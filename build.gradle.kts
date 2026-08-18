@@ -90,7 +90,12 @@ subprojects {
                 if (System.getProperty("layerBench") != null || System.getProperty("mctsBench") != null) {
                     showStandardStreams = true
                 }
-                events("failed")
+                if (System.getenv("CI") != null) {
+                    // A STARTED line without a matching completion identifies a stalled test worker.
+                    events("started", "passed", "skipped", "failed")
+                } else {
+                    events("failed")
+                }
                 showExceptions = true
                 showCauses = true
                 showStackTraces = true

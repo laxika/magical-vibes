@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,8 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
     private static final Logger LOG = Logger.getLogger(MtgjsonOracleLoader.class.getName());
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(20);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofMinutes(2);
 
     private final SetJsonCache cache;
 
@@ -139,17 +142,9 @@ public class MtgjsonOracleLoader implements OracleLoader {
     }
 
     private static String fetchFromMtgjson(String setCode) throws IOException, InterruptedException {
-        String url = "https://mtgjson.com/api/v5/" + setCode.toUpperCase() + ".json";
-
-        try (HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()) {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("User-Agent", "MagicalVibes/1.0")
-                    .header("Accept", "application/json")
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        try (HttpClient client = createHttpClient()) {
+            HttpResponse<String> response = client.send(
+                    createRequest(setCode), HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
                 throw new IOException("MTGJSON returned " + response.statusCode() + " for set " + setCode);
@@ -157,6 +152,24 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
             return response.body();
         }
+    }
+
+    static HttpClient createHttpClient() {
+        return HttpClient.newBuilder()
+                .connectTimeout(CONNECT_TIMEOUT)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
+    }
+
+    static HttpRequest createRequest(String setCode) {
+        String url = "https://mtgjson.com/api/v5/" + setCode.toUpperCase() + ".json";
+        return HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(REQUEST_TIMEOUT)
+                .header("User-Agent", "MagicalVibes/1.0")
+                .header("Accept", "application/json")
+                .GET()
+                .build();
     }
 
     static OracleData parseOracleData(JsonNode face, boolean isBackFace) {
