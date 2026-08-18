@@ -343,6 +343,38 @@ class StateBasedActionServiceTest {
         }
 
         @Test
+        @DisplayName("A replacement that mutates the battlefield does not skip a later lethal creature")
+        void lethalDamageReplacementDoesNotSkipLaterLethalCreature() {
+            Permanent protectedCreature = new Permanent(createCreatureCard("Protected Creature"));
+            protectedCreature.setMarkedDamage(3);
+            Permanent aura = new Permanent(new Card());
+            Permanent doomedCreature = new Permanent(createCreatureCard("Doomed Creature"));
+            doomedCreature.setMarkedDamage(3);
+            gd.playerBattlefields.get(player1Id).add(protectedCreature);
+            gd.playerBattlefields.get(player1Id).add(aura);
+            gd.playerBattlefields.get(player1Id).add(doomedCreature);
+
+            when(gameQueryService.isCreature(gd, protectedCreature)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, protectedCreature)).thenReturn(2);
+            when(gameQueryService.hasKeyword(gd, protectedCreature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, aura)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, doomedCreature)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, doomedCreature)).thenReturn(2);
+            when(gameQueryService.hasKeyword(gd, doomedCreature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            doAnswer(invocation -> {
+                protectedCreature.setMarkedDamage(0);
+                gd.playerBattlefields.get(player1Id).remove(aura);
+                return true;
+            }).when(graveyardService).tryRegenerate(gd, protectedCreature);
+            when(graveyardService.tryRegenerate(gd, doomedCreature)).thenReturn(false);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, doomedCreature);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, protectedCreature);
+        }
+
+        @Test
         @DisplayName("Indestructible creature with lethal damage survives")
         void indestructibleCreatureSurvivesLethalDamage() {
             Card card = createCreatureCard("Darksteel Colossus");
