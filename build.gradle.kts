@@ -76,6 +76,11 @@ subprojects {
                     excludeTags("scryfall-api")
                 }
             }
+            if (System.getenv("CI") != null) {
+                systemProperty("junit.jupiter.execution.timeout.default", "5 m")
+                systemProperty("junit.jupiter.execution.timeout.thread.mode.default", "separate_thread")
+                systemProperty("junit.jupiter.execution.timeout.threaddump.enabled", "true")
+            }
             maxParallelForks = (Runtime.getRuntime().availableProcessors() * 3 / 4).coerceAtLeast(1)
             jvmArgs("-Xmx1g", "-XX:+UseParallelGC")
             forkEvery = 2000
@@ -90,12 +95,7 @@ subprojects {
                 if (System.getProperty("layerBench") != null || System.getProperty("mctsBench") != null) {
                     showStandardStreams = true
                 }
-                if (System.getenv("CI") != null) {
-                    // A STARTED line without a matching completion identifies a stalled test worker.
-                    events("started", "passed", "skipped", "failed")
-                } else {
-                    events("failed")
-                }
+                events("failed")
                 showExceptions = true
                 showCauses = true
                 showStackTraces = true
