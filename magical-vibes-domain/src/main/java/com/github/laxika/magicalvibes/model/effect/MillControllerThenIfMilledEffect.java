@@ -20,4 +20,9 @@ public record MillControllerThenIfMilledEffect(DynamicAmount count, CardPredicat
     public MillControllerThenIfMilledEffect(int count, CardPredicate filter, CardEffect thenEffect) {
         this(new Fixed(count), filter, thenEffect);
     }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return thenEffect.targetSpec();
+    }
 }
