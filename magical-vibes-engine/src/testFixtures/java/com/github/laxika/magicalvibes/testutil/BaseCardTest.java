@@ -128,7 +128,7 @@ public abstract class BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.UPKEEP);
     }
 
     /**

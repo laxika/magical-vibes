@@ -46,13 +46,18 @@ import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GameTestHarness {
+
+    private static final int PASS_UNTIL_PRIORITY_ROUND_LIMIT = 200;
 
     // ---- Static service graph: built once per JVM fork ----
 
@@ -1388,6 +1393,14 @@ public class GameTestHarness {
         gameService.passPriority(gameData, player);
     }
 
+    /**
+     * Passes one complete priority round, resolving the top stack entry or advancing the turn when
+     * both players pass.
+     *
+     * <p>When a test's intent is to advance through multiple priority rounds to a known turn step,
+     * prefer {@link #passUntil(TurnStep)}. Repeating this method makes the destination implicit and
+     * couples the test to incidental auto-pass behavior.</p>
+     */
     public void passBothPriorities() {
         // CR 603.5: If already awaiting input (e.g. may ability prompt), return immediately.
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
@@ -1422,6 +1435,98 @@ public class GameTestHarness {
         }
 
         gameService.passPriority(gameData, second);
+    }
+
+    /**
+     * Passes priority until the next occurrence of {@code targetStep}.
+     *
+     * <p>This is the preferred way for tests to advance through multiple priority rounds to a known
+     * step. The helper temporarily configures the target as an auto-stop for every player so an
+     * auto-pass cascade cannot overshoot it. Existing auto-stop configuration is restored before
+     * returning.</p>
+     *
+     * <p>The helper resolves intervening stack entries, but it never answers player decisions. It
+     * fails with a descriptive exception if an interaction is required before the requested step,
+     * the game ends, or the destination is not reached within a bounded number of priority rounds.
+     * If entering the requested step itself opens an interaction, the step has been reached and the
+     * helper returns with that interaction pending.</p>
+     */
+    public void passUntil(TurnStep targetStep) {
+        passUntil(null, targetStep);
+    }
+
+    /**
+     * Passes priority until {@code targetStep} occurs during {@code activePlayer}'s turn.
+     *
+     * <p>Prefer this overload when a test crosses a turn boundary or exercises extra turns, because
+     * it prevents the test from stopping at the requested step during the wrong player's turn.</p>
+     */
+    public void passUntil(Player activePlayer, TurnStep targetStep) {
+        if (targetStep == null) {
+            throw new IllegalArgumentException("Target step must not be null");
+        }
+        UUID targetActivePlayerId = activePlayer == null ? null : activePlayer.getId();
+        if (targetActivePlayerId != null && !gameData.playerIds.contains(targetActivePlayerId)) {
+            throw new IllegalArgumentException("Active player is not part of this game: " + activePlayer.getUsername());
+        }
+
+        Map<UUID, Set<TurnStep>> originalAutoStops = new HashMap<>();
+        Set<UUID> playersWithoutAutoStops = new HashSet<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            Set<TurnStep> existing = gameData.playerAutoStopSteps.get(playerId);
+            if (existing == null) {
+                playersWithoutAutoStops.add(playerId);
+            } else {
+                originalAutoStops.put(playerId, existing);
+            }
+            Set<TurnStep> stopsWithTarget = existing == null ? new HashSet<>() : new HashSet<>(existing);
+            stopsWithTarget.add(targetStep);
+            gameData.playerAutoStopSteps.put(playerId, stopsWithTarget);
+        }
+
+        try {
+            for (int priorityRounds = 0;
+                    priorityRounds < PASS_UNTIL_PRIORITY_ROUND_LIMIT;
+                    priorityRounds++) {
+                if (gameData.currentStep == targetStep
+                        && (targetActivePlayerId == null || targetActivePlayerId.equals(gameData.activePlayerId))) {
+                    return;
+                }
+                if (gameData.status != GameStatus.RUNNING) {
+                    throw new IllegalStateException(passUntilFailureMessage(
+                            activePlayer, targetStep, "the game is no longer running"));
+                }
+                if (gameData.interaction.isAwaitingInput()) {
+                    PendingInteraction interaction = gameData.interaction.activeInteraction();
+                    String interactionName = interaction == null
+                            ? "unknown interaction"
+                            : interaction.getClass().getSimpleName();
+                    throw new IllegalStateException(passUntilFailureMessage(
+                            activePlayer, targetStep, "input is required for " + interactionName));
+                }
+                passBothPriorities();
+            }
+            throw new IllegalStateException(passUntilFailureMessage(
+                    activePlayer,
+                    targetStep,
+                    "the " + PASS_UNTIL_PRIORITY_ROUND_LIMIT + "-priority-round safety limit was reached"));
+        } finally {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (playersWithoutAutoStops.contains(playerId)) {
+                    gameData.playerAutoStopSteps.remove(playerId);
+                } else {
+                    gameData.playerAutoStopSteps.put(playerId, originalAutoStops.get(playerId));
+                }
+            }
+        }
+    }
+
+    private String passUntilFailureMessage(Player activePlayer, TurnStep targetStep, String reason) {
+        String destination = activePlayer == null
+                ? targetStep.name()
+                : activePlayer.getUsername() + "'s " + targetStep.name();
+        return "Could not pass until " + destination + " because " + reason
+                + " (currently " + gameData.currentStep + " on turn " + gameData.turnNumber + ")";
     }
 
     public void handleCardChosen(Player player, int cardIndex) {
