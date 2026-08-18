@@ -1140,8 +1140,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (costReductionPlan == null) {
             return false;
         }
+        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+                plan.sacrificePermanentId, plan.beholdSelection, costReductionPlan);
+        if (!canPayManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax,
+                delveReduction, costReductionPlan.reduction(), reservedCostPermanentIds)) {
+            return false;
+        }
         if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction,
-                costReductionPlan.reduction())) {
+                costReductionPlan.reduction(), reservedCostPermanentIds)) {
             return true;
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -2816,10 +2822,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (costReductionPlan == null) {
                 continue;
             }
+            UUID sacrificePermanentId = selectSacrificeTarget(gameData, burnCard);
+            Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+                    sacrificePermanentId, beholdSelection, costReductionPlan);
+            if (!canPayManaForSpell(gameData, burnCard, null, 0, delveReduction,
+                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                continue;
+            }
 
             // Cast the burn spell targeting the opponent player
             if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction,
-                    costReductionPlan.reduction())) {
+                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
                 return true; // Mana ability triggered a pending choice
             }
             List<UUID> imposedSacrificeIds = selectImposedSacrificePermanentIds(
@@ -2831,7 +2844,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(
                     buildSpellPlayCardRequest(gameData, burnCard, idx, null, targetId, null, null, null,
-                            costReductionPlan.permanentIds(), null, null, delveIndices, null, null,
+                            costReductionPlan.permanentIds(), sacrificePermanentId, null, delveIndices, null, null,
                             imposedSacrificeIds, List.of(), beholdSelection)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
+import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
@@ -328,6 +330,63 @@ class EasyAiDecisionEngineTest {
         assertThat(testGameData.stack).hasSize(1);
         assertThat(testGameData.stack.getFirst().getCard()).isSameAs(torgaar);
         assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(fodder);
+    }
+
+    @Test
+    @DisplayName("Easy AI does not spend a Costly Plunder sacrifice target for mana")
+    void doesNotSpendCostlyPlunderSacrificeTargetForMana() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        Permanent basalThrull = testHarness.addToBattlefieldAndReturn(testAiPlayer, new BasalThrull());
+        basalThrull.setSummoningSick(false);
+        Permanent swamp = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Swamp());
+        swamp.setSummoningSick(false);
+        CostlyPlunder costlyPlunder = new CostlyPlunder();
+        testHarness.setHand(testAiPlayer, List.of(costlyPlunder));
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).isEmpty();
+        assertThat(testGameData.playerHands.get(testAiPlayer.getId())).containsExactly(costlyPlunder);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId()))
+                .containsExactly(basalThrull, swamp);
+        assertThat(basalThrull.isTapped()).isFalse();
+        assertThat(swamp.isTapped()).isFalse();
+        assertThat(testGameData.playerManaPools.get(testAiPlayer.getId()).getTotal()).isZero();
+
+        for (int i = 0; i < 2; i++) {
+            Permanent additionalSwamp = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Swamp());
+            additionalSwamp.setSummoningSick(false);
+        }
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(costlyPlunder);
+        assertThat(testGameData.playerHands.get(testAiPlayer.getId())).doesNotContain(costlyPlunder);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(basalThrull);
     }
 
     @Nested

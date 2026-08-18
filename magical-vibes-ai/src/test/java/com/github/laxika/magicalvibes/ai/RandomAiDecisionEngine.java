@@ -677,6 +677,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 telemetry.recordSkip("spell: sacrifice-for-reduction cost unpayable", card.getName());
                 continue;
             }
+            Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+                    sacrificePermanentId, beholdSelection, costReductionPlan);
+            if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                telemetry.recordSkip("spell: mana unavailable after reserving cast costs", card.getName());
+                continue;
+            }
 
             if (validDiscardIndices == null) {
                 discardHandCardIndex = chooseDiscardCostIndex(
@@ -691,7 +698,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
             if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                    costReductionPlan.reduction())) {
+                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
                 return true; // Mana ability triggered a pending choice; will resume after it resolves
             }
             if (targetId != null
@@ -725,8 +732,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         break;
                     }
                     costReductionPlan = refreshedCostReductionPlan;
+                    reservedCostPermanentIds = reservedSpellCostPermanentIds(
+                            sacrificePermanentId, beholdSelection, costReductionPlan);
+                    if (!canPayManaForSpell(gameData, card, xValue, refreshedTargetingTax,
+                            delveReduction, costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                        telemetry.recordSkip("spell: refreshed mana unavailable after reserving cast costs", card.getName());
+                        targetId = null;
+                        break;
+                    }
                     if (tapManaForSpell(gameData, card, xValue, refreshedTargetingTax, delveReduction,
-                            costReductionPlan.reduction())) {
+                            costReductionPlan.reduction(), reservedCostPermanentIds)) {
                         return true;
                     }
                     currentTargets = findRandomTargets(gameData, card);

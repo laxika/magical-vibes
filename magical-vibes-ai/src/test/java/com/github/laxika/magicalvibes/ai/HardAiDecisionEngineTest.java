@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
+import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blight;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
@@ -240,6 +242,35 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(torgaar);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not spend a Costly Plunder sacrifice target for mana")
+    void doesNotSpendCostlyPlunderSacrificeTargetForMana() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        Permanent basalThrull = harness.addToBattlefieldAndReturn(player1, new BasalThrull());
+        basalThrull.setSummoningSick(false);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setSummoningSick(false);
+        CostlyPlunder costlyPlunder = new CostlyPlunder();
+        harness.setHand(player1, List.of(costlyPlunder));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(costlyPlunder);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .containsExactly(basalThrull, swamp);
+        assertThat(basalThrull.isTapped()).isFalse();
+        assertThat(swamp.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

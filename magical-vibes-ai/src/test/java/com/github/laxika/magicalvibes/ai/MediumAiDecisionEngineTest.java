@@ -12,12 +12,14 @@ import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
@@ -354,6 +356,28 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(torgaar);
         assertThat(gd.playerBattlefields.get(aiPlayer.getId())).doesNotContain(fodder);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not spend a Costly Plunder sacrifice target for mana")
+    void doesNotSpendCostlyPlunderSacrificeTargetForMana() {
+        Permanent basalThrull = harness.addToBattlefieldAndReturn(aiPlayer, new BasalThrull());
+        basalThrull.setSummoningSick(false);
+        Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
+        swamp.setSummoningSick(false);
+        CostlyPlunder costlyPlunder = new CostlyPlunder();
+        harness.setHand(aiPlayer, List.of(costlyPlunder));
+        giveAiPriority();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(costlyPlunder);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .containsExactly(basalThrull, swamp);
+        assertThat(basalThrull.isTapped()).isFalse();
+        assertThat(swamp.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
     }
 
     @Test

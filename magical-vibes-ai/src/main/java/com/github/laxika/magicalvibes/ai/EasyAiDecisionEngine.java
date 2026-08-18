@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -270,11 +271,17 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (costReductionPlan == null) {
             return false;
         }
+        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+                sacrificePermanentId, beholdSelection, costReductionPlan);
+        if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+            return false;
+        }
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
         if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction())) {
+                costReductionPlan.reduction(), reservedCostPermanentIds)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -462,11 +469,17 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (costReductionPlan == null) {
             return false;
         }
+        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+                sacrificePermanentId, beholdSelection, costReductionPlan);
+        if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+            return false;
+        }
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
         if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction())) {
+                costReductionPlan.reduction(), reservedCostPermanentIds)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(

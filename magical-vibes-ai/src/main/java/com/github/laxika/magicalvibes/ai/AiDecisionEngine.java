@@ -3269,6 +3269,54 @@ public abstract class AiDecisionEngine {
 
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
                                       int targetingTax, int delveReduction, int costReduction) {
+        return tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReduction, Set.of());
+    }
+
+    protected Set<UUID> reservedSpellCostPermanentIds(
+            UUID sacrificePermanentId, BeholdSelection beholdSelection,
+            CostReductionPlan costReductionPlan) {
+        Set<UUID> reservedIds = new HashSet<>();
+        if (sacrificePermanentId != null) {
+            reservedIds.add(sacrificePermanentId);
+        }
+        if (beholdSelection != null && beholdSelection.permanentId() != null) {
+            reservedIds.add(beholdSelection.permanentId());
+        }
+        if (costReductionPlan != null) {
+            reservedIds.addAll(costReductionPlan.permanentIds());
+        }
+        return Set.copyOf(reservedIds);
+    }
+
+    protected boolean canPayManaForSpell(GameData gameData, Card card, Integer xValue,
+                                          int targetingTax, int delveReduction, int costReduction,
+                                          Set<UUID> excludedPermanentIds) {
+        if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return true;
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) {
+            return false;
+        }
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                + targetingTax - delveReduction - costReduction;
+        if (card.isRequiresCreatureMana()) {
+            return manaManager.canPayCost(gameData, aiPlayer.getId(), manaCost, costModifier,
+                    true, excludedPermanentIds);
+        }
+        ManaCost cost = new ManaCost(manaCost);
+        if (cost.hasX() && xValue != null) {
+            return manaManager.canPayXCost(gameData, aiPlayer.getId(), card, manaCost, xValue,
+                    costModifier, excludedPermanentIds);
+        }
+        return manaManager.canPayCost(gameData, aiPlayer.getId(), manaCost, costModifier,
+                false, excludedPermanentIds);
+    }
+
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
+                                      int targetingTax, int delveReduction, int costReduction,
+                                      Set<UUID> excludedPermanentIds) {
         if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
             return false;
         }
@@ -3280,15 +3328,18 @@ public abstract class AiDecisionEngine {
         int stackSizeBeforePayment = gameData.stack.size();
 
         if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), manaCost, costModifier, tap);
+            manaManager.tapCreaturesForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+                    costModifier, tap, excludedPermanentIds);
             return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
         }
 
         ManaCost cost = new ManaCost(manaCost);
         if (cost.hasX() && xValue != null) {
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, manaCost, xValue, costModifier, tap);
+            manaManager.tapLandsForXSpellExcluding(gameData, aiPlayer.getId(), card, manaCost,
+                    xValue, costModifier, tap, excludedPermanentIds);
         } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), manaCost, costModifier, tap);
+            manaManager.tapLandsForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+                    costModifier, tap, false, excludedPermanentIds);
         }
         return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
     }
