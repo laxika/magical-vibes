@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -27,9 +28,9 @@ class TajicLegionsEdgeTest extends BaseCardTest {
         addReadyTajic(player1);
         Permanent attackingWizard = addReadyCreature(player1, new FugitiveWizard());
         Permanent nonAttackingWizard = addReadyCreature(player1, new FugitiveWizard());
-        Permanent equalPowerCreature = addReadyCreature(player1, new TajicLegionsEdge());
+        Permanent equalPowerCreature = addReadyCreature(player1, new HillGiant());
 
-        declareTajicAttackers(List.of(0, 1));
+        declareTajicAttackers(List.of(0, 1, 3));
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
