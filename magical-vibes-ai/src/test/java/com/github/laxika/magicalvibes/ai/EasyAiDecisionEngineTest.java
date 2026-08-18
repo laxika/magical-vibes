@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
@@ -393,6 +394,27 @@ class EasyAiDecisionEngineTest {
             testHarness.passBothPriorities();
 
             assertThat(testGd.playerBattlefields.get(human.getId())).doesNotContain(target);
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies a creature type for an additional cast cost")
+        void castsCallerOfTheHuntWithCreatureTypeChoice() {
+            giveAiPriority();
+            giveManaSources(Forest::new, 3);
+            testHarness.addToBattlefield(human, new EliteVanguard());
+            CallerOfTheHunt caller = new CallerOfTheHunt();
+            testHarness.setHand(aiTestPlayer, List.of(caller));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(caller);
+            assertThat(testGd.stack.getFirst().getBeholdChosenSubtype()).isEqualTo(CardSubtype.HUMAN);
+
+            testHarness.passBothPriorities();
+
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .anyMatch(permanent -> permanent.getCard() == caller);
         }
 
         @Test

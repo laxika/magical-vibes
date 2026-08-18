@@ -91,6 +91,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -200,6 +201,17 @@ class MediumAiDecisionEngineTest {
         }
     }
 
+    private Card creatureWithCreatureTypeAdditionalCost() {
+        Card card = new Card();
+        card.setName("Creature with creature type additional cost");
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{2}{G}");
+        card.setPower(2);
+        card.setToughness(2);
+        card.addEffect(EffectSlot.SPELL, new ChooseCreatureTypeCost());
+        return card;
+    }
+
     @Test
     @DisplayName("Medium AI chooses a creature type for Selective Snare")
     void castsSelectiveSnareWithCreatureTypeChoice() {
@@ -219,6 +231,30 @@ class MediumAiDecisionEngineTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(human.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies a creature type for an additional cast cost")
+    void castsCreatureWithCreatureTypeAdditionalCost() {
+        giveAiPriority();
+        for (int i = 0; i < 3; i++) {
+            Permanent forest = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+            forest.setSummoningSick(false);
+        }
+        harness.addToBattlefield(human, new EliteVanguard());
+        Card creature = creatureWithCreatureTypeAdditionalCost();
+        harness.setHand(aiPlayer, List.of(creature));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(creature);
+        assertThat(gd.stack.getFirst().getBeholdChosenSubtype()).isEqualTo(CardSubtype.HUMAN);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .anyMatch(permanent -> permanent.getCard() == creature);
     }
 
     @Test

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
@@ -314,6 +315,37 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Hard AI supplies a creature type for an additional cast cost")
+    void castsCallerOfTheHuntWithCreatureTypeChoice() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        for (int i = 0; i < 3; i++) {
+            Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+            forest.setSummoningSick(false);
+        }
+        harness.addToBattlefield(player2, new EliteVanguard());
+        CallerOfTheHunt caller = new CallerOfTheHunt();
+        harness.setHand(player1, List.of(caller));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(caller);
+        assertThat(gd.stack.getFirst().getBeholdChosenSubtype()).isEqualTo(CardSubtype.HUMAN);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == caller);
     }
 
     private Card repeatableArtifactRemoval() {

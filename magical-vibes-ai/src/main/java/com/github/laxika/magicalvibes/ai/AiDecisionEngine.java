@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
@@ -2309,6 +2310,7 @@ public abstract class AiDecisionEngine {
             // This request does not submit repeatable payments, so use the base target count.
             effectiveXValue = 1;
         }
+        CardSubtype chosenAdditionalCostCreatureType = chooseAdditionalCostCreatureType(card);
         CardSubtype chosenCreatureType = chooseCastTimeCreatureType(gameData, card, targetId, targetIds);
         return new PlayCardRequest(
                 cardIndex, effectiveXValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
@@ -2317,8 +2319,15 @@ public abstract class AiDecisionEngine {
                 exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
                 discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                 List.of(), null,
-                null, selection.permanentId(), selection.handCardIndex(), null, null, null, null, null,
+                null, selection.permanentId(), selection.handCardIndex(), null, null, null,
+                chosenAdditionalCostCreatureType == null ? null : chosenAdditionalCostCreatureType.name(), null,
                 chosenCreatureType == null ? null : chosenCreatureType.name());
+    }
+
+    private CardSubtype chooseAdditionalCostCreatureType(Card card) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureTypeCost.class::isInstance);
+        return requiresChoice ? CardSubtype.HUMAN : null;
     }
 
     private CardSubtype chooseCastTimeCreatureType(GameData gameData, Card card, UUID targetId,
