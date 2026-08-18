@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
+import com.github.laxika.magicalvibes.cards.b.BalmOfRestoration;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
@@ -88,6 +89,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void selectsModeBeforeActivatingModalAbility() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(aiPlayer, new BalmOfRestoration());
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        harness.setHand(aiPlayer, List.of());
+        int lifeBefore = gameData.getLife(aiPlayer.getId());
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getXValue()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gameData.getLife(aiPlayer.getId())).isEqualTo(lifeBefore + 2);
+        harness.assertInGraveyard(aiPlayer, "Balm of Restoration");
+    }
 
     @Test
     void doesNotRetryCastAfterLibraryMovingManaAbilityOpensStack() {

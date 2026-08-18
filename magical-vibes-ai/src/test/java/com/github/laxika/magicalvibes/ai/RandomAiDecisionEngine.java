@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
@@ -200,7 +201,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
-        record AbilityCandidate(Permanent permanent, int abilityIndex, ActivatedAbility ability) {}
+        record AbilityCandidate(Permanent permanent, int abilityIndex, ActivatedAbility ability,
+                                Integer modalChoice) {}
         List<AbilityCandidate> candidates = new ArrayList<>();
 
         for (Permanent permanent : List.copyOf(battlefield)) {
@@ -224,13 +226,18 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     telemetry.recordSkip("ability: X mana cost (unsupported)", permanent.getCard().getName());
                     continue;
                 }
+                Integer modalChoice = chooseModalAbilityMode(ability);
+                if (ability.isModalChoiceAtActivation() && modalChoice == null) {
+                    telemetry.recordSkip("ability: modal choice (unsupported)", permanent.getCard().getName());
+                    continue;
+                }
                 AbilityActivationKey key = new AbilityActivationKey(permanent.getId(), abilIdx);
                 if (abilityActivationsThisTurn.getOrDefault(key, 0)
                         >= MAX_ACTIVATIONS_PER_ABILITY_PER_TURN) {
                     continue;
                 }
                 if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
-                candidates.add(new AbilityCandidate(permanent, abilIdx, ability));
+                candidates.add(new AbilityCandidate(permanent, abilIdx, ability, modalChoice));
             }
         }
 
@@ -246,7 +253,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
 
             UUID targetId = null;
-            if (candidate.ability().isNeedsTarget()) {
+            boolean selectedAbilityNeedsTarget = candidate.modalChoice() == null
+                    ? candidate.ability().isNeedsTarget()
+                    : EffectResolution.needsTarget(
+                            EffectResolution.resolveEffects(
+                                    candidate.ability().getEffects(), null, candidate.modalChoice()),
+                            List.of(), false, false);
+            if (selectedAbilityNeedsTarget) {
                 targetId = targetSelector.chooseAbilityTarget(gameData, candidate.ability(),
                         aiPlayer.getId(), permanent);
                 if (targetId == null) {
@@ -328,7 +341,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     ? plannedGraveyardCard.getId()
                     : null;
             send(() -> gameActions.handleActivateAbility(
-                    new ActivateAbilityRequest(finalPermIdx, abilIdx, null, finalTargetId, null, null, null)));
+                    new ActivateAbilityRequest(finalPermIdx, abilIdx, candidate.modalChoice(),
+                            finalTargetId, null, null, null)));
 
             // The engine rejects some invalid activations by returning silently. If the
             // AI treated such an activation as its action for this priority, no state
@@ -355,6 +369,19 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return true;
         }
         return false;
+    }
+
+    private Integer chooseModalAbilityMode(ActivatedAbility ability) {
+        if (!ability.isModalChoiceAtActivation()) {
+            return null;
+        }
+        ChooseOneEffect modalEffect = ability.modalEffectAtActivation();
+        int[] selectedModes = new int[modalEffect.choicesRequired()];
+        for (int i = 0; i < selectedModes.length; i++) {
+            selectedModes[i] = i;
+        }
+        return ChooseOneEffect.encodeModeSelection(
+                modalEffect.choicesRequired(), modalEffect.choicesMax(), selectedModes);
     }
 
     private ExileCardFromGraveyardCost findPayExiledCardManaCost(ActivatedAbility ability) {
