@@ -15,7 +15,7 @@ class WallOfResistanceTest extends BaseCardTest {
 
     /** Simulates the Wall having been dealt damage this turn. */
     private void recordDamageDealtTo(Permanent permanent) {
-        gd.permanentsDealtDamageThisTurn.add(permanent.getId());
+        gd.recordDamageToPermanent(permanent.getId(), 1);
     }
 
     private void advanceToEndStepAndResolve(UUID activePlayerId) {

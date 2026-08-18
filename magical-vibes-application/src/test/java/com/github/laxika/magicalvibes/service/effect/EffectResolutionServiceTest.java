@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -974,7 +975,9 @@ class EffectResolutionServiceTest {
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
             Permanent target = new Permanent(createCard("Grizzly Bears"));
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(target), eq(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
+                    any(FilterContext.class))).thenReturn(false);
             EffectHandler handler = stubHandler(base);
 
             effectResolutionService.resolveEffects(gd, entry);
@@ -992,7 +995,9 @@ class EffectResolutionServiceTest {
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
             Permanent target = new Permanent(createCard("Champion of the Parish"));
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(target), eq(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
+                    any(FilterContext.class))).thenReturn(true);
             EffectHandler handler = stubHandler(upgraded);
 
             effectResolutionService.resolveEffects(gd, entry);
@@ -1014,7 +1019,8 @@ class EffectResolutionServiceTest {
             effectResolutionService.resolveEffects(gd, entry);
 
             verify(handler).resolve(gd, entry, base);
-            verify(predicateEvaluationService, never()).matchesPermanentPredicate(eq(gd), any(), any());
+            verify(predicateEvaluationService, never()).matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class));
         }
     }
 

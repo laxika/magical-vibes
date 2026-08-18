@@ -831,16 +831,17 @@ class StepTriggerServiceTest {
         void graveyardMetalcraftTriggersWhenMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
-            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                    new ConditionalEffect(new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?")));
+            ConditionalEffect effect = new ConditionalEffect(
+                    new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?"));
+            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED, effect);
             gd.playerGraveyards.get(player1Id).add(card);
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
 
             sut.handleUpkeepTriggers(gd);
 
-            // MayPayManaEffect goes through queueMayAbility, which adds to stack
-            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack).singleElement()
+                    .satisfies(entry -> assertThat(entry.getEffectsToResolve()).containsExactly(effect));
             assertThat(gd.stack.getFirst().getDescription()).contains("Metalcraft Card");
         }
 

@@ -1211,24 +1211,20 @@ public class StepTriggerService {
                 if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : upkeepEffects) {
-                    CardEffect innerEffect = effect;
-
-                    // Unwrap intervening-if conditional — check the gate at trigger time before
-                    // offering the ability (Kuldotha Phoenix metalcraft, Rekindled Flame's "if an
-                    // opponent has no cards in hand")
-                    if (innerEffect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+                    // Check the intervening-if gate at trigger time while keeping the wrapper on
+                    // the stack so the same condition is checked again during resolution.
+                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forCard(card, activePlayerId))) {
                             log.info("Game {} - {} graveyard upkeep ability skipped ({})",
                                     gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
                             continue;
                         }
-                        innerEffect = conditional.wrapped();
                     }
 
-                    if (innerEffect instanceof MayPayManaEffect mayPay) {
+                    if (effect instanceof MayPayManaEffect mayPay) {
                         gameData.queueMayAbility(card, activePlayerId, mayPay, null);
-                    } else if (innerEffect instanceof MayEffect may) {
+                    } else if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(card, activePlayerId, may);
                     } else {
                         gameData.stack.add(new StackEntry(
@@ -1236,7 +1232,7 @@ public class StepTriggerService {
                                 card,
                                 activePlayerId,
                                 card.getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(innerEffect))
+                                new ArrayList<>(List.of(effect))
                         ));
 
                         gameLogService.append(gameData, GameLog.cardThen(card, "'s upkeep ability triggers."));

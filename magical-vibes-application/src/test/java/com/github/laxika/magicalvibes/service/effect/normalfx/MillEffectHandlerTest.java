@@ -148,7 +148,8 @@ class MillEffectHandlerTest {
             gd.playerGraveyards.get(player1Id).addAll(List.of(createCard("Bear1"), createCard("Bear2")));
             gd.playerGraveyards.get(player2Id).addAll(List.of(
                     createCard("Bear3"), createCard("Bear4"), createCard("Bear5"), createCard("Bear6")));
-            when(predicateEvaluationService.matchesCardPredicate(any(), isNull(), isNull())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), isNull(), isNull(), eq(gd), any(UUID.class))).thenReturn(true);
 
             MillEffect effect = new MillEffect(new CardsInGraveyard(null, CountScope.TARGET_PLAYER),
                     MillRecipient.TARGET_PLAYER);

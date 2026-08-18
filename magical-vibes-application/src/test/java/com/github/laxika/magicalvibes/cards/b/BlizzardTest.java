@@ -138,7 +138,6 @@ class BlizzardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        advanceToNextTurn(player2);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 

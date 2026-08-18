@@ -90,7 +90,8 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
         reorderTopCardsOfLibraryEffectHandler = new ReorderTopCardsOfLibraryEffectHandler(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
                 gameQueryService, amountEvaluationService);
-        lenient().when(amountEvaluationService.evaluate(any(GameData.class), any(), any()))
+        lenient().when(amountEvaluationService.evaluate(
+                        any(GameData.class), argThat(amount -> amount instanceof Fixed), any()))
                 .thenAnswer(invocation -> ((Fixed) invocation.getArgument(1)).value());
 
     }
@@ -244,6 +245,8 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
                         new ReorderTopCardsOfLibraryEffect(new XValue());
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Soothsaying"),
                         player1Id, "Soothsaying", List.of(effect), 3);
+                when(amountEvaluationService.evaluate(eq(gd), eq(new XValue()),
+                        argThat(context -> context.xValue() == 3))).thenReturn(3);
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
