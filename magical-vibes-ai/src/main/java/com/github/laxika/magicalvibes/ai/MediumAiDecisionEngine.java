@@ -301,7 +301,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
-                buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                buildSpellPlayCardRequest(gameData, card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                         finalMultiTargetIds, convokeCreatureIds, costReductionPlan.permanentIds(),
                         finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
@@ -531,7 +531,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
-                buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                buildSpellPlayCardRequest(gameData, card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                         finalMultiTargetIds, convokeCreatureIds, costReductionPlan.permanentIds(),
                         finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,

@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -196,6 +197,27 @@ class MediumAiDecisionEngineTest {
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
+    }
+
+    @Test
+    @DisplayName("Medium AI chooses a creature type for Selective Snare")
+    void castsSelectiveSnareWithCreatureTypeChoice() {
+        giveAiPriority();
+        giveAiIslands(3);
+        Permanent target = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        SelectiveSnare snare = new SelectiveSnare();
+        harness.setHand(aiPlayer, List.of(snare));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(snare);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stack.getFirst().getChosenCreatureType()).isEqualTo(CardSubtype.BEAR);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(human.getId())).doesNotContain(target);
     }
 
     private Card multiTargetRemovalWithPerTargetLifeCost() {

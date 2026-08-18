@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -739,7 +741,20 @@ class AiTargetSelector {
         if (targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), ctx).isPresent()) {
             return false;
         }
-        return true;
+        return hasPossibleCastTimeCreatureType(gameData, card, target);
+    }
+
+    private boolean hasPossibleCastTimeCreatureType(GameData gameData, Card card, Permanent target) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CastTimeCreatureTypeChoiceEffect.class::isInstance)
+                .map(CastTimeCreatureTypeChoiceEffect.class::cast)
+                .anyMatch(CastTimeCreatureTypeChoiceEffect::requiresCastTimeCreatureTypeChoice);
+        if (!requiresChoice) {
+            return true;
+        }
+        return gameQueryService.isCreature(gameData, target)
+                && (!gameQueryService.effectiveCreatureSubtypes(gameData, target).isEmpty()
+                || gameQueryService.hasKeyword(gameData, target, Keyword.CHANGELING));
     }
 
     /**

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
@@ -2280,6 +2282,7 @@ public abstract class AiDecisionEngine {
      * The other additional-cost fields mirror the request shape used by all AI spell paths.
      */
     protected PlayCardRequest buildSpellPlayCardRequest(
+            GameData gameData,
             Card card,
             int cardIndex,
             Integer xValue,
@@ -2306,6 +2309,7 @@ public abstract class AiDecisionEngine {
             // This request does not submit repeatable payments, so use the base target count.
             effectiveXValue = 1;
         }
+        CardSubtype chosenCreatureType = chooseCastTimeCreatureType(gameData, card, targetId, targetIds);
         return new PlayCardRequest(
                 cardIndex, effectiveXValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
                 null, sacrificePermanentId, null, null, alternateCostSacrificePermanentIds, null,
@@ -2313,7 +2317,43 @@ public abstract class AiDecisionEngine {
                 exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
                 discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                 List.of(), null,
-                null, selection.permanentId(), selection.handCardIndex(), null, null, null, null, null, null);
+                null, selection.permanentId(), selection.handCardIndex(), null, null, null, null, null,
+                chosenCreatureType == null ? null : chosenCreatureType.name());
+    }
+
+    private CardSubtype chooseCastTimeCreatureType(GameData gameData, Card card, UUID targetId,
+                                                    List<UUID> targetIds) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CastTimeCreatureTypeChoiceEffect.class::isInstance)
+                .map(CastTimeCreatureTypeChoiceEffect.class::cast)
+                .anyMatch(CastTimeCreatureTypeChoiceEffect::requiresCastTimeCreatureTypeChoice);
+        if (!requiresChoice) {
+            return null;
+        }
+
+        List<UUID> announcedTargets = targetIds != null && !targetIds.isEmpty()
+                ? targetIds
+                : targetId != null ? List.of(targetId) : List.of();
+        if (announcedTargets.isEmpty()) {
+            return CardSubtype.HUMAN;
+        }
+
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (!gameQueryService.isCreatureSubtype(subtype)) {
+                continue;
+            }
+            boolean matchesAllTargets = announcedTargets.stream().allMatch(announcedTarget -> {
+                Permanent target = gameQueryService.findPermanentById(gameData, announcedTarget);
+                return target != null
+                        && gameQueryService.isCreature(gameData, target)
+                        && (gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(subtype)
+                        || gameQueryService.hasKeyword(gameData, target, Keyword.CHANGELING));
+            });
+            if (matchesAllTargets) {
+                return subtype;
+            }
+        }
+        return null;
     }
 
 

@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
@@ -262,6 +263,34 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
         assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI chooses a creature type for Selective Snare")
+    void castsSelectiveSnareWithCreatureTypeChoice() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        givePlayerIslands(player1, 3);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        SelectiveSnare snare = new SelectiveSnare();
+        harness.setHand(player1, List.of(snare));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, target.getId(), 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(snare);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stack.getFirst().getChosenCreatureType()).isEqualTo(CardSubtype.BEAR);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
 
     private Card repeatableArtifactRemoval() {

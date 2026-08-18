@@ -774,7 +774,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final CostReductionPlan finalCostReductionPlan = costReductionPlan;
             final BeholdSelection finalBeholdSelection = beholdSelection;
             send(() -> gameActions.handlePlayCard(
-                    buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                    buildSpellPlayCardRequest(gameData, card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                             finalMultiTargetIds, convokeCreatureIds, finalCostReductionPlan.permanentIds(),
                             finalSacrificePermanentId,
                             finalExileGraveyardCardIndex, finalExileGraveyardCardIndices,

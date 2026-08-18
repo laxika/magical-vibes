@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
@@ -370,6 +371,27 @@ class EasyAiDecisionEngineTest {
                 permanent.setSummoningSick(false);
                 testGd.playerBattlefields.get(aiTestPlayer.getId()).add(permanent);
             }
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses a creature type for Selective Snare")
+        void castsSelectiveSnareWithCreatureTypeChoice() {
+            giveAiPriority();
+            giveManaSources(Island::new, 3);
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            SelectiveSnare snare = new SelectiveSnare();
+            testHarness.setHand(aiTestPlayer, List.of(snare));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(snare);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+            assertThat(testGd.stack.getFirst().getChosenCreatureType()).isEqualTo(CardSubtype.BEAR);
+
+            testHarness.passBothPriorities();
+
+            assertThat(testGd.playerBattlefields.get(human.getId())).doesNotContain(target);
         }
 
         @Test
