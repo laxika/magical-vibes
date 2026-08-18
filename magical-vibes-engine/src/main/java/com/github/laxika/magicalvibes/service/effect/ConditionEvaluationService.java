@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInExileAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
@@ -63,6 +64,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPerman
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNoLandCardsInHand;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInHandThanEachOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
@@ -84,6 +86,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsMoreCreaturesThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggeringPermanentCount;
@@ -96,6 +99,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreate
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
+import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DealtDamageByRedSpellThisTurn;
@@ -304,6 +308,10 @@ public class ConditionEvaluationService {
             case CreatureDiedUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
+            case CreatureDeathsThisTurnAtLeast c ->
+                    gameData.orderedPlayerIds.stream()
+                            .mapToInt(playerId -> gameData.creatureDeathCountThisTurn.getOrDefault(playerId, 0))
+                            .sum() >= c.minimum();
             case Kicked ignored ->
                     ctx.kicked();
             case NotKicked ignored ->
@@ -391,6 +399,8 @@ public class ConditionEvaluationService {
                     attachedPermanentControllerControlsNoOther(gameData, ctx, c.filter());
             case ControllerHasMoreLifeThanAnOpponent ignored ->
                     controllerHasMoreLifeThanAnOpponent(gameData, ctx.controllerId());
+            case ControllerHasMoreCardsInHandThanEachOpponent ignored ->
+                    controllerHasMoreCardsInHandThanEachOpponent(gameData, ctx.controllerId());
             case AnOpponentHasMoreCardsInHandThanController ignored ->
                     anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
@@ -430,6 +440,8 @@ public class ConditionEvaluationService {
                     countCardsInHand(gameData, ctx.controllerId()) <= c.threshold();
             case CardsInExileAtLeast c ->
                     gameData.exiledCards.size() >= c.threshold();
+            case CardsInHandMatchingAtLeast c ->
+                    countMatchingCardsInHand(gameData, ctx.controllerId(), c.filter()) >= c.threshold();
             case ActivePlayerControlsPermanent c ->
                     activePlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case ActivePlayerControlsMoreLandsThanEachOtherPlayer ignored ->
@@ -568,9 +580,10 @@ public class ConditionEvaluationService {
                             && gameData.playersWhoSurveilledThisTurn.contains(ctx.controllerId());
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
-            case SelfWasDealtDamageThisTurn ignored ->
+            case SelfWasDealtDamageThisTurn c ->
                     ctx.sourcePermanentId() != null
-                            && gameData.permanentsDealtDamageThisTurn.contains(ctx.sourcePermanentId());
+                            && gameData.damageDealtToPermanentsThisTurn.getOrDefault(ctx.sourcePermanentId(), 0)
+                            >= Math.max(1, c.minimumAmount());
             case SourceDamagedCreatureDiedThisTurn ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.contains(ctx.sourcePermanentId());
@@ -661,7 +674,7 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && !ctx.controllerId().equals(gameData.activePlayerId);
             case TargetPermanentMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-                yield target != null && predicateEvaluationService.matchesPermanentPredicate(gameData, target, c.filter());
+                yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
             }
             case TargetPermanentManaValueEqualsControllerUnspentMana ignored -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
@@ -817,6 +830,8 @@ public class ConditionEvaluationService {
                     controlsMoreCreaturesThanOpponent(gameData, ctx);
             case APlayerControlsMoreCreaturesThanEachOtherPlayer ignored ->
                     aPlayerControlsMoreCreaturesThanEachOtherPlayer(gameData);
+            case APlayerHasMoreCardsInHandThanEachOtherPlayer ignored ->
+                    aPlayerHasMoreCardsInHandThanEachOtherPlayer(gameData);
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
             case OpponentControlsPermanentCount c ->
@@ -904,6 +919,18 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private boolean controllerHasMoreCardsInHandThanEachOpponent(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int controllerHandSize = countCardsInHand(gameData, controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (!candidateOpponentId.equals(controllerId)
+                    && controllerHandSize <= countCardsInHand(gameData, candidateOpponentId)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Sum of the effective power of every creature the given player controls. */
@@ -1051,6 +1078,21 @@ public class ConditionEvaluationService {
             }
         }
         return playersWithMostCreatures == 1;
+    }
+
+    private boolean aPlayerHasMoreCardsInHandThanEachOtherPlayer(GameData gameData) {
+        int highestHandSize = -1;
+        int playersWithMostCards = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            int handSize = countCardsInHand(gameData, playerId);
+            if (handSize > highestHandSize) {
+                highestHandSize = handSize;
+                playersWithMostCards = 1;
+            } else if (handSize == highestHandSize) {
+                playersWithMostCards++;
+            }
+        }
+        return playersWithMostCards == 1;
     }
 
     /**
@@ -1971,6 +2013,17 @@ public class ConditionEvaluationService {
         if (controllerId == null) return 0;
         List<Card> hand = gameData.playerHands.get(controllerId);
         return hand == null ? 0 : hand.size();
+    }
+
+    private int countMatchingCardsInHand(GameData gameData, UUID controllerId,
+                                         com.github.laxika.magicalvibes.model.filter.CardPredicate filter) {
+        if (controllerId == null) return 0;
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand == null) return 0;
+        return (int) hand.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, null, gameData, controllerId))
+                .count();
     }
 
     private boolean isTopCardOfLibraryColor(GameData gameData, UUID controllerId, TopCardOfLibraryColor c) {

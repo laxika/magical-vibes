@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
@@ -615,6 +616,27 @@ class PredicateEvaluationServiceTest {
             PermanentManaValueAtMostControlledCountPredicate predicate =
                     new PermanentManaValueAtMostControlledCountPredicate(
                             new PermanentHasSubtypePredicate(CardSubtype.PLAINS));
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(eligible, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(ineligible, predicate, context)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentManaValueAtMostSourceControllerHandSizePredicate uses the source controller's hand")
+        void manaValueAtMostSourceControllerHandSizeMatches() {
+            gd.playerHands.get(player1Id).add(createArtifact("Hand Card One"));
+            gd.playerHands.get(player1Id).add(createArtifact("Hand Card Two"));
+
+            Card eligibleCard = createArtifact("Eligible Artifact");
+            eligibleCard.setManaCost("{2}");
+            Permanent eligible = addPermanent(player2Id, eligibleCard);
+            Card ineligibleCard = createArtifact("Ineligible Artifact");
+            ineligibleCard.setManaCost("{3}");
+            Permanent ineligible = addPermanent(player2Id, ineligibleCard);
+
+            PermanentManaValueAtMostSourceControllerHandSizePredicate predicate =
+                    new PermanentManaValueAtMostSourceControllerHandSizePredicate();
             FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
 
             assertThat(evaluator.matchesPermanentPredicate(eligible, predicate, context)).isTrue();

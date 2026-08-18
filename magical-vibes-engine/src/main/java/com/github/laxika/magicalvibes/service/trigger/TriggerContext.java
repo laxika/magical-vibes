@@ -88,10 +88,14 @@ public sealed interface TriggerContext {
      * (ON_CONTROLLER_DEALT_DAMAGE, e.g. Living Artifact). Fired once per damage source.
      * {@code sourcePermanentId} is populated for source-specific opponent-damage triggers.
      */
-    record DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId)
-            implements TriggerContext {
+    record DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId,
+            UUID sourceControllerId) implements TriggerContext {
+        public DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId) {
+            this(damagedPlayerId, amount, sourcePermanentId, null);
+        }
+
         public DamageToControllerAmount(UUID damagedPlayerId, int amount) {
-            this(damagedPlayerId, amount, null);
+            this(damagedPlayerId, amount, null, null);
         }
     }
 

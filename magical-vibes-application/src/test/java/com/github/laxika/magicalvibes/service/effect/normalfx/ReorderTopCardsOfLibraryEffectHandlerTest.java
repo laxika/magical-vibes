@@ -7,8 +7,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -42,6 +45,8 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
+    private AmountEvaluationService amountEvaluationService;
+    @Mock
     private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
@@ -58,8 +63,6 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
     private UUID player1Id;
     private UUID player2Id;
     private ReorderTopCardsOfLibraryEffectHandler reorderTopCardsOfLibraryEffectHandler;
-    private AmountEvaluationService amountEvaluationService;
-
     @BeforeEach
     void setUp() {
 
@@ -82,13 +85,13 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
-
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         reorderTopCardsOfLibraryEffectHandler = new ReorderTopCardsOfLibraryEffectHandler(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
-                amountEvaluationService);
+                gameQueryService, amountEvaluationService);
+        lenient().when(amountEvaluationService.evaluate(any(GameData.class), any(), any()))
+                .thenAnswer(invocation -> ((Fixed) invocation.getArgument(1)).value());
 
     }
 
@@ -117,6 +120,26 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
         // =========================================================================
         // resolveRevealTopCardOfLibrary
         // =========================================================================
+
+    @Test
+            @DisplayName("Evaluates a dynamic reorder count at resolution")
+            void evaluatesDynamicCount() {
+                stubCardViewFactory();
+                gd.playerDecks.get(player1Id).add(createCard("First"));
+                gd.playerDecks.get(player1Id).add(createCard("Second"));
+                gd.playerDecks.get(player1Id).add(createCard("Third"));
+                when(amountEvaluationService.evaluate(any(GameData.class), any(), any())).thenReturn(3);
+
+                ReorderTopCardsOfLibraryEffect effect =
+                        new ReorderTopCardsOfLibraryEffect(new CardsInHand(CountScope.CONTROLLER));
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
+                        player1Id, "Sage Owl", List.of(effect));
+
+                reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                        .hasSize(3);
+            }
 
     @Test
             @DisplayName("Empty library skips reorder")

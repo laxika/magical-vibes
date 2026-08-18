@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
+import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -73,6 +74,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private ExileService exileService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
 
     private LibraryChoiceHandlerService service;
 
@@ -99,6 +101,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport.class),
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport.class),
+                murmursFromBeyondEffectHandler,
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
@@ -184,6 +187,26 @@ class LibraryChoiceHandlerServiceTest {
             verify(stateBasedActionService).performStateBasedActions(gd);
             verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
+    }
+
+    @Test
+    @DisplayName("Routes Murmurs from Beyond's opponent choice through its effect handler")
+    void murmursFromBeyondChoiceUsesEffectHandler() {
+        Card first = createCard("First Card");
+        Card second = createCard("Second Card");
+        Card third = createCard("Third Card");
+        List<Card> revealed = List.of(first, second, third);
+        gd.queueInteraction(new PendingMurmursFromBeyondChoice(player1Id));
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player2Id, revealed,
+                List.of(first.getId(), second.getId(), third.getId()),
+                false, false, false, false, false, 0, null, 1,
+                "Choose one.", 1, false));
+
+        service.handleLibraryRevealChoice(gd, player2, List.of(second.getId()));
+
+        verify(murmursFromBeyondEffectHandler).completeCardChoice(gd, revealed, List.of(second.getId()));
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
     // =========================================================================

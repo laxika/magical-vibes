@@ -316,6 +316,8 @@ public class MultiPermanentChoiceHandlerService {
             handleUntapChosenPermanents(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand) {
             handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.ReturnAnyNumberAndRecordCount ctx) {
+            handleReturnAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CombatDamageBounce ctx) {
             handleCombatDamageBounce(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AimCounterPlacement) {
@@ -893,6 +895,33 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same ability (e.g. the cycling draw)
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleReturnAnyNumberAndRecordCount(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.ReturnAnyNumberAndRecordCount context) {
+        List<Card> bouncedCards = new ArrayList<>();
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null && playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
+                    && permanentRemovalService.removePermanentToHand(gameData, permanent)) {
+                bouncedCards.add(permanent.getCard());
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        context.resolvingEntry().setEventValue(bouncedCards.size());
+
+        if (bouncedCards.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.text(gameData.playerIdToName.get(playerId) + " chooses not to return any permanents."));
+        } else {
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder(), bouncedCards)
+                            .text((bouncedCards.size() == 1 ? " is" : " are")
+                                    + " returned to their owners' hands.").build());
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -64,6 +65,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -97,6 +100,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.epic.EpicService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -170,6 +174,9 @@ class StepTriggerServiceTest {
     private ParadigmService paradigmService;
 
     @Mock
+    private EpicService epicService;
+
+    @Mock
     private CreatureControlService creatureControlService;
 
     @Mock
@@ -211,6 +218,7 @@ class StepTriggerServiceTest {
                 triggerCollectionService,
                 triggerTargetCollector,
                 paradigmService,
+                epicService,
                 validTargetService,
                 creatureControlService,
                 grantedTriggeredAbilitySupport,
@@ -1993,6 +2001,22 @@ class StepTriggerServiceTest {
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
                     .containsExactly(new DestroyAllPermanentsEffect(new PermanentTruePredicate()));
+        }
+
+        @Test
+        @DisplayName("Delayed discard trigger pushes a controller discard onto the stack")
+        void delayedDiscardPushed() {
+            Card sourceCard = createCardWithName("Ideas Unbound");
+            gd.queueDelayedAction(new DiscardCardsAtNextEndStep(player1Id, 3, sourceCard));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.getDelayedActions(DiscardCardsAtNextEndStep.class)).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .containsExactly(new DiscardEffect(3, DiscardRecipient.CONTROLLER));
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
     }
 

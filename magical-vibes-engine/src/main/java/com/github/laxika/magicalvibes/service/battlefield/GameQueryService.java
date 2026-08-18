@@ -147,6 +147,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
@@ -186,6 +187,8 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -247,6 +250,14 @@ public class GameQueryService {
     @Autowired
     @Lazy
     private ConditionEvaluationService conditionEvaluationService;
+
+    /**
+     * Evaluates dynamic amounts used by static effects that are queried outside the layered pass,
+     * such as combat taxes.
+     */
+    @Autowired
+    @Lazy
+    private AmountEvaluationService amountEvaluationService;
 
     /**
      * Evaluates card/permanent/stack-entry predicates and target filters. Injected lazily
@@ -540,7 +551,12 @@ public class GameQueryService {
         if (card.getSubtypes().contains(subtype)) return true;
         if (gameData == null || cardOwnerId == null) return false;
         if (!card.hasType(CardType.CREATURE)) return false;
-        return computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype);
+        if (computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype)) {
+            return true;
+        }
+        return isCardInGraveyard(gameData, cardOwnerId, card)
+                && computeGrantedGraveyardSubtypesForOwnedCreatureCard(gameData, cardOwnerId, card)
+                .contains(subtype);
     }
 
     private static final Set<CardSubtype> BASIC_LAND_SUBTYPES = EnumSet.of(
@@ -580,8 +596,43 @@ public class GameQueryService {
         Set<CardSubtype> subtypes = new java.util.HashSet<>(card.getSubtypes());
         if (gameData != null && cardOwnerId != null && card.hasType(CardType.CREATURE)) {
             subtypes.addAll(computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId));
+            if (isCardInGraveyard(gameData, cardOwnerId, card)) {
+                subtypes.addAll(computeGrantedGraveyardSubtypesForOwnedCreatureCard(gameData, cardOwnerId, card));
+            }
         }
         return subtypes;
+    }
+
+    /**
+     * Computes subtypes granted to one creature card while it is in its owner's graveyard. Unlike
+     * all-zone subtype grants, these grants stop applying as soon as the card changes zones.
+     */
+    public List<CardSubtype> computeGrantedGraveyardSubtypesForOwnedCreatureCard(
+            GameData gameData, UUID ownerId, Card card) {
+        List<CardSubtype> result = new ArrayList<>();
+        if (gameData == null || ownerId == null || card == null || !card.hasType(CardType.CREATURE)) {
+            return result;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
+        if (battlefield == null) return result;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof GraveyardSubtypeGrantingEffect grant)
+                        || !grant.appliesTo(card)) {
+                    continue;
+                }
+                CardSubtype subtype = grant.grantedGraveyardSubtypeFor(permanent, card);
+                if (subtype != null && !result.contains(subtype)) {
+                    result.add(subtype);
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean isCardInGraveyard(GameData gameData, UUID ownerId, Card card) {
+        return gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                .anyMatch(graveyardCard -> graveyardCard.getId().equals(card.getId()));
     }
 
     /**
@@ -4847,7 +4898,8 @@ public class GameQueryService {
             }
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof EnchantedCreatureCombatTaxEffect tax && tax.kind() == kind) {
-                    total[0] += tax.amount();
+                    total[0] += amountEvaluationService.evaluate(gameData, tax.amount(),
+                            AmountContext.forStaticEffect(aura, playerId));
                 }
             }
         });

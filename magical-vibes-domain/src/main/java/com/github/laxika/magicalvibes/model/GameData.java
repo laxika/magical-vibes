@@ -258,6 +258,8 @@ public class GameData {
     /** Players whose hands received a permanent from the battlefield this turn. */
     public final Set<UUID> playersWhoReceivedPermanentFromBattlefieldToHandThisTurn =
             ConcurrentHashMap.newKeySet();
+    /** Tracks card IDs each player discarded because of an opponent's spell or ability this turn. */
+    public final Map<UUID, Set<UUID>> cardsDiscardedByOpponentThisTurn = new ConcurrentHashMap<>();
     /**
      * When non-null, the card with this ID is currently being put into a graveyard as the discard cost
      * of activating a cycling ability. Read by {@link com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement}
@@ -809,6 +811,9 @@ public class GameData {
 
     /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
     public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players who can't cast spells for the rest of the game because an Epic spell resolved. */
+    public final Set<UUID> playersCantCastSpellsForRestOfGame = ConcurrentHashMap.newKeySet();
 
     /**
      * Card names opponents of the key player can't cast spells with, until that player's next turn
@@ -3272,6 +3277,8 @@ public class GameData {
                 copy.cardsDiscardedOrCycledThisTurn.put(k, new HashSet<>(v)));
         copy.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn
                 .addAll(this.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn);
+        this.cardsDiscardedByOpponentThisTurn.forEach((k, v) ->
+                copy.cardsDiscardedByOpponentThisTurn.put(k, new HashSet<>(v)));
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         copy.nontokenCreatureDeathCountThisTurn.putAll(this.nontokenCreatureDeathCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
@@ -3367,6 +3374,8 @@ public class GameData {
         copy.cloneOperation.copyPowerToughnessFromSource = this.cloneOperation.copyPowerToughnessFromSource;
         copy.cloneOperation.additionalTypesOverride = this.cloneOperation.additionalTypesOverride;
         copy.cloneOperation.additionalActivatedAbilities = this.cloneOperation.additionalActivatedAbilities;
+        copy.cloneOperation.nameOverride = this.cloneOperation.nameOverride;
+        copy.cloneOperation.additionalSupertypesOverride = this.cloneOperation.additionalSupertypesOverride;
 
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);
@@ -3437,6 +3446,7 @@ public class GameData {
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
+        copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
         this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);

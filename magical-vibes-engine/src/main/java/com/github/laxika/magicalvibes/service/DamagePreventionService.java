@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackingCreaturesYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
@@ -57,6 +58,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DamagePreventionReplacementSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import org.springframework.beans.factory.ObjectProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -78,17 +81,20 @@ public class DamagePreventionService {
     private final AmountEvaluationService amountEvaluationService;
     private final DamagePreventionReplacementSupport damagePreventionReplacementSupport;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
+    private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
 
     public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService,
                                    AmountEvaluationService amountEvaluationService,
                                    DamagePreventionReplacementSupport damagePreventionReplacementSupport,
-                                   StaticEffectConditionResolver staticEffectConditionResolver) {
+                                   StaticEffectConditionResolver staticEffectConditionResolver,
+                                   ObjectProvider<PermanentControlSupport> permanentControlSupportProvider) {
         this.gameQueryService = gameQueryService;
         this.lifeSupport = lifeSupport;
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
         this.damagePreventionReplacementSupport = damagePreventionReplacementSupport;
         this.staticEffectConditionResolver = staticEffectConditionResolver;
+        this.permanentControlSupportProvider = permanentControlSupportProvider;
     }
 
     public int applyDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage) {
@@ -249,6 +255,14 @@ public class DamagePreventionService {
             }
             // Prevention only applies if damage is preventable
             if (gameQueryService.isDamagePreventable(gameData)) {
+                CreateTokenEffect tokenTemplate = preventRemoveEffect.tokenTemplate();
+                if (tokenTemplate != null) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                    if (controllerId != null) {
+                        permanentControlSupportProvider.getObject().applyCreateToken(
+                                gameData, controllerId, tokenTemplate.withAmount(damage), permanent.getCard().getSetCode());
+                    }
+                }
                 return 0;
             }
             return damage;

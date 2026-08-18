@@ -103,13 +103,18 @@ public class TriggeredAbilityQueueService {
             if (result.validTargets().isEmpty()) {
                 if (optionalTarget) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-                    gameData.stack.add(new StackEntry(
+                    StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             pending.dyingCard(),
                             pending.controllerId(),
                             pending.dyingCard().getName() + "'s ability",
-                            new ArrayList<>(pending.effects())
-                    ));
+                            new ArrayList<>(pending.effects()),
+                            null,
+                            pending.sourcePermanentSnapshot() == null
+                                    ? null : pending.sourcePermanentSnapshot().getId()
+                    );
+                    entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                    gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                             "'s death trigger triggers without a target."));
                     continue;

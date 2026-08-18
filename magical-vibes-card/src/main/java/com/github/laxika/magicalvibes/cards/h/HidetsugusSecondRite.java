@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "202")
+@CardRegistration(set = "SOK", collectorNumber = "102")
 public class HidetsugusSecondRite extends Card {
 
     public HidetsugusSecondRite() {

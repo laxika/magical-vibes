@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -38,6 +40,14 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         ReorderTopCardsOfLibraryEffect reorder = (ReorderTopCardsOfLibraryEffect) effect;
 
         UUID controllerId = entry.getControllerId();
+        var source = entry.getSourcePermanentId() == null
+                ? entry.getSourcePermanentSnapshot()
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int count = Math.max(0, amountEvaluationService.evaluate(gameData, reorder.count(),
+                AmountContext.forStackEntry(entry, source)));
         UUID deckOwnerId = resolveDeckOwner(entry, reorder.owner(), controllerId);
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -47,8 +57,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         boolean ownLibrary = deckOwnerId.equals(controllerId);
         String libraryOf = ownLibrary ? "their library" : gameData.playerIdToName.get(deckOwnerId) + "'s library";
 
-        int count = Math.min(amountEvaluationService.evaluate(gameData, reorder.count(),
-                AmountContext.forStackEntry(entry, null)), deck.size());
+        count = Math.min(count, deck.size());
         if (count == 0) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ownLibrary
                     ? ": library is empty, nothing to reorder."

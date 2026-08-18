@@ -152,6 +152,7 @@ public class CastingPermissionService {
      * "Each opponent who attacked with a creature this turn can't cast spells").
      */
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
+        if (gameData.playersCantCastSpellsForRestOfGame.contains(playerId)) return true;
         if (gameData.playersSilencedThisTurn.contains(playerId)) return true;
 
         // Grand Abolisher: during its controller's turn their opponents can't cast spells.

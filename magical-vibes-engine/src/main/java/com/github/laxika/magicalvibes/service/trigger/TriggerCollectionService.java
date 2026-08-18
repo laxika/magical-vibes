@@ -891,6 +891,11 @@ public class TriggerCollectionService {
             gameData.cardsDiscardedOrCycledThisTurn
                     .computeIfAbsent(discardingPlayerId, ignored -> ConcurrentHashMap.newKeySet())
                     .add(discardedCard.getId());
+            if (gameData.discardCausedByOpponent) {
+                gameData.cardsDiscardedByOpponentThisTurn
+                        .computeIfAbsent(discardingPlayerId, ignored -> ConcurrentHashMap.newKeySet())
+                        .add(discardedCard.getId());
+            }
         }
 
         if (discardedCard != null && gameData.discardEventPlayerId != null) {
@@ -918,6 +923,10 @@ public class TriggerCollectionService {
                 }
             }
         });
+
+        if (collectTemporaryGlobalDiscardTriggers(gameData, discardingPlayerId)) {
+            anyTriggered[0] = true;
+        }
 
         // "Whenever you discard a card" — scan the discarding player's own battlefield (e.g. Necropotence).
         List<Permanent> ownBattlefield = gameData.playerBattlefields.get(discardingPlayerId);
@@ -1016,6 +1025,35 @@ public class TriggerCollectionService {
     }
 
     // ── Source deals damage to a player (noncombat) ────────────────────
+
+    private boolean collectTemporaryGlobalDiscardTriggers(GameData gameData, UUID discardingPlayerId) {
+        if (!gameData.discardCausedByOpponent) {
+            return false;
+        }
+
+        boolean triggered = false;
+        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (watcher.slot() != EffectSlot.ON_OPPONENT_DISCARDS
+                    || !watcher.controllerId().equals(discardingPlayerId)) {
+                continue;
+            }
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(watcher.effect())));
+            entry.setTargetId(discardingPlayerId);
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            log.info("Game {} - {} temporary global discard trigger fires", gameData.id,
+                    watcher.sourceCard().getName());
+            triggered = true;
+        }
+        return triggered;
+    }
 
     /**
      * Queues {@link EffectSlot#ON_DAMAGE_TO_PLAYER} triggers when a permanent deals noncombat
@@ -1341,7 +1379,8 @@ public class TriggerCollectionService {
         List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
         if (damagedPlayerBattlefield == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount);
+        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, null,
+                sourceControllerId);
         boolean fromOpponent = sourceControllerId != null && !sourceControllerId.equals(damagedPlayerId);
 
         for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {

@@ -290,8 +290,12 @@ public class GraveyardReturnSupport {
                     && (card.getKeywords().contains(Keyword.CHANGELING)
                     || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));
         }
+        UUID cardOwnerId = card.getOwnerId() != null
+                ? card.getOwnerId()
+                : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         return effect.filter() == null
-                || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId);
+                || predicateEvaluationService.matchesCardPredicate(
+                card, effect.filter(), sourceCardId, gameData, cardOwnerId);
     }
 
     private CardSubtype findSourceChosenSubtype(GameData gameData, StackEntry entry, UUID sourceCardId) {
@@ -436,10 +440,13 @@ public class GraveyardReturnSupport {
         
 
         if (effect.thisTurnOnly() || effect.fromBattlefieldThisTurn() || effect.fromAnywhereThisTurn()
-                || effect.discardedOrCycledThisTurn()) {
+                || effect.discardedOrCycledThisTurn() || effect.discardedByOpponentThisTurn()) {
             Set<UUID> trackedIds;
             String sourceLabel;
-            if (effect.discardedOrCycledThisTurn()) {
+            if (effect.discardedByOpponentThisTurn()) {
+                trackedIds = gameData.cardsDiscardedByOpponentThisTurn.getOrDefault(controllerId, Set.of());
+                sourceLabel = "because of an opponent's spell or ability";
+            } else if (effect.discardedOrCycledThisTurn()) {
                 trackedIds = gameData.cardsDiscardedOrCycledThisTurn.getOrDefault(controllerId, Set.of());
                 sourceLabel = "by cycling or discarding";
             } else if (effect.fromAnywhereThisTurn()) {

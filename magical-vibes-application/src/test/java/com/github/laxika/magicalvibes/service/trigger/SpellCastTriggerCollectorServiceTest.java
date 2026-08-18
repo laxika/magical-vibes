@@ -47,6 +47,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
@@ -65,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1400,6 +1404,41 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Kaervek the Merciless's triggered ability triggers — choose a target for 2 damage.")));
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — GainControlOfTargetCreatureByCastSpellManaValueEffect")
+    class ControllerManaValueGainControl {
+
+        @Test
+        @DisplayName("queues a creature target using the triggering spell's full mana value")
+        void queuesExactManaValueCreatureTarget() {
+            Permanent perm = createPermanent("Skyfire Kirin");
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
+            var effect = new GainControlOfTargetCreatureByCastSpellManaValueEffect(filter);
+            Card spellCard = createCard("Test Spell");
+            spellCard.setManaCost("{1}{R}");
+            gd.stack.add(new StackEntry(
+                    StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 2));
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            var queued = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            assertThat(queued.targetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
+            assertThat(((PermanentPredicateTargetFilter) queued.targetFilter()).errorMessage())
+                    .isEqualTo("Target must be a creature with mana value 4");
+            assertThat(queued.effects()).singleElement()
+                    .isEqualTo(GainControlOfTargetEffect.withTargetPredicate(
+                            ControlDuration.END_OF_TURN,
+                            ((GainControlOfTargetEffect) queued.effects().getFirst()).targetPredicate()));
         }
     }
 

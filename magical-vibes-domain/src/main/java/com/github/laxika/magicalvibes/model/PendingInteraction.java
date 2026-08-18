@@ -20,6 +20,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingIntuitionRevealChoice,
+        PendingMurmursFromBeyondChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
@@ -54,6 +55,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.IllicitAuctionBidChoice,
         PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
         PendingInteraction.MagesContestBidChoice,
+        PendingInteraction.PainsRewardBidChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
         PendingInteraction.AttachAurasChoice,
@@ -858,6 +860,22 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** A life bid for the targeted spell in Mages' Contest. */
     record MagesContestBidChoice(UUID playerId, int highBid, int maxBid, String cardName,
                                  UUID targetSpellId, UUID highBidderId)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.NumberPick(0, maxBid);
+        }
+    }
+
+    /** A life bid for Pain's Reward. */
+    record PainsRewardBidChoice(UUID playerId, int highBid, int maxBid, String cardName,
+                                UUID highBidderId, boolean openingBid)
             implements PendingInteraction {
 
         @Override

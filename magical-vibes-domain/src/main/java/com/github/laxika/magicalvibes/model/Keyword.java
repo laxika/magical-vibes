@@ -81,7 +81,8 @@ public enum Keyword {
     PROTOTYPE,
     REBOUND,
     START_YOUR_ENGINES,
-    MAX_SPEED;
+    MAX_SPEED,
+    EPIC;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

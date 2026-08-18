@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -47,6 +49,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -114,6 +117,27 @@ class DamageTriggerCollectorServiceTest {
     private TriggerMatchContext match(Permanent perm, UUID controllerId,
             com.github.laxika.magicalvibes.model.effect.CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Test
+    @DisplayName("queues a source-controller sacrifice trigger for opponent damage")
+    void queuesSourceControllerSacrificeTrigger() {
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        Permanent watcher = createPermanent("Michiko Konda, Truth Seeker");
+        var effect = new SacrificePermanentsEffect(1,
+                new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate(),
+                SacrificeRecipient.TARGET_PLAYER);
+        var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3, null, player2Id);
+
+        boolean result = registry.dispatch(
+                match(watcher, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
     }
 
     @Test
@@ -807,6 +831,25 @@ class DamageTriggerCollectorServiceTest {
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("does not queue a conditional self-damage trigger when its intervening-if is false")
+    void skipsConditionalSelfDamageTriggerWhenInterveningIfIsFalse() {
+        Permanent source = createPermanent("Kiyomaro, First to Stand");
+        var condition = new SourceUntapped();
+        var effect = new ConditionalEffect(condition, new DrawCardEffect());
+        var ctx = new TriggerContext.SourceDealsDamage(source.getCard(), player1Id, 2,
+                Map.of(player2Id, 2));
+
+        when(conditionEvaluationService.isInterveningIfMet(eq(gd), eq(effect), eq(source), eq(player1Id)))
+                .thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(source, player1Id, effect), EffectSlot.ON_SELF_DEALS_DAMAGE, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== ON_DEALT_DAMAGE — default handler =====

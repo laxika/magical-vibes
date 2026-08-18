@@ -93,6 +93,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 this::projectExileNonlandCardFromTargetHandOrGraveyardChoice);
         register(PendingInteraction.MagesContestBidChoice.class, this::projectMagesContestBidChoice);
+        register(PendingInteraction.PainsRewardBidChoice.class, this::projectPainsRewardBidChoice);
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
         register(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class,
                 this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
@@ -499,6 +500,24 @@ public class InteractionPromptProjectionRegistry {
         String highBidderName =
                 gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
         String prompt = "Bid life to counter " + targetName + " (current high bid: "
+                + interaction.highBid() + " by " + highBidderName + "). Enter more than "
+                + interaction.highBid() + " to bid, or " + interaction.highBid()
+                + " or less to pass.";
+        return InteractionPromptMessage.numberPick(
+                prompt, interaction.maxBid(), interaction.cardName());
+    }
+
+    private InteractionPromptMessage projectPainsRewardBidChoice(
+            GameData gameData, PendingInteraction.PainsRewardBidChoice interaction) {
+        if (interaction.openingBid()) {
+            String prompt = "Choose the opening life bid for " + interaction.cardName()
+                    + " (0 through " + interaction.maxBid() + ").";
+            return InteractionPromptMessage.numberPick(
+                    prompt, interaction.maxBid(), interaction.cardName());
+        }
+        String highBidderName =
+                gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
+        String prompt = "Bid life for " + interaction.cardName() + " (current high bid: "
                 + interaction.highBid() + " by " + highBidderName + "). Enter more than "
                 + interaction.highBid() + " to bid, or " + interaction.highBid()
                 + " or less to pass.";

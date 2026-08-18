@@ -23,11 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * ON_ENTER_BATTLEFIELD: the controller searches their library for any number of cards matching the
- * effect's filter, exiling each one tracked "with" the source permanent, then shuffles. "Any number"
- * is a repeated single-card pick the controller may stop at any time; the actual exile and shuffle
- * are driven by {@link com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService} via
- * the {@link LibrarySearchDestination#EXILE_WITH_SOURCE} destination. Used by Endless Horizons.
+ * ON_ENTER_BATTLEFIELD: the controller searches their library for up to a configured number of
+ * cards matching the effect's filter, exiling each one tracked "with" the source permanent, then
+ * shuffles. The actual exile and shuffle are driven by
+ * {@link com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService} via the
+ * {@link LibrarySearchDestination#EXILE_WITH_SOURCE} destination.
  */
 @Slf4j
 @Component
@@ -46,7 +46,9 @@ public class SearchLibraryForCardsToExileWithSourceEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        CardPredicate filter = ((SearchLibraryForCardsToExileWithSourceEffect) effect).filter();
+        SearchLibraryForCardsToExileWithSourceEffect searchEffect =
+                (SearchLibraryForCardsToExileWithSourceEffect) effect;
+        CardPredicate filter = searchEffect.filter();
         UUID controllerId = entry.getControllerId();
 
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry, controllerId);
@@ -75,10 +77,17 @@ public class SearchLibraryForCardsToExileWithSourceEffectHandler implements Norm
             return;
         }
 
-        String prompt = "Search your library for a " + desc + " to exile (any number).";
+        int maxCount = Math.max(0, Math.min(searchEffect.maxCount(), matchingCards.size()));
+        String prompt = searchEffect.maxCount() == Integer.MAX_VALUE
+                ? "Search your library for a " + desc + " to exile (any number)."
+                : "Search your library for up to " + maxCount + " " + desc + " to exile.";
+        if (maxCount == 0) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            return;
+        }
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
                 LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
-                        .remainingCount(matchingCards.size())
+                        .remainingCount(maxCount)
                         .canFailToFind(true)
                         .destination(LibrarySearchDestination.EXILE_WITH_SOURCE)
                         .filterPredicate(filter)

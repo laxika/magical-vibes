@@ -43,6 +43,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -849,6 +851,37 @@ public class DamageTriggerCollectorService {
 
     // ── ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT (Retaliator Griffin) ────
 
+    @CollectsTrigger(value = SacrificePermanentsEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    private boolean handleControllerDealtDamageByOpponentSacrifice(TriggerMatchContext match,
+            SacrificePermanentsEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        UUID sourceControllerId = dc.sourceControllerId();
+        if (effect.recipient() != SacrificeRecipient.TARGET_PLAYER
+                || sourceControllerId == null
+                || !match.gameData().playerIds.contains(sourceControllerId)) {
+            return false;
+        }
+
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                sourceControllerId,
+                watcher.getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers for source controller {} to sacrifice a permanent",
+                match.gameData().id, watcher.getCard().getName(),
+                match.gameData().playerIdToName.get(sourceControllerId));
+        return true;
+    }
+
     @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
     private boolean handleControllerDealtDamageByOpponentConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
@@ -998,6 +1031,11 @@ public class DamageTriggerCollectorService {
     private boolean handleSelfDealsDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
         if (sd.totalDamage() <= 0) return false;
+        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                && !conditionEvaluationService.isInterveningIfMet(match.gameData(), conditional,
+                match.permanent(), match.controllerId())) {
+            return false;
+        }
 
         GameData gameData = match.gameData();
         Card sourceCard = sd.sourceCard();

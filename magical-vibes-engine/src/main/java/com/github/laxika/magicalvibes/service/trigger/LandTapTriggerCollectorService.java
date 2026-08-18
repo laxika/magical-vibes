@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffect;
@@ -48,7 +49,9 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSu
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -332,6 +335,45 @@ public class LandTapTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                         + " adds 1 additional " + producedColor.name().toLowerCase() + " mana."));
+        return true;
+    }
+
+    @CollectsTrigger(value = AddManaForEachOtherLandWithSameNameEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddManaForEachOtherLandWithSameName(TriggerMatchContext match,
+            AddManaForEachOtherLandWithSameNameEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
+
+        var gameData = match.gameData();
+        Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
+        if (tappedLand == null || !gameQueryService.isLand(gameData, tappedLand)) return false;
+
+        String tappedLandName = gameQueryService.getEffectiveName(gameData, tappedLand);
+        long matchingLandCount = gameData.playerBattlefields
+                .getOrDefault(lt.tappingPlayerId(), List.of()).stream()
+                .filter(other -> !other.getId().equals(tappedLand.getId()))
+                .filter(other -> gameQueryService.isLand(gameData, other))
+                .filter(other -> tappedLandName.equals(gameQueryService.getEffectiveName(gameData, other)))
+                .count();
+        if (matchingLandCount == 0) return false;
+
+        Set<ManaColor> producedColors = tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                .filter(AwardManaEffect.class::isInstance)
+                .map(AwardManaEffect.class::cast)
+                .map(AwardManaEffect::color)
+                .collect(Collectors.toSet());
+        if (producedColors.isEmpty()) return false;
+
+        ManaPool pool = gameData.playerManaPools.get(lt.tappingPlayerId());
+        for (ManaColor color : producedColors) {
+            pool.add(color, Math.toIntExact(matchingLandCount));
+        }
+
+        gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + gameData.playerIdToName.get(lt.tappingPlayerId())
+                        + " adds " + matchingLandCount + " additional mana of each type produced by "
+                        + tappedLand.getCard().getName() + "."));
         return true;
     }
 

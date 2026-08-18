@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacr
 import com.github.laxika.magicalvibes.service.ability.cost.SequencePermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentUntapCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentExileAction;
@@ -89,6 +91,7 @@ import com.github.laxika.magicalvibes.model.effect.HandCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
+import com.github.laxika.magicalvibes.model.effect.RevealHandCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantOrSorcerySpellCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -124,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -169,6 +173,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AbilityActivationService {
+
+    private final CardRevealService cardRevealService;
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
@@ -2796,6 +2802,10 @@ public class AbilityActivationService {
             payRandomDiscardCost(gameData, player, randomDiscardCount);
         }
 
+        if (abilityEffects.stream().anyMatch(e -> e instanceof RevealHandCost)) {
+            cardRevealService.revealHandToAllPlayers(gameData, playerId);
+        }
+
         // Pay reveal-two-color-sharing-cards cost: reveal a qualifying pair (cards stay in hand)
         if (abilityEffects.stream().anyMatch(e -> e instanceof RevealTwoCardsSharingColorCost)) {
             List<Card> pair = colorSharingPair(gameData.playerHands.get(playerId));
@@ -2960,6 +2970,7 @@ public class AbilityActivationService {
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
         if (effect instanceof ExilePermanentCost c) return new MultiplePermanentExileCostHandler(c, predicateEvaluationService, exileAction, sourcePermanentId);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
+        if (effect instanceof SacrificeAllMatchingPermanentsCost c) return new AllMatchingPermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
         if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -4085,7 +4096,8 @@ public class AbilityActivationService {
             if (graveyard != null) {
                 for (Card card : graveyard) {
                     if (!card.isToken()
-                            && predicateEvaluationService.matchesCardPredicate(card, ability.getRequiredGraveyardCardPredicate(), null)) {
+                            && predicateEvaluationService.matchesCardPredicate(
+                            card, ability.getRequiredGraveyardCardPredicate(), null, gameData, playerId)) {
                         count++;
                     }
                 }

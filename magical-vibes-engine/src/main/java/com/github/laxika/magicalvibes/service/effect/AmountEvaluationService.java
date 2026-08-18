@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
@@ -266,6 +267,8 @@ public class AmountEvaluationService {
                     gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).min().orElse(0);
             case HighestOpponentLifeTotal ignored ->
                     highestOpponentLifeTotal(gameData, ctx);
+            case GreatestOpponentHandSize ignored ->
+                    greatestOpponentHandSize(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.playerLifeTotals.getOrDefault(ctx.targetPermanentId(), 0);
@@ -768,7 +771,8 @@ public class AmountEvaluationService {
                 if (card.isToken()) continue;
                 if (count.excludeSourceCard() && ctx.sourceCard() != null
                         && ctx.sourceCard().getId().equals(card.getId())) continue;
-                if (predicateEvaluationService.matchesCardPredicate(card, count.filter(), null)) {
+                if (predicateEvaluationService.matchesCardPredicate(
+                        card, count.filter(), null, gameData, playerId)) {
                     matches++;
                 }
             }
@@ -1185,6 +1189,16 @@ public class AmountEvaluationService {
             highest = Math.max(highest, gameData.playerLifeTotals.getOrDefault(playerId, 0));
         }
         return highest;
+    }
+
+    private int greatestOpponentHandSize(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int greatest = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            greatest = Math.max(greatest, gameData.playerHands.getOrDefault(playerId, List.of()).size());
+        }
+        return greatest;
     }
 
     private int countOpponentPoisonCounters(GameData gameData, AmountContext ctx) {

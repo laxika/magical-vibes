@@ -69,11 +69,12 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
             }
             ownTarget = resolveSourcePermanent(gameData, entry);
         } else {
-            if (targetIds == null || targetIds.size() < 2) {
+            List<UUID> exchangeTargetIds = resolveExchangeTargetIds(entry, exchange, targetIds);
+            if (exchangeTargetIds.size() < 2) {
                 return;
             }
-            opponentTargetId = targetIds.get(1);
-            ownTarget = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
+            opponentTargetId = exchangeTargetIds.get(1);
+            ownTarget = gameQueryService.findPermanentById(gameData, exchangeTargetIds.getFirst());
         }
         Permanent opponentTarget = gameQueryService.findPermanentById(gameData, opponentTargetId);
         if (ownTarget == null) {
@@ -138,6 +139,21 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());
+    }
+
+    private List<UUID> resolveExchangeTargetIds(StackEntry entry,
+                                                 ExchangeControlOfTargetPermanentsEffect exchange,
+                                                 List<UUID> targetIds) {
+        int boundGroup = entry.getCard().getEffectTargetIndex(exchange);
+        if (boundGroup > 0) {
+            List<UUID> firstTarget = entry.targetsForGroup(boundGroup - 1);
+            List<UUID> secondTarget = entry.targetsForGroup(boundGroup);
+            if (!firstTarget.isEmpty() && !secondTarget.isEmpty()) {
+                return List.of(firstTarget.getFirst(), secondTarget.getFirst());
+            }
+            return List.of();
+        }
+        return targetIds == null ? List.of() : targetIds;
     }
 
     /**

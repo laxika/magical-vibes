@@ -1403,11 +1403,16 @@ public class SpellCastingService {
                 && hand.get(cardIndex).getCastingOption(AlternateHandCast.class)
                 .map(AlternateHandCast::isPrototype)
                 .orElse(false);
-        Card card = usingBestowCost
+        Card preparedCard = usingBestowCost
                 ? bestowRuntimeCopyForHandCast(hand, cardIndex)
                 : usingPrototypeCost
                 ? prototypeRuntimeCopyForHandCast(hand, cardIndex)
                 : modalRuntimeCopyForHandCast(hand, cardIndex);
+        if (!spliceHandCardIndices.isEmpty()) {
+            preparedCard = preparedCard.createRuntimeCopy();
+            hand.set(cardIndex, preparedCard);
+        }
+        final Card card = preparedCard;
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         int extraTargetCount = Math.max(0, targetIds.size() - 1);
@@ -5878,6 +5883,7 @@ public class SpellCastingService {
             List<CardEffect> splicedEffects = new ArrayList<>(spliceCard.getEffects(EffectSlot.SPELL));
             splicedEffects.addAll(splice.splicedEffects());
             additionalSpellCostService.extractAndRemove(splicedEffects);
+            hostSpell.appendSpellTargetingFrom(spliceCard);
             filteredSpellEffects.addAll(splicedEffects);
             costs.add(splice);
             splicedNames.add(spliceCard.getName());

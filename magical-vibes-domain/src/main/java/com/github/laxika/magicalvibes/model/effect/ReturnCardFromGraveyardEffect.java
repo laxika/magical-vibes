@@ -73,6 +73,9 @@ import java.util.Set;
  *                             or discarded this turn (e.g. Shadow of the Grave); uses the
  *                             {@code cardsDiscardedOrCycledThisTurn} tracking in GameData; only meaningful
  *                             when {@link #returnAll} is {@code true}
+ * @param discardedByOpponentThisTurn {@code true} to restrict returned cards to those the controller discarded
+ *                             because of an opponent's spell or ability this turn (e.g. Pure Intentions);
+ *                             only meaningful when {@link #returnAll} is {@code true}
  * @param targetPutIntoGraveyardFromBattlefieldThisTurn {@code true} to restrict the <b>targeted</b>
  *                             graveyard card to one that was put into that graveyard from the battlefield
  *                             this turn (e.g. Grim Return, Salvager of Ruin); reads the
@@ -215,6 +218,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean fromBattlefieldThisTurn,
         boolean fromAnywhereThisTurn,
         boolean discardedOrCycledThisTurn,
+        boolean discardedByOpponentThisTurn,
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,

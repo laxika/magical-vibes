@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
+import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
@@ -65,6 +66,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
+import com.github.laxika.magicalvibes.service.epic.EpicService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -73,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
@@ -145,6 +148,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawStepOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -231,6 +236,7 @@ public class StepTriggerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final ParadigmService paradigmService;
+    private final EpicService epicService;
     private final ValidTargetService validTargetService;
     private final CreatureControlService creatureControlService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
@@ -252,6 +258,7 @@ public class StepTriggerService {
                               TriggerCollectionService triggerCollectionService,
                               TriggerTargetCollector triggerTargetCollector,
                               @Lazy ParadigmService paradigmService,
+                              EpicService epicService,
                               ValidTargetService validTargetService,
                               CreatureControlService creatureControlService,
                               GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
@@ -272,6 +279,7 @@ public class StepTriggerService {
         this.triggerCollectionService = triggerCollectionService;
         this.triggerTargetCollector = triggerTargetCollector;
         this.paradigmService = paradigmService;
+        this.epicService = epicService;
         this.validTargetService = validTargetService;
         this.creatureControlService = creatureControlService;
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
@@ -351,6 +359,7 @@ public class StepTriggerService {
 
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.UPKEEP);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_UPKEEP);
+        epicService.fireUpkeepTriggers(gameData);
 
         // Cycle of Life: "At the beginning of your next upkeep, put a +1/+1 counter on that
         // creature." A delayed triggered ability — it uses the stack but doesn't target, so the
@@ -846,6 +855,24 @@ public class StepTriggerService {
 
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: unique player with most creatures)",
+                                gameData.id, perm.getCard().getName());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof APlayerHasMoreCardsInHandThanEachOtherPlayer) {
+                    if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: unique player with most cards in hand)",
                                 gameData.id, perm.getCard().getName());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
@@ -3355,6 +3382,26 @@ public class StepTriggerService {
                 gameData.stack.add(entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger — choose an opponent."));
+            }
+        }
+
+        if (gameData.hasDelayedAction(DiscardCardsAtNextEndStep.class)) {
+            List<DiscardCardsAtNextEndStep> pendingDiscards =
+                    gameData.drainDelayedActions(DiscardCardsAtNextEndStep.class);
+            for (DiscardCardsAtNextEndStep pending : pendingDiscards) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — discard " + pending.count() + " cards",
+                        new ArrayList<>(List.of(new DiscardEffect(pending.count(), DiscardRecipient.CONTROLLER)))
+                );
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards cards."));
+                log.info("Game {} - {} delayed discard trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
             }
         }
 

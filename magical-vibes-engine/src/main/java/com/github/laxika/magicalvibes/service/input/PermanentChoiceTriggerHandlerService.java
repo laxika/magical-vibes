@@ -186,7 +186,9 @@ public class PermanentChoiceTriggerHandlerService {
                 dtt.dyingCard(),
                 dtt.controllerId(),
                 dtt.dyingCard().getName() + "'s ability",
-                new ArrayList<>(dtt.effects())
+                new ArrayList<>(dtt.effects()),
+                null,
+                dtt.sourcePermanentSnapshot() == null ? null : dtt.sourcePermanentSnapshot().getId()
         );
         if (!declined) {
             entry.setTargetId(permanentId);

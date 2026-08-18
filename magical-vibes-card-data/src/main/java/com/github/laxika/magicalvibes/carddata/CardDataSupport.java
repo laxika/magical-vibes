@@ -113,6 +113,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Rebound", Keyword.REBOUND);
         KEYWORD_MAP.put("Start your engines!", Keyword.START_YOUR_ENGINES);
         KEYWORD_MAP.put("Max speed", Keyword.MAX_SPEED);
+        KEYWORD_MAP.put("Epic", Keyword.EPIC);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

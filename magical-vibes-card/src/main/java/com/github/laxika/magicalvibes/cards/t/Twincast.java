@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "120")
 @CardRegistration(set = "M10", collectorNumber = "78")
+@CardRegistration(set = "SOK", collectorNumber = "60")
 public class Twincast extends Card {
 
     public Twincast() {

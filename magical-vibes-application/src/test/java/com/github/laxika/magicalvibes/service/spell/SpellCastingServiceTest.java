@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -275,6 +276,32 @@ class SpellCastingServiceTest {
 
         assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Adds target groups from a spliced spell to the host spell")
+    void addsSplicedSpellTargetGroups() {
+        Card host = createInstant("Arcane Host", "{1}");
+        host.setSubtypes(List.of(CardSubtype.ARCANE));
+        host.target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DrawCardEffect());
+
+        Card spliced = createInstant("Spliced Spell", "{1}");
+        spliced.target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        spliced.addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}"));
+
+        UUID firstTarget = UUID.randomUUID();
+        UUID secondTarget = UUID.randomUUID();
+        List<UUID> targetIds = List.of(firstTarget, secondTarget);
+        setHand(player1Id, List.of(host, spliced));
+        addMana(player1Id, ManaColor.COLORLESS, 3);
+        when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+        svc.playCardWithSplice(gd, player1, 0, null, null, null, targetIds, List.of(1));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactlyElementsOf(targetIds);
+        assertThat(gd.stack.getFirst().getCard().getSpellTargets()).hasSize(2);
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(spliced);
     }
 
     // =========================================================================

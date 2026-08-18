@@ -145,6 +145,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
@@ -787,6 +788,14 @@ public class PredicateEvaluationService {
                     }
                 }
                 yield permanent.getCard().getManaValue() <= matchingCount;
+            }
+            case PermanentManaValueAtMostSourceControllerHandSizePredicate ignored -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                List<Card> sourceControllerHand = gameData.playerHands.get(sourceControllerId);
+                int handSize = sourceControllerHand == null ? 0 : sourceControllerHand.size();
+                yield permanent.getCard().getManaValue() <= handSize;
             }
             case PermanentManaValueAtMostXPredicate ignored -> {
                 // Before X is known (target enumeration / static filters) treat every permanent as

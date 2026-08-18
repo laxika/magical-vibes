@@ -158,6 +158,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
     }
 
+    /** Return the chosen permanents and record the number returned on the resolving stack entry. */
+    record ReturnAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Forced sacrifice pick ("target player sacrifices N" / "each player sacrifices N").
      * {@code sacrificingPlayerId} is the current chooser. For the each-player flow (CR 101.4:

@@ -30,6 +30,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | modal, choose one, fight, bite | CARD_PATTERNS_LANDS_SPELLS.md |
 | steal, threaten, extra turn | CARD_PATTERNS_LANDS_SPELLS.md |
+| auction, bid life | CARD_PATTERNS_LANDS_SPELLS.md |
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |

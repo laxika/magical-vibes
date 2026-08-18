@@ -91,6 +91,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsTokenPredicate,
         PermanentManaValueAtMostOwnCountersPredicate,
         PermanentManaValueAtMostControlledCountPredicate,
+        PermanentManaValueAtMostSourceControllerHandSizePredicate,
         PermanentManaValueEqualsSourceCountersPredicate,
         PermanentManaValueAtMostXPredicate,
         PermanentManaValueEqualsXPredicate,

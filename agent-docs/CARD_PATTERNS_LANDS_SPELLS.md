@@ -132,6 +132,7 @@ on what the mana may pay for.
 | Put on top of library | `b/BanishmentDecree.java` | PutTargetOnTopOfLibraryEffect + PermanentAnyOfPredicate filter (artifact/creature/enchantment) |
 | Metalcraft sacrifice instant | `d/DispenseJustice.java` | SacrificeAttackingCreaturesEffect(1, 2) + PlayerPredicateTargetFilter(ANY) — metalcraft checked at resolution |
 | Destroy + cantrip | `s/Smash.java` | DestroyTargetPermanentEffect + DrawCardEffect |
+| Conditional artifact/enchantment destroy + cantrip | `r/RendingVines.java` | Artifact/enchantment target filter + `ConditionalEffect(new TargetPermanentMatches(new PermanentManaValueAtMostSourceControllerHandSizePredicate()), new DestroyTargetPermanentEffect())` + DrawCardEffect; the hand-size restriction is checked only on resolution |
 | Destroy + life gain by mana value | `d/DivineOffering.java` | DestroyTargetPermanentThenEffect(MANA_VALUE, GainLifeEffect(EventValue()), CONTROLLER) + artifact filter |
 | Destroy (no regen) + target's controller gains life by mana value | `c/Crumble.java` | DestroyTargetPermanentThenEffect(MANA_VALUE, GainLifeEffect(EventValue()), TARGET_CONTROLLER, true) + artifact filter — the trailing `true` sets cannotBeRegenerated |
 | Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentThenEffect(LoseLifeEffect(1), TARGET_CONTROLLER) + artifact filter |
@@ -145,6 +146,7 @@ on what the mana may pay for.
 | Opponent land edict | `y/YawningFissure.java` | SacrificePermanentsEffect(1, PermanentIsLandPredicate, EACH_OPPONENT) — each opponent sacrifices a land, controller unaffected |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
 | Counter by life bid | `m/MagesContest.java` | MagesContestEffect (spell target auto-derived); the parked resolution interaction runs a life auction between the caster and the targeted spell's controller |
+| Life-bid draw spell | `p/PainsReward.java` | PainsRewardEffect; the controller chooses the opening bid, then all players bid in turn order; the high bidder loses that much life and draws four cards |
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter activated ability + lock its source for the turn | `i/Interdict.java` | `StackEntryPredicateTargetFilter(StackEntryAllOfPredicate(StackEntryTypeInPredicate(ACTIVATED_ABILITY), StackEntryCardTypeInPredicate({ARTIFACT, CREATURE, ENCHANTMENT, LAND})))` + `CounterAbilityAndLockSourceEffect(UNTIL_END_OF_TURN)` + `DrawCardEffect(1)` |
 | Counter activated ability from an artifact source | `b/BrownOuphe.java` | Tap+mana activated ability with `StackEntryPredicateTargetFilter(StackEntryAllOfPredicate(StackEntryTypeInPredicate(ACTIVATED_ABILITY), StackEntryCardTypeInPredicate(ARTIFACT)))` + CounterSpellEffect |

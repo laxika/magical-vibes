@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,6 +77,8 @@ public class CloneService {
         gameData.cloneOperation.copyPowerToughnessFromSource = copyEffect.copyPowerToughnessFromSource();
         gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
         gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
+        gameData.cloneOperation.nameOverride = copyEffect.nameOverride();
+        gameData.cloneOperation.additionalSupertypesOverride = copyEffect.additionalSupertypesOverride();
         gameData.cloneOperation.embalmColorOverride = copyEffect.embalmColorOverride();
         gameData.cloneOperation.embalmAddedSubtype = copyEffect.embalmAddedSubtype();
         gameData.cloneOperation.embalmRemoveManaCost = copyEffect.embalmRemoveManaCost();
@@ -103,6 +107,8 @@ public class CloneService {
         boolean copyPowerToughnessFromSource = gameData.cloneOperation.copyPowerToughnessFromSource;
         Set<CardType> additionalTypesOverride = gameData.cloneOperation.additionalTypesOverride;
         List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
+        String nameOverride = gameData.cloneOperation.nameOverride;
+        Set<CardSupertype> additionalSupertypesOverride = gameData.cloneOperation.additionalSupertypesOverride;
         CardColor embalmColorOverride = gameData.cloneOperation.embalmColorOverride;
         CardSubtype embalmAddedSubtype = gameData.cloneOperation.embalmAddedSubtype;
         boolean embalmRemoveManaCost = gameData.cloneOperation.embalmRemoveManaCost;
@@ -119,6 +125,8 @@ public class CloneService {
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
+        gameData.cloneOperation.nameOverride = null;
+        gameData.cloneOperation.additionalSupertypesOverride = Set.of();
         gameData.cloneOperation.embalmColorOverride = null;
         gameData.cloneOperation.embalmAddedSubtype = null;
         gameData.cloneOperation.embalmRemoveManaCost = false;
@@ -140,6 +148,10 @@ public class CloneService {
                 for (ActivatedAbility extraAbility : additionalActivatedAbilities) {
                     perm.getCard().addActivatedAbility(extraAbility);
                 }
+                if (nameOverride != null) {
+                    perm.getCard().setName(nameOverride);
+                }
+                applyAdditionalSupertypes(perm.getCard(), additionalSupertypesOverride);
                 // "except it's an [subtype] in addition to its other types and it has ..." (Phantasmal Image)
                 applyAdditionalSubtypes(perm.getCard(), additionalSubtypesOverride);
                 additionalSlotEffects.forEach((slot, effects) ->
@@ -218,6 +230,14 @@ public class CloneService {
             }
         }
         copy.setSubtypes(subtypes);
+    }
+
+    private void applyAdditionalSupertypes(Card copy, Set<CardSupertype> additionalSupertypes) {
+        if (additionalSupertypes == null || additionalSupertypes.isEmpty()) return;
+        Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+        supertypes.addAll(copy.getSupertypes());
+        supertypes.addAll(additionalSupertypes);
+        copy.setSupertypes(supertypes);
     }
 
     private void applyEmbalmExceptionToCopy(Card copy, CardColor embalmColorOverride,

@@ -2,10 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -37,6 +41,14 @@ public class CopySupport {
     }
 
     public Card createCopyCard(Card original) {
+        return createCopyCard(original, false);
+    }
+
+    public Card createCopyCardWithoutEpic(Card original) {
+        return createCopyCard(original, true);
+    }
+
+    private Card createCopyCard(Card original, boolean withoutEpic) {
         Card copy = new Card();
 
         copy.setName(original.getName());
@@ -49,7 +61,13 @@ public class CopySupport {
         copy.setCardText(original.getCardText());
         copy.setPower(original.getPower());
         copy.setToughness(original.getToughness());
-        copy.setKeywords(original.getKeywords());
+        Set<Keyword> copiedKeywords = original.getKeywords().isEmpty()
+                ? EnumSet.noneOf(Keyword.class)
+                : EnumSet.copyOf(original.getKeywords());
+        if (withoutEpic) {
+            copiedKeywords.remove(Keyword.EPIC);
+        }
+        copy.setKeywords(copiedKeywords);
         copy.setLoyalty(original.getLoyalty());
         copy.setXColorRestrictions(original.getXColorRestrictions());
         if (original.getXValueCap() != null) {
@@ -58,6 +76,9 @@ public class CopySupport {
 
         for (EffectSlot slot : EffectSlot.values()) {
             for (var reg : original.getEffectRegistrations(slot)) {
+                if (withoutEpic && reg.effect() instanceof EpicEffect) {
+                    continue;
+                }
                 copy.addEffect(slot, reg.effect(), reg.triggerMode());
             }
         }

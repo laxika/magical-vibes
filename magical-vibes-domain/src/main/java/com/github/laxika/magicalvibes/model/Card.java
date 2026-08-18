@@ -563,6 +563,31 @@ public class Card {
     }
 
     /**
+     * Appends another spell's target declarations and effect bindings to this card.
+     * Splice adds the other spell's effects to the host spell, so its target groups must be added
+     * to the host's cast-time target layout as well.
+     */
+    public void appendSpellTargetingFrom(Card source) {
+        assertMutable();
+        int targetIndexOffset = spellTargets.size();
+        for (SpellTarget sourceTarget : source.spellTargets) {
+            SpellTarget target = new SpellTarget(
+                    this,
+                    sourceTarget.getFilter(),
+                    sourceTarget.getMinTargets(),
+                    sourceTarget.getMaxTargets(),
+                    sourceTarget.getKickedMinTargets(),
+                    sourceTarget.getKickedMaxTargets(),
+                    targetIndexOffset + sourceTarget.getIndex(),
+                    sourceTarget.isXScaled(),
+                    sourceTarget.getDynamicMaxTargets());
+            spellTargets.add(target);
+        }
+        source.effectTargetIndexMap.forEach((effect, targetIndex) ->
+                registerEffectTargetIndex(effect, targetIndexOffset + targetIndex));
+    }
+
+    /**
      * Clears runtime target-first declarations. Used by modal spells (ChooseOneEffect) whose chosen
      * mode declares its own {@code target()} slots at cast time, so re-casting the same card instance
      * does not accumulate stale target declarations.

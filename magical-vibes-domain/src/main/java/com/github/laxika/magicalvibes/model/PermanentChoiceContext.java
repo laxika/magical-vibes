@@ -86,6 +86,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
 
+    /** Murmurs from Beyond: the controller chooses which opponent makes the revealed-card choice. */
+    record MurmursFromBeyondOpponentChoice(UUID controllerId, List<Card> revealedCards)
+            implements PermanentChoiceContext {
+        public MurmursFromBeyondOpponentChoice {
+            revealedCards = List.copyOf(revealedCards);
+        }
+    }
+
     /**
      * Echo Chamber: {@code choosingPlayerId} picks one creature they control; a token copy of it is
      * then created under {@code copyControllerId}'s control from {@code sourceCard}.

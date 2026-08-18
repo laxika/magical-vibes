@@ -473,6 +473,7 @@ public class TurnProgressionService {
         gameData.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn.clear();
         gameData.cardsDiscardedOrCycledThisTurn.clear();
         gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.clear();
+        gameData.cardsDiscardedByOpponentThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();

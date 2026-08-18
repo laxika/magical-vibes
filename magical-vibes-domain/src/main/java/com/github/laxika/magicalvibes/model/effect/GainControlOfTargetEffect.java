@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Gains control of target permanent for the given {@link ControlDuration}.
@@ -24,26 +25,39 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *                           the source can still refer to "that creature" after the control effect
  *                           is gone (Merieke Ri Berit's "destroy that creature" on leave/untap).
  *                           Only meaningful for the {@code WHILE_SOURCE_*} durations.
+ * @param targetPredicate optional additional restriction on the target permanent
  */
 public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
-                                        boolean tapWhenControlLost, boolean linkStolenPermanentToSource)
+                                        boolean tapWhenControlLost, boolean linkStolenPermanentToSource,
+                                        PermanentPredicate targetPredicate)
         implements ControlStealingEffect {
 
     public GainControlOfTargetEffect(ControlDuration duration) {
-        this(duration, null, false, false);
+        this(duration, null, false, false, null);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype) {
-        this(duration, grantedSubtype, false, false);
+        this(duration, grantedSubtype, false, false, null);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, boolean tapWhenControlLost) {
-        this(duration, null, tapWhenControlLost, false);
+        this(duration, null, tapWhenControlLost, false, null);
+    }
+
+    public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
+                                     boolean tapWhenControlLost, boolean linkStolenPermanentToSource) {
+        this(duration, grantedSubtype, tapWhenControlLost, linkStolenPermanentToSource, null);
     }
 
     /** Control for the given duration, recording the stolen permanent on the source (Merieke Ri Berit). */
     public static GainControlOfTargetEffect linkingToSource(ControlDuration duration) {
         return new GainControlOfTargetEffect(duration, null, false, true);
+    }
+
+    /** Control for the given duration, with an additional target restriction. */
+    public static GainControlOfTargetEffect withTargetPredicate(ControlDuration duration,
+                                                                PermanentPredicate targetPredicate) {
+        return new GainControlOfTargetEffect(duration, null, false, false, targetPredicate);
     }
 
     @Override
@@ -53,6 +67,6 @@ public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype gr
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent());
+        return TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
     }
 }

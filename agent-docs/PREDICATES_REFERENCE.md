@@ -130,6 +130,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentPowerGreaterThanActivePlayerHandSizePredicate` | `()` | permanents with effective power greater than the active player's current hand size | `gameData` |
 | `PermanentPowerAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | creatures with power <= number of permanents of the subtype source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentManaValueAtMostControlledCountPredicate` | `(PermanentPredicate countFilter)` | permanents with mana value <= the number of matching permanents source's controller controls | `gameData` + `sourceControllerId` |
+| `PermanentManaValueAtMostSourceControllerHandSizePredicate` | `()` | permanents with mana value <= the number of cards in the source controller's hand | `gameData` + `sourceControllerId` |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |
 | `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Displacement Wave | `xValue` |
 | `PermanentManaValueAtMostXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null) | `xValue` |

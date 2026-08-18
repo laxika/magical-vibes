@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * <p>A {@code count} of one needs no ordering decision, so it resolves as a look-only peek.
  */
 public record ReorderTopCardsOfLibraryEffect(DynamicAmount count, LibraryOwner owner) implements CardEffect {
-
     /** Convenience constructor for a fixed number of cards in a specified library. */
     public ReorderTopCardsOfLibraryEffect(int count, LibraryOwner owner) {
         this(new Fixed(count), owner);
@@ -22,7 +21,7 @@ public record ReorderTopCardsOfLibraryEffect(DynamicAmount count, LibraryOwner o
         this(count, LibraryOwner.CONTROLLER);
     }
 
-    /** Convenience constructor for the controller's own library. */
+    /** Convenience constructor for a fixed number of cards in the controller's own library. */
     public ReorderTopCardsOfLibraryEffect(int count) {
         this(new Fixed(count), LibraryOwner.CONTROLLER);
     }
