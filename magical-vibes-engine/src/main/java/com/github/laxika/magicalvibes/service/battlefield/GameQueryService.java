@@ -143,6 +143,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNo
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
@@ -2833,6 +2834,13 @@ public class GameQueryService {
                         // computeStaticBonus for this same target (which would recurse forever).
                         && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
                     accumulator.addKeywords(grant.keywords());
+                } else if (effect instanceof GrantTriggeredAbilityEffect grant
+                        && (grant.scope() == GrantScope.OWN_CREATURES
+                                || grant.scope() == GrantScope.ALL_OWN_CREATURES)
+                        && isCreatureInStaticPass(board, target)
+                        && (grant.filter() == null
+                                || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
+                    accumulator.addGrantedEffect(grant);
                 }
             }
             if (beforeEmblem != null) {

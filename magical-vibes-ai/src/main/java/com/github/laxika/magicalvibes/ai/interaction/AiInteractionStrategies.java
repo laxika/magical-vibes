@@ -43,6 +43,7 @@ public final class AiInteractionStrategies {
         register(new EachPlayerMayPutCardFromHandChoiceAiStrategy());
         register(new RevealAnyNumberOfCardsFromHandChoiceAiStrategy());
         register(new DoomsdayChoiceAiStrategy());
+        register(new SearchLibraryAndOrGraveyardChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());
         register(new IntuitionSearchChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());

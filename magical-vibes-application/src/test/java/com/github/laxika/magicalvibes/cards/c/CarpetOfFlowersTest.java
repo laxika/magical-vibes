@@ -7,12 +7,21 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CarpetOfFlowersTest extends BaseCardTest {
+
+    @BeforeEach
+    void stopAfterMainPhaseInteractions() {
+        gd.playerAutoStopSteps.put(player1.getId(),
+                Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN));
+    }
 
     @Test
     @DisplayName("Adds mana equal to the target opponent's Islands")

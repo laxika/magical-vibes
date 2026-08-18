@@ -6561,7 +6561,9 @@ public class SpellCastingService {
                         throw new IllegalStateException("Sacrifice target does not match the required filter");
                     }
                 }
-            } else if (!(cost instanceof LifeCastingCost)) {
+            } else if (!(cost instanceof LifeCastingCost)
+                    && !(cost instanceof DiscardCardCastingCost)
+                    && !(cost instanceof RemoveCountersFromControlledCreaturesCastingCost)) {
                 throw new IllegalStateException("Cannot pay this graveyard cast cost");
             }
         }

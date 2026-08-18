@@ -18,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WretchedCamelTest extends BaseCardTest {
 
-    // ===== Death trigger — Desert condition met =====
-
     @Test
     @DisplayName("Dies while controlling a Desert — target player discards a card")
     void diesWithDesertOnBattlefieldForcesDiscard() {
@@ -80,24 +78,18 @@ class WretchedCamelTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
-    // ===== Death trigger — Desert condition not met =====
-
     @Test
-    @DisplayName("Dies without any Desert — no card is discarded (intervening-if fails at resolution)")
+    @DisplayName("Dies without any Desert — the intervening-if ability does not trigger")
     void diesWithoutDesertDiscardsNothing() {
         harness.addToBattlefield(player1, new WretchedCamel());
 
         killCamel();
 
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities(); // condition not met → discard does nothing
-
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
-
-    // ===== Helpers =====
 
     /** Player2 becomes active and Shocks the camel to death, leaving one card in player2's hand. */
     private void killCamel() {

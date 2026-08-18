@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +47,25 @@ class AwardAnyColorManaEffectHandlerTest extends AbstractPlayerInteractionHandle
                 (ChoiceContext.ManaColorChoice) captor.getValue().context();
         assertThat(choice.amount()).isEqualTo(2);
         assertThat(choice.fixedColorOptions()).containsExactlyElementsOf(ManaColor.COLORS);
+    }
+
+    @Test
+    @DisplayName("A player target used for the amount does not receive the mana")
+    void targetForAmountDoesNotBecomeManaRecipient() {
+        Card card = createCard("Carpet of Flowers");
+        AwardAnyColorManaEffect effect = new AwardAnyColorManaEffect(
+                new Fixed(2), ManaSpendRestriction.NONE, null,
+                false, true, false, true, false, false);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        ArgumentCaptor<PendingInteraction.ColorChoice> captor =
+                ArgumentCaptor.forClass(PendingInteraction.ColorChoice.class);
+        verify(interactionHandlerRegistry).begin(eq(gd), captor.capture());
+        ChoiceContext.ManaColorChoice choice =
+                (ChoiceContext.ManaColorChoice) captor.getValue().context();
+        assertThat(choice.recipientPlayerId()).isNull();
     }
 
     @Test

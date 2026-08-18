@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -36,7 +37,8 @@ public class CarpetOfFlowers extends Card {
         return new ConditionalEffect(
                 new NotCondition(new SourceAddedManaThisTurn()),
                 new MayEffect(
-                        new AwardAnyColorManaEffect(islands, true, true),
+                        new AwardAnyColorManaEffect(islands, ManaSpendRestriction.NONE, null,
+                                false, true, false, true, false, false),
                         "Add mana with Carpet of Flowers?"));
     }
 }

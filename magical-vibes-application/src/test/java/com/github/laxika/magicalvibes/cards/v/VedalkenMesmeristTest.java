@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +32,7 @@ class VedalkenMesmeristTest extends BaseCardTest {
     @Test
     @DisplayName("The -2/-0 debuff wears off at end of turn")
     void debuffWearsOffAtEndOfTurn() {
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.END_STEP));
         addCreatureReady(player1, new VedalkenMesmerist());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
@@ -38,6 +40,8 @@ class VedalkenMesmeristTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAttackTrigger();
 
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

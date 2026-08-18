@@ -20,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -259,6 +260,23 @@ class SpecializedInteractionAiStrategiesTest {
         new SearchOutsideGameOrExileCardChoiceAiStrategy().answer(
                 new PendingInteraction.SearchOutsideGameOrExileCardChoice(
                         aiPlayerId, List.of(cheap.getId(), expensive.getId()), null, "card"),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(expensive.getId())));
+    }
+
+    @Test
+    void libraryOrGraveyardSearchChoosesHighestValueCard() throws Exception {
+        Card land = card("Land", "");
+        land.setType(CardType.LAND);
+        Card cheap = card("Cheap", "{1}");
+        Card expensive = card("Expensive", "{5}");
+
+        new SearchLibraryAndOrGraveyardChoiceAiStrategy().answer(
+                new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
+                        aiPlayerId, List.of(land, cheap, expensive), Set.of(land.getId(), cheap.getId()),
+                        true, "card"),
                 context);
 
         assertThat(capturedAnswer())
