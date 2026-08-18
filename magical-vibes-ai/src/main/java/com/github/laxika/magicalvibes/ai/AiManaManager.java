@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -71,7 +72,7 @@ public class AiManaManager {
 
     @FunctionalInterface
     private interface ManaPaymentRequirement {
-        boolean isSatisfied(ManaPool pool);
+        boolean isSatisfied(ManaPool pool, Set<UUID> activatedPermanentIds);
     }
 
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID aiPlayerId) {
@@ -122,13 +123,35 @@ public class AiManaManager {
             return false;
         }
         ManaPaymentRequirement requirement = creaturesOnly
-                ? pool -> cost.canPayCreatureOnly(pool, costModifier)
-                : pool -> cost.canPay(pool, costModifier);
-        if (requirement.isSatisfied(currentPool)) {
+                ? (pool, ignored) -> cost.canPayCreatureOnly(pool, costModifier)
+                : (pool, ignored) -> cost.canPay(pool, costModifier);
+        if (requirement.isSatisfied(currentPool, Set.of())) {
             return true;
         }
         return findPaymentPlanWithRequirement(gameData, playerId, cost, currentPool,
                 false, creaturesOnly, excludedPermanentIds, requirement) != null;
+    }
+
+    boolean canPayCostWithConvoke(GameData gameData, UUID playerId, String manaCostStr,
+                                  int additionalGenericCost, Set<UUID> excludedPermanentIds,
+                                  Map<UUID, ManaColor> convokeContributions) {
+        ManaCost cost = new ManaCost(manaCostStr);
+        ManaPool currentPool = gameData.playerManaPools.get(playerId);
+        if (currentPool == null) {
+            return false;
+        }
+        ManaPaymentRequirement requirement = (pool, activatedPermanentIds) -> {
+            List<ManaColor> availableContributions = convokeContributions.entrySet().stream()
+                    .filter(entry -> !activatedPermanentIds.contains(entry.getKey()))
+                    .map(Map.Entry::getValue)
+                    .toList();
+            return cost.canPayWithConvoke(pool, additionalGenericCost, availableContributions);
+        };
+        if (requirement.isSatisfied(currentPool, Set.of())) {
+            return true;
+        }
+        return findPaymentPlanWithRequirement(gameData, playerId, cost, currentPool,
+                false, false, excludedPermanentIds, requirement) != null;
     }
 
     boolean canPayXCost(GameData gameData, UUID playerId, Card card, String manaCostStr,
@@ -138,8 +161,9 @@ public class AiManaManager {
         if (currentPool == null) {
             return false;
         }
-        ManaPaymentRequirement requirement = pool -> isXSpellPaid(cost, card, pool, xValue, costModifier);
-        if (requirement.isSatisfied(currentPool)) {
+        ManaPaymentRequirement requirement = (pool, ignored) ->
+                isXSpellPaid(cost, card, pool, xValue, costModifier);
+        if (requirement.isSatisfied(currentPool, Set.of())) {
             return true;
         }
         return findPaymentPlanWithRequirement(gameData, playerId, cost, currentPool,
@@ -401,7 +425,7 @@ public class AiManaManager {
 
     private record ManaOption(ManaActivation activation, Map<ManaColor, Integer> output, int cost) {}
 
-    private record ManaSourceOptions(List<ManaOption> options) {}
+    private record ManaSourceOptions(List<ManaOption> options, boolean creature) {}
 
     private static final class PaymentSearch {
         private ManaPaymentPlan bestPlan;
@@ -415,7 +439,7 @@ public class AiManaManager {
                                             Set<UUID> excludedPermanentIds) {
         return findPaymentPlanWithRequirement(gameData, playerId, cost, currentPool,
                 skipChoiceSources, creaturesOnly, excludedPermanentIds,
-                pool -> cost.canPay(pool, additionalGenericCost));
+                (pool, ignored) -> cost.canPay(pool, additionalGenericCost));
     }
 
     private ManaPaymentPlan findPaymentPlanWithRequirement(
@@ -430,7 +454,7 @@ public class AiManaManager {
 
         PaymentSearch search = new PaymentSearch();
         searchPaymentPlans(sources, 0, requirement, new ManaPool(currentPool),
-                new ArrayList<>(), 0, search);
+                new ArrayList<>(), new HashSet<>(), 0, search);
         return orderPaymentPlan(gameData, playerId, cost, currentPool, search.bestPlan);
     }
 
@@ -494,12 +518,13 @@ public class AiManaManager {
 
     private void searchPaymentPlans(List<ManaSourceOptions> sources, int sourceIndex,
                                     ManaPaymentRequirement requirement, ManaPool pool,
-                                    List<ManaActivation> activations, int planCost,
+                                    List<ManaActivation> activations,
+                                    Set<UUID> activatedPermanentIds, int planCost,
                                     PaymentSearch search) {
         if (++search.visitedNodes > MAX_PAYMENT_SEARCH_NODES || planCost >= search.bestCost) {
             return;
         }
-        if (requirement.isSatisfied(pool)) {
+        if (requirement.isSatisfied(pool, activatedPermanentIds)) {
             search.bestCost = planCost;
             search.bestPlan = new ManaPaymentPlan(activations);
             return;
@@ -512,13 +537,19 @@ public class AiManaManager {
         for (ManaOption option : source.options()) {
             ManaPool nextPool = new ManaPool(pool);
             option.output().forEach(nextPool::add);
+            if (source.creature()) {
+                option.output().forEach(nextPool::addCreatureMana);
+            }
             activations.add(option.activation());
+            activatedPermanentIds.add(option.activation().permanentId());
             searchPaymentPlans(sources, sourceIndex + 1, requirement, nextPool, activations,
-                    planCost + option.cost(), search);
+                    activatedPermanentIds, planCost + option.cost(), search);
+            activatedPermanentIds.remove(option.activation().permanentId());
             activations.removeLast();
         }
 
-        searchPaymentPlans(sources, sourceIndex + 1, requirement, pool, activations, planCost, search);
+        searchPaymentPlans(sources, sourceIndex + 1, requirement, pool, activations,
+                activatedPermanentIds, planCost, search);
     }
 
     private List<ManaSourceOptions> collectManaSourceOptions(GameData gameData, UUID playerId,
@@ -544,7 +575,7 @@ public class AiManaManager {
             List<ManaOption> options = manaOptionsForPermanent(
                     gameData, playerId, permanent, skipChoiceSources);
             if (!options.isEmpty()) {
-                sources.add(new ManaSourceOptions(options));
+                sources.add(new ManaSourceOptions(options, creature));
             }
         }
         return sources;

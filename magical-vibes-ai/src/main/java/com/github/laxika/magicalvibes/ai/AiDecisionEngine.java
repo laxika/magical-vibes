@@ -3306,6 +3306,19 @@ public abstract class AiDecisionEngine {
                     true, excludedPermanentIds);
         }
         ManaCost cost = new ManaCost(manaCost);
+        if (hasConvokeAbility(gameData, card)) {
+            Map<UUID, ManaColor> convokeContributions = new LinkedHashMap<>();
+            for (Permanent permanent : gameData.playerBattlefields
+                    .getOrDefault(aiPlayer.getId(), List.of())) {
+                if (!permanent.isTapped() && gameQueryService.isCreature(gameData, permanent)) {
+                    convokeContributions.put(permanent.getId(), convokeManaColor(gameData, permanent));
+                }
+            }
+            int additionalGenericCost = costModifier
+                    + (cost.hasX() && xValue != null ? xValue : 0);
+            return manaManager.canPayCostWithConvoke(gameData, aiPlayer.getId(), manaCost,
+                    additionalGenericCost, excludedPermanentIds, convokeContributions);
+        }
         if (cost.hasX() && xValue != null) {
             return manaManager.canPayXCost(gameData, aiPlayer.getId(), card, manaCost, xValue,
                     costModifier, excludedPermanentIds);
