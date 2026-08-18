@@ -55,8 +55,8 @@ public class Card {
      * Resolves oracle data for a card class whose data has not been registered yet.
      *
      * <p>Production startup eagerly registers every card and leaves this unset. The shared card-test
-     * context installs an on-demand resolver so a focused test only loads data for sets containing
-     * cards it actually constructs.
+     * context temporarily retains an on-demand resolver as a compatibility path for tests that do
+     * not yet preload their declared cards through {@code @CardUsed}.
      */
     @FunctionalInterface
     public interface OracleDataResolver {

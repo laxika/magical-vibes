@@ -71,6 +71,7 @@ Skip tests only when the script says **basic land** or **vanilla** — it prints
 `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
 
 - Follow the Testing rules in `CLAUDE.md`: behavior through the engine only — never Scryfall-metadata asserts, never white-box wiring tests.
+- Annotate the test class with `@CardUsed({...})` and list every concrete card class the tests construct, including support cards such as `GrizzlyBears`. Add a method-level `@CardUsed` only for a card confined to one scenario.
 - Use the harness: `setHand`, `addMana`, `addToBattlefield`, `castCreature/castInstant`, `activateAbility`, `passBothPriorities`, `forceStep`, `forceActivePlayer`. See `agent-docs/TEST_RECIPES.md` and `agent-docs/TEST_CREATURES_REFERENCE.md`.
 - Typical cases: each resolution branch, "wears off at end of turn" for temporary effects, and an illegal-target rejection.
 - Model new tests on a recent sibling test such as `cards/t/TragicSlipTest.java`.

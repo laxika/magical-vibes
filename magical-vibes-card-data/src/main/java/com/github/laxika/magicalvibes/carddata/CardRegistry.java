@@ -76,10 +76,12 @@ public class CardRegistry implements CardCatalog {
     void load() {
         printings = CardScanner.scan();
 
-        if (loadMode == OracleLoadMode.ON_DEMAND) {
+        if (loadMode != OracleLoadMode.EAGER) {
             indexBackFaces();
-            Card.installOracleDataResolver(oracleDataResolver);
-            LOG.info("Card registry ready for on-demand oracle loading");
+            if (loadMode == OracleLoadMode.ON_DEMAND) {
+                Card.installOracleDataResolver(oracleDataResolver);
+            }
+            LOG.info("Card registry ready for " + loadMode.name().toLowerCase(Locale.ROOT) + " oracle loading");
             return;
         }
 
@@ -108,6 +110,21 @@ public class CardRegistry implements CardCatalog {
         loadedSets.add(cardSet);
     }
 
+    /**
+     * Loads the preferred oracle set for a registered card class. Test infrastructure uses this to
+     * preload data declared by a test before that test constructs any cards.
+     *
+     * @throws IllegalArgumentException if the class is neither a registered front face nor an
+     *                                  indexed back face
+     */
+    public void ensureCardDataLoaded(Class<? extends Card> cardClass) {
+        CardSet cardSet = findSetFor(cardClass);
+        if (cardSet == null) {
+            throw new IllegalArgumentException("No registered printing found for " + cardClass.getName());
+        }
+        ensureSetLoaded(cardSet);
+    }
+
     private void indexBackFaces() {
         Map<Class<? extends Card>, CardSet> backFaces = new HashMap<>();
         Set<String> inspectedFronts = new HashSet<>();
@@ -134,15 +151,17 @@ public class CardRegistry implements CardCatalog {
             return;
         }
 
-        CardSet cardSet = preferredSet(cardClass);
-        if (cardSet == null) {
-            cardSet = backFaceSets.get(cardClass);
-        }
+        CardSet cardSet = findSetFor(cardClass);
         if (cardSet == null) {
             // Synthetic Card subclasses are common in engine tests and intentionally have no data.
             return;
         }
         ensureSetLoaded(cardSet);
+    }
+
+    private CardSet findSetFor(Class<? extends Card> cardClass) {
+        CardSet cardSet = preferredSet(cardClass);
+        return cardSet != null ? cardSet : backFaceSets.get(cardClass);
     }
 
     private static CardSet preferredSet(Class<? extends Card> cardClass) {

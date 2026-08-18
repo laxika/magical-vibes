@@ -71,6 +71,33 @@ class CardRegistryOnDemandTest {
     }
 
     @Test
+    void explicitModeLoadsOnlyCardsRequestedThroughTheRegistry() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.EXPLICIT);
+        registry.load();
+
+        assertThat(loader.loadedSetCodes).isEmpty();
+        assertThat(new Pacifism().getName()).isNull();
+
+        registry.ensureCardDataLoaded(Pacifism.class);
+
+        assertThat(loader.loadedSetCodes).hasSize(1);
+        assertThat(new Pacifism().getName()).isEqualTo("Pacifism");
+    }
+
+    @Test
+    void explicitCardLoadRejectsClassesWithoutRegisteredPrintings() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.EXPLICIT);
+        registry.load();
+
+        assertThatThrownBy(() -> registry.ensureCardDataLoaded(UnregisteredCard.class))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(UnregisteredCard.class.getName());
+        assertThat(loader.loadedSetCodes).isEmpty();
+    }
+
+    @Test
     void failedLoadsRemainRetryableAndBackFaceOnlyClassesResolveThroughTheirFrontPrinting() {
         RecordingLoader loader = new RecordingLoader();
         loader.failNextLoadOf("DKA");
@@ -128,5 +155,8 @@ class CardRegistryOnDemandTest {
             return new OracleData(name, CardType.ENCHANTMENT, Set.of(), "{1}{W}", null, List.of(),
                     List.of(), Set.of(), List.of(), cardText, null, null, Set.of(), null, null, null);
         }
+    }
+
+    private static final class UnregisteredCard extends Card {
     }
 }
