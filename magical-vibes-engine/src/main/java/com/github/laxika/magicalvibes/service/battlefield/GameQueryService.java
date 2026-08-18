@@ -438,7 +438,8 @@ public class GameQueryService {
         CharacteristicState activeState = gameData != null
                 ? LayerSystemService.activeStateFor(permanent.getId()) : null;
         if (activeState != null) {
-            return activeState.hasSupertype(supertype);
+            return activeState.hasSupertype(supertype)
+                    && !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
         }
         if (!permanent.getCard().getSupertypes().contains(supertype)) {
             if (gameData == null) {
@@ -449,10 +450,19 @@ public class GameQueryService {
         if (gameData == null) {
             return true;
         }
-        return !gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+        return !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
+    }
+
+    private boolean losesSupertypeFromGlobalStaticEffect(
+            GameData gameData, Permanent permanent, CardSupertype supertype) {
+        return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> effect instanceof PermanentsMatchingLoseSupertypeEffect lose
                         && lose.supertype() == supertype
-                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lose.filter())));
+                        && (isStaticEvaluationActive()
+                        ? predicateEvaluationService.matchesStaticFilter(
+                                permanent, lose.filter(), FilterContext.of(gameData))
+                        : predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, lose.filter()))));
     }
 
     private boolean anyBattlefieldHasStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {

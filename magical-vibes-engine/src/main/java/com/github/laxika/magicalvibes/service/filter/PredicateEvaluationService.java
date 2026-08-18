@@ -1469,7 +1469,8 @@ public class PredicateEvaluationService {
             case PermanentCounterCountAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
-            case PermanentHasSupertypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasSupertypePredicate p -> gameQueryService.hasEffectiveSupertype(
+                    context == null ? null : context.gameData(), permanent, p.supertype());
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingOpponentOfSourceControllerPredicate ignored -> {
@@ -1893,10 +1894,10 @@ public class PredicateEvaluationService {
                     state.hasProtectionColor(p.color())
                             || permanent.getProtectionFromColorsUntilEndOfTurn().contains(p.color());
             case PermanentHasSupertypePredicate p ->
-                    hasSupertype(state, permanent, gameData, p.supertype());
+                    hasSupertype(permanent, gameData, p.supertype());
             case PermanentIsHistoricPredicate ignored ->
                     state.hasCardType(CardType.ARTIFACT)
-                            || hasSupertype(state, permanent, gameData, CardSupertype.LEGENDARY)
+                            || hasSupertype(permanent, gameData, CardSupertype.LEGENDARY)
                             || state.hasSubtype(CardSubtype.SAGA);
             case PermanentNotPredicate p ->
                     !matchesPermanentPredicate(state, permanent, p.predicate(), filterContext);
@@ -1934,22 +1935,11 @@ public class PredicateEvaluationService {
     }
 
     /**
-     * Supertype during a CR 613 pass, combining the sources that can disagree with the printed
-     * type line: per-permanent persistent grants and removals stored on the {@link Permanent}
-     * (Arcum's Weathervane) and layer-4 grants sitting on the in-flight state (CR 613.1d). The
-     * stored state is authoritative for removals — it is seeded from the printed supertypes but
-     * the layered state is not told about persistent removals — so a removal blocks the layered
-     * read, while an explicit grant from either source wins.
+     * Answers supertype predicates through the central effective-characteristic query so
+     * persistent changes, the in-flight layered state, and global removals agree.
      */
-    private boolean hasSupertype(CharacteristicState state, Permanent permanent,
-                                 GameData gameData, CardSupertype supertype) {
-        if (gameQueryService.hasEffectiveSupertype(gameData, permanent, supertype)) {
-            return true;
-        }
-        if (permanent.getPersistentRemovedSupertypes().contains(supertype)) {
-            return false;
-        }
-        return state.hasSupertype(supertype);
+    private boolean hasSupertype(Permanent permanent, GameData gameData, CardSupertype supertype) {
+        return gameQueryService.hasEffectiveSupertype(gameData, permanent, supertype);
     }
 
     /**

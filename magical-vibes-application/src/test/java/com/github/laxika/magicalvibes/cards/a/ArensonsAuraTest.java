@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BadMoon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArensonsAura.class, BadMoon.class, GrizzlyBears.class})
 class ArensonsAuraTest extends BaseCardTest {
 
     // ===== {W}, Sacrifice an enchantment: Destroy target enchantment =====
@@ -21,20 +24,39 @@ class ArensonsAuraTest extends BaseCardTest {
     @DisplayName("Destroys target enchantment, sacrificing itself to pay the cost")
     void destroysTargetEnchantment() {
         harness.addToBattlefield(player1, new ArensonsAura());
-        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player2, new BadMoon());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Only enchantment player1 controls is Arenson's Aura → auto-sacrificed
-        UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
+        UUID targetId = harness.getPermanentId(player2, "Bad Moon");
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Bad Moon");
+        harness.assertInGraveyard(player2, "Bad Moon");
         // Aura sacrificed to pay the cost
         harness.assertInGraveyard(player1, "Arenson's Aura");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice another enchantment to destroy the target")
+    void sacrificesAnotherEnchantment() {
+        harness.addToBattlefield(player1, new ArensonsAura());
+        harness.addToBattlefield(player1, new BadMoon());
+        harness.addToBattlefield(player2, new BadMoon());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        UUID sacrificedId = harness.getPermanentId(player1, "Bad Moon");
+        UUID targetId = harness.getPermanentId(player2, "Bad Moon");
+        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.handlePermanentChosen(player1, sacrificedId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Arenson's Aura");
+        harness.assertInGraveyard(player1, "Bad Moon");
+        harness.assertInGraveyard(player2, "Bad Moon");
     }
 
     @Test
@@ -57,22 +79,22 @@ class ArensonsAuraTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ArensonsAura());
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        AngelicChorus chorus = new AngelicChorus();
+        BadMoon badMoon = new BadMoon();
         harness.forceActivePlayer(player2);
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(chorus));
-        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.setHand(player2, List.of(badMoon));
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castEnchantment(player2, 0);
         harness.passPriority(player2);
 
-        harness.activateAbility(player1, 0, 1, null, chorus.getId());
+        harness.activateAbility(player1, 0, 1, null, badMoon.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Bad Moon");
+        harness.assertInGraveyard(player2, "Bad Moon");
     }
 
     @Test
