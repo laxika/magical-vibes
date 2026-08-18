@@ -142,6 +142,7 @@ class HardAiSpellStrategyTest extends HardAiDecisionEngineTestSupport {
     @DisplayName("Hard AI picks highest affordable target for Entrancing Melody")
     void picksHighestAffordableTargetForEntrancingMelody() {
         HardAiDecisionEngine ai = createHardAi(player1);
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 40));
         pinLibrariesAndHands();
         giveAiPriority(player1);
         givePlayerIslands(player1, 4); // maxX = 2
