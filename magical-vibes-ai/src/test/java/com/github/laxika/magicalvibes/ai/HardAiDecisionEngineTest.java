@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
@@ -238,6 +239,28 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(torgaar);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
+    }
+
+    @Test
+    @DisplayName("Hard AI preserves Risk Factor's opponent target")
+    void castsRiskFactorAtOpponent() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        givePlayerMountains(player1, 3);
+        RiskFactor riskFactor = new RiskFactor();
+        harness.setHand(player1, List.of(riskFactor));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, player2.getId(), 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(riskFactor);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test

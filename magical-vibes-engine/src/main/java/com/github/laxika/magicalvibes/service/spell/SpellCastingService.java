@@ -1823,7 +1823,8 @@ public class SpellCastingService {
 
         if (targetId == null && targetIds.isEmpty()
                 && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget
-                && card.getMaxTargets() == 0
+                && (card.getMaxTargets() == 0
+                || card.getEffectiveMinTargets(effectiveXValue, kicked) > 0)
                 && !EffectResolution.needsDamageDistribution(card)
                 && !(kicked && findKickedDividedDamageEffect(filteredSpellEffects) != null)
                 && !needsExileTargeting && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting

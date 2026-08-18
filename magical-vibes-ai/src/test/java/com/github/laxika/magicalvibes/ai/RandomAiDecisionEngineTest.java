@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
@@ -234,6 +235,37 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
         assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
         assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+    }
+
+    @Test
+    void castsRiskFactorAtItsOpponent() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        RiskFactor riskFactor = new RiskFactor();
+        harness.setHand(aiPlayer, List.of(riskFactor));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(riskFactor);
+        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(opponent.getId());
     }
 
     @Test

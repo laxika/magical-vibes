@@ -22,10 +22,10 @@ public class RiskFactor extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent."
-        )).addEffect(EffectSlot.SPELL, new TargetPlayerChoosesOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption("Have Risk Factor deal 4 damage to you",
-                        new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER)),
-                new ChooseOneEffect.ChooseOneOption("Draw three cards", new DrawCardEffect(3))
+        )).addEffect(EffectSlot.SPELL, TargetPlayerChoosesOneEffect.forTargetedPlayer(List.of(
+            new ChooseOneEffect.ChooseOneOption("Have Risk Factor deal 4 damage to you",
+                    new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER)),
+            new ChooseOneEffect.ChooseOneOption("Draw three cards", new DrawCardEffect(3))
         )));
         addCastingOption(new JumpStartCast());
     }

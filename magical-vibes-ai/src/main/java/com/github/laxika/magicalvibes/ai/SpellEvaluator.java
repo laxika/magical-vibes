@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -453,6 +454,12 @@ public class SpellEvaluator {
             }
             return bestValue;
         }
+        if (effect instanceof TargetPlayerChoosesOneEffect choice) {
+            return choice.options().stream()
+                    .mapToDouble(option -> evaluateEtbEffect(gameData, card, option.effect(), aiPlayerId, opponentId))
+                    .max()
+                    .orElse(0);
+        }
 
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
@@ -522,6 +529,13 @@ public class SpellEvaluator {
                 bestValue = Math.max(bestValue, optionValue);
             }
             return bestValue;
+        }
+        if (effect instanceof TargetPlayerChoosesOneEffect choice) {
+            return choice.options().stream()
+                    .mapToDouble(option -> evaluateSingleEffect(gameData, card, option.effect(),
+                            aiPlayerId, opponentId, aiBattlefield, oppBattlefield))
+                    .max()
+                    .orElse(0);
         }
 
         // Sequence: steps resolve in order as one effect — score as the sum of the steps.

@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -392,6 +393,21 @@ class EasyAiDecisionEngineTest {
             testHarness.passBothPriorities();
 
             assertThat(testGd.playerBattlefields.get(human.getId())).doesNotContain(target);
+        }
+
+        @Test
+        @DisplayName("Easy AI announces Risk Factor's opponent target")
+        void castsRiskFactorAtOpponent() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 3);
+            RiskFactor riskFactor = new RiskFactor();
+            testHarness.setHand(aiTestPlayer, List.of(riskFactor));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(riskFactor);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
         }
 
         @Test

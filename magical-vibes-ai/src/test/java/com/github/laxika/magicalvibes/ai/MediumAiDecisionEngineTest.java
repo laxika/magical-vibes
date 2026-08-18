@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
@@ -218,6 +219,21 @@ class MediumAiDecisionEngineTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(human.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Medium AI announces Risk Factor's opponent target")
+    void castsRiskFactorAtOpponent() {
+        giveAiPriority();
+        giveAiMountains(3);
+        RiskFactor riskFactor = new RiskFactor();
+        harness.setHand(aiPlayer, List.of(riskFactor));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(riskFactor);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
     }
 
     private Card multiTargetRemovalWithPerTargetLifeCost() {

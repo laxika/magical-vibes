@@ -66,6 +66,16 @@ class RiskFactorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Risk Factor requires an opponent target")
+    void requiresOpponentTarget() {
+        harness.setHand(player1, List.of(new RiskFactor()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Jump-start discards a card and exiles Risk Factor after resolution")
     void jumpStartDiscardsAndExiles() {
         RiskFactor spell = new RiskFactor();

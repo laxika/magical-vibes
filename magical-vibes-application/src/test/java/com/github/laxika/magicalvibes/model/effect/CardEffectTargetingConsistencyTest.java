@@ -103,9 +103,6 @@ class CardEffectTargetingConsistencyTest {
             // Pre-resolved: EACH_UPKEEP_TRIGGERED carries Emberwilde Djinn's active player on the
             // stack entry, so this effect never asks the shared pipeline to choose a player.
             "TargetPlayerMayPayManaOrLifeEffect",
-            // Pre-resolved: EACH_UPKEEP_TRIGGERED carries the active player in the stack entry;
-            // the choice handler reads that UUID and does not ask for a target.
-            "TargetPlayerChoosesOneEffect",
             // Piggyback: Shuriken's effect reads the creature target already chosen for the
             // activated ability's damage effect; it does not choose a second target.
             "TargetPermanentControllerGainsControlOfGrantingEquipmentEffect",
