@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -25,6 +27,22 @@ class UmbraMysticTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Pacifism");
+    }
+
+    @Test
+    @DisplayName("Lethal damage destroys a granted umbra armor Aura instead of the creature")
+    void lethalDamageDestroysGrantedUmbraArmorAura() {
+        harness.addToBattlefield(player1, new UmbraMystic());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(creature.getId());
+        creature.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Pacifism");
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 
     @Test

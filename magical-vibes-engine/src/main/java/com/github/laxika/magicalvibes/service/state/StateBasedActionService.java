@@ -218,21 +218,24 @@ public class StateBasedActionService {
     }
 
     private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
+        List<Permanent> permanents = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
+
         List<DeathEntry> toDie = new ArrayList<>();
-        gameData.forEachPermanent((playerId, p) -> {
+        List<DeathEntry> lethalDamageCandidates = new ArrayList<>();
+        for (Permanent p : permanents) {
             if (processedIds.contains(p.getId())) {
-                return;
+                continue;
             }
             if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
             } else if (gameQueryService.isCreature(gameData, p)
                     && isDestroyedByLethalDamage(gameData, p)
-                    && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
-                    && !graveyardService.tryRegenerate(gameData, p)) {
+                    && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)) {
                 // CR 704.5g — creature with damage >= toughness is destroyed, and
                 // CR 704.5h — creature dealt damage by a deathtouch source since the last check
                 // is destroyed (regeneration can replace either)
-                toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
+                lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
             } else if (gameQueryService.isPlaneswalker(gameData, p) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
             } else if (gameQueryService.isBattle(gameData, p) && p.getCounterCount(CounterType.DEFENSE) <= 0
@@ -241,12 +244,23 @@ public class StateBasedActionService {
                 // "when this battle is defeated" ability is still on the stack.
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
             }
-        });
+        }
+
+        boolean replacementPerformed = false;
+        for (DeathEntry candidate : lethalDamageCandidates) {
+            if (graveyardService.tryRegenerate(gameData, candidate.permanent())) {
+                replacementPerformed = true;
+            } else {
+                toDie.add(candidate);
+            }
+        }
 
         // CR 704.5h spans "since the last state-based check" and this pass is that check:
         // consume the deathtouch memory so survivors (indestructible, regenerated) aren't
         // re-destroyed by a later pass or a later check.
-        gameData.forEachPermanent((playerId, p) -> p.setDamagedByDeathtouch(false));
+        for (Permanent p : permanents) {
+            p.setDamagedByDeathtouch(false);
+        }
 
         try {
             for (DeathEntry entry : toDie) {
@@ -291,7 +305,7 @@ public class StateBasedActionService {
         if (!toDie.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        return !toDie.isEmpty();
+        return !toDie.isEmpty() || replacementPerformed;
     }
 
     // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
