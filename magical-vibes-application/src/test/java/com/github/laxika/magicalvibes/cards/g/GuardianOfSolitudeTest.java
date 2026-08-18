@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
+import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,8 +24,9 @@ class GuardianOfSolitudeTest extends BaseCardTest {
     void arcaneSpellGrantsFlying() {
         harness.addToBattlefield(player1, new GuardianOfSolitude());
         Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();
@@ -60,8 +61,9 @@ class GuardianOfSolitudeTest extends BaseCardTest {
     void flyingWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new GuardianOfSolitude());
         Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();
