@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
+import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,8 +36,8 @@ class ScaledHulkTest extends BaseCardTest {
     @DisplayName("Casting an Arcane spell gives Scaled Hulk +2/+2")
     void arcaneSpellBoostsScaledHulk() {
         Permanent hulk = addCreatureReady(player1, new ScaledHulk());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();
@@ -64,8 +64,8 @@ class ScaledHulkTest extends BaseCardTest {
     @DisplayName("The boosts stack and wear off at end of turn")
     void boostsStackAndWearOffAtEndOfTurn() {
         Permanent hulk = addCreatureReady(player1, new ScaledHulk());
-        harness.setHand(player1, List.of(new BlessedBreath(), new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of(new DesperateRitual(), new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();

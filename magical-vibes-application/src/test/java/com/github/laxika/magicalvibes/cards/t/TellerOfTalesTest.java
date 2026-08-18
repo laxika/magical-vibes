@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
+import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
@@ -26,8 +26,8 @@ class TellerOfTalesTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         Permanent bears = findPermanent(player2, "Grizzly Bears");
 
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
 
@@ -68,8 +68,8 @@ class TellerOfTalesTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = findPermanent(player2, "Grizzly Bears");
 
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.handleMayAbilityChosen(player1, false);
