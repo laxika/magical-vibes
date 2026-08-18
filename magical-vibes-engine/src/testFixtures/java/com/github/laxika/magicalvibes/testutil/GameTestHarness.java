@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -250,6 +251,43 @@ public class GameTestHarness {
         for (int i = 0; i < amount; i++) {
             pool.add(color);
         }
+    }
+
+    /**
+     * Replaces {@code player}'s hand with {@code card}, adds the specified mana, and casts it through
+     * the ordinary no-choice hand-cast path. The spell is left on the stack for the test to resolve.
+     *
+     * <p>Use this concise setup helper only for fixed, non-hybrid, non-Phyrexian costs and spells
+     * that need no targets, modes, X value, alternate cost, or additional-cost choices. Specialized
+     * cast helpers keep those choices explicit.</p>
+     */
+    public void castFromHand(Player player, Card card, String manaCost) {
+        if (player == null || !gameData.playerIds.contains(player.getId())) {
+            throw new IllegalArgumentException("Player must be part of this game");
+        }
+        if (card == null) {
+            throw new IllegalArgumentException("Card must not be null");
+        }
+        if (manaCost == null || !manaCost.matches("(\\{[^{}]+})*")) {
+            throw new IllegalArgumentException("Mana cost must use braced symbols such as {2}{R}");
+        }
+
+        ManaCost parsedCost;
+        try {
+            parsedCost = new ManaCost(manaCost);
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("Unsupported mana cost for castFromHand: " + manaCost, e);
+        }
+        if (parsedCost.hasX() || manaCost.contains("/")) {
+            throw new IllegalArgumentException(
+                    "castFromHand supports only fixed, non-hybrid, non-Phyrexian mana costs");
+        }
+
+        setHand(player, List.of(card));
+        parsedCost.getColoredCosts().forEach((color, amount) -> addMana(player, color, amount));
+        addMana(player, ManaColor.COLORLESS, parsedCost.getGenericCost());
+        ensurePriority(player);
+        gameService.playCard(gameData, player, 0, 0, null, null);
     }
 
     public void addCreatureMana(Player player, ManaColor color, int amount) {
