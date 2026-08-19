@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,10 +26,9 @@ class ForsakenSanctuaryTest extends BaseCardTest {
     @Test
     @DisplayName("Tap ability adds one white mana")
     void tapAddsWhiteMana() {
-        harness.addToBattlefield(player1, new ForsakenSanctuary());
+        addSanctuaryReady(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "WHITE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
@@ -35,11 +36,17 @@ class ForsakenSanctuaryTest extends BaseCardTest {
     @Test
     @DisplayName("Tap ability adds one black mana")
     void tapAddsBlackMana() {
-        harness.addToBattlefield(player1, new ForsakenSanctuary());
+        addSanctuaryReady(player1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "BLACK");
+        harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    private Permanent addSanctuaryReady(Player player) {
+        Permanent permanent = new Permanent(new ForsakenSanctuary());
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        return permanent;
     }
 }

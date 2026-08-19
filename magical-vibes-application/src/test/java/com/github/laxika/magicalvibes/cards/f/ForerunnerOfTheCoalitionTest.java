@@ -50,7 +50,7 @@ class ForerunnerOfTheCoalitionTest extends BaseCardTest {
     void pirateEnteringMakesEachOpponentLoseLife() {
         harness.addToBattlefield(player1, new ForerunnerOfTheCoalition());
         harness.setHand(player1, List.of(new ProsperousPirates()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 

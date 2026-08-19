@@ -38,7 +38,7 @@ class GiltgroveStalkerTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be blocked");
+                .hasMessageContaining("cannot block");
     }
 
     @Test

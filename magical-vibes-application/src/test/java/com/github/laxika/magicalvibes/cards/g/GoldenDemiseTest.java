@@ -57,8 +57,8 @@ class GoldenDemiseTest extends BaseCardTest {
 
     private void castAndResolve() {
         harness.setHand(player1, List.of(new GoldenDemise()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
     }

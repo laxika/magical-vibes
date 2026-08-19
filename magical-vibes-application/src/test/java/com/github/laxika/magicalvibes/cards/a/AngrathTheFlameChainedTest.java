@@ -55,7 +55,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -73,11 +73,11 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 

@@ -55,7 +55,7 @@ class WarkiteMarauderTest extends BaseCardTest {
         gd.expireEndOfTurnFloatingEffects();
         target.resetModifiers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }

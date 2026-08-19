@@ -1785,7 +1785,7 @@ class ValidTargetServiceTest {
                         return true;
                     });
             lenient().when(predicateEvaluationService.matchesCardPredicate(
-                            any(Card.class), any(CardPredicate.class), any(), eq(gameData), eq(player2Id)))
+                            any(Card.class), any(CardPredicate.class), any(), eq(gameData), any(UUID.class)))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
                         CardPredicate p = inv.getArgument(1);

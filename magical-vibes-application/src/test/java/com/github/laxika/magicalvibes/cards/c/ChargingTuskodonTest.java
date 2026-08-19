@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,7 +68,7 @@ class ChargingTuskodonTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent tuskodon = harness.addToBattlefieldAndReturn(player1, new ChargingTuskodon());
         tuskodon.setSummoningSick(false);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         tuskodon.setAttacking(true);
         harness.forceActivePlayer(player1);
@@ -77,6 +78,9 @@ class ChargingTuskodonTest extends BaseCardTest {
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 2));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         harness.assertInGraveyard(player2, "Grizzly Bears");

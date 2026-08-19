@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 public record TargetCreatureDealsPowerDamageToAbilityControllerEffect() implements DamageDealingEffect {
 
     @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetPredicates.creature());
+    }
+
+    @Override
     public DynamicAmount damageAmount() {
         return new TargetPower();
     }

@@ -248,7 +248,7 @@ public class GraveyardService {
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, null, null);
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, null, null, false);
     }
 
     /**
@@ -257,7 +257,8 @@ public class GraveyardService {
      */
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, battlefieldControllerId, null);
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
+                battlefieldControllerId, null, false);
     }
 
     /**
@@ -267,25 +268,33 @@ public class GraveyardService {
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId, UUID battlefieldPermanentId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, battlefieldPermanentId);
+                battlefieldControllerId, battlefieldPermanentId, false);
+    }
+
+    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                      UUID battlefieldControllerId, UUID battlefieldPermanentId,
+                                      boolean selfGraveyardTriggerSuppressed) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
+                battlefieldControllerId, battlefieldPermanentId, selfGraveyardTriggerSuppressed);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryCreatureCardsTrigger, null, null);
+                suppressLibraryCreatureCardsTrigger, null, null, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger,
                                        UUID battlefieldControllerId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryCreatureCardsTrigger, battlefieldControllerId, null);
+                suppressLibraryCreatureCardsTrigger, battlefieldControllerId, null, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger,
-                                       UUID battlefieldControllerId, UUID battlefieldPermanentId) {
+                                       UUID battlefieldControllerId, UUID battlefieldPermanentId,
+                                       boolean selfGraveyardTriggerSuppressed) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         // CR 614.7 — self-replacement effects apply first
 
@@ -442,7 +451,7 @@ public class GraveyardService {
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
         collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
-        if (sourceZone == Zone.BATTLEFIELD) {
+        if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed) {
             collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card, battlefieldPermanentId);
         }
         if (!card.isToken() && isPermanentCard(card)) {

@@ -327,6 +327,7 @@ public class PermanentCounterSupport {
             case PETAL -> { target.setCounterCount(CounterType.PETAL, target.getCounterCount(CounterType.PETAL) + count); yield "petal"; }
             case PETRIFICATION -> { target.setCounterCount(CounterType.PETRIFICATION, target.getCounterCount(CounterType.PETRIFICATION) + count); yield "petrification"; }
             case PIN -> { target.setCounterCount(CounterType.PIN, target.getCounterCount(CounterType.PIN) + count); yield "pin"; }
+            case PREY -> { target.setCounterCount(CounterType.PREY, target.getCounterCount(CounterType.PREY) + count); yield "prey"; }
             case FUNGUS -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.FUNGUS, target.getCounterCount(CounterType.FUNGUS) + count);

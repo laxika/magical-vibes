@@ -67,9 +67,9 @@ class CherishedHatchlingTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Raptor Hatchling");
         harness.assertOnBattlefield(player2, "Grizzly Bears");

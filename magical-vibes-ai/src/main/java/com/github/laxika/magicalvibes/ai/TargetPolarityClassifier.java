@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTarget
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -284,6 +285,9 @@ public class TargetPolarityClassifier {
 
         if (effect instanceof RegenerationEffect) {
             return TargetPolarity.BENEFICIAL;
+        }
+        if (effect instanceof ExploreEffect explore) {
+            return explore.targeted() ? TargetPolarity.BENEFICIAL : null;
         }
         if (effect instanceof RegisterDelayedWatchedCreatureDealsDamageEffect) {
             return TargetPolarity.BENEFICIAL;

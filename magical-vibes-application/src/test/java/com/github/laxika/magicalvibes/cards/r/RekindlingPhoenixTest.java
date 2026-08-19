@@ -44,6 +44,7 @@ class RekindlingPhoenixTest extends BaseCardTest {
                 gd.interaction.activeInteraction();
         assertThat(choice).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Elemental");
         Permanent phoenix = findPermanents(player1, "Rekindling Phoenix").getFirst();

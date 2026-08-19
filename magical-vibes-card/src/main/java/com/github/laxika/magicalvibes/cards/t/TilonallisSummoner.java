@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtEndStepUnlessConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaCreateXTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -21,8 +22,8 @@ public class TilonallisSummoner extends Card {
 
         CreateTokenEffect elementalToken = new CreateTokenEffect(
                 1, "Elemental", 1, 1, CardColor.RED, List.of(CardSubtype.ELEMENTAL), true);
-        addEffect(EffectSlot.ON_ATTACK, new PayXManaCreateXTokensEffect("{X}{R}", elementalToken));
-        addEffect(EffectSlot.ON_ATTACK,
-                new ExileCreatedPermanentsAtEndStepUnlessConditionEffect(new ControllerHasCityBlessing()));
+        addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
+                new PayXManaCreateXTokensEffect("{X}{R}", elementalToken),
+                new ExileCreatedPermanentsAtEndStepUnlessConditionEffect(new ControllerHasCityBlessing())));
     }
 }

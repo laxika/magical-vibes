@@ -28,7 +28,7 @@ class HuatliRadiantChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 
     @Test

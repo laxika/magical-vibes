@@ -147,6 +147,7 @@ public class PermanentRemovalService {
                 : Set.of();
         boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
         boolean hadPersist = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.PERSIST);
+        boolean selfGraveyardTriggerSuppressed = selfGraveyardTriggerSuppressed(gameData, target);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
@@ -165,7 +166,8 @@ public class PermanentRemovalService {
                 gameData, target, controllerId, Zone.GRAVEYARD);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
                 creatureSubtypesAtDeath, hadUndying, hadPersist, controllerId, ownerId,
-                destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath);
+                destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath,
+                selfGraveyardTriggerSuppressed);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -204,6 +206,7 @@ public class PermanentRemovalService {
                 : Set.of();
         boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
         boolean hadPersist = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.PERSIST);
+        boolean selfGraveyardTriggerSuppressed = selfGraveyardTriggerSuppressed(gameData, target);
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
 
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
@@ -217,7 +220,7 @@ public class PermanentRemovalService {
                 gameData, target, info.controllerId(), Zone.GRAVEYARD);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
                 creatureSubtypesAtDeath, hadUndying, hadPersist, info.controllerId(), info.ownerId(), false,
-                grantedDeathEffects, dyingPowerAtDeath);
+                grantedDeathEffects, dyingPowerAtDeath, selfGraveyardTriggerSuppressed);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
     }
@@ -963,7 +966,8 @@ public class PermanentRemovalService {
                                               UUID controllerId, UUID ownerId,
                                               boolean destroyedBySpellOrAbility,
                                               List<CardEffect> grantedDeathEffects,
-                                              int dyingPowerAtDeath) {
+                                              int dyingPowerAtDeath,
+                                              boolean selfGraveyardTriggerSuppressed) {
         boolean wentToGraveyard = false;
         int exiledFromBattlefield = 0;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
@@ -978,11 +982,17 @@ public class PermanentRemovalService {
                 exiledFromBattlefield++;
                 gameLogService.append(gameData,
                         GameLog.cardThen(leaving, " is exiled instead of being put into a graveyard."));
-            } else if (graveyardService.addCardToGraveyard(
-                    gameData, ownerId, leaving, Zone.BATTLEFIELD, controllerId, target.getId())) {
-                wentToGraveyard = true;
-            } else if (gameData.findExiledCard(leaving.getId()) != null) {
-                exiledFromBattlefield++;
+            } else {
+                boolean enteredGraveyard = selfGraveyardTriggerSuppressed
+                        ? graveyardService.addCardToGraveyard(gameData, ownerId, leaving,
+                                Zone.BATTLEFIELD, controllerId, target.getId(), true)
+                        : graveyardService.addCardToGraveyard(gameData, ownerId, leaving,
+                                Zone.BATTLEFIELD, controllerId, target.getId());
+                if (enteredGraveyard) {
+                    wentToGraveyard = true;
+                } else if (gameData.findExiledCard(leaving.getId()) != null) {
+                    exiledFromBattlefield++;
+                }
             }
         }
         graveyardService.notifyCardsExiledFromBattlefield(gameData, exiledFromBattlefield);
@@ -1056,6 +1066,17 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
             }
         }
+    }
+
+    private boolean selfGraveyardTriggerSuppressed(GameData gameData, Permanent target) {
+        if (target.getCard().getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).isEmpty()) {
+            return false;
+        }
+        if (target.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return true;
+        }
+        GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, target);
+        return bonus != null && (bonus.losesAllAbilities() || bonus.losesAllNonManaAbilities());
     }
 
     /**

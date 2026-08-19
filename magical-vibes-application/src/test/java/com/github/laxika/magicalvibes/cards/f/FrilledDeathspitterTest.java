@@ -25,6 +25,6 @@ class FrilledDeathspitterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        harness.assertOnBattlefield(player2, "Frilled Deathspitter");
+        harness.assertInGraveyard(player2, "Frilled Deathspitter");
     }
 }

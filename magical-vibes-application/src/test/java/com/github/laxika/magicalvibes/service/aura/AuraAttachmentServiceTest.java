@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,6 +54,7 @@ class AuraAttachmentServiceTest {
     @Mock private GraveyardService graveyardService;
     @Mock private CreatureControlService creatureControlService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private UnattachTriggerSupport unattachTriggerSupport;
 
     @InjectMocks private AuraAttachmentService service;
 

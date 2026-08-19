@@ -6006,12 +6006,13 @@ public class TriggerCollectionService {
 
         for (UUID controllerId : controllers) {
             List<Card> sources = gameData.creatureEntersDrawSourcesThisTurn.get(controllerId);
-            if (sources == null) continue;
-            for (Card sourceCard : new ArrayList<>(sources)) {
-                gameData.queueMayAbility(sourceCard, controllerId,
-                        new MayEffect(new DrawCardEffect(), "Draw a card?"));
-                log.info("Game {} - {} triggers for creature entering (may draw)",
-                        gameData.id, sourceCard.getName());
+            if (sources != null) {
+                for (Card sourceCard : new ArrayList<>(sources)) {
+                    gameData.queueMayAbility(sourceCard, controllerId,
+                            new MayEffect(new DrawCardEffect(), "Draw a card?"));
+                    log.info("Game {} - {} triggers for creature entering (may draw)",
+                            gameData.id, sourceCard.getName());
+                }
             }
 
             if (controllerId.equals(enteringCreatureControllerId)) {

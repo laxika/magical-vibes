@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -41,7 +41,7 @@ class ReaverAmbushTest extends BaseCardTest {
     @DisplayName("Cannot target a creature with power greater than 3")
     void cannotTargetHighPowerCreature() {
         addCreatureReady(player2, new GrizzlyBears());
-        Permanent target = addCreatureReady(player2, new HillGiant());
+        Permanent target = addCreatureReady(player2, new SerraAngel());
         giveReaverAmbush();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))

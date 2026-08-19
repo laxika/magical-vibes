@@ -19,6 +19,7 @@ class TilonallisSummonerTest extends BaseCardTest {
     void payingCreatesTappedAttackingElementals() {
         addCreatureReady(player1, new TilonallisSummoner());
         harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player2, 20);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -32,7 +33,8 @@ class TilonallisSummonerTest extends BaseCardTest {
 
         List<Permanent> tokens = findPermanents(player1, "Elemental");
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allMatch(token -> token.isTapped() && token.isAttacking());
+        assertThat(tokens).allMatch(Permanent::isTapped);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
