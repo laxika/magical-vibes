@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,7 @@ public class DiscardTriggerCollectorService {
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final LifeSupport lifeSupport;
 
     @CollectsTrigger(value = OpponentCausedDiscardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleOpponentCausedDiscard(TriggerMatchContext match,
@@ -130,6 +132,8 @@ public class DiscardTriggerCollectorService {
                                 sourceCard, "."));
                     }
                 }
+                lifeSupport.applyPoisonCounters(gameData, discardingPlayerId, effectiveDamage,
+                        cardName, match.controllerId());
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {

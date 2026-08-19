@@ -443,7 +443,7 @@ public class CardChoiceHandlerService {
 
         // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
         if (!followUp.remainingEachPlayerDiscards().isEmpty()) {
-            playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
+            followUp = playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
             // The queue can drain without prompting anyone (every remaining player has an
             // empty hand); fall through so the rest of the spell still resolves.
             if (gameData.interaction.isAwaitingInput()) {
@@ -544,10 +544,15 @@ public class CardChoiceHandlerService {
                     || targetSpec.admits(TargetPredicate.Kind.PLAYER));
             if (needsTarget) {
                 List<UUID> validPermanentTargets = new ArrayList<>();
+                int thenEffectXValue = followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null
+                        ? discardedCard.getManaValue() : 0;
                 if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceCardId(sourceCard.getId())
                             .withSourceControllerId(playerId);
+                    if (followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null) {
+                        filterContext = filterContext.withXValue(thenEffectXValue);
+                    }
                     TargetPredicate targetPredicate = targetSpec.targetPredicate();
                     for (UUID targetPlayerId : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
@@ -574,7 +579,8 @@ public class CardChoiceHandlerService {
                 } else {
                     gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                    sourceCard, playerId, List.of(thenEffect)));
+                                    sourceCard, playerId, List.of(thenEffect), null, null, 0,
+                                    thenEffectXValue));
                     playerInputService.beginAnyTargetChoice(gameData, playerId,
                             validPermanentTargets, validPlayerTargets,
                             sourceCard.getName() + " — Choose a target for the reflexive trigger.");
@@ -594,13 +600,15 @@ public class CardChoiceHandlerService {
                 thenEntry.setNonTargeting(true);
                 gameData.stack.add(thenEntry);
             } else {
-                gameData.stack.add(new StackEntry(
+                StackEntry reflexiveEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
                         playerId,
                         sourceCard.getName() + "'s effect",
                         List.of(thenEffect)
-                ));
+                );
+                reflexiveEntry.setEventValue(followUp.eachPlayerNoDiscardCount());
+                gameData.stack.add(reflexiveEntry);
             }
             log.info("Game {} - {} discard-then rider pushed for {}",
                     gameData.id, player.getUsername(), sourceCard.getName());
@@ -1462,6 +1470,11 @@ public class CardChoiceHandlerService {
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        equipment.setAttachedTo(target.getId());
+        // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+        equipment.setTimestamp(gameData.nextTimestamp());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
 
         gameLogService.append(gameData, GameLog.cardTextCard(
                 equipment.getCard(), " is now attached to ", target.getCard(), "."));

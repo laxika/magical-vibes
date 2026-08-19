@@ -91,6 +91,12 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
+        if (e.duration() == EffectDuration.PERMANENT) {
+            target.setLosesAllAbilitiesPermanently(true);
+        } else {
+            target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        }
+
         // CR 613 layer engine: a one-shot "loses all abilities until end of turn" (Merfolk
         // Trickster) is a floating layer-6 effect with its own timestamp — a later-timestamp
         // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
@@ -99,6 +105,9 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
         target.setLosesAllAbilitiesUntilEndOfTurn(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), e,
-                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                target.getId(), null, null,
+                e.duration() == EffectDuration.PERMANENT
+                        ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN,
+                0));
     }
 }

@@ -48,7 +48,7 @@ public class UnattachEnchantedEquipmentEffectHandler implements NormalEffectHand
 
         var equippedPermanentId = equipment.getAttachedTo();
         equipment.setAttachedTo(null);
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" unattaches ")

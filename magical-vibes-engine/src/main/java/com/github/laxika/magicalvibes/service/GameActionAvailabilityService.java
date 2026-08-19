@@ -532,6 +532,14 @@ public class GameActionAvailabilityService {
         List<ManaCost> candidateCosts = castableCosts(card);
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
                 + additionalGenericCost;
+        if (castingCostService.hasTargetBasedCostIncrease(card)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            if (validTargets != null) {
+                additionalCost += castingCostService.getMinimumTargetBasedCostIncrease(
+                        gameData, card, validTargets.validPermanentIds());
+            }
+        }
         int delveReduction = castingCostService.maximumDelveReduction(
                 gameData, playerId, card, 0, additionalCost);
         int effectiveAdditionalCost = additionalCost - delveReduction;
@@ -835,10 +843,18 @@ public class GameActionAvailabilityService {
             if (spellLimitReached || cantCastDueToAttack) {
                 continue;
             }
+            if (!card.hasType(CardType.LAND)
+                    && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD)) {
+                continue;
+            }
 
             var flashback = card.effectiveFlashbackCast();
+            if (flashback.isPresent()
+                    && !castingPermissionService.canUseFlashback(gameData, playerId, flashback.get())) {
+                flashback = Optional.empty();
+            }
             var disturb = card.getCastingOption(DisturbCast.class);
-            Card castHalf = card.graveyardCastHalf();
+            Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
             boolean grantedFlashback = flashback.isEmpty()

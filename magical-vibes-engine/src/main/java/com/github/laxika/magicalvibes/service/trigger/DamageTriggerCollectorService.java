@@ -451,6 +451,24 @@ public class DamageTriggerCollectorService {
 
     // ── ON_ENCHANTED_CREATURE_DEALT_DAMAGE ─────────────────────────────
 
+    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
+            slot = EffectSlot.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)
+    private boolean handleCountersPlaced(TriggerMatchContext match,
+            DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
+        TriggerContext.CountersPlaced countersPlaced = (TriggerContext.CountersPlaced) ctx;
+        if (countersPlaced.amount() <= 0) return false;
+
+        Card sourceCard = match.permanent().getCard();
+        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(countersPlaced.amount());
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(damage)), false,
+                sourceCard.getTargetFilter(), 0, match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} counter-placement trigger fires for {} damage",
+                match.gameData().id, sourceCard.getName(), countersPlaced.amount());
+        return true;
+    }
+
     @CollectsTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
             slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
     private boolean handleAnyCreatureDealtDamageToController(TriggerMatchContext match,

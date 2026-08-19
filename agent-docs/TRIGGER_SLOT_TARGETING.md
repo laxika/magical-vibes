@@ -205,6 +205,8 @@ permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the 
 `DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
 `ON_ALLY_PERMANENT_SACRIFICED`, `ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
+`ON_ANY_PLAYER_TAPS_LAND`, `ON_CREWS_VEHICLE`,
+`ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
 `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
 `ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Liability; fires for nontoken permanents entering any player's graveyard and bakes the graveyard owner as the trigger's target),
 `ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Scrapheap; fires for any permanent, including tokens, entering the graveyard owned by the slot's controller),
@@ -239,7 +241,8 @@ graveyard owner controls whenever a non-token card enters their graveyard from a
 `ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` (Compost; fires on every permanent controlled by
 an opponent of the graveyard owner whenever a black card enters that graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`), `ON_ENCHANTED_PERMANENT_TAPPED`,
-`ON_ALLY_PERMANENT_BECOMES_TAPPED`,
+`ON_ALLY_PERMANENT_BECOMES_TAPPED` and `ON_OPPONENT_PERMANENT_BECOMES_TAPPED` (non-targeting effects use the direct
+stack path; graveyard-card targets use the shared `SpellGraveyardTargetTrigger` flow),
 `ON_SELF_BECOMES_UNTAPPED` (Hollowsage; fires when the permanent transitions tapped→untapped, from
 the untap step or any untap effect, via `TriggerCollectionService.checkBecomesUntappedTriggers` — driven
 from `UntapStepService` and `TapUntapSupport.untapPermanent`. Targeted effects choose targets as the ability
@@ -298,6 +301,8 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
 `ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE` (Wildwood Scourge; fires once when
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
+`ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
+event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
 `ON_SELF_EVOLVES` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
 actually places the +1/+1 counter),
 `ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE` (Flourishing Defenses; global watcher — fires on

@@ -61,7 +61,9 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
             return;
         }
 
-        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
+        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                targetCard, e.filter(), entry.getCard().getId(), gameData,
+                gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId()))) {
             String filterLabel = CardPredicateUtils.describeFilter(e.filter());
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ")."));
             return;

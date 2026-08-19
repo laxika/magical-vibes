@@ -52,7 +52,7 @@ public class EachPlayerMayScryHandler implements MayEffectHandlerBean {
 
         if (!remaining.isEmpty()) {
             effectHandler.promptNext(gameData, ability.sourceCard(),
-                    new EachPlayerMayScryEffect(effect.count(), remaining));
+                    new EachPlayerMayScryEffect(effect.count(), remaining, effect.opponentsOnly()));
         }
 
         if (!gameData.interaction.isAwaitingInput()) {

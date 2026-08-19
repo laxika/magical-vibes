@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -61,7 +62,9 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapEnteringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
@@ -75,6 +78,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -992,8 +996,54 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = EvolveTriggerEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyEvolve(TriggerMatchContext match,
+            EvolveTriggerEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = pe.mayPayTargetCardId();
+        if (enteringPermanentId == null) {
+            enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        }
+        if (enteringPermanentId == null) {
+            return true;
+        }
+
+        Permanent entering = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        if (entering == null
+                || (gameQueryService.getEffectivePower(match.gameData(), entering)
+                <= gameQueryService.getEffectivePower(match.gameData(), match.permanent())
+                && gameQueryService.getEffectiveToughness(match.gameData(), entering)
+                <= gameQueryService.getEffectiveToughness(match.gameData(), match.permanent()))) {
+            return false;
+        }
+
+        int enteringPower = gameQueryService.getEffectivePower(match.gameData(), entering);
+        int enteringToughness = gameQueryService.getEffectiveToughness(match.gameData(), entering);
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId());
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringPermanentPowerAtTrigger(enteringPower);
+            entry.setTriggeringPermanentToughnessAtTrigger(enteringToughness);
+            entry.setNonTargeting(true);
+            match.gameData().enqueueTrigger(entry);
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (counter-based evolve)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
     /**
-     * "Whenever a creature you control [gated] enters, [you may] put M +1/+1 counters on it"
+     * "Whenever a creature you control [gated] enters, [you may] put M counters on it"
      * (Mighty Emergence "you may", Sigil Captain mandatory). The gate is applied upstream by an
      * {@code EnterCreatureConditionalEffect}; here we resolve the entering permanent and either queue a
      * "you may" ({@code optional}) or bake a mandatory counter placement onto the stack — both whose
@@ -1010,10 +1060,17 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to add counters to.
             return true;
         }
-        var counters = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, effect.count());
+        CardEffect counters = new PutCounterOnTargetPermanentEffect(effect.counterType(), effect.count());
+        if (effect.requiredCounterType() != null) {
+            counters = new ConditionalEffect(
+                    new TargetPermanentMatches(new PermanentHasCountersPredicate(effect.requiredCounterType())),
+                    counters);
+        }
+        String counterDescription = effect.counterType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
         if (effect.optional()) {
             var may = new MayEffect(counters,
-                    "Put " + effect.count() + " +1/+1 counter(s) on " + pe.enteringCard().getName() + "?");
+                    "Put " + effect.count() + " " + counterDescription + " counter(s) on "
+                            + pe.enteringCard().getName() + "?");
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                         enteringPermanentId, match.permanent().getId());
@@ -1031,9 +1088,9 @@ public class EnterTriggerCollectorService {
             }
         }
         logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering ({} put {} +1/+1 counter(s) on it)",
+        log.info("Game {} - {} triggers for {} entering ({} put {} {} counter(s) on it)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
-                effect.optional() ? "may" : "mandatory", effect.count());
+                effect.optional() ? "may" : "mandatory", effect.count(), counterDescription);
         return true;
     }
 

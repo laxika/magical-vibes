@@ -403,6 +403,11 @@ new ActivatedAbility(true, null,
 
 Cards: `WallOfForgottenPharaohs`
 
+For a turn-scoped OR gate that checks either an oil counter removal from a permanent the
+activating player controlled or an oil-bearing permanent entering a graveyard, use
+`OilCounterEventThisTurn`. The engine records both event forms centrally and clears them at turn
+progression; `ChurningReservoir` is the reference implementation.
+
 For an Aura ability gated on what it is attached to ("Activate only if enchanted creature is white"), use
 `EnchantedPermanentMatches(PermanentPredicate filter, String description)` — false unless the source is an
 attached Aura whose host matches the predicate. Nature's Chosen:
@@ -844,7 +849,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `ReduceActivationCostEffect` | `(DynamicAmount amount)` | reduces the generic activation cost by the evaluated amount at activation time. Use a counting amount for "This ability costs {1} less to activate for each …" (Nemesis of Mortals) |
 | `PutCounterOnControlledCreatureCost` | `(CounterType counterType, int count)` | "Put a -1/-1 counter on a creature you control: ..." — puts counter(s) on any creature you control (not just the source), chosen via the `PermanentChoiceCostHandler` pattern (auto-selects when only one creature exists, prompts when multiple). Also valid as a SPELL-slot cost (Scarscale Ritual). Hatchet Bully |
 | `ReturnCardFromGraveyardToHandCost` | `(CardPredicate predicate)` | Payable side of `ForcedCostOrElseEffect` only. "sacrifice this unless you return a [predicate] card from your graveyard to your hand" — Harvest Wurm (`CardPredicateUtils.basicLand()`). No matching graveyard card ⇒ unpayable, penalty resolves with no prompt; accepting opens a mandatory `GraveyardChoice` to `HAND` |
-| `RemoveCounterFromControlledPermanentCost` | `()` or `(CounterType...)` | Removes one counter from a permanent you control; the no-argument form allows any kind, while varargs restrict the cost to the listed kinds. As an activated-ability cost, one candidate pays automatically and several prompt a permanent choice; as a `ForcedCostOrElseEffect` cost, no counters means the penalty resolves without a prompt. On a permanent with several allowed counter kinds the first kind present is removed. Chisei, Heart of Oceans; Power Conduit; Ion Storm |
+| `RemoveCounterFromControlledPermanentCost` | `()` or `(CounterType...)` or `(int count, PermanentPredicate filter, boolean excludeSource)` | Removes one or more counters from permanents you control; the no-argument form allows any kind, varargs restrict the listed kinds, and the counted form can filter eligible permanents and exclude the source. As an activated-ability cost, one candidate pays automatically and several prompt a permanent choice. Chisei, Heart of Oceans; Power Conduit; Ion Storm; Tekuthal, Inquiry Dominus |
 | `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |
 
 ```java

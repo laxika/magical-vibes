@@ -33,6 +33,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
     private final BattlefieldEntryService battlefieldEntryService;
     private final LibrarySearchSupport librarySearchSupport;
     private final GameQueryService gameQueryService;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,6 +78,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
                     Permanent attached = new Permanent(found);
                     attached.setAttachedTo(host.getId());
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, attached);
+                    equipSupport.notifyEquipmentAttached(gameData, attached, null);
                     gameLogService.append(gameData, GameLog.builder()
                             .card(found)
                             .text(" enters the battlefield attached to ")

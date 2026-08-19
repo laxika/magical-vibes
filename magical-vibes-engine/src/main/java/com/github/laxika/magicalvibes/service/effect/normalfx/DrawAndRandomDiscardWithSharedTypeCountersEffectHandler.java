@@ -83,6 +83,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
                     int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, e.counterAmount());
                     if (placed > 0) {
                         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                        triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                         permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                                 gameData, source, placed, controllerId);

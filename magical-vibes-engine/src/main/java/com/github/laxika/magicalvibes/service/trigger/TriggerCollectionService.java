@@ -103,6 +103,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEach
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -159,6 +160,26 @@ public class TriggerCollectionService {
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
+    }
+
+    public void checkYouPutCountersTriggers(GameData gameData, UUID placingPlayerId, int amount) {
+        if (placingPlayerId == null || amount <= 0) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.CountersPlaced(placingPlayerId, amount);
+        for (Permanent permanent : new ArrayList<>(battlefield)) {
+            dispatchSlot(gameData, permanent, placingPlayerId,
+                    EffectSlot.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER, context);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            processNextSpellTargetTrigger(gameData);
+        }
     }
 
     // ── Spell-cast triggers ────────────────────────────────────────────
@@ -2087,6 +2108,10 @@ public class TriggerCollectionService {
                 && !gameData.interaction.isAwaitingInput()) {
             processNextETBTokenMultiTargetTrigger(gameData);
         }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
+        }
     }
 
     /** Drains pending multi-target trigger choices (ETB token copies and ON_SELF_CAST multi-target). */
@@ -3299,8 +3324,9 @@ public class TriggerCollectionService {
                 damagedCreature.getId(), damageDealt);
     }
 
-    private void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
-                                                int eventValue) {
+    /** Collects turn-scoped global triggers for an event that identifies a permanent. */
+    public void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
+                                               int eventValue) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (watcher.slot() != slot) continue;
 
@@ -3359,6 +3385,14 @@ public class TriggerCollectionService {
                         continue;
                     }
                     resolved = conditional.wrapped();
+                }
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} triggers on ally permanent tap (awaiting graveyard target)",
+                            gameData.id, perm.getCard().getName());
+                    continue;
                 }
                 // Bake the tapped permanent's controller only when damage needs
                 // TRIGGERING_PERMANENT_CONTROLLER (Royal Decree). triggeringPermanentId always
@@ -3425,9 +3459,17 @@ public class TriggerCollectionService {
                 boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
                 resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
                 if (resolved == null) continue;
-                if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(perm, ownerId))) {
+                  if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
+                          && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                          ConditionContext.forPermanent(perm, ownerId))) {
+                      continue;
+                  }
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} triggers on opponent permanent tap (awaiting graveyard target)",
+                            gameData.id, perm.getCard().getName());
                     continue;
                 }
                 UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
@@ -4206,6 +4248,46 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires controller-scoped triggers once for each proliferate event. */
+    public void checkProliferateTriggers(GameData gameData, UUID proliferatingPlayerId,
+                                         int proliferateCount) {
+        if (proliferateCount <= 0) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(proliferatingPlayerId);
+        if (battlefield != null) {
+            TriggerContext.Proliferate ctx = new TriggerContext.Proliferate(proliferatingPlayerId);
+            for (Permanent perm : List.copyOf(battlefield)) {
+                for (int i = 0; i < proliferateCount; i++) {
+                    dispatchSlot(gameData, perm, proliferatingPlayerId,
+                            EffectSlot.ON_CONTROLLER_PROLIFERATES, ctx);
+                }
+            }
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(proliferatingPlayerId);
+        if (graveyard == null) return;
+
+        for (Card card : new ArrayList<>(graveyard)) {
+            List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_PROLIFERATES);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (int i = 0; i < proliferateCount; i++) {
+                for (CardEffect effect : effects) {
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            proliferatingPlayerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard trigger queued on proliferate",
+                            gameData.id, card.getName());
+                }
+            }
+        }
+    }
+
     private void collectGraveyardOpponentLifeGainTriggers(GameData gameData, UUID gainingPlayerId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(gainingPlayerId)) continue;
@@ -4742,6 +4824,7 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             boolean anyEffectFired = false;
+            boolean oncePerTurnFired = false;
             List<CardEffect> stackEffects = new ArrayList<>();
 
             for (CardEffect effect : effects) {
@@ -4750,6 +4833,10 @@ public class TriggerCollectionService {
                 if (resolvedEffect == null) continue;
                 if (!passesInterveningIf(gameData, perm, dyingCreatureControllerId, resolvedEffect,
                         dyingPermanent.getId(), dyingPower)) continue;
+
+                boolean oncePerTurn = resolvedEffect instanceof OncePerTurnTriggerEffect;
+                resolvedEffect = unwrapOncePerTurnTrigger(gameData, perm, resolvedEffect);
+                if (resolvedEffect == null) continue;
 
                 if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
@@ -4766,10 +4853,16 @@ public class TriggerCollectionService {
                             dyingPower
                     ));
                     anyEffectFired = true;
+                    if (oncePerTurn) {
+                        oncePerTurnFired = true;
+                    }
                 } else if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
                     var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
                     dispatch(match, EffectSlot.ON_ALLY_CREATURE_DIES, resolvedEffect, ctx);
                     anyEffectFired = true;
+                    if (oncePerTurn) {
+                        oncePerTurnFired = true;
+                    }
                 } else {
                     // Enduring Renewal / similar: bind the dying card id onto effects that need it
                     // before the batched stack entry is created.
@@ -4782,6 +4875,9 @@ public class TriggerCollectionService {
                                 countCountersOnPermanent(dyingPermanent));
                     }
                     stackEffects.add(resolvedEffect);
+                    if (oncePerTurn) {
+                        oncePerTurnFired = true;
+                    }
                 }
             }
 
@@ -4800,6 +4896,9 @@ public class TriggerCollectionService {
                 entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
                 gameData.stack.add(entry);
                 anyEffectFired = true;
+            }
+            if (oncePerTurnFired) {
+                gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
             }
 
             if (anyEffectFired) {
@@ -5746,12 +5845,14 @@ public class TriggerCollectionService {
             return;
         }
 
-        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, controllerId)) return;
+        poisonAmount = gameQueryService.applyPoisonCounterReplacement(gameData, controllerId, poisonAmount);
+        if (poisonAmount <= 0) return;
 
         poisonAmount = gameQueryService.replacePoisonCounters(gameData, controllerId, poisonAmount);
         if (poisonAmount <= 0) return;
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
         gameData.playerPoisonCounters.put(controllerId, currentPoison + poisonAmount);
+        checkYouPutCountersTriggers(gameData, controllerId, poisonAmount);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " gets " + poisonAmount + " poison counter"
@@ -5766,8 +5867,8 @@ public class TriggerCollectionService {
      * card was registered, push a triggered ability that returns it from its owner's graveyard to the
      * battlefield under its owner's control. Fires at most once per registration.
      */
-    public void triggerDelayedReturnOnDeath(GameData gameData, UUID dyingCreatureCardId, Card graveyardCard, UUID ownerId) {
-        Boolean enterTapped = gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.remove(dyingCreatureCardId);
+    public void triggerDelayedReturnOnDeath(GameData gameData, UUID dyingPermanentCardId, Card graveyardCard, UUID ownerId) {
+        Boolean enterTapped = gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.remove(dyingPermanentCardId);
         if (enterTapped == null) {
             return;
         }
@@ -6040,6 +6141,7 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((auraControllerId, perm) -> {
             if (!perm.isAttached() || !enteringCreatureControllerId.equals(perm.getAttachedTo())) return;
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, auraControllerId)) return;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) return;
@@ -6163,7 +6265,6 @@ public class TriggerCollectionService {
      */
     public void checkAllyNontokenArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
         if (enteringCard.isToken()) return;
-        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
 
@@ -6174,6 +6275,9 @@ public class TriggerCollectionService {
                 break;
             }
         }
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        if (enteringPermanent == null || !gameQueryService.isArtifact(gameData, enteringPermanent)) return;
 
         int extraTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCard);
         var ctx = new TriggerContext.PermanentEnters(
@@ -6238,8 +6342,6 @@ public class TriggerCollectionService {
      * if you control five or more Blood tokens, transform).
      */
     public void checkAllyArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
-        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
-
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         UUID enteringPermanentId = null;
         for (Permanent p : battlefield) {
@@ -6248,6 +6350,9 @@ public class TriggerCollectionService {
                 break;
             }
         }
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        if (enteringPermanent == null || !gameQueryService.isArtifact(gameData, enteringPermanent)) return;
         int extraTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCard);
         var ctx = new TriggerContext.PermanentEnters(
                 enteringCard, controllerId, null, 1 + extraTriggers, enteringPermanentId);
@@ -6373,6 +6478,7 @@ public class TriggerCollectionService {
         int extraTriggers = gameQueryService.countETBExtraTriggersForAnyPermanent(gameData, controllerId);
         TriggerContext.TokensEnter ctx = new TriggerContext.TokensEnter(count, 1 + extraTriggers);
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) continue;
             List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
 
@@ -6400,6 +6506,7 @@ public class TriggerCollectionService {
         int triggerCount = 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCard);
         for (Permanent perm : battlefield) {
             if (perm.getCard() == enteringCard) continue;
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) continue;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
@@ -6461,6 +6568,52 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires an Equipment's targeted "becomes attached" abilities after a new attachment. */
+    public void checkEquipmentAttachedTriggers(GameData gameData, Permanent equipment, UUID oldAttachedTo) {
+        if (equipment == null || equipment.getAttachedTo() == null
+                || equipment.getAttachedTo().equals(oldAttachedTo)
+                || !equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            return;
+        }
+
+        Permanent equipped = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        if (equipped == null || !gameQueryService.isCreature(gameData, equipped)) return;
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, equipment.getId());
+        if (controllerId == null) return;
+
+        List<CardEffect> effects = equipment.getCard().getEffects(EffectSlot.ON_EQUIPMENT_ATTACHED);
+        if (effects == null || effects.isEmpty()) return;
+
+        for (CardEffect effect : effects) {
+            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                        equipment.getCard(), controllerId, new ArrayList<>(List.of(effect)),
+                        equipment.getId(), equipment.getCard().getTargetFilter(), equipped.getId()));
+            } else {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        equipment.getCard(),
+                        controllerId,
+                        equipment.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        equipment.getId());
+                entry.setTriggeringPermanentId(equipped.getId());
+                gameData.enqueueTrigger(entry);
+            }
+            gameLogService.append(gameData, GameLog.abilityTriggers(equipment.getCard()));
+            log.info("Game {} - {} triggers when attached to {}", gameData.id,
+                    equipment.getCard().getName(), equipped.getCard().getName());
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
+        }
+    }
+
     /**
      * "Whenever an enchantment enters under your control" (ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD).
      * Supports subtype gating via {@code TriggeringCardConditionalEffect} (e.g. Trial of Solidarity's
@@ -6472,6 +6625,7 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         for (Permanent perm : battlefield) {
             if (perm.getCard() == enteringCard) continue;
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) continue;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
@@ -6553,6 +6707,7 @@ public class TriggerCollectionService {
         }
         for (Permanent perm : battlefield) {
             if (perm.getCard() == enteringLand) continue;
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, landControllerId)) continue;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
@@ -6632,7 +6787,7 @@ public class TriggerCollectionService {
             }
         }
 
-        collectEmblemAllyLandEntersTriggers(gameData, landControllerId, enteringLand);
+        collectEmblemAllyLandEntersTriggers(gameData, landControllerId, enteringLand, triggerCount);
 
         // Graveyard-resident landfall triggers (GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD, e.g. Reach of Branches).
         List<Card> graveyard = gameData.playerGraveyards.get(landControllerId);
@@ -6664,20 +6819,36 @@ public class TriggerCollectionService {
     }
 
     private void collectEmblemAllyLandEntersTriggers(GameData gameData, UUID landControllerId,
-                                                      Card enteringLand) {
+                                                      Card enteringLand, int triggerCount) {
         for (Emblem emblem : gameData.emblems) {
             if (!emblem.controllerId().equals(landControllerId)) continue;
 
             for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof DrawCardOnAllyLandEntersEffect)) continue;
-
                 Card source = emblem.sourceCard();
                 Card sourceCard = source != null ? source : enteringLand;
-                gameData.queueMayAbility(sourceCard, emblem.controllerId(),
-                        new MayEffect(new DrawCardEffect(1), "Draw a card?"));
                 String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                gameLogService.append(gameData, GameLog.text(description + " triggers."));
-                log.info("Game {} - {} landfall draw trigger queued", gameData.id, description);
+                if (effect instanceof DrawCardOnAllyLandEntersEffect) {
+                    for (int i = 0; i < triggerCount; i++) {
+                        gameData.queueMayAbility(sourceCard, emblem.controllerId(),
+                                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
+                        gameLogService.append(gameData, GameLog.text(description + " triggers."));
+                        log.info("Game {} - {} landfall draw trigger queued", gameData.id, description);
+                    }
+                } else if (effect instanceof DealDamageToAnyTargetOnAllyLandEntersEffect damageTrigger
+                        && enteringLand.getSubtypes().contains(damageTrigger.landSubtype())) {
+                    for (int i = 0; i < triggerCount; i++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                                sourceCard,
+                                emblem.controllerId(),
+                                new ArrayList<>(List.of(new DealDamageToAnyTargetEffect(damageTrigger.damage())))
+                        ));
+                        gameLogService.append(gameData,
+                                GameLog.text(description + " triggers — choose a target for "
+                                        + damageTrigger.damage() + " damage."));
+                        log.info("Game {} - {} landfall damage trigger queued ({})",
+                                gameData.id, description, damageTrigger.damage());
+                    }
+                }
             }
         }
     }
@@ -6706,6 +6877,7 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!playerId.equals(graveyardOwnerId)) return;
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, playerId)) return;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD);
             if (effects == null || effects.isEmpty()) return;
@@ -6745,6 +6917,7 @@ public class TriggerCollectionService {
         }
 
         gameData.forEachPermanent((playerId, perm) -> {
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, playerId)) return;
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_PERMANENT_ENTERS_FROM_GRAVEYARD);
             if (effects == null || effects.isEmpty()) return;
 
@@ -6790,6 +6963,9 @@ public class TriggerCollectionService {
             }
         }
         if (enteringPermanent == null || enteringPermanent.getEnteredFromGraveyardOwnerId() == null) {
+            return;
+        }
+        if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, enteringControllerId)) {
             return;
         }
 
@@ -6875,9 +7051,18 @@ public class TriggerCollectionService {
 
     private boolean dispatch(TriggerMatchContext match, EffectSlot slot, CardEffect effect,
                              TriggerContext context) {
+        if (context instanceof TriggerContext.PermanentEnters
+                && gameQueryService.areOpponentPermanentETBTriggersSuppressed(
+                match.gameData(), match.controllerId())) {
+            return false;
+        }
         int previousCopies = match.gameData().beginTriggeredAbilityCopies(1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                        match.gameData(), match.controllerId(), match.permanent()));
+                        match.gameData(), match.controllerId(), match.permanent())
+                + (context.causedByCreatureDying()
+                ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
+                        match.gameData(), match.controllerId(), match.permanent())
+                : 0));
         try {
             return registry.dispatch(match, slot, effect, context);
         } finally {
@@ -6887,6 +7072,9 @@ public class TriggerCollectionService {
 
     private void collectEvolveTrigger(GameData gameData, UUID controllerId, Permanent source,
                                       Permanent enteringPermanent, int triggerCount) {
+        if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) {
+            return;
+        }
         int enteringPower = gameQueryService.getEffectivePower(gameData, enteringPermanent);
         int enteringToughness = gameQueryService.getEffectiveToughness(gameData, enteringPermanent);
         if (enteringPower <= gameQueryService.getEffectivePower(gameData, source)

@@ -85,6 +85,7 @@ public class ExampleCard extends Card {
 
 - Upkeep sacrifice-unless-discard (any card):
   - `addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessDiscardCardTypeEffect(null))`
+  - For a reflexive post-discard effect, use `new SacrificeUnlessDiscardCardTypeEffect(null, thenEffect)`; target filters on `thenEffect` receive the discarded card's mana value as X.
   - Pass `CardType.X` instead of `null` to restrict to a specific card type
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 

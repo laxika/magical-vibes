@@ -74,6 +74,7 @@ public enum CounterType {
     MINUS_ZERO_MINUS_ONE,
     MINUS_ZERO_MINUS_TWO,
     OMEN,
+    OIL,
     ORE,
     PAIN,
     PARALYZATION,
@@ -122,13 +123,15 @@ public enum CounterType {
     FLYING,
     FIRST_STRIKE,
     LIFELINK,
-    WINCH;
+    WINCH,
+    INDESTRUCTIBLE;
 
     public Keyword grantedKeyword() {
         return switch (this) {
             case FLYING -> Keyword.FLYING;
             case FIRST_STRIKE -> Keyword.FIRST_STRIKE;
             case LIFELINK -> Keyword.LIFELINK;
+            case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
             default -> null;
         };
     }

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
@@ -130,6 +132,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSour
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsKindredPredicate;
@@ -290,7 +293,7 @@ public class PredicateEvaluationService {
 
         return switch (predicate) {
             case CardTypePredicate p ->
-                    card.hasType(p.cardType());
+                    gameQueryService.cardHasType(card, p.cardType(), gameData, cardOwnerId);
             case CardSubtypePredicate p ->
                     gameQueryService.cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
             case CardHasSourceChosenSubtypePredicate ignored -> {
@@ -344,7 +347,7 @@ public class PredicateEvaluationService {
             case CardIsTokenPredicate ignored ->
                     card.isToken();
             case CardIsHistoricPredicate ignored ->
-                    card.hasType(CardType.ARTIFACT)
+                    gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, cardOwnerId)
                             || card.getSupertypes().contains(CardSupertype.LEGENDARY)
                             || card.getSubtypes().contains(CardSubtype.SAGA);
             case CardSupertypePredicate p ->
@@ -358,6 +361,14 @@ public class PredicateEvaluationService {
                         ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 yield sourcePower != null && card.getManaValue() <= sourcePower;
+            }
+            case CardManaValueLessThanSourceLoyaltyPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                yield sourcePermanent != null
+                        && card.getManaValue() < sourcePermanent.getCounterCount(CounterType.LOYALTY);
             }
             case CardMaxManaValuePredicate p ->
                     card.getManaValue() <= p.maxManaValue();
@@ -382,7 +393,9 @@ public class PredicateEvaluationService {
                     yield true;
                 }
                 yield java.util.Arrays.stream(CardType.values())
-                        .anyMatch(type -> card.hasType(type) && imprintedCard.hasType(type));
+                    .anyMatch(type -> gameQueryService.cardHasType(card, type, gameData, cardOwnerId)
+                            && gameQueryService.cardHasType(imprintedCard, type, gameData,
+                            imprintedCard.getOwnerId()));
             }
             case CardToughnessLessThanSourceToughnessPredicate ignored -> {
                 if (gameData == null || sourceCardId == null || card.getToughness() == null) {
@@ -558,6 +571,8 @@ public class PredicateEvaluationService {
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            case PermanentIsEquippedPredicate ignored ->
+                    gameData != null && gameQueryService.isEquipped(gameData, permanent);
             case PermanentAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.isAttached()) {
                     yield false;
@@ -1089,6 +1104,15 @@ public class PredicateEvaluationService {
                         .count();
                 yield matchingCount <= countPredicate.maxCount();
             }
+            case PermanentControllerPoisonCountersAtLeastPredicate poisonPredicate -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID targetController = gameData.findControllerOf(permanent);
+                yield targetController != null
+                        && gameData.playerPoisonCounters.getOrDefault(targetController, 0)
+                        >= poisonPredicate.minimumPoisonCounters();
+            }
             case PermanentAttachedToSourceControllerPredicate ignored ->
                     sourceControllerId != null && permanent.isAttached()
                             && sourceControllerId.equals(permanent.getAttachedTo());
@@ -1519,6 +1543,10 @@ public class PredicateEvaluationService {
             case PermanentIsBlockingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsEquippedPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && gameQueryService.isEquipped(gameData, permanent);
+            }
             case PermanentIsFaceDownPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsKindredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -2135,13 +2163,15 @@ public class PredicateEvaluationService {
                     entry.getSourceZone() == castFrom.sourceZone();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
-            // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryIsSingleTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;
             case StackEntryHasXInManaCostPredicate ignored -> false;
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
-            case StackEntryManaValuePredicate ignored -> false;
-            case StackEntryMaxManaValuePredicate ignored -> false;
+            case StackEntryManaValuePredicate manaValue ->
+                    entry.getCard().getManaValue() + entry.getXValue() == manaValue.manaValue();
+            case StackEntryMaxManaValuePredicate maxManaValue ->
+                    entry.getCard().getManaValue() + entry.getXValue() <= maxManaValue.maxManaValue();
+            // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;

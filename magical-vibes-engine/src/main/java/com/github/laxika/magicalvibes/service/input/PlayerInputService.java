@@ -217,6 +217,15 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(validIds), maxCount, context, prompt));
     }
 
+    public void beginMultiPermanentOrPlayerChoice(GameData gameData, UUID playerId,
+                                                   List<UUID> validPermanentIds,
+                                                   List<UUID> validPlayerIds, int maxCount,
+                                                   MultiPermanentChoiceContext context, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
+                playerId, new ArrayList<>(validPermanentIds), new ArrayList<>(validPlayerIds),
+                maxCount, context, prompt));
+    }
+
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
         beginMultiGraveyardChoice(gameData, playerId, cards, maxCount, 0, prompt);
     }
@@ -876,6 +885,17 @@ public class PlayerInputService {
                 playerId, null, null, context, options,
                 sourceCardName + " — Choose a counter to add another of."));
         log.info("Game {} - Awaiting {} to choose a counter kind for {}", gameData.id, playerId, targetId);
+    }
+
+    public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                 String sourceCardName, int remainingSelections,
+                                                 List<CounterType> counterTypes) {
+        ChoiceContext.RemoveChosenCountersChoice context = new ChoiceContext.RemoveChosenCountersChoice(
+                targetId, playerId, sourceCardName, remainingSelections, counterTypes);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, context.options(),
+                sourceCardName + " — Choose up to " + remainingSelections + " counters to remove."));
+        log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
     }
 
     /** Dismantle: choose whether the copied counter count becomes +1/+1 or charge counters. */

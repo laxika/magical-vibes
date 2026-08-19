@@ -154,6 +154,7 @@ public class GraveyardChoiceHandlerService {
         UUID trackWithSourcePermanentId = graveyardChoice.trackWithSourcePermanentId();
         CardSubtype grantSourceHasteIfSubtype = graveyardChoice.grantSourceHasteIfSubtype();
         UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
+        boolean enterTapped = graveyardChoice.enterTapped();
         // May ability graveyard targeting context
         Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
         UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
@@ -270,6 +271,9 @@ public class GraveyardChoiceHandlerService {
                     }
                     if (grantSubtype != null && !perm.getGrantedSubtypes().contains(grantSubtype)) {
                         perm.getGrantedSubtypes().add(grantSubtype);
+                    }
+                    if (enterTapped) {
+                        perm.tap();
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
 

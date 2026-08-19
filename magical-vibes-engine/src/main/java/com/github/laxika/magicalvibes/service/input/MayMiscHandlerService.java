@@ -116,6 +116,15 @@ public class MayMiscHandlerService {
                 equipPerm.setTimestamp(gameData.nextTimestamp());
                 equipSupport.applySacrificeOnUnattachIfNeeded(
                         gameData, equipPerm, oldAttachedTo, targetPerm.getId());
+                if (!equipPerm.getCard().isAura()) {
+                    equipSupport.expireAttachedCopyEffects(gameData, equipPerm);
+                }
+                equipPerm.setAttachedTo(targetPerm.getId());
+                // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+                equipPerm.setTimestamp(gameData.nextTimestamp());
+                if (!equipPerm.getCard().isAura()) {
+                    equipSupport.notifyEquipmentAttached(gameData, equipPerm, oldAttachedTo);
+                }
                 
                 gameLogService.append(gameData, GameLog.cardTextCard(equipPerm.getCard(), " is attached to ", targetPerm.getCard(), "."));
                 log.info("Game {} - {} attached to {}", gameData.id, equipPerm.getCard().getName(), targetPerm.getCard().getName());

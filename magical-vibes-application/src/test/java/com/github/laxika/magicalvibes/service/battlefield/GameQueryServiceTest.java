@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
@@ -3062,6 +3064,28 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(gqs.getEffectiveColors(gd, perm)).containsExactly(CardColor.GREEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("canCastSpellFromZone")
+    class CanCastSpellFromZone {
+
+        @Test
+        @DisplayName("blocks noncreature spells only in the listed zones")
+        void blocksNoncreatureSpellsOnlyInListedZones() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Soulless Jailer",
+                    new NoncreatureSpellsCantBeCastFromZonesEffect(Set.of(Zone.GRAVEYARD, Zone.EXILE))));
+
+            Card instant = new Card();
+            instant.setName("Test Instant");
+            instant.setType(CardType.INSTANT);
+            Card creature = createCreature("Test Creature", 2, 2, CardColor.GREEN);
+
+            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.GRAVEYARD)).isFalse();
+            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.EXILE)).isFalse();
+            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.HAND)).isTrue();
+            assertThat(gqs.canCastSpellFromZone(gd, creature, Zone.GRAVEYARD)).isTrue();
         }
     }
 

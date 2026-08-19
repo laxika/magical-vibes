@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
@@ -1799,6 +1800,63 @@ class SpellCastTriggerCollectorServiceTest {
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — FirstMulticoloredSpellCastTriggerEffect")
+    class FirstMulticoloredSpellCastTrigger {
+
+        @Test
+        @DisplayName("tracks the first multicolored spell independently for each player")
+        void tracksEachPlayerIndependently() {
+            Permanent perm = createPermanent("Zenith Chronicler");
+            var effect = new FirstMulticoloredSpellCastTriggerEffect(List.of(new BoostSelfEffect(1, 1)));
+            Card player1Spell = createCard("Player 1 Spell");
+            player1Spell.setColors(List.of(CardColor.RED, CardColor.BLUE));
+            Card player2Spell = createCard("Player 2 Spell");
+            player2Spell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
+            when(predicateEvaluationService.matchesCardPredicate(any(), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            gd.recordSpellCast(player1Id, player1Spell);
+            boolean player1Result = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(player1Spell, player1Id, true));
+
+            gd.recordSpellCast(player2Id, player2Spell);
+            boolean player2Result = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(player2Spell, player2Id, true));
+
+            assertThat(player1Result).isTrue();
+            assertThat(player2Result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("does not trigger for a player's later multicolored spell")
+        void ignoresLaterMulticoloredSpell() {
+            Permanent perm = createPermanent("Zenith Chronicler");
+            var effect = new FirstMulticoloredSpellCastTriggerEffect(List.of(new BoostSelfEffect(1, 1)));
+            Card firstSpell = createCard("First Spell");
+            firstSpell.setColors(List.of(CardColor.RED, CardColor.BLUE));
+            Card secondSpell = createCard("Second Spell");
+            secondSpell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
+            when(predicateEvaluationService.matchesCardPredicate(any(), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            gd.recordSpellCast(player1Id, firstSpell);
+            registry.dispatch(match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(firstSpell, player1Id, true));
+            gd.recordSpellCast(player1Id, secondSpell);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(secondSpell, player1Id, true));
 
             assertThat(result).isFalse();
             assertThat(gd.stack).hasSize(1);

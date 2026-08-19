@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Capability interface for static effects that reduce the generic mana portion of activated
  * abilities of matching permanents. The effect is symmetric unless its predicate narrows the
@@ -19,6 +22,12 @@ public interface ActivatedAbilityCostReducingEffect extends CardEffect {
     /** Whether this reduction applies to the particular ability being activated. */
     default boolean appliesTo(ActivatedAbility ability) {
         return true;
+    }
+
+    /** Whether this reduction applies to the ability and its chosen targets. */
+    default boolean appliesTo(ActivatedAbility ability, UUID reducingPermanentId,
+                              UUID targetId, List<UUID> targetIds) {
+        return appliesTo(ability);
     }
 
     /** Whether this reduction applies symmetrically to abilities on every battlefield. */

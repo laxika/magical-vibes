@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCrea
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurn
 import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentUntilCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -216,6 +217,7 @@ public final class LayerClassifier {
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
         map.put(GrantSubtypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantCardTypeToOwnNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCardTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(RemoveCardTypeFromTargetPermanentEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSupertypeToEnchantedPermanentEffect.class, fixed(Layer.L4_TYPE));
@@ -341,7 +343,7 @@ public final class LayerClassifier {
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainKeywordsOfCreatureCardsExiledWithSourceEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect.class,
+        map.put(GainActivatedAbilitiesOfCardsInAllGraveyardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));

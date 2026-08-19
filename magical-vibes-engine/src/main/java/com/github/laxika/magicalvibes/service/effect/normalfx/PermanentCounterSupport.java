@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -55,6 +58,19 @@ public class PermanentCounterSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    void setTriggerCollectionService(@Lazy TriggerCollectionService triggerCollectionService) {
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target, int amount) {
+        if (triggerCollectionService != null && target != null && amount > 0) {
+            triggerCollectionService.checkYouPutCountersTriggers(
+                    gameData, placingPlayerId(gameData, entry, target), amount);
+        }
+    }
 
     public void removeCountersAndTransform(GameData gameData, Permanent self, CounterType counterType, String counterName) {
         // Remove all counters of that type
@@ -105,6 +121,7 @@ public class PermanentCounterSupport {
             return;
         }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+        notifyCountersPlaced(gameData, entry, target, counters);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
         recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
 
@@ -128,13 +145,14 @@ public class PermanentCounterSupport {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
-                    case FLYING, FIRST_STRIKE, LIFELINK -> {
+                    case FLYING, FIRST_STRIKE, LIFELINK, INDESTRUCTIBLE -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
                         perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
                     }
                     default -> throw new IllegalArgumentException("Unsupported counter type for placement: " + counterType);
                 }
                 recordCounterPlacedOnCreature(gameData, perm, placingPlayerId(gameData, entry, perm));
+                notifyCountersPlaced(gameData, entry, perm, placed);
                 affectedCards.add(perm.getCard());
             }
         }
@@ -206,6 +224,7 @@ public class PermanentCounterSupport {
             case LORE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.LORE, target.getCounterCount(CounterType.LORE) + 1); yield "lore"; }
             case LOYALTY -> { target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) + count); yield "loyalty"; }
             case LUCK -> { target.setCounterCount(CounterType.LUCK, target.getCounterCount(CounterType.LUCK) + count); yield "luck"; }
+            case OIL -> { target.setCounterCount(CounterType.OIL, target.getCounterCount(CounterType.OIL) + count); yield "oil"; }
             case PLUS_ONE_PLUS_ONE -> {
                 if (count <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
                     yield null;
@@ -356,7 +375,7 @@ public class PermanentCounterSupport {
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
             case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
             case TIDE -> { target.setCounterCount(CounterType.TIDE, target.getCounterCount(CounterType.TIDE) + count); yield "tide"; }
-            case FLYING, FIRST_STRIKE, LIFELINK -> {
+            case FLYING, FIRST_STRIKE, LIFELINK, INDESTRUCTIBLE -> {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
                 if (count > 0) {
                     target.setCounterTimestamp(counterType, gameData.nextTimestamp());
@@ -367,6 +386,7 @@ public class PermanentCounterSupport {
         };
         if (counterName == null || count <= 0) return;
 
+        notifyCountersPlaced(gameData, entry, target, count);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
             recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
@@ -446,6 +466,9 @@ public class PermanentCounterSupport {
 
         int removed = Math.min(current, amount);
         target.setCounterCount(counterType, current - removed);
+        if (counterType == CounterType.OIL) {
+            gameData.recordOilCounterRemoved(target, removed);
+        }
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(" removes " + removed + " " + counterTypeName(counterType) + " counter(s).")
@@ -467,8 +490,12 @@ public class PermanentCounterSupport {
                         permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - remaining);
             }
         } else {
-            permanent.setCounterCount(counterType,
-                    permanent.getCounterCount(counterType) - count);
+            int current = permanent.getCounterCount(counterType);
+            int removed = Math.min(current, count);
+            permanent.setCounterCount(counterType, current - removed);
+            if (counterType == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, removed);
+            }
         }
 
         String counterName = counterTypeName(counterType);

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureHasCountersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -333,6 +334,42 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
                 .isInstanceOf(PutCounterOnTargetPermanentEffect.class);
+    }
+
+    @Test
+    @DisplayName("Ally-creature counter gate matches the entering permanent's oil counters")
+    void allyCreatureCounterConditionalMatchesEnteringPermanent() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new EnteringCreatureHasCountersConditionalEffect(CounterType.OIL,
+                        new PutCountersOnEnteringCreatureEffect(CounterType.OIL, 1, false)));
+
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        enteringPermanent.setCounterCount(CounterType.OIL, 1);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        PutCounterOnTargetPermanentEffect counter = (PutCounterOnTargetPermanentEffect)
+                gd.stack.getFirst().getEffectsToResolve().getFirst();
+        assertThat(counter.counterType()).isEqualTo(CounterType.OIL);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+    }
+
+    @Test
+    @DisplayName("Ally-creature counter gate skips the entering permanent without oil counters")
+    void allyCreatureCounterConditionalSkipsEnteringPermanentWithoutCounter() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new EnteringCreatureHasCountersConditionalEffect(CounterType.OIL,
+                        new PutCountersOnEnteringCreatureEffect(CounterType.OIL, 1, false)));
+
+        Card entering = enteringCreature(2, 2);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

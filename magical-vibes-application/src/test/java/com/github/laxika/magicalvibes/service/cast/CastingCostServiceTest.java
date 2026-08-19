@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargeting
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostForTargetingSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
@@ -828,6 +830,41 @@ class CastingCostServiceTest {
             Permanent creature = new Permanent(new Card());
             ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
                     false, "{2}", List.of(), "Creature ability");
+        @DisplayName("Other-only equip cost reduction excludes the source Equipment")
+        void otherOnlyEquipCostReductionExcludesSourceEquipment() {
+            Card whip = new Card();
+            whip.addEffect(EffectSlot.STATIC, new ReduceEquipCostEffect(1, true));
+            Permanent reducer = new Permanent(whip);
+            gd.playerBattlefields.get(player1Id).add(reducer);
+
+            Permanent otherEquipment = new Permanent(new Card());
+            ActivatedAbility equipAbility = new EquipActivatedAbility("{2}");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenAnswer(invocation -> {
+                        Permanent candidate = invocation.getArgument(0);
+                        FilterContext context = invocation.getArgument(2);
+                        return candidate.getId().equals(otherEquipment.getId())
+                                && reducer.getId().equals(context.sourcePermanentId());
+                    });
+
+            assertThat(svc.getActivatedAbilityCostReduction(
+                    gd, player1Id, otherEquipment, equipAbility)).isEqualTo(1);
+            assertThat(svc.getActivatedAbilityCostReduction(
+                    gd, player1Id, reducer, equipAbility)).isZero();
+        }
+
+        @Test
+        @DisplayName("Targeted Equipment ability reduction applies only to the reducing permanent")
+        void targetedEquipmentAbilityCostReductionUsesChosenTarget() {
+            Card aspirant = new Card();
+            aspirant.addEffect(EffectSlot.STATIC,
+                    new ReduceActivatedAbilityCostForTargetingSourceEffect(1));
+            Permanent reducer = new Permanent(aspirant);
+            gd.playerBattlefields.get(player1Id).add(reducer);
+
+            Permanent equipment = new Permanent(new Card());
+            ActivatedAbility ability = new EquipActivatedAbility("{1}");
             when(predicateEvaluationService.matchesPermanentPredicate(
                     any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
                     .thenReturn(true);
@@ -836,6 +873,12 @@ class CastingCostServiceTest {
                     .isZero();
             assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
                     .isEqualTo(2);
+            assertThat(svc.getActivatedAbilityCostReduction(
+                    gd, player1Id, equipment, ability, reducer.getId(), List.of()))
+                    .isEqualTo(1);
+            assertThat(svc.getActivatedAbilityCostReduction(
+                    gd, player1Id, equipment, ability, UUID.randomUUID(), List.of()))
+                    .isZero();
         }
     }
 
@@ -885,6 +928,25 @@ class CastingCostServiceTest {
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, stomp, List.of(dinosaur.getId())))
                     .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Target-based increase applies when the first target matches")
+        void targetBasedIncreaseApplies() {
+            var predicate = new PermanentIsCreaturePredicate();
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.STATIC,
+                    new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 3));
+
+            Card creatureCard = new Card();
+            creatureCard.setType(CardType.CREATURE);
+            Permanent creature = new Permanent(creatureCard);
+            gd.playerBattlefields.get(player2Id).add(creature);
+
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, predicate)).thenReturn(true);
+
+            assertThat(svc.getTargetBasedCostIncrease(gd, spell, creature.getId(), null)).isEqualTo(3);
         }
 
         @Test
@@ -1297,9 +1359,10 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("SacrificeCreatureOrPayManaCost — true with creature, or with enough mana for combined cost")
-        void sacrificeCreatureOrPayManaCost() {
-            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost("{3}{B}"));
+        @DisplayName("SacrificePermanentOrPayManaCost — true with creature, or with enough mana for combined cost")
+        void sacrificePermanentOrPayManaCost() {
+            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost(
+                    "{3}{B}", new PermanentIsCreaturePredicate(), "a creature"));
             spell.setManaCost("{B}");
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
 

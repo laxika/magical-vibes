@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
@@ -411,7 +412,7 @@ public class MayCastHandlerService {
         String castLabel = castEffect.withoutPayingManaCost() ? " without paying its mana cost" : "";
 
         // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
-        if (accepted && !gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
+        if (accepted && !gameQueryService.canCastSpellFromZone(gameData, cardToCast, Zone.GRAVEYARD)) {
             
             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast from the graveyard."));
             accepted = false;
@@ -508,6 +509,107 @@ public class MayCastHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleCastCardFromGraveyardIfNoSpellThisTurnChoice(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
+            CastTargetCardFromGraveyardIfNoSpellThisTurnEffect castEffect) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " declines to cast ", cardToCast, "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (!gameQueryService.canCastSpellFromZone(gameData, cardToCast, Zone.GRAVEYARD)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());
+        UUID graveyardOwnerId = graveyardCard == null
+                ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToCast.getId());
+        boolean validScope = graveyardOwnerId != null && switch (castEffect.scope()) {
+            case OPPONENT_GRAVEYARD -> !graveyardOwnerId.equals(player.getId());
+            case CONTROLLERS_GRAVEYARD -> graveyardOwnerId.equals(player.getId());
+            case ALL_GRAVEYARDS -> true;
+        };
+        boolean matchesFilter = graveyardCard != null
+                && (castEffect.filter() == null
+                || predicateEvaluationService.matchesCardPredicate(graveyardCard, castEffect.filter(), cardToCast.getId()));
+        if (!validScope || !matchesFilter) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " is no longer a legal card to cast from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        StackEntryType spellType = switch (cardToCast.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Unsupported card type: " + cardToCast.getType());
+        };
+        boolean isPermanentSpell = cardToCast.hasType(CardType.CREATURE)
+                || cardToCast.hasType(CardType.ARTIFACT)
+                || cardToCast.hasType(CardType.ENCHANTMENT)
+                || cardToCast.hasType(CardType.PLANESWALKER)
+                || cardToCast.hasType(CardType.BATTLE);
+        List<CardEffect> spellEffects = isPermanentSpell
+                ? List.of()
+                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+
+        if (EffectResolution.needsTarget(cardToCast)) {
+            List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
+            if (validTargets.isEmpty()) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
+            permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
+                            spellEffects, spellType, false, false, graveyardOwnerId, true));
+            playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                    "Choose a target for " + cardToCast.getName() + ".");
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " is being cast from the graveyard, choosing a target."));
+            return;
+        }
+
+        try {
+            spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
+                    Zone.GRAVEYARD);
+        } catch (IllegalStateException ex) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast because its mana cost can't be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
+        StackEntry stackEntry = new StackEntry(
+                spellType, cardToCast, player.getId(), cardToCast.getName(),
+                spellEffects, 0, (UUID) null, null);
+        stackEntry.setOwnerIdOverride(graveyardOwnerId);
+        stackEntry.setSourceZone(Zone.GRAVEYARD);
+        gameData.stack.add(stackEntry);
+        gameData.recordSpellCast(player.getId(), cardToCast);
+        gameData.preventAdditionalSpellCastsThisTurn(player.getId());
+        gameData.priorityPassedBy.clear();
+
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(cardToCast)
+                .text(" from the graveyard.").build());
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     /**
      * Handles the "you may play target [type] card from your graveyard without paying its mana cost"
      * choice (e.g. Horde of Notions). If accepted: a land is put onto the battlefield, any other card
@@ -529,7 +631,7 @@ public class MayCastHandlerService {
 
         // Non-land cards can't be cast from graveyards if a permanent forbids it (e.g. Ashes of the Abhorrent).
         if (!cardToPlay.hasType(CardType.LAND)
-                && !gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
+                && !gameQueryService.canCastSpellFromZone(gameData, cardToPlay, Zone.GRAVEYARD)) {
             
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast from the graveyard."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

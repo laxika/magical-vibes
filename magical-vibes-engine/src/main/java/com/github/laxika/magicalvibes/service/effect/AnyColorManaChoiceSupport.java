@@ -148,6 +148,8 @@ public final class AnyColorManaChoiceSupport {
             case FLASHBACK_ONLY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, null, true);
             case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, amount);
+            case SUBTYPE_CREATURE_SPELL ->
+                    new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype());
             case CREATURE_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.creatureSpellOrAbilityOnly(playerId, amount);
             case SUBTYPE_SPELL ->

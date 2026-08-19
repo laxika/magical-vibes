@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredic
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
@@ -98,6 +100,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColo
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -281,6 +284,26 @@ class PredicateEvaluationServiceTest {
             Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(evaluator.matchesCardPredicate(card, null, null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardManaValueLessThanSourceLoyaltyPredicate uses the source permanent's loyalty")
+        void cardManaValueLessThanSourceLoyaltyPredicateMatches() {
+            Card sourceCard = new Card();
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 3);
+
+            Card eligible = createCreature("Eligible", 2, 2, CardColor.GREEN);
+            eligible.setManaCost("{2}");
+            Card tooExpensive = createCreature("Too Expensive", 2, 2, CardColor.GREEN);
+            tooExpensive.setManaCost("{3}");
+            CardManaValueLessThanSourceLoyaltyPredicate predicate =
+                    new CardManaValueLessThanSourceLoyaltyPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(eligible, predicate, sourceCard.getId(), gd, player1Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(tooExpensive, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
         }
 
         @Test
@@ -594,6 +617,21 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsLandPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentControllerPoisonCountersAtLeastPredicate checks the target's current controller")
+        void controllerPoisonCountersPredicateMatchesCurrentController() {
+            Permanent target = addPermanent(player2Id, createCreature("Target", 2, 2, CardColor.GREEN));
+            gd.playerPoisonCounters.put(player2Id, 3);
+
+            PermanentControllerPoisonCountersAtLeastPredicate predicate =
+                    new PermanentControllerPoisonCountersAtLeastPredicate(3);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, target, predicate)).isTrue();
+
+            gd.playerPoisonCounters.put(player2Id, 2);
+            assertThat(evaluator.matchesPermanentPredicate(gd, target, predicate)).isFalse();
         }
 
         @Test
@@ -1539,6 +1577,30 @@ class PredicateEvaluationServiceTest {
                     Set.of(CardSupertype.LEGENDARY));
             assertThat(evaluator.matchesStackEntryPredicate(legendaryEntry, predicate, null)).isTrue();
             assertThat(evaluator.matchesStackEntryPredicate(ordinaryEntry, predicate, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("matches a stack entry by maximum mana value")
+        void matchesMaximumManaValue() {
+            Card cheapInstant = new Card();
+            cheapInstant.setName("Cheap Instant");
+            cheapInstant.setType(CardType.INSTANT);
+            cheapInstant.setManaCost("{1}{U}");
+            StackEntry cheapEntry = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, cheapInstant, player1Id,
+                    "Cheap Instant", new ArrayList<>());
+
+            Card expensiveInstant = new Card();
+            expensiveInstant.setName("Expensive Instant");
+            expensiveInstant.setType(CardType.INSTANT);
+            expensiveInstant.setManaCost("{4}{U}");
+            StackEntry expensiveEntry = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, expensiveInstant, player1Id,
+                    "Expensive Instant", new ArrayList<>());
+
+            StackEntryMaxManaValuePredicate predicate = new StackEntryMaxManaValuePredicate(3);
+            assertThat(evaluator.matchesStackEntryPredicate(cheapEntry, predicate, null)).isTrue();
+            assertThat(evaluator.matchesStackEntryPredicate(expensiveEntry, predicate, null)).isFalse();
         }
 
         private StackEntry instantControlledBy(UUID controllerId) {

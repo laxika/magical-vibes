@@ -2664,11 +2664,14 @@ public class AbilityActivationService {
                     if (remaining > 0) {
                         removedPlus = Math.min(remaining, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE));
                         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - removedPlus);
-                        removeOtherPermanentCounters(permanent, remaining - removedPlus);
+                        removeOtherPermanentCounters(gameData, permanent, remaining - removedPlus);
                     }
                 }
                 case SILVER -> throw new IllegalStateException("Silver counters are not on permanents");
                 default -> permanent.setCounterCount(ct, permanent.getCounterCount(ct) - count);
+            }
+            if (ct == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, count);
             }
             String counterTypeLabel;
             if (ct == CounterType.ANY) {
@@ -2701,6 +2704,9 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Not enough counters to remove (need " + count + ", have " + available + ")");
             }
             permanent.setCounterCount(counterType, available - count);
+            if (counterType == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, count);
+            }
             String counterLabel = counterType.name().toLowerCase().replace('_', ' ');
             String counterWord = count == 1 ? "a " + counterLabel + " counter" : count + " " + counterLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(
@@ -2719,6 +2725,9 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Not enough counters to remove");
             }
             permanent.setCounterCount(counterType, remaining);
+            if (counterType == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, count);
+            }
             String counterLabel = counterType.name().toLowerCase().replace('_', ' ');
             String counterWord = count == 1 ? "a " + counterLabel + " counter" : count + " " + counterLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(
@@ -2756,6 +2765,7 @@ public class AbilityActivationService {
                 }
             }
             if (placed) {
+                triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, placedCount);
                 if (gameQueryService.isCreature(gameData, permanent)) {
                     gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
                 }
@@ -2776,6 +2786,9 @@ public class AbilityActivationService {
             PutTypedCounterOnSourceCost c = typedCounterCost.get();
             int placedCount = gameQueryService.replaceCounters(gameData, permanent, c.counterType(), c.count());
             permanent.setCounterCount(c.counterType(), permanent.getCounterCount(c.counterType()) + placedCount);
+            if (placedCount > 0) {
+                triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, placedCount);
+            }
             if (gameQueryService.isCreature(gameData, permanent) && placedCount > 0) {
                 gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
             }
@@ -3001,6 +3014,8 @@ public class AbilityActivationService {
         if (effect instanceof PowerBasedTapCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(
                 c, gameLogService, predicateEvaluationService);
+        if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(
+                c, gameLogService, predicateEvaluationService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
         if (effect instanceof RemoveOneOrMoreCountersFromControlledCreaturesCost c) return new RemoveCounterFromCreatureCostHandler(c, xValue, gameQueryService, gameLogService);
         if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
@@ -3366,7 +3381,8 @@ public class AbilityActivationService {
                 + effectiveXValue * manaCost.getXSymbolCount();
         int genericCost = manaCost.getGenericCost();
         int equipReduction = Math.min(
-                castingCostService.getActivatedAbilityCostReduction(gameData, playerId, permanent, ability),
+                castingCostService.getActivatedAbilityCostReduction(
+                        gameData, playerId, permanent, ability, targetId, targetIds),
                 genericCost);
         additionalGenericCost -= equipReduction;
         int battlefieldReduction = Math.min(
@@ -3911,7 +3927,7 @@ public class AbilityActivationService {
         return total;
     }
 
-    private static void removeOtherPermanentCounters(Permanent permanent, int count) {
+    private static void removeOtherPermanentCounters(GameData gameData, Permanent permanent, int count) {
         int remaining = count;
         for (CounterType type : CounterType.values()) {
             if (remaining == 0) {
@@ -3923,6 +3939,9 @@ public class AbilityActivationService {
             }
             int removed = Math.min(remaining, permanent.getCounterCount(type));
             permanent.setCounterCount(type, permanent.getCounterCount(type) - removed);
+            if (type == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, removed);
+            }
             remaining -= removed;
         }
     }

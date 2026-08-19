@@ -39,9 +39,11 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
 
                 // Create token for the target's controller if specified
-                if (destroy.tokenForController() != null && controllerId != null) {
+                if (destroy.tokenForController() != null && controllerId != null
+                        && (!destroy.tokenOnlyForSourceController()
+                        || controllerId.equals(entry.getControllerId()))) {
                     destructionSupport.createTokenForPlayer(gameData, controllerId, destroy.tokenForController(),
-                            entry.getCard().getName(), entry.getCard().getSetCode());
+                            destroy.tokenCount(), entry.getCard().getName(), entry.getCard().getSetCode());
                 }
     }
 }

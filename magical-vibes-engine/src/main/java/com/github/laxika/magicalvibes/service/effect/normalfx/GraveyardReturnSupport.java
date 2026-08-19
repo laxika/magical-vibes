@@ -281,6 +281,12 @@ public class GraveyardReturnSupport {
         if (card == null) {
             return false;
         }
+        if (effect.requiresManaValueEqualsX() && card.getManaValue() != entry.getXValue()) {
+            return false;
+        }
+        if (effect.requiresManaValueAtMostX() && card.getManaValue() > entry.getXValue()) {
+            return false;
+        }
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, entry, sourceCardId);
             UUID cardOwnerId = card.getOwnerId() != null
@@ -470,7 +476,7 @@ public class GraveyardReturnSupport {
             for (Card card : graveyard) {
                 if (!card.isToken()
                         && trackedIds.contains(card.getId())
-                        && predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                        && matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
                     toReturn.add(card);
                 }
             }
@@ -536,7 +542,7 @@ public class GraveyardReturnSupport {
                 List<Card> gy = gyEntry.getValue();
                 List<Card> toReturn = new ArrayList<>();
                 for (Card card : gy) {
-                    if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                    if (matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
                         toReturn.add(card);
                     }
                 }
@@ -627,7 +633,7 @@ public class GraveyardReturnSupport {
 
         List<Card> matchingCards = new ArrayList<>();
         for (Card card : graveyard) {
-            if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+            if (matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
                 matchingCards.add(card);
             }
         }
@@ -702,7 +708,7 @@ public class GraveyardReturnSupport {
         if (graveyard != null) {
             for (int i = graveyard.size() - 1; i >= 0; i--) {
                 Card card = graveyard.get(i);
-                if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                if (matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
                     resolvePreTargetedById(gameData, entry, effect, controllerId, sourceCardId, card.getId());
                     return;
                 }
@@ -725,7 +731,7 @@ public class GraveyardReturnSupport {
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
-            if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), effect.filter(), sourceCardId)) {
+            if (matchesReturnCardFilter(gameData, entry, effect, graveyard.get(i), sourceCardId)) {
                 matchingIndices.add(i);
             }
         }
@@ -755,6 +761,7 @@ public class GraveyardReturnSupport {
 
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, matchingIndices, effect.destination(), prompt)
+                .enterTapped(effect.enterTapped())
                 .mandatory(effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
@@ -790,7 +797,7 @@ public class GraveyardReturnSupport {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
-                if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                if (matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
                     cardPool.add(card);
                 }
             }
@@ -818,6 +825,7 @@ public class GraveyardReturnSupport {
 
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, indices, effect.destination(), prompt)
+                .enterTapped(effect.enterTapped())
                 .cardPool(cardPool);
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());

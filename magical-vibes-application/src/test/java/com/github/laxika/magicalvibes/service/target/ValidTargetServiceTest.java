@@ -346,7 +346,7 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spell)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spell, player1Id)).thenReturn(true);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
 
@@ -1071,7 +1071,7 @@ class ValidTargetServiceTest {
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
-            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, sourceCard)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, sourceCard, player1Id)).thenReturn(true);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);

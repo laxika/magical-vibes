@@ -143,6 +143,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         boolean anyNumber = chooseCount > 1 || randomBottom;
 
         if (matchingCards.isEmpty()) {
+            if (e.recordChosenCount()) {
+                entry.setEventValue(0);
+            }
             if (remainingToExile) {
                 for (Card card : topCards) {
                     gameData.addToExile(controllerId, card);
@@ -207,7 +210,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 controllerId, topCards, cardIds, restToGraveyard, false,
                 !restToGraveyard && !randomBottom && !remainingToExile,
                 randomBottom, remainingToExile, 0, null,
-                maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED));
+                maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
+                e.recordChosenCount()));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
@@ -339,6 +343,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, restBuilder.build());
             } else if (randomBottom) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
+                insertEffectAfterCurrent(entry, e, e.effectIfNoCardChosen());
             } else {
                 libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
             }
@@ -366,7 +371,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                     controllerId, topCards, cardIds, toGraveyard, true,
                     !toGraveyard && !randomBottom, randomBottom, false, 0, null,
-                    max, revealPrompt));
+                    max, revealPrompt, false, 0, false, e.effectIfNoCardChosen()));
             return;
         }
 
@@ -641,6 +646,21 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             }
             builder.card(cards.get(i));
         }
+    }
+
+    private static void insertEffectAfterCurrent(StackEntry entry, CardEffect currentEffect,
+            CardEffect followUp) {
+        if (followUp == null) {
+            return;
+        }
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = 0; i < effects.size(); i++) {
+            if (effects.get(i) == currentEffect) {
+                entry.insertEffectsToResolve(i + 1, List.of(followUp));
+                return;
+            }
+        }
+        throw new IllegalStateException("Look-at-top effect is not present on its stack entry");
     }
 
     private List<Card> filterEligibleCards(List<Card> topCards, CardPredicate predicate,

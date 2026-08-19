@@ -24,10 +24,13 @@ public class EachPlayerMayScryEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerMayScryEffect scryEffect = (EachPlayerMayScryEffect) effect;
         List<UUID> players = scryEffect.remainingPlayerIds().isEmpty()
-                ? apnapPlayers(gameData)
+                ? (scryEffect.opponentsOnly()
+                        ? apnapOpponents(gameData, entry.getControllerId())
+                        : apnapPlayers(gameData))
                 : scryEffect.remainingPlayerIds();
         if (!players.isEmpty()) {
-            promptNext(gameData, entry.getCard(), new EachPlayerMayScryEffect(scryEffect.count(), players));
+            promptNext(gameData, entry.getCard(),
+                    new EachPlayerMayScryEffect(scryEffect.count(), players, scryEffect.opponentsOnly()));
         }
     }
 
@@ -52,5 +55,11 @@ public class EachPlayerMayScryEffectHandler implements NormalEffectHandlerBean {
             return rotated;
         }
         return ordered;
+    }
+
+    public static List<UUID> apnapOpponents(GameData gameData, UUID controllerId) {
+        return apnapPlayers(gameData).stream()
+                .filter(playerId -> !playerId.equals(controllerId))
+                .toList();
     }
 }

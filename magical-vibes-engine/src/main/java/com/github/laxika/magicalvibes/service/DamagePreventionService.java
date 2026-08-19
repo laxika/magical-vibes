@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
@@ -43,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerAndCreaturesDamageP
 import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndDealThatMuchDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfFromBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
@@ -52,6 +55,13 @@ import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceT
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -62,6 +72,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import org.springframework.beans.factory.ObjectProvider;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -84,12 +96,14 @@ public class DamagePreventionService {
     private final DamagePreventionReplacementSupport damagePreventionReplacementSupport;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
+    private final GameLogService gameLogService;
 
     public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService,
                                    AmountEvaluationService amountEvaluationService,
                                    DamagePreventionReplacementSupport damagePreventionReplacementSupport,
                                    StaticEffectConditionResolver staticEffectConditionResolver,
-                                   ObjectProvider<PermanentControlSupport> permanentControlSupportProvider) {
+                                   ObjectProvider<PermanentControlSupport> permanentControlSupportProvider,
+                                   GameLogService gameLogService) {
         this.gameQueryService = gameQueryService;
         this.lifeSupport = lifeSupport;
         this.drawService = drawService;
@@ -97,6 +111,7 @@ public class DamagePreventionService {
         this.damagePreventionReplacementSupport = damagePreventionReplacementSupport;
         this.staticEffectConditionResolver = staticEffectConditionResolver;
         this.permanentControlSupportProvider = permanentControlSupportProvider;
+        this.gameLogService = gameLogService;
     }
 
     public int applyDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage) {
@@ -292,6 +307,12 @@ public class DamagePreventionService {
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof PreventAllDamageEffect
                             && !permanent.isStaticEffectSuppressed(e.getClass()))) return 0;
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(PreventDamageToSelfAndDealThatMuchDamageEffect.class::isInstance)) {
+                queuePhyrexianVindicatorTrigger(gameData, permanent, damage);
+                return 0;
+            }
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
@@ -429,6 +450,21 @@ public class DamagePreventionService {
         int prevented = Math.min(shield, damage);
         permanent.setDamagePreventionShield(shield - prevented);
         return damage - prevented;
+    }
+
+    private void queuePhyrexianVindicatorTrigger(GameData gameData, Permanent permanent, int preventedDamage) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        if (controllerId == null || preventedDamage <= 0) return;
+
+        var targetFilter = new AnyTargetPredicateTargetFilter(
+                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "another target");
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                permanent.getCard(), controllerId,
+                List.of(new DealDamageToAnyTargetEffect(new XValue())),
+                false, targetFilter, preventedDamage, permanent.getId(), new Permanent(permanent)));
+        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), "'s ability triggers."));
     }
 
     /**
@@ -845,6 +881,15 @@ public class DamagePreventionService {
             if (shield.combatOnly() && !combatDamage) {
                 continue;
             }
+            if (shield.playersOnly() && !gameData.playerIdToName.containsKey(recipientId)) {
+                continue;
+            }
+            if (shield.combatPhase() != null && !shield.combatPhase().equals(gameData.combatPhasesThisTurn)) {
+                if (gameData.combatPhasesThisTurn > shield.combatPhase()) {
+                    it.remove();
+                }
+                continue;
+            }
             if (shield.recipientId() != null && !shield.recipientId().equals(recipientId)) {
                 continue;
             }
@@ -868,6 +913,11 @@ public class DamagePreventionService {
             }
             if (shield.lifeGainPlayerId() != null) {
                 lifeSupport.applyGainLife(gameData, shield.lifeGainPlayerId(), damage, "prevented damage");
+            }
+            if (shield.token() != null && shield.tokenControllerId() != null && shield.tokenSourceSetCode() != null) {
+                permanentControlSupportProvider.getObject().applyCreateToken(
+                        gameData, shield.tokenControllerId(), shield.token(), damage,
+                        shield.tokenSourceSetCode());
             }
             return 0;
         }

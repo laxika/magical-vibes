@@ -839,6 +839,9 @@ public class StackResolutionService {
             startingLoyalty = entry.getXValue();
         }
         startingLoyalty += entry.getGrantedAdditionalLoyaltyCounters();
+        if (card.getKeywords().contains(Keyword.COMPLEATED)) {
+            startingLoyalty -= 2 * entry.getPhyrexianManaPaidWithLife();
+        }
         startingLoyalty = gameQueryService.replaceCounters(gameData, perm, controllerId,
                 CounterType.LOYALTY, startingLoyalty);
         perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);
@@ -1084,6 +1087,7 @@ public class StackResolutionService {
         int placed = gameQueryService.replaceCounters(gameData, target, CounterType.PHYLACTERY, 1);
         if (placed <= 0) return;
         target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + placed);
+        triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
         gameLogService.append(gameData,
                 GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());

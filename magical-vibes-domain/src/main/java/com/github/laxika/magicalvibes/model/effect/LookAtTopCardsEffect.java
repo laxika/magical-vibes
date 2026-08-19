@@ -69,6 +69,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                           chosen card
  * @param chooseManaValueAtMost when non-null, only cards with mana value at most this
  *                              resolution-time amount are eligible for selection
+ * @param effectIfNoCardChosen optional effect inserted after this effect when the optional choice
+ *                             finds or selects no card
+ * @param recordChosenCount when true, records the number of selected cards as the stack entry's
+ *                          event value for a following effect
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -79,8 +83,30 @@ public record LookAtTopCardsEffect(
         LibrarySearchDestination chosenDestination,
         boolean optional,
         boolean gainLifeEqualToChosenCardManaValue,
-        DynamicAmount chooseManaValueAtMost
+        DynamicAmount chooseManaValueAtMost,
+        CardEffect effectIfNoCardChosen,
+        boolean recordChosenCount
 ) implements CardEffect {
+
+    /** Canonical form without an effect for the no-card branch. */
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost, null, false);
+    }
+
+    /** Canonical form without the selected-count flag. */
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            CardEffect effectIfNoCardChosen) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                effectIfNoCardChosen, false);
+    }
 
     /** Mandatory choose-to-hand shape (the original 5-field form). */
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
@@ -180,6 +206,14 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.HAND, true);
     }
 
+    /** You may reveal one matching card into your hand; if none is taken, resolve a follow-up effect. */
+    public static LookAtTopCardsEffect mayRevealOneToHandRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, CardEffect effectIfNoCardChosen) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.HAND, true,
+                false, null, effectIfNoCardChosen);
+    }
+
     /**
      * Reveal the top {@code lookCount} cards publicly; you may put one matching card into your
      * hand; the rest go into your graveyard (Grisly Salvage).
@@ -245,6 +279,16 @@ public record LookAtTopCardsEffect(
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), choosePredicate,
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD, true);
+    }
+
+    /** You may put up to {@code maxCount} matching cards onto the battlefield tapped; the rest go
+     * to the bottom randomly, optionally recording the selected count for a following effect. */
+    public static LookAtTopCardsEffect mayPutUpToMatchingOntoBattlefieldTappedRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, int maxCount, boolean recordChosenCount) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(maxCount), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.BATTLEFIELD_TAPPED, true, false, null, null,
+                recordChosenCount);
     }
 
     /** Put one of the looked-at cards on top of your library and the rest on the bottom (Cream of the Crop). */

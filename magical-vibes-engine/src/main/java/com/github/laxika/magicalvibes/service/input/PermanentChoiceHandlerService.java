@@ -117,6 +117,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
         } else if (context instanceof PermanentChoiceContext.BounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.BouncePermanentThen bounceThen) {
+            battlefieldHandler.handleBouncePermanentThen(gameData, permanentId, bounceThen);
         } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf) {
             battlefieldHandler.handleBounceOwnPermanentOrSacrificeSelf(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf) {
@@ -183,6 +185,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReflectDamageToSourceControllerChoice(gameData, permanentId, reflectDamage);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
+        } else if (context instanceof PermanentChoiceContext.ResolvingModalTarget rmt) {
+            triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
         } else if (context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource msfc) {
             battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
         } else if (context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf) {
@@ -201,6 +205,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificePermanentAndGrantKeywordSelf(gameData, permanentId, spagks);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct) {
             battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
+        } else if (context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue kethek) {
+            battlefieldHandler.handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(gameData, permanentId, kethek);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower scsp) {
             battlefieldHandler.handleSacrificeCreatureCreateSizedTokenEqualToPower(gameData, permanentId, scsp);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensIfSubtype scts) {

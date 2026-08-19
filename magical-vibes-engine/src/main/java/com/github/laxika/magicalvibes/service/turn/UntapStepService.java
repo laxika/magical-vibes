@@ -457,7 +457,11 @@ public class UntapStepService {
             return false;
         }
         for (CounterType counterType : replaced) {
+            int removed = permanent.getCounterCount(counterType);
             permanent.setCounterCount(counterType, 0);
+            if (counterType == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, removed);
+            }
         }
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
                 " doesn't untap; its counters are removed instead."));

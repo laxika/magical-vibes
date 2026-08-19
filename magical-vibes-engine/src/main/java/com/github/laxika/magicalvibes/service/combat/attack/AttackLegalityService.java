@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -418,6 +419,14 @@ public class AttackLegalityService {
         }
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
+
+        if (gameQueryService.computeStaticBonus(gameData, creature).grantedEffects().stream()
+                .anyMatch(MustAttackPlayerEffect.class::isInstance)) {
+            UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, creatureControllerId);
+            if (defendingPlayerId != null && canAttackDefender(gameData, creature, defendingPlayerId)) {
+                count[0]++;
+            }
+        }
 
         // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
         // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement

@@ -284,6 +284,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         for (UUID playerId : gameData.orderedPlayerIds) {
             gameData.playerLifeTotals.put(playerId, 20);
             gameData.playerPoisonCounters.put(playerId, 0);
+            gameData.playersAffectedByMeliraPoisonReplacementThisTurn.clear();
             gameData.playerManaPools.put(playerId, new ManaPool());
             gameData.landsPlayedThisTurn.put(playerId, 0);
             gameData.additionalLandsThisTurn.put(playerId, 0);

@@ -356,6 +356,8 @@ public sealed interface ChoiceContext {
 
     record PreventDamageToTargetFromChosenColorChoice(UUID targetId) implements ChoiceContext {}
 
+    record TargetCreatureHexproofFromChosenColorChoice(UUID targetId) implements ChoiceContext {}
+
     /**
      * The controller chooses a color at resolution; the target permanent then becomes that color
      * until end of turn (CR 105.3 / layer 5). Used by Distorting Lens.
@@ -811,6 +813,33 @@ public sealed interface ChoiceContext {
                 return List.of(POISON);
             }
             return counterTypes.stream().map(AddAnotherCounterTypeChoice::counterLabel).toList();
+        }
+
+        public static String counterLabel(CounterType counterType) {
+            return switch (counterType) {
+                case PLUS_ONE_PLUS_ONE -> "+1/+1 counters";
+                case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
+                default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
+            };
+        }
+    }
+
+    record RemoveChosenCountersChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                      int remainingSelections, List<CounterType> counterTypes)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveChosenCountersChoice {
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(counterTypes.stream()
+                    .map(RemoveChosenCountersChoice::counterLabel)
+                    .toList());
+            options.add(DONE);
+            return List.copyOf(options);
         }
 
         public static String counterLabel(CounterType counterType) {

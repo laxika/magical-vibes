@@ -118,7 +118,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     private static void grantTo(GameData gameData, StackEntry entry, Permanent permanent,
                                 GrantActivatedAbilityEffect grant) {
         EffectDuration duration = grant.duration();
-        if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
+        if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || duration == EffectDuration.PERMANENT) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
                     entry.getCard().getName(),

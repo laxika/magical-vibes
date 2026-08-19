@@ -653,6 +653,12 @@ public class TriggeredAbilityQueueService {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceControllerId(pending.controllerId())
                             .withSourceCardId(pending.sourceCard().getId());
+                    if (pending.sourcePermanentId() != null) {
+                        filterContext = filterContext.withSourcePermanentId(pending.sourcePermanentId());
+                    }
+                    if (pending.sourcePermanentSnapshot() != null) {
+                        filterContext = filterContext.withSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                    }
                     for (UUID pid : gameData.orderedPlayerIds) {
                         if (pending.permanentTargetControllerId() != null
                                 && !pending.permanentTargetControllerId().equals(pid)) {

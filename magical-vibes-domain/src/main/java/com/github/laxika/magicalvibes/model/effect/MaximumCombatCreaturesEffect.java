@@ -24,7 +24,16 @@ public record MaximumCombatCreaturesEffect(int maxAttackers, int maxBlockers,
 
     @Override
     public boolean appliesToAttackTarget(UUID sourceControllerId, UUID attackTargetId) {
-        return attackTargetScope == CombatAttackTargetScope.ALL
-                || Objects.equals(sourceControllerId, attackTargetId);
+        return appliesToAttackTarget(sourceControllerId, null, attackTargetId);
+    }
+
+    @Override
+    public boolean appliesToAttackTarget(UUID sourceControllerId, UUID sourcePermanentId,
+                                         UUID attackTargetId) {
+        return switch (attackTargetScope) {
+            case ALL -> true;
+            case CONTROLLER -> Objects.equals(sourceControllerId, attackTargetId);
+            case SOURCE_PERMANENT -> Objects.equals(sourcePermanentId, attackTargetId);
+        };
     }
 }

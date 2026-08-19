@@ -139,6 +139,9 @@ public class MultiPermanentChoiceHandlerService {
 
         UUID playerId = player.getId();
         List<UUID> validIds = multiPermanentChoice.validIds();
+        List<UUID> validPlayerIds = multiPermanentChoice.validPlayerIds();
+        Set<UUID> validSelectionIds = new HashSet<>(validIds);
+        validSelectionIds.addAll(validPlayerIds);
         int maxCount = multiPermanentChoice.maxCount();
 
         if (permanentIds == null) {
@@ -160,8 +163,8 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         for (UUID permId : permanentIds) {
-            if (!validIds.contains(permId)) {
-                throw new IllegalStateException("Invalid permanent: " + permId);
+            if (!validSelectionIds.contains(permId)) {
+                throw new IllegalStateException("Invalid selection: " + permId);
             }
         }
 
@@ -1475,10 +1478,11 @@ public class MultiPermanentChoiceHandlerService {
         int remainingProliferates = context.remainingCount() - 1;
 
         if (permanentIds.isEmpty()) {
-            String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to proliferate any permanents.";
+            String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to proliferate any permanents or players.";
             gameLogService.append(gameData, GameLog.text(logEntry));
         } else {
             List<Card> proliferatedCards = new ArrayList<>();
+            List<String> proliferatedPlayers = new ArrayList<>();
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
@@ -1510,6 +1514,10 @@ public class MultiPermanentChoiceHandlerService {
                             int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.SLIME, 1);
                             perm.setCounterCount(CounterType.SLIME, perm.getCounterCount(CounterType.SLIME) + placed);
                         }
+                        if (perm.getCounterCount(CounterType.HATCHLING) > 0) {
+                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.HATCHLING, 1);
+                            perm.setCounterCount(CounterType.HATCHLING, perm.getCounterCount(CounterType.HATCHLING) + placed);
+                        }
                         if (perm.getCounterCount(CounterType.AWAKENING) > 0) {
                             int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.AWAKENING, 1);
                             perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + placed);
@@ -1520,6 +1528,15 @@ public class MultiPermanentChoiceHandlerService {
                         }
                     }
                     proliferatedCards.add(perm.getCard());
+                } else if (gameData.playerIds.contains(permId)
+                        && gameData.playerPoisonCounters.getOrDefault(permId, 0) > 0) {
+                    int placed = gameQueryService.applyPoisonCounterReplacement(gameData, permId, 1);
+                    if (placed > 0) {
+                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(permId, 0);
+                        gameData.playerPoisonCounters.put(permId, currentPoison + placed);
+                        triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, placed);
+                        proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+                    }
                 }
             }
 
@@ -1528,6 +1545,11 @@ public class MultiPermanentChoiceHandlerService {
                         appendCards(GameLog.builder().text("Proliferate adds counters to "), proliferatedCards)
                                 .text(".").build());
                 log.info("Game {} - Proliferated {} permanents", gameData.id, proliferatedCards.size());
+            }
+            if (!proliferatedPlayers.isEmpty()) {
+                gameLogService.append(gameData, GameLog.text("Proliferate adds poison counters to "
+                        + String.join(", ", proliferatedPlayers) + "."));
+                log.info("Game {} - Proliferated {} players", gameData.id, proliferatedPlayers.size());
             }
         }
 
@@ -1541,19 +1563,33 @@ public class MultiPermanentChoiceHandlerService {
                         || p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                         || p.getCounterCount(CounterType.LOYALTY) > 0
                         || p.getCounterCount(CounterType.SLIME) > 0
+                        || p.getCounterCount(CounterType.HATCHLING) > 0
                         || p.getCounterCount(CounterType.AWAKENING) > 0
                         || p.getCounterCount(CounterType.AIM) > 0) {
                     eligiblePermanentIds.add(p.getId());
                 }
             });
-            if (eligiblePermanentIds.isEmpty()) {
-                String logEntry = "Proliferate: no permanents with counters to choose.";
+            List<UUID> eligiblePlayerIds = new ArrayList<>();
+            for (UUID candidatePlayerId : gameData.playerIds) {
+                if (gameData.playerPoisonCounters.getOrDefault(candidatePlayerId, 0) > 0) {
+                    eligiblePlayerIds.add(candidatePlayerId);
+                }
+            }
+            if (eligiblePermanentIds.isEmpty() && eligiblePlayerIds.isEmpty()) {
+                String logEntry = "Proliferate: no permanents or players with counters to choose.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
             } else {
-                playerInputService.beginMultiPermanentChoice(gameData, playerId, eligiblePermanentIds,
-                        eligiblePermanentIds.size(),
-                        new MultiPermanentChoiceContext.Proliferate(remainingProliferates),
-                        "Proliferate: Choose permanents to add counters to.");
+                MultiPermanentChoiceContext.Proliferate nextContext =
+                        new MultiPermanentChoiceContext.Proliferate(remainingProliferates);
+                int maxCount = eligiblePermanentIds.size() + eligiblePlayerIds.size();
+                if (eligiblePlayerIds.isEmpty()) {
+                    playerInputService.beginMultiPermanentChoice(gameData, playerId, eligiblePermanentIds,
+                            maxCount, nextContext, "Proliferate: Choose permanents to add counters to.");
+                } else {
+                    playerInputService.beginMultiPermanentOrPlayerChoice(gameData, playerId,
+                            eligiblePermanentIds, eligiblePlayerIds, maxCount, nextContext,
+                            "Proliferate: Choose permanents and/or players to add counters to.");
+                }
                 return;
             }
         }
@@ -1654,16 +1690,9 @@ public class MultiPermanentChoiceHandlerService {
                     boolean hasInfect = sourcePermanent != null
                             && gameQueryService.hasKeyword(gameData, sourcePermanent, Keyword.INFECT);
                     boolean treatAsInfect = hasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, defendingPlayerId);
-                    if (treatAsInfect && gameQueryService.canPlayerGetPoisonCounters(gameData, defendingPlayerId)) {
-                        int poisonAmount = gameQueryService.replacePoisonCounters(gameData, defendingPlayerId, damage);
-                        if (poisonAmount > 0) {
-                            int currentPoison = gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
-                            gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + poisonAmount);
-                            GameLog.Builder poisonLog = GameLog.builder().text(defenderName + " gets "
-                                    + poisonAmount + " poison counter" + (poisonAmount > 1 ? "s" : "") + " from ");
-                            gameLogService.append(gameData,
-                                    appendCardOrText(poisonLog, sourceCard, sourceName).text(".").build());
-                        }
+                    if (treatAsInfect) {
+                        lifeSupport.applyPoisonCounters(gameData, defendingPlayerId, damage,
+                                sourceName, playerId);
                     } else if (!gameQueryService.canPlayerLifeChange(gameData, defendingPlayerId)) {
                         gameLogService.append(gameData, GameLog.text(defenderName + "'s life total can't change."));
                     } else {

@@ -54,6 +54,7 @@ public sealed interface ManaRestriction {
     }
 
     /** Mana spendable only to cast artifact spells or activate abilities of artifacts (Grand Architect). */
+    /** Mana spendable only to cast artifact spells or activate abilities of artifacts (Grand Architect, Slobad). */
     record ArtifactSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -96,6 +97,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "artifact abilities only";
+        }
+    }
+
+    /** Mana spendable only to cast creature spells or activate abilities of creatures (Lukka, Bound to Ruin). */
+    record CreatureSpellsOrAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellOrAbilityMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells or creature abilities only";
         }
     }
 

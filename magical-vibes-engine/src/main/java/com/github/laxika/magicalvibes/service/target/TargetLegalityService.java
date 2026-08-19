@@ -474,7 +474,8 @@ public class TargetLegalityService {
                     throw new IllegalStateException("Target card not found in any graveyard");
                 }
                 if (exileCopy.filter() != null
-                        && !predicateEvaluationService.matchesCardPredicate(card, exileCopy.filter(), null)) {
+                        && !predicateEvaluationService.matchesCardPredicate(
+                        card, exileCopy.filter(), sourceCardId, gameData, playerId)) {
                     throw new IllegalStateException("Target card must be a "
                             + CardPredicateUtils.describeFilter(exileCopy.filter()));
                 }
@@ -736,7 +737,7 @@ public class TargetLegalityService {
             validateHexproofFromColor(gameData, target, sourceCard, playerId);
 
             // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
-            if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, sourceCard)) {
+            if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, sourceCard, playerId)) {
                 throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
             }
 
@@ -822,7 +823,8 @@ public class TargetLegalityService {
         // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
         if (targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target != null && gameQueryService.cantBeTargetedByNonColorSources(gameData, target, sourceCard)) {
+            if (target != null && gameQueryService.cantBeTargetedByNonColorSources(
+                    gameData, target, sourceCard, playerId)) {
                 throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
             }
             if (target != null && gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
@@ -2022,7 +2024,8 @@ public class TargetLegalityService {
 
     private boolean isNonColorSourceRestricted(GameData gameData, Permanent targetPerm, StackEntry entry) {
         if (entry.getCard() == null) return false;
-        return gameQueryService.cantBeTargetedByNonColorSources(gameData, targetPerm, entry.getCard());
+        return gameQueryService.cantBeTargetedByNonColorSources(
+                gameData, targetPerm, entry.getCard(), entry.getControllerId());
     }
 
     private String nonColorSourceRestrictionMessage(Permanent target) {
@@ -2360,7 +2363,7 @@ public class TargetLegalityService {
         if (gameQueryService.cantBeTargetedByAnySpell(gameData, target)) {
             return target.getCard().getName() + " can't be the target of spells";
         }
-        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card)) {
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card, sourcePlayerId)) {
             return nonColorSourceRestrictionMessage(target);
         }
         if (card.isAura() && gameQueryService.cantBeEnchantedByOtherAuras(gameData, target)) {

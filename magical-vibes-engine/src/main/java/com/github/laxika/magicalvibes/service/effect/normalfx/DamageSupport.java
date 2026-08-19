@@ -445,6 +445,7 @@ public class DamageSupport {
                 int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
                 if (counters > 0) {
                     target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+                    permanentCounterSupport.notifyCountersPlaced(gameData, entry, target, counters);
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                             " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
                     log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());
@@ -1096,15 +1097,10 @@ public class DamageSupport {
             boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
 
             if (treatAsInfect) {
-                if (effectiveDamage > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                    int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
-                    if (poisonAmount > 0) {
-                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                        gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
-                        String playerName = gameData.playerIdToName.get(playerId);
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                playerName + " gets " + poisonAmount + " poison counters from ", source, "."));
-                    }
+                if (effectiveDamage > 0) {
+                    lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage,
+                            source != null ? source.getName() : entry.getCard().getName(),
+                            entry.getControllerId());
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);

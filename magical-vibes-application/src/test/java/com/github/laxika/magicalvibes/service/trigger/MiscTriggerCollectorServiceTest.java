@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -225,6 +226,24 @@ class MiscTriggerCollectorServiceTest {
         assertThat(pending.effects()).containsExactly(effect);
         assertThat(pending.controllerId()).isEqualTo(player1Id);
         assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("proliferate trigger queues the bundled effect")
+    void proliferateTriggerQueuesBundledEffect() {
+        Permanent perm = createPermanent("Scheming Aspirant");
+        var effect = new SequenceEffect(List.of(
+                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2)));
+        var ctx = new TriggerContext.Proliferate(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 
     // ===== ON_ALLY_PERMANENT_SACRIFICED — MayPayManaEffect =====

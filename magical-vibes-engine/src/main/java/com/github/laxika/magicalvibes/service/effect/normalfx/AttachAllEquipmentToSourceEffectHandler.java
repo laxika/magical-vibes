@@ -52,10 +52,11 @@ public class AttachAllEquipmentToSourceEffectHandler implements NormalEffectHand
             }
 
             UUID oldAttachedTo = equipment.getAttachedTo();
-            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+            equipSupport.expireAttachedCopyEffects(gameData, equipment);
             equipment.setAttachedTo(host.getId());
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());
+            equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
 
             gameLogService.append(gameData,
                     GameLog.cardTextCard(equipment.getCard(), " is now attached to ", host.getCard(), "."));

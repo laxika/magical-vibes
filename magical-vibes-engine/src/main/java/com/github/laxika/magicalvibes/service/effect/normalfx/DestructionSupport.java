@@ -102,6 +102,7 @@ public class DestructionSupport {
     private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
     private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
     private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
+    private final ReturnToHandEffectHandler returnToHandEffectHandler;
     private final ControllerLosesGameEffectHandler controllerLosesGameHandler;
     private final GrantEffectToSourceUntilEndOfCombatEffectHandler grantEffectToSourceUntilEndOfCombatHandler;
     private final PreventDamageFromChosenSourceEffectHandler preventDamageFromChosenSourceHandler;
@@ -397,6 +398,8 @@ public class DestructionSupport {
                     gameLogService.append(gameData, GameLog.text(playerName + " gets " + poisonAmount + " poison counters from " + cardName + "."));
                 }
             }
+            lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName,
+                    gameData.currentlyResolvingControllerId);
             return;
         }
 
@@ -464,6 +467,9 @@ public class DestructionSupport {
             return false;
         }
         permanent.setCounterCount(kind, permanent.getCounterCount(kind) - 1);
+        if (kind == CounterType.OIL) {
+            gameData.recordOilCounterRemoved(permanent, 1);
+        }
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(
                 playerName + " removes a counter from ", permanent.getCard(), "."));
@@ -624,7 +630,7 @@ public class DestructionSupport {
                 // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the
                 // entry controller is the player who owes the payment.
                 lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poison.amount(),
-                        entry.getCard().getName());
+                        entry.getCard().getName(), entry.getControllerId());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof ControllerLosesGameEffect) {
                 controllerLosesGameHandler.resolve(gameData, entry, elseEffect);
@@ -676,6 +682,8 @@ public class DestructionSupport {
                 }
             } else if (elseEffect instanceof BoostAllOwnCreaturesEffect boost) {
                 boostAllOwnCreaturesHandler.resolve(gameData, entry, boost);
+            } else if (elseEffect instanceof ReturnToHandEffect returnToHand) {
+                returnToHandEffectHandler.resolve(gameData, entry, returnToHand);
             } else {
                 log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
                         gameData.id, elseEffect.getClass().getSimpleName());
@@ -779,47 +787,55 @@ public class DestructionSupport {
 
     public void createTokenForPlayer(GameData gameData, UUID controllerId,
                                       CreateTokenEffect token, String sourceName, String sourceSetCode) {
+        createTokenForPlayer(gameData, controllerId, token, 1, sourceName, sourceSetCode);
+    }
+
+    public void createTokenForPlayer(GameData gameData, UUID controllerId,
+                                      CreateTokenEffect token, int tokenCount,
+                                      String sourceName, String sourceSetCode) {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         boolean isCreature = token.primaryType() == CardType.CREATURE;
 
-        for (int copy = 0; copy < tokenMultiplier; copy++) {
-            Card tokenCard = TokenCardFactory.create(
-                    token, token.tokenPower(), token.tokenToughness(), sourceSetCode);
-            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, controllerId, tokenCard);
+        for (int count = 0; count < tokenCount; count++) {
+            for (int copy = 0; copy < tokenMultiplier; copy++) {
+                Card tokenCard = TokenCardFactory.create(
+                        token, token.tokenPower(), token.tokenToughness(), sourceSetCode);
+                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                        gameData, controllerId, tokenCard);
 
-            Permanent tokenPermanent = new Permanent(tokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
-            if (token.tappedAndAttacking()) {
-                tokenPermanent.tap();
-                tokenPermanent.setAttacking(true);
-            } else if (token.tapped()) {
-                tokenPermanent.tap();
-            }
+                Permanent tokenPermanent = new Permanent(tokenCard);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+                if (token.tappedAndAttacking()) {
+                    tokenPermanent.tap();
+                    tokenPermanent.setAttacking(true);
+                } else if (token.tapped()) {
+                    tokenPermanent.tap();
+                }
 
-            String playerName = gameData.playerIdToName.get(controllerId);
-            String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
-            if (isCreature) {
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " creates a " + token.tokenPower() + "/" + token.tokenToughness()
-                                + " " + colorName)
-                        .card(tokenCard)
-                        .text(" creature token.")
-                        .build());
-                log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
-                        token.tokenPower(), token.tokenToughness(), token.tokenName(), playerName);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
+                if (isCreature) {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(playerName + " creates a " + token.tokenPower() + "/" + token.tokenToughness()
+                                    + " " + colorName)
+                            .card(tokenCard)
+                            .text(" creature token.")
+                            .build());
+                    log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
+                            token.tokenPower(), token.tokenToughness(), token.tokenName(), playerName);
 
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-            } else {
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " creates a " + colorName)
-                        .card(tokenCard)
-                        .text(" token.")
-                        .build());
-                log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
-                        token.tokenName(), playerName);
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                } else {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(playerName + " creates a " + colorName)
+                            .card(tokenCard)
+                            .text(" token.")
+                            .build());
+                    log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
+                            token.tokenName(), playerName);
+                }
             }
         }
     }

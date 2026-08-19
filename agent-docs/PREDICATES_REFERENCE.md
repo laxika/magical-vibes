@@ -86,6 +86,8 @@ filter directly rather than reusing a factory whose wording does not match.
 
 ### Subtype/supertype/color/keyword predicates
 
+`PermanentIsEquippedPredicate` matches permanents with at least one Equipment attached, regardless of who controls the Equipment. It needs game data and is used by Hexgold Hoverwings for "Creatures you control that are equipped get +1/+0."
+
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
 | `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors. **A land never matches**: CR 202.2 gives an object the colors of its mana cost, and a land has none, so Plains is colorless and Anarchy ("destroy all white permanents") leaves it alone. A land's color identity is carried separately as `Card.getColorIdentity()`, which is display-only (it tints the frame) and must never be read by a predicate. This is also why Mistveil Plains and friends do not count themselves toward "two or more white permanents" |
@@ -109,6 +111,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentPowerAtLeastPredicate` | `(int minPower)` | creatures with power >= N |
 | `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
 | `PermanentMaxManaValuePredicate` | `(int maxManaValue)` | permanents with mana value <= N (e.g. Witherbloom Charm) |
+| `PermanentControllerPoisonCountersAtLeastPredicate` | `(int minimumPoisonCounters)` | permanents whose current controller has at least N poison counters (e.g. Anoint with Affliction) |
 | `PermanentManaValueAtMostOwnCountersPredicate` | `(CounterType)` | permanents whose mana value ≤ the number of that counter type on them (Corrosion rust destroy) |
 | `PermanentManaValueEqualsSourceCountersPredicate` | `(CounterType)` | permanents whose mana value **equals** the number of that counter type on the evaluating **source** permanent ("destroy each creature with mana value equal to the number of age counters on this enchantment" — Wave of Terror). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone (CR 608.2b) |
 | `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
@@ -200,8 +203,8 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryCardTypeInPredicate` | `(Set<CardType>)` | stack entries whose card has any of the given card types. On an activated/triggered ability entry the card is the ability's **source**, so `Set.of(CardType.ARTIFACT)` + `StackEntryTypeInPredicate(ACTIVATED_ABILITY)` is "activated ability from an artifact source" (Brown Ouphe) |
 | `StackEntrySubtypeInPredicate` | `(Set<CardSubtype>)` | spells whose card has any of the given subtypes. Wrap in `StackEntryNotPredicate` for "non-[subtype] spell" (e.g. Faerie Trickery: counter target non-Faerie spell) |
 | `StackEntrySupertypeInPredicate` | `(Set<CardSupertype>)` | stack entries whose card has any of the given supertypes. Combine with `StackEntryTypeInPredicate` to restrict a target to legendary spells without admitting abilities from legendary permanents |
-| `StackEntryManaValuePredicate` | `(int manaValue)` | spells with exact mana value |
-| `StackEntryMaxManaValuePredicate` | `(int maxManaValue)` | spells with mana value (including chosen X) <= N. "counter target spell with mana value 4 or less" — Thoughtbind |
+| `StackEntryManaValuePredicate` | `(int manaValue)` | spells with exact mana value; also supported in `TargetSpellMatches` resolution conditions |
+| `StackEntryMaxManaValuePredicate` | `(int maxManaValue)` | spells with mana value (including chosen X) <= N. "counter target spell with mana value 4 or less" — Thoughtbind; also supported in `TargetSpellMatches` resolution conditions |
 | `StackEntryHasXInManaCostPredicate` | `()` | spells whose mana cost contains `{X}`, regardless of the chosen X. Used by Frontline Medic |
 | `StackEntryManaValueEqualsXPredicate` | `()` | spells whose mana value equals the casting spell's chosen X. "counter target spell with mana value X" — Spell Blast. The chosen X is threaded from `SpellCastingService` into `TargetLegalityService.matchesStackEntryPredicate(..., xValue)` at cast-time targeting; when X is unknown (target enumeration) it matches permissively |
 | `StackEntryManaValueEqualsSourceCountersPredicate` | `(CounterType)` | spells whose mana value (including chosen X) equals the number of that counter type on the evaluating **source** permanent. "whenever you cast a spell with mana value equal to the number of doom counters on this" — Imminent Doom. Source-dependent: the spell-cast collector passes the source permanent into `TargetLegalityService.matchesStackEntryPredicate` |
@@ -323,6 +326,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardPowerAtMostPredicate` | `(int maxPower)` | a card whose printed power is <= `maxPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for library searches like "a creature card with power 2 or less" (Imperial Recruiter) |
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is <= the source permanent's effective power; needs `GameData` and `sourceCardId` |
+| `CardManaValueLessThanSourceLoyaltyPredicate` | `()` | a card whose mana value is less than the source planeswalker's loyalty; needs `GameData` and `sourceCardId` (Nahiri, the Unforgiving) |
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |

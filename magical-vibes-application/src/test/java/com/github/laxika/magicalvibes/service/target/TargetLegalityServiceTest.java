@@ -613,7 +613,7 @@ class TargetLegalityServiceTest {
         void throwsWhenTargetCantBeTargetedByNonColorSources() {
             Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, spell)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, spell, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -894,7 +894,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
-            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, sourceCard)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, sourceCard, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
@@ -1166,7 +1166,7 @@ class TargetLegalityServiceTest {
             Card source = createCreature("Source", CardColor.RED);
             Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
-            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, source)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, source, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))
@@ -1623,7 +1623,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, spell)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, spell, player1Id)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }

@@ -178,6 +178,7 @@ public enum CardSubtype {
     SLIVER("Sliver"),
     GERM("Germ"),
     LOCUS("Locus"),
+    SPHERE("Sphere"),
     MYR("Myr"),
     HOUND("Hound"),
     GREMLIN("Gremlin"),
@@ -241,7 +242,8 @@ public enum CardSubtype {
     GATE("Gate"),
     SOLTARI("Soltari"),
     ZUBERA("Zubera"),
-    YANLING("Yanling");
+    YANLING("Yanling"),
+    MITE("Mite");
 
     @Getter
     private final String displayName;

@@ -167,6 +167,7 @@ public class LibraryChoiceHandlerService {
         String sourceSetCode = librarySearch.sourceSetCode();
         CardSubtype battlefieldIfChosenBeholdType = librarySearch.battlefieldIfChosenBeholdType();
         Integer battlefieldIfManaValueAtMost = librarySearch.battlefieldIfManaValueAtMost();
+        boolean placeBattlefieldCardsSimultaneously = librarySearch.placeBattlefieldCardsSimultaneously();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -234,7 +235,7 @@ public class LibraryChoiceHandlerService {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
                 } else if (toGraveyard) {
                     graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
-                } else if (toBattlefield) {
+                } else if (toBattlefield && !placeBattlefieldCardsSimultaneously) {
                     Permanent perm = new Permanent(chosenCard);
                     if (grantHaste) {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
@@ -257,6 +258,9 @@ public class LibraryChoiceHandlerService {
                     if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT && librarySearch.attachToPermanentId() != null) {
                         perm.setAttachedTo(librarySearch.attachToPermanentId());
                     }
+                    if (!perm.getCard().isAura()) {
+                        triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
+                    }
                     if (chosenCard.hasType(CardType.CREATURE)) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                     }
@@ -273,7 +277,7 @@ public class LibraryChoiceHandlerService {
                     // Chosen card stays on top; the rest are reordered to the bottom below
                     // (Cream of the Crop). No shuffle — unlike the non-reorder TOP_OF_LIBRARY path.
                     deck.addFirst(chosenCard);
-                } else {
+                } else if (!toBattlefield) {
                     gameData.addCardToHand(handOwnerId, chosenCard);
                 }
                 for (int i = 0; i < sourceCards.size(); i++) {
@@ -286,11 +290,13 @@ public class LibraryChoiceHandlerService {
 
             // Log the result
             if (toBattlefield) {
-                if (chosenCard == null) {
-                    gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts no card onto the battlefield."));
-                } else {
-                    gameLogService.append(gameData,
-                            GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
+                if (!placeBattlefieldCardsSimultaneously) {
+                    if (chosenCard == null) {
+                        gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts no card onto the battlefield."));
+                    } else {
+                        gameLogService.append(gameData,
+                                GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
+                    }
                 }
             } else {
                 GameLogEntry logEntry;
@@ -324,6 +330,10 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, logEntry);
             }
 
+            if (toBattlefield && placeBattlefieldCardsSimultaneously && chosenCard != null) {
+                accumulatedCards.add(chosenCard);
+            }
+
             // If ETB or legend rule caused awaiting input, defer remaining card reorder
             if (gameData.interaction.isAwaitingInput()) {
                 if (!sourceCards.isEmpty()) {
@@ -354,8 +364,16 @@ public class LibraryChoiceHandlerService {
             // Two-bounded-pick (Gift of the Gargantuan / Benefaction of Rhonas): after the first
             // pick, run the second-type pick over the same looked-at cards before disposing the rest.
             if (followUp.secondBoundedPick() != null
-                    && startSecondBoundedPick(gameData, deckOwnerId, sourceCards, followUp.secondBoundedPick())) {
+                    && startSecondBoundedPick(gameData, deckOwnerId, sourceCards, accumulatedCards,
+                            followUp.secondBoundedPick())) {
                 return;
+            }
+
+            if (toBattlefield && placeBattlefieldCardsSimultaneously && !accumulatedCards.isEmpty()) {
+                placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId,
+                        toBattlefieldTapped, grantHaste, exileAtEndStep,
+                        returnToHandAtEndStep, animateFound);
+                accumulatedCards.clear();
             }
 
             if (followUp.secondBoundedPick() != null
@@ -472,6 +490,7 @@ public class LibraryChoiceHandlerService {
             if (!accumulatedCards.isEmpty() && toBattlefield) {
                 placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
                         grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound);
+                accumulatedCards.clear();
             }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -1038,11 +1057,17 @@ public class LibraryChoiceHandlerService {
             if (librarySearch.attachToPlayerId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPlayerId());
             }
+            if (!perm.getCard().isAura()) {
+                triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
+            }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT) {
             Permanent perm = new Permanent(chosenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
+            }
+            if (!perm.getCard().isAura()) {
+                triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
             }
         } else {
             if (remainingCount > 1) {
@@ -1494,7 +1519,7 @@ public class LibraryChoiceHandlerService {
      * caller disposes the remaining cards immediately.
      */
     private boolean startSecondBoundedPick(GameData gameData, UUID controllerId, List<Card> lookedAtCards,
-            LibrarySearchFollowUp.SecondBoundedPick spec) {
+            List<Card> accumulatedCards, LibrarySearchFollowUp.SecondBoundedPick spec) {
         if (spec.type() == null && spec.subtype() == null) {
             return false;
         }
@@ -1506,18 +1531,18 @@ public class LibraryChoiceHandlerService {
                 .toList();
         if (eligible.isEmpty()) {
             if (!spec.remainingSubtypes().isEmpty()) {
-                return startSecondBoundedPick(gameData, controllerId, lookedAtCards,
+                return startSecondBoundedPick(gameData, controllerId, lookedAtCards, accumulatedCards,
                         LibrarySearchFollowUp.SecondBoundedPick.subtype(
                                 spec.remainingSubtypes().getFirst(),
                                 spec.remainingSubtypes().subList(1, spec.remainingSubtypes().size()),
-                                spec.randomRest()));
+                                spec.randomRest(), spec.destination()));
             }
             if (!spec.remainingTypes().isEmpty()) {
-                return startSecondBoundedPick(gameData, controllerId, lookedAtCards,
+                return startSecondBoundedPick(gameData, controllerId, lookedAtCards, accumulatedCards,
                         LibrarySearchFollowUp.SecondBoundedPick.cardType(
                                 spec.remainingTypes().getFirst(),
                                 spec.remainingTypes().subList(1, spec.remainingTypes().size()),
-                                spec.randomRest()));
+                                spec.randomRest(), spec.destination()));
             }
             return false;
         }
@@ -1525,28 +1550,32 @@ public class LibraryChoiceHandlerService {
         String category = spec.subtype() != null
                 ? spec.subtype().getDisplayName().toLowerCase()
                 : spec.type().getDisplayName().toLowerCase();
+        String destinationPhrase = spec.destination() == LibrarySearchDestination.BATTLEFIELD
+                ? "onto the battlefield" : "into your hand";
         String prompt = "You may reveal a " + category
-                + " card from among them and put it into your hand.";
+                + " card from among them and put it " + destinationPhrase + ".";
         LibrarySearchFollowUp nextFollowUp;
         if (spec.subtype() != null) {
             nextFollowUp = LibrarySearchFollowUp.forSubtypeBoundedPick(
-                    spec.remainingSubtypes(), spec.randomRest());
+                    spec.remainingSubtypes(), spec.randomRest(), spec.destination());
         } else if (!spec.remainingTypes().isEmpty()) {
-            nextFollowUp = LibrarySearchFollowUp.forCardTypeBoundedPick(spec.remainingTypes());
+            nextFollowUp = LibrarySearchFollowUp.forCardTypeBoundedPick(spec.remainingTypes(), spec.destination());
         } else if (spec.randomRest()) {
             nextFollowUp = LibrarySearchFollowUp.forBoundedPick(
-                    LibrarySearchFollowUp.SecondBoundedPick.terminal(true));
+                    LibrarySearchFollowUp.SecondBoundedPick.terminal(true, spec.destination()));
         } else {
             nextFollowUp = LibrarySearchFollowUp.NONE;
         }
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
                 .canFailToFind(true)
-                .destination(LibrarySearchDestination.HAND)
+                .destination(spec.destination())
                 .sourceCards(new ArrayList<>(lookedAtCards))
+                .accumulatedCards(new ArrayList<>(accumulatedCards))
                 .reorderRemainingToBottom(!spec.restToGraveyard())
                 .restToGraveyard(spec.restToGraveyard())
                 .shuffleAfterSelection(false)
+                .placeBattlefieldCardsSimultaneously(spec.destination() == LibrarySearchDestination.BATTLEFIELD)
                 .followUp(nextFollowUp)
                 .build();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
@@ -1770,12 +1799,16 @@ public class LibraryChoiceHandlerService {
             }
         }
 
+        if (libraryRevealChoice.recordSelectedCount() && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setEventValue(selectedCards.size());
+        }
+
         if (libraryRevealChoice.selectedToHand()) {
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                     libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
                     libraryRevealChoice.remainingToExile(), libraryRevealChoice.randomRemainingToBottom(),
                     libraryRevealChoice.gainLifeEqualToSelectedCardManaValue(),
-                    gameData.pendingEffectResolutionEntry);
+                    gameData.pendingEffectResolutionEntry, libraryRevealChoice.effectIfNoCardChosen());
             return;
         }
 
@@ -1995,7 +2028,7 @@ public class LibraryChoiceHandlerService {
                                               boolean remainingToExile, boolean randomRemainingToBottom) {
         resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                 reorderRemainingToBottom, remainingToGraveyard, remainingToExile,
-                randomRemainingToBottom, false, null);
+                randomRemainingToBottom, false, null, null);
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
@@ -2003,7 +2036,7 @@ public class LibraryChoiceHandlerService {
                                               boolean reorderRemainingToBottom, boolean remainingToGraveyard,
                                               boolean remainingToExile, boolean randomRemainingToBottom,
                                               boolean gainLifeEqualToSelectedCardManaValue,
-                                              StackEntry sourceEntry) {
+                                              StackEntry sourceEntry, CardEffect effectIfNoCardChosen) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
             gameData.addCardToHand(controllerId, card);
@@ -2080,6 +2113,10 @@ public class LibraryChoiceHandlerService {
             if (!remainingCards.isEmpty()) {
                 Collections.shuffle(remainingCards);
                 gameData.playerDecks.get(controllerId).addAll(remainingCards);
+            }
+            if (selectedCards.isEmpty() && effectIfNoCardChosen != null && sourceEntry != null) {
+                sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                        List.of(effectIfNoCardChosen));
             }
             log.info("Game {} - {} puts {} card(s) to hand, {} to bottom randomly",
                     gameData.id, playerName, selectedCards.size(), remainingCards.size());

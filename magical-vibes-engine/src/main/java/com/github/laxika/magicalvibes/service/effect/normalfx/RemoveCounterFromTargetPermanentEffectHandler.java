@@ -61,6 +61,9 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
         }
 
         target.setCounterCount(counterType, target.getCounterCount(counterType) - removed);
+        if (counterType == CounterType.OIL) {
+            gameData.recordOilCounterRemoved(target, removed);
+        }
         String counterName = permanentCounterSupport.counterTypeName(counterType);
         String prefix = removed == 1
                 ? "A " + counterName + " counter removed from "

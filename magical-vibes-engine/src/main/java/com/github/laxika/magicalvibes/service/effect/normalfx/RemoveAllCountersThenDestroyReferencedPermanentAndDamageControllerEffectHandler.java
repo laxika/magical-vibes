@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,6 +55,9 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
         if (referenced != null) {
             int removed = referenced.getCounterCount(e.counterType());
             referenced.setCounterCount(e.counterType(), 0);
+            if (e.counterType() == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(referenced, removed);
+            }
             if (removed > 0) {
                 String counterName = permanentCounterSupport.counterTypeName(e.counterType());
                 gameLogService.append(gameData, GameLog.builder().card(damageSourceCard)

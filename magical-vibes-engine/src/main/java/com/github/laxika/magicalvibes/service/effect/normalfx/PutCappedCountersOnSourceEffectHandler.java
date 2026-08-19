@@ -31,6 +31,7 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,6 +58,7 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
         }
 
         source.setCounterCount(e.counterType(), current + toAdd);
+        permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, toAdd);
         if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
             if (controllerId != null) {

@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -105,6 +106,7 @@ public class CombatBlockService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GraveyardTargetingService graveyardTargetingService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -1689,6 +1691,8 @@ public class CombatBlockService {
                             gameData.id, watcher.getCard().getName(), blocker.getCard().getName());
                 }
             }
+            triggerCollectionService.collectTemporaryGlobalTriggers(
+                    gameData, EffectSlot.ON_ANY_CREATURE_BLOCKS, blocker.getId(), 0);
         }
     }
 

@@ -278,7 +278,7 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
-                "Choose an instant or sorcery card exiled this way to copy "
+                "Choose " + interaction.choiceDescription() + " exiled this way to copy "
                         + interaction.copies() + " times.");
     }
 
@@ -637,7 +637,8 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectMultiPermanentChoice(
             GameData gameData, PendingInteraction.MultiPermanentChoice interaction) {
         return InteractionPromptMessage.multiPermanentPick(
-                new ArrayList<>(interaction.validIds()), interaction.maxCount(), interaction.prompt());
+                new ArrayList<>(interaction.validIds()), new ArrayList<>(interaction.validPlayerIds()),
+                interaction.maxCount(), interaction.prompt());
     }
 
     private InteractionPromptMessage projectMultiGraveyardChoice(

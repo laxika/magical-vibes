@@ -104,6 +104,11 @@ not through the handler registry.
 graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the
 same `CastingCostService.computeTargetBasedCostReduction` path.
 
+Target-gated increases use the parallel `TargetBasedCastCostIncreaseEffect` interface and
+`IncreaseOwnCastCostIfTargetingPermanentEffect` record. Their surcharge is evaluated against the
+chosen first permanent target by `CastingCostService.getTargetBasedCostIncrease`, rather than by a
+generic cost-modification handler.
+
 ## Buyback-cost reductions
 
 Effects that reduce the optional buyback cost, rather than the spell's own mana cost, use a

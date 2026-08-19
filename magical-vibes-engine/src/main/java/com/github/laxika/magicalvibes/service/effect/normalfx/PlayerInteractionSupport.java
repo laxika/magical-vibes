@@ -934,7 +934,7 @@ public class PlayerInteractionSupport {
         };
     
     }
-    public void startNextEachPlayerDiscard(GameData gameData, DiscardFollowUp followUp) {
+    public DiscardFollowUp startNextEachPlayerDiscard(GameData gameData, DiscardFollowUp followUp) {
 
         List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerDiscards());
         // When present, eachPlayerAmounts holds a per-chooser amount parallel to the remaining
@@ -949,13 +949,14 @@ public class PlayerInteractionSupport {
             if (hand == null || hand.isEmpty()) {
                 String logEntry = gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
+                followUp = followUp.incrementEachPlayerNoDiscardCount();
                 continue;
             }
-            playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount,
-                    followUp.withRemainingEachPlayer(remaining, amounts));
-            return;
+            DiscardFollowUp nextFollowUp = followUp.withRemainingEachPlayer(remaining, amounts);
+            playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount, nextFollowUp);
+            return nextFollowUp;
         }
-
+        return followUp;
     }
 
     private static void appendCardList(GameLog.Builder builder, List<Card> cards) {

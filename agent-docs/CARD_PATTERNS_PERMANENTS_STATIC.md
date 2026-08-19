@@ -17,6 +17,7 @@ All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Oil-counter trigger plus counter-based anthem | `i/IchorplateGolem.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD `EnteringCreatureHasCountersConditionalEffect(OIL, PutCountersOnEnteringCreatureEffect(OIL, 1, false, OIL))` plus STATIC `StaticBoostEffect(1, 1, ALL_OWN_CREATURES, PermanentHasCountersPredicate(OIL))` |
 | Buyback cost reduction | `m/MemoryCrystal.java` | STATIC `ReduceBuybackCostEffect(2)` — the generic mana component of every player's mana buyback costs {2} less |
 | Opponents' creatures can't get +1/+1 counters | `b/Blightbeetle.java` | STATIC GrantEffectEffect(CantHavePlusOnePlusOneCountersEffect, OPPONENT_CREATURES) — the narrow counter lock leaves other counter types unaffected |
 | Subtype lord (all) | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
@@ -170,7 +171,7 @@ All paths relative to `cards/`.
 | P/T = GY creatures | `m/Mortivore.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInGraveyard(CardTypePredicate(CREATURE), ANY_PLAYER) |
 | P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInHand(CONTROLLER) + ON_CONTROLLER_DRAWS LoseLifeEffect(1, EACH_OPPONENT) |
 | Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfEffect(PermanentCount(PermanentIsLandPredicate, CONTROLLER), same) + BoostSelfEffect(CardsInGraveyard(CardTypePredicate(LAND), CONTROLLER), same) — +1/+1 per land you control and per land card in your graveyard |
-| Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
+| Gain activated abilities from typed GY cards | `n/NecroticOoze.java`, `m/MirranSafehouse.java` | STATIC `GainActivatedAbilitiesOfCardsInAllGraveyardsEffect(CardType)` — selfOnly, gains all activated abilities of matching cards in all graveyards; `ON_TAP` mana abilities are exposed as equivalent tap abilities |
 | Grant unearth to GY creatures | `s/SedrisTheTraitorKing.java` | STATIC GrantGraveyardAbilityToCreatureCardsEffect(unearth {2}{B} ActivatedAbility) — each creature card in your graveyard gains the given graveyard-activated ability. The ability is the Fatestitcher unearth (ReturnCardFromGraveyardEffect self→BATTLEFIELD, returnAll, grantHaste, exileAtEndStep, SORCERY_SPEED). Scanned via the `GraveyardAbilityGrantingEffect` capability by `GameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard` |
 | Grant unearth to GY artifacts | `m/MishraTamerOfMakFawa.java` | STATIC GrantTriggeredAbilityEffect(ON_BECOMES_TARGET_OF_OPPONENT_SPELL, CounterUnlessSacrificesEffect, OWN_PERMANENTS) plus GrantGraveyardAbilityToArtifactCardsEffect(unearth {1}{B}{R} ActivatedAbility). The unearth ability returns the artifact card to the battlefield with haste, exiles it at the next end step or if it would leave the battlefield, and is sorcery-speed. |
 | Grant scavenge (cost = mana cost) to GY creatures | `v/VarolzTheScarStriped.java` | STATIC GrantScavengeEqualToManaCostToCreatureCardsEffect() — same capability, ability built per card from its mana cost via `Card.scavengeAbility(cost)`. Second ability: `SacrificeCreatureCost(false, false, false, true)` + `RegenerateEffect()` ("Sacrifice another creature: Regenerate ~") |
@@ -416,3 +417,4 @@ All paths relative to `cards/`.
 
 
 | Controller-scoped combat attack limit | `c/Crawlspace.java` | STATIC MaximumCombatCreaturesEffect(2, Integer.MAX_VALUE, CONTROLLER) — no more than two creatures can attack the effect's controller directly; attacks against that player's planeswalkers are unrestricted |
+| Planeswalker-scoped combat attack limit | `t/TheEternalWanderer.java` | STATIC MaximumCombatCreaturesEffect(1, Integer.MAX_VALUE, SOURCE_PERMANENT) — no more than one creature can attack the effect planeswalker each combat |

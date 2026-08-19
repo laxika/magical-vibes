@@ -45,7 +45,7 @@ public record LosesAllAbilitiesEffect(GrantScope scope, PermanentPredicate filte
         if (scope == GrantScope.SELF) {
             return new TargetSpec(null, false, null, true, 1);
         }
-        return duration == EffectDuration.UNTIL_END_OF_TURN
+        return duration == EffectDuration.UNTIL_END_OF_TURN || duration == EffectDuration.PERMANENT
                 ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

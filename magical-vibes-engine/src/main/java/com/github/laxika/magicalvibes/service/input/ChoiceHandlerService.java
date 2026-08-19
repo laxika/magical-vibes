@@ -31,7 +31,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -52,6 +54,8 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
@@ -67,6 +71,7 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -114,6 +119,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedistributePlayerLifeTotalsSupport redistributePlayerLifeTotalsSupport;
+    private final TriggerTargetCollector triggerTargetCollector;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -215,6 +221,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.PreventDamageToTargetFromChosenColorChoice ctx) {
             handlePreventDamageToTargetFromChosenColorChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.TargetCreatureHexproofFromChosenColorChoice ctx) {
+            handleTargetCreatureHexproofFromChosenColorChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.MassProtectionColorChoice ctx) {
@@ -423,6 +433,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.AddAnotherCounterTypeChoice ctx) {
             handleAddAnotherCounterTypeChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RemoveChosenCountersChoice ctx) {
+            handleRemoveChosenCountersChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
@@ -1169,6 +1183,9 @@ public class ChoiceHandlerService {
                 int current = target.getCounterCount(kind);
                 if (current > 0) {
                     target.setCounterCount(kind, current - 1);
+                    if (kind == CounterType.OIL) {
+                        gameData.recordOilCounterRemoved(target, 1);
+                    }
                     String label = kind.name().toLowerCase().replace('_', ' ');
                     gameLogService.append(gameData, GameLog.textCardText(
                             ctx.sourceCardName() + " removes a " + label + " counter from ", target.getCard(), "."));
@@ -1200,7 +1217,10 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         if (ChoiceContext.AddAnotherCounterTypeChoice.POISON.equals(choice)) {
-            lifeSupport.applyPoisonCounters(gameData, ctx.targetId(), 1, ctx.sourceCardName());
+            lifeSupport.applyPoisonCounters(gameData, ctx.targetId(), 1, ctx.sourceCardName(),
+                    gameData.pendingEffectResolutionEntry != null
+                            ? gameData.pendingEffectResolutionEntry.getControllerId()
+                            : gameData.currentlyResolvingControllerId);
         } else {
             CounterType counterType = ctx.counterTypes().stream()
                     .filter(type -> ChoiceContext.AddAnotherCounterTypeChoice.counterLabel(type).equals(choice))
@@ -1215,6 +1235,39 @@ public class ChoiceHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRemoveChosenCountersChoice(GameData gameData, String choice,
+            ChoiceContext.RemoveChosenCountersChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter choice: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (ChoiceContext.RemoveChosenCountersChoice.DONE.equals(choice) || target == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        CounterType counterType = ctx.counterTypes().stream()
+                .filter(type -> ChoiceContext.RemoveChosenCountersChoice.counterLabel(type).equals(choice))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
+        permanentCounterSupport.removeCounterFromPermanent(gameData, target, counterType, 1);
+
+        int remainingSelections = ctx.remainingSelections() - 1;
+        List<CounterType> remainingTypes =
+                com.github.laxika.magicalvibes.service.effect.normalfx.RemoveChosenCountersFromTargetPermanentEffectHandler
+                        .counterTypesOn(target);
+        if (remainingSelections > 0 && !remainingTypes.isEmpty()) {
+            playerInputService.beginRemoveChosenCountersChoice(gameData, ctx.controllerId(), ctx.targetId(),
+                    ctx.sourceCardName(), remainingSelections, remainingTypes);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     /** Completes Dismantle's counter-type choice and then chooses a controlled artifact if needed. */
@@ -1280,7 +1333,52 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(),
                 chosenLabel, ctx.sourceCard().getName());
 
+        if (beginResolvingModalTargetChoice(gameData, ctx, chosen)) {
+            return;
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
+                                                    ChooseOneEffect.ChooseOneOption chosen) {
+        if (gameData.pendingEffectResolutionEntry == null) {
+            return false;
+        }
+
+        boolean needsTarget = chosen.effects().stream().anyMatch(effect ->
+                effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
+        if (!needsTarget) {
+            return false;
+        }
+
+        Permanent source = ctx.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        TargetFilter targetFilter = chosen.targetFilter();
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData, chosen.effects(), targetFilter, ctx.controllerId(), ctx.sourceCard(),
+                TriggerTargetCollector.Options.ATTACK, source);
+        if (result.validTargets().isEmpty()) {
+            return false;
+        }
+
+        List<UUID> validPlayers = result.validTargets().stream()
+                .filter(gameData.playerIds::contains)
+                .toList();
+        List<UUID> validPermanents = result.validTargets().stream()
+                .filter(id -> !gameData.playerIds.contains(id))
+                .toList();
+        String targetDescription = result.canTargetPlayers() && result.canTargetPermanents()
+                ? "any target"
+                : result.canTargetPlayers() ? "target player" : "target permanent";
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.ResolvingModalTarget(ctx.sourceCard(), ctx.controllerId()));
+        playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(), validPermanents, validPlayers,
+                ctx.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+        return true;
     }
 
     private void handleMultipleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
@@ -1480,6 +1578,32 @@ public class ChoiceHandlerService {
         gameData.colorDamagePreventionUntilEndOfTurn
                 .computeIfAbsent(ctx.targetId(), ignored -> ConcurrentHashMap.newKeySet())
                 .add(chosenColor);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleTargetCreatureHexproofFromChosenColorChoice(GameData gameData, String chosenValue,
+                                                                    ChoiceContext.TargetCreatureHexproofFromChosenColorChoice ctx) {
+        CardColor chosenColor = CardColor.valueOf(chosenValue);
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (target != null) {
+            gameData.permanentHexproofFromColorsThisTurn
+                    .computeIfAbsent(target.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                    .add(chosenColor);
+
+            String colorName = chosenColor.name().toLowerCase();
+            target.getBlockRestrictionsUntilEndOfTurn().add(new CanBeBlockedOnlyByFilterEffect(
+                    new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(chosenColor))),
+                    "creatures that aren't " + colorName));
+
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " gains hexproof from " + colorName + " and can't be blocked by "
+                            + colorName + " creatures until end of turn."));
+            log.info("Game {} - {} gains hexproof from {} and can't be blocked by {} creatures until end of turn",
+                    gameData.id, target.getCard().getName(), colorName, colorName);
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2224,6 +2348,9 @@ public class ChoiceHandlerService {
             int available = perm.getCounterCount(ctx.counterType());
             int removed = Math.min(chosen, available);
             perm.setCounterCount(ctx.counterType(), available - removed);
+            if (ctx.counterType() == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(perm, removed);
+            }
 
             int mana = removed * ctx.manaMultiplier();
             ManaPool pool = gameData.playerManaPools.get(ctx.playerId());
@@ -2289,6 +2416,9 @@ public class ChoiceHandlerService {
             int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
             if (moved > 0) {
                 from.setCounterCount(ctx.counterType(), from.getCounterCount(ctx.counterType()) - moved);
+                if (ctx.counterType() == CounterType.OIL) {
+                    gameData.recordOilCounterRemoved(from, moved);
+                }
                 StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
                 if (sourceEntry != null) {
                     permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to, ctx.counterType(), moved);
@@ -2327,6 +2457,9 @@ public class ChoiceHandlerService {
             int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
             if (moved > 0) {
                 from.setCounterCount(ctx.counterType(), from.getCounterCount(ctx.counterType()) - moved);
+                if (ctx.counterType() == CounterType.OIL) {
+                    gameData.recordOilCounterRemoved(from, moved);
+                }
                 StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
                 if (sourceEntry != null) {
                     permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,

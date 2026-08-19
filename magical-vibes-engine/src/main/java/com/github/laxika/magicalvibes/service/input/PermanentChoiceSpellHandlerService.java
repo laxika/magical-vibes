@@ -362,6 +362,9 @@ public class PermanentChoiceSpellHandlerService {
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(gct.controllerId(), gct.cardToCast());
+            if (gct.restrictAdditionalSpellsThisTurn()) {
+                gameData.preventAdditionalSpellCastsThisTurn(gct.controllerId());
+            }
             gameData.priorityPassedBy.clear();
 
             String targetName = isPlayerTarget

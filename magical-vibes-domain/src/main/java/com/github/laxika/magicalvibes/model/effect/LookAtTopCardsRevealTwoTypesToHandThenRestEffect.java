@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.List;
 
 /**
  * Look at (or, when {@code reveal}, reveal) the top {@code count} cards of your library. You may put
- * up to one card for each requested type or subtype from among them into your hand, then put the
- * rest to {@code restDestination}. The at-most-one-per-category bound is enforced by running
+ * up to one card for each requested type or subtype from among them into {@code chosenDestination},
+ * then put the rest to {@code restDestination}. The at-most-one-per-category bound is enforced by running
  * sequential single-card picks over the same looked-at cards, which is why this is its own record
  * rather than a single multi-select
  * {@link LookAtTopCardsEffect}. Resolution lives in
@@ -27,35 +30,59 @@ import java.util.List;
  *                       used by Kaalia, Zenith Seeker
  * @param restDestination where the not-chosen cards go ({@code BOTTOM_OF_LIBRARY} or {@code GRAVEYARD})
  * @param reveal          when true the whole look is public (the looked-at cards are logged)
+ * @param chosenDestination where the chosen cards go ({@code HAND} or {@code BATTLEFIELD})
  */
 public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
-        int count,
+        DynamicAmount count,
         CardType firstType,
         CardType secondType,
         List<CardSubtype> subtypePicks,
         LookDestination restDestination,
-        boolean reveal) implements CardEffect {
+        boolean reveal,
+        LibrarySearchDestination chosenDestination) implements CardEffect {
+
+    public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+            int count, CardType firstType, CardType secondType, List<CardSubtype> subtypePicks,
+            LookDestination restDestination, boolean reveal) {
+        this(new Fixed(count), firstType, secondType, subtypePicks, restDestination, reveal,
+                LibrarySearchDestination.HAND);
+    }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect {
         subtypePicks = List.copyOf(subtypePicks);
+        if (chosenDestination != LibrarySearchDestination.HAND
+                && chosenDestination != LibrarySearchDestination.BATTLEFIELD) {
+            throw new IllegalArgumentException("Chosen destination must be hand or battlefield");
+        }
     }
 
     /** Gift of the Gargantuan: look privately, may take a creature and/or a land, rest on the bottom. */
     public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect creatureAndLandToHandRestOnBottom(int count) {
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
-                count, CardType.CREATURE, CardType.LAND, List.of(), LookDestination.BOTTOM_OF_LIBRARY, false);
+                new Fixed(count), CardType.CREATURE, CardType.LAND, List.of(),
+                LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.HAND);
     }
 
     /** Benefaction of Rhonas: reveal publicly, may take a creature and/or an enchantment, rest to graveyard. */
     public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect creatureAndEnchantmentToHandRestToGraveyard(int count) {
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
-                count, CardType.CREATURE, CardType.ENCHANTMENT, List.of(), LookDestination.GRAVEYARD, true);
+                new Fixed(count), CardType.CREATURE, CardType.ENCHANTMENT, List.of(),
+                LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND);
     }
 
     /** Kaalia, Zenith Seeker: privately look at six and may take one Angel, Demon, and Dragon. */
     public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect angelDemonDragonToHandRestOnBottom(int count) {
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
-                count, null, null, List.of(CardSubtype.ANGEL, CardSubtype.DEMON, CardSubtype.DRAGON),
-                LookDestination.BOTTOM_OF_LIBRARY, false);
+                new Fixed(count), null, null,
+                List.of(CardSubtype.ANGEL, CardSubtype.DEMON, CardSubtype.DRAGON),
+                LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.HAND);
+    }
+
+    /** Green Sun's Twilight: reveal, then put the chosen creature and/or land onto the battlefield. */
+    public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect creatureAndLandToBattlefieldRestOnBottomRandom(
+            DynamicAmount count) {
+        return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+                count, CardType.CREATURE, CardType.LAND, List.of(),
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true, LibrarySearchDestination.BATTLEFIELD);
     }
 }

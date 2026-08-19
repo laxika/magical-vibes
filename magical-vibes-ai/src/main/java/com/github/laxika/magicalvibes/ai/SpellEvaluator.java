@@ -1219,7 +1219,7 @@ public class SpellEvaluator {
         if (opponentControlsTarget && gameQueryService.hasHexproofFromColor(gameData, target, card.getColor())) return false;
         if (gameQueryService.hasProtectionFromSource(gameData, target, card)) return false;
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) return false;
-        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card)) return false;
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card, aiPlayerId)) return false;
         if (card.getTargetFilter() != null) {
             try {
                 predicateEvaluationService.validateTargetFilter(card.getTargetFilter(), target,

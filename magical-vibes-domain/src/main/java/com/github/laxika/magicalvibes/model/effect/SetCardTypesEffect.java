@@ -10,4 +10,11 @@ public record SetCardTypesEffect(Set<CardType> cardTypes, GrantScope scope) impl
     public SetCardTypesEffect {
         cardTypes = Set.copyOf(cardTypes);
     }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return scope == GrantScope.TARGET
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : TargetSpec.NONE;
+    }
 }

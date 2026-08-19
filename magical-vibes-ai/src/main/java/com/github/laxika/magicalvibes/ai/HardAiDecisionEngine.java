@@ -928,7 +928,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.SHROUD)) return false;
         if (gameQueryService.hasProtectionFromSource(gameData, creature, spell)) return false;
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, creature, spell.getColor())) return false;
-        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, spell)) return false;
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, spell, aiPlayer.getId())) return false;
         if (gameQueryService.hasHexproofFromColor(gameData, creature, spell.getColor())) return false;
 
         for (CardEffect effect : spell.getEffects(EffectSlot.SPELL)) {

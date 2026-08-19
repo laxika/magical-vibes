@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -19,6 +21,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -167,6 +172,41 @@ class GameActionAvailabilityServiceTest {
 
             assertThat(svc.isCardPlayable(gd, player1Id, creature, exactPool, 0)).isTrue();
             assertThat(svc.isCardPlayable(gd, player1Id, creature, exactPool, 1)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Includes a target-dependent surcharge when the legal target is a creature")
+        void targetBasedCostIncreaseApplies() {
+            Card spell = new Card();
+            spell.setName("Vanish into Eternity");
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{2}{W}");
+            var creaturePredicate = new PermanentIsCreaturePredicate();
+            spell.addEffect(EffectSlot.STATIC,
+                    new IncreaseOwnCastCostIfTargetingPermanentEffect(creaturePredicate, 3));
+            spell.target(TargetFilters.nonlandPermanent())
+                    .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+
+            Card creatureCard = new Card();
+            creatureCard.setName("Creature");
+            creatureCard.setType(CardType.CREATURE);
+            Permanent creature = new Permanent(creatureCard);
+            gd.playerBattlefields.get(player2Id).add(creature);
+            when(validTargetService.computeValidTargetsForSpell(gd, spell, player1Id, List.of()))
+                    .thenReturn(new ValidTargetsResponse(List.of(creature.getId()), List.of(), 1, 1,
+                            "Target must be a nonland permanent"));
+            when(validTargetService.hasValidTargetsForSpell(gd, spell, player1Id, null)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, creaturePredicate))
+                    .thenReturn(true);
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.WHITE);
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+            assertThat(svc.isCardPlayable(gd, player1Id, spell, pool, 0)).isFalse();
+
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 3);
+            assertThat(svc.isCardPlayable(gd, player1Id, spell, pool, 0)).isTrue();
         }
 
         @Test

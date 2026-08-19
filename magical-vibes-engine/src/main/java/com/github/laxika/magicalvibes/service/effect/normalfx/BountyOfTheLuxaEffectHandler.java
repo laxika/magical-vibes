@@ -31,6 +31,7 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +57,7 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
             // No counters removed: put a flood counter on the enchantment and draw a card.
             if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
                 source.setCounterCount(CounterType.FLOOD, source.getCounterCount(CounterType.FLOOD) + 1);
+                permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, 1);
                 gameLogService.append(gameData,
                         GameLog.builder().card(source.getCard()).text(" gets a flood counter.").build());
             }

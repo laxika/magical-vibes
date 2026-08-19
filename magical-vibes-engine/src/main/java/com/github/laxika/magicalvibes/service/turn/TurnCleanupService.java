@@ -132,8 +132,14 @@ public class TurnCleanupService {
             if (p.getCountersToRemoveAtNextCleanup().isEmpty()) {
                 return;
             }
-            p.getCountersToRemoveAtNextCleanup().forEach((counterType, amount) ->
-                    p.setCounterCount(counterType, Math.max(0, p.getCounterCount(counterType) - amount)));
+            p.getCountersToRemoveAtNextCleanup().forEach((counterType, amount) -> {
+                int current = p.getCounterCount(counterType);
+                int removed = Math.min(current, amount);
+                p.setCounterCount(counterType, Math.max(0, current - amount));
+                if (counterType == com.github.laxika.magicalvibes.model.CounterType.OIL) {
+                    gameData.recordOilCounterRemoved(p, removed);
+                }
+            });
             p.getCountersToRemoveAtNextCleanup().clear();
         });
     }

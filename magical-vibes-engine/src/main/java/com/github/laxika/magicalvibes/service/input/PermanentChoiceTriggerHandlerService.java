@@ -652,6 +652,26 @@ public class PermanentChoiceTriggerHandlerService {
                         permanentId,
                         Zone.STACK
                 );
+            } else if (mat.xValue() != 0 && mat.sourcePermanentId() != null) {
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        mat.sourceCard(),
+                        mat.controllerId(),
+                        mat.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(mat.effects()),
+                        mat.xValue(),
+                        mat.sourcePermanentId());
+                entry.setTargetId(permanentId);
+                entry.setSourcePermanentSnapshot(mat.sourcePermanentSnapshot());
+            } else if (mat.xValue() != 0) {
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        mat.sourceCard(),
+                        mat.controllerId(),
+                        mat.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(mat.effects()),
+                        mat.xValue());
+                entry.setTargetId(permanentId);
             } else if (mat.sourcePermanentId() != null) {
                 entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -699,6 +719,30 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleResolvingModalTarget(GameData gameData, UUID permanentId,
+                                            PermanentChoiceContext.ResolvingModalTarget context) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null) {
+            throw new IllegalStateException("Modal target choice has no parked resolution");
+        }
+
+        pendingEntry.setTargetId(permanentId);
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (gameData.playerIds.contains(permanentId)) {
+            gameLogService.append(gameData, GameLog.builder().card(context.sourceCard())
+                    .text("'s ability targets " + gameData.playerIdToName.get(permanentId) + ".").build());
+        } else if (target != null) {
+            gameLogService.append(gameData, GameLog.cardTextCard(context.sourceCard(), "'s ability targets ",
+                    target.getCard(), "."));
+        }
+
+        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
@@ -1516,6 +1560,11 @@ public class PermanentChoiceTriggerHandlerService {
         );
         if (etbTtt.targetFilter() != null) {
             entry.setTargetFilter(etbTtt.targetFilter());
+        }
+        entry.setTriggeringPermanentId(etbTtt.triggeringPermanentId());
+        if (etbTtt.sourcePermanentId() != null) {
+            entry.setSourcePermanentSnapshot(gameQueryService.findPermanentById(
+                    gameData, etbTtt.sourcePermanentId()));
         }
         pushTriggeredEntry(gameData, entry);
 

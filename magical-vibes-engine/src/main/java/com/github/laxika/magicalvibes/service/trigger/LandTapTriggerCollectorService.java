@@ -151,6 +151,8 @@ public class LandTapTriggerCollectorService {
                                 sourceCard, "."));
                     }
                 }
+                lifeSupport.applyPoisonCounters(gameData, tappingPlayerId, effectiveDamage,
+                        cardName, match.controllerId());
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change."));
             } else {

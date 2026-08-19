@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -416,8 +417,11 @@ public class MayPenaltyChoiceHandlerService {
                     return;
                 }
 
+                DiscardFollowUp followUp = effect.thenEffect() == null
+                        ? DiscardFollowUp.NONE
+                        : DiscardFollowUp.thenEffectWithDiscardedManaValue(sourceCard, effect.thenEffect());
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " to discard.", 1);
+                        "Choose a " + typeName + " to discard.", 1, followUp);
 
                 String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
                 gameLogService.append(gameData, GameLog.text(logEntry));

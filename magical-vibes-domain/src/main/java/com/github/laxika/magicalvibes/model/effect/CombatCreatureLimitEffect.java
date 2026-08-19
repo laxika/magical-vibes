@@ -21,4 +21,13 @@ public interface CombatCreatureLimitEffect extends CardEffect {
     default boolean appliesToAttackTarget(UUID sourceControllerId, UUID attackTargetId) {
         return true;
     }
+
+    /**
+     * Whether an attacker declared against {@code attackTargetId} is counted when the limiting
+     * effect is carried by {@code sourcePermanentId}.
+     */
+    default boolean appliesToAttackTarget(UUID sourceControllerId, UUID sourcePermanentId,
+                                          UUID attackTargetId) {
+        return appliesToAttackTarget(sourceControllerId, attackTargetId);
+    }
 }

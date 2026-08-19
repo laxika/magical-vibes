@@ -101,8 +101,14 @@ public record InteractionPromptMessage(
 
     public static InteractionPromptMessage multiPermanentPick(List<UUID> permanentIds, int maxCount,
                                                               String prompt) {
+        return multiPermanentPick(permanentIds, null, maxCount, prompt);
+    }
+
+    public static InteractionPromptMessage multiPermanentPick(List<UUID> permanentIds,
+                                                              List<UUID> playerIds, int maxCount,
+                                                              String prompt) {
         return of(InteractionShape.MULTI_PERMANENT_PICK, prompt, null, null, null, permanentIds,
-                null, null, maxCount, null, null, null, null, null, null);
+                playerIds, null, maxCount, null, null, null, null, null, null);
     }
 
     public static InteractionPromptMessage listPick(List<String> options, String prompt,

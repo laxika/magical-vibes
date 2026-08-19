@@ -110,7 +110,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             List<Card> cards = group.getValue();
             gameData.queueDelayedAction(new PendingExileReturn(
                     cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size())));
+                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
+                    e.returnAtOwnerNextEndStep(), false, false));
         }
     }
 

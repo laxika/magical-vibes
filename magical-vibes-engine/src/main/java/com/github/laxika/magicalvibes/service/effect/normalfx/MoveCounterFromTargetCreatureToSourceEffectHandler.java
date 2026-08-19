@@ -37,6 +37,9 @@ public class MoveCounterFromTargetCreatureToSourceEffectHandler implements Norma
         }
 
         target.setCounterCount(counterType, target.getCounterCount(counterType) - 1);
+        if (counterType == CounterType.OIL) {
+            gameData.recordOilCounterRemoved(target, 1);
+        }
         permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, counterType, 1);
     }
 }

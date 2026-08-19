@@ -463,6 +463,8 @@ public class TurnProgressionService {
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
+        gameData.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn.clear();
+        gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
@@ -553,6 +555,7 @@ public class TurnProgressionService {
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
         gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
+        gameData.playersAffectedByMeliraPoisonReplacementThisTurn.clear();
         gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatPhasesOnly = 0;

@@ -44,6 +44,9 @@ public class MoveCountersFromAllCreaturesToSourceEffectHandler implements Normal
                 int count = permanent.getCounterCount(move.counterType());
                 if (count > 0) {
                     permanent.setCounterCount(move.counterType(), 0);
+                    if (move.counterType() == com.github.laxika.magicalvibes.model.CounterType.OIL) {
+                        gameData.recordOilCounterRemoved(permanent, count);
+                    }
                     total += count;
                 }
             }

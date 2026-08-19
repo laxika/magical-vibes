@@ -168,6 +168,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentOwnsCardInExile;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentEnteredThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OilCounterEventThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoncreaturePermanentDestroyedByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThisTurn;
@@ -203,6 +204,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttackingOrBlockin
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
+import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
@@ -538,8 +540,8 @@ public class ConditionEvaluationService {
                     defendingPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case DefendingPlayerPoisoned ignored ->
                     isDefendingPlayerPoisoned(gameData, ctx.controllerId());
-            case OpponentPoisoned ignored ->
-                    isAnyOpponentPoisoned(gameData, ctx.controllerId());
+            case OpponentPoisoned c ->
+                    isAnyOpponentPoisoned(gameData, ctx.controllerId(), c.minimumPoisonCounters());
             case OpponentGraveyardAtLeast c ->
                     anyOpponentGraveyardAtLeast(gameData, ctx.controllerId(), c.threshold());
             case OpponentPutThreeOrMoreCardsIntoGraveyardThisTurn ignored ->
@@ -636,6 +638,11 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
                             .contains(ctx.controllerId());
+            case OilCounterEventThisTurn ignored ->
+                    (ctx.controllerId() != null
+                            && gameData.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn
+                            .contains(ctx.controllerId()))
+                            || gameData.permanentWithOilCounterPutIntoGraveyardThisTurn;
             case ControllerCastAnotherSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
@@ -838,9 +845,11 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && gameQueryService.isEnchantment(gameData, source);
             }
-            case SourceIsOnBattlefield ignored ->
-                    ctx.sourcePermanentId() != null
-                            && gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId()) != null;
+            case SourceIsOnBattlefield ignored -> sourcePermanent(gameData, ctx) != null;
+            case SourcePowerAtLeast c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && gameQueryService.getEffectivePower(gameData, source) >= c.threshold();
+            }
             case SourceIsTapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isTapped();
@@ -1856,11 +1865,11 @@ public class ConditionEvaluationService {
         return false;
     }
 
-    private boolean isAnyOpponentPoisoned(GameData gameData, UUID controllerId) {
+    private boolean isAnyOpponentPoisoned(GameData gameData, UUID controllerId, int minimumPoisonCounters) {
         if (controllerId == null) return false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(controllerId)
-                    && gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0) {
+                    && gameData.playerPoisonCounters.getOrDefault(playerId, 0) >= minimumPoisonCounters) {
                 return true;
             }
         }

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -154,6 +155,10 @@ public class GameData {
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who put at least one counter on a creature this turn. */
     public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who removed at least one oil counter from a permanent they controlled this turn. */
+    public final Set<UUID> playersWhoRemovedOilCountersFromControlledPermanentsThisTurn = ConcurrentHashMap.newKeySet();
+    /** Whether a permanent carrying an oil counter was put into a graveyard this turn. */
+    public boolean permanentWithOilCounterPutIntoGraveyardThisTurn;
     /** Players who controlled a permanent that received a +1/+1 counter this turn. */
     public final Set<UUID> playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who sacrificed at least one permanent this turn. */
@@ -210,6 +215,8 @@ public class GameData {
     public final Set<UUID> aiPlayerIds = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
+    /** Players for whom Melira's poison replacement effect has already applied this turn. */
+    public final Set<UUID> playersAffectedByMeliraPoisonReplacementThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerEnergyCounters = new ConcurrentHashMap<>();
     /** Persistent speed values; absent means the player has not started their engines. */
     public final Map<UUID, Integer> playerSpeeds = new ConcurrentHashMap<>();
@@ -2407,6 +2414,36 @@ public class GameData {
         return spellsCastThisTurn.getOrDefault(playerId, List.of()).size();
     }
 
+    /** Prevents {@code playerId} from casting any further spells this turn. */
+    public void preventAdditionalSpellCastsThisTurn(UUID playerId) {
+        if (playerId == null) return;
+
+        EnumSet<CardType> allSpellTypes = EnumSet.allOf(CardType.class);
+        allSpellTypes.remove(CardType.LAND);
+        playersCantCastSpellTypesThisTurn.merge(playerId, allSpellTypes, (existing, added) -> {
+            EnumSet<CardType> merged = EnumSet.copyOf(existing);
+            merged.addAll(added);
+            return merged;
+        });
+    }
+
+    /** Records an oil counter removal from a permanent currently controlled by a player. */
+    public void recordOilCounterRemoved(Permanent permanent, int amount) {
+        if (permanent == null || amount <= 0) {
+            return;
+        }
+        playerBattlefields.forEach((controllerId, battlefield) -> {
+            if (battlefield.contains(permanent)) {
+                playersWhoRemovedOilCountersFromControlledPermanentsThisTurn.add(controllerId);
+            }
+        });
+    }
+
+    /** Records that a permanent carrying an oil counter entered a graveyard this turn. */
+    public void recordPermanentWithOilCounterPutIntoGraveyard() {
+        permanentWithOilCounterPutIntoGraveyardThisTurn = true;
+    }
+
     /**
      * Returns the total number of spells cast by all players this turn (used by the Storm keyword).
      */
@@ -2922,6 +2959,7 @@ public class GameData {
         copy.activePlayerId = this.activePlayerId;
         copy.turnNumber = this.turnNumber;
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
+        copy.permanentWithOilCounterPutIntoGraveyardThisTurn = this.permanentWithOilCounterPutIntoGraveyardThisTurn;
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
@@ -3182,6 +3220,8 @@ public class GameData {
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
+        copy.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn
+                .addAll(this.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn);
         copy.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
                 .addAll(this.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn);
         copy.playersWhoSacrificedPermanentsThisTurn.addAll(this.playersWhoSacrificedPermanentsThisTurn);
@@ -3190,6 +3230,8 @@ public class GameData {
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
+        copy.playersAffectedByMeliraPoisonReplacementThisTurn
+                .addAll(this.playersAffectedByMeliraPoisonReplacementThisTurn);
         copy.playerEnergyCounters.putAll(this.playerEnergyCounters);
         copy.playerSpeeds.putAll(this.playerSpeeds);
         copy.playersWhoseSpeedIncreasedThisTurn.addAll(this.playersWhoseSpeedIncreasedThisTurn);

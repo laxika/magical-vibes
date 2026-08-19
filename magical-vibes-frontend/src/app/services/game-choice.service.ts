@@ -244,7 +244,10 @@ export class GameChoiceService {
         break;
       case 'MULTI_PERMANENT_PICK':
         this.choosingMultiplePermanents = true;
-        this.multiPermanentChoiceIds.set(new Set(msg.permanentIds ?? []));
+        this.multiPermanentChoiceIds.set(new Set([
+          ...(msg.permanentIds ?? []),
+          ...(msg.playerIds ?? [])
+        ]));
         this.multiPermanentSelectedIds.set(new Set());
         this.multiPermanentMaxCount = msg.maxCount ?? 0;
         this.multiPermanentChoicePrompt = msg.prompt;

@@ -350,6 +350,23 @@ class ManaCostTest {
             assertThat(cost.canPayWithConvoke(new ManaPool(), 0, List.of(ManaColor.GREEN))).isFalse();
             assertThat(cost.canPayWithConvoke(new ManaPool(), 0,
                     List.of(ManaColor.GREEN, ManaColor.GREEN))).isTrue();
+        void hybridPhyrexianManaUsesEitherColorOrLife() {
+            ManaCost cost = new ManaCost("{1}{R/G/P}");
+            assertThat(cost.hasPhyrexianMana()).isTrue();
+            assertThat(cost.getPhyrexianManaCount()).isEqualTo(1);
+            assertThat(cost.getManaValue()).isEqualTo(2);
+
+            ManaPool red = new ManaPool();
+            red.add(ManaColor.RED, 2);
+            assertThat(cost.canPay(red, 0)).isTrue();
+            assertThat(cost.payPhyrexianManaAuto(red, 0)).isZero();
+            assertThat(red.get(ManaColor.RED)).isEqualTo(1);
+
+            ManaPool noColor = new ManaPool();
+            noColor.add(ManaColor.COLORLESS, 1);
+            assertThat(cost.canPay(noColor, 0)).isTrue();
+            assertThat(cost.payPhyrexianManaAuto(noColor, 0)).isEqualTo(2);
+            assertThat(noColor.get(ManaColor.COLORLESS)).isEqualTo(1);
         }
 
         @Test

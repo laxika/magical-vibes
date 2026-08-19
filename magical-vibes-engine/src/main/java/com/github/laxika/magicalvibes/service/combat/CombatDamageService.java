@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerAwareEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -1402,7 +1403,7 @@ public class CombatDamageService {
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, defenderId);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
-                    firedBatchedAllyTriggerSources);
+                    combatDamageDealtToPlayer, firedBatchedAllyTriggerSources);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
         }
@@ -1532,6 +1533,7 @@ public class CombatDamageService {
      */
     private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,
                                                                UUID defenderId, int damageDealt,
+                                                               Map<Permanent, Integer> combatDamageDealtToPlayer,
                                                                Set<UUID> firedBatchedAllyTriggerSources) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         if (attackerBattlefield == null) return;
@@ -1549,6 +1551,16 @@ public class CombatDamageService {
                     if (trigger.oncePerDamageStep() && !firedBatchedAllyTriggerSources.add(perm.getId())) {
                         continue;
                     }
+                    CardEffect firedEffect = trigger.effect();
+                    if (trigger.oncePerDamageStep() && firedEffect instanceof CombatDamageDealerAwareEffect aware) {
+                        List<UUID> dealerIds = combatDamageDealtToPlayer.keySet().stream()
+                                .filter(dealer -> trigger.dealerPredicate() == null
+                                        || predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, dealer, trigger.dealerPredicate()))
+                                .map(Permanent::getId)
+                                .toList();
+                        firedEffect = aware.withCombatDamageDealerIds(dealerIds);
+                    }
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
                     // against them (Oona's Blackguard: "...that player discards a card").
                     StackEntry se = new StackEntry(
@@ -1556,7 +1568,7 @@ public class CombatDamageService {
                             perm.getCard(),
                             attackerId,
                             perm.getCard().getName() + "'s triggered ability",
-                            List.of(trigger.effect()),
+                            List.of(firedEffect),
                             defenderId,
                             trigger.bindSourceToDealer() ? creature.getId() : perm.getId()
                     );
@@ -2366,13 +2378,18 @@ public class CombatDamageService {
         if (state.poisonDamageToDefendingPlayer > 0) {
             state.poisonDamageToDefendingPlayer -= damageSupport.applySoulEchoCounterRemoval(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         }
-        if (state.poisonDamageToDefendingPlayer > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, defenderId)) {
-            int poisonAmount = gameQueryService.replacePoisonCounters(
+        if (state.poisonDamageToDefendingPlayer > 0
+                && gameQueryService.canPlayerGetPoisonCounters(gameData, defenderId)) {
+            int poisonAmount = gameQueryService.applyPoisonCounterReplacement(
                     gameData, defenderId, state.poisonDamageToDefendingPlayer);
+            poisonAmount = gameQueryService.replacePoisonCounters(gameData, defenderId, poisonAmount);
             if (poisonAmount > 0) {
                 int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
                 gameData.playerPoisonCounters.put(defenderId, currentPoison + poisonAmount);
-                String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + poisonAmount + " poison counters.";
+                triggerCollectionService.checkYouPutCountersTriggers(
+                        gameData, gameQueryService.getOpponentId(gameData, defenderId), poisonAmount);
+                String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + poisonAmount
+                        + " poison counter" + (poisonAmount > 1 ? "s" : "") + ".";
                 gameLogService.append(gameData, GameLog.text(logEntry));
             }
         }
@@ -2548,7 +2565,8 @@ public class CombatDamageService {
             // Attacking a planeswalker — damage removes loyalty counters (CR 306.8)
             // Gideon's Intervention: prevent damage to a planeswalker you control from a source with the chosen name.
             UUID pwControllerId = gameQueryService.findPermanentController(gameData, pw.getId());
-            damage *= gameQueryService.getDamageToRecipientMultiplier(gameData, pwControllerId, sourceControllerId);
+            damage *= gameQueryService.getDamageToRecipientMultiplier(
+                    gameData, pwControllerId, sourceControllerId, true);
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, pwControllerId, atk.getCard().getName())) {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
@@ -2608,7 +2626,7 @@ public class CombatDamageService {
         boolean atkHasInfect = atkStats.infect();
         if (redirectTarget != null) {
             damage *= gameQueryService.getDamageToRecipientMultiplier(
-                    gameData, gameQueryService.findPermanentController(gameData, redirectTarget.getId()), sourceControllerId);
+                    gameData, gameQueryService.findPermanentController(gameData, redirectTarget.getId()), sourceControllerId, true);
             // The guard is a creature, so wither also routes here (damage becomes -1/-1 counters).
             if (gameQueryService.dealsCounterDamageToCreatures(gameData, atk)) {
                 state.infectDamageRedirectedToGuard += damage;
@@ -2671,7 +2689,7 @@ public class CombatDamageService {
                     return;
                 }
                 damage *= gameQueryService.getDamageToRecipientMultiplier(
-                        gameData, gameQueryService.findPermanentController(gameData, combatRedirectTarget.getId()), sourceControllerId);
+                        gameData, gameQueryService.findPermanentController(gameData, combatRedirectTarget.getId()), sourceControllerId, true);
                 applyCombatCreatureDamage(gameData, atk, atkStats, combatRedirectTarget,
                         combatRedirectTargetIdx, damage, state.atkDamageTaken,
                         state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices,
@@ -2715,7 +2733,8 @@ public class CombatDamageService {
                     return;
                 }
             }
-            damage *= gameQueryService.getDamageToRecipientMultiplier(gameData, defenderId, sourceControllerId);
+            damage *= gameQueryService.getDamageToRecipientMultiplier(
+                    gameData, defenderId, sourceControllerId, true);
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(
                     gameData, defenderId, null, atk.getId(), damage, true);

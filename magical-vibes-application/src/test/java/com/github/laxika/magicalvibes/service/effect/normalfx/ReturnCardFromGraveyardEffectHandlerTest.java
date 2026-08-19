@@ -345,4 +345,34 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no ") && logEntry.plainText().contains("in any graveyard")));
             }
+
+            @Test
+            @DisplayName("Filters resolution-time choices by mana value at most X")
+            void filtersResolutionTimeChoicesByManaValueAtMostX() {
+                Card expensive = createCard("Colossal Dreadmaw");
+                expensive.setManaCost("{6}{G}");
+                Card eligible = createCard("Grizzly Bears");
+                eligible.setManaCost("{1}{G}");
+                gd.playerGraveyards.get(player1Id).add(expensive);
+                gd.playerGraveyards.get(player1Id).add(eligible);
+
+                CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+                ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(filter)
+                        .requiresManaValueAtMostX(true)
+                        .enterTapped(true)
+                        .build();
+                StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Black Sun's Twilight"),
+                        player1Id, "Black Sun's Twilight", new ArrayList<>(List.of(effect)), 5);
+
+                when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(filter), any()))
+                        .thenReturn(true);
+
+                returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.GraveyardChoice gc
+                                && gc.validIndices().equals(List.of(1))));
+            }
 }

@@ -50,6 +50,9 @@ public class RemoveAndPutCounterOnAttackEffectHandler implements NormalEffectHan
                 : null;
         if (removeFrom != null && removeFrom.getCounterCount(counterType) > 0) {
             removeFrom.setCounterCount(counterType, removeFrom.getCounterCount(counterType) - 1);
+            if (counterType == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(removeFrom, 1);
+            }
             gameLogService.append(gameData,
                     GameLog.textCardText("A " + counterType + " counter removed from ", removeFrom.getCard(), "."));
             log.info("Game {} - {} counter removed from {}", gameData.id, counterType, removeFrom.getCard().getName());

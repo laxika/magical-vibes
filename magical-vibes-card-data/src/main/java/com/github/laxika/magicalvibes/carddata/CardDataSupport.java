@@ -115,6 +115,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Start your engines!", Keyword.START_YOUR_ENGINES);
         KEYWORD_MAP.put("Max speed", Keyword.MAX_SPEED);
         KEYWORD_MAP.put("Epic", Keyword.EPIC);
+        KEYWORD_MAP.put("Toxic", Keyword.TOXIC);
+        KEYWORD_MAP.put("Compleated", Keyword.COMPLEATED);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,16 @@ public class EquipSupport {
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final TriggerCollectionService triggerCollectionService;
+    private final AuraCopyService auraCopyService;
+
+    public void expireAttachedCopyEffects(GameData gameData, Permanent equipment) {
+        auraCopyService.expireAttachedCopyEffects(gameData, equipment.getId());
+    }
+
+    public void notifyEquipmentAttached(GameData gameData, Permanent equipment, UUID oldAttachedTo) {
+        triggerCollectionService.checkEquipmentAttachedTriggers(gameData, equipment, oldAttachedTo);
+    }
 
     public Permanent findEquipmentByCardId(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {

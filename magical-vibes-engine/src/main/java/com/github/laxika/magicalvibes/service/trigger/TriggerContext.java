@@ -15,6 +15,10 @@ import java.util.Map;
  */
 public sealed interface TriggerContext {
 
+    default boolean causedByCreatureDying() {
+        return false;
+    }
+
     /**
      * Context for spell-cast triggers (ON_ANY_PLAYER_CASTS_SPELL, ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
      */
@@ -146,6 +150,12 @@ public sealed interface TriggerContext {
     /** Context for controller-energy-gain triggers. */
     record EnergyGain(UUID gainingPlayerId, int energyGainedAmount) implements TriggerContext {}
 
+    /** Context for a controller proliferating. */
+    record Proliferate(UUID proliferatingPlayerId) implements TriggerContext {}
+
+    /** Context for one counter-placement event caused by a player. */
+    record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
+
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
 
@@ -210,6 +220,11 @@ public sealed interface TriggerContext {
                          Permanent dyingPermanent) {
             this(dyingCard, controllerId, wasCreature, dyingPermanent, null);
         }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return wasCreature;
+        }
     }
 
     /**
@@ -235,6 +250,11 @@ public sealed interface TriggerContext {
             this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
                     dyingPermanentId, null);
         }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return true;
+        }
     }
 
     /**
@@ -243,7 +263,13 @@ public sealed interface TriggerContext {
      */
     record EquippedCreatureDeath(UUID dyingCreatureId,
                                  UUID dyingCreatureControllerId,
-                                 Card dyingCard) implements TriggerContext {}
+                                 Card dyingCard) implements TriggerContext {
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return true;
+        }
+    }
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD triggers.

@@ -135,7 +135,10 @@ public class ETBTokenTargetService {
 
             TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
                     gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
-                    pending.sourceCard(), TriggerTargetCollector.Options.ATTACK);
+                    pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
+                    pending.triggeringPermanentId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
             List<UUID> validPlayerTargets = targets.validTargets().stream()
                     .filter(gameData.playerIds::contains)
                     .toList();

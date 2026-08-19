@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
@@ -114,6 +115,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
+    private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
@@ -280,6 +282,11 @@ public class PermanentChoiceBattlefieldHandlerService {
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.applySacrificeOnUnattachIfNeeded(
                     gameData, equipment, oldAttachedTo, creature.getId());
+            equipSupport.expireAttachedCopyEffects(gameData, equipment);
+            equipment.setAttachedTo(creature.getId());
+            // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+            equipment.setTimestamp(gameData.nextTimestamp());
+            equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
             gameLogService.append(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         }
         // Begun from a library-search resume (Stonehewer Giant) while the search's stack entry is
@@ -462,6 +469,19 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
         // same parked-resolution resume requirement as handleSacrificeCreature above.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        if (creature == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        sacrificeOtherCreatureThenRevealHandler.resolveAfterChoice(
+                gameData, context.sourceCard(), context.controllerId(), creature, context.predicate());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -694,6 +714,75 @@ public class PermanentChoiceBattlefieldHandlerService {
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleBouncePermanentThen(GameData gameData, UUID permanentId,
+                                           PermanentChoiceContext.BouncePermanentThen context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " is returned to its owner's hand."));
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id,
+                    target.getCard().getName(), context.sourceCard().getName());
+
+            if (context.thenEffect() != null) {
+                List<CardEffect> thenEffects = new ArrayList<>(List.of(context.thenEffect()));
+                var targetSpec = context.thenEffect().targetSpec();
+                boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                        || targetSpec.admits(TargetPredicate.Kind.PLAYER);
+                if (needsTarget) {
+                    List<UUID> validPermanentTargets = new ArrayList<>();
+                    if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
+                        TargetPredicate declared = targetSpec.targetPredicate();
+                        FilterContext filterContext = new FilterContext(
+                                gameData, context.sourceCard().getId(), context.controllerId(), null, null);
+                        for (UUID playerId : gameData.orderedPlayerIds) {
+                            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                            if (battlefield == null) {
+                                continue;
+                            }
+                            for (Permanent permanent : battlefield) {
+                                if (targetPredicateEvaluationService.matchesPermanent(
+                                        declared, permanent, filterContext)) {
+                                    validPermanentTargets.add(permanent.getId());
+                                }
+                            }
+                        }
+                    }
+                    List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
+                            ? new ArrayList<>(gameData.orderedPlayerIds)
+                            : List.of();
+                    if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(context.sourceCard(), "'s ability has no valid targets."));
+                    } else {
+                        gameData.interaction.setPermanentChoiceContext(
+                                new PermanentChoiceContext.MayAbilityTriggerTarget(
+                                        context.sourceCard(), context.controllerId(), thenEffects));
+                        playerInputService.beginAnyTargetChoice(gameData, context.controllerId(),
+                                validPermanentTargets, validPlayerTargets,
+                                context.sourceCard().getName() + " — Choose any target.");
+                        return;
+                    }
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            context.sourceCard(),
+                            context.controllerId(),
+                            context.sourceCard().getName() + "'s effect",
+                            thenEffects,
+                            null,
+                            context.sourcePermanentId()));
+                }
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

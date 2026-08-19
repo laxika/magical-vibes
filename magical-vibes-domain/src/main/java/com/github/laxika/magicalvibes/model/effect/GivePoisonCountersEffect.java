@@ -7,7 +7,8 @@ import java.util.UUID;
 /**
  * Gives poison counters to one or more players. A single record covers the whole give-poison
  * family: the {@link PoisonRecipient} routes who gets poisoned (controller / target player /
- * each player / the enchanted permanent's controller).
+ * each player / each opponent / the targeted permanent's controller / the enchanted permanent's
+ * controller).
  *
  * <p>When {@code recipient == TARGET_PLAYER} and {@code spellFilter} is non-null, this doubles as a
  * trigger descriptor for {@code ON_CONTROLLER_CASTS_SPELL}: the trigger fires only when the

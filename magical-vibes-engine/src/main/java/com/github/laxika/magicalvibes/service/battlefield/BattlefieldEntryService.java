@@ -291,6 +291,10 @@ public class BattlefieldEntryService {
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPermanentAscend(gameData, controllerId);
         }
+        int countersPlacedOnEntry = counterCountAfterEntry - counterCountBeforeEntry;
+        if (countersPlacedOnEntry > 0) {
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlacedOnEntry);
+        }
         if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
         }
@@ -947,11 +951,16 @@ public class BattlefieldEntryService {
         if (permanent.getChosenSubtype() == null
                 || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
+        int countersBefore = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             if (effect instanceof EnterWithCountersEffect enterWith && isChosenSubtypeDependent(enterWith)) {
                 applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, 0,
                         List.of(), permanent.getCard());
             }
+        }
+        int countersPlaced = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum() - countersBefore;
+        if (countersPlaced > 0) {
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlaced);
         }
     }
 
@@ -1719,17 +1728,21 @@ public class BattlefieldEntryService {
             return;
         }
 
+        boolean enteringPermanentTriggersSuppressed = gameQueryService
+                .areOpponentPermanentETBTriggersSuppressed(gameData, controllerId);
         int extraEtbTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, card);
 
-        List<CardEffect> triggeredEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
-        if (enteringPermanent != null) {
+        List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed
+                ? new ArrayList<>()
+                : new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+        if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
             triggeredEffects.addAll(enteringPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
         }
         int additionalElementalTriggers = enteringPermanent == null ? 0
                 : gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, controllerId, enteringPermanent);
         int extraTriggerCopies = extraEtbTriggers + additionalElementalTriggers;
-        if (battlefield != null) {
+        if (!enteringPermanentTriggersSuppressed && battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard() == card) {
                     triggeredEffects.addAll(triggerCollectionService.grantedTriggeredEffects(

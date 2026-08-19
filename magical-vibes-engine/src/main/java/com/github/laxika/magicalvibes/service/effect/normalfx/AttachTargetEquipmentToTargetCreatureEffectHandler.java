@@ -64,7 +64,7 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
 
         UUID oldAttachedTo = equipment.getAttachedTo();
 
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(creature.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
@@ -73,5 +73,6 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
         log.info("Game {} - {} attached to {} via {}", gameData.id, equipment.getCard().getName(), creature.getCard().getName(), entry.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, creature.getId());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
     }
 }

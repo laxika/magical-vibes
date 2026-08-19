@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -451,10 +452,10 @@ public class CastingPermissionService {
      * turn. Artifact spells and each player's first nonartifact spell are never restricted; symmetric.
      */
     public boolean isAdditionalNonartifactSpellRestricted(GameData gameData, UUID playerId, Card card) {
-        if (card.hasType(CardType.ARTIFACT)) return false;
+        if (gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, playerId)) return false;
         if (!anyPlayerControlsEtherswornCanonist(gameData)) return false;
         return gameData.getSpellsCastThisTurn(playerId).stream()
-                .anyMatch(cast -> !cast.hasType(CardType.ARTIFACT));
+                .anyMatch(cast -> !gameQueryService.cardHasType(cast, CardType.ARTIFACT, gameData, playerId));
     }
 
     public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card) {
@@ -756,6 +757,12 @@ public class CastingPermissionService {
         Condition condition = card.getCastCondition();
         if (condition == null) return true;
         return conditionEvaluationService.isMet(gameData, condition, ConditionContext.forCasting(playerId));
+    }
+
+    public boolean canUseFlashback(GameData gameData, UUID playerId, FlashbackCast flashbackCast) {
+        Condition condition = flashbackCast.availabilityCondition();
+        return condition == null
+                || conditionEvaluationService.isMet(gameData, condition, ConditionContext.forCasting(playerId));
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {

@@ -24,7 +24,8 @@ public class ManaCost {
      * {@code genericAlternative} is the generic amount that may be paid instead for monocolored
      * hybrids like {2/W} (-1 when there is no generic option, e.g. the color-hybrid {W/B}).
      */
-    private record HybridSymbol(Set<ManaColor> colors, int genericAlternative) {}
+    private record HybridSymbol(Set<ManaColor> colors, int genericAlternative,
+                                boolean phyrexianAlternative) {}
 
     private record ConvokePaymentState(int contributionIndex, int remainingGeneric,
                                        Map<ManaColor, Integer> remainingColored,
@@ -60,9 +61,25 @@ public class ManaCost {
             if (symbol.equals("X")) {
                 xCount++;
             } else if (symbol.endsWith("/P")) {
-                // Phyrexian mana (e.g. R/P) — can be paid with its color or 2 life
-                ManaColor color = ManaColor.fromCode(symbol.substring(0, symbol.length() - 2));
-                phyrexian.merge(color, 1, Integer::sum);
+                // Phyrexian mana (e.g. R/P) — can be paid with its color or 2 life. Hybrid
+                // Phyrexian symbols such as R/G/P can use either listed color or 2 life.
+                String phyrexianPart = symbol.substring(0, symbol.length() - 2);
+                if (phyrexianPart.contains("/")) {
+                    Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+                    int genericAlternative = -1;
+                    for (String part : phyrexianPart.split("/")) {
+                        ManaColor color = ManaColor.fromCode(part);
+                        if (color != null) {
+                            colors.add(color);
+                        } else {
+                            genericAlternative = Integer.parseInt(part);
+                        }
+                    }
+                    hybrid.add(new HybridSymbol(colors, genericAlternative, true));
+                } else {
+                    ManaColor color = ManaColor.fromCode(phyrexianPart);
+                    phyrexian.merge(color, 1, Integer::sum);
+                }
             } else if (symbol.contains("/")) {
                 // Hybrid mana, e.g. {W/B} (pay W or B) or {2/W} (pay 2 generic or W)
                 Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
@@ -75,7 +92,7 @@ public class ManaCost {
                         genericAlt = Integer.parseInt(part);
                     }
                 }
-                hybrid.add(new HybridSymbol(colors, genericAlt));
+                hybrid.add(new HybridSymbol(colors, genericAlt, false));
             } else {
                 ManaColor color = ManaColor.fromCode(symbol);
                 if (color != null) {
@@ -309,7 +326,8 @@ public class ManaCost {
     }
 
     public boolean hasPhyrexianMana() {
-        return !phyrexianCosts.isEmpty();
+        return !phyrexianCosts.isEmpty()
+                || hybridCosts.stream().anyMatch(HybridSymbol::phyrexianAlternative);
     }
 
     /**
@@ -331,7 +349,7 @@ public class ManaCost {
      * @return the total life that must be paid
      */
     public int payPhyrexianMana(ManaPool pool, Integer requestedLifeCount) {
-        int totalPhyrexian = phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum();
+        int totalPhyrexian = getPhyrexianManaCount();
         int lifeSymbols = requestedLifeCount != null
                 ? Math.max(0, Math.min(requestedLifeCount, totalPhyrexian))
                 : 0;
@@ -359,11 +377,28 @@ public class ManaCost {
                 }
             }
         }
+        for (HybridSymbol hybrid : hybridCosts) {
+            if (!hybrid.phyrexianAlternative()) {
+                continue;
+            }
+            if (lifeSymbolsRemaining > 0) {
+                lifeCost += 2;
+                lifeSymbolsRemaining--;
+            } else {
+                ManaColor color = pickAvailableColor(hybrid.colors(), pool);
+                if (color != null) {
+                    pool.remove(color);
+                } else if (autoMode) {
+                    lifeCost += 2;
+                }
+            }
+        }
         return lifeCost;
     }
 
     public int getPhyrexianManaCount() {
-        return phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum();
+        return phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum()
+                + (int) hybridCosts.stream().filter(HybridSymbol::phyrexianAlternative).count();
     }
 
     /**
@@ -387,6 +422,23 @@ public class ManaCost {
                     reserved.merge(entry.getKey(), -1, Integer::sum);
                     lifeCost += 2;
                 }
+            }
+        }
+        for (HybridSymbol hybrid : hybridCosts) {
+            if (!hybrid.phyrexianAlternative()) {
+                continue;
+            }
+            ManaColor chosen = null;
+            for (ManaColor color : hybrid.colors()) {
+                reserved.merge(color, 1, Integer::sum);
+                if (canPayRestWithReserved(pool, xValue, reserved)) {
+                    chosen = color;
+                    break;
+                }
+                reserved.merge(color, -1, Integer::sum);
+            }
+            if (chosen == null) {
+                lifeCost += 2;
             }
         }
         for (Map.Entry<ManaColor, Integer> entry : reserved.entrySet()) {
@@ -808,7 +860,9 @@ public class ManaCost {
     }
 
     private List<HybridSymbol> hybridsMostConstrainedFirst(Map<ManaColor, Integer> available) {
-        List<HybridSymbol> sorted = new ArrayList<>(hybridCosts);
+        List<HybridSymbol> sorted = hybridCosts.stream()
+                .filter(hybrid -> !hybrid.phyrexianAlternative())
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         sorted.sort(Comparator.comparingInt(h -> (int) h.colors().stream()
                 .filter(c -> available.get(c) > 0).count()));
         return sorted;
@@ -825,6 +879,13 @@ public class ManaCost {
             }
         }
         return best;
+    }
+
+    private static ManaColor pickAvailableColor(Set<ManaColor> colors, ManaPool pool) {
+        return colors.stream()
+                .max(Comparator.comparingInt(pool::get))
+                .filter(color -> pool.get(color) > 0)
+                .orElse(null);
     }
 
     /**
@@ -2747,7 +2808,8 @@ public class ManaCost {
                         continue;
                     }
                     List<HybridSymbol> nextHybrids = new ArrayList<>(canonicalHybrids);
-                    nextHybrids.set(i, new HybridSymbol(hybrid.colors(), hybrid.genericAlternative() - 1));
+                    nextHybrids.set(i, new HybridSymbol(
+                            hybrid.colors(), hybrid.genericAlternative() - 1, hybrid.phyrexianAlternative()));
                     plan = findConvokePaymentPlan(pool, contributions, index + 1,
                             remainingGeneric, remainingColored, nextHybrids, failedStates);
                     if (plan != null) {
@@ -2767,7 +2829,8 @@ public class ManaCost {
                     continue;
                 }
                 List<HybridSymbol> nextHybrids = new ArrayList<>(canonicalHybrids);
-                nextHybrids.set(i, new HybridSymbol(hybrid.colors(), hybrid.genericAlternative() - 1));
+                nextHybrids.set(i, new HybridSymbol(
+                        hybrid.colors(), hybrid.genericAlternative() - 1, hybrid.phyrexianAlternative()));
                 plan = findConvokePaymentPlan(pool, contributions, index + 1,
                         remainingGeneric, remainingColored, nextHybrids, failedStates);
                 if (plan != null) {
@@ -2817,7 +2880,8 @@ public class ManaCost {
                 continue;
             }
             List<HybridSymbol> nextHybrids = new ArrayList<>(canonicalHybrids);
-            nextHybrids.set(i, new HybridSymbol(hybrid.colors(), hybrid.genericAlternative() - 1));
+            nextHybrids.set(i, new HybridSymbol(
+                    hybrid.colors(), hybrid.genericAlternative() - 1, hybrid.phyrexianAlternative()));
             plan = findConvokePaymentPlan(pool, contributions, index + 1,
                     remainingGeneric, remainingColored, nextHybrids, failedStates);
             if (plan != null) {

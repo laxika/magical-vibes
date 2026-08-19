@@ -48,7 +48,8 @@ public record LibrarySearchParams(
         String sourceSetCode,
         boolean sourceSideboard,
         CardSubtype battlefieldIfChosenBeholdType,
-        Integer battlefieldIfManaValueAtMost
+        Integer battlefieldIfManaValueAtMost,
+        boolean placeBattlefieldCardsSimultaneously
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -74,7 +75,8 @@ public record LibrarySearchParams(
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
-                battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost);
+                battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                placeBattlefieldCardsSimultaneously);
     }
 
     public static class Builder {
@@ -114,6 +116,7 @@ public record LibrarySearchParams(
         private boolean sourceSideboard;
         private CardSubtype battlefieldIfChosenBeholdType;
         private Integer battlefieldIfManaValueAtMost;
+        private boolean placeBattlefieldCardsSimultaneously;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -286,6 +289,12 @@ public record LibrarySearchParams(
             return this;
         }
 
+        /** Holds selected battlefield cards until a bounded multi-pick flow completes. */
+        public Builder placeBattlefieldCardsSimultaneously(boolean placeBattlefieldCardsSimultaneously) {
+            this.placeBattlefieldCardsSimultaneously = placeBattlefieldCardsSimultaneously;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
@@ -294,7 +303,8 @@ public record LibrarySearchParams(
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                     returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
-                    battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost);
+                    battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                    placeBattlefieldCardsSimultaneously);
         }
     }
 }

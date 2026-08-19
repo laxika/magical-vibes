@@ -88,6 +88,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
             if (placed <= 0) continue;
 
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, p, placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, p);

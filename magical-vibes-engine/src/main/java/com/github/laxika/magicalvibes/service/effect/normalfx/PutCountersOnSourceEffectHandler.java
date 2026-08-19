@@ -51,16 +51,19 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
             amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE, amount);
             if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, amount);
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source);
         } else if (plusZeroPlusOne) {
             amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ZERO_PLUS_ONE, amount);
             if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + amount);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, amount);
         } else {
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) return;
             amount = gameQueryService.replaceCounters(gameData, source, CounterType.MINUS_ONE_MINUS_ONE, amount);
             if (amount <= 0) return;
             source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + amount);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, amount);
         }
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets " + amount + " " + counterLabel + " counter(s).").build());
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), amount, counterLabel);

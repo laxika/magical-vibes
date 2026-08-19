@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTog
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
@@ -94,6 +95,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -242,7 +244,7 @@ public class CombatAttackService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CombatCreatureLimitEffect limit
                         && (!filterByAttackTarget
-                        || limit.appliesToAttackTarget(sourceControllerId, attackTargetId))) {
+                        || limit.appliesToAttackTarget(sourceControllerId, permanent.getId(), attackTargetId))) {
                     maximum[0] = Math.min(maximum[0], limit.maxAttackers());
                 }
             }
@@ -567,6 +569,12 @@ public class CombatAttackService {
                             || validTargetIds.contains(attacker.getMustAttackTargetId()))
                     && !attacker.getMustAttackTargetId().equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
+            }
+            if (gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects().stream()
+                    .anyMatch(MustAttackPlayerEffect.class::isInstance)
+                    && attackLegalityService.canAttackDefender(gameData, attacker, defenderId)
+                    && !gameData.playerIds.contains(targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " must attack a player");
             }
             // Taunt: a taunted player's attacking creatures must attack the taunter if able.
             UUID taunter = gameData.tauntedThisTurn.get(playerId);
@@ -1130,7 +1138,7 @@ public class CombatAttackService {
 
         // Check for "whenever a creature you control attacks" triggers (ON_ALLY_CREATURE_ATTACKS)
         // These fire once per attacking creature (not once per combat like ON_ALLY_CREATURES_ATTACK).
-        // Supports TriggeringCardConditionalEffect to filter by the attacking creature.
+        // Supports card and permanent conditional effects to filter by the attacking creature.
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
@@ -1148,7 +1156,12 @@ public class CombatAttackService {
                     } else if (effect instanceof TriggeringPermanentConditionalEffect permConditional) {
                         // Filter by the attacking permanent itself (e.g. Rage Forger — "a creature you
                         // control with a +1/+1 counter on it attacks").
-                        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, permConditional.predicate())) {
+                        FilterContext sourceContext = FilterContext.of(gameData)
+                                .withSourceCardId(perm.getOriginalCard().getId())
+                                .withSourceControllerId(playerId)
+                                .withSourcePermanentId(perm.getId());
+                        if (!predicateEvaluationService.matchesPermanentPredicate(
+                                attacker, permConditional.predicate(), sourceContext)) {
                             continue;
                         }
                         matchingEffects.add(permConditional.wrapped());

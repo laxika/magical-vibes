@@ -166,7 +166,13 @@ public class LifeSupport {
     }
 
     public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {
-        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
+        applyPoisonCounters(gameData, playerId, amount, sourceName, gameData.currentlyResolvingControllerId);
+    }
+
+    public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName,
+                                    UUID placingPlayerId) {
+        amount = gameQueryService.applyPoisonCounterReplacement(gameData, playerId, amount);
+        if (amount <= 0) return;
 
         amount = gameQueryService.replacePoisonCounters(gameData, playerId, amount);
         if (amount <= 0) return;
@@ -180,6 +186,7 @@ public class LifeSupport {
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
+        triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
     }
 
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {

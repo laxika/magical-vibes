@@ -897,7 +897,7 @@ public class ValidTargetService {
         }
 
         // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
-        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, sourceCard)) {
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, sourceCard, controllerId)) {
             return false;
         }
 

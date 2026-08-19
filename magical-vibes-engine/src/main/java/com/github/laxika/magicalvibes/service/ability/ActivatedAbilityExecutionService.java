@@ -278,6 +278,9 @@ public class ActivatedAbilityExecutionService {
             if (counterSource != null) {
                 effectiveXValue = counterSource.getCounterCount(counterType);
                 counterSource.setCounterCount(counterType, 0);
+                if (counterType == CounterType.OIL) {
+                    gameData.recordOilCounterRemoved(counterSource, effectiveXValue);
+                }
             }
         }
 
@@ -399,7 +402,7 @@ public class ActivatedAbilityExecutionService {
             unattachedEquipmentCard = equipment.getCard();
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, equipment.getAttachedTo(), null);
             equipment.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+            equipSupport.expireAttachedCopyEffects(gameData, equipment);
         }
 
         List<StackEntry> deferredCostTriggers = new ArrayList<>();
@@ -859,7 +862,11 @@ public class ActivatedAbilityExecutionService {
                     log.info("Game {} - Awaiting {} to choose a mana color from a fixed set", gameData.id, player.getUsername());
                 }
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
-                arm.applyTo(gameData.playerManaPools.get(playerId));
+                int amount = amountEvaluationService.evaluate(gameData, arm.amount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
+                if (amount > 0) {
+                    arm.applyTo(gameData.playerManaPools.get(playerId), amount);
+                }
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 ahg.applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
@@ -1029,6 +1036,7 @@ public class ActivatedAbilityExecutionService {
                                 gameLogService.append(gameData, GameLog.text(logEntry));
                             }
                         }
+                        lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
                     } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                     } else {
@@ -1176,6 +1184,7 @@ public class ActivatedAbilityExecutionService {
                         gameLogService.append(gameData, GameLog.text(playerName + " gets " + poisonAmount + " poison counters from " + cardName + "."));
                     }
                 }
+                lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
@@ -1252,7 +1261,8 @@ public class ActivatedAbilityExecutionService {
                 total += amountEvaluationService.evaluate(gameData, ofColors.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
-                total += arm.amount();
+                total += amountEvaluationService.evaluate(gameData, arm.amount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 total += ahg.amount();
             } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {

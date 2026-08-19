@@ -142,7 +142,7 @@ public final class CombatHelper {
                 if (effect instanceof CombatCreatureLimitEffect limit) {
                     long affectedAttackers = attackerIndices.stream()
                             .filter(index -> limit.appliesToAttackTarget(sourceControllerId,
-                                    attackTargets.get(index)))
+                                    permanent.getId(), attackTargets.get(index)))
                             .count();
                     if (affectedAttackers > limit.maxAttackers()) {
                         throw new IllegalStateException("No more than " + limit.maxAttackers()

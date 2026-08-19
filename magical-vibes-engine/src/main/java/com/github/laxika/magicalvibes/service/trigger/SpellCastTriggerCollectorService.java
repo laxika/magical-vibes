@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAllCardsWithCastSpellM
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsWithCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -170,6 +171,25 @@ public class SpellCastTriggerCollectorService {
     private boolean handleAnyPlayerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = FirstMulticoloredSpellCastTriggerEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleFirstMulticoloredSpellCastTrigger(TriggerMatchContext match,
+            FirstMulticoloredSpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (sc.spellCard().getColors().size() < 2) {
+            return false;
+        }
+        long multicoloredSpellsThisTurn = match.gameData().getSpellsCastThisTurn(sc.castingPlayerId()).stream()
+                .filter(card -> card.getColors().size() >= 2)
+                .count();
+        if (multicoloredSpellsThisTurn != 1) {
+            return false;
+        }
+        return handleGenericSpellCastTrigger(match,
+                new SpellCastTriggerEffect(null, trigger.resolvedEffects()),
+                sc.spellCard(), sc.castingPlayerId());
     }
 
     @CollectsTrigger(value = SpellweaverHelixTriggerEffect.class,

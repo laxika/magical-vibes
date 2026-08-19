@@ -301,6 +301,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controlled by that permanent's controller (so it fires for an opponent's Aura too).
      *  Checked in {@code TriggerCollectionService.checkAuraAttachedTriggers}. Used by Brood Keeper. */
     ON_AURA_ATTACHED_TO_SELF,
+    /** Triggers on an Equipment whenever it becomes attached to a permanent. */
+    ON_EQUIPMENT_ATTACHED,
     ON_ENCHANTED_PERMANENT_TAPPED,
     /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
      *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
@@ -665,6 +667,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
     /** Triggers whenever one or more +1/+1 counters are put on a permanent the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
+    /** Triggers whenever the controller puts one or more counters on a permanent or player. */
+    ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
      *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
      *  lands (no counter, no trigger). Used by Renegade Krasis. */
@@ -712,6 +716,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
     /** Triggers during your turn whenever one or more cards are exiled from graveyards and/or the battlefield. */
     ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN,
+    /** Triggers whenever this permanent's controller proliferates. */
+    ON_CONTROLLER_PROLIFERATES,
+    /** Triggers whenever the controller of this card proliferates while this card is in that
+     *  player's graveyard. */
+    GRAVEYARD_ON_CONTROLLER_PROLIFERATES,
     /** Triggers whenever one or more creature cards leave the controller's graveyard. */
     ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever one or more artifact and/or creature cards leave the controller's graveyard. */
@@ -727,7 +736,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_EXPLOIT,
     /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK
      *  (which fires once per combat), this fires separately for each creature declared as an attacker.
-     *  Supports TriggeringCardConditionalEffect to filter by the attacking creature (e.g. Vampires).
+     *  Supports TriggeringCardConditionalEffect and TriggeringPermanentConditionalEffect to filter
+     *  by the attacking creature (e.g. Vampires and creatures with counters).
      *  Checked in {@code CombatAttackService.declareAttackers}. Used by Sanctum Seeker. */
     ON_ALLY_CREATURE_ATTACKS,
     /** Triggers once per unblocked attacking creature the controller controls, during the

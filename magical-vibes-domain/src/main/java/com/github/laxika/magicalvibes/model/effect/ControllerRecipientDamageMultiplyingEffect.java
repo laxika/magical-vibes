@@ -10,4 +10,11 @@ public interface ControllerRecipientDamageMultiplyingEffect extends CardEffect {
      * The factor applied to each matching damage event.
      */
     int damageMultiplier();
+
+    /**
+     * Whether this multiplier applies only to noncombat damage.
+     */
+    default boolean noncombatOnly() {
+        return false;
+    }
 }

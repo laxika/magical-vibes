@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -54,12 +56,14 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
             return;
         }
 
-        var oldAttachedTo = equipment.getAttachedTo();
+        UUID oldAttachedTo = equipment.getAttachedTo();
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());

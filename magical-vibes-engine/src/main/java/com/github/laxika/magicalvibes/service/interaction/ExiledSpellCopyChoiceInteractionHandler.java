@@ -3,11 +3,16 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +35,8 @@ public class ExiledSpellCopyChoiceInteractionHandler
     private final CopySupport copySupport;
     private final ExileService exileService;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    private final GameLogService gameLogService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.ExiledSpellCopyChoice> handledType() {
@@ -57,6 +64,22 @@ public class ExiledSpellCopyChoiceInteractionHandler
             // Nothing to copy: drain through the shared queue epilogue so the parked stack entry
             // that began this choice is resumed.
             exileFreeCastQueueSupport.castNextFromQueue(gameData, interaction.playerId());
+            return;
+        }
+
+        if (interaction.mayCastCopies()) {
+            Card copy = copySupport.createCopyCard(entry.card());
+            exileService.exileCard(gameData, interaction.playerId(), copy);
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    copy,
+                    interaction.playerId(),
+                    List.of(new MayCastCopyWithoutPayingManaCostEffect()),
+                    "Cast the copy of " + copy.getName() + " without paying its mana cost?",
+                    copy.getId()));
+            gameLogService.append(gameData,
+                    GameLog.textCardText(gameData.playerIdToName.get(interaction.playerId())
+                            + " creates a copy of ", entry.card(), "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

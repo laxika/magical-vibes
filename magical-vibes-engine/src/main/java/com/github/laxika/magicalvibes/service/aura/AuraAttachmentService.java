@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -109,9 +110,13 @@ public class AuraAttachmentService {
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (equipped creature left the battlefield)."));
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
                     } else {
+                        boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                        if (wentToGraveyard && hadOilCounter) {
+                            gameData.recordPermanentWithOilCounterPutIntoGraveyard();
+                        }
                         String reason = p.isAttached()
                                 ? "enchanted permanent left the battlefield"
                                 : "Aura is not attached";
@@ -193,9 +198,13 @@ public class AuraAttachmentService {
                     log.info("Game {} - {} becomes a creature after illegal bestow attachment", gameData.id, p.getCard().getName());
                 } else {
                     // CR 704.5m — an illegally attached aura is put into its owner's graveyard
+                    boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
                     it.remove();
                     gameData.expireFloatingEffectsForDepartedSource(p.getId());
                     boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                    if (wentToGraveyard && hadOilCounter) {
+                        gameData.recordPermanentWithOilCounterPutIntoGraveyard();
+                    }
                     
                     gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" is put into the graveyard (" + reason + ").").build());
                     log.info("Game {} - {} removed (illegally attached: {})", gameData.id, p.getCard().getName(), reason);

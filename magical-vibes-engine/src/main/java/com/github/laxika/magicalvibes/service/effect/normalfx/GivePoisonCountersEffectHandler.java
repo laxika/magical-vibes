@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,21 +35,35 @@ public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean 
         String sourceName = entry.getCard().getName();
 
         switch (e.recipient()) {
-            case CONTROLLER -> lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), e.amount(), sourceName);
+            case CONTROLLER -> lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), e.amount(), sourceName, entry.getControllerId());
             case TARGET_PLAYER -> {
                 UUID targetPlayerId = entry.getTargetId();
                 if (targetPlayerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, targetPlayerId, e.amount(), sourceName);
+                lifeSupport.applyPoisonCounters(gameData, targetPlayerId, e.amount(), sourceName, entry.getControllerId());
             }
             case EACH_PLAYER -> {
                 for (UUID playerId : gameData.orderedPlayerIds) {
-                    lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName);
+                    lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
                 }
+            }
+            case EACH_OPPONENT -> {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    if (!playerId.equals(entry.getControllerId())) {
+                        lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
+                    }
+                }
+            }
+            case TARGET_PERMANENT_CONTROLLER -> {
+                UUID targetPermanentId = entry.getTargetId();
+                if (targetPermanentId == null) return;
+                UUID playerId = gameQueryService.findPermanentController(gameData, targetPermanentId);
+                if (playerId == null) return;
+                lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
             }
             case ENCHANTED_PERMANENT_CONTROLLER -> {
                 UUID playerId = e.affectedPlayerId();
                 if (playerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName);
+                lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
             }
         }
     }

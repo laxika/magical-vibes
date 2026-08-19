@@ -37,7 +37,16 @@ public record FlickerEffect(
         CardEffect bonusEffect,
         int plusOnePlusOneCountersOnReturn,
         boolean returnUnderController,
-        boolean grantHaste) implements CardEffect {
+        boolean grantHaste,
+        boolean returnAtOwnerNextEndStep) implements CardEffect {
+
+    public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+                         TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+                         CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+                         boolean returnUnderController, boolean grantHaste) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, false);
+    }
 
     /** Exile target permanent, return it at the beginning of the next end step (Glimmerpoint Stag). */
     public static FlickerEffect exileTargetReturnAtEndStep() {
@@ -48,6 +57,12 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStep(boolean returnTapped) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, returnTapped, null, null, 0, false, false);
+    }
+
+    /** Exile target permanent, returning it under its owner's control at that owner's next end step. */
+    public static FlickerEffect exileTargetReturnAtOwnerNextEndStep() {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, false, false, true);
     }
 
     /** Exile target permanent, return it at the beginning of the next end step with +1/+1 counters. */

@@ -31,12 +31,14 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -1362,6 +1364,21 @@ public class LayerSystemService {
                             null, false, false, grant.cardType(), null));
                 }
             }
+            case GrantCardTypeToOwnNonlandPermanentsEffect grant -> {
+                manage(board, instance);
+                PermanentSlot source = instance.source();
+                if (source == null) return;
+                for (PermanentSlot target : slots) {
+                    if (!target.controllerId().equals(source.controllerId())) {
+                        continue;
+                    }
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (state == null || state.hasCardType(CardType.LAND)) continue;
+                    state.addCardType(grant.cardType());
+                    record(board, instance, target, new L4Contribution(
+                            null, false, false, grant.cardType(), null));
+                }
+            }
             case SetCardTypesEffect set -> {
                 manage(board, instance);
                 for (PermanentSlot target : scopeTargets(instance, set.scope(), null, slots, slotsById, board)) {
@@ -2154,6 +2171,9 @@ public class LayerSystemService {
                     case GrantActivatedAbilityEffect grant -> {
                         state.addActivatedAbility(grant.ability().withGrantSource(
                                 instance.floating().sourcePermanentId()));
+                        state.addActivatedAbility(grant.ability());
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), grant);
                     }
                     case ProtectionFromColorsEffect protection -> {
                         state.addProtectionColors(protection.colors());

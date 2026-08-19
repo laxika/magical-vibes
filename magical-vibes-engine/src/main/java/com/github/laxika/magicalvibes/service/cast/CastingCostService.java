@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetin
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PerTargetCastCostReductionEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetBasedCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDiscardAlternativeCostEffect;
@@ -474,6 +475,48 @@ public class CastingCostService {
     }
 
     /**
+     * Extra generic mana imposed by a spell-self target-cost effect, such as Vanish into
+     * Eternity's creature-targeting surcharge.
+     */
+    public int getTargetBasedCostIncrease(GameData gameData, Card card, UUID targetId, List<UUID> targetIds) {
+        UUID firstTargetId = targetIds != null && !targetIds.isEmpty()
+                ? targetIds.getFirst() : targetId;
+        if (firstTargetId == null) {
+            return 0;
+        }
+        Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
+        if (firstTarget == null) {
+            return 0;
+        }
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(TargetBasedCastCostIncreaseEffect.class::isInstance)
+                .map(TargetBasedCastCostIncreaseEffect.class::cast)
+                .filter(effect -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, firstTarget, effect.predicate()))
+                .mapToInt(TargetBasedCastCostIncreaseEffect::amount)
+                .sum();
+    }
+
+    /**
+     * Minimum target-based surcharge among the supplied legal permanent targets. A spell may
+     * choose the cheapest legal target when its cost depends on that target.
+     */
+    public int getMinimumTargetBasedCostIncrease(GameData gameData, Card card, List<UUID> targetIds) {
+        if (targetIds == null || targetIds.isEmpty()) {
+            return 0;
+        }
+        return targetIds.stream()
+                .mapToInt(targetId -> getTargetBasedCostIncrease(gameData, card, targetId, null))
+                .min()
+                .orElse(0);
+    }
+
+    public boolean hasTargetBasedCostIncrease(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(TargetBasedCastCostIncreaseEffect.class::isInstance);
+    }
+
+    /**
      * Extra generic mana required to activate an activated ability of {@code sourcePermanent},
      * summed over every {@link ActivatedAbilityCostIncreasingEffect} on any battlefield whose
      * predicate matches the source (e.g. Gloom taxes white enchantments' abilities {3} more).
@@ -535,6 +578,13 @@ public class CastingCostService {
      */
     public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
                                                 Permanent sourcePermanent, ActivatedAbility ability) {
+        return getActivatedAbilityCostReduction(gameData, activatingPlayerId, sourcePermanent, ability,
+                null, List.of());
+    }
+
+    public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
+                                                Permanent sourcePermanent, ActivatedAbility ability,
+                                                UUID targetId, List<UUID> targetIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
         if (battlefield == null) return 0;
 
@@ -543,13 +593,14 @@ public class CastingCostService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ActivatedAbilityCostReducingEffect reducer
                         && !reducer.appliesSymmetrically()
-                        && reducer.appliesTo(ability)
+                        && reducer.appliesTo(ability, permanent.getId(), targetId, targetIds)
                         && predicateEvaluationService.matchesPermanentPredicate(
-                                sourcePermanent, reducer.affectedPermanents(),
-                                FilterContext.of(gameData)
-                                        .withSourceCardId(permanent.getOriginalCard().getId())
-                                        .withSourceControllerId(activatingPlayerId)
-                                        .withSourcePermanentSnapshot(permanent))) {
+                        sourcePermanent, reducer.affectedPermanents(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(permanent.getOriginalCard().getId())
+                                .withSourceControllerId(activatingPlayerId)
+                                .withSourcePermanentSnapshot(permanent)
+                                .withSourcePermanentId(permanent.getId()))) {
                     reduction += reducer.genericCostReduction();
                 }
             }
@@ -596,10 +647,11 @@ public class CastingCostService {
                             && reducingEffect.appliesSymmetrically()
                             && (ability == null || reducingEffect.appliesTo(ability))
                             && predicateEvaluationService.matchesPermanentPredicate(
-                                    sourcePermanent, reducingEffect.affectedPermanents(),
-                                    FilterContext.of(gameData)
-                                            .withSourceCardId(perm.getOriginalCard().getId())
-                                            .withSourceControllerId(pid))) {
+                                sourcePermanent, reducingEffect.affectedPermanents(),
+                                FilterContext.of(gameData)
+                                        .withSourceCardId(perm.getOriginalCard().getId())
+                                        .withSourceControllerId(pid)
+                                        .withSourcePermanentId(perm.getId()))) {
                         reduction += reducingEffect.genericCostReduction();
                     }
                 }
