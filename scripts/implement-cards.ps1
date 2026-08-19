@@ -129,7 +129,7 @@ for ($cardId = $From; $cardId -le $To; $cardId++) {
         # *>$null needs a non-Stop EAP on Windows PowerShell 5.1, or native stderr
         # aborts/deadlocks under the script-level $ErrorActionPreference=Stop.
         $reasoningConfig = "model_reasoning_effort=`"$Effort`""
-        & { $ErrorActionPreference = "Ignore"; & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt" *>$null }
+        & { $ErrorActionPreference = "Continue"; & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt" *>$null }
     }
     else {
         & claude --permission-mode auto --model $Model --effort $Effort -p $prompt --append-system-prompt $systemPrompt

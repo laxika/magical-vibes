@@ -141,7 +141,7 @@ $reviewJob = {
         elseif ($JobRunner -eq "codex") {
             # A non-Stop EAP prevents native stderr from aborting or deadlocking
             # under Windows PowerShell 5.1. Codex output is intentionally quiet.
-            $ErrorActionPreference = "Ignore"
+            $ErrorActionPreference = "Continue"
             $reasoningConfig = "model_reasoning_effort=`"$JobEffort`""
             & codex --search --ask-for-approval never exec --model $JobModel --config $reasoningConfig --cd $JobRepositoryRoot "$prompt`n`n$JobSystemPrompt" *>$null
             $exitCode = $LASTEXITCODE

@@ -137,7 +137,7 @@ try {
     & {
         # A non-Stop preference prevents native stderr from becoming terminating
         # NativeCommandError records under Windows PowerShell 5.1.
-        $ErrorActionPreference = "Ignore"
+        $ErrorActionPreference = "Continue"
         & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot --output-schema $commitSchemaPath --output-last-message $commitOutputPath $prompt
     }
     $codexExitCode = $LASTEXITCODE
