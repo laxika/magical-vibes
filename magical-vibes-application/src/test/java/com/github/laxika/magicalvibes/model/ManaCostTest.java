@@ -350,6 +350,9 @@ class ManaCostTest {
             assertThat(cost.canPayWithConvoke(new ManaPool(), 0, List.of(ManaColor.GREEN))).isFalse();
             assertThat(cost.canPayWithConvoke(new ManaPool(), 0,
                     List.of(ManaColor.GREEN, ManaColor.GREEN))).isTrue();
+        }
+
+        @Test
         void hybridPhyrexianManaUsesEitherColorOrLife() {
             ManaCost cost = new ManaCost("{1}{R/G/P}");
             assertThat(cost.hasPhyrexianMana()).isTrue();

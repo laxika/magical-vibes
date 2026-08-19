@@ -830,6 +830,17 @@ class CastingCostServiceTest {
             Permanent creature = new Permanent(new Card());
             ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
                     false, "{2}", List.of(), "Creature ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, creature, ability))
+                    .isZero();
+            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
+                    .isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("Other-only equip cost reduction excludes the source Equipment")
         void otherOnlyEquipCostReductionExcludesSourceEquipment() {
             Card whip = new Card();
@@ -869,10 +880,6 @@ class CastingCostServiceTest {
                     any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
                     .thenReturn(true);
 
-            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, creature, ability))
-                    .isZero();
-            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
-                    .isEqualTo(2);
             assertThat(svc.getActivatedAbilityCostReduction(
                     gd, player1Id, equipment, ability, reducer.getId(), List.of()))
                     .isEqualTo(1);

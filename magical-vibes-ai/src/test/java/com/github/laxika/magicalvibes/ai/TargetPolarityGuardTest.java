@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -85,6 +86,9 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd,
                 new ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
+        assertThat(classifier.classify(gd,
+                new ReturnTargetCardOnDeathThisTurnEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
     }
 
     @Test
