@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
@@ -821,6 +822,22 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
                     .allMatch(permanent -> !permanent.isTapped());
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(victimize);
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Suffer the Past without cards in the target graveyard")
+        void doesNotCastSufferThePastWithoutCardsInTargetGraveyard() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 2);
+            SufferThePast sufferThePast = new SufferThePast();
+            testHarness.setHand(aiTestPlayer, List.of(sufferThePast));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(sufferThePast);
         }
 
         @Test

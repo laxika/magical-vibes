@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -2424,6 +2425,34 @@ public abstract class AiDecisionEngine {
                     .count());
         }
         return maxX;
+    }
+
+    /**
+     * Returns the maximum X allowed by both the caster's graveyard requirements and any
+     * target-player graveyard exile requirement on the spell.
+     */
+    protected int getMaxXForGraveyardRequirements(GameData gameData, Card card, UUID targetPlayerId) {
+        return Math.min(getMaxXForGraveyardRequirements(gameData, card),
+                getMaxXForTargetPlayerGraveyardRequirement(gameData, card, targetPlayerId));
+    }
+
+    private int getMaxXForTargetPlayerGraveyardRequirement(
+            GameData gameData, Card card, UUID targetPlayerId) {
+        TargetPlayerGraveyardExileEffect effect = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(TargetPlayerGraveyardExileEffect.class::isInstance)
+                .map(TargetPlayerGraveyardExileEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (effect == null || targetPlayerId == null) {
+            return Integer.MAX_VALUE;
+        }
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return 0;
+        }
+        return (int) gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()).stream()
+                .filter(graveyardCard -> predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, effect.filter(), card.getId()))
+                .count();
     }
 
     private boolean hasValidRequiredGraveyardReturnTargets(GameData gameData, Card card) {

@@ -596,7 +596,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
-                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
+                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card, targetId));
                 maxX = Math.min(maxX, getMaxXForDiscardCost(gameData, card));
                 if (maxX <= 0) {
                     telemetry.recordSkip("spell: X cost unaffordable", card.getName());

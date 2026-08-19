@@ -213,7 +213,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             if (hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
-                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
+                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card, targetId));
                 maxX = Math.min(maxX, getMaxXForDiscardCost(gameData, card));
                 if (maxX <= 0) {
                     return false;
@@ -232,7 +232,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                         : Math.max(1, chosen.getCard().getManaValue());
             } else {
                 int smartX = manaManager.calculateSmartX(gameData, aiPlayer.getId(), card, targetId, virtualPool, costModifier);
-                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card, targetId));
                 smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) {
                     return false;
@@ -456,7 +456,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             if (hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
-                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
+                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card, targetId));
                 maxX = Math.min(maxX, getMaxXForDiscardCost(gameData, card));
                 if (maxX <= 0) return false;
                 List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
@@ -471,7 +471,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                         : Math.max(1, chosen.getCard().getManaValue());
             } else {
                 int smartX = manaManager.calculateSmartX(gameData, aiPlayer.getId(), card, targetId, virtualPool, instantCostModifier);
-                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card, targetId));
                 smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) return false;
                 xValue = smartX;

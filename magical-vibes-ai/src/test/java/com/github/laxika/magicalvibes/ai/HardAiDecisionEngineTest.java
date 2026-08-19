@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
@@ -193,6 +194,28 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getCard()).isSameAs(purge);
         assertThat(gd.stack.getFirst().getTargetIds()).hasSize(2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast Suffer the Past without cards in the target graveyard")
+    void doesNotCastSufferThePastWithoutCardsInTargetGraveyard() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        SufferThePast sufferThePast = new SufferThePast();
+        harness.setHand(player1, List.of(sufferThePast));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, player2.getId(), 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sufferThePast);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test

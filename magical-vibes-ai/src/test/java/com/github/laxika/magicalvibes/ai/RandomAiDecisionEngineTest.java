@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
@@ -1479,6 +1480,46 @@ class RandomAiDecisionEngineTest {
         }
 
         assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(spell);
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotSubmitSufferThePastWhenTargetGraveyardIsEmpty() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        SufferThePast spell = new SufferThePast();
+
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return 0;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(spell);
+        assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isEqualTo(2);
         assertThat(gameData.stack).isEmpty();
         assertThat(gameData.interaction.isAwaitingInput()).isFalse();
     }

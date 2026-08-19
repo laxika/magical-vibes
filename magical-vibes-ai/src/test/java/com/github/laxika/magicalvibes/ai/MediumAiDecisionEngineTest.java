@@ -92,11 +92,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -1773,6 +1776,27 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
                 .allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(victimize);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast a target-player graveyard X spell without cards")
+    void doesNotCastTargetPlayerGraveyardSpellWithoutCardsInTargetGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(2);
+        Card spell = new Card();
+        spell.setName("Target-player graveyard X spell");
+        spell.setType(CardType.INSTANT);
+        spell.setManaCost("{X}{B}");
+        spell.addEffect(EffectSlot.SPELL, new ExileTargetPlayerGraveyardCardsEffect(1, 1));
+        spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(spell);
     }
 
     @Test
