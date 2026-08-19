@@ -120,6 +120,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -328,6 +329,17 @@ public class StepTriggerService {
                     gameLogService.append(gameData, GameLog.text(
                             description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
                     log.info("Game {} - {} {} emblem trigger queued for graveyard target selection",
+                            gameData.id, description, step);
+                    continue;
+                }
+                boolean needsPermanentTarget = upkeepTrigger.effects().stream()
+                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                if (needsPermanentTarget) {
+                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
+                            description, emblem.controllerId(), new ArrayList<>(upkeepTrigger.effects()), source));
+                    gameLogService.append(gameData, GameLog.text(
+                            description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
+                    log.info("Game {} - {} {} emblem trigger queued for permanent target selection",
                             gameData.id, description, step);
                     continue;
                 }
@@ -1195,6 +1207,12 @@ public class StepTriggerService {
                             perm.getId()
                     );
                     entry.setSourcePermanentSnapshot(new Permanent(perm));
+                    if (perm.isAttached()) {
+                        Permanent attached = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+                        if (attached != null) {
+                            entry.setAttachedPermanentSnapshot(new Permanent(attached));
+                        }
+                    }
                     gameData.stack.add(entry);
 
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
@@ -4394,7 +4412,7 @@ public class StepTriggerService {
                         gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                 perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
                     } else {
-                        gameData.stack.add(new StackEntry(
+                        StackEntry entry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 activePlayerId,
@@ -4402,7 +4420,21 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(effect)),
                                 null,
                                 perm.getId()
-                        ));
+                        );
+                        if (effect instanceof DamageDealingEffect) {
+                            entry.setSourcePermanentSnapshot(new Permanent(perm));
+                            if (perm.isAttached()) {
+                                UUID enchantedPermanentControllerId =
+                                        gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
+                                entry.setTargetId(enchantedPermanentControllerId);
+                                entry.setNonTargeting(true);
+                                Permanent attached = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+                                if (attached != null) {
+                                    entry.setAttachedPermanentSnapshot(new Permanent(attached));
+                                }
+                            }
+                        }
+                        gameData.stack.add(entry);
 
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
@@ -4644,6 +4676,11 @@ public class StepTriggerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
+            triggerCollectionService.processNextEmblemTriggerTarget(gameData);
             return;
         }
 

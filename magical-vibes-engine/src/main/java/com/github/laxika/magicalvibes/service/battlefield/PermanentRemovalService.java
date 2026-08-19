@@ -827,6 +827,7 @@ public class PermanentRemovalService {
      * from the battlefield list. This is the single point where structural cleanup happens.
      */
     private RemovedPermanentInfo processRemovalCleanup(GameData gameData, Permanent target, UUID controllerId) {
+        gameData.playersWhosePermanentsLeftBattlefieldThisTurn.add(controllerId);
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
         gameData.stolenCreatures.remove(target.getId());
         // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
@@ -1022,7 +1023,8 @@ public class PermanentRemovalService {
                 collectPersistTrigger(gameData, target, ownerId, hadPersist);
             }
             if (wasArtifact) {
-                triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
+                triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+                        gameData, ownerId, controllerId, target.getCard().getManaValue());
             }
             if (wasEnchantment) {
                 triggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);

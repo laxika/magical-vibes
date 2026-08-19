@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M21", collectorNumber = "188")
+@CardRegistration(set = "AER", collectorNumber = "109")
 public class HeroicIntervention extends Card {
 
     public HeroicIntervention() {

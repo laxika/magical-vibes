@@ -168,6 +168,9 @@ public class LifeSupport {
     public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {
         if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
 
+        amount = gameQueryService.replacePoisonCounters(gameData, playerId, amount);
+        if (amount <= 0) return;
+
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
         gameData.playerPoisonCounters.put(playerId, currentPoison + amount);
 

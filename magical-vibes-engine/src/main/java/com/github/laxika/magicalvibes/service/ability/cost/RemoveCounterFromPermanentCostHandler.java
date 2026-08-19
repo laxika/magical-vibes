@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,11 +18,14 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
 
     private final RemoveCounterFromControlledPermanentCost cost;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public RemoveCounterFromPermanentCostHandler(RemoveCounterFromControlledPermanentCost cost,
-                                                 GameLogService gameLogService) {
+                                                 GameLogService gameLogService,
+                                                 PredicateEvaluationService predicateEvaluationService) {
         this.cost = cost;
         this.gameLogService = gameLogService;
+        this.predicateEvaluationService = predicateEvaluationService;
     }
 
     @Override
@@ -48,6 +52,8 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
             return List.of();
         }
         return battlefield.stream()
+                .filter(p -> cost.permanentFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.permanentFilter()))
                 .filter(this::hasCounter)
                 .map(Permanent::getId)
                 .toList();
@@ -58,6 +64,10 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
         List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
         if (battlefield == null || !battlefield.contains(chosen)) {
             throw new IllegalStateException("Must choose a permanent you control");
+        }
+        if (cost.permanentFilter() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, cost.permanentFilter())) {
+            throw new IllegalStateException("Permanent does not match the counter-removal cost");
         }
         CounterType counterType = firstCounterType(chosen);
         if (counterType == null) {

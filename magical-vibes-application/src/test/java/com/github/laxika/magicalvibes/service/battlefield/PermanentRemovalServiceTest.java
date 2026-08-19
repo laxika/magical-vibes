@@ -471,7 +471,8 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, artifact);
 
-            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
+            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+                    gd, player1Id, player1Id, artifact.getCard().getManaValue());
         }
 
         @Test
@@ -609,6 +610,16 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             assertThat(gd.playerHands.get(player1Id))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
+
+        @Test
+        @DisplayName("Records the permanent's controller when it leaves the battlefield")
+        void recordsControllerWhenPermanentLeaves() {
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
+
+            prs.removePermanentToHand(gd, bears);
+
+            assertThat(gd.playersWhosePermanentsLeftBattlefieldThisTurn).containsExactly(player1Id);
         }
 
         @Test

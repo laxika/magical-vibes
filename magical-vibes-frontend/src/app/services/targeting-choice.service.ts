@@ -3,7 +3,7 @@ import {
   WebsocketService, Game, MessageType, Card, Permanent, StackEntry, ActivatedAbilityView,
   ValidTargetsResponse, ModalOptionView
 } from './websocket.service';
-import { isPermanentCreature } from '../components/game/battlefield.utils';
+import { isPermanentArtifact, isPermanentCreature } from '../components/game/battlefield.utils';
 
 @Injectable({ providedIn: 'root' })
 export class TargetingChoiceService {
@@ -2034,7 +2034,25 @@ export class TargetingChoiceService {
     this.convoking = true;
     this.convokeCardIndex = cardIndex;
     this.convokeCardName = card.name;
+    this.pendingConvokeCard = card;
     this.convokeSelectedCreatureIds.set([]);
+  }
+
+  canSelectCastingAssistance(permanent: Permanent): boolean {
+    if (!this.convoking || !permanent || permanent.tapped) return false;
+    const card = this.pendingConvokeCard;
+    const canConvoke = card?.keywords.includes('CONVOKE') ?? false;
+    const canImprovise = card?.keywords.includes('IMPROVISE') ?? false;
+    return (canConvoke && isPermanentCreature(permanent))
+      || (canImprovise && isPermanentArtifact(permanent));
+  }
+
+  castingAssistancePermanentLabel(): string {
+    const card = this.pendingConvokeCard;
+    const canConvoke = card?.keywords.includes('CONVOKE') ?? false;
+    const canImprovise = card?.keywords.includes('IMPROVISE') ?? false;
+    return canConvoke && canImprovise ? 'creatures or artifacts'
+      : canImprovise ? 'artifacts' : 'creatures';
   }
 
   toggleConvokeCreature(permanentId: string): void {

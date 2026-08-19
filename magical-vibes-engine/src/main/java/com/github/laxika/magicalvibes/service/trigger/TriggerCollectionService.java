@@ -433,13 +433,15 @@ public class TriggerCollectionService {
                             );
                             gameData.queueMayAbility(card, castingPlayerId, mayPay, null);
                         } else {
-                            gameData.stack.add(new StackEntry(
+                            StackEntry entry = new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
                                     card,
                                     castingPlayerId,
                                     card.getName() + "'s ability",
                                     new ArrayList<>(trigger.resolvedEffects())
-                            ));
+                            );
+                            entry.setTriggeringCardId(spellCard.getId());
+                            gameData.stack.add(entry);
                         }
 
                         log.info("Game {} - {} graveyard spell-cast trigger queued",
@@ -3903,7 +3905,8 @@ public class TriggerCollectionService {
      * @param ability      the activated ability that was activated (retained for retargeting the copy)
      */
     public void checkControllerActivatesNonManaAbilityTriggers(GameData gameData, UUID activatingPlayerId,
-                                                               StackEntry abilityEntry, ActivatedAbility ability) {
+                                                               StackEntry abilityEntry, ActivatedAbility ability,
+                                                               Permanent activatedPermanent) {
         if (abilityEntry == null) return;
 
         Integer pendingLoyaltyCopies = gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.get(activatingPlayerId);
@@ -3945,7 +3948,34 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY)) {
-                if (!(effect instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) continue;
+                if (!(effect instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) {
+                    if (!ownerId.equals(activatingPlayerId)) continue;
+                    CardEffect resolved = resolveTriggeringPermanentConditional(
+                            gameData, perm, ownerId, activatedPermanent, effect);
+                    if (resolved == null) continue;
+                    if (resolved.targetSpec().declares(TargetPredicates.anyTarget())) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                                perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), false, null, 0,
+                                perm.getId()));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} queues an any-target non-mana ability trigger ({})",
+                                gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
+                    } else {
+                        gameData.enqueueTrigger(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                ownerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(resolved)),
+                                null,
+                                perm.getId()
+                        ));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} triggers on non-mana ability activation ({})",
+                                gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
+                    }
+                    continue;
+                }
                 if (trigger.equippedCreatureOnly()) {
                     // "an ability of equipped creature" — the ability's source must be what this
                     // permanent is attached to, whoever activated it.
@@ -4837,8 +4867,12 @@ public class TriggerCollectionService {
         });
     }
 
-    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId, UUID artifactControllerId) {
-        var ctx = new TriggerContext.ArtifactGraveyard(graveyardOwnerId, artifactControllerId);
+    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                                         UUID artifactControllerId, int artifactManaValue) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of());
+        Card artifactCard = graveyard.isEmpty() ? null : graveyard.getLast();
+        var ctx = new TriggerContext.ArtifactGraveyard(
+                graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue);
 
         gameData.forEachPermanent((playerId, perm) -> {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
@@ -4847,6 +4881,15 @@ public class TriggerCollectionService {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
         });
+    }
+
+    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                                         UUID artifactControllerId) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of());
+        Card artifactCard = graveyard.isEmpty() ? null : graveyard.getLast();
+        checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+                gameData, graveyardOwnerId, artifactControllerId,
+                artifactCard == null ? 0 : artifactCard.getManaValue());
     }
 
     public void checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId, UUID landControllerId) {
@@ -5649,6 +5692,8 @@ public class TriggerCollectionService {
 
         if (!gameQueryService.canPlayerGetPoisonCounters(gameData, controllerId)) return;
 
+        poisonAmount = gameQueryService.replacePoisonCounters(gameData, controllerId, poisonAmount);
+        if (poisonAmount <= 0) return;
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
         gameData.playerPoisonCounters.put(controllerId, currentPoison + poisonAmount);
 

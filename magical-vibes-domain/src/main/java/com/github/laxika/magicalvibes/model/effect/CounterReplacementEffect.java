@@ -12,4 +12,9 @@ public interface CounterReplacementEffect extends CardEffect {
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature) {
         return true;
     }
+
+    default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature,
+                              boolean affectedPermanentIsArtifact) {
+        return appliesTo(counterType, affectedPermanentIsCreature);
+    }
 }

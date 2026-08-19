@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 import java.util.Objects;
@@ -17,16 +18,26 @@ import java.util.Objects;
  *
  * <p>Used both as the payable side of a {@link ForcedCostOrElseEffect} and as an activated-ability
  * cost. When used for an activated ability, the controller chooses one of their counter-bearing
- * permanents through the standard permanent-choice cost flow.
+ * permanents through the standard permanent-choice cost flow. {@code permanentFilter}, when
+ * present, further restricts which permanents may pay the cost.
  */
-public record RemoveCounterFromControlledPermanentCost(List<CounterType> allowedCounterTypes) implements CostEffect {
+public record RemoveCounterFromControlledPermanentCost(List<CounterType> allowedCounterTypes,
+                                                        PermanentPredicate permanentFilter) implements CostEffect {
 
     public RemoveCounterFromControlledPermanentCost() {
-        this(List.of(CounterType.ANY));
+        this(List.of(CounterType.ANY), null);
+    }
+
+    public RemoveCounterFromControlledPermanentCost(List<CounterType> allowedCounterTypes) {
+        this(allowedCounterTypes, null);
     }
 
     public RemoveCounterFromControlledPermanentCost(CounterType... allowedCounterTypes) {
-        this(List.of(allowedCounterTypes));
+        this(List.of(allowedCounterTypes), null);
+    }
+
+    public RemoveCounterFromControlledPermanentCost(CounterType counterType, PermanentPredicate permanentFilter) {
+        this(List.of(counterType), permanentFilter);
     }
 
     public RemoveCounterFromControlledPermanentCost {

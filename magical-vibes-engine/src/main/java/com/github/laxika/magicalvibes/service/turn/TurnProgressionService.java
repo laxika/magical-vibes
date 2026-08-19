@@ -230,10 +230,14 @@ public class TurnProgressionService {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
                 gameData.combatPhasesThisTurn++;
+                gameData.forEachPermanent((playerId, p) -> {
+                    p.setAttackedThisCombat(false);
+                    p.setBlockedThisCombat(false);
+                });
+                gameData.combatBlockOpponentIdsThisCombat.clear();
                 if (additionalCombatPhase) {
                     processAdditionalCombatBeginningEffects(gameData);
                 }
-                gameData.combatBlockOpponentIdsThisCombat.clear();
                 stepTriggerService.handleBeginningOfCombatTriggers(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 combatService.handleDeclareAttackersStep(gameData);
@@ -474,6 +478,7 @@ public class TurnProgressionService {
         gameData.cardsDiscardedOrCycledThisTurn.clear();
         gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.clear();
         gameData.cardsDiscardedByOpponentThisTurn.clear();
+        gameData.playersWhosePermanentsLeftBattlefieldThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
@@ -578,6 +583,7 @@ public class TurnProgressionService {
         gameData.permanentsProtectedFromDamageUntilNextTurn.values().removeIf(nextActive::equals);
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);
         gameData.playersWithProtectionFromEverythingUntilNextTurn.remove(nextActive);

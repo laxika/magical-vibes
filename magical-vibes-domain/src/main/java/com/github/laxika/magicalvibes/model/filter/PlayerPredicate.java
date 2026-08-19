@@ -5,6 +5,7 @@ package com.github.laxika.magicalvibes.model.filter;
  * targeting services, which dispatch over this sealed hierarchy.
  */
 public sealed interface PlayerPredicate permits
+        PlayerDamagedBySourceCombatThisTurnPredicate,
         PlayerDamagedBySourceThisTurnPredicate,
         PlayerDealtDamageThisTurnPredicate,
         PlayerControlsMoreCreaturesThanControllerPredicate,

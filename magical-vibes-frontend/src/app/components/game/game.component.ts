@@ -1334,7 +1334,7 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.choice.targeting.convoking) {
-      if (perm && isPermanentCreature(perm) && !perm.tapped) {
+      if (perm && this.choice.targeting.canSelectCastingAssistance(perm)) {
         this.choice.targeting.toggleConvokeCreature(perm.id);
       }
       return;

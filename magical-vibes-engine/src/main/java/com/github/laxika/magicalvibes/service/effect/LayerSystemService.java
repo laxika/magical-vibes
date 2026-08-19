@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnly
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
@@ -2134,6 +2135,10 @@ public class LayerSystemService {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), grant.keywords(), Set.of(), false));
+                    }
+                    case GrantActivatedAbilityEffect grant -> {
+                        state.addActivatedAbility(grant.ability().withGrantSource(
+                                instance.floating().sourcePermanentId()));
                     }
                     case ProtectionFromColorsEffect protection -> {
                         state.addProtectionColors(protection.colors());

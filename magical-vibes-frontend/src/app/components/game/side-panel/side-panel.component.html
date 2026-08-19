@@ -258,7 +258,7 @@
 
     @if (choice.targeting.convoking) {
       <div class="side-prompt prompt-targeting">
-        <span class="side-prompt-text">Tap creatures to help cast {{ choice.targeting.convokeCardName }} ({{ choice.targeting.convokeSelectedCreatureIds().length }} tapped)</span>
+        <span class="side-prompt-text">Tap {{ choice.targeting.castingAssistancePermanentLabel() }} to help cast {{ choice.targeting.convokeCardName }} ({{ choice.targeting.convokeSelectedCreatureIds().length }} tapped)</span>
         <div class="side-prompt-buttons side-prompt-buttons-stacked">
           <button class="btn-side-prompt" (click)="choice.targeting.confirmConvoke()">Cast</button>
           <button class="btn-side-prompt" (click)="choice.targeting.skipConvoke()">Skip Convoke</button>

@@ -1096,6 +1096,35 @@ class SpellCastingServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Improvise")
+    class Improvise {
+
+        @Test
+        @DisplayName("Improvise taps artifacts and reduces generic mana cost")
+        void improviseTapsArtifacts() {
+            Card improviseCard = createCreature("Improvise Beast", "{5}{U}");
+            improviseCard.setKeywords(EnumSet.of(Keyword.IMPROVISE));
+            Card helper = createArtifact("Artifact Helper", "{2}");
+            Permanent helperPerm = new Permanent(helper);
+            gd.playerBattlefields.get(player1Id).add(helperPerm);
+
+            setHand(player1Id, List.of(improviseCard));
+            addMana(player1Id, ManaColor.BLUE, 5);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
+            when(castingCostService.getCastCostModifier(gd, player1Id, improviseCard, 0)).thenReturn(0);
+            when(gameQueryService.isArtifact(eq(gd), any(Permanent.class))).thenReturn(true);
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
+
+            svc.playCard(gd, player1, 0, null, null, null, null, List.of(helperPerm.getId()), false, null);
+
+            assertThat(helperPerm.isTapped()).isTrue();
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gd.stack).hasSize(1);
+        }
+    }
+
     // =========================================================================
     // paySpellManaCost
     // =========================================================================

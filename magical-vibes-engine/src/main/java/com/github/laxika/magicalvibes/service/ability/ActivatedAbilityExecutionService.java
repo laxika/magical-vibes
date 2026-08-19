@@ -519,7 +519,8 @@ public class ActivatedAbilityExecutionService {
         // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
         // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
-        triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(gameData, playerId, abilityEntry, ability);
+        triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
+                gameData, playerId, abilityEntry, ability, permanent);
         // "Whenever an opponent activates a non-mana ability" triggers (Harsh Mentor). Reached only on
         // the non-mana path, so the "if it isn't a mana ability" clause is satisfied automatically.
         triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(gameData, playerId, permanent);
@@ -1013,10 +1014,13 @@ public class ActivatedAbilityExecutionService {
                             gameData, playerId, effectiveDamage);
                     if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
                         if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                            int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                            gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
-                            String logEntry = player.getUsername() + " gets " + effectiveDamage + " poison counters from " + cardName + ".";
-                            gameLogService.append(gameData, GameLog.text(logEntry));
+                            int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
+                            if (poisonAmount > 0) {
+                                int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                                gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
+                                String logEntry = player.getUsername() + " gets " + poisonAmount + " poison counters from " + cardName + ".";
+                                gameLogService.append(gameData, GameLog.text(logEntry));
+                            }
                         }
                     } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
@@ -1158,9 +1162,12 @@ public class ActivatedAbilityExecutionService {
                     gameData, playerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                    gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
-                    gameLogService.append(gameData, GameLog.text(playerName + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
+                    int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
+                    if (poisonAmount > 0) {
+                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                        gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
+                        gameLogService.append(gameData, GameLog.text(playerName + " gets " + poisonAmount + " poison counters from " + cardName + "."));
+                    }
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));

@@ -144,6 +144,8 @@ public class StackEntry {
      * information when the source left the battlefield before resolution (sacrifice costs).
      */
     @Setter private Permanent sourcePermanentSnapshot;
+    /** Last-known snapshot of the permanent attached to the source Aura when its trigger fired. */
+    @Setter private Permanent attachedPermanentSnapshot;
     /**
      * The permanent chosen while activating an ability or resolving a library selection. Read back
      * at resolution by the {@code ChosenPermanentPower} dynamic amount so an effect can scale to
@@ -230,6 +232,8 @@ public class StackEntry {
      * {@code StackResolutionService} and turned into +1/+1 counters by the as-enters replacement.
      */
     @Setter private int grantedBloodthirst;
+    /** Additional loyalty counters granted to a planeswalker spell before it enters. */
+    @Setter private int grantedAdditionalLoyaltyCounters;
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
@@ -507,6 +511,7 @@ public class StackEntry {
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
+        this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
         this.sacrificedCardId = source.sacrificedCardId;
@@ -531,6 +536,7 @@ public class StackEntry {
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedBloodthirst = source.grantedBloodthirst;
+        this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
     }
 

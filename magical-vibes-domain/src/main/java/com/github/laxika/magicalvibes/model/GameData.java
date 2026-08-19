@@ -260,6 +260,9 @@ public class GameData {
             ConcurrentHashMap.newKeySet();
     /** Tracks card IDs each player discarded because of an opponent's spell or ability this turn. */
     public final Map<UUID, Set<UUID>> cardsDiscardedByOpponentThisTurn = new ConcurrentHashMap<>();
+    /** Players who controlled a permanent that left the battlefield this turn. */
+    public final Set<UUID> playersWhosePermanentsLeftBattlefieldThisTurn =
+            ConcurrentHashMap.newKeySet();
     /**
      * When non-null, the card with this ID is currently being put into a graveyard as the discard cost
      * of activating a cycling ability. Read by {@link com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement}
@@ -826,6 +829,10 @@ public class GameData {
      * that controller's next turn (survives end-of-turn cleanup).
      */
     public final Map<UUID, Set<String>> opponentsCantCastNamedSpellsUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
+    /** Players who can't cast noncreature spells until the key player's next turn. */
+    public final Map<UUID, Set<UUID>> playersCantCastNoncreatureSpellsUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
     /** Land subtype -&gt; extra mana color added whenever a player taps a land of that subtype for mana
@@ -3285,6 +3292,8 @@ public class GameData {
                 .addAll(this.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn);
         this.cardsDiscardedByOpponentThisTurn.forEach((k, v) ->
                 copy.cardsDiscardedByOpponentThisTurn.put(k, new HashSet<>(v)));
+        copy.playersWhosePermanentsLeftBattlefieldThisTurn
+                .addAll(this.playersWhosePermanentsLeftBattlefieldThisTurn);
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         copy.nontokenCreatureDeathCountThisTurn.putAll(this.nontokenCreatureDeathCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
@@ -3462,6 +3471,8 @@ public class GameData {
         copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
         this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->
+                copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;

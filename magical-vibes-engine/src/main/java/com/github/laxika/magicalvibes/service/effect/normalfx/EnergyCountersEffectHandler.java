@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -18,13 +19,16 @@ public class EnergyCountersEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     public EnergyCountersEffectHandler(GameLogService gameLogService,
                                        @Lazy TriggerCollectionService triggerCollectionService,
-                                       AmountEvaluationService amountEvaluationService) {
+                                       AmountEvaluationService amountEvaluationService,
+                                       GameQueryService gameQueryService) {
         this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
         this.amountEvaluationService = amountEvaluationService;
+        this.gameQueryService = gameQueryService;
     }
 
     @Override
@@ -38,6 +42,9 @@ public class EnergyCountersEffectHandler implements NormalEffectHandlerBean {
         int current = gameData.playerEnergyCounters.getOrDefault(entry.getControllerId(), 0);
         int amount = amountEvaluationService.evaluate(gameData, energy.amount(),
                 AmountContext.forStackEntry(entry, null));
+        if (amount > 0) {
+            amount = gameQueryService.replaceEnergyCounters(gameData, entry.getControllerId(), amount);
+        }
         int updated = Math.max(0, current + amount);
         int changed = updated - current;
         if (changed == 0) {

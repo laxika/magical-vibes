@@ -268,7 +268,19 @@ public sealed interface TriggerContext {
      * ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD triggers.
      */
     record ArtifactGraveyard(UUID graveyardOwnerId,
-                             UUID artifactControllerId) implements TriggerContext {}
+                             UUID artifactControllerId,
+                             Card artifactCard,
+                             int artifactManaValue) implements TriggerContext {
+
+        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId) {
+            this(graveyardOwnerId, artifactControllerId, null, 0);
+        }
+
+        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId, Card artifactCard) {
+            this(graveyardOwnerId, artifactControllerId, artifactCard,
+                    artifactCard == null ? 0 : artifactCard.getManaValue());
+        }
+    }
 
     /**
      * Context for ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Dingus Egg).

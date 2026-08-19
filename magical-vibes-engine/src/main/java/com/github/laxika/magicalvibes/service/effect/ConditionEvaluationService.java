@@ -169,6 +169,7 @@ import com.github.laxika.magicalvibes.model.condition.NoncreaturePermanentDestro
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
@@ -183,6 +184,7 @@ import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
@@ -541,7 +543,11 @@ public class ConditionEvaluationService {
             case PermanentPutIntoYourHandFromBattlefieldThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn
-                            .contains(ctx.controllerId());
+                                    .contains(ctx.controllerId());
+            case PermanentLeftBattlefieldUnderYourControlThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
+                                    .contains(ctx.controllerId());
             case DidntActivateLoyaltyAbilityThisTurn ignored ->
                     ctx.controllerId() != null
                             && !gameData.playersWhoActivatedLoyaltyAbilityThisTurn.contains(ctx.controllerId());
@@ -723,6 +729,10 @@ public class ConditionEvaluationService {
                     isSourceCardInCommandZone(gameData, ctx);
             case SourceCardInGraveyard ignored ->
                     isSourceCardInGraveyard(gameData, ctx);
+            case SourceAttackedOrBlockedThisCombat ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && (source.isAttackedThisCombat() || source.isBlockedThisCombat());
+            }
             case SourceAttackedOrBlockedThisTurn ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && (source.isAttackedThisTurn() || source.isBlockedThisTurn());

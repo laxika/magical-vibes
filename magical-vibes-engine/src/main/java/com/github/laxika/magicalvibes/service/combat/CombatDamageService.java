@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefending
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -1343,7 +1344,10 @@ public class CombatDamageService {
                     continue;
                 }
 
-                if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                if ((effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                        && !(effect instanceof CombatDamageTriggerContextEffect)
+                        && !(effect instanceof CombatOpponentReferencingEffect)) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId));
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
@@ -2358,10 +2362,14 @@ public class CombatDamageService {
             state.poisonDamageToDefendingPlayer -= damageSupport.applySoulEchoCounterRemoval(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         }
         if (state.poisonDamageToDefendingPlayer > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, defenderId)) {
-            int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
-            gameData.playerPoisonCounters.put(defenderId, currentPoison + state.poisonDamageToDefendingPlayer);
-            String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + state.poisonDamageToDefendingPlayer + " poison counters.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            int poisonAmount = gameQueryService.replacePoisonCounters(
+                    gameData, defenderId, state.poisonDamageToDefendingPlayer);
+            if (poisonAmount > 0) {
+                int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
+                gameData.playerPoisonCounters.put(defenderId, currentPoison + poisonAmount);
+                String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + poisonAmount + " poison counters.";
+                gameLogService.append(gameData, GameLog.text(logEntry));
+            }
         }
         }
 

@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOneCounterToArtifactOrCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlayerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
@@ -1095,6 +1097,39 @@ class GameQueryServiceTest {
             Permanent artifact = addPermanent(player1Id, createArtifact("Sol Ring"));
 
             assertThat(gqs.doublePlusOnePlusOneCounters(gd, artifact, 1)).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("Winding Constrictor counter replacements")
+    class WindingConstrictorCounterReplacementsTest {
+
+        @Test
+        @DisplayName("adds one counter on artifacts and creatures but not enchantments")
+        void addsCounterOnlyOnArtifactsOrCreatures() {
+            Card marker = createCreature("Winding Constrictor", 2, 3, CardColor.BLACK);
+            marker.addEffect(EffectSlot.STATIC, new AddOneCounterToArtifactOrCreatureEffect());
+            addPermanent(player1Id, marker);
+            Permanent creature = addPermanent(player1Id, createCreature("Creature", 2, 2, CardColor.GREEN));
+            Permanent artifact = addPermanent(player1Id, createArtifact("Artifact"));
+            Permanent enchantment = addPermanent(player1Id, createEnchantment("Enchantment"));
+
+            assertThat(gqs.replaceCounters(gd, creature, CounterType.PLUS_ONE_PLUS_ONE, 1)).isEqualTo(2);
+            assertThat(gqs.replaceCounters(gd, artifact, CounterType.CHARGE, 1)).isEqualTo(2);
+            assertThat(gqs.replaceCounters(gd, enchantment, CounterType.CHARGE, 1)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("adds one player counter only to the controller's event")
+        void addsPoisonCounterForController() {
+            Card marker = createCreature("Winding Constrictor", 2, 3, CardColor.BLACK);
+            marker.addEffect(EffectSlot.STATIC, new AddOnePlayerCounterEffect());
+            addPermanent(player1Id, marker);
+
+            assertThat(gqs.replacePoisonCounters(gd, player1Id, 1)).isEqualTo(2);
+            assertThat(gqs.replacePoisonCounters(gd, player2Id, 1)).isEqualTo(1);
+            assertThat(gqs.replaceEnergyCounters(gd, player1Id, 1)).isEqualTo(2);
+            assertThat(gqs.replaceEnergyCounters(gd, player2Id, 1)).isEqualTo(1);
         }
     }
 

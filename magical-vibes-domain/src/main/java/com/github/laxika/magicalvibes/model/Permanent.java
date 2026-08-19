@@ -36,6 +36,7 @@ public class Permanent {
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
+    private boolean attackedThisCombat;
     /** Set when this creature is declared as an attacker; unlike {@link #attackedThisTurn} it survives
      *  the intervening opponent turns and is rolled into {@link #attackedDuringControllersLastTurn} at
      *  the start of its controller's next turn by {@link #rollOverAttackRecord()}. */
@@ -56,6 +57,7 @@ public class Permanent {
      *  {@link #attackedThisTurn}) and is reset at each turn start. Read by
      *  {@code PermanentAttackedOrBlockedThisTurnPredicate} (Vizier of Deferment). */
     private boolean blockedThisTurn;
+    private boolean blockedThisCombat;
     /** Set when this creature blocks or becomes blocked. Unlike {@link #blockedThisTurn} it is NOT
      *  cleared at turn start — it stays set until an effect that reads a "since your last upkeep"
      *  window consumes it (Wiitigo's upkeep trigger clears it after resolving). */
@@ -576,6 +578,7 @@ public class Permanent {
         this.bestow = false;
         this.tapped = false;
         this.attackedThisTurn = false;
+        this.attackedThisCombat = false;
         this.summoningSick = true;
     }
 
@@ -594,12 +597,14 @@ public class Permanent {
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
+        this.attackedThisCombat = source.attackedThisCombat;
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
         this.attackedDuringControllersLastTurn = source.attackedDuringControllersLastTurn;
         this.cantAttackNextTurn = source.cantAttackNextTurn;
         this.cantAttackThisTurn = source.cantAttackThisTurn;
         this.blocking = source.blocking;
         this.blockedThisTurn = source.blockedThisTurn;
+        this.blockedThisCombat = source.blockedThisCombat;
         this.blockedOrWasBlockedSinceLastUpkeep = source.blockedOrWasBlockedSinceLastUpkeep;
         this.becomeTargetCounterUsedThisTurn = source.becomeTargetCounterUsedThisTurn;
         this.blockingTargets.addAll(source.blockingTargets);
@@ -850,6 +855,7 @@ public class Permanent {
         this.attacking = attacking;
         if (attacking) {
             this.attackedThisTurn = true;
+            this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
         }
     }
@@ -876,6 +882,7 @@ public class Permanent {
         this.blocking = blocking;
         if (blocking) {
             this.blockedThisTurn = true;
+            this.blockedThisCombat = true;
         }
     }
 
@@ -945,6 +952,10 @@ public class Permanent {
         this.attackedThisTurn = attackedThisTurn;
     }
 
+    public void setAttackedThisCombat(boolean attackedThisCombat) {
+        this.attackedThisCombat = attackedThisCombat;
+    }
+
     /** Records a creature devoured by this permanent's devour ability as it entered (CR 702.82). */
     public void recordDevouredCreature(Card devoured) {
         devouredCreatures.add(devoured);
@@ -963,6 +974,10 @@ public class Permanent {
 
     public void setBlockedThisTurn(boolean blockedThisTurn) {
         this.blockedThisTurn = blockedThisTurn;
+    }
+
+    public void setBlockedThisCombat(boolean blockedThisCombat) {
+        this.blockedThisCombat = blockedThisCombat;
     }
 
     /**

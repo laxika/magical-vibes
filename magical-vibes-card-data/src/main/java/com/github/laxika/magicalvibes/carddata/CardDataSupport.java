@@ -53,6 +53,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Menace", Keyword.MENACE);
         KEYWORD_MAP.put("Indestructible", Keyword.INDESTRUCTIBLE);
         KEYWORD_MAP.put("Convoke", Keyword.CONVOKE);
+        KEYWORD_MAP.put("Improvise", Keyword.IMPROVISE);
         KEYWORD_MAP.put("Haste", Keyword.HASTE);
         KEYWORD_MAP.put("Lifelink", Keyword.LIFELINK);
         KEYWORD_MAP.put("Trample", Keyword.TRAMPLE);

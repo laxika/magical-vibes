@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -49,7 +50,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 if (target == null) {
                     continue; // Partially resolves — skip removed targets
                 }
-                grantTo(target, e.ability(), e.duration());
+                grantTo(gameData, entry, target, e);
                 count++;
             }
         } else if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
@@ -60,7 +61,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             Permanent enchanted = aura == null || aura.getAttachedTo() == null ? null
                     : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
             if (enchanted != null) {
-                grantTo(enchanted, e.ability(), e.duration());
+                grantTo(gameData, entry, enchanted, e);
                 count++;
             }
         } else {
@@ -94,14 +95,18 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                             && !predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), filterContext)) {
                         continue;
                     }
-                    grantTo(permanent, e.ability(), e.duration());
+                    grantTo(gameData, entry, permanent, e);
                     count++;
                 }
             }
         }
 
-        String durationText = e.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
-                ? "until your next turn" : "until end of turn";
+        String durationText = switch (e.duration()) {
+            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as the source remains on the battlefield";
+            case PERMANENT, CONTINUOUS -> "indefinitely";
+            default -> "until end of turn";
+        };
         String recipientText = e.scope() == GrantScope.OWN_LANDS ? "land(s)" :
                 e.scope() == GrantScope.OWN_PERMANENTS ? "permanent(s)" : "creature(s)";
         
@@ -110,12 +115,33 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 gameData.id, entry.getCard().getName(), count, recipientText, durationText);
     }
 
-    private static void grantTo(Permanent permanent, com.github.laxika.magicalvibes.model.ActivatedAbility ability,
-                                EffectDuration duration) {
+    private static void grantTo(GameData gameData, StackEntry entry, Permanent permanent,
+                                GrantActivatedAbilityEffect grant) {
+        EffectDuration duration = grant.duration();
+        if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(),
+                    entry.getCard().getName(),
+                    entry.getSourcePermanentId(),
+                    entry.getControllerId(),
+                    new GrantActivatedAbilityEffect(
+                            grant.ability().withGrantSource(entry.getSourcePermanentId()),
+                            GrantScope.TARGET,
+                            grant.filter(),
+                            duration
+                    ),
+                    permanent.getId(),
+                    null,
+                    null,
+                    duration,
+                    0
+            ));
+            return;
+        }
         if (duration == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
-            permanent.getUntilNextTurnActivatedAbilities().add(ability);
+            permanent.getUntilNextTurnActivatedAbilities().add(grant.ability());
         } else {
-            permanent.getTemporaryActivatedAbilities().add(ability);
+            permanent.getTemporaryActivatedAbilities().add(grant.ability());
         }
     }
 }

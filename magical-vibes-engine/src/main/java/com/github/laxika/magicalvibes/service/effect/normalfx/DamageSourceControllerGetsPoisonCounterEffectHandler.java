@@ -33,12 +33,16 @@ public class DamageSourceControllerGetsPoisonCounterEffectHandler implements Nor
         if (playerId == null || !gameData.playerIds.contains(playerId)) return;
         if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
 
+        int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, 1);
+        if (poisonAmount <= 0) return;
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-        gameData.playerPoisonCounters.put(playerId, currentPoison + 1);
+        gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " gets a poison counter (" , entry.getCard(), ")."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " gets " + poisonAmount
+                + " poison counter" + (poisonAmount > 1 ? "s" : "") + " (" , entry.getCard(), ")."));
 
-        log.info("Game {} - {} gets a poison counter from {}", gameData.id, playerName, entry.getCard().getName());
+        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName,
+                poisonAmount, entry.getCard().getName());
     }
 }

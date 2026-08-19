@@ -101,6 +101,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
+import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
@@ -373,6 +374,8 @@ public class AmountEvaluationService {
             case SourceCardPower ignored ->
                     ctx.sourceCard() == null || ctx.sourceCard().getPower() == null ? 0
                             : Math.max(0, ctx.sourceCard().getPower());
+            case SourceManaValueMinusOne ignored ->
+                    ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;
             case SourcePower ignored ->
                     ctx.sourcePermanent() == null ? 0
                             : Math.max(0, gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));

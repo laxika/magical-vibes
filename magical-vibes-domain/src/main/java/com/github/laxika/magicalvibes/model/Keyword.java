@@ -18,6 +18,7 @@ public enum Keyword {
     MENACE,
     INDESTRUCTIBLE,
     CONVOKE,
+    IMPROVISE,
     HASTE,
     TRAMPLE,
     LIFELINK,

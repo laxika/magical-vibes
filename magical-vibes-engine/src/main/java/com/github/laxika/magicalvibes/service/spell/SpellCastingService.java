@@ -201,9 +201,9 @@ public class SpellCastingService {
     // --- Helper methods ---
 
     /**
-     * Whether a permanent the casting player controls grants conspire (CR 702.78) to {@code card} via a
-     * {@link SpellCastingAbilityGrantingEffect} static ability (e.g. Wort, the Raidmother). Lets the conspire
-     * cost be paid on spells that lack the innate {@code CONSPIRE} keyword.
+     * Whether a permanent the casting player controls grants {@code ability} to {@code card} via a
+     * {@link SpellCastingAbilityGrantingEffect} static ability. Lets casting assistance be paid on spells
+     * that lack the innate ability keyword.
      */
     private boolean hasSpellCastingAbilityGrantForCard(GameData gameData, UUID playerId, Card card, Keyword ability) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1380,12 +1380,14 @@ public class SpellCastingService {
                     || usingSharedColorDiscardAlternativeCost)) {
                 // Allow — alternate cost bypasses mana check; validated below
             } else if ((cardCheck.getKeywords().contains(Keyword.CONVOKE)
-                    || hasSpellCastingAbilityGrantForCard(gameData, playerId, cardCheck, Keyword.CONVOKE))
+                    || cardCheck.getKeywords().contains(Keyword.IMPROVISE)
+                    || hasSpellCastingAbilityGrantForCard(gameData, playerId, cardCheck, Keyword.CONVOKE)
+                    || hasSpellCastingAbilityGrantForCard(gameData, playerId, cardCheck, Keyword.IMPROVISE))
                     && !convokeCreatureIds.isEmpty()) {
-                // Allow convoke-assisted casting even if not in basic playable list
+                // Allow assisted casting even if not in basic playable list
                 List<Integer> convokePlayable = actionAvailabilityService.getPlayableCardIndices(gameData, playerId, convokeCreatureIds.size());
                 if (!convokePlayable.contains(cardIndex)) {
-                    throw new IllegalStateException("Card is not playable even with convoke");
+                    throw new IllegalStateException("Card is not playable even with casting assistance");
                 }
             } else if (hasSacrificeForCostReduction) {
                 // Allow — sacrifice cost reduction will be validated during casting
@@ -1966,24 +1968,27 @@ public class SpellCastingService {
             }
         }
 
-        // Validate and apply convoke
+        // Validate and apply convoke or improvise
         List<ManaColor> convokeContributions = List.of();
-        if (!convokeCreatureIds.isEmpty()
-                && (card.getKeywords().contains(Keyword.CONVOKE)
-                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONVOKE))) {
-            List<ManaColor> contributions = collectConvokeContributions(gameData, playerId, convokeCreatureIds);
+        boolean hasConvoke = card.getKeywords().contains(Keyword.CONVOKE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONVOKE);
+        boolean hasImprovise = card.getKeywords().contains(Keyword.IMPROVISE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.IMPROVISE);
+        if (!convokeCreatureIds.isEmpty() && (hasConvoke || hasImprovise)) {
+            List<ManaColor> contributions = collectConvokeContributions(
+                    gameData, playerId, convokeCreatureIds, hasConvoke, hasImprovise);
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            List<Permanent> validatedCreatures = convokeCreatureIds.stream()
+            List<Permanent> validatedSources = convokeCreatureIds.stream()
                     .map(creatureId -> battlefield.stream().filter(p -> p.getId().equals(creatureId)).findFirst().orElseThrow())
                     .toList();
-            // Tap all convoke creatures (after validation to ensure atomic failure).
+            // Tap all casting-assistance sources after validation to ensure atomic failure.
             // CR 603.2 + 603.3: any "whenever enchanted permanent becomes tapped" triggers
             // are deferred so they don't sit on the stack mid-cast; finishSpellCast()
             // flushes pendingManaAbilityTriggers onto the stack above the spell.
             int stackBeforeTriggers = gameData.stack.size();
-            for (Permanent creature : validatedCreatures) {
-                creature.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
+            for (Permanent source : validatedSources) {
+                source.tap();
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, source);
             }
             if (gameData.stack.size() > stackBeforeTriggers) {
                 List<StackEntry> deferred = new ArrayList<>(
@@ -2994,10 +2999,9 @@ public class SpellCastingService {
                                 throw new IllegalStateException("Each damage assignment must be positive");
                             }
                         }
-                    } else if (dividedEffect != null && dividedEffect.targetRestriction() == null
-                            && dividedEffect.canTargetPlayers()) {
-                        // Dynamic total divided as you choose among any number of targets, creatures
-                        // and/or players (e.g. Jaws of Stone — X = Mountains you control at cast time).
+                    } else if (dividedEffect != null
+                            && !(dividedEffect.totalDamage() instanceof Fixed)) {
+                        // Dynamic total divided as you choose among any number of targets.
                         int expectedTotal = amountEvaluationService.evaluate(gameData,
                                 dividedEffect.totalDamage(),
                                 com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, resolvedXValue));
@@ -3006,9 +3010,25 @@ public class SpellCastingService {
                         }
                         for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
                             UUID assignedTargetId = assignment.getKey();
-                            if (!gameData.playerIds.contains(assignedTargetId)
-                                    && gameQueryService.findPermanentById(gameData, assignedTargetId) == null) {
-                                throw new IllegalStateException("Invalid target");
+                            boolean isPlayer = gameData.playerIds.contains(assignedTargetId);
+                            if (isPlayer) {
+                                if (!dividedEffect.canTargetPlayers()) {
+                                    throw new IllegalStateException("All targets must be creatures");
+                                }
+                            } else {
+                                Permanent target = gameQueryService.findPermanentById(gameData, assignedTargetId);
+                                if (target == null) {
+                                    throw new IllegalStateException("Invalid target");
+                                }
+                                if (!dividedEffect.canTargetPlayers()
+                                        && !gameQueryService.isCreature(gameData, target)) {
+                                    throw new IllegalStateException("All targets must be creatures");
+                                }
+                                if (dividedEffect.targetRestriction() != null
+                                        && !predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, target, dividedEffect.targetRestriction())) {
+                                    throw new IllegalStateException("Illegal target for divided damage");
+                                }
                             }
                             if (assignment.getValue() <= 0) {
                                 throw new IllegalStateException("Each damage assignment must be positive");
@@ -5431,11 +5451,13 @@ public class SpellCastingService {
     }
 
     /**
-     * The mana colors the given creatures would contribute via convoke, validating that each is an
-     * untapped creature the player controls. A {@code null} entry is a colorless creature (generic
-     * only). Throws if any creature is missing, not a creature, or already tapped.
+     * The mana contributions the selected permanents would make via convoke or improvise. Convoke
+     * sources contribute their color when possible; improvise-only artifacts contribute generic
+     * mana. Throws if a source is missing, not a legal source, or already tapped.
      */
-    private List<ManaColor> collectConvokeContributions(GameData gameData, UUID playerId, List<UUID> convokeCreatureIds) {
+    private List<ManaColor> collectConvokeContributions(GameData gameData, UUID playerId,
+                                                         List<UUID> convokeCreatureIds,
+                                                         boolean hasConvoke, boolean hasImprovise) {
         List<ManaColor> contributions = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         for (UUID creatureId : convokeCreatureIds) {
@@ -5444,13 +5466,22 @@ public class SpellCastingService {
                     .findFirst()
                     .orElse(null);
             if (creature == null) {
-                throw new IllegalStateException("Convoke creature not found on your battlefield");
+                throw new IllegalStateException(hasConvoke
+                        ? "Convoke creature not found on your battlefield"
+                        : "Improvise artifact not found on your battlefield");
             }
-            if (!gameQueryService.isCreature(gameData, creature)) {
-                throw new IllegalStateException(creature.getCard().getName() + " is not a creature");
+            boolean isCreature = gameQueryService.isCreature(gameData, creature);
+            boolean isArtifact = gameQueryService.isArtifact(gameData, creature);
+            if ((!hasConvoke || !isCreature) && (!hasImprovise || !isArtifact)) {
+                throw new IllegalStateException(creature.getCard().getName()
+                        + (hasConvoke && !hasImprovise ? " is not a creature" : " is not an artifact"));
             }
             if (creature.isTapped()) {
                 throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
+            }
+            if (hasImprovise && isArtifact && (!hasConvoke || !isCreature)) {
+                contributions.add(null);
+                continue;
             }
             Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
             ManaColor contribution = creatureColors == null || creatureColors.isEmpty()
@@ -5470,16 +5501,19 @@ public class SpellCastingService {
     }
 
     /**
-     * Convoke contributions previewed before the cast is committed, for affordability checks. Returns
-     * an empty list when the card has no convoke or no creatures were offered.
+     * Casting-assistance contributions previewed before the cast is committed, for affordability
+     * checks. Returns an empty list when the card has no assistance keyword or no sources were offered.
      */
     private List<ManaColor> planConvokeContributions(GameData gameData, UUID playerId, Card card, List<UUID> convokeCreatureIds) {
         if (convokeCreatureIds == null || convokeCreatureIds.isEmpty()) return List.of();
-        if (!card.getKeywords().contains(Keyword.CONVOKE)
-                && !hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONVOKE)) {
+        boolean hasConvoke = card.getKeywords().contains(Keyword.CONVOKE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONVOKE);
+        boolean hasImprovise = card.getKeywords().contains(Keyword.IMPROVISE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.IMPROVISE);
+        if (!hasConvoke && !hasImprovise) {
             return List.of();
         }
-        return collectConvokeContributions(gameData, playerId, convokeCreatureIds);
+        return collectConvokeContributions(gameData, playerId, convokeCreatureIds, hasConvoke, hasImprovise);
     }
 
     private int computeSpellManaPayment(GameData gameData, UUID playerId, Card card, int effectiveXValue,
@@ -5729,16 +5763,35 @@ public class SpellCastingService {
             if (assignments.size() > maxTargets) {
                 throw new IllegalStateException("Too many targets");
             }
-        } else if (dividedEffect.targetRestriction() == null && dividedEffect.canTargetPlayers()) {
+        } else if (!(dividedEffect.totalDamage() instanceof Fixed)) {
             int expectedTotal = amountEvaluationService.evaluate(gameData, dividedEffect.totalDamage(),
                     com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, resolvedXValue));
             if (totalDamage != expectedTotal) {
                 throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
             }
-            for (UUID assignedTargetId : assignments.keySet()) {
-                if (!gameData.playerIds.contains(assignedTargetId)
-                        && gameQueryService.findPermanentById(gameData, assignedTargetId) == null) {
-                    throw new IllegalStateException("Invalid target");
+            for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+                UUID assignedTargetId = assignment.getKey();
+                boolean isPlayer = gameData.playerIds.contains(assignedTargetId);
+                if (isPlayer) {
+                    if (!dividedEffect.canTargetPlayers()) {
+                        throw new IllegalStateException("All targets must be creatures");
+                    }
+                } else {
+                    Permanent target = gameQueryService.findPermanentById(gameData, assignedTargetId);
+                    if (target == null) {
+                        throw new IllegalStateException("Invalid target");
+                    }
+                    if (!dividedEffect.canTargetPlayers() && !gameQueryService.isCreature(gameData, target)) {
+                        throw new IllegalStateException("All targets must be creatures");
+                    }
+                    if (dividedEffect.targetRestriction() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, target, dividedEffect.targetRestriction())) {
+                        throw new IllegalStateException("Illegal target for divided damage");
+                    }
+                }
+                if (assignment.getValue() <= 0) {
+                    throw new IllegalStateException("Each damage assignment must be positive");
                 }
             }
         } else {

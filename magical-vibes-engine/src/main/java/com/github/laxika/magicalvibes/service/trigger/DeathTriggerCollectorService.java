@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
@@ -633,6 +634,22 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ALLY_CREATURE_DIES (may effects only — non-may effects are batched by orchestrator) ──
 
+    private CardEffect snapshotArtifactManaValue(CardEffect effect, int artifactManaValue) {
+        if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
+                || !returnEffect.targetGraveyard()) {
+            return effect;
+        }
+
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(artifactManaValue - 1);
+        CardPredicate filter = returnEffect.filter() == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(returnEffect.filter(), manaValueFilter));
+        return returnEffect.toBuilder()
+                .filter(filter)
+                .dynamicMaxManaValue(null)
+                .build();
+    }
+
     @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DIES)
     boolean handleAllyCreatureMayPay(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
@@ -1055,6 +1072,27 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ────────────
 
+    @CollectsTrigger(value = ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect.class,
+            slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleArtifactGraveyardReturnUnlessDamage(TriggerMatchContext match,
+            ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect effect, TriggerContext ctx) {
+        TriggerContext.ArtifactGraveyard artifactGraveyard = (TriggerContext.ArtifactGraveyard) ctx;
+        Card artifactCard = artifactGraveyard.artifactCard();
+        if (artifactCard == null || artifactCard.isToken()) {
+            return false;
+        }
+
+        ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect baked =
+                new ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect(
+                        effect.damage(), artifactCard.getId());
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked)),
+                true, match.permanent().getCard().getTargetFilter(), 0, match.permanent().getId(),
+                new Permanent(match.permanent())));
+        logArtifactGraveyard(match);
+        return true;
+    }
+
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
@@ -1090,9 +1128,19 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
+        CardEffect triggerEffect = conditional.wrapped();
+        if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
+            CardEffect baked = snapshotArtifactManaValue(triggerEffect, ag.artifactManaValue());
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked))));
+            logArtifactGraveyard(match);
+            return true;
+        }
+
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(),
-                new ArrayList<>(List.of(conditional.wrapped())), true,
+                new ArrayList<>(List.of(triggerEffect)), true,
                 match.permanent().getCard().getTargetFilter(), 0, match.permanent().getId(),
                 new Permanent(match.permanent())));
         logArtifactGraveyard(match);

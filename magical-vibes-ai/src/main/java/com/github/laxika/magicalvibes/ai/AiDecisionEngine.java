@@ -3393,12 +3393,12 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Selects the smallest prefix of the player's untapped creatures that lets the spell's
-     * remaining mana cost be paid with the current mana pool and convoke. Mana is tapped first so
-     * creatures that also produce mana cannot be announced for both costs.
+     * Selects the smallest prefix of the player's untapped creatures or artifacts that lets the
+     * spell's remaining mana cost be paid with the current mana pool and convoke or improvise.
+     * Mana is tapped first so permanents that also produce mana cannot be announced for both costs.
      *
-     * @return the selected creature IDs, an empty list when no convoke is needed, or {@code null}
-     * when the current state cannot pay the cost with any legal convoke selection
+     * @return the selected permanent IDs, an empty list when no assistance is needed, or
+     * {@code null} when the current state cannot pay the cost with any legal selection
      */
     protected List<UUID> selectConvokeCreatureIds(GameData gameData, Card card, Integer xValue,
                                                    int targetingTax) {
@@ -3433,12 +3433,20 @@ public abstract class AiDecisionEngine {
         }
 
         List<UUID> selectedIds = new ArrayList<>();
+        boolean canConvoke = card.getKeywords().contains(Keyword.CONVOKE)
+                || hasGrantedConvokeAbility(gameData, card);
+        boolean canImprovise = card.getKeywords().contains(Keyword.IMPROVISE);
         for (Permanent permanent : battlefield) {
-            if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)) {
+            if (permanent.isTapped()) {
+                continue;
+            }
+            boolean isCreature = gameQueryService.isCreature(gameData, permanent);
+            boolean isArtifact = gameQueryService.isArtifact(gameData, permanent);
+            if ((!canConvoke || !isCreature) && (!canImprovise || !isArtifact)) {
                 continue;
             }
             selectedIds.add(permanent.getId());
-            contributions.add(convokeManaColor(gameData, permanent));
+            contributions.add(canConvoke && isCreature ? convokeManaColor(gameData, permanent) : null);
             if (cost.canPayWithConvoke(pool, additionalGenericCost, contributions)) {
                 return List.copyOf(selectedIds);
             }
@@ -3452,14 +3460,23 @@ public abstract class AiDecisionEngine {
         }
         return (int) gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of()).stream()
                 .filter(permanent -> !permanent.isTapped())
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> (card.getKeywords().contains(Keyword.CONVOKE)
+                        || hasGrantedConvokeAbility(gameData, card))
+                        && gameQueryService.isCreature(gameData, permanent)
+                        || card.getKeywords().contains(Keyword.IMPROVISE)
+                        && gameQueryService.isArtifact(gameData, permanent))
                 .count();
     }
 
     private boolean hasConvokeAbility(GameData gameData, Card card) {
-        if (card.getKeywords().contains(Keyword.CONVOKE)) {
+        if (card.getKeywords().contains(Keyword.CONVOKE)
+                || card.getKeywords().contains(Keyword.IMPROVISE)) {
             return true;
         }
+        return hasGrantedConvokeAbility(gameData, card);
+    }
+
+    private boolean hasGrantedConvokeAbility(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         if (battlefield == null) {
             return false;

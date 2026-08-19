@@ -604,6 +604,23 @@ public class GameActionAvailabilityService {
             }
         }
 
+        if (card.getKeywords().contains(Keyword.IMPROVISE)
+                || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.IMPROVISE)) {
+            int untappedArtifactCount = 0;
+            if (ctx.battlefield() != null) {
+                for (Permanent perm : ctx.battlefield()) {
+                    if (gameQueryService.isArtifact(gameData, perm) && !perm.isTapped()) {
+                        untappedArtifactCount++;
+                    }
+                }
+            }
+            int improviseArtifacts = extraConvokeMana > 0 ? extraConvokeMana : untappedArtifactCount;
+            List<ManaColor> contributions = Collections.nCopies(improviseArtifacts, null);
+            if (cost.canPayWithConvoke(pool, effectiveAdditionalCost, contributions)) {
+                return true;
+            }
+        }
+
         // Check if castable with sacrifice-for-cost-reduction (e.g. Torgaar)
         SacrificeCreaturesForCostReductionEffect sacReduce = null;
         for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,8 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
     private ExileService exileService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     private LibraryRevealSupport libraryRevealSupport;
     private GameData gd;
     private UUID player1Id;
@@ -77,7 +80,10 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler = new RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler(gameLogService, battlefieldEntryService);
+        when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any(UUID.class)))
+                .thenAnswer(invocation -> ((Card) invocation.getArgument(0)).hasType(CardType.CREATURE));
+        revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler = new RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler(
+                gameLogService, battlefieldEntryService, predicateEvaluationService);
 
     }
 

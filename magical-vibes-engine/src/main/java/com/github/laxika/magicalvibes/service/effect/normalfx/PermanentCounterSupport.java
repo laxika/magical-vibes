@@ -282,6 +282,7 @@ public class PermanentCounterSupport {
             case HATCHLING -> { target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) + count); yield "hatchling"; }
             case HOOFPRINT -> { target.setCounterCount(CounterType.HOOFPRINT, target.getCounterCount(CounterType.HOOFPRINT) + count); yield "hoofprint"; }
             case INVITATION -> { target.setCounterCount(CounterType.INVITATION, target.getCounterCount(CounterType.INVITATION) + count); yield "invitation"; }
+            case UNITY -> { target.setCounterCount(CounterType.UNITY, target.getCounterCount(CounterType.UNITY) + count); yield "unity"; }
             case KI -> { target.setCounterCount(CounterType.KI, target.getCounterCount(CounterType.KI) + count); yield "ki"; }
             case LANDMARK -> { target.setCounterCount(CounterType.LANDMARK, target.getCounterCount(CounterType.LANDMARK) + count); yield "landmark"; }
             case STUDY -> { target.setCounterCount(CounterType.STUDY, target.getCounterCount(CounterType.STUDY) + count); yield "study"; }

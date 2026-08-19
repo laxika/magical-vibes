@@ -99,6 +99,9 @@ public class MultiPermanentChoiceHandlerService {
             .TargetPlayerSacrificesCreatureAndPlaneswalkerEffectHandler
             targetPlayerSacrificesCreatureAndPlaneswalkerHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachOpponentSacrificesArtifactAndNonartifactCreatureEffectHandler
+            eachOpponentSacrificesArtifactAndNonartifactCreatureHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler eachPlayerChoosesLandOfEachBasicTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
@@ -204,6 +207,20 @@ public class MultiPermanentChoiceHandlerService {
                 boolean hasPlaneswalker = permanentIds.stream().anyMatch(ctx.planeswalkerIds()::contains);
                 if (!hasCreature || !hasPlaneswalker) {
                     throw new IllegalStateException("The selection must include a creature and a planeswalker");
+                }
+            }
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesArtifactAndNonartifactCreature ctx) {
+            if (permanentIds.size() != ctx.requiredCount()) {
+                throw new IllegalStateException("Must select exactly " + ctx.requiredCount()
+                        + " creatures to sacrifice");
+            }
+            if (ctx.requiredCount() == 2) {
+                boolean hasArtifactCreature = permanentIds.stream().anyMatch(ctx.artifactCreatureIds()::contains);
+                boolean hasNonartifactCreature = permanentIds.stream().anyMatch(ctx.nonartifactCreatureIds()::contains);
+                if (!hasArtifactCreature || !hasNonartifactCreature) {
+                    throw new IllegalStateException(
+                            "The selection must include an artifact creature and a nonartifact creature");
                 }
             }
         }
@@ -404,6 +421,15 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerSacrificeOneOfEachTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TargetPlayerSacrificesCreatureAndPlaneswalker ctx) {
             targetPlayerSacrificesCreatureAndPlaneswalkerHandler.completeChoice(gameData, permanentIds, ctx);
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesArtifactAndNonartifactCreature ctx) {
+            eachOpponentSacrificesArtifactAndNonartifactCreatureHandler.completeChoice(gameData, permanentIds, ctx);
+
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+
             permanentRemovalService.removeOrphanedAuras(gameData);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
@@ -1591,12 +1617,15 @@ public class MultiPermanentChoiceHandlerService {
                             && gameQueryService.hasKeyword(gameData, sourcePermanent, Keyword.INFECT);
                     boolean treatAsInfect = hasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, defendingPlayerId);
                     if (treatAsInfect && gameQueryService.canPlayerGetPoisonCounters(gameData, defendingPlayerId)) {
-                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
-                        gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + damage);
-                        GameLog.Builder poisonLog = GameLog.builder().text(defenderName + " gets "
-                                + damage + " poison counter" + (damage > 1 ? "s" : "") + " from ");
-                        gameLogService.append(gameData,
-                                appendCardOrText(poisonLog, sourceCard, sourceName).text(".").build());
+                        int poisonAmount = gameQueryService.replacePoisonCounters(gameData, defendingPlayerId, damage);
+                        if (poisonAmount > 0) {
+                            int currentPoison = gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
+                            gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + poisonAmount);
+                            GameLog.Builder poisonLog = GameLog.builder().text(defenderName + " gets "
+                                    + poisonAmount + " poison counter" + (poisonAmount > 1 ? "s" : "") + " from ");
+                            gameLogService.append(gameData,
+                                    appendCardOrText(poisonLog, sourceCard, sourceName).text(".").build());
+                        }
                     } else if (!gameQueryService.canPlayerLifeChange(gameData, defendingPlayerId)) {
                         gameLogService.append(gameData, GameLog.text(defenderName + "'s life total can't change."));
                     } else {

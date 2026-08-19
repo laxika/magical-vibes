@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -962,6 +963,26 @@ class MiscTriggerCollectorServiceTest {
             assertThat(entry.getEventValue()).isEqualTo(3);
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
+    }
+
+    @Test
+    @DisplayName("queues energy gain on controller life loss")
+    void queuesEnergyGainOnControllerLifeLoss() {
+        Permanent perm = createPermanent("Gonti's Machinations");
+        var effect = new EnergyCountersEffect(1);
+        var ctx = new TriggerContext.LifeLoss(player1Id, 2);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        var entry = gd.stack.getLast();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(entry.getControllerId()).isEqualTo(player1Id);
+        assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(entry.getEffectsToResolve()).containsExactly(effect);
     }
 
     // ===== ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — BoostSelfEffect =====

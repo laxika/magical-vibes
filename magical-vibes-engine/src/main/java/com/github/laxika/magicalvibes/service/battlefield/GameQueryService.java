@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerCounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
@@ -1953,6 +1954,14 @@ public class GameQueryService {
      */
     public int replaceCounters(GameData gameData, UUID controllerId, CounterType counterType,
                                int count, boolean affectedPermanentIsCreature) {
+        return replaceCounters(gameData, controllerId, counterType, count,
+                affectedPermanentIsCreature, false);
+    }
+
+    /** Applies counter replacements with the affected permanent's effective artifact status. */
+    public int replaceCounters(GameData gameData, UUID controllerId, CounterType counterType,
+                               int count, boolean affectedPermanentIsCreature,
+                               boolean affectedPermanentIsArtifact) {
         if (count <= 0 || controllerId == null) {
             return count;
         }
@@ -1964,7 +1973,8 @@ public class GameQueryService {
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CounterReplacementEffect replacement
-                        && replacement.appliesTo(counterType, affectedPermanentIsCreature)) {
+                        && replacement.appliesTo(counterType, affectedPermanentIsCreature,
+                        affectedPermanentIsArtifact)) {
                     result = replacement.replace(counterType, result);
                 }
             }
@@ -1990,6 +2000,9 @@ public class GameQueryService {
                 if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
                         && replacement.appliesToNonCreatureVehicles()) {
                     result = replacement.replace(result);
+                } else if (effect instanceof CounterReplacementEffect replacement
+                        && replacement.appliesTo(CounterType.PLUS_ONE_PLUS_ONE, false, true)) {
+                    result = replacement.replace(CounterType.PLUS_ONE_PLUS_ONE, result);
                 }
             }
         }
@@ -2004,7 +2017,8 @@ public class GameQueryService {
                 && effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.VEHICLE)) {
             return replacePlusOnePlusOneCounters(gameData, controllerId, count, true);
         }
-        return replaceCounters(gameData, controllerId, counterType, count, creature);
+        boolean artifact = isArtifact(gameData, permanent);
+        return replaceCounters(gameData, controllerId, counterType, count, creature, artifact);
     }
 
     /** Applies all counter replacements for a permanent entering under {@code controllerId}. */
@@ -2015,7 +2029,37 @@ public class GameQueryService {
                 && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE)) {
             return replacePlusOnePlusOneCounters(gameData, controllerId, count, true);
         }
-        return replaceCounters(gameData, controllerId, counterType, count, creature);
+        boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
+        return replaceCounters(gameData, controllerId, counterType, count, creature, artifact);
+    }
+
+    /** Applies all poison-counter replacements for a player. */
+    public int replacePoisonCounters(GameData gameData, UUID playerId, int count) {
+        return replacePlayerCounters(gameData, playerId, count);
+    }
+
+    /** Applies all energy-counter replacements for a player. */
+    public int replaceEnergyCounters(GameData gameData, UUID playerId, int count) {
+        return replacePlayerCounters(gameData, playerId, count);
+    }
+
+    private int replacePlayerCounters(GameData gameData, UUID playerId, int count) {
+        if (count <= 0 || playerId == null) {
+            return count;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return count;
+        }
+        int result = count;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PlayerCounterReplacementEffect replacement) {
+                    result = replacement.replace(result);
+                }
+            }
+        }
+        return result;
     }
 
     /**

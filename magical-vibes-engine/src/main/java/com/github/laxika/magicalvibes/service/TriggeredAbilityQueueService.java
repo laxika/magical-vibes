@@ -902,15 +902,19 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             PermanentChoiceContext.EmblemTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
 
-            // Collect valid targets: all permanents (or only opponent permanents if opponentControlledOnly)
-            List<UUID> validTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                if (pending.opponentControlledOnly() && pid.equals(pending.controllerId())) continue;
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    validTargets.add(p.getId());
-                }
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    null,
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.UPKEEP);
+            List<UUID> validTargets = result.validTargets();
+            if (pending.opponentControlledOnly()) {
+                validTargets = validTargets.stream()
+                        .filter(id -> !pending.controllerId().equals(
+                                gameQueryService.findPermanentController(gameData, id)))
+                        .toList();
             }
 
             if (validTargets.isEmpty()) {
@@ -926,7 +930,7 @@ public class TriggeredAbilityQueueService {
             gameData.interaction.setPermanentChoiceContext(pending);
             String targetDesc = pending.opponentControlledOnly()
                     ? "target permanent an opponent controls to exile"
-                    : "target permanent to exile";
+                    : "target permanent";
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.emblemDescription() + "'s ability - Choose " + targetDesc + ".");
 

@@ -836,6 +836,7 @@ public class StackResolutionService {
         if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()) {
             startingLoyalty = entry.getXValue();
         }
+        startingLoyalty += entry.getGrantedAdditionalLoyaltyCounters();
         startingLoyalty = gameQueryService.replaceCounters(gameData, perm, controllerId,
                 CounterType.LOYALTY, startingLoyalty);
         perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);

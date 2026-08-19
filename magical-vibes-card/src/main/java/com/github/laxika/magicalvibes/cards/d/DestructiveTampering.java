@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "141")
+@CardRegistration(set = "AER", collectorNumber = "78")
 public class DestructiveTampering extends Card {
 
     public DestructiveTampering() {

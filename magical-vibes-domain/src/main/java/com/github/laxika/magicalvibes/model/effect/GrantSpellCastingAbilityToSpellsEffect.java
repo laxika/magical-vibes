@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@code grantedAbility} even though the card lacks the printed ability.
  * Consulted alongside the innate ability by the spell-casting flow.
  * <p>
- * Used by Wort, the Raidmother (conspire, CR 702.78, on red or green instant and sorcery spells)
- * and Chief Engineer (convoke, CR 702.51, on artifact spells).
+ * Used by Wort, the Raidmother (conspire, on red or green instant and sorcery spells), Chief Engineer
+ * (convoke, on artifact spells), and Inspiring Statuary (improvise, on nonartifact spells).
  * <p>
  * Only abilities with engine support are accepted: a grant nothing consults would be silently
  * inert, so widening this set means wiring a new gate at the same time.
@@ -20,10 +20,11 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
     public GrantSpellCastingAbilityToSpellsEffect {
         if (grantedAbility != Keyword.CONSPIRE
                 && grantedAbility != Keyword.CONVOKE
+                && grantedAbility != Keyword.IMPROVISE
                 && grantedAbility != Keyword.REBOUND) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
-                            + "; only CONSPIRE, CONVOKE, and REBOUND do");
+                            + "; only CONSPIRE, CONVOKE, IMPROVISE, and REBOUND do");
         }
     }
 }

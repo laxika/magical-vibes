@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceCombatThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
@@ -2887,6 +2888,8 @@ public class TargetLegalityService {
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
             case PlayerDamagedBySourceThisTurnPredicate ignored ->
                     wasDamagedBySourceThisTurn(gameData, sourcePermanentId, targetPlayerId);
+            case PlayerDamagedBySourceCombatThisTurnPredicate ignored ->
+                    wasDamagedBySourceCombatThisTurn(gameData, sourcePermanentId, targetPlayerId);
             case PlayerControlsMoreCreaturesThanControllerPredicate ignored ->
                     controllerId != null
                             && !controllerId.equals(targetPlayerId)
@@ -2960,6 +2963,15 @@ public class TargetLegalityService {
         Set<UUID> noncombatVictims = gameData.noncombatDamageToPlayersThisTurn.get(sourcePermanentId);
         return (combatVictims != null && combatVictims.contains(targetPlayerId))
                 || (noncombatVictims != null && noncombatVictims.contains(targetPlayerId));
+    }
+
+    private boolean wasDamagedBySourceCombatThisTurn(GameData gameData, UUID sourcePermanentId,
+                                                     UUID targetPlayerId) {
+        if (sourcePermanentId == null) {
+            return false;
+        }
+        Set<UUID> combatVictims = gameData.combatDamageToPlayersThisTurn.get(sourcePermanentId);
+        return combatVictims != null && combatVictims.contains(targetPlayerId);
     }
 
     /**

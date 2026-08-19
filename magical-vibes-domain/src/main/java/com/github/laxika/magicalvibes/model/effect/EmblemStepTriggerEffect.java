@@ -12,8 +12,9 @@ import java.util.List;
  * of the emblem.
  *
  * @param step          the step the emblem triggers in, on its controller's turn
- * @param effects       what the emblem does when it triggers, resolved as a non-targeting triggered
- *                      ability controlled by the emblem's controller
+ * @param effects       what the emblem does when it triggers, resolved as a triggered ability
+ *                      controlled by the emblem's controller; effects that declare a permanent
+ *                      target prompt for that target as the trigger is put on the stack
  * @param reminderText  the emblem's own text, used in the game log
  */
 public record EmblemStepTriggerEffect(EmblemTriggerStep step, List<CardEffect> effects,

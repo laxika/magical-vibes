@@ -49,6 +49,7 @@ public enum CounterType {
     INCUBATION,
     INFECTION,
     INCARNATION,
+    UNITY,
     INVITATION,
     JAVELIN,
     KI,

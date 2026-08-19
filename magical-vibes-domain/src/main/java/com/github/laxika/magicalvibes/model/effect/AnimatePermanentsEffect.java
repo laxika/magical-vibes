@@ -105,7 +105,7 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetPredicates.permanent());
+            case TARGET -> TargetSpec.benign(TargetPredicates.permanent(), filter);
             case TARGET_PLAYERS_LANDS -> TargetSpec.benign(TargetPredicates.player());
             case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;

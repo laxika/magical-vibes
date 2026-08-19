@@ -111,6 +111,8 @@ public class CastingPermissionService {
         // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return false;
+        if (!card.hasType(CardType.CREATURE)
+                && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return false;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
@@ -592,6 +594,8 @@ public class CastingPermissionService {
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
+        if (!card.hasType(CardType.CREATURE)
+                && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return true;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
     }
@@ -602,6 +606,11 @@ public class CastingPermissionService {
             if (restrictedSpellTypes.contains(type)) return true;
         }
         return forbiddenCardNames.contains(card.getName());
+    }
+
+    private boolean isNoncreatureSpellCastRestrictedUntilNextTurn(GameData gameData, UUID playerId) {
+        return gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.values().stream()
+                .anyMatch(targetPlayers -> targetPlayers.contains(playerId));
     }
 
     public boolean controlsLegendaryCreatureOrPlaneswalker(GameData gameData, UUID playerId) {

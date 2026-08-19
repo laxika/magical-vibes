@@ -1095,11 +1095,14 @@ public class DamageSupport {
 
             if (treatAsInfect) {
                 if (effectiveDamage > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                    gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
-                    String playerName = gameData.playerIdToName.get(playerId);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            playerName + " gets " + effectiveDamage + " poison counters from ", source, "."));
+                    int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
+                    if (poisonAmount > 0) {
+                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                        gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
+                        String playerName = gameData.playerIdToName.get(playerId);
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                playerName + " gets " + poisonAmount + " poison counters from ", source, "."));
+                    }
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);

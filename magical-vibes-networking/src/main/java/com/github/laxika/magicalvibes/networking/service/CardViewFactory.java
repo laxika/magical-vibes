@@ -200,7 +200,8 @@ public class CardViewFactory {
                 xValueCost != null ? xValueCost.maxValue() : 0,
                 abilityViews,
                 card.getLoyalty(),
-                card.getKeywords().contains(Keyword.CONVOKE),
+                card.getKeywords().contains(Keyword.CONVOKE)
+                        || card.getKeywords().contains(Keyword.IMPROVISE),
                 hasPhyrexianMana,
                 phyrexianManaCount,
                 card.isToken(),

@@ -123,6 +123,13 @@ public record DealDividedDamageEffect(
                 new PermanentIsCreaturePredicate(), 0, false, false, false);
     }
 
+    /** Dynamic total divided as you choose among any number of target creatures. */
+    public static DealDividedDamageEffect chosenAmongTargetCreatures(DynamicAmount totalDamage) {
+        return new DealDividedDamageEffect(
+                totalDamage, null, DivisionMode.CHOSEN,
+                new PermanentIsCreaturePredicate(), 0, false, false, false);
+    }
+
     /** Fixed total divided as you choose among any number of target creatures and planeswalkers. */
     public static DealDividedDamageEffect chosenAmongTargetCreaturesAndPlaneswalkers(int totalDamage) {
         return new DealDividedDamageEffect(

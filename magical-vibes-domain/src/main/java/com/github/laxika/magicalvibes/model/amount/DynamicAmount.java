@@ -95,6 +95,7 @@ public sealed interface DynamicAmount permits
         SacrificedPermanentPower,
         SacrificedPermanentToughness,
         SourceCardPower,
+        SourceManaValueMinusOne,
         SourcePower,
         SourceToughness,
         SpellsCastThisTurn,

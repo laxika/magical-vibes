@@ -197,6 +197,24 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each opponent chooses an artifact creature and a nonartifact creature to sacrifice. */
+    record EachOpponentSacrificesArtifactAndNonartifactCreature(List<UUID> playerIds,
+                                                                  int playerIndex,
+                                                                  List<UUID> accumulatedSacrificeIds,
+                                                                  List<UUID> artifactCreatureIds,
+                                                                  List<UUID> nonartifactCreatureIds,
+                                                                  int requiredCount,
+                                                                  UUID sourceControllerId,
+                                                                  String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachOpponentSacrificesArtifactAndNonartifactCreature {
+            playerIds = List.copyOf(playerIds);
+            accumulatedSacrificeIds = List.copyOf(accumulatedSacrificeIds);
+            artifactCreatureIds = List.copyOf(artifactCreatureIds);
+            nonartifactCreatureIds = List.copyOf(nonartifactCreatureIds);
+        }
+    }
+
     /**
      * Desolation-style forced sacrifice: same APNAP simultaneous pick as {@link ForcedSacrifice},
      * then after all sacrifices the source deals {@code damageAmount} to each player who

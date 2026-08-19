@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfCombatEffect;
@@ -40,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -103,6 +106,8 @@ public class DestructionSupport {
     private final GrantEffectToSourceUntilEndOfCombatEffectHandler grantEffectToSourceUntilEndOfCombatHandler;
     private final PreventDamageFromChosenSourceEffectHandler preventDamageFromChosenSourceHandler;
     private final BoostAllOwnCreaturesEffectHandler boostAllOwnCreaturesHandler;
+    private final BounceSupport bounceSupport;
+    private final EnergyCountersEffectHandler energyCountersEffectHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -384,10 +389,13 @@ public class DestructionSupport {
 
         if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
             if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
-                String playerName = gameData.playerIdToName.get(playerId);
-                gameLogService.append(gameData, GameLog.text(playerName + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
+                int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
+                if (poisonAmount > 0) {
+                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                    gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
+                    String playerName = gameData.playerIdToName.get(playerId);
+                    gameLogService.append(gameData, GameLog.text(playerName + " gets " + poisonAmount + " poison counters from " + cardName + "."));
+                }
             }
             return;
         }
@@ -575,6 +583,11 @@ public class DestructionSupport {
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
+            } else if (elseEffect instanceof ReturnToHandEffect returnToHand
+                    && returnToHand.scope() == BounceScope.SELF) {
+                bounceSupport.applyReturnSelfToHand(gameData, entry);
+            } else if (elseEffect instanceof EnergyCountersEffect energyCounters) {
+                energyCountersEffectHandler.resolve(gameData, entry, energyCounters);
             } else if (elseEffect instanceof SacrificeEnchantedCreatureEffect sacrificeEnchanted) {
                 // "that player sacrifices it unless they pay {X}" (Soul Tithe) — the enchanted
                 // permanent, not the Aura, is sacrificed by its own controller.

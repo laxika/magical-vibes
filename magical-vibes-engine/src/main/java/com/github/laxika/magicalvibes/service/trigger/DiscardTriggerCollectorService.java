@@ -121,11 +121,14 @@ public class DiscardTriggerCollectorService {
                     gameData, discardingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, discardingPlayerId)) {
-                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(discardingPlayerId, 0);
-                    gameData.playerPoisonCounters.put(discardingPlayerId, currentPoison + effectiveDamage);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            gameData.playerIdToName.get(discardingPlayerId) + " gets " + effectiveDamage + " poison counters from ",
-                            sourceCard, "."));
+                    int poisonAmount = gameQueryService.replacePoisonCounters(gameData, discardingPlayerId, effectiveDamage);
+                    if (poisonAmount > 0) {
+                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(discardingPlayerId, 0);
+                        gameData.playerPoisonCounters.put(discardingPlayerId, currentPoison + poisonAmount);
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                gameData.playerIdToName.get(discardingPlayerId) + " gets " + poisonAmount + " poison counters from ",
+                                sourceCard, "."));
+                    }
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
