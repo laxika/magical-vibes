@@ -5,6 +5,7 @@
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner codex
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner muse
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner codex -Effort xhigh
+#   .\scripts\review-cards.ps1 sos 1 20 -Parallelism 10
 #
 # The muse runner drives the claude CLI against Meta's Muse endpoint and needs
 # $env:MODEL_API_KEY to be set first:
@@ -38,7 +39,12 @@ param(
     # Reasoning effort for the codex runner. Defaults to "xhigh" and is ignored
     # by the other runners.
     [ValidateSet("low", "medium", "high", "xhigh", "max")]
-    [string] $Effort
+    [string] $Effort,
+
+    # Maximum number of card reviews to run at the same time. Use 1 to run
+    # reviews sequentially.
+    [ValidateRange(1, 100)]
+    [int] $Parallelism = 10
 )
 
 $ErrorActionPreference = "Stop"
@@ -94,14 +100,14 @@ if ($Runner -eq "muse") {
 $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and review the card immediately. Be thorough in the review. Implementation is read-only: do not edit card classes, effects, predicates, or docs - only delete a stale pass result file when required. Review every existing test for the card under review for rules accuracy and correctness. Ensure every test class for the card under review has @CardUsed({...}) listing every concrete card class it constructs, including support cards; add or correct class- and method-level annotations as needed. This annotation maintenance is required and is an exception to the read-only and test-modification restrictions. Make sure that only one set's cards are used in the test (preferably the set where the tested card is from). If it is not possible, then the test could use other ones as well, but we should try to stick to a limited number of sets if possible. Fix or otherwise modify an existing test only when it is wrong. Also inspect the current test harness for higher-level helpers. When an existing helper can replace multiple lines in the card's tests without changing their behavior or coverage, refactor those tests to use it instead of duplicating lower-level steps; this cleanup is an exception to the preceding restriction. Tests are encouraged: when oracle coverage is below 100% or you spot realistic edge cases, ADD focused harness tests. Always look up cards used for testing. Verify their real mana costs and other parameters using the MCP. Whenever possible, use real cards for testing. New failing tests that confirm a bug are good - leave them and report FAIL. Write scripts/result/{SET}/{collectorNumber}.txt only when there are real issues; on a clean pass delete any stale result file and write nothing."
 
 $total = $To - $From + 1
-$index = 0
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$effectiveParallelism = [Math]::Min($Parallelism, $total)
 
 if ($Runner -eq "codex") {
-    Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort"
+    Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort  Parallelism: $effectiveParallelism"
 }
 else {
-    Write-Host "Runner: $Runner  Model: $Model"
+    Write-Host "Runner: $Runner  Model: $Model  Parallelism: $effectiveParallelism"
 }
 
 $cardInfoLauncher = Join-Path $PSScriptRoot "..\mcp\card-info\start.ps1"
@@ -112,32 +118,141 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-for ($cardId = $From; $cardId -le $To; $cardId++) {
-    $index++
-    Write-Host ""
-    Write-Host "############################################################"
-    Write-Host "# [$index/$total] review-card $SetCode $cardId"
-    Write-Host "############################################################"
+$reviewJob = {
+    param(
+        [string] $JobRunner,
+        [string] $JobModel,
+        [string] $JobEffort,
+        [string] $JobRepositoryRoot,
+        [string] $JobSetCode,
+        [int] $JobCardId,
+        [string] $JobSystemPrompt
+    )
 
-    $prompt = "/review-card $SetCode $cardId"
+    try {
+        Set-Location -LiteralPath $JobRepositoryRoot
+        $prompt = "/review-card $JobSetCode $JobCardId"
+        $commandOutput = @()
 
-    if ($Runner -eq "grok") {
-        & agent -p --force --trust --model $Model "$prompt`n`n$systemPrompt"
-    }
-    elseif ($Runner -eq "codex") {
-        # *>$null needs a non-Stop EAP on Windows PowerShell 5.1, or native stderr
-        # aborts/deadlocks under the script-level $ErrorActionPreference=Stop.
-        $reasoningConfig = "model_reasoning_effort=`"$Effort`""
-        & { $ErrorActionPreference = "Ignore"; & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt" *>$null }
-    }
-    else {
-        & claude --permission-mode auto --model $Model -p $prompt --append-system-prompt $systemPrompt
-    }
+        if ($JobRunner -eq "grok") {
+            $commandOutput = @(& agent -p --force --trust --model $JobModel "$prompt`n`n$JobSystemPrompt" 2>&1)
+            $exitCode = $LASTEXITCODE
+        }
+        elseif ($JobRunner -eq "codex") {
+            # A non-Stop EAP prevents native stderr from aborting or deadlocking
+            # under Windows PowerShell 5.1. Codex output is intentionally quiet.
+            $ErrorActionPreference = "Ignore"
+            $reasoningConfig = "model_reasoning_effort=`"$JobEffort`""
+            & codex --search --ask-for-approval never exec --model $JobModel --config $reasoningConfig --cd $JobRepositoryRoot "$prompt`n`n$JobSystemPrompt" *>$null
+            $exitCode = $LASTEXITCODE
+        }
+        else {
+            $commandOutput = @(& claude --permission-mode auto --model $JobModel -p $prompt --append-system-prompt $JobSystemPrompt 2>&1)
+            $exitCode = $LASTEXITCODE
+        }
 
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "$cliName exited with code $LASTEXITCODE for $SetCode $cardId. Stopping."
-        exit $LASTEXITCODE
+        [pscustomobject] @{
+            CardId = $JobCardId
+            ExitCode = $exitCode
+            Output = @($commandOutput | ForEach-Object { $_.ToString() })
+        }
     }
+    catch {
+        [pscustomobject] @{
+            CardId = $JobCardId
+            ExitCode = 1
+            Output = @($_.Exception.Message)
+        }
+    }
+}
+
+$runningJobs = @{}
+$cardIdsByJobId = @{}
+$nextCardId = $From
+$started = 0
+$completed = 0
+$failure = $null
+
+try {
+    while ($runningJobs.Count -gt 0 -or ($nextCardId -le $To -and $null -eq $failure)) {
+        while ($null -eq $failure -and $runningJobs.Count -lt $effectiveParallelism -and $nextCardId -le $To) {
+            $started++
+            Write-Host ""
+            Write-Host "############################################################"
+            Write-Host "# Starting [$started/$total] review-card $SetCode $nextCardId"
+            Write-Host "############################################################"
+
+            $job = Start-Job -ScriptBlock $reviewJob -ArgumentList @(
+                $Runner,
+                $Model,
+                $Effort,
+                $repositoryRoot,
+                $SetCode,
+                $nextCardId,
+                $systemPrompt
+            )
+            $runningJobs[$job.Id] = $job
+            $cardIdsByJobId[$job.Id] = $nextCardId
+            $nextCardId++
+        }
+
+        if ($runningJobs.Count -eq 0) {
+            break
+        }
+
+        $completedJob = Wait-Job -Job @($runningJobs.Values) -Any
+        $completedCardId = $cardIdsByJobId[$completedJob.Id]
+        try {
+            $result = Receive-Job -Job $completedJob
+        }
+        catch {
+            $result = [pscustomobject] @{
+                CardId = $completedCardId
+                ExitCode = 1
+                Output = @($_.Exception.Message)
+            }
+        }
+        if ($null -eq $result) {
+            $result = [pscustomobject] @{
+                CardId = $completedCardId
+                ExitCode = 1
+                Output = @("Review job ended without returning a result. Job state: $($completedJob.State).")
+            }
+        }
+        $runningJobs.Remove($completedJob.Id)
+        $cardIdsByJobId.Remove($completedJob.Id)
+        Remove-Job -Job $completedJob
+        $completed++
+
+        Write-Host ""
+        Write-Host "############################################################"
+        Write-Host "# Completed [$completed/$total] review-card $SetCode $($result.CardId)"
+        Write-Host "############################################################"
+        foreach ($line in @($result.Output)) {
+            Write-Host $line
+        }
+
+        if ($result.ExitCode -ne 0) {
+            Write-Warning "$cliName exited with code $($result.ExitCode) for $SetCode $($result.CardId). No new reviews will be started."
+            if ($null -eq $failure) {
+                $failure = $result
+            }
+        }
+    }
+}
+finally {
+    foreach ($job in @($runningJobs.Values)) {
+        if ($job.State -eq "Running") {
+            Stop-Job -Job $job
+        }
+        Receive-Job -Job $job | Out-Null
+        Remove-Job -Job $job -Force
+    }
+}
+
+if ($null -ne $failure) {
+    Write-Error "Review failed for $SetCode $($failure.CardId) with exit code $($failure.ExitCode). Already-running reviews were allowed to finish."
+    exit $failure.ExitCode
 }
 
 Write-Host ""
