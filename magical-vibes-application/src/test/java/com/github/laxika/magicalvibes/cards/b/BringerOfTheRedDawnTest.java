@@ -41,9 +41,9 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         target.tap();
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
@@ -59,6 +59,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         target.tap();
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -75,9 +76,9 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -97,12 +98,12 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(noncreature);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(target.getId()).doesNotContain(noncreature.getId());
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 }

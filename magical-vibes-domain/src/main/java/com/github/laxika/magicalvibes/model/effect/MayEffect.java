@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
  *                   declining simply does nothing
  * @param choicePlayer identifies the player who makes the choice
  */
-public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer) implements CardEffect {
+public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
+        implements CombatDamageTriggerContextEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -29,5 +30,12 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return wrappedSpec != TargetSpec.NONE || elseEffect == null
                 ? wrappedSpec
                 : elseEffect.targetSpec();
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
+                ? contextEffect.combatDamageTriggerContext()
+                : null;
     }
 }

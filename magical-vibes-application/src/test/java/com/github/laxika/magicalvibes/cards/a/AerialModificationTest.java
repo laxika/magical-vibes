@@ -25,8 +25,8 @@ class AerialModificationTest extends BaseCardTest {
         castAerialModification(schooner);
 
         assertThat(gqs.isCreature(gd, schooner)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, schooner)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, schooner)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, schooner)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, schooner)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, schooner, Keyword.FLYING)).isTrue();
     }
 

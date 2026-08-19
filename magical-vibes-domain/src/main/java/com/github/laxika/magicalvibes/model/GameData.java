@@ -2974,6 +2974,11 @@ public class GameData {
         copy.eachPlayerPayMana.manaPaid.putAll(this.eachPlayerPayMana.manaPaid);
         copy.eachPlayerPayMana.currentPlayerId = this.eachPlayerPayMana.currentPlayerId;
         copy.eachPlayerPayMana.sourceSetCode = this.eachPlayerPayMana.sourceSetCode;
+        copy.goblinGame.active = this.goblinGame.active;
+        copy.goblinGame.order.addAll(this.goblinGame.order);
+        copy.goblinGame.index = this.goblinGame.index;
+        copy.goblinGame.itemCounts.putAll(this.goblinGame.itemCounts);
+        copy.goblinGame.currentPlayerId = this.goblinGame.currentPlayerId;
         copy.illicitAuction.active = this.illicitAuction.active;
         copy.illicitAuction.order.addAll(this.illicitAuction.order);
         copy.illicitAuction.index = this.illicitAuction.index;

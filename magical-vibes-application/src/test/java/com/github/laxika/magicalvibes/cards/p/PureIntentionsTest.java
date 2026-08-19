@@ -50,7 +50,7 @@ class PureIntentionsTest extends BaseCardTest {
         harness.castInstant(player1, 0, (java.util.UUID) null);
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Sift(), new GrizzlyBears(), new Forest()));
+        harness.setHand(player1, List.of(new Sift(), new GrizzlyBears(), new Forest(), new Sift()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();

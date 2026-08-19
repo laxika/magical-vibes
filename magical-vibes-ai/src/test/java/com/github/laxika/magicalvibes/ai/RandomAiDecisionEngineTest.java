@@ -125,12 +125,13 @@ class RandomAiDecisionEngineTest {
             assertThat(gameData.stack.getFirst().getTargetId())
                     .isIn(aiPlayer.getId(), opponent.getId());
             UUID targetId = gameData.stack.getFirst().getTargetId();
+            int xValue = gameData.stack.getFirst().getXValue();
             int targetLifeBefore = gameData.getLife(targetId);
 
             harness.passBothPriorities();
 
             assertThat(watcher.drainFailures()).isEmpty();
-            assertThat(gameData.getLife(targetId)).isEqualTo(targetLifeBefore - 6);
+            assertThat(gameData.getLife(targetId)).isEqualTo(targetLifeBefore - 2 * xValue);
         } finally {
             watcher.uninstall();
         }

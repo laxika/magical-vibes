@@ -16,9 +16,9 @@ class ConjuredCurrencyTest extends BaseCardTest {
         Permanent opp = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, opp.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, opp.getId());
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -30,9 +30,10 @@ class ConjuredCurrencyTest extends BaseCardTest {
     @DisplayName("No exchange when the controller declines")
     void noExchangeWhenDeclined() {
         harness.addToBattlefield(player1, new ConjuredCurrency());
-        harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, opp.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -48,7 +49,6 @@ class ConjuredCurrencyTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         // The only other permanent belongs to the controller, so there is nothing to exchange with.
         harness.assertOnBattlefield(player1, "Conjured Currency");
@@ -62,16 +62,15 @@ class ConjuredCurrencyTest extends BaseCardTest {
         Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, elves.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, elves.getId());
 
         // Player 2 now controls Conjured Currency, so on their upkeep it triggers for them. The
         // Llanowar Elves player 1 took are still owned by player 2, so they are not a legal target
         // and nothing can be exchanged back.
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertOnBattlefield(player2, "Conjured Currency");

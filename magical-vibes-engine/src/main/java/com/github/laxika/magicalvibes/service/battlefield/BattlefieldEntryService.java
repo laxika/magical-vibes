@@ -2038,10 +2038,11 @@ public class BattlefieldEntryService {
                     // Multi-target ETB (e.g. Burning Sun's Avatar, or a single group with
                     // "up to N" targets): choose slot-by-slot at trigger time,
                     // accumulating into targetIds.
-                    List<UUID> initialTargets = targetId == null ? List.of() : List.of(targetId);
-                    int initialGroupIndex = targetId == null ? (card.isAura() ? 1 : 0) : 1;
-                    List<Integer> initialGroupSizes = targetId == null
-                            ? (card.isAura() ? List.of(1) : List.of()) : List.of(1);
+                    List<UUID> initialTargets = card.isAura() || targetId == null
+                            ? List.of() : List.of(targetId);
+                    int initialGroupIndex = card.isAura() ? 1 : targetId == null ? 0 : 1;
+                    List<Integer> initialGroupSizes = card.isAura()
+                            ? List.of(0) : targetId == null ? List.of() : List.of(1);
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
                             initialTargets, initialGroupIndex, 0,
