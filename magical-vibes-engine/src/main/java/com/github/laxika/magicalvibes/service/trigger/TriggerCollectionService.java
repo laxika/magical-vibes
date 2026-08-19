@@ -4639,14 +4639,15 @@ public class TriggerCollectionService {
         }
     }
 
-    public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
+    public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId,
+                                               Permanent dyingPermanent, int dyingPowerAtDeath) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
         Card dyingCard = dyingPermanent.getCard();
-        int dyingPower = Math.max(0, gameQueryService.getEffectivePower(gameData, dyingPermanent));
+        int dyingPower = Math.max(0, dyingPowerAtDeath);
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
-                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(),
+                dyingPower, dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(),
                 dyingPermanent);
 
         for (Permanent perm : battlefield) {
@@ -4675,7 +4676,7 @@ public class TriggerCollectionService {
                     // that died").
                     gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                             perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(resolvedEffect)),
-                            Math.max(0, dyingPermanent.getEffectivePower())
+                            dyingPower
                     ));
                     anyEffectFired = true;
                 } else if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {

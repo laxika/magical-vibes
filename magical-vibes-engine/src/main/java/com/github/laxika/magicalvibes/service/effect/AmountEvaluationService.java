@@ -1013,6 +1013,7 @@ public class AmountEvaluationService {
 
     private int greatestManaValueAmongControlled(
             GameData gameData, GreatestManaValueAmongControlled amount, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
         FilterContext filterContext = (GameQueryService.isStaticEvaluationActive()

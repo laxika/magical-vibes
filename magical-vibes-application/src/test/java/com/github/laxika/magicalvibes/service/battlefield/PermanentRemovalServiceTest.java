@@ -456,7 +456,7 @@ class PermanentRemovalServiceTest {
 
             verify(triggerCollectionService).collectDeathTrigger(
                     eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears), eq(List.of()));
-            verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears);
+            verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears, 0);
             verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears);
             verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(gd, bears.getId(), player1Id, bears.getCard());
         }

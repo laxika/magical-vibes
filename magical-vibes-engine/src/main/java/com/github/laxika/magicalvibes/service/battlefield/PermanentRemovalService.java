@@ -130,6 +130,9 @@ public class PermanentRemovalService {
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        int dyingPowerAtDeath = wasCreature
+                ? Math.max(0, gameQueryService.getEffectivePower(gameData, target))
+                : 0;
         List<CardEffect> grantedDeathEffects = wasCreature
                 ? triggerCollectionService.grantedTriggeredEffects(gameData, target, EffectSlot.ON_DEATH)
                 : List.of();
@@ -158,7 +161,7 @@ public class PermanentRemovalService {
                 gameData, target, controllerId, Zone.GRAVEYARD);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
                 creatureSubtypesAtDeath, hadUndying, hadPersist, controllerId, ownerId,
-                destroyedBySpellOrAbility, grantedDeathEffects);
+                destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -185,6 +188,7 @@ public class PermanentRemovalService {
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        int dyingPowerAtDeath = wasCreature ? Math.max(0, target.getEffectivePower()) : 0;
         List<CardEffect> grantedDeathEffects = wasCreature
                 ? triggerCollectionService.grantedTriggeredEffects(gameData, target, EffectSlot.ON_DEATH)
                 : List.of();
@@ -208,7 +212,7 @@ public class PermanentRemovalService {
                 gameData, target, info.controllerId(), Zone.GRAVEYARD);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
                 creatureSubtypesAtDeath, hadUndying, hadPersist, info.controllerId(), info.ownerId(), false,
-                grantedDeathEffects);
+                grantedDeathEffects, dyingPowerAtDeath);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
     }
@@ -950,7 +954,8 @@ public class PermanentRemovalService {
                                               boolean hadUndying, boolean hadPersist,
                                               UUID controllerId, UUID ownerId,
                                               boolean destroyedBySpellOrAbility,
-                                              List<CardEffect> grantedDeathEffects) {
+                                              List<CardEffect> grantedDeathEffects,
+                                              int dyingPowerAtDeath) {
         boolean wentToGraveyard = false;
         int exiledFromBattlefield = 0;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
@@ -1002,7 +1007,8 @@ public class PermanentRemovalService {
                 }
                 triggerCollectionService.checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
                         gameData, target.getOriginalCard(), ownerId, controllerId);
-                triggerCollectionService.checkAllyCreatureDeathTriggers(gameData, controllerId, target);
+                triggerCollectionService.checkAllyCreatureDeathTriggers(
+                        gameData, controllerId, target, dyingPowerAtDeath);
                 triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
