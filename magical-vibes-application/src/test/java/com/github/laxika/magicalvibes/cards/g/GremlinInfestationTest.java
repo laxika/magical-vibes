@@ -44,7 +44,7 @@ class GremlinInfestationTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         attachAura(player1, artifact);
         harness.setHand(player1, List.of(new Shatter()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, artifact.getId());
         resolveAllTriggers();

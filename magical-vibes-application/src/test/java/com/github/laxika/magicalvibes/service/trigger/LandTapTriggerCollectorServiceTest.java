@@ -394,6 +394,7 @@ class LandTapTriggerCollectorServiceTest {
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
             when(gameQueryService.canPlayerGetPoisonCounters(gd, player2Id)).thenReturn(true);
+            when(gameQueryService.replacePoisonCounters(gd, player2Id, 1)).thenReturn(1);
 
             registry.dispatch(
                     match(manabarbs, player1Id, effect),

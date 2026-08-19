@@ -243,6 +243,9 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applySourceNextCombatDamageToOpponentRedirect(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTurnSourceDamageRedirectToController(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
                 eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
@@ -277,7 +280,7 @@ class CombatDamageServiceTest {
                 eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
         lenient().when(damagePreventionService.applyCreatureRedirectShields(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
@@ -360,6 +363,8 @@ class CombatDamageServiceTest {
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.canPlayerGetPoisonCounters(eq(gameData), any(UUID.class)))
                 .thenReturn(true);
+        when(gameQueryService.replacePoisonCounters(eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
     }
 
     // ===== Creature helpers =====

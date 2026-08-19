@@ -23,9 +23,9 @@ class SoldeviGolemTest extends BaseCardTest {
         target.tap();
 
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(golem.isTapped()).isFalse();
@@ -40,6 +40,7 @@ class SoldeviGolemTest extends BaseCardTest {
         target.tap();
 
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

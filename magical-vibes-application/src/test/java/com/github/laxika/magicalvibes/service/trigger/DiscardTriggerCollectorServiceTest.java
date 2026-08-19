@@ -250,6 +250,7 @@ class DiscardTriggerCollectorServiceTest {
                     .thenReturn(2);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
             when(gameQueryService.canPlayerGetPoisonCounters(gd, player2Id)).thenReturn(true);
+            when(gameQueryService.replacePoisonCounters(gd, player2Id, 2)).thenReturn(2);
 
             registry.dispatch(
                     match(megrim, player1Id, effect),

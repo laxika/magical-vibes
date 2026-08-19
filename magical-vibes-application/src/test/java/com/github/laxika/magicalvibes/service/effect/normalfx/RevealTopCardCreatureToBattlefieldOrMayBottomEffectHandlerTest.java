@@ -80,7 +80,7 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any(UUID.class)))
+        lenient().when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any(UUID.class)))
                 .thenAnswer(invocation -> ((Card) invocation.getArgument(0)).hasType(CardType.CREATURE));
         revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler = new RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler(
                 gameLogService, battlefieldEntryService, predicateEvaluationService);

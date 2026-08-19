@@ -61,13 +61,16 @@ class HopeOfGhirapurTest extends BaseCardTest {
     void restrictionEndsAtControllerNextTurn() {
         activateHopeAgainstPlayer2();
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
 
-        advanceToUpkeep(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 

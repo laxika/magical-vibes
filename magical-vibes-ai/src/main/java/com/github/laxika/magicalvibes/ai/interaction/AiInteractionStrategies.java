@@ -38,6 +38,7 @@ public final class AiInteractionStrategies {
         register(new HostileNegotiationsOpponentPileChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
         register(new KeepCardsInHandChoiceAiStrategy());
+        register(new EachPlayerChoosesOneCardOfEachColorChoiceAiStrategy());
         register(new PutLandsFromHandChoiceAiStrategy());
         register(new PutUpToCardsFromHandOntoBattlefieldChoiceAiStrategy());
         register(new EachPlayerMayPutCardFromHandChoiceAiStrategy());
