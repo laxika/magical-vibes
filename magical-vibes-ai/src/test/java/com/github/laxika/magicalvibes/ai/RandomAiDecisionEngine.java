@@ -708,13 +708,19 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     && !EffectResolution.needsDamageDistribution(card)
                     && !castCost.hasX()) {
                 List<UUID> currentTargets = findRandomTargets(gameData, card);
+                Set<UUID> attemptedTargets = new HashSet<>();
+                attemptedTargets.add(targetId);
                 while (!currentTargets.contains(targetId)) {
-                    if (currentTargets.isEmpty()) {
+                    List<UUID> unattemptedTargets = currentTargets.stream()
+                            .filter(candidateId -> !attemptedTargets.contains(candidateId))
+                            .toList();
+                    if (unattemptedTargets.isEmpty()) {
                         telemetry.recordSkip("spell: no valid target after mana payment", card.getName());
                         targetId = null;
                         break;
                     }
-                    targetId = currentTargets.get(rng.nextInt(currentTargets.size()));
+                    targetId = unattemptedTargets.get(rng.nextInt(unattemptedTargets.size()));
+                    attemptedTargets.add(targetId);
                     int refreshedTargetingTax = computeTargetingTax(gameData, targetId, null);
                     ManaPool refreshedVirtualPool = manaManager.buildVirtualManaPool(
                             gameData, aiPlayer.getId());

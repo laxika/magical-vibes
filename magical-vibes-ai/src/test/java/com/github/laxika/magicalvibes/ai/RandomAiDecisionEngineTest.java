@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -77,6 +78,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -1268,6 +1274,87 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void givesUpWhenManaPaymentCyclesTappedTargetCandidates() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        firstTarget.tap();
+
+        Card spell = new Card();
+        spell.setName("Cycling tapped-target spell");
+        spell.setType(CardType.INSTANT);
+        spell.setManaCost("{3}");
+        spell.target(new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsTappedPredicate())),
+                "Target must be a tapped creature"))
+                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 3);
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = new RandomAiDecisionEngine(
+                gameData.id,
+                aiPlayer,
+                harness.getGameRegistry(),
+                harness.getGameService(),
+                harness.getGameQueryService(),
+                harness.getBlockLegalityService(),
+                harness.getCombatAttackService(),
+                harness.getGameActionAvailabilityService(),
+                harness.getCastingCostService(),
+                harness.getCastingPermissionService(),
+                harness.getTargetValidationService(),
+                harness.getTargetLegalityService(),
+                new Random() {
+                    @Override
+                    public int nextInt(int bound) {
+                        return 0;
+                    }
+                },
+                new FuzzTelemetry()) {
+            @Override
+            protected boolean tapManaForSpell(GameData data, Card card, Integer xValue,
+                                              int targetingTax, int delveReduction, int costReduction,
+                                              Set<UUID> excludedPermanentIds) {
+                if (firstTarget.isTapped()) {
+                    firstTarget.untap();
+                } else {
+                    firstTarget.tap();
+                }
+                if (secondTarget.isTapped()) {
+                    secondTarget.untap();
+                } else {
+                    secondTarget.tap();
+                }
+                return false;
+            }
+        };
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(spell);
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
