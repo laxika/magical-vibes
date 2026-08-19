@@ -205,7 +205,7 @@ public class StaticEffectSupport {
             }
         } else if (wrapped instanceof GrantColorEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                    || selfInScope(context, grant.scope(), null)) {
+                    || selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addGrantedColor(grant.color());
                 if (grant.overriding()) {
                     accumulator.setColorOverriding(true);
@@ -309,6 +309,11 @@ public class StaticEffectSupport {
             for (Permanent source : bf) {
                 for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
+                            && (animateLands.scope() == GrantScope.ALL_LANDS
+                                    || (animateLands.scope() == GrantScope.OWN_LANDS
+                                            && bf.contains(permanent))
+                                    || (animateLands.scope() == GrantScope.OPPONENT_LANDS
+                                            && !bf.contains(permanent)))
                             && (animateLands.requiredSubtype() == null
                                     || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))) {
                         return true;

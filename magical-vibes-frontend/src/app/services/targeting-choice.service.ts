@@ -710,7 +710,7 @@ export class TargetingChoiceService {
     this.kickerCardIndex = -1;
     this.kickerCardName = '';
     this.kickerCost = '';
-    if (card?.kickerRequiresTap) {
+    if (card?.kickerRequiresTap || card?.kickerRequiresReturn) {
       this.choosingKickerPermanent = true;
       this.kickerPermanentCardIndex = savedIndex;
       this.kickerPermanentDescription = card.kickerCost ?? '';
@@ -743,6 +743,12 @@ export class TargetingChoiceService {
     if (!this.choosingKickerPermanent) return;
     this.kickerPermanentSelectedId.set(
       this.kickerPermanentSelectedId() === permanentId ? null : permanentId);
+  }
+
+  canSelectKickerPermanent(permanent: Permanent): boolean {
+    if (!this.choosingKickerPermanent) return false;
+    const card = this.gameSignal()?.hand[this.kickerPermanentCardIndex];
+    return card?.kickerRequiresReturn ? isPermanentCreature(permanent) : !permanent.tapped;
   }
 
   confirmKickerPermanent(): void {

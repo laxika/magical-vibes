@@ -164,6 +164,15 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A global turn-scoped restriction stops every creature from attacking")
+    void globalCantAttackThisTurnRestrictionStopsAttacking() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        gd.creaturesCantAttackThisTurn = true;
+
+        assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
+    }
+
+    @Test
     @DisplayName("An aura granting \"can't attack or block\" stops the enchanted creature attacking")
     void auraCantAttackOrBlockStopsAttacking() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());

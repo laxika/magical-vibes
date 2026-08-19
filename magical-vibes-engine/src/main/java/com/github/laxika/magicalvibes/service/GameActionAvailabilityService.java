@@ -305,9 +305,11 @@ public class GameActionAvailabilityService {
                 card.getEffects(EffectSlot.SPELL), false, null);
         boolean needsSpellCastTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
-        boolean allTargetsOptional = !card.getSpellTargets().isEmpty() && card.getMinTargets() == 0;
+        Integer maxXValue = maxAnnounceableX(card, pool);
+        boolean allTargetsOptional = !card.getSpellTargets().isEmpty()
+                && (card.getMinTargets() == 0
+                || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0);
         if (!allTargetsOptional && needsSpellCastTarget) {
-            Integer maxXValue = maxAnnounceableX(card, pool);
             boolean hasValidTarget = validTargetService.hasValidTargetsForSpell(
                     gameData, card, playerId, maxXValue);
             if (!hasValidTarget && canAffordKickerCost(gameData, playerId, card, pool, additionalGenericCost)) {
@@ -388,10 +390,21 @@ public class GameActionAvailabilityService {
         if (kicker == null) {
             return false;
         }
+        if (kicker.hasLifeCost()
+                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || gameData.getLife(playerId) < kicker.lifeCost().effectiveAmount(gameData.getLife(playerId)))) {
+            return false;
+        }
         if (kicker.hasSacrificeCost()
                 && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, kicker.sacrificePredicate()))) {
+            return false;
+        }
+        if (kicker.hasReturnCost()
+                && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, kicker.returnPredicate()))) {
             return false;
         }
         if (!kicker.hasManaCost()) {

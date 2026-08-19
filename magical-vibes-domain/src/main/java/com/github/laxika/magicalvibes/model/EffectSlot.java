@@ -749,6 +749,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  and for player targets. Checked in {@code TriggerCollectionService} from both the spell and
      *  ability target paths. */
     ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers once for each other permanent controlled by this permanent's controller that
+     * becomes the target of a spell or ability controlled by an opponent. The targeted permanent
+     * is stored as the triggered entry's non-targeting {@code triggeringPermanentId}. Checked in
+     * {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
+     * {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
+    ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     /** Triggers whenever ANY creature (any controller) becomes the target of ANY spell or ability.
      *  Fires on ALL permanents with this slot across every battlefield (not just the targeted
      *  creature). The targeted creature's permanent ID is set as the non-targeting {@code targetId}

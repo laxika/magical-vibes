@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
@@ -130,6 +131,7 @@ import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEn
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
@@ -323,6 +325,8 @@ public class ConditionEvaluationService {
                     ctx.buyback();
             case PutCounterCostPaid ignored ->
                     ctx.putCounterCostPaid();
+            case RepeatedAdditionalCostPaid c ->
+                    ctx.repeatedAdditionalCosts().contains(c.manaCost());
             case CastForMadnessCost ignored ->
                     ctx.madness();
             case CastForProwlCost ignored ->
@@ -521,6 +525,8 @@ public class ConditionEvaluationService {
                     isAnyOpponentHandEmpty(gameData, ctx.controllerId());
             case NoSpellsCastLastTurn ignored ->
                     noSpellsCastLastTurn(gameData);
+            case NoCreaturesAttackedThisTurn ignored ->
+                    gameData.creaturesAttackedCountThisTurn.values().stream().noneMatch(count -> count > 0);
             case TwoOrMoreSpellsCastLastTurn ignored ->
                     gameData.spellsCastLastTurn.values().stream().anyMatch(count -> count >= 2);
             case DefendingPlayerControlsPermanent c ->

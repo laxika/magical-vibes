@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "112")
+@CardRegistration(set = "PLS", collectorNumber = "37")
 public class SunkenHope extends Card {
 
     public SunkenHope() {

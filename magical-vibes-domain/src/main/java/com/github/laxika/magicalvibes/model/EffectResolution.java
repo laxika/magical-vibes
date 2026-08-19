@@ -298,7 +298,11 @@ public final class EffectResolution {
      * Returns true if the given effects require damage distribution (divided damage spells).
      */
     public static boolean needsDamageDistribution(List<CardEffect> effects) {
-        return effects.stream().anyMatch(EffectResolution::distributesAmountsAmongTargets);
+        return effects.stream().anyMatch(effect ->
+                distributesAmountsAmongTargets(effect)
+                        || effect instanceof ConditionalReplacementEffect conditional
+                        && distributesAmountsAmongTargets(conditional.baseEffect())
+                        && distributesAmountsAmongTargets(conditional.upgradedEffect()));
     }
 
     /**

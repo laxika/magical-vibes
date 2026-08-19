@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -31,14 +33,29 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantProtectionFromColorUntilEndOfTurnEffect) effect;
+        if (e.scope() == GrantScope.OWN_CREATURES) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            if (battlefield == null) {
+                return;
+            }
+            battlefield.stream()
+                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .forEach(permanent -> grantProtection(permanent, e.color(), gameData));
+            return;
+        }
+
         Permanent target = resolveRecipient(gameData, entry, e);
         if (target == null) {
             return;
         }
 
-        target.getProtectionFromColorsUntilEndOfTurn().add(e.color());
+        grantProtection(target, e.color(), gameData);
+    }
 
-        String colorName = e.color().name().toLowerCase();
+    private void grantProtection(Permanent target, CardColor color, GameData gameData) {
+        target.getProtectionFromColorsUntilEndOfTurn().add(color);
+
+        String colorName = color.name().toLowerCase();
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(" gains protection from " + colorName + " until end of turn.")

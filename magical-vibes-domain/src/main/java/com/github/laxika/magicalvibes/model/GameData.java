@@ -481,6 +481,8 @@ public class GameData {
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
     /** Progress state for Liege of the Hollows' "each player may pay any amount of mana" flow. */
     public final EachPlayerPayManaState eachPlayerPayMana = new EachPlayerPayManaState();
+    /** Progress state for Goblin Game's hidden item-count choices. */
+    public final GoblinGameState goblinGame = new GoblinGameState();
     /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
     public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
@@ -686,6 +688,8 @@ public class GameData {
     public boolean damageCantBePreventedThisTurn = false;
     /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
     public boolean playersCantGainLifeThisTurn = false;
+    /** When true, no creature can attack this turn. Cleared at turn cleanup. */
+    public boolean creaturesCantAttackThisTurn = false;
     /**
      * Set for the duration of a single unpreventable damage event ("the damage can't be prevented",
      * e.g. Flames of the Blood Hand), so the shared prevention gate {@code isDamagePreventable}
@@ -3089,6 +3093,7 @@ public class GameData {
         });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
+        copy.creaturesCantAttackThisTurn = this.creaturesCantAttackThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
         copy.permanentDamageDoublingsThisTurn.putAll(this.permanentDamageDoublingsThisTurn);

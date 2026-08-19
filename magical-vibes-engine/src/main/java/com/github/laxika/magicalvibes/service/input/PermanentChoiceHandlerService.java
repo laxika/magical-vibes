@@ -155,6 +155,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentId, slt);
         } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
+        } else if (context instanceof PermanentChoiceContext.GuardDogsPermanentChoice) {
+            battlefieldHandler.handleGuardDogsPermanentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.RedirectDamageSourceChoice redirectSource) {
             battlefieldHandler.handleRedirectDamageSourceChoice(gameData, permanentId, redirectSource);
         } else if (context instanceof PermanentChoiceContext.RedirectCreatureDamageSourceChoice redirectCreatureSource) {

@@ -47,6 +47,7 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     transformable: false,
     kickerCost: null,
     kickerRequiresTap: false,
+    kickerRequiresReturn: false,
     buybackCost: null,
     buybackRequiresSacrifice: false,
     buybackDiscardCount: 0,

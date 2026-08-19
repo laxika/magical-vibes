@@ -389,6 +389,12 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null, true);
     }
 
+    public void castKickedCreatureWithPermanent(Player player, int cardIndex, UUID permanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                permanentId, null, null, null, null, true);
+    }
+
     public void castKickedInstant(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, null, null, null, true);
@@ -402,6 +408,14 @@ public class GameTestHarness {
     public void castKickedInstantWithSacrifice(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId, null, null, null, null, true);
+    }
+
+    public void castKickedInstantWithSacrifices(Player player, int cardIndex, UUID targetId,
+                                                 List<UUID> additionalTargetIds,
+                                                 List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, additionalTargetIds, List.of(), false,
+                null, null, null, null, null, true, null, null, List.of(), sacrificePermanentIds);
     }
 
     public void castKickedSorcery(Player player, int cardIndex) {
@@ -422,6 +436,13 @@ public class GameTestHarness {
     public void castKickedSorceryWithSacrificeNoKickerTarget(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId, null, null, null, null, true);
+    }
+
+    public void castKickedSorceryWithSacrifices(Player player, int cardIndex, UUID targetId,
+                                                List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, true, null, null, List.of(), sacrificePermanentIds);
     }
 
     public void castKickedSorceryWithTap(Player player, int cardIndex, UUID targetId, UUID tappedPermanentId) {

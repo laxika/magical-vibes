@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffe
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "56")
+@CardRegistration(set = "PLS", collectorNumber = "19")
 public class VoiceOfAll extends Card {
 
     public VoiceOfAll() {

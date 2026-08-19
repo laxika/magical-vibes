@@ -17,14 +17,25 @@ import java.util.List;
  *
  * @param multikicker whether the repeated payments are multikicker payments and therefore count
  *                    as kicks for kicked-spell triggers
+ * @param maxPaymentsPerCost maximum number of times each declared cost may be paid
  */
-public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker) implements CostEffect {
+public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker,
+                                            int maxPaymentsPerCost) implements CostEffect {
 
     public RepeatableAdditionalManaCost(List<String> manaCosts) {
-        this(manaCosts, false);
+        this(manaCosts, false, Integer.MAX_VALUE);
+    }
+
+    public RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker) {
+        this(manaCosts, multikicker, Integer.MAX_VALUE);
     }
 
     public static RepeatableAdditionalManaCost multikicker(List<String> manaCosts) {
-        return new RepeatableAdditionalManaCost(manaCosts, true);
+        return new RepeatableAdditionalManaCost(manaCosts, true, Integer.MAX_VALUE);
+    }
+
+    /** Creates an optional additional cost that may be paid at most once. */
+    public static RepeatableAdditionalManaCost singlePayment(List<String> manaCosts) {
+        return new RepeatableAdditionalManaCost(manaCosts, false, 1);
     }
 }

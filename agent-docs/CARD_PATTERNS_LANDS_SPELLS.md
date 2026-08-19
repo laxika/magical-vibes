@@ -13,6 +13,7 @@ on what the mana may pay for.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Controller-scoped land animation with first strike | `n/NaturalEmergence.java` | ETB `ReturnPermanentControlledByPlayerToHandEffect` filtered to red or green enchantments + STATIC `AllLandsAreCreaturesEffect(2, 2, null, null, GrantScope.OWN_LANDS)` + `GrantKeywordEffect(FIRST_STRIKE, GrantScope.OWN_LANDS)` |
 | Basic land | `f/Forest.java` | `addEffect(ON_TAP, AwardManaEffect(color))` |
 | Pain land | `s/SulfurousSprings.java` | 3 activated abilities: colorless + 2x colored with DealDamageToController |
 | Creature land (manland) | `t/TreetopVillage.java` | STATIC `EntersTappedEffect` + ON_TAP mana + AnimatePermanentsEffect (5-arg SELF/UEOT) ability |
@@ -71,6 +72,7 @@ on what the mana may pay for.
 | Sacrifice nontoken; target opponent three-way punisher; may repeat | `f/ForbiddenRitual.java` | `target(PlayerPredicateTargetFilter(OPPONENT))` + SPELL `ForbiddenRitualEffect(2)` — sacrifice a nontoken permanent; if you do, that opponent loses 2 life unless they sacrifice any permanent or discard; may repeat against the same target |
 | For each creature, sacrifice unless pay X life | `k/KillingWave.java` | SPELL KillingWaveEffect() — X = xValue; APNAP multi-select creatures to keep (pay X life each); then simultaneous pay + sacrifice. X=0 no-op. No target |
 | Each player keeps one land per basic land type | `g/GlobalRuin.java` | SPELL EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffect() — APNAP per-player choices over effective basic land types, then sacrifice every other land. A multi-typed land may satisfy multiple type choices |
+| Each player returns one land per basic land type | `p/PlanarOverlay.java` | SPELL EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandEffect() — APNAP per-player choices over effective basic land types, then return the chosen lands to their owners' hands. A multi-typed land may satisfy multiple type choices |
 | -1/-1 counters + three-way punisher on target's controller | `t/TormentOfVenom.java` | `target(PermanentIsCreaturePredicate)` + SPELL `PutCounterOnTargetPermanentEffect(MINUS_ONE_MINUS_ONE, 3)` + `LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)` — put three -1/-1 counters on target creature; its controller loses 3 life unless they sacrifice **another** nonland permanent or discard. Punisher piggybacks on the counter effect's `targetId` (listed second, but creature still present); the countered creature is excluded from the sacrifice options |
 | Multi-target damage | `c/ConeOfFlame.java` | DealDividedDamageEffect.ordered(List.of(1,2,3)) — fixed amounts by target order |
 | Mixed target groups (mandatory + optional) | `s/SeismicShift.java` | Two separate `target()` calls with different filters and counts: `target(LandFilter)` (1,1) + `target(CreatureFilter, 0, 2)`. Destroy land + up to 2 creatures can't block. Also see `i/IntoTheMawOfHell.java` for two mandatory groups |
@@ -149,6 +151,7 @@ on what the mana may pay for.
 | Counter by life bid | `m/MagesContest.java` | MagesContestEffect (spell target auto-derived); the parked resolution interaction runs a life auction between the caster and the targeted spell's controller |
 | Life-bid draw spell | `p/PainsReward.java` | PainsRewardEffect; the controller chooses the opening bid, then all players bid in turn order; the high bidder loses that much life and draws four cards |
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
+| Counter (filtered by kicker) | `e/ErtaisTrickery.java` | StackEntryPredicateTargetFilter + StackEntryKickedPredicate + CounterSpellEffect |
 | Counter activated ability + lock its source for the turn | `i/Interdict.java` | `StackEntryPredicateTargetFilter(StackEntryAllOfPredicate(StackEntryTypeInPredicate(ACTIVATED_ABILITY), StackEntryCardTypeInPredicate({ARTIFACT, CREATURE, ENCHANTMENT, LAND})))` + `CounterAbilityAndLockSourceEffect(UNTIL_END_OF_TURN)` + `DrawCardEffect(1)` |
 | Counter activated ability from an artifact source | `b/BrownOuphe.java` | Tap+mana activated ability with `StackEntryPredicateTargetFilter(StackEntryAllOfPredicate(StackEntryTypeInPredicate(ACTIVATED_ABILITY), StackEntryCardTypeInPredicate(ARTIFACT)))` + CounterSpellEffect |
 | Counter (filtered by mana value) | `m/MentalMisstep.java` | StackEntryPredicateTargetFilter + StackEntryManaValuePredicate. Phyrexian mana cost |

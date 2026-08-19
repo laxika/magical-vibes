@@ -80,6 +80,7 @@ public class AttackLegalityService {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
+        if (gameData.creaturesCantAttackThisTurn) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
         if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;

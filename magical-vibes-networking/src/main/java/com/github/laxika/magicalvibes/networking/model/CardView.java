@@ -74,6 +74,7 @@ public record CardView(
         boolean transformable,
         String kickerCost,
         boolean kickerRequiresTap,
+        boolean kickerRequiresReturn,
         String buybackCost,
         boolean buybackRequiresSacrifice,
         int buybackDiscardCount,

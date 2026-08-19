@@ -1418,7 +1418,7 @@ public class PermanentChoiceTriggerHandlerService {
                                                    PermanentChoiceContext.ETBTokenMultiTargetTrigger etbMtt) {
         int groupIdx = etbMtt.currentGroupIndex();
         int chosenInGroup = etbMtt.chosenInCurrentGroup();
-        int groupMin = etbMtt.sourceCard().getSpellTargets().get(groupIdx).getMinTargets();
+        int groupMin = etbTokenTargetService.effectiveMinTargets(gameData, etbMtt);
 
         // Once the group's minimum has been met, a response equal to the controller's own
         // player ID means "stop adding targets in this group".

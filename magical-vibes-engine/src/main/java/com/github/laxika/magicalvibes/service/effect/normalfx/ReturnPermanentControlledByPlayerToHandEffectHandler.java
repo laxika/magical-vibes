@@ -41,7 +41,9 @@ public class ReturnPermanentControlledByPlayerToHandEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ReturnPermanentControlledByPlayerToHandEffect e = (ReturnPermanentControlledByPlayerToHandEffect) effect;
-        UUID playerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
+        UUID playerId = e.actingPlayerIsController()
+                ? entry.getControllerId()
+                : entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         UUID chooserId = e.controllerChooses() ? entry.getControllerId() : playerId;
         if (playerId == null || chooserId == null || !gameData.playerIds.contains(playerId)
                 || !gameData.playerIds.contains(chooserId)) {

@@ -2033,6 +2033,8 @@ public class TriggerCollectionService {
             if (targetControllersWithAllyTrigger.add(controllerId)) {
                 collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, spellEntry);
             }
+            collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
+                    gameData, targetPermanent, controllerId, spellEntry);
             collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry);
             collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent);
             collectOpponentCreatureBecomesTargetOfYourSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
@@ -2133,6 +2135,8 @@ public class TriggerCollectionService {
                 if (targetControllersWithAllyTrigger.add(controllerId)) {
                     collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, abilityEntry);
                 }
+                collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
+                        gameData, targetPermanent, controllerId, abilityEntry);
             }
 
             // Check the targeted permanent itself for "when this becomes the target" triggers.
@@ -2198,6 +2202,42 @@ public class TriggerCollectionService {
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} ally-permanent-or-player-becomes-target-of-opponent trigger queued",
+                    gameData.id, source.getCard().getName());
+        }
+    }
+
+    private void collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
+            GameData gameData, Permanent targetPermanent, UUID targetControllerId, StackEntry triggeringEntry) {
+        if (targetControllerId.equals(triggeringEntry.getControllerId())) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : battlefield) {
+            if (source.getId().equals(targetPermanent.getId())) continue;
+
+            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
+                    EffectSlot.ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+            if (effects.isEmpty()) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    targetControllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    effects,
+                    null,
+                    source.getId()
+            );
+            entry.setNonTargeting(true);
+            entry.setTriggeringPermanentId(targetPermanent.getId());
+            entry.setTriggeringPermanentControllerId(targetControllerId);
+            gameData.stack.add(entry);
+
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} another-ally-permanent-becomes-target-of-opponent trigger queued",
                     gameData.id, source.getCard().getName());
         }
     }

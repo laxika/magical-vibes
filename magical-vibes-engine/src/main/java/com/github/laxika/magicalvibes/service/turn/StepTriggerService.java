@@ -3148,6 +3148,34 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(ReturnExiledCardToHandAtNextEndStep.class)) {
+            List<ReturnExiledCardToHandAtNextEndStep> pending =
+                    gameData.drainDelayedActions(ReturnExiledCardToHandAtNextEndStep.class);
+            for (ReturnExiledCardToHandAtNextEndStep action : pending) {
+                var exiled = gameData.findExiledCard(action.cardId());
+                if (exiled == null) {
+                    log.info("Game {} - Delayed next-end-step exile-to-hand return for card {} skipped (no longer in exile)",
+                            gameData.id, action.cardId());
+                    continue;
+                }
+                gameData.removeFromExile(action.cardId());
+                gameData.addCardToHand(action.ownerId(), exiled.card());
+                if (action.sourceCard() != null) {
+                    String sourceName = action.sourceCard().getName();
+                    gameLogService.append(gameData, GameLog.text(
+                            "The card exiled with " + sourceName + " returns to its owner's hand."));
+                    log.info("Game {} - uncast card exiled with {} returns to owner's hand at end step",
+                            gameData.id, sourceName);
+                } else {
+                    String playerName = gameData.playerIdToName.get(action.ownerId());
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(exiled.card(), " returns to " + playerName + "'s hand (delayed trigger)."));
+                    log.info("Game {} - {} returns to {}'s hand from exile (delayed next-end-step trigger)",
+                            gameData.id, exiled.card().getName(), playerName);
+                }
+            }
+        }
+
         if (gameData.hasDelayedAction(DelayedSacrificeTargetPermanentAtEndStep.class)) {
             List<DelayedSacrificeTargetPermanentAtEndStep> pending =
                     gameData.drainDelayedActions(DelayedSacrificeTargetPermanentAtEndStep.class);
@@ -3543,27 +3571,6 @@ public class StepTriggerService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(cardToReturn, " returns to " + playerName + "'s hand (delayed trigger)."));
                 log.info("Game {} - {} returns to {}'s hand from exile (delayed end-step trigger)",
-                        gameData.id, cardToReturn.getName(), playerName);
-            }
-        }
-
-        if (gameData.hasDelayedAction(ReturnExiledCardToHandAtNextEndStep.class)) {
-            List<ReturnExiledCardToHandAtNextEndStep> pendingReturns = gameData.drainDelayedActions(
-                    ReturnExiledCardToHandAtNextEndStep.class);
-            for (ReturnExiledCardToHandAtNextEndStep pending : pendingReturns) {
-                var exiledEntry = gameData.findExiledCard(pending.cardId());
-                if (exiledEntry == null) {
-                    log.info("Game {} - Delayed next-end-step exile-to-hand return for card {} skipped (no longer in exile)",
-                            gameData.id, pending.cardId());
-                    continue;
-                }
-                Card cardToReturn = exiledEntry.card();
-                gameData.removeFromExile(pending.cardId());
-                gameData.addCardToHand(pending.ownerId(), cardToReturn);
-                String playerName = gameData.playerIdToName.get(pending.ownerId());
-                gameLogService.append(gameData,
-                        GameLog.cardThen(cardToReturn, " returns to " + playerName + "'s hand (delayed trigger)."));
-                log.info("Game {} - {} returns to {}'s hand from exile (delayed next-end-step trigger)",
                         gameData.id, cardToReturn.getName(), playerName);
             }
         }
@@ -4070,7 +4077,10 @@ public class StepTriggerService {
                     } else {
                         // EndStepPlayerTargetedEffect ("... that player ...") reads the end-step
                         // player off targetId; every other end-step effect gets a null target id.
-                        UUID endStepTargetId = effect instanceof EndStepPlayerTargetedEffect ? activePlayerId : null;
+                        boolean targetsEndStepPlayer = effect instanceof EndStepPlayerTargetedEffect
+                                || effect instanceof ConditionalEffect conditional
+                                && conditional.wrapped() instanceof EndStepPlayerTargetedEffect;
+                        UUID endStepTargetId = targetsEndStepPlayer ? activePlayerId : null;
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),

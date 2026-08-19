@@ -172,8 +172,10 @@ public class CardViewFactory {
                 : kickerEffect.hasManaCost() ? kickerEffect.cost()
                 : kickerEffect.hasSacrificeCost() ? "Sacrifice " + kickerEffect.sacrificeDescription()
                 : kickerEffect.hasTapCost() ? "Tap " + kickerEffect.tapDescription()
+                : kickerEffect.hasReturnCost() ? "Return " + kickerEffect.returnDescription()
                 : null;
         boolean kickerRequiresTap = kickerEffect != null && kickerEffect.hasTapCost();
+        boolean kickerRequiresReturn = kickerEffect != null && kickerEffect.hasReturnCost();
 
         return new CardView(
                 card.getId(),
@@ -223,6 +225,7 @@ public class CardViewFactory {
                 card.getBackFaceCard() != null,
                 kickerCost,
                 kickerRequiresTap,
+                kickerRequiresReturn,
                 buybackCost,
                 buybackEffect != null && buybackEffect.hasSacrificeCost(),
                 buybackEffect != null ? buybackEffect.discardCount() : 0,

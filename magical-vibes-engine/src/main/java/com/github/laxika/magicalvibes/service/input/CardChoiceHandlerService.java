@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -83,6 +84,7 @@ public class CardChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final TapUntapSupport tapUntapSupport;
     private final PermanentCounterSupport permanentCounterSupport;
     private final LifeSupport lifeSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
@@ -103,6 +105,7 @@ public class CardChoiceHandlerService {
         boolean enterTapped = false;
         boolean grantHaste = false;
         boolean sacrificeAtEndStep = false;
+        boolean returnToHandAtEndStep = false;
         boolean enterAttacking = false;
         boolean drawAndRepeat = false;
         boolean putAnyNumber = false;
@@ -127,6 +130,7 @@ public class CardChoiceHandlerService {
             enterTapped = hc.enterTapped();
             grantHaste = hc.grantHaste();
             sacrificeAtEndStep = hc.sacrificeAtEndStep();
+            returnToHandAtEndStep = hc.returnToHandAtEndStep();
             attachEquipmentCardId = hc.attachEquipmentCardId();
             enterAttacking = hc.enterAttacking();
             sacrificeUnlessPayGenericReduction = hc.sacrificeUnlessPayGenericReduction();
@@ -194,7 +198,7 @@ public class CardChoiceHandlerService {
                 resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
             } else {
                 Permanent enteredPermanent = resolveUntargetedCardChoice(gameData, player, playerId, card, enterTapped, grantHaste,
-                        sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
+                        sacrificeAtEndStep, returnToHandAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                         faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                         returnExiledSourceCardId);
                 if (artifactCounterType != null && gameQueryService.isArtifact(gameData, enteredPermanent)) {
@@ -215,10 +219,13 @@ public class CardChoiceHandlerService {
                     if (drawAndRepeat) {
                         drawService.resolveDrawCard(gameData, playerId);
                     }
-                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId,
-                            new PutCardToBattlefieldEffect(drawAndRepeatPredicate, drawAndRepeatLabel, enterTapped,
-                                    false, false, false, false, false, drawAndRepeat, putAnyNumber, faceDown,
-                                    faceDownPower, faceDownToughness, faceDownCardTypes));
+                    PutCardToBattlefieldEffect repeatEffect = new PutCardToBattlefieldEffect(drawAndRepeatPredicate,
+                            drawAndRepeatLabel, enterTapped, false, false, false, false, false, drawAndRepeat,
+                            putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes);
+                    if (returnToHandAtEndStep) {
+                        repeatEffect = repeatEffect.returningToHandAtEndStep();
+                    }
+                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId, repeatEffect);
                 }
             }
         }
@@ -643,7 +650,7 @@ public class CardChoiceHandlerService {
             playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
                     exileChoice.playPermissionControllerId(), exileChoice.remainingCount(),
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave());
+                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId());
             return;
         }
 
@@ -689,7 +696,7 @@ public class CardChoiceHandlerService {
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave());
+                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId());
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -699,9 +706,17 @@ public class CardChoiceHandlerService {
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
-                    exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave());
+                    exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
+                    exileChoice.untapPermanentId());
         } else {
             gameData.interaction.clearAwaitingInput();
+
+            if (exileChoice.untapPermanentId() != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, exileChoice.untapPermanentId());
+                if (source != null && tapUntapSupport.untapPermanent(gameData, source)) {
+                    gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+                }
+            }
 
             // Resume resolving remaining effects
             if (gameData.pendingEffectResolutionEntry != null) {
@@ -1338,6 +1353,7 @@ public class CardChoiceHandlerService {
 
     private Permanent resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card,
                                              boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                             boolean returnToHandAtEndStep,
                                              UUID attachEquipmentCardId, boolean enterAttacking,
                                              Integer sacrificeUnlessPayGenericReduction, boolean faceDown,
                                              int faceDownPower, int faceDownToughness,
@@ -1384,6 +1400,10 @@ public class CardChoiceHandlerService {
         if (sacrificeAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
                     DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId));
+        }
+        if (returnToHandAtEndStep) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
+                    DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
         }
 
         // Flash: "sacrifice it unless you pay its mana cost reduced by {N}." Prompt a pay-or-sacrifice

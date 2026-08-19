@@ -62,6 +62,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -1008,10 +1009,17 @@ public class AdditionalSpellCostService {
         if (cost == null) {
             throw new IllegalStateException(card.getName() + " has no repeatable additional cost to pay");
         }
+        Map<String, Integer> paymentCounts = new HashMap<>();
         for (String payment : payments) {
             if (!cost.manaCosts().contains(payment)) {
                 throw new IllegalStateException("Invalid additional cost payment " + payment
                         + " for " + card.getName());
+            }
+            int count = paymentCounts.merge(payment, 1, Integer::sum);
+            if (count > cost.maxPaymentsPerCost()) {
+                throw new IllegalStateException("Additional cost payment " + payment
+                        + " may be paid at most " + cost.maxPaymentsPerCost() + " time(s) for "
+                        + card.getName());
             }
         }
         return String.join("", payments);

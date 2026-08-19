@@ -1755,7 +1755,7 @@ public class BattlefieldEntryService {
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
             EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
-                    kicked, evoked, prowl, enteringPermanent);
+                    kicked, evoked, prowl, enteringPermanent, repeatedAdditionalCosts);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
@@ -2020,6 +2020,7 @@ public class BattlefieldEntryService {
                     || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
             if ((hasDynamicTargetCount && !hasTarget)
+                    || hasUnselectedDynamicEtbTargetGroup(card, otherEffects, targetId, targetIds)
                     || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
                     || auraETBTargetNeedsSelection
@@ -2037,16 +2038,20 @@ public class BattlefieldEntryService {
                     // Multi-target ETB (e.g. Burning Sun's Avatar, or a single group with
                     // "up to N" targets): choose slot-by-slot at trigger time,
                     // accumulating into targetIds.
+                    List<UUID> initialTargets = targetId == null ? List.of() : List.of(targetId);
+                    int initialGroupIndex = targetId == null ? (card.isAura() ? 1 : 0) : 1;
+                    List<Integer> initialGroupSizes = targetId == null
+                            ? (card.isAura() ? List.of(1) : List.of()) : List.of(1);
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
-                            List.of(), card.isAura() ? 1 : 0, 0,
-                            card.isAura() ? List.of(1) : List.of(), xValue,
+                            initialTargets, initialGroupIndex, 0,
+                            initialGroupSizes, xValue,
                             repeatedAdditionalCosts == null ? List.of() : List.copyOf(repeatedAdditionalCosts)));
                     for (int i = 0; i < extraTriggerCopies; i++) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
-                                List.of(), card.isAura() ? 1 : 0, 0,
-                                card.isAura() ? List.of(1) : List.of(), xValue,
+                                initialTargets, initialGroupIndex, 0,
+                                initialGroupSizes, xValue,
                                 repeatedAdditionalCosts == null ? List.of() : List.copyOf(repeatedAdditionalCosts)));
                     }
                     gameLogService.append(gameData,
@@ -2303,5 +2308,25 @@ public class BattlefieldEntryService {
             consumed += size;
         }
         return List.copyOf(activeTargets);
+    }
+
+    private boolean hasUnselectedDynamicEtbTargetGroup(Card card, List<CardEffect> effects,
+                                                         UUID targetId, List<UUID> targetIds) {
+        if (targetId == null || targetIds == null || !targetIds.isEmpty()) {
+            return false;
+        }
+        for (SpellTarget group : card.getSpellTargets()) {
+            if (group.getDynamicMaxTargets() == null) {
+                continue;
+            }
+            boolean hasActiveTargetEffect = effects.stream()
+                    .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (hasActiveTargetEffect) {
+                return true;
+            }
+        }
+        return false;
     }
 }

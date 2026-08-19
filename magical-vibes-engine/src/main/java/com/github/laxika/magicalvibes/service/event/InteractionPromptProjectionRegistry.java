@@ -77,6 +77,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectHostileNegotiationsOpponentPileChoice);
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
         register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
+        register(PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice.class,
+                this::projectEachPlayerChoosesOneCardOfEachColorChoice);
         register(PendingInteraction.PutLandsFromHandChoice.class, this::projectPutLandsFromHandChoice);
         register(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class,
                 this::projectEachPlayerMayPutCardFromHandChoice);
@@ -385,6 +387,25 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose up to seven cards in your hand to keep. Shuffle the rest into your library.");
+    }
+
+    private InteractionPromptMessage projectEachPlayerChoosesOneCardOfEachColorChoice(
+            GameData gameData, PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice interaction) {
+        return InteractionPromptMessage.cardIndexPick(
+                interaction.validIndices(),
+                "Choose a " + colorName(interaction.colorIndex()) + " card to keep for "
+                        + interaction.sourceName() + ".", false);
+    }
+
+    private String colorName(int colorIndex) {
+        return switch (colorIndex) {
+            case 0 -> "white";
+            case 1 -> "blue";
+            case 2 -> "black";
+            case 3 -> "red";
+            case 4 -> "green";
+            default -> throw new IllegalArgumentException("Unknown card color index: " + colorIndex);
+        };
     }
 
     private InteractionPromptMessage projectPutLandsFromHandChoice(

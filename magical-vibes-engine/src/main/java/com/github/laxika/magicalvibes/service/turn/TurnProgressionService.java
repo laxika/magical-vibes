@@ -551,6 +551,7 @@ public class TurnProgressionService {
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
         gameData.otherCreaturesCantAttackExemptCreatureIds.clear();
+        gameData.creaturesCantAttackThisTurn = false;
         if (gameData.peaceTalksTurnsRemaining > 0) {
             gameData.peaceTalksTurnsRemaining--;
         }

@@ -1614,7 +1614,13 @@ public class LayerSystemService {
                     if (isSource(instance, target)) continue;
                     Permanent permanent = target.permanent();
                     CharacteristicState state = states.get(permanent.getId());
+                    boolean scopeMatches = animateLands.scope() == GrantScope.ALL_LANDS
+                            || (animateLands.scope() == GrantScope.OWN_LANDS
+                                    && target.controllerId().equals(instance.source().controllerId()))
+                            || (animateLands.scope() == GrantScope.OPPONENT_LANDS
+                                    && !target.controllerId().equals(instance.source().controllerId()));
                     if (state.hasCardType(CardType.LAND) && !state.hasCardType(CardType.CREATURE)
+                            && scopeMatches
                             && (animateLands.requiredSubtype() == null
                                     || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))
                             && !isOneShotAnimated(permanent)) {

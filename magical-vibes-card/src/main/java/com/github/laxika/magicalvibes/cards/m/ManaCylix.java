@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "138")
+@CardRegistration(set = "PLS", collectorNumber = "132")
 public class ManaCylix extends Card {
 
     public ManaCylix() {

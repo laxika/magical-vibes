@@ -89,7 +89,6 @@ public enum CardSet {
     SET_S00("S00"),
     SET_S99("S99"),
     SET_BRB("BRB"),
-    SET_S00("S00"),
     SET_PCY("PCY"),
     SET_POR("POR"),
     SET_P02("P02"),
@@ -107,10 +106,10 @@ public enum CardSet {
     SET_MGB("MGB"),
     SET_TPR("TPR"),
     SET_ATH("ATH"),
-    SET_BRB("BRB"),
     SET_FDN("FDN"),
     SET_ULG("ULG"),
-    SET_DFT("DFT");
+    SET_DFT("DFT"),
+    SET_PLS("PLS");
 
     @Getter
     private final String code;

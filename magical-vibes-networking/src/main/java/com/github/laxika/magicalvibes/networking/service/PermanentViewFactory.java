@@ -182,6 +182,7 @@ public class PermanentViewFactory {
                 .transformable(false)
                 .kickerCost(null)
                 .kickerRequiresTap(false)
+                .kickerRequiresReturn(false)
                 .buybackCost(null)
                 .modalChoicesRequired(0)
                 .modalChoicesMax(0)

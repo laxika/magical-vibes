@@ -22,9 +22,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -398,6 +401,33 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
             verify(permanentRemovalService, never()).removeOrphanedAuras(any());
+        }
+
+        @Test
+        @DisplayName("Passes the source permanent snapshot to the predicate context")
+        void passesSourcePermanentSnapshotToPredicateContext() {
+            Card card = createCard("Waterspout Elemental");
+            Permanent source = createCreature("Waterspout Elemental");
+            Permanent other = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(other);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.allPermanentsMatching(
+                    new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()));
+            StackEntry entry = entryWithSource(card, player1Id, List.of(effect), source.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(source), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(other), any(), any())).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, other)).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<FilterContext> contextCaptor = ArgumentCaptor.forClass(FilterContext.class);
+            verify(predicateEvaluationService).matchesPermanentPredicate(eq(other), any(), contextCaptor.capture());
+            assertThat(contextCaptor.getValue().sourcePermanentSnapshot().getId()).isEqualTo(source.getId());
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, source);
+            verify(permanentRemovalService).removePermanentToHand(gd, other);
         }
     }
 

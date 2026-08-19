@@ -207,10 +207,13 @@ public final class TextChangeTransformer {
                                 prevention.sourceActivationManaColor(), prevention.exileFromLibrary(),
                                 prevention.damageRedSourceController(), prevention.damageSourceController());
             }
-            case GrantColorEffect grant ->
-                    substitution.fromColor() != null && grant.color() == substitution.fromColor()
-                            ? new GrantColorEffect(substitution.toColor(), grant.scope(), grant.overriding())
-                            : grant;
+            case GrantColorEffect grant -> {
+                CardColor color = substitution.fromColor() != null && grant.color() == substitution.fromColor()
+                        ? substitution.toColor() : grant.color();
+                PermanentPredicate filter = apply(grant.filter(), substitution);
+                yield color == grant.color() && filter == grant.filter() ? grant
+                        : new GrantColorEffect(color, grant.scope(), grant.overriding(), filter);
+            }
             case EnchantedPermanentBecomesTypeEffect becomes -> {
                 if (substitution.fromLandType() == null) {
                     yield becomes;

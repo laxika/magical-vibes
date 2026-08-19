@@ -255,6 +255,7 @@ public class TurnCleanupService {
         gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.playersCantGainLifeThisTurn = false;
+        gameData.creaturesCantAttackThisTurn = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();

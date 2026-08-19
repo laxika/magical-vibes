@@ -197,6 +197,7 @@ export interface Card {
   transformable: boolean;
   kickerCost: string | null;
   kickerRequiresTap: boolean;
+  kickerRequiresReturn: boolean;
   buybackCost: string | null;
   buybackRequiresSacrifice?: boolean;
   buybackDiscardCount?: number;

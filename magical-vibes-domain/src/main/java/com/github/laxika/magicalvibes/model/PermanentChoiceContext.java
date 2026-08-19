@@ -263,6 +263,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Guard Dogs: choose a permanent you control to compare with the targeted creature's colors. */
+    record GuardDogsPermanentChoice(UUID controllerId) implements PermanentChoiceContext {}
+
     record RedirectDamageSourceChoice(UUID controllerId, int amount, UUID redirectTargetId) implements PermanentChoiceContext {}
 
     /** "All damage that would be dealt to target creature this turn by a source of your choice is dealt to

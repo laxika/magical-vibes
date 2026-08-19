@@ -558,6 +558,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
 | `ConditionalEffect(new ActivationCount(threshold, abilityIndex), wrapped)` | - | yes | - |
 | `ConditionalEffect(new DidntAttack(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new NoCreaturesAttackedThisTurn(), wrapped)` | - | yes | yes (end step) | global turn condition; any player's attack makes it false |
 | `ConditionalEffect(new CameUnderControlThisTurn(), wrapped)` | yes | yes | - | source is still summoning sick (came under your control this turn); usually wrapped in `NotCondition` |
 | `ConditionalEffect(new SourceEnteredBattlefieldThisTurn(), wrapped)` | yes | yes | - | source entered the battlefield this turn (scans `permanentsEnteredBattlefieldThisTurn`, survives control changes unlike `CameUnderControlThisTurn`); Fungus Elemental gate |
 | `ConditionalEffect(new PermanentLeftBattlefieldUnderYourControlThisTurn(), wrapped)` | yes | yes | - | a permanent you controlled left the battlefield this turn; bounce, exile, graveyard, and library moves count while phasing and control changes do not |

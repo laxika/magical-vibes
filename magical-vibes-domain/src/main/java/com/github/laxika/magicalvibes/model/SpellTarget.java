@@ -28,6 +28,7 @@ public class SpellTarget {
     private final int kickedMinTargets;
     private final int kickedMaxTargets;
     private final int index;
+    private final DynamicAmount dynamicMinTargets;
     private final DynamicAmount dynamicMaxTargets;
     /**
      * When true the number of targets scales with the spell's X: the effective max
@@ -37,21 +38,28 @@ public class SpellTarget {
      */
     private final boolean xScaled;
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index) {
-        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, false, null);
+        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, false, null, null);
     }
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index, boolean xScaled) {
-        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, xScaled, null);
+        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, xScaled, null, null);
     }
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index,
                 boolean xScaled, DynamicAmount dynamicMaxTargets) {
-        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, xScaled, dynamicMaxTargets);
+        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, xScaled, null,
+                dynamicMaxTargets);
+    }
+
+    SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index,
+                boolean xScaled, DynamicAmount dynamicMinTargets, DynamicAmount dynamicMaxTargets) {
+        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, xScaled,
+                dynamicMinTargets, dynamicMaxTargets);
     }
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets,
                 int kickedMinTargets, int kickedMaxTargets, int index,
-                boolean xScaled, DynamicAmount dynamicMaxTargets) {
+                boolean xScaled, DynamicAmount dynamicMinTargets, DynamicAmount dynamicMaxTargets) {
         this.card = card;
         this.filter = filter;
         this.minTargets = minTargets;
@@ -60,6 +68,7 @@ public class SpellTarget {
         this.kickedMaxTargets = kickedMaxTargets;
         this.index = index;
         this.xScaled = xScaled;
+        this.dynamicMinTargets = dynamicMinTargets;
         this.dynamicMaxTargets = dynamicMaxTargets;
     }
 

@@ -170,6 +170,33 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (grant.scope() == GrantScope.ALL_LANDS) {
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourceControllerId(entry.getControllerId());
+            final int[] count = {0};
+            gameData.forEachPermanent((playerId, permanent) -> {
+                if (!gameQueryService.isLand(gameData, permanent)) {
+                    return;
+                }
+                if (grant.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
+                    return;
+                }
+                Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());
+                if (grantableKeywords.isEmpty()) {
+                    return;
+                }
+                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
+                count[0]++;
+            });
+
+            String keywordNames = formatKeywords(grant.keywords());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count[0] + " land(s) " + durationLabel(grant.duration()) + ".").build());
+            log.info("Game {} - {} grants {} to {} land(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count[0]);
+            return;
+        }
+
         // SELF resolves against the source; TARGET may cover multiple targets when the effect is
         // bound to a target group (e.g. Blades of Velis Vel: "up to two target creatures").
         List<UUID> ids;

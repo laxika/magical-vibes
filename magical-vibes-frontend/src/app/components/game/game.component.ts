@@ -1340,7 +1340,7 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.choice.targeting.choosingKickerPermanent) {
-      if (perm && !perm.tapped) {
+      if (perm && this.choice.targeting.canSelectKickerPermanent(perm)) {
         this.choice.targeting.toggleKickerPermanent(perm.id);
       }
       return;

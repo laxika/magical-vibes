@@ -43,6 +43,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HostileNegotiationsFaceUpChoice,
         PendingInteraction.HostileNegotiationsOpponentPileChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
+        PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice,
         PendingInteraction.PutLandsFromHandChoice,
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
         PendingInteraction.EachPlayerMayPutCardFromHandChoice,
@@ -569,6 +570,38 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount());
+        }
+    }
+
+    /**
+     * Noxious Vapors: one player chooses a card for the current color from their revealed hand.
+     * A multicolored card may be chosen again for another color; {@code chosenCardIdsByPlayer}
+     * accumulates the cards each player will keep until every player has chosen.
+     */
+    record EachPlayerChoosesOneCardOfEachColorChoice(
+            UUID playerId, java.util.List<Integer> validIndices,
+            java.util.List<UUID> playerIds, int playerIndex, int colorIndex,
+            java.util.List<UUID> chosenCardIds,
+            java.util.Map<UUID, java.util.List<UUID>> chosenCardIdsByPlayer,
+            UUID controllerId, String sourceName) implements PendingInteraction {
+
+        public EachPlayerChoosesOneCardOfEachColorChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+            playerIds = java.util.List.copyOf(playerIds);
+            chosenCardIds = java.util.List.copyOf(chosenCardIds);
+            java.util.Map<UUID, java.util.List<UUID>> copied = new java.util.LinkedHashMap<>();
+            chosenCardIdsByPlayer.forEach((id, cards) -> copied.put(id, java.util.List.copyOf(cards)));
+            chosenCardIdsByPlayer = java.util.Collections.unmodifiableMap(copied);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 
@@ -1566,8 +1599,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean faceDown, int faceDownPower, int faceDownToughness,
                           java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
                           UUID returnSourcePermanentId, CounterType artifactCounterType,
-                          int artifactCounterCount)
+                          int artifactCounterCount, boolean returnToHandAtEndStep)
             implements PendingInteraction, HandChoice {
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                              boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                              String drawAndRepeatLabel, boolean putAnyNumber,
+                              boolean faceDown, int faceDownPower, int faceDownToughness,
+                              java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                              UUID returnSourcePermanentId, CounterType artifactCounterType,
+                              int artifactCounterCount) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                    attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
+                    drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
+                    faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
+                    returnSourcePermanentId, artifactCounterType, artifactCounterCount, false);
+        }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
@@ -1999,14 +2048,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                UUID sourcePermanentId, UUID playPermissionControllerId,
                                int remainingCount, String prompt,
                                java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
-                               boolean faceDown, boolean returnOnSourceLeave)
+                               boolean faceDown, boolean returnOnSourceLeave,
+                               UUID untapPermanentId)
             implements PendingInteraction, HandChoice {
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                    UUID sourcePermanentId, UUID playPermissionControllerId,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, java.util.List.of(), 0, false, false);
+                    remainingCount, prompt, java.util.List.of(), 0, false, false, null);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -2014,7 +2064,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false);
+                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false, null);
+        }
+
+        public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                   UUID sourcePermanentId, UUID playPermissionControllerId,
+                                   int remainingCount, String prompt,
+                                   java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
+                                   boolean faceDown, boolean returnOnSourceLeave) {
+            this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
+                    remainingCount, prompt, remainingChoosers, cardsPerPlayer,
+                    faceDown, returnOnSourceLeave, null);
         }
 
         @Override

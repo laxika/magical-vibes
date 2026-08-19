@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackingCreaturesYouControlEffect;
@@ -219,6 +220,10 @@ public class DamagePreventionService {
     }
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
+        if (damage > 0 && gameQueryService.isCreature(gameData, permanent)) {
+            damage = applyControlledCreaturesDamageReduction(gameData, permanent, damage);
+            if (damage <= 0) return 0;
+        }
         // Kiora, the Crashing Wave: prevent all damage dealt to the targeted permanent until its
         // controller's next turn begins.
         if (gameQueryService.isDamagePreventable(gameData)
@@ -386,6 +391,32 @@ public class DamagePreventionService {
             return applyPermanentDamagePreventionShield(gameData, permanent, damage);
         }
         return damage;
+    }
+
+    /**
+     * Applies replacement effects that reduce damage to creatures controlled by a player. These
+     * effects are replacements rather than prevention, so they still apply when damage cannot be
+     * prevented.
+     */
+    private int applyControlledCreaturesDamageReduction(GameData gameData, Permanent creature, int damage) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null || damage <= 0) return damage;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return damage;
+
+        long totalReduction = 0;
+        for (Permanent source : battlefield) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(
+                        gameData, source, controllerId, effect);
+                if (resolved instanceof ControlledCreaturesDamageReductionEffect reduction) {
+                    totalReduction += reduction.amount();
+                    if (totalReduction >= damage) return 0;
+                }
+            }
+        }
+        return (int) (damage - totalReduction);
     }
 
     public int applyPermanentDamagePreventionShield(GameData gameData, Permanent permanent, int damage) {
@@ -993,9 +1024,10 @@ public class DamagePreventionService {
 
     /**
      * Checks creature-specific damage redirect shields (e.g. Oracle's Attendants) for damage dealt to a
-     * specific creature by a chosen source. This is a redirection (replacement) effect: when the chosen
-     * source would deal damage to the protected creature this turn, ALL of it (no amount limit) is
-     * redirected to the shield's redirect target. Reuses {@link GameData#pendingSourceRedirectDamage}
+     * specific creature by a chosen or any source. This is a redirection (replacement) effect:
+     * unlimited shields redirect all matching damage, next-event shields redirect one matching damage
+     * event in full, and amount-limited shields redirect only their remaining amount. Reuses
+     * {@link GameData#pendingSourceRedirectDamage}
      * so callers deal the redirected damage via their existing {@code processSourceRedirectDamage}.
      *
      * @param protectedPermanentId the creature receiving damage
@@ -1029,7 +1061,8 @@ public class DamagePreventionService {
             if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
 
             if (shield.isNextEvent()) {
-                // Next-event (Jade Monolith): redirect all of this one damage event, then consume the shield.
+                // Next-event (Jade Monolith, Mirrorwood Treefolk): redirect all of this one damage event,
+                // then consume the shield.
                 it.remove();
                 gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
                         protectedPermanentId, sourcePermanentId, remaining, shield.redirectTargetId()));

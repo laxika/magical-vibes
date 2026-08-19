@@ -44,9 +44,9 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
+        int amount = e.nextEvent() ? 1 : amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
-        if (amount <= 0) {
+        if (!e.nextEvent() && amount <= 0) {
             return;
         }
 
@@ -66,16 +66,22 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
                     new PlayerNextDamageRedirectShield(protectedId, amount, destinationId));
         } else {
             gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
-                    protectedId, null, amount, destinationId));
+                    protectedId, null, e.nextEvent() ? CreatureDamageRedirectShield.NEXT_EVENT : amount,
+                    destinationId));
         }
 
-        GameLog.Builder logEntry = GameLog.builder()
-                .text("The next " + amount + " damage that would be dealt to ");
+        GameLog.Builder logEntry = GameLog.builder();
+        if (e.nextEvent()) {
+            logEntry.text("The next time damage would be dealt to ");
+        } else {
+            logEntry.text("The next " + amount + " damage that would be dealt to ");
+        }
         appendActor(logEntry, gameData, protectedId, protectedPermanent);
-        logEntry.text(" this turn is dealt to ");
+        logEntry.text(e.nextEvent() ? " this turn, that damage is dealt to " : " this turn is dealt to ");
         appendActor(logEntry, gameData, destinationId, destinationPermanent);
         gameLogService.append(gameData, logEntry.text(" instead.").build());
-        log.info("Game {} - registered next-{}-damage redirect from {} to {}", gameData.id, amount,
+        log.info("Game {} - registered next-{} redirect from {} to {}", gameData.id,
+                e.nextEvent() ? "damage-event" : amount + "-damage",
                 describe(gameData, protectedId, protectedPermanent),
                 describe(gameData, destinationId, destinationPermanent));
     }

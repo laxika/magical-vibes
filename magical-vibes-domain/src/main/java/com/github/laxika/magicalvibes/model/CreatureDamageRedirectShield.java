@@ -12,9 +12,10 @@ import java.util.UUID;
  *   <li><b>Amount-limited, any source</b> (positive {@code remainingAmount}, null {@code damageSourceId}):
  *       only the next {@code remainingAmount} damage from any source is redirected, then the shield is
  *       consumed. Used by Zealous Inquisitor.</li>
- *   <li><b>Next-event, chosen source</b> ({@link #NEXT_EVENT} amount, non-null {@code damageSourceId}):
- *       the next single damage event the chosen source would deal to the protected creature this turn is
- *       redirected in full, then the shield is consumed. Used by Jade Monolith.</li>
+ *   <li><b>Next-event</b> ({@link #NEXT_EVENT} amount): the next single damage event matching the
+ *       source filter would deal to the protected creature this turn is redirected in full, then the
+ *       shield is consumed. A non-null {@code damageSourceId} is used by Jade Monolith; a null source
+ *       matches any source and is used by Mirrorwood Treefolk.</li>
  *   <li><b>Combat-only</b> ({@code combatOnly} set): the shield is checked only for combat damage.
  *       Used by Shield Dancer.</li>
  * </ul>

@@ -100,6 +100,11 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return new ReturnToHandEffect(BounceScope.SELF, null, 0, 0);
     }
 
+    /** Returns the permanent whose event produced the resolving triggered ability. */
+    public static ReturnToHandEffect triggering() {
+        return new ReturnToHandEffect(BounceScope.TRIGGERING, null, 0, 0);
+    }
+
     /**
      * Returns the resolving spell card itself to its owner's hand instead of the graveyard
      * (instants/sorceries that bounce themselves off the stack — Redeem the Lost's won-clash reward).

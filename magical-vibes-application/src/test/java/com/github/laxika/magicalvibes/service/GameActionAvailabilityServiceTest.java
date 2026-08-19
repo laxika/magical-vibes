@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -176,6 +180,24 @@ class GameActionAvailabilityServiceTest {
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
 
             assertThat(svc.isCardPlayable(gd, player1Id, creature, pool, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Exact-X target group is playable at X=0 without a legal target")
+        void exactXTargetGroupIsPlayableAtZero() {
+            Card card = new Card();
+            card.setName("Exact X spell");
+            card.setType(CardType.INSTANT);
+            card.setManaCost("{X}{U}{B}");
+            card.targetExactlyX(new PermanentPredicateTargetFilter(
+                    new PermanentTruePredicate(), "Target must be a permanent"), 100)
+                    .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLUE);
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLACK);
+
+            assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
         }
 
         @Test

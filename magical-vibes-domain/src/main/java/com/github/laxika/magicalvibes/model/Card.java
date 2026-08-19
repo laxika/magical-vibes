@@ -472,7 +472,7 @@ public class Card {
                                         int kickedMinTargets, int kickedMaxTargets) {
         assertMutable();
         SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets,
-                kickedMinTargets, kickedMaxTargets, spellTargets.size(), false, null);
+                kickedMinTargets, kickedMaxTargets, spellTargets.size(), false, null, null);
         spellTargets.add(st);
         return st;
     }
@@ -507,6 +507,18 @@ public class Card {
     public SpellTarget targetUpTo(DynamicAmount dynamicMaxTargets, TargetFilter filter, int cap) {
         assertMutable();
         SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), false, dynamicMaxTargets);
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
+     * Declares a target group whose minimum and maximum are both the evaluated dynamic count.
+     * A zero count produces no target, while a positive count requires that many targets.
+     */
+    public SpellTarget targetWithDynamicCount(DynamicAmount dynamicTargetCount, TargetFilter filter, int cap) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), false,
+                dynamicTargetCount, dynamicTargetCount);
         spellTargets.add(st);
         return st;
     }
@@ -580,6 +592,7 @@ public class Card {
                     sourceTarget.getKickedMaxTargets(),
                     targetIndexOffset + sourceTarget.getIndex(),
                     sourceTarget.isXScaled(),
+                    sourceTarget.getDynamicMinTargets(),
                     sourceTarget.getDynamicMaxTargets());
             spellTargets.add(target);
         }
@@ -659,7 +672,8 @@ public class Card {
     }
 
     public boolean hasDynamicTargetCount() {
-        return spellTargets.stream().anyMatch(st -> st.getDynamicMaxTargets() != null);
+        return spellTargets.stream().anyMatch(st -> st.getDynamicMinTargets() != null
+                || st.getDynamicMaxTargets() != null);
     }
 
     /**
@@ -756,8 +770,9 @@ public class Card {
     public void copyTargetingFrom(Card original) {
         assertMutable();
         for (SpellTarget st : original.spellTargets) {
-            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(), st.getIndex(),
-                    st.isXScaled(), st.getDynamicMaxTargets()));
+            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(),
+                    st.getKickedMinTargets(), st.getKickedMaxTargets(), st.getIndex(), st.isXScaled(),
+                    st.getDynamicMinTargets(), st.getDynamicMaxTargets()));
         }
         effectTargetIndexMap.putAll(original.effectTargetIndexMap);
         castTimeTargetFilter = original.castTimeTargetFilter;

@@ -60,6 +60,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             case TARGET -> resolveTarget(gameData, entry, e);
             case TARGET_CHOSEN_CREATURE_TYPE -> resolveTargetChosenCreatureType(gameData, entry, e);
             case SELF -> bounceSupport.applyReturnSelfToHand(gameData, entry);
+            case TRIGGERING -> resolveTriggering(gameData, entry, e);
             case SELF_SPELL -> resolveSelfSpell(gameData, entry);
             case ALL_MATCHING -> resolveAllMatching(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
@@ -102,6 +103,15 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         bounceAll(gameData, entry, List.of(enchanted));
+    }
+
+    private void resolveTriggering(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        UUID triggeringPermanentId = entry.getTriggeringPermanentId();
+        if (triggeringPermanentId == null) {
+            return;
+        }
+        bounceTarget(gameData, entry, e, triggeringPermanentId);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private void resolveGrantingEquipment(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
@@ -205,6 +215,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                 .withXValue(entry.getXValue());
 
         FilterContext context = filterContext;

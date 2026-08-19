@@ -43,6 +43,7 @@ function makeCard(overrides: Partial<Card>): Card {
     transformable: false,
     kickerCost: null,
     kickerRequiresTap: false,
+    kickerRequiresReturn: false,
     buybackCost: null,
     buybackRequiresSacrifice: false,
     buybackDiscardCount: 0,

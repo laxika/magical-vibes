@@ -16,13 +16,27 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param controllerChooses when true, the resolving ability's controller chooses a permanent
  *                          controlled by the acting player (Sigil of Sleep)
+ * @param actingPlayerIsController when true, the resolving ability's controller is the acting
+ *                                 player even when the stack entry has an unrelated target
+ *                                 (Sparkcaster)
  */
 public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
-                                                            boolean controllerChooses)
+                                                            boolean controllerChooses,
+                                                            boolean actingPlayerIsController)
         implements CombatDamageTriggerContextEffect {
 
     public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun) {
-        this(filter, noun, false);
+        this(filter, noun, false, false);
+    }
+
+    public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
+                                                         boolean controllerChooses) {
+        this(filter, noun, controllerChooses, false);
+    }
+
+    public static ReturnPermanentControlledByPlayerToHandEffect controller(PermanentPredicate filter,
+                                                                            String noun) {
+        return new ReturnPermanentControlledByPlayerToHandEffect(filter, noun, false, true);
     }
 
     /**

@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -35,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -51,6 +54,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControll
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -105,6 +109,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BounceSupport bounceSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
@@ -234,6 +239,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ReturnAllPermanentsOfChosenColorChoice ctx) {
             handleReturnAllPermanentsOfChosenColorChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx) {
+            handleDestroyAllPermanentsOfChosenColorChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ExileTopCardsChosenColorTokensChoice ctx) {
@@ -1666,6 +1675,24 @@ public class ChoiceHandlerService {
         if (gameData.pendingEffectResolutionEntry != null) {
             bounceSupport.applyReturnAllPermanentsOfColorToHand(gameData,
                     gameData.pendingEffectResolutionEntry, color, ctx.filter());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleDestroyAllPermanentsOfChosenColorChoice(GameData gameData, String chosenValue,
+            ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx) {
+        CardColor color = CardColor.valueOf(chosenValue);
+
+        gameData.interaction.clearAwaitingInput();
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            PermanentPredicate colorFilter = new PermanentColorInPredicate(Set.of(color));
+            PermanentPredicate filter = ctx.filter() == null
+                    ? colorFilter
+                    : new PermanentAllOfPredicate(List.of(ctx.filter(), colorFilter));
+            destroyAllPermanentsEffectHandler.resolve(gameData, gameData.pendingEffectResolutionEntry,
+                    new DestroyAllPermanentsEffect(filter));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

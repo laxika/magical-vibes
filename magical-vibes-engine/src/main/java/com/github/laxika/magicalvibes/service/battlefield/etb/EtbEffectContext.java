@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Per-trigger context passed to {@link EtbEffectResolver} handlers when a creature's own
@@ -23,14 +24,24 @@ import java.util.UUID;
  * @param evoked          whether the spell was cast for its evoke cost (gates the evoke sacrifice)
  * @param prowl           whether the spell was cast for its prowl cost (gates prowl-conditional effects)
  * @param sourcePermanent the permanent that just entered, when available
+ * @param repeatedAdditionalCosts the repeatable additional mana payments made to cast the source spell
  */
 public record EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                                boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
-                               boolean prowl, Permanent sourcePermanent) {
+                               boolean prowl, Permanent sourcePermanent,
+                               List<String> repeatedAdditionalCosts) {
 
     public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                             boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                             boolean prowl) {
-        this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl, null);
+        this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
+                null, List.of());
+    }
+
+    public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
+                            boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
+                            boolean prowl, Permanent sourcePermanent) {
+        this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
+                sourcePermanent, List.of());
     }
 }

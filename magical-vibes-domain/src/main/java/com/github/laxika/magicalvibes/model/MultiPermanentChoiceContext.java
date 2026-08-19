@@ -607,6 +607,17 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Planar Overlay: the current player chose a land for the current basic land type. */
+    record EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice(
+            java.util.List<UUID> playerIds, int playerIndex, int typeIndex,
+            java.util.List<UUID> selectedIds, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            selectedIds = java.util.List.copyOf(selectedIds);
+        }
+    }
+
     /** Sundering Titan: the controller chose a land for the current basic land type. */
     record ChooseLandOfEachBasicTypeThenDestroyChoice(UUID controllerId, int typeIndex,
                                                       java.util.List<UUID> chosenIds,

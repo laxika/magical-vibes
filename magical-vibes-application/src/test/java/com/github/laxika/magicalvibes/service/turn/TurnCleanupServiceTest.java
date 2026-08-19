@@ -623,6 +623,16 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears the global creature attack restriction")
+        void clearsCreaturesCantAttackThisTurn() {
+            gd.creaturesCantAttackThisTurn = true;
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.creaturesCantAttackThisTurn).isFalse();
+        }
+
+        @Test
         @DisplayName("Expiring layer-1 copy floating effect reverts the permanent to its pre-copy card")
         void revertsEndOfTurnCopyWhenFloatingEffectExpires() {
             Permanent perm = new Permanent(createCardWithName("Tilonalli's Skinshifter"));

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Static effect that grants a color to permanents matching the given scope.
@@ -10,10 +11,16 @@ import com.github.laxika.magicalvibes.model.CardColor;
  * @param color      the color to grant
  * @param scope      which permanents are affected (EQUIPPED_CREATURE, ENCHANTED_CREATURE, etc.)
  * @param overriding when true, replaces all existing colors instead of adding (e.g. "is a black Zombie")
+ * @param filter     optional predicate to restrict which permanents are affected
  */
-public record GrantColorEffect(CardColor color, GrantScope scope, boolean overriding) implements CardEffect {
+public record GrantColorEffect(CardColor color, GrantScope scope, boolean overriding,
+                               PermanentPredicate filter) implements CardEffect {
 
     public GrantColorEffect(CardColor color, GrantScope scope) {
-        this(color, scope, false);
+        this(color, scope, false, null);
+    }
+
+    public GrantColorEffect(CardColor color, GrantScope scope, boolean overriding) {
+        this(color, scope, overriding, null);
     }
 }

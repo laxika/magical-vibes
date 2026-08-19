@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
@@ -4740,8 +4741,23 @@ public class GameQueryService {
         return gameData.anyPermanentMatches(source ->
                 source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
+                                && (animateLands.scope() == GrantScope.ALL_LANDS
+                                        || (animateLands.scope() == GrantScope.OWN_LANDS
+                                                && sourceControlsPermanent(gameData, source, permanent))
+                                        || (animateLands.scope() == GrantScope.OPPONENT_LANDS
+                                                && !sourceControlsPermanent(gameData, source, permanent)))
                                 && (animateLands.requiredSubtype() == null
                                         || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))));
+    }
+
+    private boolean sourceControlsPermanent(GameData gameData, Permanent source, Permanent permanent) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(source)) {
+                return battlefield.contains(permanent);
+            }
+        }
+        return false;
     }
 
     /**

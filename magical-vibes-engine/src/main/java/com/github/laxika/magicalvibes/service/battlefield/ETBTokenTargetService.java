@@ -201,6 +201,7 @@ public class ETBTokenTargetService {
             }
 
             SpellTarget group = groups.get(idx);
+            int effectiveMinTargets = effectiveMinTargets(gameData, pending, group);
             int effectiveMaxTargets = effectiveMaxTargets(gameData, pending, group);
 
             if (chosenInGroup >= effectiveMaxTargets) {
@@ -292,7 +293,7 @@ public class ETBTokenTargetService {
             boolean noLegalTargets = validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty();
 
             if (noLegalTargets) {
-                if (chosenInGroup < group.getMinTargets()) {
+                if (chosenInGroup < effectiveMinTargets) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
                     log.info("Game {} - {} ETB multi-target trigger skipped (no valid targets for mandatory group {} at slot {})",
@@ -309,7 +310,7 @@ public class ETBTokenTargetService {
                 continue;
             }
 
-            boolean minMet = chosenInGroup >= group.getMinTargets();
+            boolean minMet = chosenInGroup >= effectiveMinTargets;
             boolean mustChooseRemainingController =
                     card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
             if (minMet && !mustChooseRemainingController
@@ -350,6 +351,30 @@ public class ETBTokenTargetService {
                 new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
                         null, pending.repeatedAdditionalCosts(), null));
         return Math.min(group.getMaxTargets(), Math.max(0, dynamicMax));
+    }
+
+    public int effectiveMinTargets(GameData gameData,
+                                   PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        SpellTarget group = pending.sourceCard().getSpellTargets().get(pending.currentGroupIndex());
+        return effectiveMinTargets(gameData, pending, group);
+    }
+
+    private int effectiveMinTargets(GameData gameData,
+                                    PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                    SpellTarget group) {
+        int staticMin = group.isXScaled()
+                ? Math.min(pending.xValue(), group.getMinTargets())
+                : group.getMinTargets();
+        if (group.getDynamicMinTargets() == null) {
+            return staticMin;
+        }
+        Permanent source = pending.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        int dynamicMin = amountEvaluationService.evaluate(gameData, group.getDynamicMinTargets(),
+                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
+                        null, pending.repeatedAdditionalCosts(), null));
+        return Math.max(staticMin, Math.max(0, dynamicMin));
     }
 
     private void pushMultiTargetETBStackEntry(GameData gameData,
@@ -430,7 +455,8 @@ public class ETBTokenTargetService {
      */
     public boolean needsSlotBySlotTargetSelection(Card card) {
         return card.getSpellTargets().stream()
-                .anyMatch(g -> g.getMaxTargets() > 1 || g.getMinTargets() == 0);
+                .anyMatch(g -> g.getMaxTargets() > 1 || g.getMinTargets() == 0
+                        || g.getDynamicMinTargets() != null);
     }
 
     private List<CardEffect> effectsForTargetGroup(Card card, List<CardEffect> effects, int groupIndex) {

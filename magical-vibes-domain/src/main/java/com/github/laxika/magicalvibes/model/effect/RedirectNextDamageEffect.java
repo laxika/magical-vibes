@@ -5,19 +5,21 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * "The next {@code amount} damage that would be dealt to X this turn is dealt to Y instead."
+ * "The next {@code amount} damage that would be dealt to X this turn is dealt to Y instead," or
+ * the next damage event is redirected in full when {@code nextEvent} is true.
  * Both ends of the redirection are roles rather than fixed objects, which is the only axis the
  * whole family varies on: {@code protectedRole} is whose incoming damage is diverted and
  * {@code destinationRole} is who receives it instead. The shield matches damage from any source
  * (combat or noncombat) and is consumed once {@code amount} damage has been redirected.
  *
- * <p>A permanent-protecting instance installs an amount-limited
+ * <p>A permanent-protecting instance installs an amount-limited or next-event
  * {@code CreatureDamageRedirectShield}; a player-protecting one (reachable only when
  * {@code protectedRole} resolves to a player, as with Martyrdom's any-target grant) installs a
  * {@code PlayerNextDamageRedirectShield}, which protects the player alone and not their
  * permanents. Both are cleared at turn cleanup.</p>
  *
- * <p>Cards: Zhalfirin Crusader, Zealous Inquisitor, Personal Incarnation (protected = source),
+ * <p>Cards: Mirrorwood Treefolk (next event), Zhalfirin Crusader, Zealous Inquisitor,
+ * Personal Incarnation (protected = source),
  * Martyrdom, Hazduhr the Abbot, Daughter of Autumn, Vassal's Duty (protected = target).</p>
  *
  * @param protectedRole   whose incoming damage is redirected
@@ -27,21 +29,37 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                        without a target (Personal Incarnation)
  * @param targetPredicate an optional narrowing predicate on a permanent target ("target white
  *                        creature"), or {@code null} when the declared target alone suffices
+ * @param nextEvent       whether the next damage event is redirected in full instead of redirecting
+ *                        a fixed or dynamic amount
  */
 public record RedirectNextDamageEffect(RedirectRole protectedRole,
                                        RedirectRole destinationRole,
                                        DynamicAmount amount,
                                        TargetPredicate declaredTarget,
-                                       PermanentPredicate targetPredicate) implements CardEffect {
+                                       PermanentPredicate targetPredicate,
+                                       boolean nextEvent) implements CardEffect {
 
     public RedirectNextDamageEffect(RedirectRole protectedRole, RedirectRole destinationRole,
                                     DynamicAmount amount, TargetPredicate declaredTarget) {
-        this(protectedRole, destinationRole, amount, declaredTarget, null);
+        this(protectedRole, destinationRole, amount, declaredTarget, null, false);
     }
 
     public RedirectNextDamageEffect(RedirectRole protectedRole, RedirectRole destinationRole,
                                     int amount, TargetPredicate declaredTarget) {
-        this(protectedRole, destinationRole, new Fixed(amount), declaredTarget, null);
+        this(protectedRole, destinationRole, new Fixed(amount), declaredTarget, null, false);
+    }
+
+    public RedirectNextDamageEffect(RedirectRole protectedRole, RedirectRole destinationRole,
+                                    DynamicAmount amount, TargetPredicate declaredTarget,
+                                    PermanentPredicate targetPredicate) {
+        this(protectedRole, destinationRole, amount, declaredTarget, targetPredicate, false);
+    }
+
+    public static RedirectNextDamageEffect nextEvent(RedirectRole protectedRole,
+                                                      RedirectRole destinationRole,
+                                                      TargetPredicate declaredTarget) {
+        return new RedirectNextDamageEffect(protectedRole, destinationRole, new Fixed(1),
+                declaredTarget, null, true);
     }
 
     /**

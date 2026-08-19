@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -69,6 +70,20 @@ public class StackEntry {
      */
     @Setter private UUID ownerIdOverride;
     @Setter private boolean kicked;
+
+    /** Whether this spell paid a kicker or multikicker cost. */
+    public boolean wasKicked() {
+        if (kicked) {
+            return true;
+        }
+        if (repeatedAdditionalCosts.isEmpty()) {
+            return false;
+        }
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(RepeatableAdditionalManaCost.class::isInstance)
+                .map(RepeatableAdditionalManaCost.class::cast)
+                .anyMatch(RepeatableAdditionalManaCost::multikicker);
+    }
     /**
      * Whether this spell's buyback cost was paid (CR 702.27). Stamped by
      * {@code SpellCastingService} when the caster announces buyback; read at resolution by
