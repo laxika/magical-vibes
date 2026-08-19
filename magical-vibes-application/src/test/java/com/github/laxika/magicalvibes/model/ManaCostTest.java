@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -323,6 +325,23 @@ class ManaCostTest {
     @Nested
     @DisplayName("hybrid mana")
     class HybridMana {
+
+        @Test
+        @DisplayName("convoke does not treat hybrid symbols as free")
+        void convokePaysHybridSymbolsBeforeGenericMana() {
+            ManaCost cost = new ManaCost("{3}{W/U}{W/U}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.WHITE, 2);
+            pool.add(ManaColor.BLUE, 2);
+
+            assertThat(cost.canPayWithConvoke(pool, 0, List.of())).isFalse();
+            assertThat(cost.canPayWithConvoke(pool, 0, List.of(ManaColor.GREEN))).isTrue();
+            assertThat(cost.canPayWithConvoke(pool, 0, List.of(ManaColor.GREEN, ManaColor.GREEN))).isTrue();
+
+            cost.payWithConvoke(pool, 0, List.of(ManaColor.GREEN));
+
+            assertThat(pool.getTotal()).isZero();
+        }
 
         @Test
         void colorHybridManaValueCountsAsOne() {

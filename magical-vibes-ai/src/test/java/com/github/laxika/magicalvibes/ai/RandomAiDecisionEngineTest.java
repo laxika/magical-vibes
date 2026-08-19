@@ -1566,6 +1566,44 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    void suppliesUntappedCreatureForHybridConvokeSpell() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(aiPlayer, new Island());
+        }
+        Permanent creature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+        Card convokeSpell = new Card();
+        convokeSpell.setName("Hybrid Convoke Test Creature");
+        convokeSpell.setType(CardType.CREATURE);
+        convokeSpell.setManaCost("{3}{W/U}{W/U}");
+        convokeSpell.setPower(2);
+        convokeSpell.setToughness(2);
+        convokeSpell.setKeywords(EnumSet.of(Keyword.CONVOKE));
+        harness.setHand(aiPlayer, List.of(convokeSpell));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(convokeSpell);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
     void skipsXSpellWhenItsDynamicCapIsZero() {
         GameTestHarness harness = new GameTestHarness();
         harness.skipMulligan();

@@ -2632,91 +2632,144 @@ public class ManaCost {
 
     /**
      * Check if the cost can be paid with convoke contributions.
-     * Each convoke contribution pays for one mana: colored if it matches an unpaid colored cost,
-     * otherwise reduces generic cost.
-     */
-    /**
-     * Check if the cost can be paid with convoke contributions.
-     * Each convoke contribution pays for one mana: colored if it matches an unpaid colored cost,
-     * otherwise reduces generic cost. Null entries represent colorless creatures (generic only).
+     * Each convoke contribution pays for one mana: colored if it matches an unpaid colored or
+     * hybrid cost, otherwise reduces generic cost. Null entries represent colorless creatures
+     * (generic only).
      */
     public boolean canPayWithConvoke(ManaPool pool, int additionalGenericCost, List<ManaColor> convokeContributions) {
-        // Calculate remaining costs after convoke
-        Map<ManaColor, Integer> remainingColored = new EnumMap<>(ManaColor.class);
-        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remainingColored.put(entry.getKey(), entry.getValue());
-        }
-        int remainingGeneric = genericCost + additionalGenericCost;
-
-        for (ManaColor contribution : convokeContributions) {
-            if (contribution != null) {
-                int coloredRemaining = remainingColored.getOrDefault(contribution, 0);
-                if (coloredRemaining > 0) {
-                    remainingColored.put(contribution, coloredRemaining - 1);
-                } else if (remainingGeneric > 0) {
-                    remainingGeneric--;
-                }
-            } else {
-                // Colorless creature can only pay generic
-                if (remainingGeneric > 0) {
-                    remainingGeneric--;
-                }
-            }
-        }
-
-        // Check pool can pay the remaining
-        for (Map.Entry<ManaColor, Integer> entry : remainingColored.entrySet()) {
-            if (pool.get(entry.getKey()) < entry.getValue()) {
-                return false;
-            }
-        }
-
-        int poolRemaining = pool.getTotal();
-        for (Map.Entry<ManaColor, Integer> entry : remainingColored.entrySet()) {
-            poolRemaining -= entry.getValue();
-        }
-
-        return poolRemaining >= remainingGeneric;
+        return findConvokePaymentPlan(pool, additionalGenericCost, convokeContributions) != null;
     }
 
     /**
      * Pay the cost using convoke contributions and the mana pool.
-     * Each convoke contribution pays for one mana: colored if it matches an unpaid colored cost,
-     * otherwise reduces generic cost.
+     * Each convoke contribution pays for one mana: colored if it matches an unpaid colored or
+     * hybrid cost, otherwise reduces generic cost.
      */
     public void payWithConvoke(ManaPool pool, int additionalGenericCost, List<ManaColor> convokeContributions) {
-        // Calculate remaining costs after convoke
-        Map<ManaColor, Integer> remainingColored = new EnumMap<>(ManaColor.class);
-        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remainingColored.put(entry.getKey(), entry.getValue());
+        ManaCost remainingCost = findConvokePaymentPlan(pool, additionalGenericCost, convokeContributions);
+        if (remainingCost == null) {
+            throw new IllegalStateException("Mana cost cannot be paid with convoke");
         }
-        int remainingGeneric = genericCost + additionalGenericCost;
+        remainingCost.payWithAdditionalGenericCost(pool, 0, 0);
+    }
 
-        for (ManaColor contribution : convokeContributions) {
-            if (contribution != null) {
-                int coloredRemaining = remainingColored.getOrDefault(contribution, 0);
-                if (coloredRemaining > 0) {
-                    remainingColored.put(contribution, coloredRemaining - 1);
-                } else if (remainingGeneric > 0) {
-                    remainingGeneric--;
+    private ManaCost findConvokePaymentPlan(ManaPool pool, int additionalGenericCost,
+                                             List<ManaColor> convokeContributions) {
+        Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        List<HybridSymbol> remainingHybrids = new ArrayList<>(hybridCosts);
+        int remainingGeneric = Math.max(0, genericCost + additionalGenericCost);
+        List<ManaColor> contributions = convokeContributions != null
+                ? convokeContributions : List.of();
+        return findConvokePaymentPlan(pool, contributions, 0, remainingGeneric,
+                remainingColored, remainingHybrids);
+    }
+
+    private ManaCost findConvokePaymentPlan(ManaPool pool, List<ManaColor> contributions, int index,
+                                             int remainingGeneric,
+                                             Map<ManaColor, Integer> remainingColored,
+                                             List<HybridSymbol> remainingHybrids) {
+        EnumMap<ManaColor, Integer> noPhyrexianCosts = new EnumMap<>(ManaColor.class);
+        ManaCost remainingCost = new ManaCost(
+                remainingGeneric, remainingColored, noPhyrexianCosts, remainingHybrids, 0,
+                cumulativeUpkeepPayment);
+        if (remainingCost.canPay(pool)) {
+            return remainingCost;
+        }
+        if (index == contributions.size()) {
+            return null;
+        }
+
+        ManaColor contribution = contributions.get(index);
+        ManaCost plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                remainingGeneric, remainingColored, remainingHybrids);
+        if (plan != null) {
+            return plan;
+        }
+        if (contribution == null) {
+            if (remainingGeneric == 0) {
+                for (int i = 0; i < remainingHybrids.size(); i++) {
+                    HybridSymbol hybrid = remainingHybrids.get(i);
+                    if (hybrid.genericAlternative() <= 0) {
+                        continue;
+                    }
+                    List<HybridSymbol> nextHybrids = new ArrayList<>(remainingHybrids);
+                    nextHybrids.set(i, new HybridSymbol(hybrid.colors(), hybrid.genericAlternative() - 1));
+                    plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                            remainingGeneric, remainingColored, nextHybrids);
+                    if (plan != null) {
+                        return plan;
+                    }
                 }
-            } else {
-                // Colorless creature can only pay generic
-                if (remainingGeneric > 0) {
-                    remainingGeneric--;
+                return null;
+            }
+            plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                    remainingGeneric - 1, remainingColored, remainingHybrids);
+            if (plan != null) {
+                return plan;
+            }
+            for (int i = 0; i < remainingHybrids.size(); i++) {
+                HybridSymbol hybrid = remainingHybrids.get(i);
+                if (hybrid.genericAlternative() <= 0) {
+                    continue;
                 }
+                List<HybridSymbol> nextHybrids = new ArrayList<>(remainingHybrids);
+                nextHybrids.set(i, new HybridSymbol(hybrid.colors(), hybrid.genericAlternative() - 1));
+                plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                        remainingGeneric, remainingColored, nextHybrids);
+                if (plan != null) {
+                    return plan;
+                }
+            }
+            return null;
+        }
+
+        int coloredRemaining = remainingColored.getOrDefault(contribution, 0);
+        if (coloredRemaining > 0) {
+            Map<ManaColor, Integer> nextColored = new EnumMap<>(remainingColored);
+            nextColored.put(contribution, coloredRemaining - 1);
+            plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                    remainingGeneric, nextColored, remainingHybrids);
+            if (plan != null) {
+                return plan;
             }
         }
 
-        // Pay remaining colored costs from pool
-        for (Map.Entry<ManaColor, Integer> entry : remainingColored.entrySet()) {
-            for (int i = 0; i < entry.getValue(); i++) {
-                pool.remove(entry.getKey());
+        for (int i = 0; i < remainingHybrids.size(); i++) {
+            HybridSymbol hybrid = remainingHybrids.get(i);
+            if (!hybrid.colors().contains(contribution)) {
+                continue;
+            }
+            List<HybridSymbol> nextHybrids = new ArrayList<>(remainingHybrids);
+            nextHybrids.remove(i);
+            plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                    remainingGeneric, remainingColored, nextHybrids);
+            if (plan != null) {
+                return plan;
             }
         }
 
-        // Pay remaining generic from pool
-        payGenericPreferColorless(pool, remainingGeneric);
+        if (remainingGeneric > 0) {
+            plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                    remainingGeneric - 1, remainingColored, remainingHybrids);
+            if (plan != null) {
+                return plan;
+            }
+        }
+
+        for (int i = 0; i < remainingHybrids.size(); i++) {
+            HybridSymbol hybrid = remainingHybrids.get(i);
+            if (hybrid.genericAlternative() <= 0) {
+                continue;
+            }
+            List<HybridSymbol> nextHybrids = new ArrayList<>(remainingHybrids);
+            nextHybrids.set(i, new HybridSymbol(hybrid.colors(), hybrid.genericAlternative() - 1));
+            plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                    remainingGeneric, remainingColored, nextHybrids);
+            if (plan != null) {
+                return plan;
+            }
+        }
+        return null;
     }
 
     /**
