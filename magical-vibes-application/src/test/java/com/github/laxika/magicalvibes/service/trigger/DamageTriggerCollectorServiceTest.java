@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -842,7 +844,7 @@ class DamageTriggerCollectorServiceTest {
         var ctx = new TriggerContext.SourceDealsDamage(source.getCard(), player1Id, 2,
                 Map.of(player2Id, 2));
 
-        when(conditionEvaluationService.isInterveningIfMet(eq(gd), eq(effect), eq(source), eq(player1Id)))
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class)))
                 .thenReturn(false);
 
         boolean result = registry.dispatch(
@@ -850,6 +852,32 @@ class DamageTriggerCollectorServiceTest {
 
         assertThat(result).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("evaluates a self-damage condition from the source card after the source dies")
+    void evaluatesSelfDamageConditionAfterSourceDies() {
+        Permanent source = createPermanent("Kiyomaro, First to Stand");
+        var condition = new SourceUntapped();
+        var effect = new ConditionalEffect(condition, new DrawCardEffect());
+        var ctx = new TriggerContext.SourceDealsDamage(source.getCard(), player1Id, 2,
+                Map.of(player2Id, 2));
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class)))
+                .thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(null, player1Id, effect), EffectSlot.ON_SELF_DEALS_DAMAGE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isNull();
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+
+        ArgumentCaptor<ConditionContext> contextCaptor = ArgumentCaptor.forClass(ConditionContext.class);
+        verify(conditionEvaluationService).isMet(eq(gd), eq(condition), contextCaptor.capture());
+        assertThat(contextCaptor.getValue().sourcePermanent()).isNull();
+        assertThat(contextCaptor.getValue().sourceCard()).isSameAs(source.getCard());
     }
 
     // ===== ON_DEALT_DAMAGE — default handler =====

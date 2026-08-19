@@ -1031,11 +1031,6 @@ public class DamageTriggerCollectorService {
     private boolean handleSelfDealsDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
         if (sd.totalDamage() <= 0) return false;
-        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                && !conditionEvaluationService.isInterveningIfMet(match.gameData(), conditional,
-                match.permanent(), match.controllerId())) {
-            return false;
-        }
 
         GameData gameData = match.gameData();
         Card sourceCard = sd.sourceCard();
