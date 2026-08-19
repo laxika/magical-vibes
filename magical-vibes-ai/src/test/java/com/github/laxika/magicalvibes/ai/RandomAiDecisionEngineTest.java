@@ -894,7 +894,7 @@ class RandomAiDecisionEngineTest {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService().handleDeclareAttackersStep(gameData));
 
         RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
         FuzzLogWatcher watcher = FuzzLogWatcher.install();

@@ -189,6 +189,10 @@ class EasyAiDecisionEngineTest {
 
         Mockito.lenient().when(combatAttackService.getMaximumAttackers(
                 any(GameData.class), any(UUID.class))).thenReturn(Integer.MAX_VALUE);
+        Mockito.lenient().doAnswer(invocation -> {
+            java.util.function.Supplier<?> queries = invocation.getArgument(1);
+            return queries.get();
+        }).when(gameQueryService).withQueryScope(any(GameData.class), any());
     }
 
     private EasyAiDecisionEngine createEngine() {
@@ -1888,7 +1892,8 @@ class EasyAiDecisionEngineTest {
             combatHarness.forceActivePlayer(combatAiPlayer);
             combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
             combatHarness.clearPriorityPassed();
-            combatHarness.beginAttackerDeclarationInput();
+            combatHarness.inMutationScope(() ->
+                    combatHarness.getCombatAttackService().handleDeclareAttackersStep(combatGd));
 
             FuzzLogWatcher watcher = FuzzLogWatcher.install();
             try {

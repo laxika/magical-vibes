@@ -1011,7 +1011,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     protected void handleAttackers(GameData gameData) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
         List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
+        List<Integer> availableIndices = getAttackableIndicesForDecision(gameData, actingPlayerId);
         if (battlefield == null || availableIndices.isEmpty()) {
             sendAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
             return;
@@ -1026,7 +1026,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Ensure creatures with "attacks each combat if able" are included
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
+        List<Integer> mustAttackIndices = getMustAttackIndicesForDecision(
+                gameData, actingPlayerId, availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
         // CR 508.1c: if only one attacker selected and it can't attack alone, try to

@@ -586,7 +586,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     protected void handleAttackers(GameData gameData) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
         List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
+        List<Integer> availableIndices = getAttackableIndicesForDecision(gameData, actingPlayerId);
         if (battlefield == null || availableIndices.isEmpty()) {
             sendAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
             return;
@@ -639,7 +639,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Ensure creatures with "attacks each combat if able" are included
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
+        List<Integer> mustAttackIndices = getMustAttackIndicesForDecision(
+                gameData, actingPlayerId, availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
         // Ensure at least one attacker when forced (e.g. Trove of Temptation)

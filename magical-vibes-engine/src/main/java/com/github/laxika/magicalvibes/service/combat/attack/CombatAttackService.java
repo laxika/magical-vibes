@@ -133,11 +133,23 @@ public class CombatAttackService {
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final ETBTokenTargetService etbTokenTargetService;
 
+    private record AttackerDeclarationPrompt(List<Integer> attackableIndices,
+                                             List<Integer> mustAttackIndices,
+                                             List<CombatAttackTarget> availableTargets,
+                                             int taxPerCreature,
+                                             boolean mustAttackWithAtLeastOne) {
+    }
+
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as
      * attackers against at least one available attack target.
      */
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> getAttackableCreatureIndicesUnscoped(gameData, playerId));
+    }
+
+    private List<Integer> getAttackableCreatureIndicesUnscoped(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         if (attackLegalityService.isPlayerPreventedFromAttacking(gameData, playerId)) return List.of();
@@ -173,27 +185,29 @@ public class CombatAttackService {
      */
     public List<Integer> getAttackableCreatureIndicesForTarget(GameData gameData, UUID playerId,
                                                                 UUID targetId) {
-        List<Integer> attackable = getAttackableCreatureIndices(gameData, playerId);
-        if (attackable.isEmpty() || targetId == null) {
-            return attackable;
-        }
+        return gameQueryService.withQueryScope(gameData, () -> {
+            List<Integer> attackable = getAttackableCreatureIndicesUnscoped(gameData, playerId);
+            if (attackable.isEmpty() || targetId == null) {
+                return attackable;
+            }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return List.of();
-        }
-
-        List<Integer> targetAttackable = attackable.stream()
-                .filter(index -> attackLegalityService.canAttackDefender(
-                        gameData, battlefield.get(index), targetId))
-                .toList();
-        if (targetAttackable.size() == 1) {
-            Permanent sole = battlefield.get(targetAttackable.getFirst());
-            if (hasCantAttackOrBlockAlone(gameData, sole)) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
                 return List.of();
             }
-        }
-        return targetAttackable;
+
+            List<Integer> targetAttackable = attackable.stream()
+                    .filter(index -> attackLegalityService.canAttackDefender(
+                            gameData, battlefield.get(index), targetId))
+                    .toList();
+            if (targetAttackable.size() == 1) {
+                Permanent sole = battlefield.get(targetAttackable.getFirst());
+                if (hasCantAttackOrBlockAlone(gameData, sole)) {
+                    return List.of();
+                }
+            }
+            return targetAttackable;
+        });
     }
 
     /**
@@ -241,6 +255,12 @@ public class CombatAttackService {
      * "attacks each combat if able" requirement. Returns empty if an attack tax is in effect.
      */
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> getMustAttackIndicesUnscoped(gameData, playerId, attackableIndices));
+    }
+
+    private List<Integer> getMustAttackIndicesUnscoped(GameData gameData, UUID playerId,
+                                                        List<Integer> attackableIndices) {
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return List.of();
@@ -417,22 +437,33 @@ public class CombatAttackService {
      * If no creatures can attack, the step is skipped.
      */
     public void handleDeclareAttackersStep(GameData gameData) {
-        UUID activeId = gameData.activePlayerId;
-        List<Integer> attackable = getAttackableCreatureIndices(gameData, activeId);
+        AttackerDeclarationPrompt prompt = gameQueryService.withQueryScope(gameData, () -> {
+            UUID activeId = gameData.activePlayerId;
+            List<Integer> attackable = getAttackableCreatureIndicesUnscoped(gameData, activeId);
 
-        if (attackable.isEmpty()) {
+            if (attackable.isEmpty()) {
+                return new AttackerDeclarationPrompt(List.of(), List.of(), List.of(), 0, false);
+            }
+
+            List<Integer> mustAttack = getMustAttackIndicesUnscoped(gameData, activeId, attackable);
+            List<CombatAttackTarget> availableTargets =
+                    attackLegalityService.buildAvailableTargets(gameData, activeId);
+            int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, activeId);
+            boolean mustAttackWithAtLeastOne = isOpponentForcedToAttack(gameData, activeId);
+            return new AttackerDeclarationPrompt(
+                    attackable, mustAttack, availableTargets, taxPerCreature, mustAttackWithAtLeastOne);
+        });
+
+        if (prompt.attackableIndices().isEmpty()) {
+            UUID activeId = gameData.activePlayerId;
             String playerName = gameData.playerIdToName.get(activeId);
             log.info("Game {} - {} has no creatures that can attack, skipping combat", gameData.id, playerName);
             return;
         }
 
-        List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
-        List<CombatAttackTarget> availableTargets = attackLegalityService.buildAvailableTargets(gameData, activeId);
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, activeId);
-        boolean mustAttackWithAtLeastOne = isOpponentForcedToAttack(gameData, activeId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(
-                activeId, attackable, mustAttack, availableTargets,
-                taxPerCreature, mustAttackWithAtLeastOne));
+                gameData.activePlayerId, prompt.attackableIndices(), prompt.mustAttackIndices(),
+                prompt.availableTargets(), prompt.taxPerCreature(), prompt.mustAttackWithAtLeastOne()));
     }
 
     /**

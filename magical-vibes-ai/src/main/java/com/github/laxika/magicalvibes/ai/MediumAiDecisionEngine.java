@@ -562,8 +562,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
     @Override
     protected void handleAttackers(GameData gameData) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
+        List<Integer> availableIndices = getAttackableIndicesForDecision(gameData, actingPlayerId);
+        List<Integer> mustAttackIndices = getMustAttackIndicesForDecision(
+                gameData, actingPlayerId, availableIndices);
 
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
                 gameData, actingPlayerId, availableIndices, mustAttackIndices);

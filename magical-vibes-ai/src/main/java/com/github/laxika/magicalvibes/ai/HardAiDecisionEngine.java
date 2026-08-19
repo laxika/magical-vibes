@@ -2316,13 +2316,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     @Override
     protected void handleAttackers(GameData gameData) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
+        List<Integer> availableIndices = getAttackableIndicesForDecision(gameData, actingPlayerId);
         if (availableIndices.isEmpty()) {
             sendAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
             return;
         }
 
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
+        List<Integer> mustAttackIndices = getMustAttackIndicesForDecision(
+                gameData, actingPlayerId, availableIndices);
 
         // "All-in" means every creature whose attack accomplishes something — a creature
         // with power <= 0 assigns no combat damage (CR 510.1a) and just dies to a free block.

@@ -237,6 +237,33 @@ public abstract class AiDecisionEngine {
         return aiPlayer.getId();
     }
 
+    /**
+     * Uses the legal attacker snapshot that opened the pending combat prompt. The game is paused
+     * while that prompt is active, so recomputing the same legality query only adds work and can
+     * make a delayed AI decision look stuck. Hand-built test prompts may omit the snapshot; those
+     * still fall back to the live combat service.
+     */
+    protected List<Integer> getAttackableIndicesForDecision(GameData gameData, UUID playerId) {
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null && playerId.equals(declaration.activePlayerId())
+                && !declaration.attackerIndices().isEmpty()) {
+            return declaration.attackerIndices();
+        }
+        return combatAttackService.getAttackableCreatureIndices(gameData, playerId);
+    }
+
+    protected List<Integer> getMustAttackIndicesForDecision(
+            GameData gameData, UUID playerId, List<Integer> attackableIndices) {
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null && playerId.equals(declaration.activePlayerId())
+                && declaration.attackerIndices().equals(attackableIndices)) {
+            return declaration.mustAttackIndices();
+        }
+        return combatAttackService.getMustAttackIndices(gameData, playerId, attackableIndices);
+    }
+
     private boolean isAuthorizedFor(GameData gameData, PendingInteraction interaction) {
         return AiUtils.isRespondingFor(gameData, aiPlayer.getId(), interaction.decidingPlayerId());
     }
@@ -1085,32 +1112,10 @@ public abstract class AiDecisionEngine {
      */
     protected void sendAttackerDeclaration(DeclareAttackersRequest request) {
         GameData gameData = gameRegistry.get(gameId);
-        DeclareAttackersRequest requirementLegalRequest = gameData == null
-                ? request
-                : enforceAttackerDeclarationRequirements(gameData, request);
-        if (gameData != null) {
-            requirementLegalRequest = enforceConditionalAttackRequirements(gameData, requirementLegalRequest);
-        }
-        DeclareAttackersRequest targetLegalRequest = gameData == null
-                ? requirementLegalRequest
-                : removeAttackersThatCannotAttackDefaultTarget(gameData, requirementLegalRequest);
-        DeclareAttackersRequest restrictionLegalRequest = gameData == null
-                ? targetLegalRequest
-                : removeUnmetAttackRestrictions(gameData, targetLegalRequest);
         DeclareAttackersRequest combatLimitLegalRequest = gameData == null
-                ? restrictionLegalRequest
-                : capAttackersToCombatMaximum(gameData, restrictionLegalRequest);
-        if (gameData != null) {
-            combatLimitLegalRequest = removeUnmetAttackRestrictions(gameData, combatLimitLegalRequest);
-            if (combatLimitLegalRequest.attackerIndices().isEmpty()
-                    && combatAttackService.isOpponentForcedToAttack(
-                            gameData, activeDecisionPlayerId(gameData))) {
-                DeclareAttackersRequest forcedFallback = findLegalFallbackAttackerDeclaration(gameData);
-                if (!forcedFallback.attackerIndices().isEmpty()) {
-                    combatLimitLegalRequest = forcedFallback;
-                }
-            }
-        }
+                ? request
+                : gameQueryService.withQueryScope(
+                        gameData, () -> normalizeAttackerDeclaration(gameData, request));
         String rejection = attemptAttackerDeclaration(combatLimitLegalRequest);
         if (rejection == null) {
             return;
@@ -1128,7 +1133,8 @@ public abstract class AiDecisionEngine {
         if (gameData == null) {
             return;
         }
-        DeclareAttackersRequest fallback = findLegalFallbackAttackerDeclaration(gameData);
+        DeclareAttackersRequest fallback = gameQueryService.withQueryScope(
+                gameData, () -> findLegalFallbackAttackerDeclaration(gameData));
         if (!fallback.attackerIndices().isEmpty()) {
             rejection = attemptAttackerDeclaration(fallback);
             if (rejection == null) {
@@ -1136,6 +1142,29 @@ public abstract class AiDecisionEngine {
             }
         }
         log.error("AI: No legal attacker declaration found in game {}; last rejection: {}", gameId, rejection);
+    }
+
+    private DeclareAttackersRequest normalizeAttackerDeclaration(
+            GameData gameData, DeclareAttackersRequest request) {
+        DeclareAttackersRequest requirementLegalRequest =
+                enforceAttackerDeclarationRequirements(gameData, request);
+        requirementLegalRequest = enforceConditionalAttackRequirements(gameData, requirementLegalRequest);
+        DeclareAttackersRequest targetLegalRequest =
+                removeAttackersThatCannotAttackDefaultTarget(gameData, requirementLegalRequest);
+        DeclareAttackersRequest restrictionLegalRequest =
+                removeUnmetAttackRestrictions(gameData, targetLegalRequest);
+        DeclareAttackersRequest combatLimitLegalRequest =
+                capAttackersToCombatMaximum(gameData, restrictionLegalRequest);
+        combatLimitLegalRequest = removeUnmetAttackRestrictions(gameData, combatLimitLegalRequest);
+        if (combatLimitLegalRequest.attackerIndices().isEmpty()
+                && combatAttackService.isOpponentForcedToAttack(
+                        gameData, activeDecisionPlayerId(gameData))) {
+            DeclareAttackersRequest forcedFallback = findLegalFallbackAttackerDeclaration(gameData);
+            if (!forcedFallback.attackerIndices().isEmpty()) {
+                combatLimitLegalRequest = forcedFallback;
+            }
+        }
+        return combatLimitLegalRequest;
     }
 
     private DeclareAttackersRequest findLegalFallbackAttackerDeclaration(GameData gameData) {

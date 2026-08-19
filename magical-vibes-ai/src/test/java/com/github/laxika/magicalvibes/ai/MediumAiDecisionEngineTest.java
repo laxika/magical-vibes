@@ -614,7 +614,7 @@ class MediumAiDecisionEngineTest {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService().handleDeclareAttackersStep(gd));
 
         FuzzLogWatcher watcher = FuzzLogWatcher.install();
         try {
