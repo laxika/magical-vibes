@@ -344,6 +344,15 @@ class ManaCostTest {
         }
 
         @Test
+        void convokePaysMonocoloredHybridGenericAlternativeOneManaAtATime() {
+            ManaCost cost = new ManaCost("{2/W}");
+
+            assertThat(cost.canPayWithConvoke(new ManaPool(), 0, List.of(ManaColor.GREEN))).isFalse();
+            assertThat(cost.canPayWithConvoke(new ManaPool(), 0,
+                    List.of(ManaColor.GREEN, ManaColor.GREEN))).isTrue();
+        }
+
+        @Test
         void colorHybridManaValueCountsAsOne() {
             // {1}{W/B} — generic 1 + one color-hybrid symbol = mana value 2.
             assertThat(new ManaCost("{1}{W/B}").getManaValue()).isEqualTo(2);

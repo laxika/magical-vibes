@@ -51,9 +51,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -61,6 +64,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -2875,5 +2879,19 @@ class AiManaManagerTest {
 
             assertThat(colors).containsExactly(ManaColor.COLORLESS);
         }
+    }
+
+    @Test
+    void rejectsUnpayableConvokeCostWithoutEnumeratingEveryManaPlan() {
+        for (int i = 0; i < 12; i++) {
+            addUntappedLand("Forest " + i, ManaColor.GREEN);
+        }
+        Map<UUID, ManaColor> convokeContributions = new LinkedHashMap<>();
+        for (int i = 0; i < 20; i++) {
+            convokeContributions.put(UUID.randomUUID(), ManaColor.GREEN);
+        }
+
+        assertTimeout(Duration.ofSeconds(2), () -> assertThat(manager.canPayCostWithConvoke(
+                gd, player1Id, "{21}{R}", 0, Set.of(), convokeContributions)).isFalse());
     }
 }

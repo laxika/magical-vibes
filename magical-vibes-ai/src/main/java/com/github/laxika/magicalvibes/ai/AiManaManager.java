@@ -150,8 +150,27 @@ public class AiManaManager {
         if (requirement.isSatisfied(currentPool, Set.of())) {
             return true;
         }
-        return findPaymentPlanWithRequirement(gameData, playerId, cost, currentPool,
-                false, false, excludedPermanentIds, requirement) != null;
+        List<ManaSourceOptions> sources = collectManaSourceOptions(
+                gameData, playerId, false, false, excludedPermanentIds);
+        if (sources.isEmpty()) {
+            return false;
+        }
+        ManaPool maximumPool = currentPool instanceof VirtualManaPool virtualPool
+                ? new VirtualManaPool(virtualPool)
+                : new ManaPool(currentPool);
+        for (ManaSourceOptions source : sources) {
+            for (ManaOption option : source.options()) {
+                option.output().forEach(maximumPool::add);
+                if (source.creature()) {
+                    option.output().forEach(maximumPool::addCreatureMana);
+                }
+            }
+        }
+        if (!requirement.isSatisfied(maximumPool, Set.of())) {
+            return false;
+        }
+        return hasPaymentPlan(sources, 0, requirement, new ManaPool(currentPool),
+                new HashSet<>(), new PaymentSearch());
     }
 
     boolean canPayXCost(GameData gameData, UUID playerId, Card card, String manaCostStr,
@@ -550,6 +569,39 @@ public class AiManaManager {
 
         searchPaymentPlans(sources, sourceIndex + 1, requirement, pool, activations,
                 activatedPermanentIds, planCost, search);
+    }
+
+    private boolean hasPaymentPlan(List<ManaSourceOptions> sources, int sourceIndex,
+                                   ManaPaymentRequirement requirement, ManaPool pool,
+                                   Set<UUID> activatedPermanentIds, PaymentSearch search) {
+        if (++search.visitedNodes > MAX_PAYMENT_SEARCH_NODES) {
+            return false;
+        }
+        if (requirement.isSatisfied(pool, activatedPermanentIds)) {
+            return true;
+        }
+        if (sourceIndex >= sources.size()) {
+            return false;
+        }
+
+        ManaSourceOptions source = sources.get(sourceIndex);
+        for (ManaOption option : source.options()) {
+            ManaPool nextPool = new ManaPool(pool);
+            option.output().forEach(nextPool::add);
+            if (source.creature()) {
+                option.output().forEach(nextPool::addCreatureMana);
+            }
+            activatedPermanentIds.add(option.activation().permanentId());
+            if (hasPaymentPlan(sources, sourceIndex + 1, requirement, nextPool,
+                    activatedPermanentIds, search)) {
+                activatedPermanentIds.remove(option.activation().permanentId());
+                return true;
+            }
+            activatedPermanentIds.remove(option.activation().permanentId());
+        }
+
+        return hasPaymentPlan(sources, sourceIndex + 1, requirement, pool,
+                activatedPermanentIds, search);
     }
 
     private List<ManaSourceOptions> collectManaSourceOptions(GameData gameData, UUID playerId,
