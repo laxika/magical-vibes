@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
@@ -795,8 +796,9 @@ public class CardChoiceHandlerService {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                     player.getId(), targetPlayerId, newValidIndices, remainingChoices,
                     discardMode, exileMode, chosenCards, null, prompt, false, revealedHandChoice.optional(),
-                    false, null, null, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames(),
-                    false, revealedHandChoice.shuffleIntoLibraryMode()));
+                    false, null, null, 0, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames(),
+                    false, revealedHandChoice.shuffleIntoLibraryMode(), false,
+                    revealedHandChoice.grantPlayPermission(), revealedHandChoice.returnAtNextEndStep()));
         } else {
             finishRevealedHandChoice(gameData, player, revealedHandChoice, chosenCards);
         }
@@ -878,6 +880,13 @@ public class CardChoiceHandlerService {
                 exileService.exileCard(gameData, targetPlayerId, exiled);
                 if (revealedHandChoice.imprintOnSource() && sourcePermanentId != null) {
                     exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
+                }
+                if (revealedHandChoice.grantPlayPermission()) {
+                    gameData.exilePlayPermissions.put(exiled.getId(), player.getId());
+                }
+                if (revealedHandChoice.returnAtNextEndStep()) {
+                    gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
+                            exiled.getId(), targetPlayerId));
                 }
             }
 

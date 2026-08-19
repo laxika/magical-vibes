@@ -873,6 +873,16 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);
     }
 
+    /** Casts a targeted instant with multiple hand cards paying its alternate discard cost. */
+    public void castInstantWithAlternateDiscards(Player player, int cardIndex, UUID targetId,
+                                                  int firstDiscardHandCardIndex,
+                                                  List<Integer> additionalDiscardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, List.of(), null, List.of(), false, firstDiscardHandCardIndex,
+                additionalDiscardHandCardIndices);
+    }
+
     /**
      * Cast a targeted instant using an exile-from-hand alternate casting cost
      * ({@code discardHandCardIndex} is the pre-removal hand index of the card to exile).

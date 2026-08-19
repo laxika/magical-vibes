@@ -31,10 +31,12 @@ import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
@@ -496,6 +498,32 @@ public class CastingCostService {
             }
         }
         return tax;
+    }
+
+    /**
+     * Non-mana costs imposed on an activated ability by static effects on the battlefield. Costs
+     * are collected before any activation cost is paid so they can use the normal permanent-choice
+     * payment and interaction path.
+     */
+    public List<CostEffect> getActivatedAbilityAdditionalCosts(GameData gameData, Permanent sourcePermanent) {
+        List<CostEffect> costs = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilityAdditionalCostEffect additionalCost
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                                    sourcePermanent, additionalCost.affectedPermanents(),
+                                    FilterContext.of(gameData)
+                                            .withSourceCardId(perm.getOriginalCard().getId())
+                                            .withSourceControllerId(pid))) {
+                        costs.add(additionalCost.additionalCost());
+                    }
+                }
+            }
+        }
+        return costs;
     }
 
     /**
@@ -984,6 +1012,9 @@ public class CastingCostService {
             if (matchingCount < exileHandCost.get().count()) return false;
         }
 
+        List<DiscardCardCastingCost> discardHandCosts = altCast.getCosts(DiscardCardCastingCost.class);
+        if (!canPayDiscardCosts(gameData, playerId, card, discardHandCosts)) return false;
+
         var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
         if (revealHandCost.isPresent() && !revealHandCost.get().revealEntireHand()) {
             List<Card> hand = gameData.playerHands.get(playerId);
@@ -1033,6 +1064,35 @@ public class CastingCostService {
         }
 
         return true;
+    }
+
+    private boolean canPayDiscardCosts(GameData gameData, UUID playerId, Card sourceCard,
+                                       List<DiscardCardCastingCost> costs) {
+        if (costs.isEmpty()) return true;
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null) return false;
+        return canMatchDiscardCosts(hand, sourceCard, costs, 0, new HashSet<>());
+    }
+
+    private boolean canMatchDiscardCosts(List<Card> hand, Card sourceCard,
+                                         List<DiscardCardCastingCost> costs, int costIndex,
+                                         Set<UUID> usedCardIds) {
+        if (costIndex == costs.size()) return true;
+        DiscardCardCastingCost cost = costs.get(costIndex);
+        for (Card candidate : hand) {
+            if (candidate.getId().equals(sourceCard.getId()) || usedCardIds.contains(candidate.getId())) {
+                continue;
+            }
+            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(
+                    candidate, cost.predicate(), candidate.getId())) {
+                usedCardIds.add(candidate.getId());
+                if (canMatchDiscardCosts(hand, sourceCard, costs, costIndex + 1, usedCardIds)) {
+                    return true;
+                }
+                usedCardIds.remove(candidate.getId());
+            }
+        }
+        return false;
     }
 
     private ManaCost manaCostOf(Permanent permanent) {

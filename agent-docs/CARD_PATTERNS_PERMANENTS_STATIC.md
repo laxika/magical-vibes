@@ -107,6 +107,7 @@ All paths relative to `cards/`.
 | Protection from mana value N or greater | `m/MistmeadowSkulk.java` | STATIC ProtectionFromManaValueEffect(N) |
 | Grant protection from colors to greatest-MV creatures | `f/FavorOfTheMighty.java` | STATIC GrantEffectEffect(ProtectionFromColorsEffect(all 5 colors), ALL_CREATURES, PermanentHasGreatestManaValueAmongAllCreaturesPredicate) â€” granted protection is read by GameQueryService.hasProtectionFrom via the static bonus's grantedEffects |
 | Prevent all damage to self | `c/ChoMannoRevolutionary.java` | STATIC PreventAllDamageEffect |
+| Static prevention that any player can switch off | `g/GlitteringLion.java` | STATIC PreventAllDamageEffect + `{3}` `SuppressStaticEffectUntilEndOfTurnEffect(PreventAllDamageEffect.class)` with `.withActivatableByAnyPlayer()` |
 | Wall-only targeting restriction | `w/WallOfShadows.java` | STATIC WallOnlyTargetingRestrictionEffect + PreventAllDamageToSelfFromCreaturesItBlocksEffect — the targeting marker is checked against the source spell/ability's full legal target shape, including modal mode unions |
 | CU + prevent all damage to your creatures | `i/InnerSanctum.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect.life(2) + STATIC PreventDamageToCreaturesEffect.youControl(false) — `false` covers combat damage too; `true` is Mark of Asylum's noncombat-only variant. `PreventDamageToCreaturesEffect.all()` is the ungated both-players version (`b/BubbleMatrix.java`) |
 | Prevent all damage to you during your turn | `p/PersonalSanctuary.java` | STATIC PreventAllDamageToControllerEffect(true) â€” turn-gated variant of Glacial Chasm's prevention; applies only while the controller is the active player |
@@ -268,6 +269,7 @@ All paths relative to `cards/`.
 | Escalating upkeep symmetrical exile | `d/DescentIntoMadness.java` | UPKEEP_TRIGGERED `SequenceEffect.of(PutCountersOnSelfEffect(CounterType.DESPAIR), EachPlayerExilesPermanentsOrCardsFromHandEffect(CountersOnSource(CounterType.DESPAIR)))` â€” one stack entry, so the exile count reads the counter the same trigger just added; players pick freely across their battlefield and hand and the enchantment can exile itself |
 
 | Opponent end-step quest counter + threshold token ability | `l/LuminarchAscension.java` | OPPONENT_END_STEP_TRIGGERED `ConditionalEffect(ControllerDidntLoseLifeThisTurn, MayEffect(PutCountersOnSelfEffect(QUEST)))` + activated `CreateTokenEffect(4/4 Angel, FLYING)` gated by `withRequiredSourceCounters(QUEST, 4)` |
+| Each player's end step: damage for untapped lands | `c/CitadelOfPain.java` | END_STEP_TRIGGERED `DealDamageToEndStepPlayerEffect(PermanentCount(AllOf(LAND, Not(TAPPED)), TARGET_PLAYER))` — the amount is evaluated at resolution for the active end-step player |
 | Any card enters your graveyard + graveyard reset ability | `q/QuestForAncientSecrets.java` | `ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE MayEffect(PutCountersOnSelfEffect(QUEST))` + activated `RemoveCounterFromSourceCost(5, QUEST)` + `SacrificeSelfCost` + `ShuffleGraveyardIntoLibraryEffect(true)` |
 
 ## Auras

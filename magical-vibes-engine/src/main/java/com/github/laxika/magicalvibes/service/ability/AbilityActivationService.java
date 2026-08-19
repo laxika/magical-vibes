@@ -2309,6 +2309,13 @@ public class AbilityActivationService {
                 permanentChoiceCosts.add(imposedHandler);
             }
         }
+        for (CostEffect additionalCost : castingCostService.getActivatedAbilityAdditionalCosts(gameData, permanent)) {
+            PermanentChoiceCostHandler additionalHandler = toPermanentChoiceCostHandler(
+                    gameData, additionalCost, sourceId, xValueForCost);
+            if (additionalHandler != null) {
+                permanentChoiceCosts.add(additionalHandler);
+            }
+        }
 
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
             handler.validateCanPay(gameData, playerId);
@@ -3096,7 +3103,9 @@ public class AbilityActivationService {
         ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
         List<CardEffect> abilityEffects = ability.getEffects();
         if (!abilityEffects.contains(context.costEffect())) {
-            throw new IllegalStateException("Activated ability no longer has the required cost");
+            if (!(context.costEffect() instanceof CostEffect)) {
+                throw new IllegalStateException("Activated ability no longer has the required cost");
+            }
         }
 
         PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), context.sourcePermanentId(), context.xValue(), context.chosenSoFar());
@@ -3522,6 +3531,13 @@ public class AbilityActivationService {
                     sourceId, xValue);
             if (imposedHandler != null) {
                 imposedHandler.validateCanPay(gameData, playerId);
+            }
+        }
+        for (CostEffect additionalCost : castingCostService.getActivatedAbilityAdditionalCosts(gameData, permanent)) {
+            PermanentChoiceCostHandler additionalHandler = toPermanentChoiceCostHandler(
+                    gameData, additionalCost, sourceId, xValue);
+            if (additionalHandler != null) {
+                additionalHandler.validateCanPay(gameData, playerId);
             }
         }
 

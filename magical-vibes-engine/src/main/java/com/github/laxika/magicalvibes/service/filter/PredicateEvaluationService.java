@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
@@ -1063,6 +1064,22 @@ public class PredicateEvaluationService {
                         .filter(p -> !controllerControlsPredicate.excludeSelf() || !p.getId().equals(permanent.getId()))
                         .anyMatch(p -> matchesPermanentPredicate(p, controllerControlsPredicate.filter(), filterContext));
             }
+            case PermanentControllerControlsPermanentCountAtMostPredicate countPredicate -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID targetController = gameData.findControllerOf(permanent);
+                List<Permanent> targetBattlefield = targetController == null ? null
+                        : gameData.playerBattlefields.get(targetController);
+                if (targetBattlefield == null) {
+                    yield false;
+                }
+                long matchingCount = targetBattlefield.stream()
+                        .filter(p -> matchesPermanentPredicate(p, countPredicate.countFilter(), filterContext))
+                        .limit((long) countPredicate.maxCount() + 1)
+                        .count();
+                yield matchingCount <= countPredicate.maxCount();
+            }
             case PermanentAttachedToSourceControllerPredicate ignored ->
                     sourceControllerId != null && permanent.isAttached()
                             && sourceControllerId.equals(permanent.getAttachedTo());
@@ -1442,6 +1459,8 @@ public class PredicateEvaluationService {
             }
             case PermanentControllerControlsPermanentPredicate p ->
                     controllerControlsMatchingStatic(permanent, p, context);
+            case PermanentControllerControlsPermanentCountAtMostPredicate p ->
+                    controllerControlsAtMostMatchingStatic(permanent, p, context);
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     hasGreatestManaValueAmongAllCreaturesStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongAllArtifactsPredicate ignored ->
@@ -1608,6 +1627,22 @@ public class PredicateEvaluationService {
         return battlefield.stream()
                 .filter(candidate -> !predicate.excludeSelf() || !candidate.getId().equals(target.getId()))
                 .anyMatch(candidate -> matchesStaticFilter(candidate, predicate.filter(), context));
+    }
+
+    /** Recursion-safe count of permanents matching a filter on the tested permanent's battlefield. */
+    private boolean controllerControlsAtMostMatchingStatic(
+            Permanent target, PermanentControllerControlsPermanentCountAtMostPredicate predicate,
+            FilterContext context) {
+        GameData gameData = context == null ? null : context.gameData();
+        if (gameData == null) return false;
+        UUID controllerId = gameData.findControllerOf(target);
+        List<Permanent> battlefield = controllerId == null ? null : gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        long matchingCount = battlefield.stream()
+                .filter(candidate -> matchesStaticFilter(candidate, predicate.countFilter(), context))
+                .limit((long) predicate.maxCount() + 1)
+                .count();
+        return matchingCount <= predicate.maxCount();
     }
 
     /**

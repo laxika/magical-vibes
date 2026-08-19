@@ -217,6 +217,7 @@ public sealed interface Condition permits
         TopCardOfLibraryColor,
         TopCardOfLibraryType,
         TotalPermanentCountEven,
+        TotalCreatureCardsInGraveyardsAtLeast,
         TwoOrMoreSpellsCastLastTurn,
         WonClash {
 

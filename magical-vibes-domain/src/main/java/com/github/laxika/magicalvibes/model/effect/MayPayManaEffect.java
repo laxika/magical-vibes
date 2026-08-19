@@ -4,6 +4,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * Like {@link MayEffect}, but the player must pay a mana cost to get the effect.
  * Used for "you may pay {X}. If you do, [effect]" patterns (e.g. Spellbomb cycle).
  *
+ * <p>{@link MayPayPayer#ANY_PLAYER} offers the payment to each player in APNAP order and applies
+ * the wrapped effect if at least one player pays.
+ *
  * <p>{@code payer} redirects the "may pay" prompt away from the ability's controller:
  * {@link MayPayPayer#ENCHANTED_CONTROLLER} prompts the enchanted permanent's controller — the
  * player carried on the stack entry's {@code targetId} by an

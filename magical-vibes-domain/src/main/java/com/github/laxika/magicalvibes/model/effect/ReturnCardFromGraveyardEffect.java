@@ -199,6 +199,11 @@ import java.util.Set;
  *                             cards go to the battlefield, everything else goes to the controller's hand
  *                             (e.g. Deadbridge Chant); only honoured on the {@link #returnAtRandom} path,
  *                             where it overrides {@link #destination}
+ * @param battlefieldIfCreatureElseExile {@code true} to route each randomly selected card per its type — creature
+ *                             cards go to the battlefield, everything else is exiled; only honoured on the
+ *                             {@link #returnAtRandom} path, where it overrides {@link #destination}
+ * @param shuffleGraveyardBeforeRandomSelection {@code true} to randomly reorder the controller's graveyard before
+ *                             selecting random cards; only honoured on the {@link #returnAtRandom} path
  * @param dynamicMaxManaValue dynamic mana-value limit to snapshot when a death trigger is collected;
  *                             used for abilities such as Kodama of the Center Tree's soulshift X
  * @param unearth              {@code true} when the battlefield return is an unearth activation,
@@ -258,6 +263,8 @@ public record ReturnCardFromGraveyardEffect(
         int enterWithCounterCount,
         boolean linkToSource,
         boolean battlefieldIfCreatureElseHand,
+        boolean battlefieldIfCreatureElseExile,
+        boolean shuffleGraveyardBeforeRandomSelection,
         DynamicAmount dynamicMaxManaValue,
         boolean unearth
 ) implements CardEffect {

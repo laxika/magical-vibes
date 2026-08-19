@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -27,6 +25,21 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+            }
+
+            @Test
+            @DisplayName("Auto-applies controller life gain when the penalty drains")
+            void autoAppliesControllerLifeGainWhenPenaltyDrains() {
+                Card card = createCard("Rhystic Study");
+                LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(5, 3, true);
+                StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+
+                when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+
+                resolveEffect(gd, entry, effect);
+
+                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
+                verify(lifeSupport).applyGainLife(gd, player1Id, 5);
             }
 
             @Test

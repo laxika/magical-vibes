@@ -48,6 +48,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected CoinFlipService coinFlipService;
     @Mock protected PermanentCounterSupport permanentCounterSupport;
     @Mock protected InteractionHandlerRegistry interactionHandlerRegistry;
+    @Mock protected LifeSupport lifeSupport;
 
     protected EffectHandlerRegistry registry;
     protected PlayerInteractionSupport support;
@@ -71,7 +72,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
                 handlerName, support, registry, gameLogService, cardRevealService, drawService, sessionManager, cardViewFactory,
                 gameQueryService, predicateEvaluationService, playerInputService, triggerCollectionService, battlefieldEntryService,
                 permanentRemovalService, graveyardService, interactionHandlerRegistry, coinFlipService,
-                permanentCounterSupport);
+                permanentCounterSupport, lifeSupport);
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();
     }

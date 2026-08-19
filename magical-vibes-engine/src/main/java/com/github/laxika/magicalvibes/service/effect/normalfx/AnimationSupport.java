@@ -285,6 +285,45 @@ public class AnimationSupport {
                         + " Elemental creatures with reach, indestructible, and haste " + durationText + ". They're still lands."));
     }
 
+    /** TARGET_PLAYERS_LANDS scope — all lands the targeted player controls, until end of turn. */
+    public void animateTargetPlayersLands(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        List<Permanent> battlefield = targetPlayerId == null
+                ? null
+                : gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        AmountContext ctx = AmountContext.forStackEntry(entry, source);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+
+        for (Permanent perm : battlefield) {
+            if (!perm.getCard().hasType(CardType.LAND)) {
+                continue;
+            }
+            perm.setAnimatedUntilEndOfTurn(true);
+            perm.setAnimatedPower(power);
+            perm.setAnimatedToughness(toughness);
+            perm.setAnimatedColor(effect.animatedColor());
+            perm.getTransientSubtypes().clear();
+            perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
+            perm.getGrantedKeywords().addAll(effect.grantedKeywords());
+            perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+            addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness,
+                    EffectDuration.UNTIL_END_OF_TURN);
+
+            log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
+        }
+
+        gameLogService.append(gameData, GameLog.text("All lands target player controls become " + power + "/"
+                + toughness + " creatures until end of turn. They're still lands."));
+    }
+
     /** ALL_LANDS scope — every land on the battlefield (both players), until end of turn (Natural Affinity). */
     public void animateAllLands(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         Permanent source = entry.getSourcePermanentId() != null

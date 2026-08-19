@@ -32,6 +32,8 @@ public enum GrantScope {
     OWN_PERMANENTS,
     /** All creatures the targeted player controls (one-shot, e.g. Shields of Velis Vel). */
     TARGET_PLAYERS_CREATURES,
+    /** All lands the targeted player controls (one-shot animation effects). */
+    TARGET_PLAYERS_LANDS,
     /**
      * All creatures on the battlefield <em>except</em> the source permanent itself.
      * Use this for "other …" wordings, or when the source can never match the filter.

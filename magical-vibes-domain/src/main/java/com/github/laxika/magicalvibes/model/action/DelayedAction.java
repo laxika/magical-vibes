@@ -19,6 +19,7 @@ package com.github.laxika.magicalvibes.model.action;
  */
 public sealed interface DelayedAction permits
         DelayedAdditionalCombatBeginningEffect,
+        DelayedEndOfCombatTrigger,
         DelayedPermanentAction,
         ExilePermanentAtControllerEndStep,
         SacrificeAtEndOfCombat,
@@ -48,6 +49,7 @@ public sealed interface DelayedAction permits
         DelayedGraveyardToHandReturn,
         DiscardCardsAtNextEndStep,
         ReturnExiledCardToHandAtEndStep,
+        ReturnExiledCardToHandAtNextEndStep,
         DelayedGraveyardToBattlefieldSelfReturn,
         DelayedGraveyardToBattlefieldTransformedReturn,
         DelayedGraveyardToBattlefieldUnderControl,

@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -72,13 +73,28 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        UUID tokenControllerId = entry.getControllerId();
+        if (effect.createForTargetController()) {
+            UUID targetControllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+            if (targetControllerId != null) {
+                tokenControllerId = targetControllerId;
+            }
+        }
+
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, tokenControllerId);
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = buildTokenCopyCard(sourceCard, effect);
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, entry.getControllerId(), tokenCard);
+                    gameData, tokenControllerId, tokenCard);
             Permanent tokenPermanent = new Permanent(tokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, tokenControllerId, tokenPermanent);
+            entry.getCreatedPermanentIds().add(tokenPermanent.getId());
+
+            if (effect.trackWithSource() && entry.getSourcePermanentId() != null) {
+                gameData.sourceCreatedTokens
+                        .computeIfAbsent(entry.getSourcePermanentId(), ignored -> ConcurrentHashMap.newKeySet())
+                        .add(tokenPermanent.getId());
+            }
 
             if (effect.tappedAndAttacking()) {
                 tokenPermanent.tap();
@@ -101,7 +117,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
             // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
             // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, tokenControllerId, tokenCard, null, false);
 
             if (effect.initialCounters() != null && !effect.initialCounters().isEmpty()
                     && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {

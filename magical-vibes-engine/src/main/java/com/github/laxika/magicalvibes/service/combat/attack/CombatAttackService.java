@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
@@ -91,6 +92,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostService;
+import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -126,6 +128,7 @@ public class CombatAttackService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.AttackSacrificeCostService attackSacrificeCostService;
     private final AttackReturnToHandCostService attackReturnToHandCostService;
+    private final CombatTapCostService combatTapCostService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final ETBTokenTargetService etbTokenTargetService;
@@ -143,6 +146,7 @@ public class CombatAttackService {
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
             if (attackLegalityService.canAttack(gameData, p, playerId)
+                    && combatTapCostService.canPayAttackCost(gameData, p)
                     && canAttackAnyTarget(gameData, p, validAttackTargetIds)) {
                 indices.add(i);
             }
@@ -509,6 +513,8 @@ public class CombatAttackService {
         // must be affordable together, not just each attacker on its own.
         attackSacrificeCostService.validateGlobalSacrificeAttackCosts(gameData, playerId, attackerIndices);
         attackReturnToHandCostService.validateReturnToHandAttackCosts(gameData, playerId, attackerIndices);
+        List<Permanent> selectedAttackers = attackerIndices.stream().map(battlefield::get).toList();
+        combatTapCostService.validateAttackCosts(gameData, playerId, selectedAttackers);
 
         UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
         Set<UUID> validTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
@@ -611,6 +617,8 @@ public class CombatAttackService {
                 gameData.lifeLostThisTurn.merge(playerId, lifeCost, Integer::sum);
             }
         }
+
+        combatTapCostService.payAttackCosts(gameData, playerId, declaredAttackers);
 
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
@@ -746,6 +754,11 @@ public class CombatAttackService {
                 // Filter out controls-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ControlsPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ControlsPermanentCountAtMost
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
@@ -1284,7 +1297,15 @@ public class CombatAttackService {
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
-                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURES_ATTACK_YOU);
+                List<CardEffect> effects = new ArrayList<>();
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CREATURES_ATTACK_YOU)) {
+                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, attackedPlayerId))) {
+                        continue;
+                    }
+                    effects.add(effect);
+                }
                 if (effects.isEmpty()) continue;
 
                 StackEntry trigger = new StackEntry(

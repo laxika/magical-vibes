@@ -19,4 +19,12 @@ public sealed interface CastingOption permits FlashbackCast, DisturbCast, Altern
                 .map(type::cast)
                 .findFirst();
     }
+
+    /** Returns every cost component of the requested type, preserving casting-cost order. */
+    default <T extends CastingCost> List<T> getCosts(Class<T> type) {
+        return costs().stream()
+                .filter(type::isInstance)
+                .map(type::cast)
+                .toList();
+    }
 }

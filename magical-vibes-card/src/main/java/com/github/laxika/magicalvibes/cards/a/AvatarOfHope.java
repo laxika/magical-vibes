@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "4")
+@CardRegistration(set = "PCY", collectorNumber = "3")
 public class AvatarOfHope extends Card {
 
     public AvatarOfHope() {

@@ -2622,6 +2622,10 @@ public class CombatDamageService {
                         gameData, sourceControllerId, defenderId);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
+            // Mirror Strike: redirect the chosen attacker's combat damage to its controller.
+            damage = damagePreventionService.applyTurnSourceDamageRedirectToController(
+                    gameData, defenderId, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
@@ -2865,7 +2869,8 @@ public class CombatDamageService {
         damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, source.getId(), target.getId(), damage);
         processSourceRedirectDamage(gameData);
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants) per-source for creature targets
-        damage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), source.getId(), damage);
+        damage = damagePreventionService.applyCreatureRedirectShields(
+                gameData, target.getId(), source.getId(), damage, true);
         processSourceRedirectDamage(gameData);
         // Apply target+source-specific prevention shields (e.g. Healing Grace) before generic creature prevention
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);

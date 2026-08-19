@@ -28,6 +28,8 @@ import java.util.Set;
  *       re-derived at resolution and without targeting (the Genju cycle).</li>
  *   <li>{@link GrantScope#OWN_LANDS} — all lands you control (Sylvan Awakening) until end of turn
  *       or until your next turn.</li>
+ *   <li>{@link GrantScope#TARGET_PLAYERS_LANDS} — all lands the targeted player controls until
+ *       end of turn.</li>
  *   <li>{@link GrantScope#OWN_PERMANENTS} — all permanents you control matching {@link #filter}
  *       (The Antiquities War III) until end of turn.</li>
  * </ul>
@@ -104,6 +106,7 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
     public TargetSpec targetSpec() {
         return switch (scope) {
             case TARGET -> TargetSpec.benign(TargetPredicates.permanent());
+            case TARGET_PLAYERS_LANDS -> TargetSpec.benign(TargetPredicates.player());
             case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;
         };

@@ -1153,8 +1153,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               boolean exileAllCopiesOfChosenNames,
                               boolean imprintOnSource,
                               boolean shuffleIntoLibraryMode,
-                              boolean discardThenDrawMode)
+                              boolean discardThenDrawMode,
+                              boolean grantPlayPermission,
+                              boolean returnAtNextEndStep)
             implements PendingInteraction {
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional,
+                                  boolean gainLifeToChooserEqualToChosenToughness,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
+                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
+                                  boolean exileAllCopiesOfChosenNames,
+                                  boolean imprintOnSource,
+                                  boolean shuffleIntoLibraryMode,
+                                  boolean discardThenDrawMode) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
+                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
+                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode, false, false);
+        }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                   java.util.List<Integer> validIndices, int remainingCount,
@@ -1163,7 +1185,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   String prompt, boolean bottomThenDrawMode, boolean optional) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional, false,
-                    null, null, 0, null, false, false, false, false);
+                    null, null, 0, null, false, false, false, false, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,

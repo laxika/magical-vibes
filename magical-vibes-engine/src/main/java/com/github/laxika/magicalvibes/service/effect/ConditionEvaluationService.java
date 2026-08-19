@@ -219,6 +219,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
+import com.github.laxika.magicalvibes.model.condition.TotalCreatureCardsInGraveyardsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
@@ -432,6 +433,8 @@ public class ConditionEvaluationService {
                     countCardsInLibrary(gameData, ctx.controllerId()) >= c.threshold();
             case AnyGraveyardAtLeast c ->
                     anyGraveyardAtLeast(gameData, c.threshold());
+            case TotalCreatureCardsInGraveyardsAtLeast c ->
+                    totalCreatureCardsInGraveyards(gameData) >= c.threshold();
             case AnyLibraryAtMost c ->
                     anyLibraryAtMost(gameData, c.threshold());
             case CardsInHandAtLeast c ->
@@ -1974,6 +1977,15 @@ public class ConditionEvaluationService {
 
     private boolean anyGraveyardAtLeast(GameData gameData, int threshold) {
         return gameData.playerGraveyards.values().stream().anyMatch(graveyard -> graveyard.size() >= threshold);
+    }
+
+    private int totalCreatureCardsInGraveyards(GameData gameData) {
+        return gameData.playerGraveyards.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(card -> !card.isToken() && card.hasType(CardType.CREATURE))
+                .mapToInt(card -> 1)
+                .sum();
     }
 
     private boolean anyOpponentGraveyardAtLeast(GameData gameData, UUID controllerId, int threshold) {

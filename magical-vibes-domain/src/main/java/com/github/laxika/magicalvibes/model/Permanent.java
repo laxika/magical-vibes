@@ -453,6 +453,8 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** Concrete printed static effect types suppressed on this permanent until end of turn. */
+    private final Set<Class<? extends CardEffect>> suppressedStaticEffectsUntilEndOfTurn = new HashSet<>();
     /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
     @Setter private boolean losesAllAbilitiesPermanently;
     /** When true, this permanent has lost all creature types until end of turn (e.g. Amoeboid Changeling).
@@ -732,6 +734,7 @@ public class Permanent {
         this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.suppressedStaticEffectsUntilEndOfTurn.addAll(source.suppressedStaticEffectsUntilEndOfTurn);
         this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
         this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
@@ -1281,6 +1284,14 @@ public class Permanent {
         tappedPermanentsForAbilityThisTurn.clear();
     }
 
+    public void suppressStaticEffectUntilEndOfTurn(Class<? extends CardEffect> effectType) {
+        suppressedStaticEffectsUntilEndOfTurn.add(effectType);
+    }
+
+    public boolean isStaticEffectSuppressed(Class<? extends CardEffect> effectType) {
+        return suppressedStaticEffectsUntilEndOfTurn.contains(effectType);
+    }
+
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
@@ -1330,6 +1341,7 @@ public class Permanent {
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
+        this.suppressedStaticEffectsUntilEndOfTurn.clear();
         this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.transientRemovedSubtypes.clear();
         this.temporaryActivatedAbilities.clear();

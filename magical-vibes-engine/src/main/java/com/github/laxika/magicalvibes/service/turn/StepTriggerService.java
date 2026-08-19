@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefield
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttac
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -783,6 +785,12 @@ public class StepTriggerService {
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, activePlayerId))) {
                     continue;
+                } else if (effect instanceof MayEffect may
+                        && may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    // A targeted "you may" trigger still chooses its target as the trigger is put
+                    // on the stack; only the may decision waits for resolution.
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
+                            perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
                 } else if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
                 } else if (effect instanceof MayRevealSubtypeFromHandEffect mayReveal) {
@@ -2677,6 +2685,25 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleEndOfCombatTriggers(GameData gameData) {
+        List<DelayedEndOfCombatTrigger> delayedTriggers =
+                gameData.drainDelayedActions(DelayedEndOfCombatTrigger.class);
+        for (DelayedEndOfCombatTrigger delayedTrigger : delayedTriggers) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayedTrigger.sourceCard(),
+                    delayedTrigger.controllerId(),
+                    delayedTrigger.sourceCard().getName() + "'s end-of-combat ability",
+                    new ArrayList<>(List.of(delayedTrigger.effect())),
+                    (UUID) null,
+                    delayedTrigger.sourcePermanentId()
+            ));
+
+            gameLogService.append(gameData, GameLog.cardThen(
+                    delayedTrigger.sourceCard(), "'s end-of-combat ability triggers."));
+            log.info("Game {} - {} delayed end-of-combat trigger pushed onto stack",
+                    gameData.id, delayedTrigger.sourceCard().getName());
+        }
+
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.END_OF_COMBAT_TRIGGERED);
             if (effects == null || effects.isEmpty()) {
@@ -3498,6 +3525,27 @@ public class StepTriggerService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(cardToReturn, " returns to " + playerName + "'s hand (delayed trigger)."));
                 log.info("Game {} - {} returns to {}'s hand from exile (delayed end-step trigger)",
+                        gameData.id, cardToReturn.getName(), playerName);
+            }
+        }
+
+        if (gameData.hasDelayedAction(ReturnExiledCardToHandAtNextEndStep.class)) {
+            List<ReturnExiledCardToHandAtNextEndStep> pendingReturns = gameData.drainDelayedActions(
+                    ReturnExiledCardToHandAtNextEndStep.class);
+            for (ReturnExiledCardToHandAtNextEndStep pending : pendingReturns) {
+                var exiledEntry = gameData.findExiledCard(pending.cardId());
+                if (exiledEntry == null) {
+                    log.info("Game {} - Delayed next-end-step exile-to-hand return for card {} skipped (no longer in exile)",
+                            gameData.id, pending.cardId());
+                    continue;
+                }
+                Card cardToReturn = exiledEntry.card();
+                gameData.removeFromExile(pending.cardId());
+                gameData.addCardToHand(pending.ownerId(), cardToReturn);
+                String playerName = gameData.playerIdToName.get(pending.ownerId());
+                gameLogService.append(gameData,
+                        GameLog.cardThen(cardToReturn, " returns to " + playerName + "'s hand (delayed trigger)."));
+                log.info("Game {} - {} returns to {}'s hand from exile (delayed next-end-step trigger)",
                         gameData.id, cardToReturn.getName(), playerName);
             }
         }

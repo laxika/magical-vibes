@@ -68,6 +68,21 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     }
 
     @Test
+    @DisplayName("TARGET_PLAYER_OR_PERMANENT_CONTROLLER payer prompts a target player")
+    void targetPlayerOrPermanentControllerPayerPromptsTargetPlayer() {
+        Card card = createCard("Rhystic Lightning");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = new MayPayManaEffect("{2}", wrapped, "Pay {2}?",
+                MayPayPayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER);
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayPayEffect), player2Id);
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+    }
+
+    @Test
     @DisplayName("TRIGGERING_PLAYER payer prompts the player whose action caused the trigger")
     void triggeringPlayerPayerPromptsTriggeringPlayer() {
         Card card = createCard("Unifying Theory");

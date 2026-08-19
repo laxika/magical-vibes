@@ -37,12 +37,14 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -99,6 +101,8 @@ public class DestructionSupport {
     private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
     private final ControllerLosesGameEffectHandler controllerLosesGameHandler;
     private final GrantEffectToSourceUntilEndOfCombatEffectHandler grantEffectToSourceUntilEndOfCombatHandler;
+    private final PreventDamageFromChosenSourceEffectHandler preventDamageFromChosenSourceHandler;
+    private final BoostAllOwnCreaturesEffectHandler boostAllOwnCreaturesHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -652,6 +656,13 @@ public class DestructionSupport {
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }
+            } else if (elseEffect instanceof PreventDamageFromChosenSourceEffect preventDamage) {
+                preventDamageFromChosenSourceHandler.resolve(gameData, entry, preventDamage);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            } else if (elseEffect instanceof BoostAllOwnCreaturesEffect boost) {
+                boostAllOwnCreaturesHandler.resolve(gameData, entry, boost);
             } else {
                 log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
                         gameData.id, elseEffect.getClass().getSimpleName());

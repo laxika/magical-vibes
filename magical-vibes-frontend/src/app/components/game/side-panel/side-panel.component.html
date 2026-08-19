@@ -282,7 +282,7 @@
             @if (choice.targeting.alternateCostRevealsHandCard) {
               <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Reveal {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card from hand</button>
             } @else if (choice.targeting.alternateCostDiscardsHandCard) {
-              <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Discard a card that shares a color from hand</button>
+              <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Discard {{ choice.targeting.alternateCostExileHandLabel || 'a card' }} from hand</button>
             } @else {
               <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Exile {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card from hand</button>
             }
@@ -351,7 +351,7 @@
         @if (choice.targeting.alternateCostRevealsHandCard) {
           <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card in your hand to reveal for {{ choice.targeting.alternateCostCardName }}</span>
         } @else if (choice.targeting.alternateCostDiscardsHandCard) {
-          <span class="side-prompt-text">Select a card that shares a color in your hand to discard for {{ choice.targeting.alternateCostCardName }}</span>
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a card' }} in your hand to discard for {{ choice.targeting.alternateCostCardName }}</span>
         } @else {
           <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card in your hand to exile for {{ choice.targeting.alternateCostCardName }}</span>
         }

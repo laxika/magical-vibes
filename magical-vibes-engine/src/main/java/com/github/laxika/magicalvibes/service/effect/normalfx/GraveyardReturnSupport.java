@@ -621,6 +621,10 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        if (effect.shuffleGraveyardBeforeRandomSelection()) {
+            Collections.shuffle(graveyard, ThreadLocalRandom.current());
+        }
+
         List<Card> matchingCards = new ArrayList<>();
         for (Card card : graveyard) {
             if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
@@ -644,7 +648,9 @@ public class GraveyardReturnSupport {
                 graveyard.remove(randomCard);
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, randomCard);
 
-                boolean toBattlefield = effect.battlefieldIfCreatureElseHand()
+                boolean conditionalDestination = effect.battlefieldIfCreatureElseHand()
+                        || effect.battlefieldIfCreatureElseExile();
+                boolean toBattlefield = conditionalDestination
                         ? randomCard.hasType(CardType.CREATURE)
                         : effect.destination() != GraveyardChoiceDestination.HAND;
                 if (toBattlefield) {
@@ -659,6 +665,8 @@ public class GraveyardReturnSupport {
                                 effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking());
                     }
                     applyBattlefieldReturnRiders(gameData, controllerId, randomCard, effect);
+                } else if (effect.battlefieldIfCreatureElseExile()) {
+                    exileService.exileCard(gameData, controllerId, randomCard);
                 } else {
                     gameData.addCardToHand(controllerId, randomCard);
                 }
@@ -671,6 +679,8 @@ public class GraveyardReturnSupport {
         String playerName = gameData.playerIdToName.get(controllerId);
         String destText = effect.battlefieldIfCreatureElseHand()
                 ? "hand or the battlefield"
+                : effect.battlefieldIfCreatureElseExile()
+                ? "exile or the battlefield"
                 : effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
         GameLog.Builder builder = GameLog.builder().text(playerName + " returns ");
         appendCardList(builder, returnedCards);

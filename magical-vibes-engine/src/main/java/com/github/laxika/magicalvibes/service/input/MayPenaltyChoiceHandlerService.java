@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCard
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DrawCardUnlessPaysEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -111,6 +112,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler returnMatchingPermanentsUnlessOwnerPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
+    private final LifeSupport lifeSupport;
 
     /**
      * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
@@ -543,6 +545,7 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst().orElseThrow();
 
         UUID targetPlayerId = ability.controllerId();
+        boolean penaltyApplied = false;
 
         if (accepted) {
             ManaCost cost = new ManaCost("{" + effect.payAmount() + "}");
@@ -554,6 +557,7 @@ public class MayPenaltyChoiceHandlerService {
                 log.info("Game {} - {} pays {} to avoid life loss ({})", gameData.id, player.getUsername(), effect.payAmount(), ability.sourceCard().getName());
             } else {
                 // Can't pay — apply life loss
+                penaltyApplied = true;
                 if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                     gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                 } else {
@@ -576,6 +580,11 @@ public class MayPenaltyChoiceHandlerService {
                         player.getUsername() + " loses " + effect.lifeLoss() + " life. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
             }
+            penaltyApplied = true;
+        }
+
+        if (penaltyApplied && effect.controllerGainsLifeLost() && ability.sourceControllerId() != null) {
+            lifeSupport.applyGainLife(gameData, ability.sourceControllerId(), effect.lifeLoss());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

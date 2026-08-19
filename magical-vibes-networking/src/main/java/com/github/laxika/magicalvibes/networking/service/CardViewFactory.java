@@ -137,11 +137,18 @@ public class CardViewFactory {
         int alternateCostReturnCount = altCastOpt.flatMap(a -> a.getCost(ReturnPermanentsCost.class)).map(ReturnPermanentsCost::count).orElse(0);
         String alternateCostManaCost = altCastOpt.flatMap(a -> a.getCost(ManaCastingCost.class)).map(ManaCastingCost::manaCost).orElse(null);
         var exileHandCost = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class));
+        List<DiscardCardCastingCost> discardHandCosts = altCastOpt
+                .map(a -> a.getCosts(DiscardCardCastingCost.class)).orElse(List.of());
         var revealHandCost = altCastOpt.flatMap(a -> a.getCost(RevealCardsFromHandCastingCost.class));
         int alternateCostExileHandCount = exileHandCost.map(ExileCardsFromHandCastingCost::count)
-                .orElse(revealHandCost.isPresent() ? 1 : 0);
+                .orElse(!discardHandCosts.isEmpty() ? discardHandCosts.size()
+                        : revealHandCost.isPresent() ? 1 : 0);
         String alternateCostExileHandLabel = exileHandCost.map(ExileCardsFromHandCastingCost::label)
-                .orElseGet(() -> revealHandCost.map(RevealCardsFromHandCastingCost::label).orElse(null));
+                .orElseGet(() -> !discardHandCosts.isEmpty()
+                        ? String.join(" and ", discardHandCosts.stream()
+                                .map(cost -> cost.label() != null ? cost.label() : "a card").toList())
+                        : revealHandCost.map(RevealCardsFromHandCastingCost::label).orElse(null));
+        boolean alternateCostDiscardsHandCard = !discardHandCosts.isEmpty();
         boolean alternateCostRevealsHandCard = revealHandCost.isPresent();
         boolean graveyardCastRequiresDiscard = card.getCastingOption(GraveyardCast.class)
                 .flatMap(castingOption -> castingOption.getCost(DiscardCardCastingCost.class))
@@ -207,7 +214,7 @@ public class CardViewFactory {
                 alternateCostManaCost,
                 alternateCostExileHandCount,
                 alternateCostExileHandLabel,
-                false,
+                alternateCostDiscardsHandCard,
                 alternateCostRevealsHandCard,
                 graveyardCastRequiresDiscard,
                 graveyardAbilityViews,

@@ -780,7 +780,9 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
                     slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+                    slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     })
     private boolean handleAllyNontokenCreatureCreateTokenCopy(TriggerMatchContext match,
             CreateTokenCopyOfTargetPermanentEffect effect, TriggerContext ctx) {

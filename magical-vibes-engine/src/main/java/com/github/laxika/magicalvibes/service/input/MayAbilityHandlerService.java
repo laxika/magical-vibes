@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
@@ -585,6 +587,14 @@ public class MayAbilityHandlerService {
 
     private void handleResolutionTimeMayChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         gameData.resolvingMayEffectFromStack = false;
+        MayPayManaEffect anyPlayerMayPay = ability.effects().stream()
+                .filter(e -> e instanceof MayPayManaEffect mayPay && mayPay.payer() == MayPayPayer.ANY_PLAYER)
+                .map(MayPayManaEffect.class::cast)
+                .findFirst().orElse(null);
+        if (anyPlayerMayPay != null) {
+            handleAnyPlayerMayPayChoice(gameData, player, accepted, ability);
+            return;
+        }
         RegisterDelayedCounterTriggerEffect dct = ability.effects().stream().filter(e -> e instanceof RegisterDelayedCounterTriggerEffect).map(e -> (RegisterDelayedCounterTriggerEffect) e).findFirst().orElse(null);
         if (dct != null) { gameData.pendingEffectResolutionEntry = null; gameData.pendingEffectResolutionIndex = 0; mayMiscHandlerService.handleOpeningHandDelayedCounterTrigger(gameData, player, accepted, ability, dct); return; }
         RegisterDelayedManaTriggerEffect dmt = ability.effects().stream().filter(e -> e instanceof RegisterDelayedManaTriggerEffect).map(e -> (RegisterDelayedManaTriggerEffect) e).findFirst().orElse(null);
@@ -819,7 +829,53 @@ public class MayAbilityHandlerService {
         if (ability.effects().isEmpty()) return null;
         CardEffect first = ability.effects().getFirst();
         if (first instanceof MayEffect may) { return may.wrapped(); }
+        if (first instanceof MayPayManaEffect mayPay) { return mayPay.wrapped(); }
         return first;
+    }
+
+    private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,
+                                             PendingMayAbility ability) {
+        if (accepted && ability.manaCost() != null) {
+            ManaCost cost = new ManaCost(ability.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
+                gameData.anyPlayerMayPayManaRemainingPlayers.clear();
+                gameData.resolvedMayAccepted = true;
+                resumeAfterResolutionTimeMayChoice(gameData);
+                return;
+            }
+        }
+
+        if (!gameData.anyPlayerMayPayManaRemainingPlayers.isEmpty()) {
+            UUID next = gameData.anyPlayerMayPayManaRemainingPlayers.removeFirst();
+            gameData.resolvingMayEffectFromStack = true;
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    ability.sourceCard(), next, ability.effects(), ability.description(), ability.targetCardId(),
+                    ability.manaCost(), ability.sourcePermanentId(), ability.tapPermanentsCost(),
+                    ability.lifeCost(), ability.additionalLifeCost(), ability.attackedTargetId(),
+                    ability.activePlayerId(), ability.choicePlayerId(), ability.sourcePermanentSnapshot(),
+                    ability.sourceControllerId(), ability.triggeringCardId(), ability.eventValue()));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.anyPlayerMayPayManaRemainingPlayers.clear();
+        gameData.resolvedMayAccepted = false;
+        resumeAfterResolutionTimeMayChoice(gameData);
+    }
+
+    private void resumeAfterResolutionTimeMayChoice(GameData gameData) {
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void setUpSelfTargetIfNeeded(GameData gameData, PendingMayAbility ability, StackEntry pendingEntry, CardEffect innerEffect) {

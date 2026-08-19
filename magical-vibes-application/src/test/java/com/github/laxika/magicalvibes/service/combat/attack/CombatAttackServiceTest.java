@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JackalFamiliar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.cards.k.KeldonBerserker;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
@@ -85,6 +86,18 @@ class CombatAttackServiceTest extends BaseCardTest {
 
     private CombatResult declare(List<Integer> attackerIndices) {
         return declare(attackerIndices, null);
+    }
+
+    @Test
+    @DisplayName("An attack trigger gated by at most zero matching permanents is skipped when not met")
+    void skipsAtMostPermanentAttackTriggerWhenConditionIsNotMet() {
+        addCreatureReady(player1, new KeldonBerserker());
+        harness.addToBattlefield(player1, new Forest());
+        enterDeclareAttackers();
+
+        gs.declareAttackers(gd, player1, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

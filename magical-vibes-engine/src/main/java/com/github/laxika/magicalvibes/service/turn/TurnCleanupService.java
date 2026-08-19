@@ -204,6 +204,7 @@ public class TurnCleanupService {
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
+        gameData.turnSourceDamageRedirectToControllerShields.clear();
         gameData.playerNextDamageRedirectShields.clear();
         gameData.playerNextInstantOrSorceryDamageRedirectShields.clear();
         gameData.sourceNextCombatDamageToOpponentRedirectShields.clear();

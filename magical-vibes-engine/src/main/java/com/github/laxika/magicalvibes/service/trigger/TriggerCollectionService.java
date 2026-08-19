@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffec
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.LeavingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -5413,12 +5414,17 @@ public class TriggerCollectionService {
             if (perm.getId().equals(leavingId)) return;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD)) {
+                CardEffect resolved = effect;
+                if (effect instanceof LeavingCreatureNameAwareEffect aware) {
+                    if (leavingPermanent.getCard().isToken()) continue;
+                    resolved = aware.boundToLeavingCreatureName(leavingPermanent.getCard().getName());
+                }
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(List.of(resolved)),
                         null,
                         perm.getId()
                 ));

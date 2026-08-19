@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
@@ -1260,6 +1261,7 @@ public class SpellCastingService {
         if (imposedSacrificePermanentIds == null) imposedSacrificePermanentIds = List.of();
         if (beholdPermanentIds == null) beholdPermanentIds = List.of();
         if (beholdHandCardIndices == null) beholdHandCardIndices = List.of();
+        if (discardHandCardIndices == null) discardHandCardIndices = List.of();
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -1287,6 +1289,21 @@ public class SpellCastingService {
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class)
                         .flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
                         .isPresent();
+        List<DiscardCardCastingCost> alternateDiscardCosts = !fromGraveyard
+                ? handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class)
+                        .map(a -> a.getCosts(DiscardCardCastingCost.class))
+                        .orElse(List.of())
+                : List.of();
+        boolean hasDiscardHandAlternateCost = !alternateDiscardCosts.isEmpty();
+        List<Integer> alternateDiscardHandCardIndices = List.of();
+        int additionalAlternateDiscardCount = Math.max(0, alternateDiscardCosts.size() - 1);
+        if (additionalAlternateDiscardCount > 0
+                && (forceAlternateCost || discardHandCardIndex != null || sharedColorDiscardHandCardIndex != null)) {
+            int splitIndex = Math.min(additionalAlternateDiscardCount, discardHandCardIndices.size());
+            alternateDiscardHandCardIndices = List.copyOf(discardHandCardIndices.subList(0, splitIndex));
+            discardHandCardIndices = List.copyOf(discardHandCardIndices.subList(splitIndex,
+                    discardHandCardIndices.size()));
+        }
         boolean hasBestowCost = !fromGraveyard
                 && handEarly.get(cardIndex).getCastingOption(BestowCast.class).isPresent();
         boolean usingBestowCost = hasBestowCost && (forceAlternateCost || targetId != null);
@@ -1295,9 +1312,13 @@ public class SpellCastingService {
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
                 && castingCostService.hasSharedColorDiscardAlternativeCostFromBattlefield(
                         gameData, playerId, handEarly.get(cardIndex));
+        Integer alternateDiscardHandCardIndex = hasDiscardHandAlternateCost
+                ? discardHandCardIndex != null ? discardHandCardIndex : sharedColorDiscardHandCardIndex
+                : null;
         boolean usingAlternateCost = usingBestowCost || forceAlternateCost
                 || (!alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction)
                 || (hasExileHandAlternateCost && discardHandCardIndex != null)
+                || alternateDiscardHandCardIndex != null
                 || usingSharedColorDiscardAlternativeCost;
 
         // Handle playing a land from graveyard (e.g. via Crucible of Worlds)
@@ -1651,6 +1672,9 @@ public class SpellCastingService {
                 validateExileFromHandAlternateCost(gameData, playerId, card, exileHandCost.get(),
                         discardHandCardIndex, cardIndex, effectiveXValue);
             }
+
+            validateAlternateDiscardCosts(gameData, playerId, card, alternateDiscardCosts,
+                    alternateDiscardHandCardIndex, alternateDiscardHandCardIndices, cardIndex);
 
             var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
             if (revealHandCost.isPresent()) {
@@ -2227,10 +2251,12 @@ public class SpellCastingService {
                     payBestowCastingCost(gameData, player, card, targetingTax);
                 } else if (usingSharedColorDiscardAlternativeCost) {
                     paySharedColorDiscardAlternativeCost(gameData, player, card,
-                            sharedColorDiscardHandCardIndex, cardIndex);
+                    sharedColorDiscardHandCardIndex, cardIndex);
                 } else {
                     payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds,
-                            discardHandCardIndex, cardIndex, manaCostX);
+                            hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
+                            alternateDiscardHandCardIndices,
+                            cardIndex, manaCostX);
                 }
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
             } else {
@@ -2444,10 +2470,12 @@ public class SpellCastingService {
                     payBestowCastingCost(gameData, player, card, targetingTax);
                 } else if (usingSharedColorDiscardAlternativeCost) {
                     paySharedColorDiscardAlternativeCost(gameData, player, card,
-                            sharedColorDiscardHandCardIndex, cardIndex);
+                    sharedColorDiscardHandCardIndex, cardIndex);
                 } else {
                     payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds,
-                            discardHandCardIndex, cardIndex, resolvedXValue);
+                            hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
+                            alternateDiscardHandCardIndices,
+                            cardIndex, resolvedXValue);
                 }
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
             } else {
@@ -5045,9 +5073,11 @@ public class SpellCastingService {
                                  boolean sourceFreeCast) {
         if (sourceFreeCast
                 && !castingPermissionService.consumeFreeCastFromExiledWithSource(
-                gameData, playerId, exileCardId)) {
+                        gameData, playerId, exileCardId)) {
             throw new IllegalStateException("Exile cast permission is no longer available");
         }
+        gameData.clearDelayedActions(ReturnExiledCardToHandAtNextEndStep.class,
+                action -> action.cardId().equals(exileCardId));
         gameData.removeFromExile(exileCardId);
         gameData.recordCardPlayedFromExile(playerId);
     }
@@ -6629,10 +6659,11 @@ public class SpellCastingService {
     }
 
     private void payAlternateCastingCost(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds,
-                                         Integer discardHandCardIndex, int spellCardIndex, int xValue) {
+                                         Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                                         int spellCardIndex, int xValue) {
         gameData.addSpellCastManaSpent(card.getId(),
                 computeAlternateCastingManaPayment(gameData, player, card, sacrificePermanentIds,
-                        discardHandCardIndex, spellCardIndex, xValue));
+                        discardHandCardIndex, discardHandCardIndices, spellCardIndex, xValue));
     }
 
     private void paySharedColorDiscardAlternativeCost(GameData gameData, Player player, Card card,
@@ -6690,7 +6721,8 @@ public class SpellCastingService {
     }
 
     private int computeAlternateCastingManaPayment(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds,
-                                                   Integer discardHandCardIndex, int spellCardIndex, int xValue) {
+                                                   Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                                                   int spellCardIndex, int xValue) {
         AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
                 .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
         UUID playerId = player.getId();
@@ -6794,6 +6826,27 @@ public class SpellCastingService {
                     gameData.id, player.getUsername(), toExile.getName());
         }
 
+        List<AlternateDiscardSelection> discardSelections = validateAlternateDiscardCosts(
+                gameData, playerId, card, altCast.getCosts(DiscardCardCastingCost.class),
+                discardHandCardIndex, discardHandCardIndices, spellCardIndex);
+        discardSelections = new ArrayList<>(discardSelections);
+        discardSelections.sort((left, right) -> Integer.compare(right.handIndex(), left.handIndex()));
+        List<Card> hand = gameData.playerHands.get(playerId);
+        for (AlternateDiscardSelection selection : discardSelections) {
+            int effectiveIndex = validateDiscardFromHandAlternateCost(gameData, playerId, card,
+                    selection.cost(), selection.handIndex(), spellCardIndex);
+            Card toDiscard = hand.remove(effectiveIndex);
+            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " discards ")
+                    .card(toDiscard)
+                    .text(" from their hand for ")
+                    .card(card)
+                    .text(".")
+                    .build());
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+        }
+
         var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
         if (revealHandCost.isPresent()) {
             if (revealHandCost.get().revealEntireHand()) {
@@ -6888,6 +6941,63 @@ public class SpellCastingService {
             throw new IllegalStateException("Exiled card must have mana value " + xValue);
         }
         return spellStillInHand ? discardHandCardIndex : effectiveIndex;
+    }
+
+    private List<AlternateDiscardSelection> validateAlternateDiscardCosts(
+            GameData gameData, UUID playerId, Card card, List<DiscardCardCastingCost> costs,
+            Integer firstHandCardIndex, List<Integer> additionalHandCardIndices, int spellCardIndex) {
+        if (costs.isEmpty()) {
+            return List.of();
+        }
+        List<Integer> handCardIndices = new ArrayList<>();
+        if (firstHandCardIndex != null) {
+            handCardIndices.add(firstHandCardIndex);
+        }
+        if (additionalHandCardIndices != null) {
+            handCardIndices.addAll(additionalHandCardIndices);
+        }
+        if (handCardIndices.size() != costs.size()
+                || handCardIndices.stream().distinct().count() != handCardIndices.size()) {
+            throw new IllegalStateException("Must choose one card for each discard cost to cast " + card.getName());
+        }
+        List<AlternateDiscardSelection> selections = new ArrayList<>();
+        for (int i = 0; i < costs.size(); i++) {
+            int handCardIndex = handCardIndices.get(i);
+            validateDiscardFromHandAlternateCost(gameData, playerId, card, costs.get(i),
+                    handCardIndex, spellCardIndex);
+            selections.add(new AlternateDiscardSelection(costs.get(i), handCardIndex));
+        }
+        return selections;
+    }
+
+    private int validateDiscardFromHandAlternateCost(GameData gameData, UUID playerId, Card card,
+                                                    DiscardCardCastingCost cost,
+                                                    Integer discardHandCardIndex, int spellCardIndex) {
+        String label = cost.label() != null ? cost.label() : "a card";
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (discardHandCardIndex == null || discardHandCardIndex == spellCardIndex || hand == null) {
+            throw new IllegalStateException("Must discard " + label + " from your hand to cast " + card.getName());
+        }
+        boolean spellStillInHand = spellCardIndex >= 0 && spellCardIndex < hand.size()
+                && hand.get(spellCardIndex) == card;
+        int effectiveIndex = (!spellStillInHand && spellCardIndex >= 0 && discardHandCardIndex > spellCardIndex)
+                ? discardHandCardIndex - 1
+                : discardHandCardIndex;
+        if (spellStillInHand && (discardHandCardIndex < 0 || discardHandCardIndex >= hand.size())) {
+            throw new IllegalStateException("Must discard " + label + " from your hand to cast " + card.getName());
+        }
+        if (!spellStillInHand && (effectiveIndex < 0 || effectiveIndex >= hand.size())) {
+            throw new IllegalStateException("Must discard " + label + " from your hand to cast " + card.getName());
+        }
+        Card toDiscard = hand.get(spellStillInHand ? discardHandCardIndex : effectiveIndex);
+        if (cost.predicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(toDiscard, cost.predicate(), toDiscard.getId())) {
+            throw new IllegalStateException("Discarded card must be " + label);
+        }
+        return spellStillInHand ? discardHandCardIndex : effectiveIndex;
+    }
+
+    private record AlternateDiscardSelection(DiscardCardCastingCost cost, int handIndex) {
     }
 
     private int validateRevealFromHandAlternateCost(GameData gameData, UUID playerId, Card card,

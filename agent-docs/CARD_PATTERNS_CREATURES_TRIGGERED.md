@@ -1,5 +1,9 @@
 # Card Patterns: Triggered Creatures
 
+| Nontoken creature enters → controller creates copy; nontoken creature leaves → exile same-name tokens; source leaves → exile its created tokens | `d/DualNature.java` | ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD `TriggeringCardConditionalEffect(CardNotPredicate(CardIsTokenPredicate), CreateTokenCopyOfTargetPermanentEffect.trackedForTargetController())` + ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD `ExileTokensWithSameNameAsLeavingCreatureEffect()` + ON_SELF_LEAVES_BATTLEFIELD `ExileTokensCreatedWithSourceEffect()` |
+
+| Each player's upkeep: active player mills and creates tokens by milled mana value | `i/InfernalGenesis.java` | EACH_UPKEEP_TRIGGERED `MillActivePlayerAndCreateTokensByManaValueEffect(CreateTokenEffect)` — uses the active player captured on the trigger entry, creates under that player's control, and creates nothing when the milled card has mana value 0 |
+
 | Same-name graveyard instant/sorcery cast on hand spell | `h/HarnessTheStorm.java` | ON_CONTROLLER_CASTS_SPELL `CastSameNameCardFromGraveyardOnSpellCastEffect()` — accepts only an instant or sorcery cast from hand, chooses the matching controller-graveyard card as the trigger is queued, then the existing graveyard-cast effect offers its normal-cost cast |
 | Attack: tap any number of creatures for self-boost | `l/LedevChampion.java` | `ON_ATTACK TapCreaturesBoostSelfEffect()` — controller chooses any number of untapped creatures they control at resolution; the source gets +1/+1 until end of turn per creature tapped |
 

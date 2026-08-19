@@ -164,6 +164,7 @@ public enum CardSubtype {
     SAPROLING("Saproling"),
     TREEFOLK("Treefolk"),
     TRILOBITE("Trilobite"),
+    TURTLE("Turtle"),
     TROLL("Troll"),
     MASTICORE("Masticore"),
     DINOSAUR("Dinosaur"),

@@ -385,6 +385,8 @@ public class GameData {
      * declines (the pending ability's {@code controllerId} is the deciding player, not the source).
      */
     public UUID forcedCostOrElseSourceControllerId;
+    /** MayPayManaEffect ({@code ANY_PLAYER}): players still to be offered the payment in APNAP order. */
+    public final List<UUID> anyPlayerMayPayManaRemainingPlayers = new ArrayList<>();
     /**
      * EachPlayerTakesDamageUnlessPays: players still to be offered the pay-or-take-damage prompt
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
@@ -742,6 +744,9 @@ public class GameData {
     public final List<CreatureDamageRedirectShield> creatureDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Saving Grace: redirect all damage this turn dealt to a protected player or their permanents onto a fixed creature (any source, unlimited). */
     public final List<TurnDamageRedirectToCreatureShield> turnDamageRedirectToCreatureShields = Collections.synchronizedList(new ArrayList<>());
+    /** Mirror Strike: redirect all combat damage this turn from a chosen source to the protected player onto its controller. */
+    public final List<TurnSourceDamageRedirectToControllerShield> turnSourceDamageRedirectToControllerShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed permanent (any source). */
     public final List<PlayerNextDamageRedirectShield> playerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** One-shot redirection shields (General's Regalia): the next damage event from a chosen source
@@ -3088,6 +3093,7 @@ public class GameData {
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
+        copy.turnSourceDamageRedirectToControllerShields.addAll(this.turnSourceDamageRedirectToControllerShields);
         copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
         copy.playerSourceNextDamageRedirectShields.addAll(this.playerSourceNextDamageRedirectShields);
         copy.playerNextInstantOrSorceryDamageRedirectShields.addAll(this.playerNextInstantOrSorceryDamageRedirectShields);
@@ -3310,6 +3316,7 @@ public class GameData {
         copy.tariffRemainingPlayers.addAll(this.tariffRemainingPlayers);
         copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
+        copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
@@ -3348,6 +3355,12 @@ public class GameData {
                 this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChoiceMade;
         copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId =
                 this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId;
+        copy.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume =
+                this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume;
+        copy.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade =
+                this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
+        copy.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId =
+                this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId;
         copy.graveyardTargetOperation.resolutionTimeForgottenLoreResume =
                 this.graveyardTargetOperation.resolutionTimeForgottenLoreResume;
         copy.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume =

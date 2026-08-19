@@ -362,6 +362,8 @@ export class TargetingChoiceService {
   selectingAlternateCostHandCard = false;
   /** Hand index to exile when confirming an exile-from-hand alternate cast (pre-removal index). */
   private pendingAlternateExileHandIndex: number | null = null;
+  private pendingAlternateHandCardIndices: number[] = [];
+  private pendingAlternateHandCardDiscards = false;
 
   choosingBehold = false;
   selectingBeholdPermanent = false;
@@ -1226,15 +1228,22 @@ export class TargetingChoiceService {
       targetId
     };
     if (this.pendingAlternateExileHandIndex != null) {
-      if (this.alternateCostDiscardsHandCard) {
-        msg.sharedColorDiscardHandCardIndex = this.pendingAlternateExileHandIndex;
+      const alternateHandCardIndices = [this.pendingAlternateExileHandIndex,
+        ...this.pendingAlternateHandCardIndices];
+      if (this.pendingAlternateHandCardDiscards || this.alternateCostDiscardsHandCard) {
+        msg.sharedColorDiscardHandCardIndex = alternateHandCardIndices[0];
+        if (alternateHandCardIndices.length > 1) {
+          msg.discardHandCardIndices = alternateHandCardIndices.slice(1);
+        }
       } else {
-        msg.discardHandCardIndex = this.pendingAlternateExileHandIndex;
+        msg.discardHandCardIndex = alternateHandCardIndices[0];
       }
       if (this.gameSignal()?.hand?.[cardIndex]?.keywords?.includes('MORPH')) {
         msg.morph = true;
       }
       this.pendingAlternateExileHandIndex = null;
+      this.pendingAlternateHandCardIndices = [];
+      this.pendingAlternateHandCardDiscards = false;
     }
     if (this.pendingGraveyardCastDiscardHandIndex != null) {
       msg.discardHandCardIndex = this.pendingGraveyardCastDiscardHandIndex;
@@ -2339,12 +2348,19 @@ export class TargetingChoiceService {
     this.resetAlternateCostState();
   }
 
-  /** Hand-card click while paying an exile-from-hand alternate casting cost. */
+  /** Hand-card click while paying an exile- or discard-from-hand alternate casting cost. */
   selectAlternateCostHandCard(handIndex: number): void {
     if (!this.selectingAlternateCostHandCard) return;
     if (handIndex === this.alternateCostCardIndex) return;
+    if (this.pendingAlternateHandCardIndices.includes(handIndex)) return;
     const spellIndex = this.alternateCostCardIndex;
-    this.pendingAlternateExileHandIndex = handIndex;
+    this.pendingAlternateHandCardIndices.push(handIndex);
+    const requiredHandCardCount = this.alternateCostDiscardsHandCard
+      ? Math.max(1, this.alternateCostExileHandCount) : 1;
+    if (this.pendingAlternateHandCardIndices.length < requiredHandCardCount) return;
+    this.pendingAlternateExileHandIndex = this.pendingAlternateHandCardIndices[0] ?? handIndex;
+    this.pendingAlternateHandCardIndices = this.pendingAlternateHandCardIndices.slice(1);
+    this.pendingAlternateHandCardDiscards = this.alternateCostDiscardsHandCard;
     this.selectingAlternateCostHandCard = false;
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
@@ -2416,6 +2432,8 @@ export class TargetingChoiceService {
     this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
     this.pendingAlternateExileHandIndex = null;
+    this.pendingAlternateHandCardIndices = [];
+    this.pendingAlternateHandCardDiscards = false;
   }
 
   toggleExileCounterCostPermanent(permanentId: string): void {

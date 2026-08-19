@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
+import com.github.laxika.magicalvibes.model.TurnSourceDamageRedirectToControllerShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
@@ -283,7 +284,9 @@ public class DamagePreventionService {
                         gameData, gameQueryService.findPermanentController(gameData, permanent.getId()), damage);
                 if (damage <= 0) return 0;
             }
-            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof PreventAllDamageEffect
+                            && !permanent.isStaticEffectSuppressed(e.getClass()))) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
@@ -1002,6 +1005,14 @@ public class DamagePreventionService {
      * @return the remaining damage after redirection (0 if a shield matched)
      */
     public int applyCreatureRedirectShields(GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId, int damage) {
+        return applyCreatureRedirectShields(gameData, protectedPermanentId, sourcePermanentId, damage, false);
+    }
+
+    /**
+     * Checks creature-specific damage redirect shields, optionally restricting them to combat damage.
+     */
+    public int applyCreatureRedirectShields(GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId,
+                                            int damage, boolean combatDamage) {
         // No isDamagePreventable check — this is redirection (replacement), not prevention.
         if (damage <= 0 || protectedPermanentId == null
                 || gameData.creatureDamageRedirectShields.isEmpty()) return damage;
@@ -1013,6 +1024,7 @@ public class DamagePreventionService {
         while (it.hasNext() && remaining > 0) {
             CreatureDamageRedirectShield shield = it.next();
             if (!shield.protectedPermanentId().equals(protectedPermanentId)) continue;
+            if (shield.combatOnly() && !combatDamage) continue;
             // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
             if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
 
@@ -1242,6 +1254,32 @@ public class DamagePreventionService {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null || !gameQueryService.isCreature(gameData, target)) continue;
             gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(protectedPlayerId, null, damage, targetId));
+            return 0;
+        }
+        return damage;
+    }
+
+    /** Redirects combat damage from a chosen source to a protected player onto that source's controller. */
+    public int applyTurnSourceDamageRedirectToController(GameData gameData, UUID protectedPlayerId,
+                                                         UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || protectedPlayerId == null || sourcePermanentId == null
+                || gameData.turnSourceDamageRedirectToControllerShields.isEmpty()) {
+            return damage;
+        }
+
+        for (TurnSourceDamageRedirectToControllerShield shield
+                : gameData.turnSourceDamageRedirectToControllerShields) {
+            if (!shield.protectedPlayerId().equals(protectedPlayerId)
+                    || !shield.sourcePermanentId().equals(sourcePermanentId)) {
+                continue;
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+            if (controllerId == null || !gameData.playerIds.contains(controllerId)
+                    || controllerId.equals(protectedPlayerId)) {
+                continue;
+            }
+            gameData.pendingSourceRedirectDamage.add(
+                    new SourceDamageRedirectShield(protectedPlayerId, sourcePermanentId, damage, controllerId));
             return 0;
         }
         return damage;

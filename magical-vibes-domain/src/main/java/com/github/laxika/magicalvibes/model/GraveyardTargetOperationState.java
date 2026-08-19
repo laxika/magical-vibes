@@ -59,6 +59,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenEachOpponentLosesLifeChoiceMade;
     /** The card chosen by the optional filtered exile choice, or {@code null} for decline. */
     public UUID resolutionTimeExileThenEachOpponentLosesLifeChosenCardId;
+    /** Resolution-time land exile followed by a target-creature counter placement. */
+    public boolean resolutionTimeExileThenPutCounterOnTargetCreatureResume;
+    /** Whether the land-exile choice has been answered. */
+    public boolean resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
+    /** The land chosen by the resolution-time exile choice, or {@code null} for decline. */
+    public UUID resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore). When set,
      * {@code GraveyardChoiceHandlerService.handleGraveyardCardChosen} only records the chosen card on

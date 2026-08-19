@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "215")
+@CardRegistration(set = "PCY", collectorNumber = "100")
 public class RidgelineRager extends Card {
 
     public RidgelineRager() {

@@ -596,6 +596,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId =
+                    cardIds.isEmpty() ? null : cardIds.getFirst();
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Resolution-time "exile up to one …" mid-resolution choices (Grixis Sojourners exile-only,
         // God-Pharaoh's Gift exile+4/4 black Zombie token copy with haste until EOT): the choice was
         // begun mid-resolution, so complete the effect and resume the paused ability rather than

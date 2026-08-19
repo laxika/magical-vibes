@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
+import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
@@ -100,6 +101,7 @@ public class CombatBlockService {
     private final GameLogService gameLogService;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
+    private final CombatTapCostService combatTapCostService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GraveyardTargetingService graveyardTargetingService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
@@ -113,7 +115,8 @@ public class CombatBlockService {
         BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, battlefield);
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            if (blockLegalityService.canBlock(blockContext, battlefield.get(i))) {
+            if (blockLegalityService.canBlock(blockContext, battlefield.get(i))
+                    && combatTapCostService.canPayBlockCost(gameData, battlefield.get(i))) {
                 indices.add(i);
             }
         }
@@ -361,6 +364,12 @@ public class CombatBlockService {
         validateMustBlockIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
 
+        List<Permanent> declaredBlockers = blockerAssignments.stream()
+                .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
+                .distinct()
+                .toList();
+        combatTapCostService.validateBlockCosts(gameData, defenderId, attackerBattlefield, declaredBlockers);
+
         // Block tax (e.g. Hipparion): the block is legal only if its additional cost can be paid.
         if (blockTaxTotal > 0) {
             ManaPool pool = gameData.playerManaPools.get(defenderId);
@@ -392,6 +401,8 @@ public class CombatBlockService {
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " pays " + blockLifeTaxTotal + " life to declare blockers."));
         }
+
+        combatTapCostService.payBlockCosts(gameData, defenderId, attackerBattlefield, declaredBlockers);
 
         // Mark creatures as blocking, and record turn-scoped combat-block opponent subtypes so
         // "target creature that blocked or was blocked by a [subtype] this turn" spells (Time to
@@ -1687,6 +1698,9 @@ public class CombatBlockService {
             if (effect instanceof CanBlockAnyNumberOfCreaturesEffect) {
                 return Integer.MAX_VALUE;
             }
+        }
+        if (gameQueryService.hasAuraWithEffect(gameData, creature, CanBlockAnyNumberOfCreaturesEffect.class)) {
+            return Integer.MAX_VALUE;
         }
 
         // One-shot "can block an additional creature this turn" grants (e.g. Act of Heroism).

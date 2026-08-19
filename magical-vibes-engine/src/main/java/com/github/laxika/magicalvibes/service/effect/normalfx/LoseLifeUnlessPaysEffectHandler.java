@@ -21,6 +21,7 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,14 +51,23 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
                 log.info("Game {} - {} loses {} life (can't pay {}, {})",
                         gameData.id, playerName, e.lifeLoss(), e.payAmount(), entry.getCard().getName());
             }
+            applyLifeGainIfConfigured(gameData, entry, e);
             return;
         }
 
         // Can pay — ask the target player via the may ability system
         String prompt = "Pay {" + e.payAmount() + "}? If you don't, you lose " + e.lifeLoss() + " life. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(), targetPlayerId, List.of(e), prompt
+                entry.getCard(), targetPlayerId, List.of(e), prompt,
+                null, null, null, null, 0, 0, null, null, null, null,
+                entry.getControllerId(), null, 0
         ));
-    
+    }
+
+    private void applyLifeGainIfConfigured(GameData gameData, StackEntry entry,
+                                           LoseLifeUnlessPaysEffect effect) {
+        if (effect.controllerGainsLifeLost()) {
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), effect.lifeLoss());
+        }
     }
 }
