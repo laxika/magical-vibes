@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost;
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -1905,6 +1906,26 @@ class StepTriggerServiceTest {
             verify(lifeSupport).applyGainLife(
                     gd, player1Id, 4, "Spinal Embrace", sourceCard, StackEntryType.TRIGGERED_ABILITY);
             assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStep.class)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Sacrifices a delayed target when its mana value is within the limit")
+        void sacrificesDelayedTargetWithinManaValueLimit() {
+            Card targetCard = createCardWithName("Target Creature");
+            Permanent target = new Permanent(targetCard);
+            gd.playerBattlefields.get(player1Id).add(target);
+            gd.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost(
+                    target.getId(), player1Id, 3));
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+            when(permanentRemovalService.removePermanentToGraveyard(gd, target)).thenReturn(true);
+
+            sut.handleEndStepTriggers(gd);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, target);
+            assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost.class))
+                    .isEmpty();
         }
 
         @Test

@@ -15,8 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -38,11 +39,23 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class CreatureControlService {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
+
+    @Autowired
+    public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
+                                  UnattachTriggerSupport unattachTriggerSupport) {
+        this.gameLogService = gameLogService;
+        this.gameQueryService = gameQueryService;
+        this.unattachTriggerSupport = unattachTriggerSupport;
+    }
+
+    public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService) {
+        this(gameLogService, gameQueryService, new UnattachTriggerSupport(gameLogService));
+    }
 
     /**
      * Creates a floating control effect giving {@code newControllerId} control of {@code target}
@@ -163,6 +176,7 @@ public class CreatureControlService {
         // becomes unattached.
         if (revertedToDefault && permanent.isAttached()
                 && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo(), current);
             permanent.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
             gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));

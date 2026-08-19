@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -1197,6 +1198,9 @@ public class TriggeredAbilityQueueService {
         }
         if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
             return targetedReturnEffect(sacrificeThen.thenEffect());
+        }
+        if (effect instanceof SacrificeSelfThenEffect sacrificeSelfThen) {
+            return targetedReturnEffect(sacrificeSelfThen.thenEffect());
         }
         return null;
     }

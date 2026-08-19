@@ -1456,10 +1456,12 @@ public class CardChoiceHandlerService {
         if (!equipSupport.canAttachEquipment(gameData, equipment, target)) {
             return;
         }
+        UUID oldAttachedTo = equipment.getAttachedTo();
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
+        equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
 
         gameLogService.append(gameData, GameLog.cardTextCard(
                 equipment.getCard(), " is now attached to ", target.getCard(), "."));

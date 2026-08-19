@@ -532,6 +532,13 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Each player chose creatures to keep whose total power is at most a fixed limit. */
+    record EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice(
+            UUID choosingPlayerId, int maxPower, java.util.List<UUID> remainingPlayerIds,
+            java.util.List<UUID> accumulatedKeepIds, String sourceName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Fade Away: the player selected creatures whose controllers will pay instead of sacrificing. */
     record FadeAwayKeep(UUID choosingPlayerId, java.util.List<UUID> creatureIds,
                         java.util.List<UUID> remainingPlayerIds,

@@ -54,10 +54,12 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
             return;
         }
 
+        var oldAttachedTo = equipment.getAttachedTo();
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
+        equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());

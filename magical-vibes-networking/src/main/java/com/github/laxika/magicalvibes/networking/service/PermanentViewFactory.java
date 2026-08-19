@@ -75,6 +75,14 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities,
+                staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding,
+                subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, staticRemovedKeywords,
+                losesAllAbilities, false, staticGrantedSupertypes, modifierLines, faceUpExiledWithCards,
+                faceDownExiledCount, staticName);
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(p.getUntilNextTurnKeywords());
         allKeywords.addAll(bonusKeywords);
@@ -106,6 +114,8 @@ public class PermanentViewFactory {
         if (losesAllAbilities) {
             cardView = stripCardActivatedAbilities(cardView);
             cardView = clearHasTapAbility(cardView);
+        } else if (losesAllNonManaAbilities) {
+            cardView = stripCardNonManaActivatedAbilities(cardView, p.getCard());
         }
         return new PermanentView(
                 p.getId(), cardView,
@@ -365,6 +375,22 @@ public class PermanentViewFactory {
             return cardView;
         }
         return cardView.toBuilder().activatedAbilities(List.of()).build();
+    }
+
+    private CardView stripCardNonManaActivatedAbilities(CardView cardView, Card card) {
+        List<ActivatedAbilityView> retained = new ArrayList<>();
+        List<ActivatedAbility> printed = card.getActivatedAbilities();
+        List<ActivatedAbilityView> views = cardView.activatedAbilities();
+        int printedCount = Math.min(printed.size(), views.size());
+        for (int i = 0; i < printedCount; i++) {
+            if (printed.get(i).isManaAbility()) {
+                retained.add(views.get(i));
+            }
+        }
+        if (views.size() > printedCount) {
+            retained.addAll(views.subList(printedCount, views.size()));
+        }
+        return cardView.toBuilder().activatedAbilities(retained).build();
     }
 
     private CardView applyStaticGrantedColors(CardView cardView, Permanent p, Set<CardColor> staticGrantedColors, boolean colorOverriding) {

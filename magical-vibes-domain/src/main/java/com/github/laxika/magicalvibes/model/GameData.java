@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -91,6 +92,8 @@ public class GameData {
     public final Set<UUID> playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who searched their own libraries this turn, including searches that found no card. */
     public final Set<UUID> playersWhoSearchedLibraryThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who have received the city's blessing for the rest of the game. */
+    public final Set<UUID> playersWithCityBlessing = ConcurrentHashMap.newKeySet();
     /** Players who played at least one card from exile this turn. */
     public final Set<UUID> playersWhoPlayedCardFromExileThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who investigated this turn. */
@@ -645,6 +648,8 @@ public class GameData {
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who, this turn, gain control of tokens that would be created under an opponent's control (Crafty Cutpurse). */
+    public final Set<UUID> playersGatheringTokensThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, exile creatures that would enter without having been cast (Hallowed Moonlight). */
     public final Set<UUID> playersExilingUncastEnteringCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, exile nontoken creatures that would enter without having been cast (Mistcaller). */
@@ -872,6 +877,9 @@ public class GameData {
     /** Card types each player can't cast this turn (e.g. Moonhold, Abeyance). Cleared at end of turn. */
     public final Map<UUID, Set<CardType>> playersCantCastSpellTypesThisTurn = new ConcurrentHashMap<>();
 
+    /** Card types each player can't cast during their next turn. Promoted when that turn begins. */
+    public final Map<UUID, Set<CardType>> playersCantCastSpellTypesNextTurn = new ConcurrentHashMap<>();
+
     /** Players who can't cast noncreature spells this turn (e.g. Aurelia's Fury). Cleared at end of turn. */
     public final Set<UUID> playersCantCastNoncreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -903,7 +911,7 @@ public class GameData {
 
     /** Player IDs that may cast spells of a given type as though they had flash until end of turn.
      *  Cleared at end of turn. */
-    public final Map<UUID, Set<CardType>> cardTypeFlashGrantsThisTurn = new ConcurrentHashMap<>();
+    public final Map<UUID, Set<CardPredicate>> cardTypeFlashGrantsThisTurn = new ConcurrentHashMap<>();
 
     /** Pending "the next spell of this type you cast this turn can be cast as though it had flash"
      *  grants (Quicken), keyed by player. Each list element is one unconsumed grant; a grant is
@@ -1003,6 +1011,9 @@ public class GameData {
 
     /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
     public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
+
+    /** Persistent "Whenever a creature you control enters, you may draw a card" triggers. */
+    public final Map<UUID, List<Card>> creatureEntersDrawSources = new ConcurrentHashMap<>();
 
     /** "At the beginning of each combat this turn, untap all creatures that attacked this turn" delayed triggers. */
     public final Map<UUID, List<Card>> untapAttackedCreaturesEachCombatThisTurnSources = new ConcurrentHashMap<>();
@@ -2265,15 +2276,23 @@ public class GameData {
 
     /** Adds an unlimited flash permission for spells of the given type until end of turn. */
     public void addCardTypeFlashGrant(UUID playerId, CardType cardType) {
+        addCardPredicateFlashGrant(playerId, new CardTypePredicate(cardType));
+    }
+
+    /** Adds an unlimited flash permission for spells matching the predicate until end of turn. */
+    public void addCardPredicateFlashGrant(UUID playerId, CardPredicate predicate) {
         cardTypeFlashGrantsThisTurn
                 .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet())
-                .add(cardType);
+                .add(predicate);
     }
 
     /** Returns true if the player may cast spells of the card's type as though they had flash. */
     public boolean hasCardTypeFlashGrant(UUID playerId, Card card) {
-        Set<CardType> grants = cardTypeFlashGrantsThisTurn.get(playerId);
-        return grants != null && grants.stream().anyMatch(card::hasType);
+        Set<CardPredicate> grants = cardTypeFlashGrantsThisTurn.get(playerId);
+        return grants != null && grants.stream()
+                .filter(CardTypePredicate.class::isInstance)
+                .map(CardTypePredicate.class::cast)
+                .anyMatch(grant -> card.hasType(grant.cardType()));
     }
 
     /**
@@ -3060,6 +3079,7 @@ public class GameData {
                 .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
+        copy.playersGatheringTokensThisTurn.addAll(this.playersGatheringTokensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
         copy.playersExilingUncastEnteringNontokenCreaturesThisTurn
                 .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
@@ -3158,6 +3178,7 @@ public class GameData {
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
+        copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
@@ -3491,6 +3512,8 @@ public class GameData {
         copy.playersWhoTappedLandForManaThisTurn.addAll(this.playersWhoTappedLandForManaThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastSpellTypesThisTurn.putAll(this.playersCantCastSpellTypesThisTurn);
+        this.playersCantCastSpellTypesNextTurn.forEach((k, v) ->
+                copy.playersCantCastSpellTypesNextTurn.put(k, new HashSet<>(v)));
         copy.playersCantCastNoncreatureSpellsThisTurn.addAll(this.playersCantCastNoncreatureSpellsThisTurn);
         copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);
         copy.playersCantActivateNonManaAbilitiesThisTurn.addAll(this.playersCantActivateNonManaAbilitiesThisTurn);
@@ -3510,6 +3533,8 @@ public class GameData {
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
+        this.creatureEntersDrawSources.forEach((playerId, cards) ->
+                copy.creatureEntersDrawSources.put(playerId, new ArrayList<>(cards)));
         this.untapAttackedCreaturesEachCombatThisTurnSources.forEach((playerId, cards) ->
                 copy.untapAttackedCreaturesEachCombatThisTurnSources.put(playerId, new ArrayList<>(cards)));
 

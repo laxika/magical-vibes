@@ -31,6 +31,7 @@ public class EquipSupport {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     public Permanent findEquipmentByCardId(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -61,6 +62,10 @@ public class EquipSupport {
 
     public void applySacrificeOnUnattachIfNeeded(GameData gameData, Permanent equipment,
                                                 UUID oldAttachedTo, UUID newAttachedTo) {
+        if (oldAttachedTo != null && !oldAttachedTo.equals(newAttachedTo)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, equipment, oldAttachedTo);
+        }
+
         boolean hasSacrificeOnUnattach = equipment.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);
 

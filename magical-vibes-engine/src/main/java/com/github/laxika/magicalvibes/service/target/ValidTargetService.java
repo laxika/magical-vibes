@@ -1245,6 +1245,12 @@ public class ValidTargetService {
      */
     private boolean matchesGraveyardEffectTypeFilter(GameData gameData, CardEffect effect, Card c,
                                                      UUID sourceCardId, UUID controllerId, int effectiveXValue) {
+        var declaredFilter = effect.targetSpec().graveyardCardPredicate().orElse(null);
+        if (declaredFilter != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                        c, declaredFilter, sourceCardId, gameData, controllerId)) {
+            return false;
+        }
         if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
             return c.hasType(CardType.CREATURE);
         } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect e) {

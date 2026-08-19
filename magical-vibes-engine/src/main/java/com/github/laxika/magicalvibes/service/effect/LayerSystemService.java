@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffec
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
@@ -1078,6 +1079,7 @@ public class LayerSystemService {
     /** Equal-timestamp tie-break within one source: lose-all, then keyword removals, then grants. */
     private static int abilityRemovalRank(CardEffect effect) {
         if (effect instanceof LosesAllAbilitiesEffect
+                || effect instanceof LosesAllNonManaAbilitiesEffect
                 || effect instanceof BecomeEnchantmentUntilCreatureSpellCastEffect) return 0;
         if (effect instanceof RemoveKeywordEffect) return 1;
         return 2;
@@ -1133,7 +1135,8 @@ public class LayerSystemService {
         if (state == null) {
             return false;
         }
-        return state.isPrintedAbilitiesRemoved() || (includeLoseAll && state.isLosesAllAbilities());
+        return state.isPrintedAbilitiesRemoved() || (includeLoseAll
+                && (state.isLosesAllAbilities() || state.isLosesAllNonManaAbilities()));
     }
 
     /**
@@ -2126,6 +2129,12 @@ public class LayerSystemService {
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
                     }
+                    case LosesAllNonManaAbilitiesEffect ignored -> {
+                        state.loseAllNonManaAbilities(instance.timestamp());
+                        board.clearGrantedEffects(target.permanent().getId());
+                        board.recordProvenance(target.permanent().getId(),
+                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
+                    }
                     case BecomeEnchantmentUntilCreatureSpellCastEffect ignored -> {
                         state.loseAllAbilities(instance.timestamp());
                         board.clearGrantedEffects(target.permanent().getId());
@@ -2194,6 +2203,11 @@ public class LayerSystemService {
                 board.clearGrantedEffects(target.permanent().getId());
                 touched = true;
             }
+            if (harvested.isLosesAllNonManaAbilities()) {
+                state.loseAllNonManaAbilities(instance.timestamp());
+                board.clearGrantedEffects(target.permanent().getId());
+                touched = true;
+            }
             for (Keyword removed : harvested.getRemovedKeywords()) {
                 state.removeKeyword(removed);
                 touched = true;
@@ -2204,7 +2218,8 @@ public class LayerSystemService {
             }
             board.recordProvenance(target.permanent().getId(),
                     ModifierLine.abilities(provenanceSourceName(instance), harvested.getKeywords(),
-                            harvested.getRemovedKeywords(), harvested.isLosesAllAbilities()));
+                            harvested.getRemovedKeywords(), harvested.isLosesAllAbilities()
+                                    || harvested.isLosesAllNonManaAbilities()));
             if (!harvested.getProtectionColors().isEmpty()) {
                 state.addProtectionColors(harvested.getProtectionColors());
                 if (!instance.source().permanent().getId().equals(target.permanent().getId())) {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M19", collectorNumber = "25")
 @CardRegistration(set = "GRN", collectorNumber = "21")
+@CardRegistration(set = "RIX", collectorNumber = "12")
 public class LuminousBonds extends Card {
 
     public LuminousBonds() {

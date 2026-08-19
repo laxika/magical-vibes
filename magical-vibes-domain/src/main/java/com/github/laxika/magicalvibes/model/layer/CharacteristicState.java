@@ -69,6 +69,10 @@ public class CharacteristicState {
     private boolean losesAllAbilities;
     /** CR 613.7 timestamp of the lose-all effect; only meaningful while {@link #losesAllAbilities}. */
     private long losesAllAbilitiesTimestamp;
+    /** True once a layer-6 effect has removed all non-mana abilities. */
+    private boolean losesAllNonManaAbilities;
+    /** Timestamp of the non-mana ability removal. */
+    private long losesAllNonManaAbilitiesTimestamp;
     /**
      * True once a land-type-setting effect (Blood Moon, Sea's Claim, ...) removed the object's
      * printed abilities as part of setting its land types (CR 305.7). Unlike
@@ -172,6 +176,8 @@ public class CharacteristicState {
         this.switchCount = source.switchCount;
         this.losesAllAbilities = source.losesAllAbilities;
         this.losesAllAbilitiesTimestamp = source.losesAllAbilitiesTimestamp;
+        this.losesAllNonManaAbilities = source.losesAllNonManaAbilities;
+        this.losesAllNonManaAbilitiesTimestamp = source.losesAllNonManaAbilitiesTimestamp;
         this.printedAbilitiesRemoved = source.printedAbilitiesRemoved;
     }
 
@@ -315,6 +321,20 @@ public class CharacteristicState {
         grantedStaticEffects.clear();
         this.losesAllAbilities = true;
         this.losesAllAbilitiesTimestamp = timestamp;
+    }
+
+    /**
+     * Applies an ability-removal effect that preserves activated mana abilities already present.
+     * Abilities granted by later timestamps are added normally by the layered pass.
+     */
+    public void loseAllNonManaAbilities(long timestamp) {
+        keywords.clear();
+        blockedKeywords.clear();
+        protectionColors.clear();
+        grantedActivatedAbilities.removeIf(ability -> !ability.isManaAbility());
+        grantedStaticEffects.clear();
+        this.losesAllNonManaAbilities = true;
+        this.losesAllNonManaAbilitiesTimestamp = timestamp;
     }
 
     /**

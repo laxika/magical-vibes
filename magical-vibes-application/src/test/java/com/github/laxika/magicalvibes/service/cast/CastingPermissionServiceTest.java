@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEf
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -621,6 +622,29 @@ class CastingPermissionServiceTest {
             gd.graveyardPlayPermissions.put(card.getId(), player1Id);
 
             assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("isGraveyardCastAvailable â€” cast-time condition")
+    class GraveyardCastCondition {
+
+        @Test
+        @DisplayName("Rejects a graveyard cast when its condition is not met")
+        void rejectsWhenConditionIsNotMet() {
+            GainedLifeThisTurn condition = new GainedLifeThisTurn();
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
+
+            assertThat(svc.isGraveyardCastAvailable(gd, player1Id, new GraveyardCast(condition))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Allows a graveyard cast when its condition is met")
+        void allowsWhenConditionIsMet() {
+            GainedLifeThisTurn condition = new GainedLifeThisTurn();
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(true);
+
+            assertThat(svc.isGraveyardCastAvailable(gd, player1Id, new GraveyardCast(condition))).isTrue();
         }
     }
 }

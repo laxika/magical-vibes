@@ -83,6 +83,7 @@ public enum CardSet {
     SET_KLD("KLD"),
     SET_AER("AER"),
     SET_XLN("XLN"),
+    SET_RIX("RIX"),
     SET_DOM("DOM"),
     SET_GRN("GRN"),
     SET_SOS("SOS"),

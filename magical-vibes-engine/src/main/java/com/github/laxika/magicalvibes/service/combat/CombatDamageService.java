@@ -349,7 +349,7 @@ public class CombatDamageService {
         processDelayedWatchedCreatureCombatDamageTriggers(gameData, state);
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
-        processAllyDealtDamageToCreatureReflectionTriggers(gameData, state);
+        processAllyDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
 
         // Process ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
         processDealtDamageTriggers(gameData, dealtDamageTriggerData);
@@ -742,10 +742,10 @@ public class CombatDamageService {
                             damagePreventableFrom(gameData, snap.damagePreventable(), atk));
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
-                // CR 510.1c: a creature that an effect made blocked without any creature blocking it
-                // (Dazzling Beauty) has nothing to assign its combat damage to, so it deals none.
+                // A creature made blocked without a creature blocking it deals no damage unless it
+                // has trample, which can assign all its damage to the defending player.
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()
-                        && !atk.isBlockedWithoutBlockers()) {
+                        && (!atk.isBlockedWithoutBlockers() || atkStats.trample())) {
                     int power = gameQueryService.applyCombatDamageMultiplier(gameData, atkStats.combatDamage(), atk, null);
                     accumulatePlayerDamage(gameData, atk, atkStats, power, defenderId,
                             unblockedDamageRedirectTarget, state);
@@ -1945,16 +1945,21 @@ public class CombatDamageService {
      * each source/target combat-damage pair. Each source creature that dealt damage to a creature
      * this step reflects that damage to the damaged creature's controller if a watcher listens.
      */
-    private void processAllyDealtDamageToCreatureReflectionTriggers(GameData gameData, CombatDamageState state) {
+    private void processAllyDealtDamageToCreatureReflectionTriggers(GameData gameData, CombatDamageState state,
+                                                                     Map<UUID, Permanent> damagedCreatureSnapshots) {
         for (var entry : state.combatDamageAmountsToCreatures.entrySet()) {
             Permanent source = entry.getKey();
             UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
             if (sourceControllerId == null) continue;
             for (var amountEntry : entry.getValue().entrySet()) {
                 UUID damagedCreatureControllerId = state.combatDamageTargetControllers.get(amountEntry.getKey());
+                Permanent damagedCreatureSnapshot = gameQueryService.findPermanentById(gameData, amountEntry.getKey());
+                if (damagedCreatureSnapshot == null) {
+                    damagedCreatureSnapshot = damagedCreatureSnapshots.get(amountEntry.getKey());
+                }
                 triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(
                         gameData, source, sourceControllerId, damagedCreatureControllerId,
-                        amountEntry.getKey(), amountEntry.getValue(), true);
+                        amountEntry.getKey(), damagedCreatureSnapshot, amountEntry.getValue(), true);
 
                 // Mangara's Equity: "…or a white creature you control". The damaged creature may have
                 // died to the damage; only surviving permanents can be filtered, which is enough —

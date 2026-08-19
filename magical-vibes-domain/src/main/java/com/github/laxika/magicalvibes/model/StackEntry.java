@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -247,6 +248,8 @@ public class StackEntry {
      * {@code StackResolutionService} and turned into +1/+1 counters by the as-enters replacement.
      */
     @Setter private int grantedBloodthirst;
+    /** Triggered abilities granted to the permanent as this spell enters the battlefield. */
+    private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
     /**
@@ -551,8 +554,18 @@ public class StackEntry {
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedBloodthirst = source.grantedBloodthirst;
+        source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
+                this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
+    }
+
+    public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
+        grantedTriggeredEffectsOnEntry.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(effect);
+    }
+
+    public Map<EffectSlot, List<CardEffect>> getGrantedTriggeredEffectsOnEntry() {
+        return grantedTriggeredEffectsOnEntry;
     }
 
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")

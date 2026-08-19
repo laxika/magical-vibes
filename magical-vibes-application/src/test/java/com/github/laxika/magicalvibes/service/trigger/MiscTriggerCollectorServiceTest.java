@@ -42,6 +42,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -835,7 +837,28 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_GAINS_LIFE — PutCounterOnEachControlledPermanentEffect =====
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — UntapPermanentsEffect")
+    class LifeGainUntapSelf {
+
+        @Test
+        @DisplayName("puts triggered ability on stack with the source permanent")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Famished Paladin");
+            var effect = new UntapPermanentsEffect(TapUntapScope.SELF);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
 
     @Nested
     @DisplayName("ON_CONTROLLER_GAINS_LIFE — PutCounterOnEachControlledPermanentEffect")

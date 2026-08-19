@@ -158,6 +158,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastSourceControllerLifeTotalPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -849,6 +850,13 @@ public class PredicateEvaluationService {
                     yield gameQueryService.powerForStaticFilter(permanent) >= powerAtLeastPredicate.minPower();
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) >= powerAtLeastPredicate.minPower();
+            }
+            case PermanentPowerAtLeastSourceControllerLifeTotalPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                yield gameQueryService.getEffectivePower(gameData, permanent)
+                        >= gameData.getLife(sourceControllerId);
             }
             case PermanentToughnessAtMostPredicate toughnessAtMostPredicate -> {
                 if (gameData == null) {
@@ -1856,7 +1864,13 @@ public class PredicateEvaluationService {
         } else {
             GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
             if (!staticBonus.losesAllAbilities() && !permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-                abilities.addAll(permanent.getCard().getActivatedAbilities());
+                if (staticBonus.losesAllNonManaAbilities()) {
+                    abilities.addAll(permanent.getCard().getActivatedAbilities().stream()
+                            .filter(AbilityActivationService::isManaAbility)
+                            .toList());
+                } else {
+                    abilities.addAll(permanent.getCard().getActivatedAbilities());
+                }
             }
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }

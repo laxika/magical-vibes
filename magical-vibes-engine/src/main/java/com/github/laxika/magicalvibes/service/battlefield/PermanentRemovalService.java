@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 
 /**
  * Handles removing permanents from the battlefield and moving them to their destination zones
@@ -68,6 +69,7 @@ public class PermanentRemovalService {
     private final UntapLockReleaseService untapLockReleaseService;
     private final AuraCopyService auraCopyService;
     private final CreatureControlService creatureControlService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -79,7 +81,8 @@ public class PermanentRemovalService {
                                    ExileService exileService,
                                    UntapLockReleaseService untapLockReleaseService,
                                    @Lazy AuraCopyService auraCopyService,
-                                   @Lazy CreatureControlService creatureControlService) {
+                                   @Lazy CreatureControlService creatureControlService,
+                                   UnattachTriggerSupport unattachTriggerSupport) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -91,6 +94,7 @@ public class PermanentRemovalService {
         this.untapLockReleaseService = untapLockReleaseService;
         this.auraCopyService = auraCopyService;
         this.creatureControlService = creatureControlService;
+        this.unattachTriggerSupport = unattachTriggerSupport;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -185,6 +189,7 @@ public class PermanentRemovalService {
             return;
         }
 
+        unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), controllerId);
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
@@ -795,7 +800,9 @@ public class PermanentRemovalService {
     private Optional<RemovedPermanentInfo> removeFromBattlefield(GameData gameData, Permanent target) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
+            if (battlefield != null && battlefield.contains(target)) {
+                unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
+                battlefield.remove(target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId));
             }
@@ -972,7 +979,7 @@ public class PermanentRemovalService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(leaving, " is exiled instead of being put into a graveyard."));
             } else if (graveyardService.addCardToGraveyard(
-                    gameData, ownerId, leaving, Zone.BATTLEFIELD, controllerId)) {
+                    gameData, ownerId, leaving, Zone.BATTLEFIELD, controllerId, target.getId())) {
                 wentToGraveyard = true;
             } else if (gameData.findExiledCard(leaving.getId()) != null) {
                 exiledFromBattlefield++;

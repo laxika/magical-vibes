@@ -273,10 +273,13 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
         if (equipment != null && creature != null
                 && equipSupport.canAttachEquipment(gameData, equipment, creature)) {
+            UUID oldAttachedTo = equipment.getAttachedTo();
             gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
+            equipSupport.applySacrificeOnUnattachIfNeeded(
+                    gameData, equipment, oldAttachedTo, creature.getId());
             gameLogService.append(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         }
         // Begun from a library-search resume (Stonehewer Giant) while the search's stack entry is

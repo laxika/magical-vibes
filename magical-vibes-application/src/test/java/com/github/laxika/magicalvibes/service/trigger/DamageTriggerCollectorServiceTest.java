@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -30,7 +31,9 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -948,6 +951,33 @@ class DamageTriggerCollectorServiceTest {
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+
+        @Test
+        @DisplayName("queues a target choice for a mandatory targeted effect")
+        void queuesTargetChoiceForTargetedEffect() {
+            Card sourceCard = createCard("Trapjaw Tyrant");
+            var effect = new ExileTargetPermanentUntilSourceLeavesEffect();
+            sourceCard.target(new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature"))
+                    .addEffect(EffectSlot.ON_DEALT_DAMAGE, effect);
+            Permanent damagedCreature = new Permanent(sourceCard);
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect),
+                    EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            assertThat(pending.controllerId()).isEqualTo(player1Id);
+            assertThat(pending.sourcePermanentId()).isEqualTo(damagedCreature.getId());
+            assertThat(pending.spellManaSpentX()).isEqualTo(2);
+            assertThat(pending.effects()).containsExactly(effect);
+            assertThat(pending.targetFilter()).isEqualTo(sourceCard.getTargetFilter());
         }
     }
 }

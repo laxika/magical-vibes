@@ -104,6 +104,7 @@ public sealed interface PermanentPredicate permits
         PermanentNotPredicate,
         PermanentOwnedBySourceControllerPredicate,
         PermanentPowerAtLeastPredicate,
+        PermanentPowerAtLeastSourceControllerLifeTotalPredicate,
         PermanentPowerAtMostControlledCreatureCountPredicate,
         PermanentPowerAtMostControlledSubtypeCountPredicate,
         PermanentPowerAtMostPredicate,

@@ -41,6 +41,7 @@ public class StaticBonusAccumulator {
     private int basePowerOverride;
     private int baseToughnessOverride;
     private boolean losesAllAbilities;
+    private boolean losesAllNonManaAbilities;
     /**
      * While {@code true}, layer 5/6 outputs (colors, keywords, keyword removals, ability loss,
      * protection, granted abilities/effects) are discarded: the CR 613 layered pass already
@@ -244,6 +245,15 @@ public class StaticBonusAccumulator {
         this.losesAllAbilities = losesAllAbilities;
     }
 
+    public boolean isLosesAllNonManaAbilities() {
+        return losesAllNonManaAbilities;
+    }
+
+    public void setLosesAllNonManaAbilities(boolean losesAllNonManaAbilities) {
+        if (layeredOutputsSuppressed) return;
+        this.losesAllNonManaAbilities = losesAllNonManaAbilities;
+    }
+
     /**
      * Builds a {@link StaticBonus} from this accumulator's state.
      *
@@ -258,7 +268,7 @@ public class StaticBonusAccumulator {
                 grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding,
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                 basePTOverridden, basePowerOverride, baseToughnessOverride, losesAllAbilities,
-                false, name);
+                losesAllNonManaAbilities, false, name);
     }
 }
 

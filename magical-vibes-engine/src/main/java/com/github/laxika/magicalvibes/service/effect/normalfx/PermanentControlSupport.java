@@ -157,7 +157,11 @@ public class PermanentControlSupport {
             }
         }
 
-        battlefieldEntryService.checkAllyTokenEntersTriggers(gameData, controllerId, createdIds.size());
+        UUID tokenControllerId = createdIds.isEmpty()
+                ? controllerId
+                : gameQueryService.findPermanentController(gameData, createdIds.get(createdIds.size() - 1));
+        battlefieldEntryService.checkAllyTokenEntersTriggers(
+                gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds.size());
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);
         return createdIds;

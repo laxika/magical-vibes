@@ -27,6 +27,7 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,10 +66,12 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
                 ? gameQueryService.findPermanentById(gameData, equipmentId)
                 : null;
         if (equipment != null) {
+            UUID oldAttachedTo = equipment.getAttachedTo();
             gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
+            equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, creature.getId());
             
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " is now attached to ", dyingCard, "."));
             log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), dyingCard.getName());

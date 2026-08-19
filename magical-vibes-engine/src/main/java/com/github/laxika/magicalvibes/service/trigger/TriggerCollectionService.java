@@ -179,11 +179,20 @@ public class TriggerCollectionService {
         for (DelayedControllerSpellCastTrigger delayed
                 : gameData.getDelayedActions(DelayedControllerSpellCastTrigger.class)) {
             if (!delayed.controllerId().equals(castingPlayerId)) continue;
-            Permanent source = gameQueryService.findPermanentById(gameData, delayed.sourcePermanentId());
-            if (source == null) continue;
+            if (delayed.sourceMustRemainOnBattlefield()
+                    && gameQueryService.findPermanentById(gameData, delayed.sourcePermanentId()) == null) {
+                continue;
+            }
             if (!predicateEvaluationService.matchesCardPredicate(spellCard, delayed.spellFilter(), null)) continue;
 
-            StackEntry entry = new StackEntry(
+            StackEntry entry = delayed.sourcePermanentId() == null
+                    ? new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(delayed.resolvedEffects()))
+                    : new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     delayed.sourceCard(),
                     delayed.controllerId(),
@@ -191,6 +200,7 @@ public class TriggerCollectionService {
                     new ArrayList<>(delayed.resolvedEffects()),
                     null,
                     delayed.sourcePermanentId());
+            entry.setTriggeringCardId(spellCard.getId());
             entry.setNonTargeting(true);
             gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.cardTextCard(
@@ -2926,8 +2936,8 @@ public class TriggerCollectionService {
      * (Sosuke, Son of Seshiro) whether this event was combat damage.
      */
     public void checkAllyDealtDamageToCreatureTriggers(GameData gameData, Permanent damageSource,
-            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId, int damage,
-            boolean combatDamage) {
+            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId,
+            Permanent damagedCreature, int damage, boolean combatDamage) {
         if (damageSource == null || damageSourceControllerId == null || damagedCreatureControllerId == null || damage <= 0) {
             return;
         }
@@ -2939,14 +2949,14 @@ public class TriggerCollectionService {
             if (watcher.getId().equals(damageSource.getId())) return;
 
             fireAllyDealtDamageToCreatureTrigger(gameData, watcher, damageSource, damageSourceControllerId,
-                    damagedCreatureControllerId, damagedCreatureId, damage, combatDamage);
+                    damagedCreatureControllerId, damagedCreatureId, damagedCreature, damage, combatDamage);
         });
 
         // A self-scoped trigger ("Whenever this creature deals damage to a creature, …") triggered
         // when the damage was dealt, so it still goes on the stack when lethal damage back from the
         // blocker has already moved the source off the battlefield.
         fireAllyDealtDamageToCreatureTrigger(gameData, damageSource, damageSource, damageSourceControllerId,
-                damagedCreatureControllerId, damagedCreatureId, damage, combatDamage);
+                damagedCreatureControllerId, damagedCreatureId, damagedCreature, damage, combatDamage);
     }
 
     public void checkAllyDealtDamageToPlaneswalkerTriggers(GameData gameData, Permanent damageSource,
@@ -3008,8 +3018,8 @@ public class TriggerCollectionService {
     }
 
     private void fireAllyDealtDamageToCreatureTrigger(GameData gameData, Permanent watcher, Permanent damageSource,
-            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId, int damage,
-            boolean combatDamage) {
+            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId,
+            Permanent damagedCreature, int damage, boolean combatDamage) {
         List<CardEffect> effects = new ArrayList<>(
                 watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
         // Abilities granted until end of turn (Cruel Deceiver) live on the permanent, not the card.
@@ -3094,6 +3104,12 @@ public class TriggerCollectionService {
                     continue;
                 }
                 if (damagedCreatureId == null) continue;
+                var damagedCreatureFilter = damagedCreatureTrigger.damagedCreatureFilter();
+                if (damagedCreatureFilter != null && (damagedCreature == null
+                        || !predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, damagedCreature, damagedCreatureFilter))) {
+                    continue;
+                }
 
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -5976,7 +5992,8 @@ public class TriggerCollectionService {
      * Fires turn-scoped delayed triggers registered by Beck. Each registration is a separate
      * optional draw trigger, including for tokens and creatures controlled by the other player.
      */
-    public void checkCreatureEntersThisTurnTriggers(GameData gameData, Card enteringCreature) {
+    public void checkCreatureEntersThisTurnTriggers(GameData gameData, UUID enteringCreatureControllerId,
+                                                    Card enteringCreature) {
         if (enteringCreature.getToughness() == null) return;
 
         List<UUID> controllers = new ArrayList<>(gameData.orderedPlayerIds);
@@ -5995,6 +6012,17 @@ public class TriggerCollectionService {
                         new MayEffect(new DrawCardEffect(), "Draw a card?"));
                 log.info("Game {} - {} triggers for creature entering (may draw)",
                         gameData.id, sourceCard.getName());
+            }
+
+            if (controllerId.equals(enteringCreatureControllerId)) {
+                List<Card> persistentSources = gameData.creatureEntersDrawSources.get(controllerId);
+                if (persistentSources == null) continue;
+                for (Card sourceCard : new ArrayList<>(persistentSources)) {
+                    gameData.queueMayAbility(sourceCard, controllerId,
+                            new MayEffect(new DrawCardEffect(), "Draw a card?"));
+                    log.info("Game {} - {} triggers for controlled creature entering (may draw)",
+                            gameData.id, sourceCard.getName());
+                }
             }
         }
     }
@@ -6979,6 +7007,8 @@ public class TriggerCollectionService {
 
     private boolean dispatchSlot(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot, TriggerContext ctx) {
         if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+        if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
         boolean triggered = false;
         for (CardEffect effect : perm.getCard().getEffects(slot)) {
             if (slot == EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE

@@ -59,6 +59,7 @@ class CostEffectClassificationTest {
             "PutCounterOnSourceCost",
             "PutTypedCounterOnSourceCost",
             "PutCardFromHandOnTopOfLibraryCost",
+            "PutSelfOnBottomOfOwnersLibraryCost",
             "ReduceActivationCostPerCounterEffect",
             "RemoveAllCountersAsCostEffect",
             "RemoveCounterFromControlledCreatureCost",

@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -336,6 +337,12 @@ public class ActivatedAbilityExecutionService {
         boolean shouldReturnSelfToHand = abilityEffects.stream().anyMatch(e -> e instanceof ReturnSelfToHandCost);
         if (shouldReturnSelfToHand) {
             permanentRemovalService.removePermanentToHand(gameData, permanent);
+        }
+
+        boolean shouldPutSelfOnBottomOfLibrary = abilityEffects.stream()
+                .anyMatch(PutSelfOnBottomOfOwnersLibraryCost.class::isInstance);
+        if (shouldPutSelfOnBottomOfLibrary) {
+            permanentRemovalService.removePermanentToLibraryBottom(gameData, permanent);
         }
 
         Optional<SacrificeSelfCost> sacrificeSelfCost = abilityEffects.stream()

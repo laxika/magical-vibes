@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThe
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -587,6 +588,33 @@ public class EnterTriggerCollectorService {
                 " triggers — " + controllerName + " will gain " + amount + " life."));
         log.info("Game {} - {} triggers for {} entering (gain {} life)",
                 gameData.id, cardName, pe.enteringCard().getName(), amount);
+        return true;
+    }
+
+    @CollectsTrigger(value = ExploreEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyCreatureExplore(TriggerMatchContext match,
+                                               ExploreEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    enteringPermanentId);
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
+        }
+        logTriggered(match);
         return true;
     }
 

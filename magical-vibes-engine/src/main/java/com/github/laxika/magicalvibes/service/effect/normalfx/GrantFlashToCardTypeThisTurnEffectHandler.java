@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +28,9 @@ public class GrantFlashToCardTypeThisTurnEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantFlashToCardTypeThisTurnEffect grant = (GrantFlashToCardTypeThisTurnEffect) effect;
-        gameData.addCardTypeFlashGrant(entry.getControllerId(), grant.cardType());
-        String typeName = grant.cardType().name().toLowerCase(Locale.ROOT);
+        gameData.addCardPredicateFlashGrant(entry.getControllerId(), grant.filter());
+        String typeName = grant.filter() instanceof CardTypePredicate type
+                ? type.cardType().name().toLowerCase(Locale.ROOT) : "matching";
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" lets its controller cast " + typeName

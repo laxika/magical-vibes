@@ -62,6 +62,7 @@ public class AnimationSupport {
     private final TriggerTargetCollector triggerTargetCollector;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerCollectionService triggerCollectionService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
@@ -211,6 +212,7 @@ public class AnimationSupport {
 
         // CR 301.5c — Equipment that's also a creature can't stay attached
         if (self.isAttached() && self.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(self.getId());
             gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " becomes unattached."));
@@ -384,6 +386,7 @@ public class AnimationSupport {
 
                 // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo());
                     permanent.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
                     gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
@@ -467,6 +470,7 @@ public class AnimationSupport {
 
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo());
             target.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(target.getId());
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " becomes unattached."));
@@ -582,6 +586,7 @@ public class AnimationSupport {
         Card frontCard = self.getCard();
         String frontName = frontCard.getName();
         if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(self.getId());
             gameLogService.append(gameData, GameLog.cardThen(frontCard, " becomes unattached."));

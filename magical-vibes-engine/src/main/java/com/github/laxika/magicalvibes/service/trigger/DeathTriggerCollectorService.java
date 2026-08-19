@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesCondi
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileIfHadCounterElseReturnWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
@@ -90,6 +91,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHan
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreatureOnLeaveEffect;
@@ -935,6 +937,32 @@ public class DeathTriggerCollectorService {
 
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
         addEnchantedPermanentDeathEntry(match, effect.withAmount(Math.max(0, epd.dyingCreaturePower())));
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleReturnEnchantedCreatureAndSourceTransformed(TriggerMatchContext match,
+            ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect effect, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        CardEffect effectForStack = epd.dyingCreatureCardId() != null
+                ? new ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect(epd.dyingCreatureCardId())
+                : effect;
+        addEnchantedPermanentDeathEntry(match, effectForStack);
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleExileTopCardsFromEnchantedCreatureOwnerAndAllowCast(TriggerMatchContext match,
+            ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect effect, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        UUID libraryOwnerId = epd.dyingCreatureCardId() == null
+                ? null
+                : gameQueryService.findGraveyardOwnerById(match.gameData(), epd.dyingCreatureCardId());
+        CardEffect baked = new ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect(
+                Math.max(0, epd.dyingCreaturePower()), libraryOwnerId);
+        addEnchantedPermanentDeathEntry(match, baked);
         return true;
     }
 

@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -132,6 +133,7 @@ public class BattlefieldEntryService {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private AscendEffectHandler ascendEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAllPermanentsAsEntersEffectHandler sacrificeAllPermanentsAsEntersEffectHandler;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
@@ -168,6 +170,11 @@ public class BattlefieldEntryService {
         this.conditionEvaluationService = conditionEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
+    }
+
+    @Autowired
+    void setAscendEffectHandler(@Lazy AscendEffectHandler handler) {
+        this.ascendEffectHandler = handler;
     }
 
     @Autowired
@@ -281,6 +288,9 @@ public class BattlefieldEntryService {
         // CR 613.7b: a permanent receives its timestamp as it enters the battlefield.
         permanent.setTimestamp(gameData.nextTimestamp());
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        if (ascendEffectHandler != null) {
+            ascendEffectHandler.checkPermanentAscend(gameData, controllerId);
+        }
         if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
         }
@@ -386,6 +396,10 @@ public class BattlefieldEntryService {
      * once a permanent is already assigned to the gatherer, they are not their own opponent.
      */
     public UUID resolveEnteringController(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.getCard().isToken()) {
+            return gameQueryService.resolveTokenCreationController(
+                    gameData, controllerId, permanent.getCard().hasType(CardType.CREATURE));
+        }
         if (gameData.playersGatheringSpecimensThisTurn.isEmpty()
                 || !permanent.getCard().hasType(CardType.CREATURE)) {
             return controllerId;
@@ -1348,6 +1362,7 @@ public class BattlefieldEntryService {
                                                  boolean kicked, List<UUID> targetIds,
                                                  List<String> repeatedAdditionalCosts,
                                                  List<UUID> convokeCreatureIds) {
+        controllerId = resolveTokenControllerForEntry(gameData, controllerId, card);
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1707,6 +1722,9 @@ public class BattlefieldEntryService {
         int extraEtbTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, card);
 
         List<CardEffect> triggeredEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+        if (enteringPermanent != null) {
+            triggeredEffects.addAll(enteringPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+        }
         int additionalElementalTriggers = enteringPermanent == null ? 0
                 : gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, controllerId, enteringPermanent);
@@ -1826,7 +1844,7 @@ public class BattlefieldEntryService {
         }
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
-        triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, card);
+        triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
@@ -1837,6 +1855,18 @@ public class BattlefieldEntryService {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
         }
+    }
+
+    private UUID resolveTokenControllerForEntry(GameData gameData, UUID controllerId, Card card) {
+        if (!card.isToken()) {
+            return controllerId;
+        }
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            if (battlefield.getValue().stream().anyMatch(permanent -> permanent.getCard() == card)) {
+                return battlefield.getKey();
+            }
+        }
+        return controllerId;
     }
 
     /**

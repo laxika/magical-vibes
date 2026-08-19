@@ -307,7 +307,8 @@ public class DamagePreventionService {
             // Mark of Asylum / Inner Sanctum: "Prevent all [noncombat] damage that would be dealt to creatures you control."
             if (hasCreatureDamagePreventionSource(gameData, permanent, isCombatDamage)) return 0;
             // Emmara Tandris: "Prevent all damage that would be dealt to creature tokens you control."
-            if (gameQueryService.isAllDamageToControlledCreaturePrevented(gameData, permanent)) return 0;
+            int controlledCreatureDamageLimit = gameQueryService.getControlledCreatureDamageLimit(gameData, permanent);
+            if (controlledCreatureDamageLimit < damage) return controlledCreatureDamageLimit;
             if (isCombatDamage
                     && gameQueryService.isAllCombatDamageToControlledCreaturePrevented(gameData, permanent)) return 0;
             // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Combat

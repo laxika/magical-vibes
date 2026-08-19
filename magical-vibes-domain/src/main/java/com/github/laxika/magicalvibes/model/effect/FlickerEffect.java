@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Exile permanent(s) and return them to the battlefield under their owner's control (CR 610.3) as
  * new objects — counters, attached Auras/Equipment and other state are lost, and tokens cease to
  * exist in exile. When {@code returnUnderController} is true (Restoration Angel), the card returns
- * under the effect controller's control instead, keeping a stolen creature permanently.
+ * under the effect controller's control instead, keeping a stolen creature permanently. For a
+ * self-flicker, this flag also distinguishes "under your control" from "under its owner's control."
  *
  * <p>Unifies the former {@code ExileTargetPermanentAndReturnAtEndStepEffect},
  * {@code ExileSelfAndReturnAtEndStepEffect},
@@ -22,8 +23,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * returns. When {@code bonusSubtype} is set with
  * {@code plusOnePlusOneCountersOnReturn}, counters apply only if the exiled permanent had that
  * subtype. {@code returnUnderController} is only meaningful for {@link ReturnTiming#IMMEDIATE}
- * TARGET flickers. {@code grantHaste} gives each returning permanent haste and is only meaningful
- * for {@link ReturnTiming#AT_STEP}.
+ * TARGET flickers and self-flickers that return under the effect controller's control.
+ * {@code grantHaste} gives each returning permanent haste and is only meaningful for
+ * {@link ReturnTiming#AT_STEP}.
  */
 public record FlickerEffect(
         FlickerScope scope,
@@ -57,7 +59,13 @@ public record FlickerEffect(
     /** Exile this permanent, return it under your control at the beginning of the next end step (Argent Sphinx). */
     public static FlickerEffect exileSelfReturnAtEndStep() {
         return new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.AT_STEP,
-                TurnStep.END_STEP, false, null, null, 0, false, false);
+                TurnStep.END_STEP, false, null, null, 0, true, false);
+    }
+
+    /** Exile this permanent, return it tapped under its owner's control at the next end step. */
+    public static FlickerEffect exileSelfReturnAtEndStepUnderOwnerControl(boolean returnTapped) {
+        return new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, returnTapped, null, null, 0, false, false);
     }
 
     /**

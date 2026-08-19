@@ -1391,6 +1391,7 @@ public class AbilityActivationService {
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         validateNotBlockedByCombatActionLock(gameData, ability);
+        validateHandTimingRestriction(gameData, playerId, ability);
 
         // Ninjutsu takes its own path: the source card is not discarded (it stays revealed in hand
         // until the ability resolves) and targetId names the attacker returned as a cost, not a
@@ -1435,24 +1436,32 @@ public class AbilityActivationService {
         // instead when the printed cost says so (Elvish Spirit Guide). Exiling is not a discard, so
         // no discard triggers fire; and the ability produces mana, so it resolves immediately
         // without using the stack (CR 605.1a).
-        hand.remove(handCardIndex);
+        boolean discarded = false;
         if (ability.isExilesSourceFromHand()) {
+            hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
             resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
             gameData.priorityPassedBy.clear();
             mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
         }
-        UUID previousCyclingCard = gameData.cardEnteringGraveyardByCycling;
-        if (ability.isCyclingAbility()) {
-            gameData.cardEnteringGraveyardByCycling = card.getId();
+        if (ability.isRevealsSourceFromHand()) {
+            cardRevealService.revealToAllPlayers(gameData, playerId,
+                    com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
+        } else {
+            hand.remove(handCardIndex);
+            UUID previousCyclingCard = gameData.cardEnteringGraveyardByCycling;
+            if (ability.isCyclingAbility()) {
+                gameData.cardEnteringGraveyardByCycling = card.getId();
+            }
+            try {
+                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                discarded = true;
+            } finally {
+                gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
+            }
+            gameData.discardCausedByOpponent = false;
         }
-        try {
-            graveyardService.addCardToGraveyard(gameData, playerId, card);
-        } finally {
-            gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
-        }
-        gameData.discardCausedByOpponent = false;
 
         // Push the ability onto the stack (cost effects are not part of the resolution snapshot)
         List<CardEffect> snapshotEffects = new ArrayList<>();
@@ -1482,7 +1491,9 @@ public class AbilityActivationService {
         // Discard triggers fire after the ability is on the stack (CR 601.2h), so a "whenever you
         // cycle or discard" trigger (e.g. Curator of Mysteries) lands above the cycling draw and
         // resolves first.
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        if (discarded) {
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        }
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
         log.info("Game {} - {} activates {}'s hand ability", gameData.id, player.getUsername(), card.getName());
@@ -3223,6 +3234,11 @@ public class AbilityActivationService {
                 || permanent.isFaceDown()) {
             // Permanent has lost all its own abilities; only static-granted abilities remain
             abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
+        } else if (staticBonus.losesAllNonManaAbilities()) {
+            abilities = permanent.getCard().getActivatedAbilities().stream()
+                    .filter(AbilityActivationService::isManaAbility)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
             abilities.addAll(staticBonus.grantedActivatedAbilities());
@@ -3447,6 +3463,9 @@ public class AbilityActivationService {
 
         // Loyalty ability restrictions (the cost itself is paid after target legality is confirmed)
         if (ability.getLoyaltyCost() != null) {
+            if (gameQueryService.isPlaneswalkerLoyaltyAbilityLocked(gameData, permanent)) {
+                throw new IllegalStateException("Loyalty abilities of planeswalkers can't be activated");
+            }
             validateLoyaltyCost(gameData, playerId, permanent, ability, xValue);
         }
 
@@ -4135,6 +4154,13 @@ public class AbilityActivationService {
         }
 
         validateHandSizeRestrictions(gameData, playerId, ability);
+    }
+
+    private void validateHandTimingRestriction(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
+                && !playerId.equals(gameData.activePlayerId)) {
+            throw new IllegalStateException("This ability can only be activated during your turn");
+        }
     }
 
     /**

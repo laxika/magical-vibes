@@ -15,11 +15,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,7 @@ public class CloneService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentCopierService permanentCopierService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
         return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0);
@@ -53,10 +57,7 @@ public class CloneService {
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue) {
-        CopyPermanentOnEnterEffect copyEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof CopyPermanentOnEnterEffect)
-                .map(e -> (CopyPermanentOnEnterEffect) e)
-                .findFirst().orElse(null);
+        CopyPermanentOnEnterEffect copyEffect = findCopyEffect(gameData, controllerId, card);
         if (copyEffect == null) return false;
 
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
@@ -96,6 +97,24 @@ public class CloneService {
         ));
         playerInputService.processNextMayAbility(gameData);
         return true;
+    }
+
+    private CopyPermanentOnEnterEffect findCopyEffect(GameData gameData, UUID controllerId, Card card) {
+        ConditionContext conditionContext = ConditionContext.forCard(card, controllerId);
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof CopyPermanentOnEnterEffect copyEffect) {
+                return copyEffect;
+            }
+            if (effect instanceof ConditionalReplacementEffect conditional) {
+                CardEffect selected = conditionEvaluationService.isMet(
+                        gameData, conditional.condition(), conditionContext)
+                        ? conditional.upgradedEffect() : conditional.baseEffect();
+                if (selected instanceof CopyPermanentOnEnterEffect copyEffect) {
+                    return copyEffect;
+                }
+            }
+        }
+        return null;
     }
 
     public void completeCloneEntry(GameData gameData, UUID targetId) {

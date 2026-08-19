@@ -109,10 +109,13 @@ public class MayMiscHandlerService {
                             gameData, equipPerm.getCard(), attachmentControllerId, targetPerm)
                     : equipSupport.canAttachEquipment(gameData, equipPerm, targetPerm));
             if (canAttach) {
+                UUID oldAttachedTo = equipPerm.getAttachedTo();
                 gameData.expireFloatingEffectsForUnattachedSource(equipPerm.getId());
                 equipPerm.setAttachedTo(targetPerm.getId());
                 // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                 equipPerm.setTimestamp(gameData.nextTimestamp());
+                equipSupport.applySacrificeOnUnattachIfNeeded(
+                        gameData, equipPerm, oldAttachedTo, targetPerm.getId());
                 
                 gameLogService.append(gameData, GameLog.cardTextCard(equipPerm.getCard(), " is attached to ", targetPerm.getCard(), "."));
                 log.info("Game {} - {} attached to {}", gameData.id, equipPerm.getCard().getName(), targetPerm.getCard().getName());

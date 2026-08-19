@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "190")
+@CardRegistration(set = "RIX", collectorNumber = "94")
 public class BrasssBounty extends Card {
 
     public BrasssBounty() {

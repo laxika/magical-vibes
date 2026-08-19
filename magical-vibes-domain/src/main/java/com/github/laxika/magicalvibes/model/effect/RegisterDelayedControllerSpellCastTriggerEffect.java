@@ -14,8 +14,15 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param spellFilter     which cast spells fire the trigger; {@code null} = any spell
  * @param resolvedEffects effects put on the stack when it fires
+ * @param sourceMustRemainOnBattlefield whether the source must still be on the battlefield
  */
 public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
-                                                              List<CardEffect> resolvedEffects)
+                                                              List<CardEffect> resolvedEffects,
+                                                              boolean sourceMustRemainOnBattlefield)
         implements CardEffect {
+
+    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
+                                                            List<CardEffect> resolvedEffects) {
+        this(spellFilter, resolvedEffects, true);
+    }
 }

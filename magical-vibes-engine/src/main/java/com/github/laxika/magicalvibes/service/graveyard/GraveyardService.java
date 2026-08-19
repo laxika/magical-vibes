@@ -248,7 +248,7 @@ public class GraveyardService {
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, null);
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, null, null);
     }
 
     /**
@@ -257,18 +257,35 @@ public class GraveyardService {
      */
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, battlefieldControllerId);
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, battlefieldControllerId, null);
+    }
+
+    /**
+     * Moves a permanent card to its owner's graveyard while preserving the battlefield permanent's
+     * ID for triggered abilities that refer to the permanent after it leaves the battlefield.
+     */
+    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                      UUID battlefieldControllerId, UUID battlefieldPermanentId) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
+                battlefieldControllerId, battlefieldPermanentId);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryCreatureCardsTrigger, null);
+                suppressLibraryCreatureCardsTrigger, null, null);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger,
                                        UUID battlefieldControllerId) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone,
+                suppressLibraryCreatureCardsTrigger, battlefieldControllerId, null);
+    }
+
+    private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                       boolean suppressLibraryCreatureCardsTrigger,
+                                       UUID battlefieldControllerId, UUID battlefieldPermanentId) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         // CR 614.7 — self-replacement effects apply first
 
@@ -426,7 +443,7 @@ public class GraveyardService {
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
         collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
         if (sourceZone == Zone.BATTLEFIELD) {
-            collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card);
+            collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card, battlefieldPermanentId);
         }
         if (!card.isToken() && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -610,7 +627,8 @@ public class GraveyardService {
      * the source zone is the battlefield. The card has already entered the graveyard; the trigger goes
      * on the stack under its owner's control.
      */
-    private void collectPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID ownerId, Card card) {
+    private void collectPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID ownerId, Card card,
+                                                                  UUID battlefieldPermanentId) {
         for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -626,7 +644,7 @@ public class GraveyardService {
                     card.getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
                     null,
-                    (UUID) null
+                    battlefieldPermanentId
             ));
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());

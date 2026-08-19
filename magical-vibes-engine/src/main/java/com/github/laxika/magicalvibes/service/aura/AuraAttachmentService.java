@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,7 @@ public class AuraAttachmentService {
     private final GraveyardService graveyardService;
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     /**
      * A card that was put into the graveyard as an orphaned aura, along with the controller
@@ -99,6 +101,7 @@ public class AuraAttachmentService {
                         log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
                     } else if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         // Equipment stays on the battlefield unattached when the equipped creature leaves
+                        unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);
                         gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                         anyUnattached = true;
@@ -158,6 +161,7 @@ public class AuraAttachmentService {
                 boolean isEquipment = GameQueryService.permanentHasSubtype(p, CardSubtype.EQUIPMENT);
                 if (!isAura && !isEquipment) {
                     // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
+                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                     p.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     anyUnattached = true;
@@ -172,6 +176,7 @@ public class AuraAttachmentService {
 
                 if (isEquipment) {
                     // CR 704.5n — illegally attached equipment becomes unattached but stays
+                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                     p.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     anyUnattached = true;

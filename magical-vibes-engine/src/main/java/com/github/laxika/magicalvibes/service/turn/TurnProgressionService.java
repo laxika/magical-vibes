@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -60,6 +61,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -466,6 +468,15 @@ public class TurnProgressionService {
         gameData.creaturesAttackedCountThisTurn.clear();
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        Set<CardType> nextTurnRestrictedTypes = gameData.playersCantCastSpellTypesNextTurn.remove(nextActive);
+        if (nextTurnRestrictedTypes != null) {
+            gameData.playersCantCastSpellTypesThisTurn.merge(nextActive, nextTurnRestrictedTypes,
+                    (existing, pending) -> {
+                        Set<CardType> merged = new HashSet<>(existing);
+                        merged.addAll(pending);
+                        return merged;
+                    });
+        }
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();

@@ -1293,8 +1293,33 @@ public class DamageTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
     private boolean handleDealtDamageDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            GameData gameData = match.gameData();
+            Permanent damagedCreature = dc.damagedCreature();
+            UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
+            if (controllerId == null) return false;
+
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    damagedCreature.getCard(), controllerId, new ArrayList<>(List.of(effect)),
+                    !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                    targetFilterForTriggeredEffect(damagedCreature.getCard(), effect),
+                    dc.damageDealt(), damagedCreature.getId()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
+            log.info("Game {} - {} ON_DEALT_DAMAGE targeted trigger fires",
+                    gameData.id, damagedCreature.getCard().getName());
+            return true;
+        }
         addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effect, dc.damageDealt());
         return true;
+    }
+
+    private TargetFilter targetFilterForTriggeredEffect(Card card, CardEffect effect) {
+        int targetIndex = card.getEffectTargetIndex(effect);
+        if (targetIndex >= 0 && targetIndex < card.getSpellTargets().size()) {
+            return card.getSpellTargets().get(targetIndex).getFilter();
+        }
+        return card.getTargetFilter();
     }
 
     /**

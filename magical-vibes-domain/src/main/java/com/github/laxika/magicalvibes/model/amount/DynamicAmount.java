@@ -88,6 +88,7 @@ public sealed interface DynamicAmount permits
         Min,
         OpponentPoisonCounters,
         OtherAttackersSharingCreatureTypeWithTarget,
+        DistinctPermanentNamesCount,
         PermanentCount,
         PermanentManaValueSum,
         RepeatedAdditionalCostCount,

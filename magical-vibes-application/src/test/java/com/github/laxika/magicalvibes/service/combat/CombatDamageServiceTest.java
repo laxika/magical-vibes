@@ -1016,6 +1016,20 @@ class CombatDamageServiceTest {
         }
 
         @Test
+        @DisplayName("Trample deals damage when the creature that blocked it has left combat")
+        void trampleDealsDamageWhenBlockerHasLeftCombat() {
+            stubDamageResolution();
+            stubRegularPlayerDamage();
+
+            Permanent attacker = addAttacker("Trampler", 4, 4, Keyword.TRAMPLE);
+            attacker.setBlockedWithoutBlockers(true);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(16);
+        }
+
+        @Test
         @DisplayName("Trample with deathtouch: only 1 damage needed per blocker to be lethal")
         void trampleDeathtouchOnlyNeedsOnePerBlocker() {
             Permanent attacker = addAttacker("Avatar", 8, 8, Keyword.TRAMPLE, Keyword.DEATHTOUCH);

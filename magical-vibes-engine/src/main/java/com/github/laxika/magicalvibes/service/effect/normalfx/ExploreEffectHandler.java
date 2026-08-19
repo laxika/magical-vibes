@@ -37,6 +37,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
+        ExploreEffect exploreEffect = (ExploreEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -63,8 +64,11 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             triggerCollectionService.checkExploreTriggers(gameData, controllerId);
         } else {
             // Not a land — put a +1/+1 counter on the exploring creature
-            Permanent source = entry.getSourcePermanentId() != null
-                    ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+            UUID exploringPermanentId = exploreEffect.targeted()
+                    ? entry.getTargetId()
+                    : entry.getSourcePermanentId();
+            Permanent source = exploringPermanentId != null
+                    ? gameQueryService.findPermanentById(gameData, exploringPermanentId)
                     : null;
             if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
                 int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);

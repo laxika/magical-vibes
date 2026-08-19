@@ -87,6 +87,9 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.KillingWaveEffectHandler killingWaveEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesCreaturesWithTotalPowerAtMostThenSacrificeRestEffectHandler
+            powerLimitedCreatureChoiceHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler fadeAwayEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EquipoiseSupport equipoiseSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -192,6 +195,10 @@ public class MultiPermanentChoiceHandlerService {
             // so leave the prompt standing rather than sacrificing creatures for nothing.
             throw new IllegalStateException("Selected creatures have total power below "
                     + powerCtx.requiredPower());
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice powerCtx
+                && totalPower(gameData, permanentIds) > powerCtx.maxPower()) {
+            throw new IllegalStateException("Selected creatures have total power above " + powerCtx.maxPower());
         }
         if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls
                 && permanentIds.size() != 1) {
@@ -395,6 +402,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource ctx) {
             handleSacrificeCreaturesWithTotalPowerOrSacrificeSource(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice ctx) {
+            handlePowerLimitedCreatureChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped) {
             handleChooseFivePermanentsSearchSameName(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DevourSacrifice ctx) {
@@ -1194,6 +1203,29 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
         return total;
+    }
+
+    private int totalPower(GameData gameData, List<UUID> permanentIds) {
+        int total = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                total += gameQueryService.getEffectivePower(gameData, perm);
+            }
+        }
+        return total;
+    }
+
+    private void handlePowerLimitedCreatureChoice(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice context) {
+        powerLimitedCreatureChoiceHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     /**

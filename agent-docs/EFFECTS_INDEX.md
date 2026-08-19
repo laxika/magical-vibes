@@ -3682,3 +3682,25 @@ Samite Blessing uses `PreventDamageFromChosenSourceEffect.nextDamageToTargetCrea
 | `RegisterDelayedUnblockedAttackerGainLifeEffect` | `()` | target-aware delayed trigger: when the chosen creature attacks and isn't blocked, its controller may gain life equal to its power; if they do, it assigns no combat damage this turn. Stored as `DelayedUnblockedAttackerGainLife`; used by Delif's Cone. |
 | `RegisterDelayedUnblockedAttackerCubeCounterEffect` | `()` | target-aware delayed trigger: when the chosen creature attacks and isn't blocked, it assigns no combat damage this turn and the source card gets a cube counter. Stored as `DelayedUnblockedAttackerCubeCounter`; used by Delif's Cube. |
 | `GrantAdditionalLoyaltyCountersToCastSpellEffect` | `(int amount)` | Grants additional loyalty counters to the planeswalker spell referenced by an enclosing graveyard spell-cast trigger; the counters are applied as it enters the battlefield. |
+| `EachPlayerChoosesCreaturesWithTotalPowerAtMostThenSacrificeRestEffect` | `(int maxPower)` | Each player chooses creatures with total effective power at most the limit, then all unchosen creatures are sacrificed simultaneously. |
+| `AscendEffect` | `()` | Gives the controller the city's blessing when they control at least ten permanents. |
+| `TargetCreatureDealsPowerDamageToAbilityControllerEffect` | `()` | The targeted creature deals damage equal to its power to the resolving ability's controller. |
+| `DoubleSelfCombatDamageToPlayersEffect` | `()` | Doubles combat damage the source deals to players. |
+| `SacrificeTargetPermanentAtEndStepIfManaValueAtMostEffect` | `(int maxManaValue)` | Schedules a conditional next-end-step sacrifice of the target. |
+| `DestroyRandomAttackingCreatureEffect` | `()` | Destroys a random creature among those that attacked this turn. |
+| `SearchOutsideGameToHandEffect` | `([CardPredicate filter])` | Moves a matching card from the controller's outside-the-game pool to their hand. |
+| `RevealTopCardPutIntoHandAndDrainOpponentsEffect` | `()` | Reveals and draws the top card, then drains opponents for its mana value. |
+| `PutSelfOnBottomOfOwnersLibraryCost` | `()` | Puts the source permanent on the bottom of its owner's library as an activation cost. |
+| `EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect` | `()` | Each opponent loses life equal to their own graveyard size. |
+| `ExileTopCardOfEachPlayersLibraryAndMayCastSpellsEffect` | `()` | Exiles each library's top card and lets the controller cast the exiled nonland spells for free. |
+| `ExileTargetPlayerHandFaceDownWithSourceThenDrawEffect` | `()` | Exiles the target player's hand face down with the source, then replaces it with that many cards. |
+| `ExileTargetPermanentMayCastWithoutPayingManaCostEffect` | `()` | Exiles the target permanent and lets its owner cast the card for free while it remains exiled. |
+| `CraftyCutpurseEffect` | `()` | Redirects tokens opponents would create this turn to the effect's controller. |
+| `PayXManaGainXLifeAndDrawXCardsEffect` | `(String manaCost)` | Pays a resolution-time X cost, then gains X life and draws X cards. |
+| `ExileCreatedPermanentsAtEndStepUnlessConditionEffect` | `(Condition condition)` | Creates a delayed trigger that exiles permanents created by the resolution unless the condition is met. |
+| `GrantTriggeredAbilityToCastSpellEffect` | `(EffectSlot slot, CardEffect grantedEffect)` | Grants a triggered ability to the triggering permanent spell as it enters. |
+| `LosesAllNonManaAbilitiesEffect` | `(GrantScope scope[, PermanentPredicate filter])` | Layer-six ability removal that preserves mana abilities. |
+| `OpponentsCantCastSpellTypesNextTurnEffect` | `(Set<CardType> restrictedTypes)` | Prevents opponents from casting the configured spell types during their next turns. |
+| `PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect` | `()` | Prevents all players from activating planeswalker loyalty abilities. |
+| `ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect` | `()` | Exiles cards from the enchanted creature owner's library using its last-known power and grants cast permission. |
+| `ExileCardFromHandWithSourceEffect` | `()` | Exiles a chosen hand card face up and tracks it with the source. |

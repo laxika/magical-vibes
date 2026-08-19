@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
+import com.github.laxika.magicalvibes.model.action.DelayedExileCreatedPermanentsAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost;
 import com.github.laxika.magicalvibes.model.action.DelayedCoinFlipSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
@@ -170,6 +172,7 @@ import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffec
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtEndStepUnlessConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
@@ -3222,6 +3225,31 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost.class)) {
+            List<DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost> pending =
+                    gameData.drainDelayedActions(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost.class);
+            for (DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost action : pending) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (permanent == null
+                        || !action.controllerId().equals(
+                                gameQueryService.findPermanentController(gameData, permanent.getId()))
+                        || permanent.getCard().getManaValue() > action.maxManaValue()) {
+                    continue;
+                }
+
+                UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (!permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                    continue;
+                }
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                        gameData, sacrificingPlayerId, permanent.getCard());
+                gameLogService.append(gameData, GameLog.isSacrificed(permanent.getCard()));
+                log.info("Game {} - {} sacrificed by a mana-value-conditional delayed trigger",
+                        gameData.id, permanent.getCard().getName());
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+        }
+
         // Perform the scheduled end-step zone changes: token exiles (e.g. Mimic Vat), nontoken
         // exiles (e.g. Dark Maze), sacrifices (e.g. Choreographed Sparks' creature-copy token) and
         // destructions (e.g. Stone Giant).
@@ -3410,6 +3438,25 @@ public class StepTriggerService {
                         "'s delayed trigger — untap up to " + pending.count() + " permanent(s)."));
                 log.info("Game {} - {} delayed untap {} permanent(s) trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName(), pending.count());
+            }
+        }
+
+        if (gameData.hasDelayedAction(DelayedExileCreatedPermanentsAtEndStep.class)) {
+            List<DelayedExileCreatedPermanentsAtEndStep> pendingExiles =
+                    gameData.drainDelayedActions(DelayedExileCreatedPermanentsAtEndStep.class);
+            for (DelayedExileCreatedPermanentsAtEndStep pending : pendingExiles) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — exile created permanents",
+                        new ArrayList<>(List.of(new ExileCreatedPermanentsAtEndStepUnlessConditionEffect(
+                                pending.permanentIds(), pending.condition())))
+                ));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger — exile created permanents."));
+                log.info("Game {} - {} delayed exile trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
             }
         }
 

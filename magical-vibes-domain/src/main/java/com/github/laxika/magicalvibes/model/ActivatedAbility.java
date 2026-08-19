@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import lombok.Getter;
@@ -141,6 +143,8 @@ public class ActivatedAbility {
      * triggers fire. Set via {@link #withExilesSourceFromHand()}.
      */
     private boolean exilesSourceFromHand;
+    /** Whether this hand-activated ability reveals the source card without moving it out of hand. */
+    private boolean revealsSourceFromHand;
     /**
      * When true this hand-activated ability is a ninjutsu ability (CR 702.49a). Its intrinsic cost
      * returns an unblocked attacking creature the activating player controls to its owner's hand
@@ -322,6 +326,15 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withExilesSourceFromHand() {
         this.exilesSourceFromHand = true;
+        return this;
+    }
+
+    /**
+     * Fluent setter marking a hand-activated ability whose intrinsic cost reveals the source card
+     * while leaving it in its owner's hand.
+     */
+    public ActivatedAbility withRevealsSourceFromHand() {
+        this.revealsSourceFromHand = true;
         return this;
     }
 
@@ -568,6 +581,16 @@ public class ActivatedAbility {
 
     public boolean isNeedsSpellTarget() {
         return effects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
+    }
+
+    /** Whether this activated ability produces mana without targeting or using a loyalty cost. */
+    public boolean isManaAbility() {
+        if (isNeedsTarget() || isNeedsSpellTarget() || loyaltyCost != null) {
+            return false;
+        }
+        return effects.stream()
+                .filter(effect -> !(effect instanceof CostEffect))
+                .anyMatch(ManaProducingEffect.class::isInstance);
     }
 
     /**

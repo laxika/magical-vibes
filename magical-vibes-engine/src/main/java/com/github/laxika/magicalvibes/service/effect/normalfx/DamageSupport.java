@@ -366,7 +366,8 @@ public class DamageSupport {
                 // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
                 triggerCollectionService.queueEnchantedCreatureDealsDamageToCreatureTriggers(
                         gameData, reflectionSource, target.getId(), damage);
-                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, target.getId(), damage, false);
+                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource,
+                        sourceControllerId, damagedCreatureControllerId, target.getId(), target, damage, false);
             }
 
             // Mangara's Equity: "…or a white creature you control" — deliberately outside the gate.
@@ -535,7 +536,8 @@ public class DamageSupport {
             UUID reflectionTargetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             triggerCollectionService.queueEnchantedCreatureDealsDamageToCreatureTriggers(
                     gameData, reflectionSource, target.getId(), damage);
-            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, entry.getControllerId(), reflectionTargetControllerId, target.getId(), damage, false);
+            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource,
+                    entry.getControllerId(), reflectionTargetControllerId, target.getId(), target, damage, false);
 
             // Mangara's Equity: "…or a white creature you control"
             triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(

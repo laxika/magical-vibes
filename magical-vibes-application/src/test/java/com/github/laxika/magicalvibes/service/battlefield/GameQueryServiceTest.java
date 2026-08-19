@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleSelfCombatDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -2097,6 +2098,24 @@ class GameQueryServiceTest {
                     "Shock", new ArrayList<>(), null);
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, entry, false)).isEqualTo(2);
             assertThat(gqs.getControllerDamageMultiplier(gd, player2Id, entry, false)).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("source combat damage multipliers")
+    class SourceCombatDamageMultiplier {
+
+        @Test
+        @DisplayName("limits self combat doubling to player damage")
+        void limitsSelfCombatDoublingToPlayerDamage() {
+            Permanent source = addPermanent(player1Id,
+                    createCreatureWithStaticEffect("Charging Tuskodon", 4, 4, CardColor.RED,
+                            new DoubleSelfCombatDamageToPlayersEffect()));
+            Permanent creatureTarget = addPermanent(player2Id, createCreature("Creature", 5, 5, CardColor.GREEN));
+
+            assertThat(gqs.applyCombatDamageMultiplier(gd, 4, source, null)).isEqualTo(8);
+            assertThat(gqs.applyCombatDamageMultiplier(gd, 4, source, creatureTarget)).isEqualTo(4);
+            assertThat(gqs.getSourceDamageMultiplier(gd, player1Id, source)).isEqualTo(1);
         }
     }
 

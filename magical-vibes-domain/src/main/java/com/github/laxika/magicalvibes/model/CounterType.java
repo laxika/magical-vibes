@@ -84,6 +84,7 @@ public enum CounterType {
     POLYP,
     PLAGUE,
     PRESSURE,
+    PREY,
     PUPA,
     QUEST,
     REVIVAL,

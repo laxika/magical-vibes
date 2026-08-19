@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCoun
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggeringPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
@@ -191,6 +192,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThi
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceExiledDifferentManaValuesThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
 import com.github.laxika.magicalvibes.model.condition.SourceHasDealtDamage;
@@ -406,6 +409,8 @@ public class ConditionEvaluationService {
                     attachedPermanentControllerControlsNoOther(gameData, ctx, c.filter());
             case ControllerHasMoreLifeThanAnOpponent ignored ->
                     controllerHasMoreLifeThanAnOpponent(gameData, ctx.controllerId());
+            case ControllerHasCityBlessing ignored ->
+                    ctx.controllerId() != null && gameData.playersWithCityBlessing.contains(ctx.controllerId());
             case ControllerHasMoreCardsInHandThanEachOpponent ignored ->
                     controllerHasMoreCardsInHandThanEachOpponent(gameData, ctx.controllerId());
             case AnOpponentHasMoreCardsInHandThanController ignored ->
@@ -765,6 +770,20 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getCounterCount(c.counterType()) >= c.threshold();
             }
+            case SourceExiledCardsThreshold c ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.exiledCards.stream()
+                                    .filter(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()))
+                                    .filter(e -> !e.card().isToken())
+                                    .count() >= c.threshold();
+            case SourceExiledDifferentManaValuesThreshold c ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.exiledCards.stream()
+                                    .filter(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()))
+                                    .filter(e -> !e.card().isToken())
+                                    .map(e -> e.card().getManaValue())
+                                    .distinct()
+                                    .count() >= c.threshold();
             case TriggeringPermanentPowerGreaterThanSourcePower ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 if (source == null || ctx.triggeringPermanentPowerAtTrigger() == null) {

@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -962,6 +963,27 @@ class ActivatedAbilityExecutionServiceTest {
                     .noneMatch(e -> e instanceof ExileSelfCost);
             assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .anyMatch(e -> e instanceof DrawCardEffect);
+        }
+    }
+
+    @Nested
+    @DisplayName("put self on bottom of library cost")
+    class PutSelfOnBottomOfOwnersLibraryCostFlow {
+
+        @Test
+        @DisplayName("moves the source permanent to the bottom of its owner's library")
+        void putsSourceOnLibraryBottom() {
+            Card card = createCard("Test Navigator", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new PutSelfOnBottomOfOwnersLibraryCost(), new DrawCardEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Put self on bottom: draw a card");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(permanentRemovalService).removePermanentToLibraryBottom(gameData, perm);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
+                    .noneMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryCost);
         }
     }
 

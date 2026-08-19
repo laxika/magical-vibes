@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,40 +15,31 @@ class ForsakenSanctuaryTest extends BaseCardTest {
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
         harness.setHand(player1, List.of(new ForsakenSanctuary()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Forsaken Sanctuary").isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Tapping for white mana produces one white")
-    void tappingProducesWhiteMana() {
-        addSanctuaryReady(player1);
+    @DisplayName("Tap ability adds one white mana")
+    void tapAddsWhiteMana() {
+        harness.addToBattlefield(player1, new ForsakenSanctuary());
 
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Tapping for black mana produces one black")
-    void tappingProducesBlackMana() {
-        addSanctuaryReady(player1);
+    @DisplayName("Tap ability adds one black mana")
+    void tapAddsBlackMana() {
+        harness.addToBattlefield(player1, new ForsakenSanctuary());
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
-    }
-
-    private Permanent addSanctuaryReady(Player player) {
-        Permanent perm = new Permanent(new ForsakenSanctuary());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

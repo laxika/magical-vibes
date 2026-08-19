@@ -940,6 +940,26 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("Cannot activate loyalty ability while planeswalker loyalty abilities are locked")
+        void cannotActivateLoyaltyWhileLocked() {
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
+
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isPlaneswalkerLoyaltyAbilityLocked(gameData, perm)).thenReturn(true);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("can't be activated");
+        }
+
+        @Test
         @DisplayName("Cannot activate loyalty ability outside main phase")
         void cannotActivateLoyaltyOutsideMainPhase() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
