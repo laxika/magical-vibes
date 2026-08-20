@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifactSpellsEffect;
@@ -1068,7 +1069,8 @@ public class CastingPermissionService {
                 if (effect instanceof AllowCastFromTopOfLibraryEffect allow
                         && (allow.matches(card)
                         || (card.getType() != CardType.LAND && allow.filter() != null
-                        && predicateEvaluationService.matchesCardPredicate(card, allow.filter(), null)))) {
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, allow.filter(), perm.getOriginalCard().getId(), gameData, playerId)))) {
                     return true;
                 }
             }
@@ -1111,6 +1113,11 @@ public class CastingPermissionService {
             if (playerId.equals(permission.castingPlayerId())
                     && gameData.findExiledCard(permission.cardId()) != null) {
                 castableIds.add(permission.cardId());
+            }
+        }
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (hasIceCounterPermission(gameData, playerId, entry.card().getId(), false)) {
+                castableIds.add(entry.card().getId());
             }
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
@@ -1178,6 +1185,7 @@ public class CastingPermissionService {
         if (entry == null) return false;
         if (findTemporaryExileCastPermission(gameData, playerId, entry, false) != null) return true;
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
+        if (hasIceCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
@@ -1246,6 +1254,9 @@ public class CastingPermissionService {
             return OptionalInt.of(0);
         }
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) {
+            return OptionalInt.of(0);
+        }
+        if (hasIceCounterPermission(gameData, playerId, cardId, false)) {
             return OptionalInt.of(0);
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1350,6 +1361,11 @@ public class CastingPermissionService {
         return false;
     }
 
+    /** Returns whether the player may spend snow mana as any color for an ice-counter card. */
+    public boolean hasSnowManaAsAnyColorPermission(GameData gameData, UUID playerId, UUID cardId) {
+        return hasIceCounterPermission(gameData, playerId, cardId, true);
+    }
+
     private boolean hasStashCounterPermission(GameData gameData, UUID playerId, UUID cardId,
                                               boolean anyManaTypeRequired) {
         if (!gameData.stashCounterCardIds.contains(cardId)) return false;
@@ -1364,6 +1380,22 @@ public class CastingPermissionService {
                         .anyMatch(permission -> permission.stashCounterOnly()
                                 && (!anyManaTypeRequired || permission.anyManaType())
                                 && applies(permission, gameData, playerId, source, entry)));
+    }
+
+    private boolean hasIceCounterPermission(GameData gameData, UUID playerId, UUID cardId,
+                                            boolean anyManaTypeRequired) {
+        if (!gameData.exiledCardsWithIceCounters.contains(cardId)) return false;
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null || entry.card().hasType(CardType.LAND) || playerId.equals(entry.ownerId())) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(AllowCastFromCardsExiledWithIceCountersEffect.class::isInstance)
+                        .map(AllowCastFromCardsExiledWithIceCountersEffect.class::cast)
+                        .anyMatch(permission -> !anyManaTypeRequired || permission.anyManaType()));
     }
 
     private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,

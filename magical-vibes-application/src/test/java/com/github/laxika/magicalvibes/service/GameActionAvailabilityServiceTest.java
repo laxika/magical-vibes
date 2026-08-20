@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ForetellCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -319,6 +321,28 @@ class GameActionAvailabilityServiceTest {
             List<Integer> playable = svc.getPlayableCardIndices(gd, player1Id, 0);
 
             assertThat(playable).contains(0);
+        }
+
+        @Test
+        @DisplayName("Foretell reduction makes the action available on an opponent's turn")
+        void foretellReductionMakesActionAvailableOnOpponentsTurn() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            gd.activePlayerId = player2Id;
+
+            Card reducer = new Card();
+            reducer.setName("Cosmos Charger");
+            reducer.setType(CardType.CREATURE);
+            reducer.addEffect(EffectSlot.STATIC, new ForetellCostReductionEffect(1, true));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Card foretellCard = new Card();
+            foretellCard.setName("Foretell Card");
+            foretellCard.setType(CardType.INSTANT);
+            foretellCard.addCastingOption(new ForetellCast("{1}{U}"));
+            gd.playerHands.get(player1Id).add(foretellCard);
+            gd.playerManaPools.get(player1Id).add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS);
+
+            assertThat(svc.getPlayableForetellIndices(gd, player1Id)).containsExactly(0);
         }
 
         @Test

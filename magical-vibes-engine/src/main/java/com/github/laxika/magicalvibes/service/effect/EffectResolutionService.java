@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -135,7 +136,8 @@ public class EffectResolutionService {
             // Conditional wrapper: re-check condition at resolution time (intervening-if)
             if (effect instanceof ConditionalEffect conditional) {
                 boolean evaluatedWhenEtbTriggered = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && conditional.condition() instanceof ColorSpentToCast;
+                        && (conditional.condition() instanceof ColorSpentToCast
+                        || conditional.condition() instanceof SnowManaSpentToCast);
                 if (!evaluatedWhenEtbTriggered
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
@@ -302,6 +304,8 @@ public class EffectResolutionService {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
+            gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
         // Lethally-damaged creatures die at the state-based action check that follows this

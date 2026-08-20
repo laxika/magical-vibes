@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
+import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
@@ -1774,8 +1774,8 @@ public class LibraryChoiceHandlerService {
         }
 
         // Intuition: the targeted opponent chose which revealed card goes to the controller's hand
-        if (gameData.hasPendingInteraction(PendingIntuitionRevealChoice.class)) {
-            handleIntuitionRevealChoice(gameData, allRevealedCards, cardIds);
+        if (gameData.hasPendingInteraction(PendingOpponentChoosesCardToHandRestToGraveyard.class)) {
+            handleOpponentChoosesCardToHandRestToGraveyard(gameData, allRevealedCards, cardIds);
             return;
         }
 
@@ -2219,9 +2219,10 @@ public class LibraryChoiceHandlerService {
      * controller's hand, the rest into their graveyard, then their library is shuffled. An empty
      * answer is treated as picking the first revealed card — the choice is mandatory.
      */
-    private void handleIntuitionRevealChoice(GameData gameData, List<Card> allRevealedCards,
-                                             List<UUID> selectedCardIds) {
-        UUID controllerId = gameData.pollPendingInteraction(PendingIntuitionRevealChoice.class).controllerId();
+    private void handleOpponentChoosesCardToHandRestToGraveyard(
+            GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds) {
+        UUID controllerId = gameData.pollPendingInteraction(
+                PendingOpponentChoosesCardToHandRestToGraveyard.class).controllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         UUID chosenId = selectedCardIds.isEmpty()

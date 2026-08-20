@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
-import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
+import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
@@ -56,7 +56,7 @@ class PendingInteractionContractTest {
             PendingSphinxAmbassadorChoice.class,
             PendingCapriciousEfreetState.class,
             PendingKarnScionRevealChoice.class,
-            PendingIntuitionRevealChoice.class,
+            PendingOpponentChoosesCardToHandRestToGraveyard.class,
             PendingMurmursFromBeyondChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,

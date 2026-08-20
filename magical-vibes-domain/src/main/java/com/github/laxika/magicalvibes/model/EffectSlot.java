@@ -49,6 +49,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
+    ON_CONTROLLER_FORETELLS,
     ON_CONTROLLER_COUNTERS_SPELL,
     /** "Whenever a spell you've cast is countered, ..." */
     ON_CONTROLLER_SPELL_COUNTERED,
@@ -551,6 +552,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */
     ON_OPPONENT_CREATURE_DEALT_DAMAGE,
+    ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE,
     /** Triggers whenever any creature (yours or an opponent's) is dealt damage (combat or non-combat).
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields;
      *  the queued stack entry targets the damaged creature (e.g. Death Pits of Rath). */
@@ -764,6 +766,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  and for player targets. Checked in {@code TriggerCollectionService} from both the spell and
      *  ability target paths. */
     ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     /** Triggers once for each other permanent controlled by this permanent's controller that
      * becomes the target of a spell or ability controlled by an opponent. The targeted permanent
      * is stored as the triggered entry's non-targeting {@code triggeringPermanentId}. Checked in

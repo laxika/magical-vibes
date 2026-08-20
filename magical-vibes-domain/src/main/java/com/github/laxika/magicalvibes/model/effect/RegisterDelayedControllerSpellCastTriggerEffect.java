@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.List;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 /**
  * When resolved, registers a delayed triggered ability for the rest of the turn: "Until end of turn,
@@ -17,12 +18,26 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param sourceMustRemainOnBattlefield whether the source must still be on the battlefield
  */
 public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
+                                                              StackEntryPredicate stackEntryFilter,
                                                               List<CardEffect> resolvedEffects,
                                                               boolean sourceMustRemainOnBattlefield)
         implements CardEffect {
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects) {
-        this(spellFilter, resolvedEffects, true);
+        this(spellFilter, null, resolvedEffects, true);
+    }
+
+    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
+                                                            List<CardEffect> resolvedEffects,
+                                                            boolean sourceMustRemainOnBattlefield) {
+        this(spellFilter, null, resolvedEffects, sourceMustRemainOnBattlefield);
+    }
+
+    public static RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(
+            StackEntryPredicate stackEntryFilter, List<CardEffect> resolvedEffects,
+            boolean sourceMustRemainOnBattlefield) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(
+                null, stackEntryFilter, resolvedEffects, sourceMustRemainOnBattlefield);
     }
 }

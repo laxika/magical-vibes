@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 
-/**
- * Replacement behavior for counters put on permanents controlled by the effect's controller.
- */
+/** Replacement behavior for counters put on permanents or players. */
 public interface CounterReplacementEffect extends CardEffect {
 
     int replace(CounterType counterType, int count);
@@ -16,5 +14,13 @@ public interface CounterReplacementEffect extends CardEffect {
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature,
                               boolean affectedPermanentIsArtifact) {
         return appliesTo(counterType, affectedPermanentIsCreature);
+    }
+
+    default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature,
+                              boolean sourceControlsAffectedPermanent,
+                              boolean sourceControllerIsPlacingPlayer,
+                              boolean affectedObjectIsPlayer) {
+        return sourceControlsAffectedPermanent
+                && appliesTo(counterType, affectedPermanentIsCreature, false);
     }
 }

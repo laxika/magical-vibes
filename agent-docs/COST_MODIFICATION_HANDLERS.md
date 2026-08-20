@@ -118,6 +118,11 @@ applies to buyback costs paid by every player while its source is on the battlef
 change discard, life, or sacrifice buyback costs, and it does not reduce the spell's normal cast
 cost.
 
+Foretell special-action modifiers use the same battlefield handler registry. A handler may
+override `modifyForetellCost` for the generic action cost and
+`allowsForetellDuringAnyTurn` for a source-controller timing permission; ordinary spell-cost
+modifiers do not affect foretell.
+
 ## Infrastructure
 
 - `cast/CostModificationHandlerBean.java` — interface.
@@ -143,6 +148,9 @@ cost.
 - `cast/costmod/ReduceBuybackCostEffectHandler.java` — battlefield handler for
   `ReduceBuybackCostEffect(int)`; contributes only through `modifyBuybackCost`, so the effect is
   isolated from ordinary spell-cost calculations.
+- `cast/costmod/ForetellCostReductionEffectHandler.java` — battlefield handler for
+  `ForetellCostReductionEffect(int, boolean)`; contributes through the foretell action-cost and
+  any-player-turn channels for the source controller.
 - `cast/costmod/ReduceCastCostForChosenNameSpellsEffectHandler.java` — battlefield handler for
   `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
   whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record
@@ -193,6 +201,8 @@ cost.
 ## Adding a new cost-modifier card
 
 Temporary reductions are represented by `ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect`, whose normal-effect handler adds the existing `ReduceCastCostForMatchingSpellsEffect` as an until-end-of-turn floating effect. `CastingCostService` includes active floating cost modifiers in its snapshot so preview and payment use the same result.
+
+One-shot reductions use `ReduceCastCostForNextMatchingSpellEffect`; its floating effect remains visible to both cost previews and payment, then `TriggerCollectionService` removes it after the controller casts a matching spell (or during end-of-turn cleanup if unused).
 
 **First check whether it's a spell-self reduction** ("this spell costs {N} less to cast …"). If so,
 use `ReduceOwnCastCostEffect(DynamicAmount)` for generic mana, or

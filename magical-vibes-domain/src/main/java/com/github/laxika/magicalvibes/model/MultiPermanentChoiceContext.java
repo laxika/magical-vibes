@@ -432,6 +432,14 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chose distinct artifact and/or creature tokens to copy. */
+    record CreateTokenCopiesOfChosenDistinctControlledTokens() implements MultiPermanentChoiceContext {
+    }
+
+    /** Exile any number of selected permanents until the source permanent leaves the battlefield. */
+    record ExileAnyNumberUntilSourceLeaves(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    }
+
     /**
      * "Sacrifice [source] unless you sacrifice any number of creatures with total power
      * {@code requiredPower} or greater" (Phyrexian Dreadnought). The chosen creatures are

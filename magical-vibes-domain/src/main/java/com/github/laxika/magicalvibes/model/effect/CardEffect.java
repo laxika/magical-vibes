@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 public interface CardEffect {
@@ -66,4 +67,10 @@ public interface CardEffect {
      * targets have become illegal, so its handler can apply a separate resolution clause.
      */
     default boolean resolvesWhenTargetIllegal() { return false; }
+
+    /**
+     * Resolves a trigger-only condition that depends on the activated ability that caused the
+     * trigger. Effects without such a condition remain unchanged.
+     */
+    default CardEffect resolveForActivatedAbility(ActivatedAbility ability) { return this; }
 }

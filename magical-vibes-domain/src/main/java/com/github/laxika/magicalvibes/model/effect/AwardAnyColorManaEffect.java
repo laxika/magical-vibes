@@ -107,7 +107,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     @Override
     public int estimatedWildcardMana() {
         return switch (restriction) {
-            case NONE, CREATURE_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
+            case NONE, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
                  CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
             case ABILITIES, IMPRINTED_CARD_COLORS, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY,

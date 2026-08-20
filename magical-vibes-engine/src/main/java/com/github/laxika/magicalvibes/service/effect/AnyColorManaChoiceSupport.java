@@ -148,6 +148,8 @@ public final class AnyColorManaChoiceSupport {
             case FLASHBACK_ONLY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, null, true);
             case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, amount);
+            case CREATURE_OR_ENCHANTMENT_SPELL_ONLY ->
+                    throw new IllegalArgumentException("Use the two-color mana effect for this restriction");
             case SUBTYPE_CREATURE_SPELL ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype());
             case CREATURE_SPELLS_OR_ABILITIES ->

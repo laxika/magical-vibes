@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -114,6 +115,9 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
+        if (stt.targetFilter() != null) {
+            entry.setTargetFilter(stt.targetFilter());
+        }
         pushTriggeredEntry(gameData, entry);
 
         if (declined) {
@@ -175,6 +179,21 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCopyPermanentTargetedBySpell(GameData gameData, UUID permanentId) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null) {
+            throw new IllegalStateException("No pending effect resolution for permanent choice");
+        }
+
+        pendingEntry.setTargetId(permanentId);
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleDeathTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.DeathTriggerTarget dtt) {
@@ -1825,6 +1844,11 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleSagaChapterTarget(GameData gameData, UUID chosenId, PermanentChoiceContext.SagaChapterTarget sct) {
+        if (!sct.targetGroups().isEmpty()) {
+            handleSagaChapterMultiTarget(gameData, chosenId, sct);
+            return;
+        }
+
         // If the player chose their own player ID, it means "skip" (up to one — chose zero)
         boolean skipped = gameData.playerIdToName.containsKey(chosenId)
                 && chosenId.equals(sct.controllerId());
@@ -1882,6 +1906,68 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSagaChapterPlayerTarget(GameData gameData, UUID chosenId,
+                                               PermanentChoiceContext.SagaChapterPlayerTarget scpt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                scpt.sourceCard(),
+                scpt.controllerId(),
+                scpt.sourceCard().getName() + "'s chapter " + scpt.chapterName() + " ability",
+                new ArrayList<>(scpt.effects()),
+                chosenId,
+                scpt.sourcePermanentId()
+        );
+        pushTriggeredEntry(gameData, entry);
+
+        gameLogService.append(gameData, GameLog.builder().card(scpt.sourceCard())
+                .text("'s chapter " + scpt.chapterName() + " targets "
+                        + gameData.playerIdToName.get(chosenId) + ".").build());
+        log.info("Game {} - {} chapter {} targets player {}", gameData.id,
+                scpt.sourceCard().getName(), scpt.chapterName(), gameData.playerIdToName.get(chosenId));
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
+            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
+            return;
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSagaChapterMultiTarget(GameData gameData, UUID chosenId,
+                                               PermanentChoiceContext.SagaChapterTarget sct) {
+        SagaChapterTargetGroup group = sct.targetGroups().get(sct.currentGroupIndex());
+        boolean skipped = group.minTargets() == 0
+                && gameData.playerIdToName.containsKey(chosenId)
+                && chosenId.equals(sct.controllerId());
+        List<UUID> chosenTargets = new ArrayList<>(sct.chosenTargetsSoFar());
+        if (!skipped) {
+            chosenTargets.add(chosenId);
+        }
+
+        boolean repeatVariableLastGroup = !skipped
+                && sct.targetGroups().size() == 1
+                && chosenTargets.size() < group.maxTargets();
+
+        gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
+        gameData.queueInteractionFirst(new PermanentChoiceContext.SagaChapterTarget(
+                sct.sourceCard(), sct.controllerId(), sct.effects(), sct.sourcePermanentId(),
+                sct.chapterName(), sct.targetFilters(), sct.targetGroups(), chosenTargets,
+                repeatVariableLastGroup ? sct.currentGroupIndex() : sct.currentGroupIndex() + 1));
+        triggerCollectionService.processNextSagaChapterTarget(gameData);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -140,6 +142,63 @@ public class CastingCostService {
             }
         }
         return new CostModifierSnapshot(modifiers);
+    }
+
+    /** Returns the effective generic mana cost of the foretell special action. */
+    public ManaCost getForetellActionCost(GameData gameData, UUID playerId) {
+        int modifier = getForetellCostModifier(gameData, playerId, buildCostModifierSnapshot(gameData, playerId));
+        if (modifier >= 0) {
+            return new ManaCost("{" + (2 + modifier) + "}");
+        }
+        return new ManaCost("{2}").reducedBy(new ManaCost("{" + -modifier + "}"));
+    }
+
+    /** Returns the card's native or granted foretell cost, or {@code null} when it cannot be foretold. */
+    public ManaCost getForetellCost(GameData gameData, UUID playerId, Card card) {
+        ManaCastingCost nativeCost = card.getCastingOption(ForetellCast.class)
+                .map(ForetellCast::manaCostString)
+                .filter(java.util.Objects::nonNull)
+                .map(ManaCastingCost::new)
+                .orElse(null);
+        if (nativeCost != null) {
+            return new ManaCost(nativeCost.manaCost());
+        }
+
+        CostModifierSnapshot snapshot = buildCostModifierSnapshot(gameData, playerId);
+        for (CollectedCostModifier costModifier : snapshot.modifiers()) {
+            ManaCost granted = costModifier.handler().grantedForetellCost(
+                    gameData, playerId, card, costModifier.effect(), costModifier.source());
+            if (granted != null) {
+                return granted;
+            }
+        }
+        return null;
+    }
+
+    /** Returns the net generic-mana delta applied to the foretell special action. */
+    public int getForetellCostModifier(GameData gameData, UUID playerId) {
+        return getForetellCostModifier(gameData, playerId, buildCostModifierSnapshot(gameData, playerId));
+    }
+
+    private int getForetellCostModifier(GameData gameData, UUID playerId, CostModifierSnapshot snapshot) {
+        int modifier = 0;
+        for (CollectedCostModifier costModifier : snapshot.modifiers()) {
+            modifier += costModifier.handler().modifyForetellCost(
+                    gameData, playerId, costModifier.effect(), costModifier.source());
+        }
+        return modifier;
+    }
+
+    /** Whether the player may foretell during a turn whose active player is someone else. */
+    public boolean canForetellDuringAnyTurn(GameData gameData, UUID playerId) {
+        CostModifierSnapshot snapshot = buildCostModifierSnapshot(gameData, playerId);
+        for (CollectedCostModifier costModifier : snapshot.modifiers()) {
+            if (costModifier.handler().allowsForetellDuringAnyTurn(
+                    gameData, playerId, costModifier.effect(), costModifier.source())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -660,6 +719,18 @@ public class CastingCostService {
         return reduction;
     }
 
+    private int evaluateActivatedAbilityCostReduction(
+            GameData gameData, ActivatedAbilityCostReducingEffect reducer,
+            Permanent reducingPermanent, UUID reducingControllerId) {
+        if (reducer.genericCostReductionAmount() != null) {
+            return amountEvaluationService.evaluate(
+                    gameData,
+                    reducer.genericCostReductionAmount(),
+                    AmountContext.forStaticEffect(reducingPermanent, reducingControllerId));
+        }
+        return reducer.genericCostReduction();
+    }
+
     /**
      * Extra sacrifice-of-matching-permanent requirement imposed by battlefield taxes such as
      * Drought: one sacrifice per matching mana symbol in {@code cost}, summed across every
@@ -1089,6 +1160,15 @@ public class CastingCostService {
                                     c, exileGraveyardCost.get().predicate(), c.getId()))
                     .count();
             if (matchingCount < exileGraveyardCost.get().count()) return false;
+        }
+
+        var chosenExileGraveyardCost = altCast.getCost(ExileCardFromGraveyardCastingCost.class);
+        if (chosenExileGraveyardCost.isPresent()) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null || graveyard.stream().noneMatch(c ->
+                    chosenExileGraveyardCost.get().predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            c, chosenExileGraveyardCost.get().predicate(), c.getId()))) return false;
         }
 
         var manaCost = altCast.getCost(ManaCastingCost.class);

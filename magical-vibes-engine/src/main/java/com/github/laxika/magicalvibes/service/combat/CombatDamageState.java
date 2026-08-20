@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.*;
@@ -44,6 +45,12 @@ class CombatDamageState {
     final Map<Integer, Integer> unpreventableAtkDamageTaken = new HashMap<>();
     final Map<Integer, Integer> unpreventableDefDamageTaken = new HashMap<>();
 
+    // Per-target snapshots used to calculate excess combat damage after prevention is applied.
+    final Map<UUID, Integer> damageDealtToPermanentsBeforeStep = new HashMap<>();
+    final Map<UUID, Integer> markedDamageBeforeStep = new HashMap<>();
+    final Map<UUID, Integer> toughnessBeforeStep = new HashMap<>();
+    final Map<UUID, Integer> loyaltyBeforeStep = new HashMap<>();
+
     // Deathtouch tracking
     final Set<Integer> deathtouchDamagedAttackerIndices = new HashSet<>();
     final Set<Integer> deathtouchDamagedDefenderIndices = new HashSet<>();
@@ -64,6 +71,8 @@ class CombatDamageState {
     final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
     final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();
     final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();
+    final List<DelayedCombatDamageLookAtHandAndDrawQualification>
+            delayedCombatDamageLookAtHandAndDrawQualifications = new ArrayList<>();
 
     // Per-source damage amounts to each target creature (for ON_DEALT_DAMAGE triggers needing damage amount)
     // Key: source permanent, Value: map of target creature ID -> damage amount
@@ -79,5 +88,11 @@ class CombatDamageState {
     boolean defenderDamageAsInfect;
 
     record DelayedCombatDamageDrawQualification(DelayedCombatDamageDraw delayedAction, Set<UUID> sourceIds) {
+    }
+
+    record DelayedCombatDamageLookAtHandAndDrawQualification(
+            DelayedCombatDamageLookAtHandAndDraw delayedAction,
+            UUID damagedPlayerId
+    ) {
     }
 }

@@ -178,6 +178,7 @@ public class StateBasedActionService {
             gameData.exiledCardHitCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
+            gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
@@ -187,8 +188,10 @@ public class StateBasedActionService {
             gameData.stashCounterCardIds.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
             gameData.exileInsteadOfGraveyard.remove(cardId);
+            gameData.foretoldCardIds.remove(cardId);
             gameData.graveyardPlayPermissions.remove(cardId);
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(cardId);
+            gameData.graveyardCardsEnterTapped.remove(cardId);
         }
         gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));
         gameData.clearDelayedActions(PendingExileReturn.class,

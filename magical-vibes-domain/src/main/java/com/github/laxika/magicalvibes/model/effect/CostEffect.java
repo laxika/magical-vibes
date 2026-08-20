@@ -73,6 +73,14 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
+     * True when paying this cost must preserve the sacrificed permanent's last-known
+     * characteristics for a later effect in the same ability.
+     */
+    default boolean recordsSacrificedPermanentSnapshot() {
+        return false;
+    }
+
+    /**
      * The life paid to satisfy this cost given the payer's current life total (a fixed amount,
      * or "half your life rounded up"), or {@code 0} when this cost costs no life.
      */

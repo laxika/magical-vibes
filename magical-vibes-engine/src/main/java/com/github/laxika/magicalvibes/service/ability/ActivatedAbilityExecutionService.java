@@ -457,7 +457,7 @@ public class ActivatedAbilityExecutionService {
         // here so they end up ON TOP of the activated ability (non-mana), or deferred to the next
         // priority window alongside cost triggers (mana abilities, per CR 603.3).
         int stackBeforeActivationTriggers = gameData.stack.size();
-        triggerCollectionService.checkControllerActivatesAbilityTriggers(gameData, playerId, permanent);
+        triggerCollectionService.checkControllerActivatesAbilityTriggers(gameData, playerId, permanent, ability);
         if (ability.isExhaustAbility()) {
             triggerCollectionService.checkControllerActivatesExhaustAbilityTriggers(gameData, playerId);
             triggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard(gameData, playerId);

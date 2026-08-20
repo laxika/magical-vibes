@@ -59,6 +59,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.CipherEncode) {
             battlefieldHandler.handleCipherEncode(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.CreateTokensAndAttachEquipment attachEquipment) {
+            battlefieldHandler.handleCreateTokensAndAttachEquipment(gameData, permanentId, attachEquipment);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToCreature attachEquip) {
             battlefieldHandler.handleAttachEquipmentToCreature(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
@@ -151,6 +153,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleSpellTargetTrigger(gameData, permanentId, stt);
         } else if (context instanceof PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
             triggerHandler.handleDiscardTrigger(gameData, permanentId, dtt);
+        } else if (context instanceof PermanentChoiceContext.CopyPermanentTargetedBySpell) {
+            triggerHandler.handleCopyPermanentTargetedBySpell(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.DiscardControllerTriggerTarget dct) {
             triggerHandler.handleDiscardControllerTrigger(gameData, permanentId, dct);
         } else if (context instanceof PermanentChoiceContext.DeathTriggerTarget dtt) {
@@ -303,6 +307,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleAttackCounterMoveSecondTarget(gameData, permanentId, acms);
         } else if (context instanceof PermanentChoiceContext.SagaChapterTarget sct) {
             triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
+        } else if (context instanceof PermanentChoiceContext.SagaChapterPlayerTarget scpt) {
+            triggerHandler.handleSagaChapterPlayerTarget(gameData, permanentId, scpt);
         } else if (context instanceof PermanentChoiceContext.TariffTieBreak tariffTieBreak) {
             battlefieldHandler.handleTariffTieBreak(gameData, permanentId, tariffTieBreak);
         } else if (context instanceof PermanentChoiceContext.DispersalTieBreak dispersalTieBreak) {

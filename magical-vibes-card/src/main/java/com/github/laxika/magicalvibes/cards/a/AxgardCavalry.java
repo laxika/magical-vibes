@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "189")
+@CardRegistration(set = "KHM", collectorNumber = "121")
 public class AxgardCavalry extends Card {
 
     public AxgardCavalry() {

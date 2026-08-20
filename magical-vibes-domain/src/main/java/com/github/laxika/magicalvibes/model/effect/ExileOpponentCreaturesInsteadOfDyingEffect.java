@@ -7,7 +7,20 @@ package com.github.laxika.magicalvibes.model.effect;
  * creatures controlled by an opponent of this permanent's controller. Because the creature never
  * reaches a graveyard, its dies-triggers do not fire. Applied in {@code PermanentRemovalService},
  * which is the one place that knows both the dying permanent's controller and that it was a
- * creature. Used by Liesa, Forgotten Archangel.
+ * creature. Used by Liesa, Forgotten Archangel. The parameterized form also models Draugr
+ * Necromancer's nontoken-only variant, which adds an ice counter to the exiled card.
+ *
+ * @param nontokenOnly whether token creatures are excluded
+ * @param addIceCounter whether the exiled card receives an ice counter
  */
-public record ExileOpponentCreaturesInsteadOfDyingEffect() implements CardEffect {
+public record ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, boolean addIceCounter)
+        implements CardEffect {
+
+    public ExileOpponentCreaturesInsteadOfDyingEffect() {
+        this(false, false);
+    }
+
+    public static ExileOpponentCreaturesInsteadOfDyingEffect withIceCounter() {
+        return new ExileOpponentCreaturesInsteadOfDyingEffect(true, true);
+    }
 }

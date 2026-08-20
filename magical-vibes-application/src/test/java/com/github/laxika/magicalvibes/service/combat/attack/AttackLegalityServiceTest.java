@@ -31,6 +31,11 @@ import com.github.laxika.magicalvibes.cards.t.TrainingDrone;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -451,6 +456,19 @@ class AttackLegalityServiceTest extends BaseCardTest {
         // A taunt adds a second requirement, but only while the taunter is attackable.
         gd.tauntedThisTurn.put(player1.getId(), player2.getId());
         assertThat(als.getMustAttackRequirementCount(gd, okk)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A floating goad requirement covers matching opposing creatures")
+    void floatingGoadRequirementCoversMatchingOpposingCreatures() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        var goad = new GoadCreaturesUntilNextTurnEffect(new PermanentNotPredicate(
+                new PermanentControlledBySourceControllerPredicate()));
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), "Kardur, Doomscourge", null, player1.getId(), goad,
+                null, null, goad.affectedPredicate(), EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+
+        assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
     }
 
     @Test

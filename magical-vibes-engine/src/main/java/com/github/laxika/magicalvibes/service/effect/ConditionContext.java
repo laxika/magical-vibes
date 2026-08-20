@@ -43,6 +43,7 @@ public record ConditionContext(
         boolean buyback,
         boolean prowl,
         boolean madness,
+        boolean castForForetell,
         boolean overloaded,
         Zone sourceZone,
         int xValue,
@@ -55,6 +56,18 @@ public record ConditionContext(
         Card sacrificedCard,
         List<String> repeatedAdditionalCosts
 ) {
+    public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
+                            Card sourceCard, boolean kicked, boolean buyback, boolean prowl,
+                            boolean madness, boolean overloaded, Zone sourceZone, int xValue,
+                            UUID targetId, Card triggeringCard, boolean staticEvaluation,
+                            boolean putCounterCostPaid, UUID triggeringPermanentId,
+                            Integer triggeringPermanentPowerAtTrigger, Card sacrificedCard,
+                            List<String> repeatedAdditionalCosts) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
+                madness, false, overloaded, sourceZone, xValue, targetId, triggeringCard,
+                staticEvaluation, putCounterCostPaid, triggeringPermanentId,
+                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts);
+    }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
                             Card sourceCard, boolean kicked, boolean buyback, boolean prowl,
@@ -99,7 +112,8 @@ public record ConditionContext(
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static ConditionContext forStackEntry(StackEntry entry) {
         return new ConditionContext(entry.getControllerId(), entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(),
-                entry.getCard(), entry.isKicked(), entry.isBuyback(), entry.isProwl(), entry.isMadness(), entry.isOverloaded(),
+                entry.getCard(), entry.isKicked(), entry.isBuyback(), entry.isProwl(), entry.isMadness(),
+                entry.isCastForForetell(), entry.isOverloaded(),
                 entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
                 entry.isPutCounterCostPaid(), entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard(),
@@ -146,7 +160,7 @@ public record ConditionContext(
     /** Returns a copy with the given snapshotted numeric value (attacker count, mana spent). */
     public ConditionContext withXValue(int newXValue) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, madness, overloaded, sourceZone, newXValue, targetId, triggeringCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, newXValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts);
     }
@@ -154,7 +168,7 @@ public record ConditionContext(
     /** Returns a copy with the given target id (e.g. a multi-target group's chosen target). */
     public ConditionContext withTargetId(UUID newTargetId) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, madness, overloaded, sourceZone, xValue, newTargetId, triggeringCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, newTargetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts);
     }
@@ -162,7 +176,7 @@ public record ConditionContext(
     /** Returns a copy with the given triggering (entering) card. */
     public ConditionContext withTriggeringCard(Card card) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, madness, overloaded, sourceZone, xValue, targetId, card, staticEvaluation,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, card, staticEvaluation,
                 putCounterCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger,
                 sacrificedCard, repeatedAdditionalCosts);
     }
@@ -170,7 +184,7 @@ public record ConditionContext(
     /** Returns a copy carrying the permanent that caused an enter-the-battlefield trigger. */
     public ConditionContext withTriggeringPermanentId(UUID permanentId) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, madness, overloaded, sourceZone, xValue, targetId, triggeringCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, permanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts);
     }
@@ -178,7 +192,7 @@ public record ConditionContext(
     /** Returns a copy carrying the triggering permanent's snapshotted power. */
     public ConditionContext withTriggeringPermanentPowerAtTrigger(Integer power) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, madness, overloaded, sourceZone, xValue, targetId, triggeringCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, triggeringPermanentId, power, sacrificedCard,
                 repeatedAdditionalCosts);
     }

@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -371,6 +372,20 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("CardToughnessAtLeastPredicate matches cards at or above the toughness")
+        void cardToughnessAtLeastPredicateMatches() {
+            Card eligible = createCreature("Wall of Frost", 0, 7, CardColor.BLUE);
+            Card tooSmall = createCreature("Grizzly Bears", 2, 2, CardColor.GREEN);
+            Card withoutToughness = createLand("Forest");
+
+            CardToughnessAtLeastPredicate predicate = new CardToughnessAtLeastPredicate(6);
+
+            assertThat(evaluator.matchesCardPredicate(eligible, predicate, null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(tooSmall, predicate, null)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(withoutToughness, predicate, null)).isFalse();
+        }
+
+        @Test
         @DisplayName("CardSubtypePredicate matches subtype")
         void cardSubtypePredicateMatches() {
             Card card = createCreature("Elf", 1, 1, CardColor.GREEN);
@@ -390,11 +405,17 @@ class PredicateEvaluationServiceTest {
             Card bear = createCreatureWithSubtypes("Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
             Card elf = createCreatureWithSubtypes("Elf", 1, 1, CardColor.GREEN, List.of(CardSubtype.ELF));
             Card changeling = createChangelingCreature("Changeling");
+            Card nonCreatureElf = createArtifact("Kindred Spell");
+            nonCreatureElf.setSubtypes(List.of(CardSubtype.BEAR));
             CardHasSourceChosenSubtypePredicate predicate = new CardHasSourceChosenSubtypePredicate();
 
             assertThat(evaluator.matchesCardPredicate(bear, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(elf, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
             assertThat(evaluator.matchesCardPredicate(changeling, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(nonCreatureElf, new CardHasSourceChosenSubtypePredicate(false),
+                    sourceCard.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(nonCreatureElf, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
         }
 
         @Test

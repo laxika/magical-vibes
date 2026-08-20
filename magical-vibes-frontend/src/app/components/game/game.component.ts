@@ -514,6 +514,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
 
     this.playableCardIndices.set(new Set(state.playableCardIndices));
+    this.playableForetellIndices.set(new Set(state.playableForetellIndices ?? []));
     this.potentialPlayableCardIndices.set(new Set(state.potentialPlayableCardIndices ?? []));
     this.potentialManaTotal.set(state.potentialManaTotal ?? 0);
     this.potentialPayableAbilityIndices.set(state.potentialPayableAbilityIndices ?? {});
@@ -573,6 +574,7 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Priority & playability ==========
 
   playableCardIndices = signal(new Set<number>());
+  playableForetellIndices = signal(new Set<number>());
   potentialPlayableCardIndices = signal(new Set<number>());
   potentialManaTotal = signal(0);
   potentialPayableAbilityIndices = signal<Record<string, number[]>>({});
@@ -587,6 +589,10 @@ export class GameComponent implements OnInit, OnDestroy {
       player taps their mana sources (MTGO-style — clicking enters the payment flow). */
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index) || this.potentialPlayableCardIndices().has(index);
+  }
+
+  isForetellPlayable(index: number): boolean {
+    return this.playableForetellIndices().has(index);
   }
 
   isGraveyardLandPlayable(index: number): boolean {
@@ -604,6 +610,10 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.choice.targeting.selectingBeholdHandCard) {
       this.choice.targeting.selectBeholdHandCard(index);
+      return;
+    }
+    if (!this.isCardPlayable(index) && this.isForetellPlayable(index)) {
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, foretell: true });
       return;
     }
     this.choice.targeting.playCard(index, (i) => this.isCardPlayable(i));

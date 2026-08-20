@@ -46,6 +46,7 @@ public sealed interface Condition permits
         CardsInHandMatchingAtLeast,
         CardsLeftGraveyardThisTurn,
         CastForMadnessCost,
+        CastForForetellCost,
         CastForProwlCost,
         CastFromZone,
         CastNotFromHand,
@@ -91,6 +92,7 @@ public sealed interface Condition permits
         ControlsPermanent,
         ControlsPermanentCount,
         ControlsPermanentCountAtMost,
+        ControlsCreaturesSharingCreatureType,
         ControlsPermanentsWithDifferentNames,
         ControlsPermanentsWithSameName,
         ControlledCreaturesTotalPowerAtLeast,
@@ -123,6 +125,7 @@ public sealed interface Condition permits
         ExtraTurn,
         Equipped,
         GainedLifeThisTurn,
+        GiantWizardOrSpellDealtDamageToTargetThisTurn,
         GraveyardCardThreshold,
         HasAttacker,
         ImprintedCardMatches,
@@ -228,6 +231,9 @@ public sealed interface Condition permits
         TotalPermanentCountEven,
         TotalCreatureCardsInGraveyardsAtLeast,
         TwoOrMoreSpellsCastLastTurn,
+        CreaturesDiedThisTurnAtLeast,
+        SnowManaSpentToCast,
+        SourceWasSecondSpellCastThisTurn,
         WonClash {
 
     /** Human-readable condition name for log messages (e.g. "metalcraft", "equipped"). */

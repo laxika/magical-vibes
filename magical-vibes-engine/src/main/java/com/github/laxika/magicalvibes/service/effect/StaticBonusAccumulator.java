@@ -38,8 +38,8 @@ public class StaticBonusAccumulator {
     private boolean landSubtypeOverriding;
     private boolean cardTypeOverriding;
     private boolean basePTOverridden;
-    private int basePowerOverride;
-    private int baseToughnessOverride;
+    private Integer basePowerOverride;
+    private Integer baseToughnessOverride;
     private boolean losesAllAbilities;
     private boolean losesAllNonManaAbilities;
     /**
@@ -222,15 +222,19 @@ public class StaticBonusAccumulator {
         return basePTOverridden;
     }
 
-    public int getBasePowerOverride() {
+    public Integer getBasePowerOverride() {
         return basePowerOverride;
     }
 
-    public int getBaseToughnessOverride() {
+    public Integer getBaseToughnessOverride() {
         return baseToughnessOverride;
     }
 
     public void setBasePTOverride(int power, int toughness) {
+        setBasePTOverride(Integer.valueOf(power), Integer.valueOf(toughness));
+    }
+
+    public void setBasePTOverride(Integer power, Integer toughness) {
         this.basePTOverridden = true;
         this.basePowerOverride = power;
         this.baseToughnessOverride = toughness;

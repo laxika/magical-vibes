@@ -18,6 +18,10 @@ public sealed interface ManaRestriction {
     /** Adds {@code amount} mana of {@code color} to the pool bucket for this restriction. */
     void applyTo(ManaPool pool, ManaColor color, int amount);
 
+    default void applyTo(ManaPool pool, ManaColor color, int amount, CardSubtype sourceChosenSubtype) {
+        applyTo(pool, color, amount);
+    }
+
     /** Short human-readable description of the restriction, used in game log lines. */
     String description();
 
@@ -50,6 +54,34 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return allowedSpellTypes + " spells only";
+        }
+    }
+
+    record ForetellOrInstantSorcery() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addForetellOrInstantSorceryOnlyColorless(amount);
+            } else {
+                pool.addForetellOrInstantSorceryOnlyColored(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "foretell or instant/sorcery spells only";
+        }
+    }
+
+    record ForetellSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addForetellSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "foretell cards or spells with foretell only";
         }
     }
 
@@ -201,6 +233,26 @@ public sealed interface ManaRestriction {
     }
 
     /** Mana spendable only to cast spells with {@code spellSubtype} or planeswalker spells of {@code planeswalkerSubtype}. */
+    record SubtypeOrLegendaryCreatureSpells(CardSubtype subtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            applyTo(pool, color, amount, subtype);
+        }
+
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount, CardSubtype sourceChosenSubtype) {
+            CardSubtype effectiveSubtype = subtype != null ? subtype : sourceChosenSubtype;
+            if (effectiveSubtype != null) {
+                pool.addSubtypeOrLegendaryCreatureMana(effectiveSubtype, color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return (subtype == null ? "chosen creature type" : subtype) + " or legendary creature spells only";
+        }
+    }
+
     record SubtypeOrPlaneswalkerSpells(CardSubtype spellSubtype, CardSubtype planeswalkerSubtype) implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {

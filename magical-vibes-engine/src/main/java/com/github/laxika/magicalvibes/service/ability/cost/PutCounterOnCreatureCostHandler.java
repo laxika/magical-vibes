@@ -60,7 +60,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         }
         CounterType type = cost.counterType();
         int count = cost.count();
-        count = gameQueryService.replaceCounters(gameData, chosen, type, count);
+        count = gameQueryService.replaceCounters(gameData, chosen, type, count, player.getId());
         if (count <= 0) {
             return;
         }

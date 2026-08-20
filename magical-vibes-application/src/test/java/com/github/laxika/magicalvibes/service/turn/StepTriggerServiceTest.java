@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
@@ -2127,6 +2128,26 @@ class StepTriggerServiceTest {
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(gd.stack.getFirst().getDescription()).contains("chapter II");
             assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Saga target groups trigger target selection for optional multi-target chapters")
+        void sagaTargetGroupsTriggerSelectionForOptionalChapter() {
+            Card saga = createSaga("Targeted Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_I,
+                    new MayEffect(new GainLifeEffect(1), "Gain life?"));
+            saga.setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+                    new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Target must be a creature"), 1, 1)));
+            Permanent sagaPermanent = new Permanent(saga);
+            sagaPermanent.setCounterCount(CounterType.LORE, 0);
+            gd.playerBattlefields.get(player1Id).add(sagaPermanent);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)).isTrue();
+            verify(triggerCollectionService).processNextSagaChapterTarget(gd);
         }
 
         @Test

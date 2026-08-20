@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -146,6 +147,7 @@ public class CombatTriggerService {
                         );
                         trigger.setNonTargeting(true);
                         trigger.setTriggeringPermanentId(creature.getId());
+                        captureEquippedCreatureDamageSource(trigger, creature, finalCreatureControllerId, effectsForStack);
                         // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                         // (e.g. equipment-granted Afflict) can resolve.
                         trigger.setAttackedTargetId(creature.getAttackTarget());
@@ -185,6 +187,7 @@ public class CombatTriggerService {
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());
                             trigger.setTriggeringPermanentId(creature.getId());
+                            captureEquippedCreatureDamageSource(trigger, creature, finalCreatureControllerId, effectsForStack);
                             gameData.stack.add(trigger);
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
@@ -258,6 +261,7 @@ public class CombatTriggerService {
                             trigger.setNonTargeting(true);
                         }
                         trigger.setTriggeringPermanentId(attacker.getId());
+                        captureEquippedCreatureDamageSource(trigger, attacker, finalControllerId, transformedEffects);
                         gameData.stack.add(trigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
@@ -266,6 +270,14 @@ public class CombatTriggerService {
                 }
             }
         });
+    }
+
+    private static void captureEquippedCreatureDamageSource(StackEntry trigger, Permanent creature,
+                                                             UUID controllerId, List<CardEffect> effects) {
+        if (effects.stream().anyMatch(EquippedCreatureDealsDamageToDefendingPlayerEffect.class::isInstance)) {
+            trigger.setDamageSourceCard(creature.getCard());
+            trigger.setTriggeringPermanentControllerId(controllerId);
+        }
     }
 
     /**

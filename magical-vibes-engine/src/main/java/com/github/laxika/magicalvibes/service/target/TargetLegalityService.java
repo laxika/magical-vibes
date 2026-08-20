@@ -409,7 +409,8 @@ public class TargetLegalityService {
                         throw new IllegalStateException("Target card not found in any graveyard");
                     }
                     if (returnCardsEffect.filter() != null
-                            && !predicateEvaluationService.matchesCardPredicate(card, returnCardsEffect.filter(), null)) {
+                            && !predicateEvaluationService.matchesCardPredicate(
+                            card, returnCardsEffect.filter(), sourceCardId)) {
                         throw new IllegalStateException("Target card must be a "
                                 + CardPredicateUtils.describeFilter(returnCardsEffect.filter()));
                     }

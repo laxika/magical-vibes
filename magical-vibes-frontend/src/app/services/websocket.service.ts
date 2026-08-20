@@ -422,6 +422,7 @@ export interface GameStateNotification {
   manaPool: Record<string, number>;
   autoStopSteps: string[];
   playableCardIndices: number[];
+  playableForetellIndices: number[];
   potentialPlayableCardIndices: number[];
   potentialManaTotal: number;
   potentialPayableAbilityIndices: Record<string, number[]>;

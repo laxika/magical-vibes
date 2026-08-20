@@ -34,8 +34,8 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSubtypePredicate p) {
             return p.subtype().getDisplayName() + " card";
         }
-        if (predicate instanceof CardHasSourceChosenSubtypePredicate) {
-            return "creature card of the chosen type";
+        if (predicate instanceof CardHasSourceChosenSubtypePredicate p) {
+            return p.creatureOnly() ? "creature card of the chosen type" : "card of the chosen type";
         }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";

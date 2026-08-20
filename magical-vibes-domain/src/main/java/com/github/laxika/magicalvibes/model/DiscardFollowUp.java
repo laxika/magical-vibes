@@ -38,7 +38,25 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               Permanent enteringPermanent, UUID enteringControllerId,
                               UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount,
                               UUID thenEffectTargetId, boolean plaguecrafter,
-                              int eachPlayerNoDiscardCount, boolean thenEffectUsesDiscardedManaValue) {
+                              int eachPlayerNoDiscardCount, boolean thenEffectUsesDiscardedManaValue,
+                              UUID rummageDrawPlayerId) {
+
+    public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
+                           List<UUID> remainingEachPlayerDiscards, UUID eachPlayerControllerId,
+                           int eachPlayerAmount, int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                           UUID boostPermanentId, int boostPower, int boostToughness,
+                           Card thenEffectSourceCard, CardEffect thenEffect, CardPredicate thenEffectCondition,
+                           Permanent enteringPermanent, UUID enteringControllerId,
+                           UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount,
+                           UUID thenEffectTargetId, boolean plaguecrafter,
+                           int eachPlayerNoDiscardCount, boolean thenEffectUsesDiscardedManaValue) {
+        this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId,
+                eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower,
+                boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent,
+                enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount,
+                thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount,
+                thenEffectUsesDiscardedManaValue, null);
+    }
 
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            List<UUID> remainingEachPlayerDiscards,
@@ -64,6 +82,11 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     public static DiscardFollowUp rummage(int drawCount) {
         return new DiscardFollowUp(drawCount, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
                 null, null, null, null, null, null, 0, null, false, 0, false);
+    }
+
+    public static DiscardFollowUp rummageToPlayer(int drawCount, UUID playerId) {
+        return new DiscardFollowUp(drawCount, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                null, null, null, null, null, null, 0, null, false, 0, false, playerId);
     }
 
     public static DiscardFollowUp untap(UUID permanentId) {

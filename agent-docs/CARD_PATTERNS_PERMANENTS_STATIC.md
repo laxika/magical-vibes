@@ -6,6 +6,8 @@
 
 All paths relative to `cards/`.
 
+| Aura that grants a keyword to an enchanted Equipment's equipped creature | `r/RuneOfSustenance.java` | target(`TargetFilters.permanent()`) + ON_ENTER_BATTLEFIELD DrawCardEffect(1) + STATIC GrantKeywordEffect(LIFELINK, ENCHANTED_PERMANENT, PermanentIsCreaturePredicate) + STATIC GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(LIFELINK) |
+
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Global draw replacement plus end-step sacrifice-or-discard | `p/PossessedPortal.java` | STATIC `PossessedPortalDrawReplacementEffect` plus END_STEP_TRIGGERED `EachPlayerSacrificesPermanentUnlessDiscardEffect` |
@@ -19,6 +21,7 @@ All paths relative to `cards/`.
 |---------|-----------|-------|
 | Oil-counter trigger plus counter-based anthem | `i/IchorplateGolem.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD `EnteringCreatureHasCountersConditionalEffect(OIL, PutCountersOnEnteringCreatureEffect(OIL, 1, false, OIL))` plus STATIC `StaticBoostEffect(1, 1, ALL_OWN_CREATURES, PermanentHasCountersPredicate(OIL))` |
 | Buyback cost reduction | `m/MemoryCrystal.java` | STATIC `ReduceBuybackCostEffect(2)` — the generic mana component of every player's mana buyback costs {2} less |
+| Foretell cost reduction and timing permission | `c/CosmosCharger.java` | STATIC `ForetellCostReductionEffect(1, true)` — your foretell action costs {1} less and may be taken during any player's turn |
 | Opponents' creatures can't get +1/+1 counters | `b/Blightbeetle.java` | STATIC GrantEffectEffect(CantHavePlusOnePlusOneCountersEffect, OPPONENT_CREATURES) — the narrow counter lock leaves other counter types unaffected |
 | Subtype lord (all) | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
 | Subtype lord (own) + keyword | `k/KnightExemplar.java` | STATIC StaticBoostEffect(1, 1, Set.of(INDESTRUCTIBLE), OWN_CREATURES, PermanentHasAnySubtypePredicate) â€” +1/+1 and indestructible to other Knights you control |
@@ -50,6 +53,7 @@ All paths relative to `cards/`.
 | Choose subtype + lord boost + cast draw | `v/VanquishersBanner.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC BoostCreaturesOfChosenSubtypeEffect(1,1) + ON_CONTROLLER_CASTS_SPELL ChosenSubtypeSpellCastTriggerEffect(DrawCardEffect) â€” choose type on enter, +1/+1 to own creatures of that type, draw on casting creature of that type |
 | Choose subtype + charge on cast + counter-scaled lord | `d/DoorOfDestinies.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + ON_CONTROLLER_CASTS_SPELL ChosenSubtypeSpellCastTriggerEffect(PutCountersOnSelfEffect(CHARGE), false) + STATIC BoostCreaturesOfChosenSubtypeEffect(1,1,CounterType.CHARGE) â€” charge counter whenever you cast any spell of the chosen type (creatureSpellOnly=false), own creatures of that type get +1/+1 per charge counter |
 | Shared-type pump | `c/CoatOfArms.java` | STATIC BoostBySharedCreatureTypeEffect |
+| Choose subtype + copy matching spells as tokens | `r/ReflectionsOfLittjara.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + ON_CONTROLLER_CASTS_SPELL CopyControllerCastSpellOnSpellCastEffect(CardHasSourceChosenSubtypePredicate(false), tokenCopy=true) — copies any spell carrying the chosen creature subtype; permanent-spell copies resolve as tokens |
 | Chroma anthem (own creatures) | `l/LightFromWithin.java` | STATIC BoostOwnCreaturesByManaSymbolEffect(ManaColor.WHITE, 1, 1) â€” each creature you control gets +1/+1 per white mana symbol in its own cost; hybrid/Phyrexian symbols of that color count |
 | Color-count anthem (other multicolored) | `k/KnightOfNewAlara.java` | STATIC BoostOtherMulticoloredCreaturesByColorCountEffect(1, 1) â€” each other multicolored creature you control gets +1/+1 per color it has; monocolored/colorless creatures and the source itself get nothing (layer-5-aware color count) |
 | Can't block | `s/SpinelessThug.java` | STATIC CantBlockEffect |
@@ -345,6 +349,7 @@ All paths relative to `cards/`.
 | Grant keyword + upkeep counter + death return | `g/GlisteningOil.java` | STATIC GrantKeywordEffect(INFECT, ENCHANTED_CREATURE) + UPKEEP_TRIGGERED PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE) + ON_DEATH ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardIsSelfPredicate).build() |
 | Upkeep +1/+1 counter + sacrifice on combat | `p/PrimalCocoon.java` | UPKEEP_TRIGGERED PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE) + ON_ATTACK SacrificeSelfEffect + ON_BLOCK SacrificeSelfEffect |
 | Doesn't untap + enchanted controller upkeep life loss | `n/NumbingDose.java` | STATIC DoesntUntapEffect.enchanted() + ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED EnchantedCreatureControllerLosesLifeEffect(1) — enchants artifact or creature, uses PermanentAnyOfPredicate target filter |
+| Aura ETB taps enchanted creature and deals its power to you + untap lock | `b/BindTheMonster.java` | target(TargetFilters.creature()) + ON_ENTER_BATTLEFIELD TapPermanentsEffect(TapUntapScope.ENCHANTED) + EnchantedCreatureDealsPowerDamageToControllerEffect() + STATIC DoesntUntapEffect.enchanted() |
 | ETB mass tap + permanent untap lock on a land subtype | `c/CurseOfMaritLage.java` | ON_ENTER_BATTLEFIELD TapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, PermanentHasSubtypePredicate(ISLAND)) + STATIC MatchingPermanentsDoesntUntapEffect(same predicate) — taps all Islands on entry, then keeps them locked; one predicate reused by both slots |
 | Color-wide untap lock + each-upkeep pay-to-untap | `m/MagneticMountain.java`, `t/ThelonsCurse.java` | STATIC MatchingPermanentsDoesntUntapEffect(blueCreature) + EACH_UPKEEP_TRIGGERED PayManaPerTappedCreatureToUntapEffect("{4}" / "{U}", blueCreature) — blue creatures don't untap; each player's upkeep, that player may pay the per-creature mana cost for tapped blue creatures they control to untap them (multi-permanent choice capped by colored-cost affordability; blueCreature = PermanentAllOfPredicate(IsCreature, ColorIn(BLUE))) |
 | Enchant enchantment: upkeep damage to its controller | `f/Feedback.java` | target(PermanentIsEnchantmentPredicate) + ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED DealDamageToPlayersEffect(1, DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER) — deals damage (not life loss) to the enchanted enchantment's controller at their upkeep; StepTriggerService bakes that controller as the stack targetId |

@@ -66,6 +66,8 @@ public class StackEntry {
     @Setter private boolean castTransformed;
     /** Whether a creature spell resolves as a face-down 2/2 from a morph cast. */
     @Setter private boolean castFaceDown;
+    /** Whether a permanent resolved from this spell enters the battlefield tapped. */
+    @Setter private boolean entersTapped;
     @Setter private Zone sourceZone;
     /**
      * Overrides the card's disposition owner when this spell is controlled by someone other than its
@@ -117,9 +119,11 @@ public class StackEntry {
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
     private Card bestowOriginalCard;
+    private Card physicalCard;
     /** Whether this spell was cast for its prowl cost — carried to the entering permanent so its
      *  "if its prowl cost was paid" ETB trigger can gate on it (CR 702.75). */
     @Setter private boolean prowl;
+    @Setter private boolean castForForetell;
     /** Whether this spell was cast for its madness cost. */
     @Setter private boolean madness;
     /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
@@ -178,10 +182,12 @@ public class StackEntry {
      * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringCardId;
+    @Setter private long triggeringCardGraveyardEntryVersion;
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
+    @Setter private Permanent sacrificedPermanentSnapshot;
     /** Effective power of the permanent sacrificed as an additional cost, when snapshotted. */
     @Setter private int sacrificedPower;
     /** Effective toughness of the permanent sacrificed as an additional cost, when snapshotted. */
@@ -513,6 +519,7 @@ public class StackEntry {
         this.castWithDisturb = source.castWithDisturb;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
+        this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
@@ -523,7 +530,9 @@ public class StackEntry {
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
         this.evoked = source.evoked;
         this.bestowOriginalCard = source.bestowOriginalCard;
+        this.physicalCard = source.physicalCard;
         this.prowl = source.prowl;
+        this.castForForetell = source.castForForetell;
         this.overloaded = source.overloaded;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
@@ -539,8 +548,11 @@ public class StackEntry {
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
+        this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.sacrificedCardId = source.sacrificedCardId;
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
+        this.sacrificedPermanentSnapshot = source.sacrificedPermanentSnapshot == null
+                ? null : new Permanent(source.sacrificedPermanentSnapshot);
         this.sacrificedPower = source.sacrificedPower;
         this.sacrificedToughness = source.sacrificedToughness;
         this.sacrificedCard = source.sacrificedCard;
@@ -647,6 +659,10 @@ public class StackEntry {
         this.bestowOriginalCard = freezeCard(bestowOriginalCard);
     }
 
+    public void setPhysicalCard(Card physicalCard) {
+        this.physicalCard = freezeCard(physicalCard);
+    }
+
     public void setConvokeCreatureIds(List<UUID> convokeCreatureIds) {
         this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
     }
@@ -656,7 +672,10 @@ public class StackEntry {
     }
 
     public Card getPhysicalCard() {
-        return bestowOriginalCard != null ? bestowOriginalCard : card;
+        if (bestowOriginalCard != null) {
+            return bestowOriginalCard;
+        }
+        return physicalCard != null ? physicalCard : card;
     }
 
     /**

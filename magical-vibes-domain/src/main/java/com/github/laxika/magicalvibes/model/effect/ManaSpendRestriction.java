@@ -39,6 +39,7 @@ public enum ManaSpendRestriction {
 
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,
+    CREATURE_OR_ENCHANTMENT_SPELL_ONLY,
 
     /** Spendable only to cast creature spells of the effect's printed subtype (The Seedcore). */
     SUBTYPE_CREATURE_SPELL,

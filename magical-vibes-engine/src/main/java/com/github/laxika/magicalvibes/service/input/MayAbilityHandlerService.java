@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraOrEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -674,7 +675,9 @@ public class MayAbilityHandlerService {
                     && (pendingEntry.getTargetId() != null
                     || !pendingEntry.getTargetIds().isEmpty()
                     || !pendingEntry.getTargetCardIds().isEmpty());
-            if (innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect && !targetAlreadySet) {
+            if ((innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect
+                    || innerEffect instanceof AttachTargetAuraOrEquipmentToTargetCreatureEffect)
+                    && !targetAlreadySet) {
                 var mayHandler = mayEffectHandlerRegistry.getHandler(innerEffect);
                 if (mayHandler != null) {
                     mayHandler.handle(gameData, player, true, ability);

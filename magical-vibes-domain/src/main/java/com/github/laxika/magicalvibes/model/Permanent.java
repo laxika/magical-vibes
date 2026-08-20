@@ -162,6 +162,8 @@ public class Permanent {
      * sacrificed for "add one mana of any type that land could produce").
      */
     @Setter private Card chosenCard;
+    /** Last-known snapshot of a permanent sacrificed as payment for an ability that needs it at resolution. */
+    @Setter private Permanent chosenSacrificedPermanentSnapshot;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantBlockThisCombat;
@@ -646,6 +648,8 @@ public class Permanent {
         this.chosenPermanentId = source.chosenPermanentId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
+        this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null
+                ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantBlockThisCombat = source.cantBlockThisCombat;
@@ -1220,6 +1224,7 @@ public class Permanent {
             case FLYING -> CounterType.FLYING;
             case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
             case LIFELINK -> CounterType.LIFELINK;
+            case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
             default -> null;
         };
         return (!faceDown && card.getKeywords().contains(keyword)) || grantedKeywords.contains(keyword)

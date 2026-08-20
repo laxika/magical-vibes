@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ICE", collectorNumber = "367")
 @CardRegistration(set = "CSP", collectorNumber = "151")
+@CardRegistration(set = "KHM", collectorNumber = "276")
+@CardRegistration(set = "KHM", collectorNumber = "277")
 public class SnowCoveredPlains extends Card {
 
     public SnowCoveredPlains() {

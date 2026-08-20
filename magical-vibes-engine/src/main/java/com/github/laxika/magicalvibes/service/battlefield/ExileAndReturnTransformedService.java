@@ -70,7 +70,7 @@ public class ExileAndReturnTransformedService {
         // enters with its starting loyalty, otherwise the state-based check kills it immediately.
         if (backFace.hasType(CardType.PLANESWALKER) && backFace.getLoyalty() != null) {
             int loyalty = gameQueryService.replaceCounters(gameData, newPerm, controllerId,
-                    CounterType.LOYALTY, backFace.getLoyalty());
+                    CounterType.LOYALTY, backFace.getLoyalty(), controllerId);
             newPerm.setCounterCount(CounterType.LOYALTY, loyalty);
         }
 

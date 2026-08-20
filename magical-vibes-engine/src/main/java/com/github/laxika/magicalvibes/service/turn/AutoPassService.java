@@ -193,6 +193,11 @@ public class AutoPassService {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
+            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
+        }
+
         // Process any pending end-step targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             stepTriggerService.processNextEndStepTriggerTarget(gameData);

@@ -145,6 +145,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.DifferentColorManaChoice ctx) {
+            handleDifferentColorManaChosen(gameData, player, colorName, ctx, colorChoice.options());
+            return;
+        }
+
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx);
@@ -281,6 +286,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellCreatureTypeChoice) {
             handleSpellCreatureTypeChoice(gameData, player, colorName);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SpellCardTypeChoice) {
+            handleSpellCardTypeChoice(gameData, player, colorName);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellColorChoice) {
@@ -656,6 +665,9 @@ public class ChoiceHandlerService {
             // Filter lands ("Add {R}{R}, {R}{G}, or {G}{G}") — each mana is chosen individually from
             // the fixed color list; add one and re-prompt until all picks have been made.
             manaPool.add(manaColor, 1);
+            if (ctx.fromSnowSource()) {
+                manaPool.addSnowMana(manaColor, 1);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, 1);
             }
@@ -667,7 +679,8 @@ public class ChoiceHandlerService {
             int remaining = amount - 1;
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.fixedColorCombination(
-                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions());
+                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
+                        .withSnowSource(ctx.fromSnowSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -725,6 +738,9 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} artifact-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else {
             manaPool.add(manaColor, amount);
+            if (ctx.fromSnowSource()) {
+                manaPool.addSnowMana(manaColor, amount);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
             }
@@ -761,6 +777,40 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleDifferentColorManaChosen(GameData gameData, Player player, String colorName,
+                                                ChoiceContext.DifferentColorManaChoice ctx,
+                                                List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+        ManaColor manaColor = ManaColor.valueOf(colorName);
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.addCreatureOrEnchantmentSpellOnlyMana(manaColor, ctx.amount());
+
+        if (ctx.firstColor() == null) {
+            List<String> remainingColors = ManaColor.COLORS.stream()
+                    .filter(color -> color != manaColor)
+                    .map(Enum::name)
+                    .toList();
+            ChoiceContext.DifferentColorManaChoice nextContext =
+                    new ChoiceContext.DifferentColorManaChoice(
+                            ctx.playerId(), ctx.amount(), ctx.restriction(), manaColor);
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    ctx.playerId(), null, null, nextContext, remainingColors,
+                    "Choose a different color of mana to add."));
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord
+                + " " + ctx.firstColor().name().toLowerCase() + " and " + manaWord + " "
+                + manaColor.name().toLowerCase() + " mana (creature or enchantment spells only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2235,6 +2285,20 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleSpellCardTypeChoice(GameData gameData, Player player, String typeName) {
+        CardType cardType = CardType.valueOf(typeName);
+
+        gameData.chosenSpellPermanentType = cardType;
+        gameData.chosenSpellCardType = cardType;
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + cardType.getDisplayName().toLowerCase() + ".";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chooses card type {} for a spell", gameData.id, player.getUsername(), cardType);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleTurnaboutChoice(GameData gameData, Player player, String choice) {
         CardType chosenType;
         boolean tap;
@@ -3108,19 +3172,6 @@ public class ChoiceHandlerService {
         String logEntry = player.getUsername() + " chooses " + color.name().toLowerCase() + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses color {} for a spell", gameData.id, player.getUsername(), color);
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleSpellCardTypeChoice(GameData gameData, Player player, String cardTypeName) {
-        CardType cardType = CardType.valueOf(cardTypeName);
-
-        gameData.chosenSpellCardType = cardType;
-        gameData.interaction.clearAwaitingInput();
-
-        String logEntry = player.getUsername() + " chooses " + cardType.getDisplayName().toLowerCase() + ".";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - {} chooses card type {} for a spell", gameData.id, player.getUsername(), cardType);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

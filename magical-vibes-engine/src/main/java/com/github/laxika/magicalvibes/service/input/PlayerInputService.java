@@ -730,16 +730,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
     }
 
-    public void beginSpellColorChoice(GameData gameData, UUID playerId) {
-        ChoiceContext.SpellColorChoice choiceContext = new ChoiceContext.SpellColorChoice(playerId);
-        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, colors, "Choose a color."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a color for a spell", gameData.id, playerName);
-    }
-
     public void beginSpellCardTypeChoice(GameData gameData, UUID playerId) {
         ChoiceContext.SpellCardTypeChoice choiceContext = new ChoiceContext.SpellCardTypeChoice(playerId);
         List<String> cardTypes = Arrays.stream(CardType.values())
@@ -749,7 +739,17 @@ public class PlayerInputService {
                 playerId, null, null, choiceContext, cardTypes, "Choose a card type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card type for a spell", gameData.id, playerName);
+        log.info("Game {} - Awaiting {} to choose a card type", gameData.id, playerName);
+    }
+
+    public void beginSpellColorChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellColorChoice choiceContext = new ChoiceContext.SpellColorChoice(playerId);
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a color for a spell", gameData.id, playerName);
     }
 
     public void beginSpellNumberChoice(GameData gameData, UUID playerId, int maxNumber) {

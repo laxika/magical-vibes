@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
@@ -511,6 +512,7 @@ public class TurnProgressionService {
         gameData.playersAttackedThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
+        gameData.clearDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
@@ -546,6 +548,7 @@ public class TurnProgressionService {
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
+        gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
@@ -598,6 +601,8 @@ public class TurnProgressionService {
         // player whose turn is beginning (its entries are keyed by that controlling player).
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
         gameData.permanentsProtectedFromDamageUntilNextTurn.values().removeIf(nextActive::equals);
+        gameData.creatureControllerDamageRedirectShields.removeIf(
+                shield -> nextActive.equals(shield.protectedPlayerId()));
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);

@@ -22,6 +22,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record CloneCopy() implements PermanentChoiceContext {}
 
+    record CopyPermanentTargetedBySpell() implements PermanentChoiceContext {}
+
     record CipherEncode() implements PermanentChoiceContext {}
 
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
@@ -31,6 +33,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Stonehewer Giant: attach the just-placed Equipment {@code equipmentPermanentId} to the chosen creature. */
     record AttachEquipmentToCreature(UUID equipmentPermanentId, UUID controllerId) implements PermanentChoiceContext {}
+
+    /** Reckless Crew: choose at most one distinct Equipment for each created token. */
+    record CreateTokensAndAttachEquipment(Card sourceCard, UUID controllerId, List<UUID> tokenIds,
+                                          int tokenIndex, List<UUID> chosenEquipmentIds)
+            implements PermanentChoiceContext {}
 
     /** Nettlevine Blight: sacrifice {@code permanentToSacrificeId}, then reattach the source Aura
      *  {@code auraPermanentId} onto the chosen creature or land. */
@@ -924,7 +931,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  {@code targetFilters} restricts valid targets (e.g. "creature an opponent controls"); null/empty = any creature. */
     record SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                              UUID sourcePermanentId, String chapterName,
-                             Set<TargetFilter> targetFilters) implements PermanentChoiceContext {}
+                             Set<TargetFilter> targetFilters,
+                             List<SagaChapterTargetGroup> targetGroups,
+                             List<UUID> chosenTargetsSoFar,
+                             int currentGroupIndex) implements PermanentChoiceContext {
+        public SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                 UUID sourcePermanentId, String chapterName,
+                                 Set<TargetFilter> targetFilters) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chapterName, targetFilters,
+                    List.of(), List.of(), 0);
+        }
+    }
+
+    record SagaChapterPlayerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, String chapterName)
+            implements PermanentChoiceContext {}
 
     /** Saga chapter ability that targets a card in a graveyard (e.g. The Mirari Conjecture chapters I/II). */
     record SagaChapterGraveyardTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

@@ -717,6 +717,10 @@ public class ManaCost {
         return canPay(pool, 0);
     }
 
+    public boolean canPayForForetell(ManaPool pool) {
+        return canPay(pool.copyForForetellPayment(), 0, false, false, false, false, true);
+    }
+
     public boolean canPay(ManaPool pool, int xValue) {
         if (snowCost > 0) {
             if (pool.getSnowManaTotal() < snowCost) {
@@ -1734,6 +1738,15 @@ public class ManaCost {
 
     public void pay(ManaPool pool) {
         pay(pool, 0);
+    }
+
+    public void payForForetell(ManaPool pool) {
+        ManaPool.ForetellPaymentState state = pool.beginForetellPayment();
+        try {
+            pay(pool, 0, false, false, false, false, true);
+        } finally {
+            pool.endForetellPayment(state);
+        }
     }
 
     public void pay(ManaPool pool, int xValue) {

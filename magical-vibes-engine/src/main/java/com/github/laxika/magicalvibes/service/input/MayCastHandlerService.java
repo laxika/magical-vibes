@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -1173,17 +1174,32 @@ public class MayCastHandlerService {
      */
     public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
                                                     PendingMayAbility ability) {
+        boolean revealCardOnDecline = ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .findFirst()
+                .map(MayCastFromHandWithoutPayingManaCostEffect::revealCardOnDecline)
+                .orElse(true);
+        handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability,
+                MayCastFromHandWithoutPayingManaCostEffect.class, revealCardOnDecline, false);
+    }
+
+    public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability,
+                                                    Class<? extends CardEffect> pendingEffectType,
+                                                    boolean revealCardOnDecline,
+                                                    boolean scryIfDeclined) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
 
         if (!accepted) {
-            boolean revealCardOnDecline = ability.effects().stream()
-                    .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
-                    .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
-                    .findFirst()
-                    .map(MayCastFromHandWithoutPayingManaCostEffect::revealCardOnDecline)
-                    .orElse(true);
-            if (revealCardOnDecline) {
+            if (scryIfDeclined) {
+                queueScryFallback(gameData);
+                gameLogService.append(gameData,
+                        GameLog.text(playerName + " declines to cast a permanent spell from hand."));
+                log.info("Game {} - {} declines all eligible permanent spells from hand", gameData.id,
+                        playerName);
+            } else if (revealCardOnDecline) {
                 gameLogService.append(gameData,
                         GameLog.textCardText(playerName + " declines to cast ", cardToCast, "."));
                 log.info("Game {} - {} declines to cast {} from hand", gameData.id,
@@ -1214,6 +1230,9 @@ public class MayCastHandlerService {
         }
 
         if (cardIndex == -1) {
+            if (scryIfDeclined) {
+                queueScryFallback(gameData);
+            }
             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer in hand."));
             log.info("Game {} - {} no longer in hand for cast-from-hand", gameData.id, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1229,11 +1248,19 @@ public class MayCastHandlerService {
 
         // Remove remaining may-cast-from-hand abilities (only cast one spell)
         gameData.pendingMayAbilities.removeIf(pma ->
-                pma.effects().stream().anyMatch(e -> e instanceof MayCastFromHandWithoutPayingManaCostEffect));
+                pma.effects().stream().anyMatch(pendingEffectType::isInstance));
 
         // Remove from hand and cast
         hand.remove(cardIndex);
         castCardFromHandWithoutPaying(gameData, player, cardToCast);
+    }
+
+    private void queueScryFallback(GameData gameData) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            pendingEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(new ScryEffect(1)));
+        }
     }
 
     private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card) {

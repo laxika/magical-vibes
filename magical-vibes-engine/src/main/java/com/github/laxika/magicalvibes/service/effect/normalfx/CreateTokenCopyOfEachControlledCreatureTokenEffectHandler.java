@@ -64,8 +64,7 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
         }
     }
 
-    private void createTokenCopy(GameData gameData, StackEntry entry, Card sourceCard) {
-        // Copy all copiable characteristics per CR 707.2.
+    void createTokenCopy(GameData gameData, StackEntry entry, Card sourceCard) {
         Card tokenCard = new Card();
         tokenCard.setName(sourceCard.getName());
         tokenCard.setType(sourceCard.getType());

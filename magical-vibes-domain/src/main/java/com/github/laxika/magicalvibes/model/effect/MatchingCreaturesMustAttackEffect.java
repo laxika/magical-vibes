@@ -10,5 +10,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * is not required to pay any attack costs even when this effect is present.
  * Used by Goblin Assault (Goblin creatures).
  */
-public record MatchingCreaturesMustAttackEffect(PermanentPredicate matcher) implements CardEffect {
+public record MatchingCreaturesMustAttackEffect(PermanentPredicate matcher)
+        implements CombatAttackRequirementEffect {
+
+    @Override
+    public PermanentPredicate affectedPredicate() {
+        return matcher;
+    }
 }

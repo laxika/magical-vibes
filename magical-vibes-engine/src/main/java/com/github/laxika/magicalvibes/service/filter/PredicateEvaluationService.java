@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredi
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
@@ -46,6 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
@@ -61,7 +64,9 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringControllersLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
@@ -340,6 +345,8 @@ public class PredicateEvaluationService {
             case CardHasEmbalmOrEternalizePredicate ignored ->
                     card.getGraveyardActivatedAbilities().stream()
                             .anyMatch(ActivatedAbility::isEmbalmOrEternalize);
+            case CardHasForetellPredicate ignored ->
+                    card.getCastingOption(ForetellCast.class).isPresent();
             case CardHasNoAbilitiesPredicate ignored ->
                     card.getCardText() == null && card.getKeywords().isEmpty();
             case CardIsPermanentPredicate ignored ->
@@ -381,6 +388,8 @@ public class PredicateEvaluationService {
             case CardPowerToughnessTotalAtMostPredicate p ->
                     card.getPower() != null && card.getToughness() != null
                             && card.getPower() + card.getToughness() <= p.maxTotal();
+            case CardToughnessAtLeastPredicate p ->
+                    card.getToughness() != null && card.getToughness() >= p.minToughness();
             case CardToughnessGreaterThanPowerPredicate ignored ->
                     card.getPower() != null && card.getToughness() != null
                             && card.getToughness() > card.getPower();
@@ -580,6 +589,15 @@ public class PredicateEvaluationService {
                 Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
                 yield host != null && gameQueryService.isCreature(gameData, host);
             }
+            case PermanentAttachedToCreatureControlledBySourceControllerPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+                UUID hostControllerId = host == null ? null : gameData.findControllerOf(host);
+                yield host != null && gameQueryService.isCreature(gameData, host)
+                        && sourceControllerId.equals(hostControllerId);
+            }
             case PermanentIsAuraAttachedToSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null
                         || !permanent.getCard().isAura() || !permanent.isAttached()) {
@@ -598,6 +616,14 @@ public class PredicateEvaluationService {
                 }
                 yield sourceAura != null && sourceAura.isAttached()
                         && sourceAura.getAttachedTo().equals(permanent.getId());
+            }
+            case PermanentAttachedToSourcePermanentPredicate ignored -> {
+                Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && sourceCardId != null) {
+                    sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                }
+                yield sourcePermanent != null && permanent.isAttached()
+                        && sourcePermanent.getId().equals(permanent.getAttachedTo());
             }
             case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
                 Permanent equipped = equippedCreatureOfSource(gameData, sourceCardId, filterContext);
@@ -1598,6 +1624,16 @@ public class PredicateEvaluationService {
                 Permanent sourceAura = context == null ? null : context.sourcePermanentSnapshot();
                 yield sourceAura != null && sourceAura.isAttached()
                         && sourceAura.getAttachedTo().equals(permanent.getId());
+            }
+            case PermanentAttachedToSourcePermanentPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceCardId = context == null ? null : context.sourceCardId();
+                Permanent sourcePermanent = context == null ? null : context.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && sourceCardId != null) {
+                    sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                }
+                yield sourcePermanent != null && permanent.isAttached()
+                        && sourcePermanent.getId().equals(permanent.getAttachedTo());
             }
             case PermanentIsSourcePermanentPredicate ignored -> {
                 UUID sourcePermanentId = context == null ? null : context.sourcePermanentId();

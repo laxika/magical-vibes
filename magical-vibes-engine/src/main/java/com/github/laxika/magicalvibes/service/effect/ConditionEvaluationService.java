@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGra
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.CastForForetellCost;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -93,6 +95,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCoun
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggeringPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlsCreaturesSharingCreatureType;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
@@ -101,6 +104,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreate
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
+import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
@@ -125,6 +129,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpe
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.GiantWizardOrSpellDealtDamageToTargetThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
@@ -206,6 +211,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceWasSecondSpellCastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
@@ -219,6 +225,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetManaValueAtMostControllerGraveyardCount;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -315,6 +322,10 @@ public class ConditionEvaluationService {
                     isCovenMet(gameData, ctx);
             case Morbid ignored ->
                     gameQueryService.isMorbidMet(gameData);
+            case CreaturesDiedThisTurnAtLeast c ->
+                    gameData.creatureDeathCountThisTurn.values().stream()
+                            .mapToInt(Integer::intValue)
+                            .sum() >= c.minimum();
             case CreatureDiedUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
@@ -330,6 +341,8 @@ public class ConditionEvaluationService {
                     ctx.buyback();
             case PutCounterCostPaid ignored ->
                     ctx.putCounterCostPaid();
+            case CastForForetellCost ignored ->
+                    ctx.castForForetell();
             case RepeatedAdditionalCostPaid c ->
                     ctx.repeatedAdditionalCosts().contains(c.manaCost());
             case CastForMadnessCost ignored ->
@@ -368,6 +381,12 @@ public class ConditionEvaluationService {
             case GainedLifeThisTurn gainedLife ->
                     ctx.controllerId() != null
                             && gameData.getLifeGainedThisTurn(ctx.controllerId()) >= gainedLife.minimumAmount();
+            case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && ctx.targetId() != null
+                            && gameData.qualifyingDamageControllersByPermanentThisTurn
+                            .getOrDefault(ctx.targetId(), Set.of())
+                            .contains(ctx.controllerId());
             case DidntGainLifeThisTurn ignored ->
                     ctx.controllerId() != null && !gameData.hasGainedLifeThisTurn(ctx.controllerId());
             case ControlsPermanent c ->
@@ -388,6 +407,8 @@ public class ConditionEvaluationService {
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentCountAtMost c ->
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) <= c.maxCount();
+            case ControlsCreaturesSharingCreatureType c ->
+                    controlsCreaturesSharingCreatureType(gameData, ctx, c.minimum());
             case ControlsPermanentsWithDifferentNames c ->
                     countControlledMatchingPermanentNames(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentsWithSameName c ->
@@ -649,6 +670,12 @@ public class ConditionEvaluationService {
             case ControllerCastSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), null, c.filter());
+            case SourceWasSecondSpellCastThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && ctx.sourceCard() != null
+                            && gameData.getSpellsCastThisTurn(ctx.controllerId()).size() > 1
+                            && ctx.sourceCard().getId().equals(
+                            gameData.getSpellsCastThisTurn(ctx.controllerId()).get(1).getId());
             case ControllerCastThreeOrMoreSpellsThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastThreeOrMoreSpellsThisTurn(
                             gameData, ctx.controllerId(), c.filter());
@@ -687,6 +714,9 @@ public class ConditionEvaluationService {
                     ctx.sourceCard() != null
                             && gameData.getSpellCastManaSpentByColor(ctx.sourceCard().getId(), c.color())
                             >= c.minimumAmount();
+            case SnowManaSpentToCast ignored ->
+                    ctx.sourceCard() != null
+                            && gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId()) > 0;
             case ControllerTurn ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
             case ControllerMainPhase ignored ->
@@ -1520,6 +1550,33 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
         return battlefield.stream().filter(p -> matchesPermanent(gameData, p, filter, ctx)).count();
+    }
+
+    private boolean controlsCreaturesSharingCreatureType(GameData gameData, ConditionContext ctx, int minimum) {
+        if (minimum <= 0) return true;
+        if (ctx.controllerId() == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+
+        Set<CardSubtype> allCreatureTypes = EnumSet.noneOf(CardSubtype.class);
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (gameQueryService.isCreatureSubtype(subtype)) {
+                allCreatureTypes.add(subtype);
+            }
+        }
+
+        Map<CardSubtype, Integer> countsByType = new HashMap<>();
+        for (Permanent permanent : battlefield) {
+            if (!gameQueryService.isCreature(gameData, permanent)) continue;
+            Set<CardSubtype> creatureTypes = gameQueryService.effectiveCreatureSubtypes(gameData, permanent);
+            if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+                creatureTypes = allCreatureTypes;
+            }
+            for (CardSubtype creatureType : creatureTypes) {
+                countsByType.merge(creatureType, 1, Integer::sum);
+            }
+        }
+        return countsByType.values().stream().anyMatch(count -> count >= minimum);
     }
 
     /**

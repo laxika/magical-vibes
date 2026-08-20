@@ -38,7 +38,8 @@ public class PutPhylacteryCounterOnTargetPermanentEffectHandler implements Norma
             return;
         }
 
-        int placed = gameQueryService.replaceCounters(gameData, target, CounterType.PHYLACTERY, 1);
+        int placed = gameQueryService.replaceCounters(gameData, target, CounterType.PHYLACTERY, 1,
+                entry.getControllerId());
         if (placed <= 0) {
             return;
         }

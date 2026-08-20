@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSuppo
 import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAttachEquipmentSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
@@ -83,6 +84,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PermanentChoiceBattlefieldHandlerService {
+    private final CreateTokensAndAttachEquipmentSupport createTokensAndAttachEquipmentSupport;
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
@@ -293,6 +295,11 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Begun from a library-search resume (Stonehewer Giant) while the search's stack entry is
         // still parked — the canonical epilogue resumes it.
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCreateTokensAndAttachEquipment(GameData gameData, UUID chosenId,
+                                                     PermanentChoiceContext.CreateTokensAndAttachEquipment context) {
+        createTokensAndAttachEquipmentSupport.handleChoice(gameData, chosenId, context);
     }
 
     public void handleAuraGraft(GameData gameData, UUID permanentId, PermanentChoiceContext.AuraGraft auraGraft) {
@@ -1776,7 +1783,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
                 t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
                 t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters(),
-                t.grantedKeywordsUntilEndOfTurn());
+                t.grantedKeywordsUntilEndOfTurn(), t.supertypes());
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 ctx.sourceCard(),

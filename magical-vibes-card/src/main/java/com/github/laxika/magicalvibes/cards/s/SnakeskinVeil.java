@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "233")
+@CardRegistration(set = "KHM", collectorNumber = "194")
 public class SnakeskinVeil extends Card {
 
     public SnakeskinVeil() {

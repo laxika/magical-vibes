@@ -235,6 +235,18 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class,
+            slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    private boolean handleOpponentNontokenPermanentSacrificeMay(TriggerMatchContext match,
+                                                                 MayEffect may,
+                                                                 TriggerContext ctx) {
+        TriggerContext.OpponentNontokenPermanentSacrificed sacrifice =
+                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                sacrifice.sacrificedCard().getId());
+        return true;
+    }
+
     // ── ON_ANY_CREATURE_SACRIFICED ─────────────────────────────────────
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
@@ -1313,6 +1325,48 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on controlled-source noncombat damage ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), damage.damageAmount());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    private boolean handleOpponentNontokenPermanentSacrificeDefault(TriggerMatchContext match,
+                                                                      CardEffect effect,
+                                                                      TriggerContext ctx) {
+        TriggerContext.OpponentNontokenPermanentSacrificed sacrifice =
+                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setTriggeringCardId(sacrifice.sacrificedCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(sacrifice.sacrificedCard().getId()));
+        match.gameData().enqueueTrigger(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_FORETELLS)
+    private boolean handleForetellBoostSelf(TriggerMatchContext match,
+            BoostSelfEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on foretell (self-boost)",
+                gameData.id, sourceCard.getName());
         return true;
     }
 

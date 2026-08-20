@@ -71,6 +71,18 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         applyBoost(gameData, entry, target, powerBoost, toughnessBoost, boost.duration());
     }
 
+    void resolveForTarget(GameData gameData, StackEntry entry, Permanent target,
+                          BoostTargetCreatureEffect boost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        AmountContext ctx = AmountContext.forStackEntry(entry, source);
+        int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
+        int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
+        applyBoost(gameData, entry, target, powerBoost, toughnessBoost, boost.duration());
+    }
+
     private void applyBoost(GameData gameData, StackEntry entry, Permanent target,
                             int powerBoost, int toughnessBoost, GrantDuration duration) {
         // The end-of-turn pump is the plain modifier, wiped by turn cleanup. An "until your next

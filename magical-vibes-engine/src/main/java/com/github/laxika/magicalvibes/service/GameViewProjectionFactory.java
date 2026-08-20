@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -53,6 +55,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Pure player-specific projection of authoritative game state into immutable networking views.
@@ -115,6 +118,8 @@ public class GameViewProjectionFactory {
                     ? new ArrayList<>(gameData.playerAutoStopSteps.get(playerId))
                     : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
             List<Integer> playableCardIndices = actionAvailabilityService.getPlayableCardIndices(gameData, playerId);
+            List<Integer> playableForetellIndices =
+                    actionAvailabilityService.getPlayableForetellIndices(gameData, playerId);
             List<Integer> potentialPlayableCardIndices =
                     actionAvailabilityService.getPotentialPlayableCardIndices(
                             gameData, playerId, playableCardIndices);
@@ -139,6 +144,8 @@ public class GameViewProjectionFactory {
                             .stream().map(c -> createHandCardView(gameData, controlledId, c, controlledGranted)).toList();
                     playableCardIndices =
                             actionAvailabilityService.getPlayableCardIndices(gameData, controlledId);
+                    playableForetellIndices =
+                            actionAvailabilityService.getPlayableForetellIndices(gameData, controlledId);
                     potentialPlayableCardIndices =
                             actionAvailabilityService.getPotentialPlayableCardIndices(
                                     gameData, controlledId, playableCardIndices);
@@ -159,11 +166,12 @@ public class GameViewProjectionFactory {
             }
 
             messages.put(playerId, new GameStateMessage(
-                    gameData.status, gameData.activePlayerId, gameData.turnNumber,
+                    MessageType.GAME_STATE, gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
                     applyFaceDownReveals(battlefields, faceDownReveals, playerId),
                     stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
+                    playableForetellIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
@@ -507,6 +515,11 @@ public class GameViewProjectionFactory {
         // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
         Set<UUID> castableFromExileWithSource = castingPermissionService.getCastableExiledCardIds(gameData, playerId);
         Set<UUID> anyManaTypeIds = castingPermissionService.getAnyManaTypeExiledCardIds(gameData, playerId);
+        Set<UUID> snowManaAsAnyColorIds = gameData.exiledCards.stream()
+                .filter(entry -> castingPermissionService.hasSnowManaAsAnyColorPermission(
+                        gameData, playerId, entry.card().getId()))
+                .map(entry -> entry.card().getId())
+                .collect(Collectors.toSet());
 
         // Include player's own exiled cards plus cards from any exile zone castable via source effect
         List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
@@ -535,9 +548,31 @@ public class GameViewProjectionFactory {
         ManaPool pool = gameData.playerManaPools.get(playerId);
 
         for (Card card : exiledCards) {
+            ManaPool cardPool = pool;
+            if (snowManaAsAnyColorIds.contains(card.getId())) {
+                cardPool = new ManaPool(pool);
+                cardPool.setSnowManaSpendableAsAnyColor(true);
+            }
+            if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
+                    && cardPool.getCreatureOrEnchantmentSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteCreatureOrEnchantmentSpellOnlyMana();
+            }
+            ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
+            ForetellCast foretellCast = card.getCastingOption(ForetellCast.class).orElse(null);
+            ManaCost foretoldCost = gameData.foretoldCardCosts.get(card.getId());
+            if (foretoldCost == null && foretellCast != null && foretellCast.manaCostString() != null) {
+                foretoldCost = new ManaCost(foretellCast.manaCostString());
+            }
+            boolean foretellPermission = foretoldCost != null
+                    && gameData.foretoldCardIds.contains(card.getId())
+                    && exiledEntry != null
+                    && playerId.equals(exiledEntry.exilerId())
+                    && exiledEntry.exiledTurnNumber() < gameData.turnNumber;
             UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
             boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
-                    || castableFromExileWithSource.contains(card.getId());
+                    || castableFromExileWithSource.contains(card.getId())
+                    || foretellPermission;
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
             if (!hasPermission && !hasExileCast) {
                 continue;
@@ -561,29 +596,37 @@ public class GameViewProjectionFactory {
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
-                if (castingPermissionService.hasFreeCastFromExiledWithSource(gameData, playerId, card.getId())
-                        || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
+                if (!foretellPermission
+                        && (castingPermissionService.hasFreeCastFromExiledWithSource(gameData, playerId, card.getId())
+                        || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card))) {
                     playable.add(exileCardView(gameData, playerId, card));
                 } else {
-                    boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
+                    boolean playWithoutPaying = !foretellPermission
+                            && gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
+                    ManaCost baseCost = foretellPermission
+                            ? foretoldCost
+                            : card.getParsedManaCost();
                     ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                            gameData, playerId, card, card.getParsedManaCost());
+                            gameData, playerId, card, baseCost);
                     boolean canAfford;
                     if (anyManaTypeIds.contains(card.getId())) {
-                        canAfford = cost.canPayAsGeneric(pool);
+                        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+                        canAfford = foretellPermission
+                                ? cost.canPayAsGeneric(cardPool, 0, additionalCost)
+                                : cost.canPayAsGeneric(cardPool);
                     } else {
                         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
-                        boolean powerstoneContext = isArtifact && pool.getPowerstoneOnlyColorless() > 0;
+                        boolean powerstoneContext = isArtifact && cardPool.getPowerstoneOnlyColorless() > 0;
                         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
                         boolean hasRestrictedRedContext = isArtifact
                                 || card.hasType(CardType.CREATURE);
                         canAfford = (isArtifact || isMyr || hasRestrictedRedContext || powerstoneContext)
-                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext,
+                                ? cost.canPay(cardPool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext,
                                 false, false, null, null, false, false, false, false, Set.of(), powerstoneContext)
-                                : cost.canPay(pool, additionalCost);
+                                : cost.canPay(cardPool, additionalCost);
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
-                        if (!canAfford) {
+                        if (!foretellPermission && !canAfford) {
                             canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
                         }
                     }

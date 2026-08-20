@@ -606,7 +606,7 @@
           <app-card-display
             animate.enter="hand-card-enter"
             [card]="card"
-            [class.playable]="isCardPlayable($index)"
+            [class.playable]="isCardPlayable($index) || isForetellPlayable($index)"
             [class.casting-pending]="choice.targeting.payingForCast && choice.targeting.pendingCastCardIndex === $index"
             [class.choosable-card]="(choice.choosingFromHand && choice.isChoosableCard($index)) || choice.targeting.isBuybackDiscardSelectable($index)"
             [class.alternate-cost-selected]="choice.targeting.isBuybackDiscardSelected($index) || choice.targeting.isAlternateCostHandCardSelected($index)"

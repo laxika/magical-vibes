@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.Builder;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -55,6 +56,7 @@ import java.util.Set;
  *                             e.g. Yawgmoth's Vile Offering). Default {@code false} means the graveyard
  *                             target is mandatory (e.g. Raise Dead, Crawl from the Cellar) even when the
  *                             spell also has optional permanent target groups
+ * @param mandatory            {@code true} when a resolution-time graveyard choice cannot be declined
  * @param returnAll            {@code true} to return all matching cards without player choice;
  *                             {@code false} to let the controller pick one
  * @param thisTurnOnly         {@code true} to restrict returned cards to <b>creature</b> cards put into the
@@ -98,6 +100,8 @@ import java.util.Set;
  *                             the source is gone or the Aura can't legally enchant it (Hakim, Loreweaver)
  * @param grantHaste           {@code true} to grant haste to the permanent when it enters the battlefield
  *                             (e.g. Postmortem Lunge)
+ * @param grantHasteUntilNextTurn {@code true} to grant haste to the returned permanent until the
+ *                             beginning of its controller's next turn
  * @param grantKeywords        keywords granted indefinitely to the returned permanent (e.g. Kheru
  *                             Lich Lord)
  * @param exileAtEndStep       {@code true} to schedule the permanent for exile at the beginning of the
@@ -118,6 +122,8 @@ import java.util.Set;
  *                             "in addition to its other colors" (e.g. Rise from the Grave)
  * @param grantSubtype         when non-null, permanently grants this subtype to the returned creature
  *                             "in addition to its other types" (e.g. Rise from the Grave)
+ * @param grantSubtypes        additional subtypes permanently granted to the returned creature
+ *                             "in addition to its other types"
  * @param grantIndestructible  {@code true} to permanently grant indestructible to the returned
  *                             permanent (e.g. Fated Return)
  * @param enterTapped          {@code true} if the returned permanent enters the battlefield tapped
@@ -185,6 +191,9 @@ import java.util.Set;
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
  *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
  *                             Dead — "That creature gains Cumulative upkeep {2}.")
+ * @param createTokensIfSubtype when non-null, resolve {@link #createTokensEffect} after the returned
+ *                             permanent enters if the returned card has this subtype
+ * @param createTokensEffect token-creation effect for the {@link #createTokensIfSubtype} rider
  * @param enterWithCounter     when non-null, put {@link #enterWithCounterCount} counters of that type on
  *                             the returned permanent after it enters (e.g. Bogardan Phoenix death counter);
  *                             only meaningful for {@code BATTLEFIELD}
@@ -217,6 +226,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean sourceChosenSubtype,
         GraveyardSearchScope source,
         boolean targetGraveyard,
+        boolean mandatory,
         boolean upTo,
         boolean returnAll,
         boolean thisTurnOnly,
@@ -230,6 +240,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean loseLifeEqualToManaValue,
         boolean attachToSource,
         boolean grantHaste,
+        boolean grantHasteUntilNextTurn,
         Set<Keyword> grantKeywords,
         boolean exileAtEndStep,
         boolean exileAtYourNextEndStep,
@@ -239,6 +250,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean requiresManaValueAtMostX,
         CardColor grantColor,
         CardSubtype grantSubtype,
+        List<CardSubtype> grantSubtypes,
         boolean grantIndestructible,
         boolean enterTapped,
         boolean underOwnersControl,
@@ -259,6 +271,8 @@ public record ReturnCardFromGraveyardEffect(
         CardType plusOneCountersIfCardType,
         Condition plusOneCountersIfCondition,
         int plusOneCounterCount,
+        CardSubtype createTokensIfSubtype,
+        CreateTokenEffect createTokensEffect,
         CounterType enterWithCounter,
         int enterWithCounterCount,
         boolean linkToSource,
@@ -278,6 +292,7 @@ public record ReturnCardFromGraveyardEffect(
         private GraveyardSearchScope source = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
         private int randomCount = 1;
         private Set<Keyword> grantKeywords = Set.of();
+        private List<CardSubtype> grantSubtypes = List.of();
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -192,6 +193,19 @@ class EtbEffectResolverTest {
         spent.put(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 1);
         gameData.setSpellCastManaSpentByColor(card.getId(), spent);
         assertThat(resolver.resolve(ctx(true, 0, false), twoWhite)).isNull();
+    }
+
+    @Test
+    @DisplayName("SnowManaSpentToCast: snapshots the cast-time result into the ETB trigger")
+    void snowManaSpentToCastConditional() {
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        ConditionalEffect snowMana = new ConditionalEffect(new SnowManaSpentToCast(), wrapped);
+
+        gameData.setSpellCastSnowManaSpent(card.getId(), 1);
+        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isSameAs(snowMana);
+
+        gameData.setSpellCastSnowManaSpent(card.getId(), 0);
+        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isNull();
     }
 
     @Test

@@ -28,7 +28,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -219,6 +221,23 @@ class TargetLegalityServiceTest {
                 gd, player1Id, List.of(effect), List.of(ownCard.getId(), opponentCard.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("All targets must be in a single graveyard");
+    }
+
+    @Test
+    @DisplayName("passes the source card ID to graveyard return predicates")
+    void passesSourceCardIdToGraveyardReturnPredicate() {
+        Card source = createCreature("Source", CardColor.WHITE);
+        Card target = createCreature("Target", CardColor.WHITE);
+        ReturnTargetCardsFromGraveyardToHandEffect effect =
+                ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(new CardIsSelfPredicate());
+        when(gameQueryService.findCardInGraveyardById(gd, target.getId())).thenReturn(target);
+        when(predicateEvaluationService.matchesCardPredicate(target, effect.filter(), source.getId()))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> sut.validateMultiTargetGraveyardAbility(
+                gd, player1Id, List.of(effect), List.of(target.getId()), source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target card must be a");
     }
 
     private Permanent addPermanent(UUID playerId, Card card) {

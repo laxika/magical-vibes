@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.PendingUntapOnDiscardType;
+import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -460,10 +461,12 @@ public class CardChoiceHandlerService {
         // Draw cards after "discard up to N, then draw that many" completes
         if (followUp.rummageDrawCount() > 0) {
             int drawCount = followUp.rummageDrawCount();
+            UUID drawPlayerId = followUp.rummageDrawPlayerId() == null
+                    ? playerId : followUp.rummageDrawPlayerId();
             for (int i = 0; i < drawCount; i++) {
-                drawService.resolveDrawCard(gameData, playerId);
+                drawService.resolveDrawCard(gameData, drawPlayerId);
             }
-            String drawPlayerName = gameData.playerIdToName.get(playerId);
+            String drawPlayerName = gameData.playerIdToName.get(drawPlayerId);
             gameLogService.append(gameData, GameLog.text(drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
         }
 
@@ -899,8 +902,17 @@ public class CardChoiceHandlerService {
         } else if (exileMode) {
             // Exile chosen cards
             UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
+            PendingValkiHandExileChoice valkiChoice = gameData.pollPendingInteraction(
+                    PendingValkiHandExileChoice.class);
+            if (valkiChoice != null) {
+                sourcePermanentId = valkiChoice.sourcePermanentId();
+            }
             for (Card exiled : chosenCards) {
-                exileService.exileCard(gameData, targetPlayerId, exiled);
+                if (valkiChoice != null) {
+                    exileService.exileCard(gameData, targetPlayerId, exiled, sourcePermanentId);
+                } else {
+                    exileService.exileCard(gameData, targetPlayerId, exiled);
+                }
                 if (revealedHandChoice.imprintOnSource() && sourcePermanentId != null) {
                     exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
                 }

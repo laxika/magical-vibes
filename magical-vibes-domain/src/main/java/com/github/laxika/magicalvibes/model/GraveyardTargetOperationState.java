@@ -73,6 +73,12 @@ public class GraveyardTargetOperationState {
     public UUID resolutionTimeExileThenEachOpponentLosesLifeChosenCardId;
     /** Resolution-time land exile followed by a target-creature counter placement. */
     public boolean resolutionTimeExileThenPutCounterOnTargetCreatureResume;
+    public ExileUpToOneMatchingCardFromEachGraveyardContext
+            resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
+    public boolean resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
+    public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesResume;
+    public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChoiceMade;
+    public UUID resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChosenCardId;
     /** Whether the land-exile choice has been answered. */
     public boolean resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
     /** The land chosen by the resolution-time exile choice, or {@code null} for decline. */
@@ -125,5 +131,9 @@ public class GraveyardTargetOperationState {
     }
 
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {
+    }
+
+    public record ExileUpToOneMatchingCardFromEachGraveyardContext(
+            UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {
     }
 }

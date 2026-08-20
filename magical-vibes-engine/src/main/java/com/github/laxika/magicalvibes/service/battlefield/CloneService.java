@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -84,6 +85,9 @@ public class CloneService {
         gameData.cloneOperation.embalmAddedSubtype = copyEffect.embalmAddedSubtype();
         gameData.cloneOperation.embalmRemoveManaCost = copyEffect.embalmRemoveManaCost();
         gameData.cloneOperation.additionalPlusOnePlusOneCounters = copyEffect.additionalPlusOnePlusOneCounters();
+        gameData.cloneOperation.additionalSupertypesOverride = copyEffect.additionalSupertypesOverride();
+        gameData.cloneOperation.additionalKeywordsOverride = copyEffect.additionalKeywordsOverride();
+        gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
         gameData.cloneOperation.xValue = xValue;
@@ -132,6 +136,8 @@ public class CloneService {
         CardSubtype embalmAddedSubtype = gameData.cloneOperation.embalmAddedSubtype;
         boolean embalmRemoveManaCost = gameData.cloneOperation.embalmRemoveManaCost;
         DynamicAmount additionalPlusOnePlusOneCounters = gameData.cloneOperation.additionalPlusOnePlusOneCounters;
+        Set<Keyword> additionalKeywordsOverride = gameData.cloneOperation.additionalKeywordsOverride;
+        boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
         int xValue = gameData.cloneOperation.xValue;
@@ -150,6 +156,9 @@ public class CloneService {
         gameData.cloneOperation.embalmAddedSubtype = null;
         gameData.cloneOperation.embalmRemoveManaCost = false;
         gameData.cloneOperation.additionalPlusOnePlusOneCounters = null;
+        gameData.cloneOperation.additionalSupertypesOverride = Set.of();
+        gameData.cloneOperation.additionalKeywordsOverride = Set.of();
+        gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
         gameData.cloneOperation.xValue = 0;
@@ -163,6 +172,10 @@ public class CloneService {
                 Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
                 permanentCopierService.applyCloneCopy(
                         perm, targetPerm, effectivePowerOverride, effectiveToughnessOverride, additionalTypesOverride);
+                boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
+                        || perm.getCard().hasType(CardType.CREATURE);
+                applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,
+                        creatureOnlyCharacteristicsApply ? additionalKeywordsOverride : Set.of());
                 // "except it has..." — add additional abilities to the copy (e.g. Evil Twin)
                 for (ActivatedAbility extraAbility : additionalActivatedAbilities) {
                     perm.getCard().addActivatedAbility(extraAbility);
@@ -187,8 +200,10 @@ public class CloneService {
                 // Applied before battlefield entry so ETB triggers / SBAs see the counters. Must be
                 // done here (not via EnterWithCountersEffect) because the copy overwrites the card's
                 // effects before putPermanentOntoBattlefield runs applyEnterWithCounters.
-                applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
-                        additionalPlusOnePlusOneCounters, xValue);
+                if (creatureOnlyCharacteristicsApply) {
+                    applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
+                            additionalPlusOnePlusOneCounters, xValue);
+                }
             }
         }
 
@@ -237,6 +252,22 @@ public class CloneService {
                 log.info("Game {} - {} enters as copy with {} additional +1/+1 counter(s)",
                         gameData.id, perm.getCard().getName(), count);
             }
+        }
+    }
+
+    private void applyAdditionalCopyCharacteristics(Card copy, Set<CardSupertype> additionalSupertypes,
+                                                    Set<Keyword> additionalKeywords) {
+        if (additionalSupertypes != null && !additionalSupertypes.isEmpty()) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(copy.getSupertypes());
+            supertypes.addAll(additionalSupertypes);
+            copy.setSupertypes(supertypes);
+        }
+        if (additionalKeywords != null && !additionalKeywords.isEmpty()) {
+            EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(copy.getKeywords());
+            keywords.addAll(additionalKeywords);
+            copy.setKeywords(keywords);
         }
     }
 

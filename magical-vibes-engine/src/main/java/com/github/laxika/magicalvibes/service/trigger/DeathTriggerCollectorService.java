@@ -221,7 +221,7 @@ public class DeathTriggerCollectorService {
                 t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
                 t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
                 t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), counters,
-                t.grantedKeywordsUntilEndOfTurn());
+                t.grantedKeywordsUntilEndOfTurn(), t.supertypes());
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -1444,6 +1444,33 @@ public class DeathTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent {} put into graveyard from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName(), apg.dyingCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
+            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
+    boolean handleEquippedCreatureReturnToHand(TriggerMatchContext match,
+            ReturnTriggeringCardToOwnerHandEffect effect, TriggerContext ctx) {
+        TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
+        if (ecd.dyingCard() == null) {
+            return false;
+        }
+        UUID dyingCardId = ecd.dyingCard().getId();
+        UUID handOwnerId = gameQueryService.findGraveyardOwnerById(match.gameData(), dyingCardId);
+        ReturnTriggeringCardToOwnerHandEffect baked = new ReturnTriggeringCardToOwnerHandEffect(
+                dyingCardId, handOwnerId);
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(baked)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (equipped creature returns to hand)",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 

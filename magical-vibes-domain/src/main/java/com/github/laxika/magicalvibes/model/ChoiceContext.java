@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public sealed interface ChoiceContext {
@@ -27,7 +28,35 @@ public sealed interface ChoiceContext {
                            Set<CardSubtype> restrictedToSpellOrAbilitySubtypes,
                            boolean abilityOnly,
                            UUID recipientPlayerId,
-                           boolean grantsAdditionalPlusOneCounter) implements ChoiceContext {
+                           boolean grantsAdditionalPlusOneCounter,
+                           boolean fromSnowSource) implements ChoiceContext {
+
+        public ManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                               CardSubtype restrictedToCreatureSubtype, boolean flashbackOnly,
+                               boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
+                               boolean creatureSourceSpellOrAbility, List<ManaColor> fixedColorOptions,
+                               boolean creatureSpellOnly, boolean artifactSpellOrAbilityOnly,
+                               boolean grantsUncounterable, boolean manaValueAtLeastFour,
+                               boolean creatureSpellOrAbilityOnly, UUID sourcePermanentId,
+                               Set<CardSubtype> restrictedToSpellOrAbilitySubtypes,
+                               boolean abilityOnly, UUID recipientPlayerId,
+                               boolean grantsAdditionalPlusOneCounter) {
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly,
+                    instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility,
+                    fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly,
+                    grantsUncounterable, manaValueAtLeastFour, creatureSpellOrAbilityOnly,
+                    sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly,
+                    recipientPlayerId, grantsAdditionalPlusOneCounter, false);
+        }
+
+        public ManaColorChoice withSnowSource(boolean fromSnowSource) {
+            return new ManaColorChoice(playerId, fromCreature, amount, restrictedToCreatureSubtype,
+                    flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype,
+                    creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly,
+                    artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour,
+                    creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes,
+                    abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource);
+        }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
@@ -249,6 +278,9 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record DifferentColorManaChoice(UUID playerId, int amount, ManaSpendRestriction restriction,
+                                    ManaColor firstColor) implements ChoiceContext {}
+
     /** A mana ability that adds mana equal to the chosen color's devotion. */
     record DevotionManaColorChoice(UUID playerId, UUID sourcePermanentId, boolean fromCreature,
                                    int manaMultiplier) implements ChoiceContext {
@@ -393,11 +425,11 @@ public sealed interface ChoiceContext {
      */
     record SpellCreatureTypeChoice(UUID controllerId) implements ChoiceContext {}
 
-    /** Choosing a color at resolution for a spell with no permanent to store it on. */
-    record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
-
     /** Choosing a card type at resolution for a spell with no permanent to store it on. */
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
+
+    /** Choosing a color at resolution for a spell with no permanent to store it on. */
+    record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing a number at resolution for a spell with no permanent to store it on. */
     record SpellNumberChoice(UUID controllerId) implements ChoiceContext {}

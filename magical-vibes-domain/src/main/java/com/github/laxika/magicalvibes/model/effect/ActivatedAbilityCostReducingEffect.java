@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
@@ -16,8 +17,15 @@ public interface ActivatedAbilityCostReducingEffect extends CardEffect {
     /** The permanents whose activated abilities are cheaper. */
     PermanentPredicate affectedPermanents();
 
-    /** Generic mana removed from a matching activated ability's cost. */
-    int genericCostReduction();
+    /** Generic mana removed from a matching activated ability's cost when the reduction is fixed. */
+    default int genericCostReduction() {
+        return 0;
+    }
+
+    /** Dynamic generic mana reduction, evaluated against the permanent carrying this effect. */
+    default DynamicAmount genericCostReductionAmount() {
+        return null;
+    }
 
     /** Whether this reduction applies to the particular ability being activated. */
     default boolean appliesTo(ActivatedAbility ability) {

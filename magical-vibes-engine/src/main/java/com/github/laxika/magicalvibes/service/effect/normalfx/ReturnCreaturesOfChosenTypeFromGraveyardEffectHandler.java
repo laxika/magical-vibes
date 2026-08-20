@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesOfChosenTypeFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link ReturnCreaturesOfChosenTypeFromGraveyardEffect} by choosing a creature type and
- * delegating the return-all operation to the shared graveyard-return support.
+ * delegating the return operation to the shared graveyard-return handlers.
  */
 @Component
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class ReturnCreaturesOfChosenTypeFromGraveyardEffectHandler implements No
 
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler returnCardsHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +40,7 @@ public class ReturnCreaturesOfChosenTypeFromGraveyardEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (ReturnCreaturesOfChosenTypeFromGraveyardEffect) effect;
         UUID controllerId = entry.getControllerId();
 
         if (gameData.chosenSpellSubtype == null) {
@@ -50,15 +53,23 @@ public class ReturnCreaturesOfChosenTypeFromGraveyardEffectHandler implements No
         CardSubtype chosenSubtype = gameData.chosenSpellSubtype;
         gameData.chosenSpellSubtype = null;
 
-        ReturnCardFromGraveyardEffect returnAll = ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(chosenSubtype),
-                                new CardKeywordPredicate(Keyword.CHANGELING))))))
-                .returnAll(true)
-                .build();
-        graveyardReturnSupport.resolveReturnAll(gameData, entry, returnAll, controllerId, entry.getCard().getId());
+        var filter = new CardAllOfPredicate(List.of(
+                new CardTypePredicate(CardType.CREATURE),
+                new CardAnyOfPredicate(List.of(
+                        new CardSubtypePredicate(chosenSubtype),
+                        new CardKeywordPredicate(Keyword.CHANGELING)
+                ))
+        ));
+        if (e.maxCount() == Integer.MAX_VALUE) {
+            ReturnCardFromGraveyardEffect returnAll = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                    .filter(filter)
+                    .returnAll(true)
+                    .build();
+            graveyardReturnSupport.resolveReturnAll(gameData, entry, returnAll, controllerId, entry.getCard().getId());
+        } else {
+            returnCardsHandler.resolve(gameData, entry,
+                    new ReturnCardsFromControllerGraveyardToBattlefieldEffect(filter, e.maxCount()));
+        }
     }
 }

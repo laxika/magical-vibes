@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -73,6 +75,7 @@ public class GameService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final CastingCostService castingCostService;
 
     @Autowired
     public GameService(GameQueryService gameQueryService, GameLogService gameLogService,
@@ -85,7 +88,8 @@ public class GameService {
                        CardRevealService cardRevealService, PredicateEvaluationService predicateEvaluationService,
                        ConditionEvaluationService conditionEvaluationService,
                        PermanentCounterSupport permanentCounterSupport,
-                       TriggerCollectionService triggerCollectionService) {
+                       TriggerCollectionService triggerCollectionService,
+                       CastingCostService castingCostService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.combatService = combatService;
@@ -103,6 +107,7 @@ public class GameService {
         this.conditionEvaluationService = conditionEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
         this.triggerCollectionService = triggerCollectionService;
+        this.castingCostService = castingCostService;
     }
 
     /** Compatibility constructor for focused service tests that do not exercise morph reveals. */
@@ -116,7 +121,7 @@ public class GameService {
         this(gameQueryService, gameLogService, combatService, turnProgressionService,
                 interactionHandlerRegistry, spellCastingService, stackResolutionService,
                 abilityActivationService, mulliganService, gameOutcomeService, mutationCoordinator,
-                manaChoiceNarrowingService, null, null, null, null, null);
+                manaChoiceNarrowingService, null, null, null, null, null, null);
     }
 
     private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
@@ -339,6 +344,55 @@ public class GameService {
             log.info("Game {} - {} pays {{}} for Leonin Arbiter search tax (special action)",
                     gameData.id, player.getUsername(), totalCost);
 
+            invalidateForAllPlayers(gameData);
+        }
+    }
+
+    /** Exiles a foretell card from the active player's hand as a special action. */
+    public void foretellCard(GameData gameData, Player player, int cardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData, () -> foretellCard(gameData, actionPlayer, cardIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            boolean activePlayerTurn = player.getId().equals(gameData.activePlayerId);
+            boolean canForetellDuringAnyTurn = castingCostService != null
+                    && castingCostService.canForetellDuringAnyTurn(gameData, player.getId());
+            if (!activePlayerTurn && !canForetellDuringAnyTurn) {
+                throw new IllegalStateException("Foretell can only be used during your turn");
+            }
+
+            List<Card> hand = gameData.playerHands.get(player.getId());
+            if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
+                throw new IllegalArgumentException("Invalid card index");
+            }
+            Card card = hand.get(cardIndex);
+            ManaCost foretellCost = castingCostService == null
+                    ? card.getCastingOption(ForetellCast.class)
+                    .map(ForetellCast::manaCostString)
+                    .filter(java.util.Objects::nonNull)
+                    .map(ManaCost::new)
+                    .orElse(null)
+                    : castingCostService.getForetellCost(gameData, player.getId(), card);
+            if (foretellCost == null) {
+                throw new IllegalStateException("Card does not have foretell");
+            }
+
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            ManaCost cost = castingCostService == null
+                    ? new ManaCost("{2}")
+                    : castingCostService.getForetellActionCost(gameData, player.getId());
+            if (pool == null || !cost.canPayForForetell(pool)) {
+                throw new IllegalStateException("Not enough mana to foretell");
+            }
+            cost.payForForetell(pool);
+            hand.remove(cardIndex);
+            gameData.addForetoldCardToExile(player.getId(), card, foretellCost);
+            triggerCollectionService.checkControllerForetellTriggers(gameData, player.getId(), card);
+            gameData.priorityPassedBy.clear();
+            gameLogService.append(gameData,
+                    GameLog.textCardText(player.getUsername() + " foretells ", card, "."));
+            log.info("Game {} - {} foretells {}", gameData.id, player.getUsername(), card.getName());
             invalidateForAllPlayers(gameData);
         }
     }

@@ -5,7 +5,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * one of them, that card goes into the controller's hand and the rest into their graveyard, then
  * the library is shuffled. The controller picks the three cards through a
  * {@code PendingInteraction.IntuitionSearchChoice}; the opponent's pick rides the shared
- * {@code LIBRARY_REVEAL_CHOICE} prompt carried by {@code PendingIntuitionRevealChoice}.
+ * {@code LIBRARY_REVEAL_CHOICE} prompt carried by
+ * {@code PendingOpponentChoosesCardToHandRestToGraveyard}.
  */
 public record IntuitionEffect() implements CardEffect {
 

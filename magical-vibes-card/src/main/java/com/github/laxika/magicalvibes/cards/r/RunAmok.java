@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DOM", collectorNumber = "140")
+@CardRegistration(set = "KHM", collectorNumber = "147")
 public class RunAmok extends Card {
 
     public RunAmok() {

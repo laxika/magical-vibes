@@ -55,23 +55,34 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        if (e.scope() == GrantScope.TARGET) {
+            List<UUID> targetIds = entry.targetsForEffect(e);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue;
+                }
+                applyEffect(gameData, entry, e, target);
+                String description = basePowerToughnessDescription(e);
+                gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(description).build());
+                log.info("Game {} - {}{}", gameData.id, target.getCard().getName(), description);
+            }
+            return;
+        }
+
         // SELF scope ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter)
-        // resolves against the source; TARGET scope resolves against the chosen target.
-        UUID id = e.scope() == GrantScope.SELF ? entry.getSourcePermanentId() : entry.getTargetId();
-        Permanent target = gameQueryService.findPermanentById(gameData, id);
+        // resolves against the source.
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (target == null) {
             return;
         }
 
         applyEffect(gameData, entry, e, target);
-
-        String description = e.power() == null
-                ? " has base toughness " + e.toughness() + " until end of turn."
-                : e.toughness() == null
-                ? " has base power " + e.power() + " until end of turn."
-                : " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
+        String description = basePowerToughnessDescription(e);
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(description).build());
-
         log.info("Game {} - {}{}", gameData.id, target.getCard().getName(), description);
     }
 
@@ -84,13 +95,38 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         // The legacy UEOT fields are an all-or-nothing pair, so a partial setter
         // ("has base toughness 1") skips them entirely and rides on the floating 7b entry alone,
         // which carries per-component nulls.
-        if (e.power() != null && e.toughness() != null) {
+        if (e.duration() == EffectDuration.UNTIL_END_OF_TURN
+                && e.power() != null && e.toughness() != null) {
             target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
             target.setBasePowerOverride(e.power());
             target.setBaseToughnessOverride(e.toughness());
         }
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+        FloatingContinuousEffect floating = gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                e, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                e, target.getId(), null, null, e.duration(), 0));
+        if (e.duration() == EffectDuration.PERMANENT) {
+            long timestamp = floating.timestamp();
+            if (e.power() != null) {
+                target.setBasePowerOverriddenPermanently(true);
+                target.setPermanentBasePowerOverride(e.power());
+                target.setPermanentBasePowerOverrideTimestamp(timestamp);
+            }
+            if (e.toughness() != null) {
+                target.setBaseToughnessOverriddenPermanently(true);
+                target.setPermanentBaseToughnessOverride(e.toughness());
+                target.setPermanentBaseToughnessOverrideTimestamp(timestamp);
+            }
+        }
+    }
+
+    private String basePowerToughnessDescription(SetBasePowerToughnessEffect effect) {
+        String duration = effect.duration() == EffectDuration.UNTIL_END_OF_TURN
+                ? " until end of turn" : "";
+        return effect.power() == null
+                ? " has base toughness " + effect.toughness() + duration + "."
+                : effect.toughness() == null
+                ? " has base power " + effect.power() + duration + "."
+                : " has base power and toughness " + effect.power() + "/" + effect.toughness()
+                + duration + ".";
     }
 }

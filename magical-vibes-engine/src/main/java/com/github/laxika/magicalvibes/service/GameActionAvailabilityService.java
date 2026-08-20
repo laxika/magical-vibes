@@ -50,6 +50,27 @@ public class GameActionAvailabilityService {
                         gameData, playerId, extraConvokeMana, gameData.playerManaPools.get(playerId)));
     }
 
+    public List<Integer> getPlayableForetellIndices(GameData gameData, UUID playerId) {
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()
+                || !playerId.equals(gameQueryService.getPriorityPlayerId(gameData))
+                || (!playerId.equals(gameData.activePlayerId)
+                && !castingCostService.canForetellDuringAnyTurn(gameData, playerId))) {
+            return List.of();
+        }
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (pool == null) return List.of();
+        ManaCost actionCost = castingCostService.getForetellActionCost(gameData, playerId);
+        List<Integer> playable = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (castingCostService.getForetellCost(gameData, playerId, hand.get(i)) != null
+                    && actionCost.canPayForForetell(pool)) {
+                playable.add(i);
+            }
+        }
+        return playable;
+    }
+
     /**
      * Hand indices castable right now if the player also taps their untapped mana sources
      * (MTGO-style click-to-cast). Checked against the potential pool from
@@ -264,6 +285,26 @@ public class GameActionAvailabilityService {
 
     private boolean isCardPlayable(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                    int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
+        if (card.isModalDoubleFaced() && card.getBackFaceCard() != null) {
+            return isCardPlayableForFace(gameData, playerId, card, pool, extraConvokeMana,
+                    additionalGenericCost, ctx)
+                    || isCardPlayableForFace(gameData, playerId, card.getBackFaceCard(), pool,
+                    extraConvokeMana, additionalGenericCost, ctx);
+        }
+        return isCardPlayableForFace(gameData, playerId, card, pool, extraConvokeMana,
+                additionalGenericCost, ctx);
+    }
+
+    private boolean isCardPlayableForFace(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                          int extraConvokeMana, int additionalGenericCost,
+                                          SpellPlayabilityContext ctx) {
+        if (card.getCastingOption(ForetellCast.class).isPresent()
+                && pool.getForetellSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteForetellSpellOnlyMana();
+        }
         // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
         // mutating the caller's pool. Only copy when the player actually has the permission (rare).
         if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {
@@ -289,6 +330,13 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual)
                     : new ManaPool(pool);
             pool.promoteCreatureSpellOrAbilityMana();
+        }
+        if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
+                && pool.getCreatureOrEnchantmentSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteCreatureOrEnchantmentSpellOnlyMana();
         }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
@@ -438,6 +486,11 @@ public class GameActionAvailabilityService {
                 && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE)
                 ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
+        Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
+                ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
+                || card.getKeywords().contains(Keyword.CHANGELING))
+                ? EnumSet.allOf(CardSubtype.class) : subtypeCreatureContext
+                : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
@@ -447,13 +500,24 @@ public class GameActionAvailabilityService {
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
+        ManaPool paymentPool = pool;
+        if (!subtypeOrLegendaryCreatureContext.isEmpty()
+                && pool.getSubtypeOrLegendaryCreatureManaTotal(subtypeOrLegendaryCreatureContext) > 0) {
+            ManaPool promoted = new ManaPool(pool);
+            for (ManaColor color : ManaColor.values()) {
+                promoted.add(color, pool.getSubtypeOrLegendaryCreatureManaForColor(
+                        subtypeOrLegendaryCreatureContext, color));
+            }
+            paymentPool = promoted;
+        }
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen
                 || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
                 || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
+                || !subtypeOrLegendaryCreatureContext.isEmpty()
                 || powerstoneContext;
         return hasRestricted
-                ? totalCost.canPay(pool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
+                ? totalCost.canPay(paymentPool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
                 Set.of(), subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext)
@@ -576,6 +640,11 @@ public class GameActionAvailabilityService {
         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
+        Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
+                ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
+                || card.getKeywords().contains(Keyword.CHANGELING))
+                ? EnumSet.allOf(CardSubtype.class) : subtypeCreatureContext
+                : Set.of();
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
@@ -595,21 +664,32 @@ public class GameActionAvailabilityService {
         // Legendary-spell-only mana (Untaidake, the Cloud Keeper) can pay for any legendary spell.
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
+        ManaPool paymentPool = pool;
+        if (!subtypeOrLegendaryCreatureContext.isEmpty()
+                && pool.getSubtypeOrLegendaryCreatureManaTotal(subtypeOrLegendaryCreatureContext) > 0) {
+            ManaPool promoted = new ManaPool(pool);
+            for (ManaColor color : ManaColor.values()) {
+                promoted.add(color, pool.getSubtypeOrLegendaryCreatureManaForColor(
+                        subtypeOrLegendaryCreatureContext, color));
+            }
+            paymentPool = promoted;
+        }
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
                 || !subtypeOrPlaneswalkerSpellContext.isEmpty()
-                || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty() || powerstoneContext;
+                || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
+                || !subtypeOrLegendaryCreatureContext.isEmpty() || powerstoneContext;
         for (ManaCost cost : candidateCosts) {
             cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, cost, ctx.costSnapshot(), false);
             boolean canAfford = hasRestricted
-                    ? cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost,
+                    ? cost.canPayWithAdditionalGenericCost(paymentPool, 0, effectiveAdditionalCost,
                     isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
                     powerstoneContext)
-                    : cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost);
+                    : cost.canPayWithAdditionalGenericCost(paymentPool, 0, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
             }

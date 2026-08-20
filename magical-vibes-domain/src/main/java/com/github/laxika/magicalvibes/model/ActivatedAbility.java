@@ -41,6 +41,8 @@ public class ActivatedAbility {
     private final List<TargetFilter> multiTargetFilters;
     private final int minTargets;
     private final int maxTargets;
+    /** Whether this ability is a boast ability and can use extra boast activation permissions. */
+    private boolean boast;
     private final boolean variableLoyaltyCost;
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
@@ -275,6 +277,7 @@ public class ActivatedAbility {
         copy.maxActivationsPerTurnAmount = this.maxActivationsPerTurnAmount;
         copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
+        copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
@@ -303,6 +306,12 @@ public class ActivatedAbility {
     public ActivatedAbility withMaxActivationsPerTurn(DynamicAmount amount, String description) {
         this.maxActivationsPerTurnAmount = amount;
         this.maxActivationsPerTurnDescription = description;
+        return this;
+    }
+
+    /** Marks this once-per-turn ability as a boast ability. */
+    public ActivatedAbility withBoast() {
+        this.boast = true;
         return this;
     }
 

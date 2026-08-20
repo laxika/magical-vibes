@@ -9,7 +9,9 @@ package com.github.laxika.magicalvibes.model.filter;
 public sealed interface PermanentPredicate permits
         PermanentAllOfPredicate,
         PermanentAnyOfPredicate,
+        PermanentAttachedToSourcePermanentPredicate,
         PermanentAttachedToCreaturePredicate,
+        PermanentAttachedToCreatureControlledBySourceControllerPredicate,
         PermanentAttachedToSourceControllerPredicate,
         PermanentAttackedThisTurnPredicate,
         PermanentAttackedOrBlockedThisTurnPredicate,

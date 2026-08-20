@@ -69,8 +69,15 @@ final class TokenCardFactory {
         if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
             tokenCard.setAdditionalTypes(token.additionalTypes());
         }
-        if (token.legendary()) {
-            tokenCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        if (token.legendary() || (token.supertypes() != null && !token.supertypes().isEmpty())) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            if (token.supertypes() != null) {
+                supertypes.addAll(token.supertypes());
+            }
+            if (token.legendary()) {
+                supertypes.add(CardSupertype.LEGENDARY);
+            }
+            tokenCard.setSupertypes(supertypes);
         }
         if (token.tokenEffects() != null) {
             for (Map.Entry<EffectSlot, CardEffect> tokenEffect : token.tokenEffects().entrySet()) {

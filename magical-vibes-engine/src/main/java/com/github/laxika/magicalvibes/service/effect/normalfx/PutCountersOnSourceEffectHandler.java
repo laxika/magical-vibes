@@ -48,19 +48,22 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         int amount = e.amount();
         if (e.powerModifier() > 0) {
             if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) return;
-            amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE, amount);
+            amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE,
+                    amount, entry.getControllerId());
             if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, amount);
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source);
         } else if (plusZeroPlusOne) {
-            amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ZERO_PLUS_ONE, amount);
+            amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ZERO_PLUS_ONE,
+                    amount, entry.getControllerId());
             if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + amount);
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, amount);
         } else {
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) return;
-            amount = gameQueryService.replaceCounters(gameData, source, CounterType.MINUS_ONE_MINUS_ONE, amount);
+            amount = gameQueryService.replaceCounters(gameData, source, CounterType.MINUS_ONE_MINUS_ONE,
+                    amount, entry.getControllerId());
             if (amount <= 0) return;
             source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + amount);
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, amount);

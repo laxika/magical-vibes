@@ -581,6 +581,10 @@ public class CombatAttackService {
             if (taunter != null && validTargetIds.contains(taunter) && !taunter.equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the taunting player");
             }
+            if (attackLegalityService.mustAttackOtherPlayerIfAble(gameData, attacker, targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName()
+                        + " must attack a player other than you if able");
+            }
             // Defender-scoped restriction (e.g. Form of the Dragon — "Creatures without flying can't attack you"):
             // the attacked player controls a permanent that forbids attackers not matching its exemption predicate.
             if (!attackLegalityService.canAttackDefender(gameData, attacker, targetId)) {
@@ -1450,6 +1454,7 @@ public class CombatAttackService {
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                 }
             }
+            triggerCollectionService.checkTemporaryGlobalCreatureAttackTriggers(gameData, attacker);
         }
 
         // Fire delayed "until your next turn, whenever a creature an opponent controls attacks, it
@@ -1807,7 +1812,8 @@ public class CombatAttackService {
 
     private boolean hasCantAttackOrBlockAlone(GameData gameData, Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance)
+                .anyMatch(effect -> effect instanceof CantAttackOrBlockAloneEffect restriction
+                        && restriction.restrictsAttacking())
                 || gameQueryService.hasAuraWithEffect(gameData, creature,
                         EnchantedCreatureCantAttackOrBlockAloneEffect.class);
     }

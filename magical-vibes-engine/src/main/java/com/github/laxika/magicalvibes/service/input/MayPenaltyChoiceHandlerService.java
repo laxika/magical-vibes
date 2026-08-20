@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
@@ -1824,9 +1825,15 @@ public class MayPenaltyChoiceHandlerService {
             UUID sacrificingPlayerId = effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer()
                     ? decidingPlayerId : sourceControllerId;
             UUID sourcePermanentId = ability.sourcePermanentId();
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(ability.sourceCard().getId())
+                    .withSourceControllerId(sourceControllerId)
+                    .withSourcePermanentSnapshot(ability.sourcePermanentSnapshot())
+                    .withSourcePermanentId(sourcePermanentId);
             List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sacrificingPlayerId,
                     p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))
-                            && predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
+                            && predicateEvaluationService.matchesPermanentPredicate(p, sacrificeCost.filter(),
+                            filterContext));
 
             if (matchingIds.size() == 1) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());

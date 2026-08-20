@@ -154,6 +154,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardSubtypeGrantingEffect;
@@ -235,6 +236,9 @@ public class GameQueryService {
             CardSubtype.ISLAND,
             CardSubtype.PLAINS,
             CardSubtype.SWAMP,
+            CardSubtype.DESERT,
+            CardSubtype.GATE,
+            CardSubtype.LOCUS,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
             CardSubtype.AJANI,
@@ -314,7 +318,7 @@ public class GameQueryService {
                            Set<CardSupertype> grantedSupertypes, boolean colorOverriding,
                            boolean subtypeOverriding, boolean landSubtypeOverriding,
                            boolean cardTypeOverriding, Set<Keyword> removedKeywords,
-                           boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride,
+                           boolean basePTOverridden, Integer basePowerOverride, Integer baseToughnessOverride,
                            boolean losesAllAbilities, boolean ptSwitched) {
             this(power, toughness, keywords, protectionColors, animatedCreature,
                     grantedActivatedAbilities, grantedEffects, grantedColors, grantedSubtypes,
@@ -695,7 +699,8 @@ public class GameQueryService {
      * Computes the list of subtypes granted to creature cards owned by the given player in
      * non-battlefield zones (hand, graveyard, library, exile) and creature spells they control
      * on the stack. Scans the owner's battlefield for permanents with
-     * {@link GrantChosenSubtypeToOwnCreaturesEffect#affectsAllZones()} == {@code true}.
+     * {@link GrantChosenSubtypeToOwnCreaturesEffect#affectsAllZones()} == {@code true}, or
+     * with a {@link GrantAllCreatureTypesToOwnCreaturesEffect}.
      */
     public List<CardSubtype> computeGrantedSubtypesForOwnedCreatureCard(GameData gameData, UUID ownerId) {
         List<CardSubtype> result = new ArrayList<>();
@@ -703,13 +708,17 @@ public class GameQueryService {
         if (bf == null) return result;
         for (Permanent perm : bf) {
             CardSubtype chosen = perm.getChosenSubtype();
-            if (chosen == null) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantChosenSubtypeToOwnCreaturesEffect g && g.affectsAllZones()) {
-                    if (!result.contains(chosen)) {
+                    if (chosen != null && !result.contains(chosen)) {
                         result.add(chosen);
                     }
-                    break;
+                } else if (effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect) {
+                    for (CardSubtype subtype : CardSubtype.values()) {
+                        if (isCreatureSubtype(subtype) && !result.contains(subtype)) {
+                            result.add(subtype);
+                        }
+                    }
                 }
             }
         }
@@ -2095,6 +2104,33 @@ public class GameQueryService {
         return replaceCounters(gameData, controllerId, counterType, count, creature, artifact);
     }
 
+    public int replaceCounters(GameData gameData, Permanent permanent, CounterType counterType,
+                               int count, UUID placingPlayerId) {
+        UUID affectedControllerId = findPermanentController(gameData, permanent.getId());
+        boolean creature = permanent.getCard().hasType(CardType.CREATURE) || isCreature(gameData, permanent);
+        boolean artifact = isArtifact(gameData, permanent);
+        final int[] result = {count};
+        gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
+            boolean sourceControlsAffected = Objects.equals(sourceControllerId, affectedControllerId);
+            boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof CounterReplacementEffect replacement)) continue;
+                    boolean applies;
+                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
+                            || replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect) {
+                        applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
+                                sourceControllerIsPlacing, false);
+                    } else {
+                        applies = sourceControlsAffected && replacement.appliesTo(counterType, creature, artifact);
+                    }
+                    if (applies) result[0] = replacement.replace(counterType, result[0]);
+                }
+            }
+        });
+        return result[0];
+    }
+
     /** Applies proliferate replacement effects controlled by {@code controllerId}. */
     public int replaceProliferateCount(GameData gameData, UUID controllerId, int count) {
         if (count <= 0 || controllerId == null) {
@@ -2125,6 +2161,32 @@ public class GameQueryService {
         }
         boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
         return replaceCounters(gameData, controllerId, counterType, count, creature, artifact);
+    }
+
+    public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
+                               CounterType counterType, int count, UUID placingPlayerId) {
+        boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
+        boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
+        final int[] result = {count};
+        gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
+            boolean sourceControlsAffected = Objects.equals(sourceControllerId, controllerId);
+            boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof CounterReplacementEffect replacement)) continue;
+                    boolean applies;
+                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
+                            || replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect) {
+                        applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
+                                sourceControllerIsPlacing, false);
+                    } else {
+                        applies = sourceControlsAffected && replacement.appliesTo(counterType, creature, artifact);
+                    }
+                    if (applies) result[0] = replacement.replace(counterType, result[0]);
+                }
+            }
+        });
+        return result[0];
     }
 
     /** Applies all poison-counter replacements for a player. */
@@ -2805,7 +2867,7 @@ public class GameQueryService {
      */
     private record AccumulatorSnapshot(int power, int toughness, Set<Keyword> keywords,
                                        Set<Keyword> removedKeywords, boolean losesAllAbilities,
-                                       boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride,
+                                       boolean basePTOverridden, Integer basePowerOverride, Integer baseToughnessOverride,
                                        int grantedEffectCount) {
         static AccumulatorSnapshot of(StaticBonusAccumulator accumulator) {
             return new AccumulatorSnapshot(accumulator.getPower(), accumulator.getToughness(),
@@ -2822,8 +2884,8 @@ public class GameQueryService {
             removed.removeAll(removedKeywords);
             boolean baseChanged = includeBase && accumulator.isBasePTOverridden()
                     && (!basePTOverridden
-                        || accumulator.getBasePowerOverride() != basePowerOverride
-                        || accumulator.getBaseToughnessOverride() != baseToughnessOverride);
+                        || !Objects.equals(accumulator.getBasePowerOverride(), basePowerOverride)
+                        || !Objects.equals(accumulator.getBaseToughnessOverride(), baseToughnessOverride));
             return new ModifierLine(source,
                     accumulator.getPower() - power, accumulator.getToughness() - toughness,
                     baseChanged ? accumulator.getBasePowerOverride() : null,
@@ -3179,11 +3241,13 @@ public class GameQueryService {
         // value. Precedence between setters lives entirely in LayerSystemService.applyLayer7b.
         LayerSystemService.BasePt basePt7b = board.basePt7b().get(target.getId());
         if (basePt7b != null) {
+            Integer accumulatedBasePower = accumulator.getBasePowerOverride();
+            Integer accumulatedBaseToughness = accumulator.getBaseToughnessOverride();
             int basePower = basePt7b.power() != null ? basePt7b.power()
-                    : accumulator.isBasePTOverridden() ? accumulator.getBasePowerOverride()
+                    : accumulatedBasePower != null ? accumulatedBasePower
                     : target.getBasePower();
             int baseToughness = basePt7b.toughness() != null ? basePt7b.toughness()
-                    : accumulator.isBasePTOverridden() ? accumulator.getBaseToughnessOverride()
+                    : accumulatedBaseToughness != null ? accumulatedBaseToughness
                     : target.getBaseToughness();
             accumulator.setBasePTOverride(basePower, baseToughness);
         }
@@ -5331,6 +5395,27 @@ public class GameQueryService {
             return !aTypes.isEmpty();
         }
         return aTypes.stream().anyMatch(bTypes::contains);
+    }
+
+    /**
+     * Returns whether a last-known battlefield permanent shares a creature type with a card in a
+     * non-battlefield zone. The permanent side uses its layered creature types; the card side uses
+     * its intrinsic creature types.
+     */
+    public boolean shareCreatureType(GameData gameData, Permanent permanent, Card card) {
+        boolean permanentChangeling = hasKeyword(gameData, permanent, Keyword.CHANGELING);
+        boolean cardChangeling = card.getKeywords().contains(Keyword.CHANGELING);
+        Set<CardSubtype> permanentTypes = effectiveCreatureSubtypes(gameData, permanent);
+        Set<CardSubtype> cardTypes = card.getSubtypes().stream()
+                .filter(this::isCreatureSubtype)
+                .collect(java.util.stream.Collectors.toSet());
+        if (permanentChangeling) {
+            return cardChangeling || !cardTypes.isEmpty();
+        }
+        if (cardChangeling) {
+            return !permanentTypes.isEmpty();
+        }
+        return permanentTypes.stream().anyMatch(cardTypes::contains);
     }
 
     /**

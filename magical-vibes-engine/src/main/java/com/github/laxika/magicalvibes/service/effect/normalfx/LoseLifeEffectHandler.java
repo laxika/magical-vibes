@@ -102,6 +102,12 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     private void loseTargetPlayerLife(GameData gameData, StackEntry entry, LoseLifeEffect effect,
             int amount, String sourceName) {
         UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null && entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            targetPlayerId = entry.getTargetIds().getFirst();
+        }
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));

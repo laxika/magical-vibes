@@ -19,7 +19,8 @@ import java.util.UUID;
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
-        PendingIntuitionRevealChoice,
+        PendingOpponentChoosesCardToHandRestToGraveyard,
+        PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingMurmursFromBeyondChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
@@ -855,11 +856,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * of them through the library-reveal prompt; the unchosen library cards are never held out, so
      * only the picked cards leave the library before the shuffle.
      */
-    record IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count)
+    record IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count,
+                                 boolean requireDifferentNames)
             implements PendingInteraction {
 
         public IntuitionSearchChoice {
             pool = java.util.List.copyOf(pool);
+        }
+
+        public IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count) {
+            this(playerId, opponentId, pool, count, false);
         }
 
         /** The selectable card IDs, in begin-time pool order. */

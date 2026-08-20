@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
+import java.util.UUID;
 
 /**
  * A self-contained, Spring-managed cast-cost modification handler.
@@ -83,5 +87,27 @@ public interface CostModificationHandlerBean {
     default int modifyBuybackCost(CostModificationContext context, CardEffect effect,
                                   CostModificationSource source) {
         return 0;
+    }
+
+    /**
+     * Returns a signed generic-mana delta for the foretell special action. Ordinary spell-cost
+     * modifiers do not affect foretell unless they override this method.
+     */
+    default int modifyForetellCost(GameData gameData, UUID playerId, CardEffect effect,
+                                   CostModificationSource source) {
+        return 0;
+    }
+
+    /** Returns a foretell cost granted to the given card, or {@code null} when it is not eligible. */
+    default ManaCost grantedForetellCost(GameData gameData, UUID playerId,
+                                         Card card,
+                                         CardEffect effect, CostModificationSource source) {
+        return null;
+    }
+
+    /** Whether this occurrence permits its controller to foretell during any player's turn. */
+    default boolean allowsForetellDuringAnyTurn(GameData gameData, UUID playerId, CardEffect effect,
+                                                CostModificationSource source) {
+        return false;
     }
 }

@@ -41,6 +41,8 @@ public sealed interface TriggerContext {
     /** Context for "whenever a spell or ability you control counters a spell" triggers. */
     record SpellCountered(UUID counteringPlayerId) implements TriggerContext {}
 
+    record Foretell(UUID foretellingPlayerId, Card foretoldCard) implements TriggerContext {}
+
     /** Context for "whenever a spell you've cast is countered" triggers. */
     record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
 
@@ -108,6 +110,9 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
+    record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
+                                               Card sacrificedCard) implements TriggerContext {}
+
     /** Context for opponent-nontoken-permanent-sacrificed triggers. */
     record OpponentPermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
@@ -115,6 +120,10 @@ public sealed interface TriggerContext {
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
      */
     record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) implements TriggerContext {}
+
+    record OpponentPermanentDealtExcessDamage(Permanent damagedPermanent,
+                                              UUID damagedPermanentControllerId,
+                                              int excessDamage) implements TriggerContext {}
 
     /** Context for a creature dealing damage to another creature. */
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,

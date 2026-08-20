@@ -233,6 +233,9 @@ public class Card {
     /** Per-chapter target filters for Saga cards (e.g. "target creature an opponent controls"). */
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, Set<TargetFilter>> sagaChapterTargetFilters = new EnumMap<>(EffectSlot.class);
+    /** Per-chapter target groups for Saga abilities with more than one target. */
+    @Getter(AccessLevel.NONE)
+    private Map<EffectSlot, List<SagaChapterTargetGroup>> sagaChapterTargetGroups = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
     /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
@@ -335,6 +338,8 @@ public class Card {
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
         // effectCache intentionally left empty — rebuilt lazily by getEffects()
         this.sagaChapterTargetFilters.putAll(source.sagaChapterTargetFilters);
+        source.sagaChapterTargetGroups.forEach((slot, groups) ->
+                this.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(source.handActivatedAbilities);
@@ -921,6 +926,15 @@ public class Card {
         return sagaChapterTargetFilters.getOrDefault(slot, Set.of());
     }
 
+    public void setSagaChapterTargetGroups(EffectSlot slot, List<SagaChapterTargetGroup> groups) {
+        assertMutable();
+        sagaChapterTargetGroups.put(slot, List.copyOf(groups));
+    }
+
+    public List<SagaChapterTargetGroup> getSagaChapterTargetGroups(EffectSlot slot) {
+        return sagaChapterTargetGroups.getOrDefault(slot, List.of());
+    }
+
     public void addActivatedAbility(ActivatedAbility ability) {
         assertMutable();
         activatedAbilities.add(ability);
@@ -1106,6 +1120,10 @@ public class Card {
 
     public boolean hasType(CardType cardType) {
         return type == cardType || additionalTypes.contains(cardType);
+    }
+
+    public boolean hasKeyword(Keyword keyword) {
+        return keywords.contains(keyword);
     }
 
     public boolean isAura() {

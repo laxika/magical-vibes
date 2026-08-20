@@ -19,15 +19,20 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>A {@code null} component means "leave that base value alone" — "has base toughness 1"
  * (Chariot of the Sun) sets only the 7b toughness component and keeps the creature's printed
- * power. Only the one-shot ({@code TARGET}/{@code SELF}) pipeline supports a null component;
- * continuous static scopes must pass both values.
+ * power. Partial setters are supported by both the one-shot and continuous static pipelines.
  *
  * @param power     the base power to set, or {@code null} to leave base power unchanged
  * @param toughness the base toughness to set, or {@code null} to leave base toughness unchanged
  * @param scope     which permanents are affected ({@code TARGET} for the one-shot until-EOT usage,
  *                  {@code ENCHANTED_CREATURE}/{@code EQUIPPED_CREATURE}/etc. for continuous static)
+ * @param duration  how long a one-shot target or self setter remains active
  */
-public record SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope) implements CardEffect {
+public record SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
+                                           EffectDuration duration) implements CardEffect {
+
+    public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope) {
+        this(power, toughness, scope, EffectDuration.UNTIL_END_OF_TURN);
+    }
 
     /**
      * Convenience constructor for the one-shot "target creature has base power and toughness X/Y
@@ -49,6 +54,12 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
      */
     public static SetBasePowerToughnessEffect powerOnly(int power) {
         return new SetBasePowerToughnessEffect(power, null, GrantScope.TARGET);
+    }
+
+    /** One-shot "target creature has base power and toughness 4/4" indefinitely. */
+    public static SetBasePowerToughnessEffect indefinitely(int power, int toughness) {
+        return new SetBasePowerToughnessEffect(power, toughness, GrantScope.TARGET,
+                EffectDuration.PERMANENT);
     }
 
     @Override

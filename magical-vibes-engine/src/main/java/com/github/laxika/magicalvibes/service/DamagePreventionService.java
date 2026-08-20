@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
@@ -1211,6 +1212,39 @@ public class DamagePreventionService {
 
         gameData.creatureDamageRedirectShields.addAll(toReAdd);
         return remaining;
+    }
+
+    /**
+     * Ascent of the Worthy: redirects damage that would be dealt to a creature controlled by the
+     * protected player onto the chosen creature until that player's next turn.
+     */
+    public int applyCreatureControllerDamageRedirectUntilNextTurn(GameData gameData,
+                                                                   UUID protectedPlayerId,
+                                                                   Permanent damagedCreature,
+                                                                   UUID sourcePermanentId,
+                                                                   int damage) {
+        if (damage <= 0 || protectedPlayerId == null || damagedCreature == null
+                || !gameQueryService.isCreature(gameData, damagedCreature)
+                || gameData.creatureControllerDamageRedirectShields.isEmpty()) {
+            return damage;
+        }
+
+        for (CreatureControllerDamageRedirectShield shield :
+                gameData.creatureControllerDamageRedirectShields) {
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())
+                    || damagedCreature.getId().equals(shield.redirectTargetCreatureId())) {
+                continue;
+            }
+            Permanent redirectTarget = gameQueryService.findPermanentById(
+                    gameData, shield.redirectTargetCreatureId());
+            if (redirectTarget == null || !gameQueryService.isCreature(gameData, redirectTarget)) {
+                continue;
+            }
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    damagedCreature.getId(), sourcePermanentId, damage, redirectTarget.getId()));
+            return 0;
+        }
+        return damage;
     }
 
     /**

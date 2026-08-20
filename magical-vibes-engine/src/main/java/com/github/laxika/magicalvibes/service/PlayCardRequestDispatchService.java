@@ -30,6 +30,10 @@ public class PlayCardRequestDispatchService {
     private final GameService gameService;
 
     public void dispatch(GameData gameData, Player player, PlayCardRequest request) {
+        if (Boolean.TRUE.equals(request.foretell())) {
+            gameService.foretellCard(gameData, player, request.cardIndex());
+            return;
+        }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
             gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
             return;
