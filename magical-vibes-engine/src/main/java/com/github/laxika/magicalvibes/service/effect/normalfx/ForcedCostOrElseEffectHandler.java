@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
@@ -117,19 +120,31 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         if (paidEffects.isEmpty()) {
             return;
         }
+        List<CardEffect> snapshottedPaidEffects = paidEffects.stream()
+                .map(effect -> snapshotPaidEffectXValue(effect, xValue))
+                .toList();
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
         if (pendingEntry != null
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0
                 && pendingIndex <= pendingEntry.getEffectsToResolve().size()) {
-            pendingEntry.insertEffectsToResolve(pendingIndex, paidEffects);
+            pendingEntry.insertEffectsToResolve(pendingIndex, snapshottedPaidEffects);
             return;
         }
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
-                sourceCard.getName() + "'s ability", new ArrayList<>(paidEffects), xValue, sourcePermanentId);
+                sourceCard.getName() + "'s ability", new ArrayList<>(snapshottedPaidEffects), xValue, sourcePermanentId);
         entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
         gameData.enqueueTrigger(entry);
+    }
+
+    private CardEffect snapshotPaidEffectXValue(CardEffect effect, int xValue) {
+        if (effect instanceof BoostSelfEffect boost) {
+            return new BoostSelfEffect(
+                    boost.powerBoost() instanceof XValue ? new Fixed(xValue) : boost.powerBoost(),
+                    boost.toughnessBoost() instanceof XValue ? new Fixed(xValue) : boost.toughnessBoost());
+        }
+        return effect;
     }
 
     /**

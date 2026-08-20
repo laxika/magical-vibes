@@ -52,7 +52,6 @@ class WallOfShardsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         advanceToNextTurn(player2);
-        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

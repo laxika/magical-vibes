@@ -113,6 +113,9 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
                         eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
@@ -172,6 +175,9 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         lenient().when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         lenient().when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(target), anyInt(), eq(false), nullable(Permanent.class)))
                 .thenAnswer(inv -> inv.getArgument(2));
         // Lenient: record-only damage no longer reads toughness — destruction happens at the
         // SBA check, outside these handler unit tests. Excess-damage paths still read it.

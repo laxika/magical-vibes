@@ -458,9 +458,6 @@ public class GameQueryService {
             LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
             try {
                 activeState = LayerSystemService.activeStateFor(permanent.getId());
-                if (activeState != null) {
-                    return activeState.hasSupertype(supertype);
-                }
             } finally {
                 layerSystemService.endPass(pass);
             }

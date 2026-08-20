@@ -40,8 +40,8 @@ class MagmaticCoreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 2);
 
-        assertThat(firstCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(secondCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(secondCreature.getCard());
     }
 
     @Test

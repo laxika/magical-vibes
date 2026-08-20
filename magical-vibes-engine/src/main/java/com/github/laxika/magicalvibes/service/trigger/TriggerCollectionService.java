@@ -6469,7 +6469,7 @@ public class TriggerCollectionService {
                 }
 
                 dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                        resolved, ctx);
+                        effect, resolved, ctx);
             }
         }
 
@@ -7137,6 +7137,13 @@ public class TriggerCollectionService {
                                   CardEffect effect, TriggerContext.PermanentEnters ctx) {
         var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
         return dispatch(match, slot, effect, ctx);
+    }
+
+    private boolean dispatchEnter(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot,
+                                  CardEffect rawEffect, CardEffect resolvedEffect,
+                                  TriggerContext.PermanentEnters ctx) {
+        var match = new TriggerMatchContext(gameData, perm, controllerId, rawEffect);
+        return dispatch(match, slot, resolvedEffect, ctx);
     }
 
     private boolean dispatch(TriggerMatchContext match, EffectSlot slot, CardEffect effect,

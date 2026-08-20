@@ -71,7 +71,8 @@ class PendingInteractionContractTest {
             PendingGuildFeud.class,
             PendingThranTomeChoice.class,
             PendingWhimsOfTheFates.class,
-            PendingInteraction.RevealedFreeCastGroup.class);
+            PendingInteraction.RevealedFreeCastGroup.class,
+            PendingInteraction.RippleFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,

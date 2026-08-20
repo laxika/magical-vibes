@@ -272,7 +272,8 @@ public class TargetLegalityService {
         }
         if (targetCardIds.isEmpty()) {
             boolean zeroTargetsAllowed = effects.stream().anyMatch(effect ->
-                    effect instanceof ExileCardsFromGraveyardEffect
+                    effect instanceof TargetedGraveyardCardsEffect
+                            || effect instanceof ExileCardsFromGraveyardEffect
                             || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
                             && returnEffect.minTargets() == 0)
                     || xValue != null && xValue == 0 && effects.stream()

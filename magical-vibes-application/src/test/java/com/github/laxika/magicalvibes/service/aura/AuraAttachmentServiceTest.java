@@ -96,7 +96,8 @@ class AuraAttachmentServiceTest {
             service.removeOrphanedAuras(gd);
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(aura);
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(aura.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(
+                    eq(gd), eq(player1Id), eq(aura.getOriginalCard()), eq(Zone.BATTLEFIELD), eq(player1Id), eq(aura));
         }
 
         @Test
@@ -105,7 +106,7 @@ class AuraAttachmentServiceTest {
             Permanent aura = createAura("Errantry");
             gd.playerBattlefields.get(player1Id).add(aura);
             when(graveyardService.addCardToGraveyard(
-                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura)).thenReturn(true);
 
             var result = service.removeOrphanedAuras(gd);
 
@@ -113,7 +114,7 @@ class AuraAttachmentServiceTest {
             assertThat(result.removals()).containsExactly(
                     new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id));
             verify(graveyardService).addCardToGraveyard(
-                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD);
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura);
         }
 
         @Test
@@ -132,8 +133,10 @@ class AuraAttachmentServiceTest {
             service.removeOrphanedAuras(gd);
 
             assertThat(gd.playerBattlefields.get(player1Id)).isEmpty();
-            verify(graveyardService).addCardToGraveyard(gd, player1Id, aura1.getOriginalCard(), Zone.BATTLEFIELD);
-            verify(graveyardService).addCardToGraveyard(gd, player1Id, aura2.getOriginalCard(), Zone.BATTLEFIELD);
+            verify(graveyardService).addCardToGraveyard(
+                    gd, player1Id, aura1.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura1);
+            verify(graveyardService).addCardToGraveyard(
+                    gd, player1Id, aura2.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura2);
         }
 
         @Test
@@ -149,7 +152,8 @@ class AuraAttachmentServiceTest {
             service.removeOrphanedAuras(gd);
 
             assertThat(gd.playerBattlefields.get(player2Id)).doesNotContain(aura);
-            verify(graveyardService).addCardToGraveyard(gd, player2Id, aura.getOriginalCard(), Zone.BATTLEFIELD);
+            verify(graveyardService).addCardToGraveyard(
+                    gd, player2Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player2Id, aura);
         }
 
         @Test
@@ -198,7 +202,8 @@ class AuraAttachmentServiceTest {
 
             service.removeOrphanedAuras(gd);
 
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), any(), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(
+                    eq(gd), eq(player1Id), any(), eq(Zone.BATTLEFIELD), eq(player1Id), eq(aura));
             verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player2Id), any(), any());
         }
     }
@@ -276,7 +281,8 @@ class AuraAttachmentServiceTest {
 
             // Aura should be removed from battlefield
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(aura);
-            verify(graveyardService).addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD);
+            verify(graveyardService).addCardToGraveyard(
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura);
 
             // Equipment should stay on battlefield, unattached
             assertThat(gd.playerBattlefields.get(player1Id)).contains(equipment);
@@ -301,7 +307,8 @@ class AuraAttachmentServiceTest {
 
             when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
             when(gameQueryService.hasProtectionFromSource(gd, host, aura)).thenReturn(true);
-            when(graveyardService.addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura)).thenReturn(true);
 
             var result = service.enforceAttachmentLegality(gd);
 
@@ -327,7 +334,8 @@ class AuraAttachmentServiceTest {
             when(gameQueryService.hasProtectionFromSource(gd, host, aura)).thenReturn(false);
             when(predicateEvaluationService.checkTargetFilter(eq(filter), eq(host), any()))
                     .thenReturn(Optional.of("Target must be a creature"));
-            when(graveyardService.addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura)).thenReturn(true);
 
             var result = service.enforceAttachmentLegality(gd);
 
@@ -383,7 +391,8 @@ class AuraAttachmentServiceTest {
 
             when(gameQueryService.getEffectiveColors(gd, aura)).thenReturn(Set.of(CardColor.BLACK));
             when(gameQueryService.playerHasProtectionFromColor(gd, player2Id, CardColor.BLACK)).thenReturn(true);
-            when(graveyardService.addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura)).thenReturn(true);
 
             var result = service.enforceAttachmentLegality(gd);
 

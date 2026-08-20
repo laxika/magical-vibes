@@ -1131,7 +1131,9 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getSourcePermanentSnapshot()).isSameAs(perm);
+            Permanent snapshot = gameData.stack.getFirst().getSourcePermanentSnapshot();
+            assertThat(snapshot).isNotSameAs(perm);
+            assertThat(snapshot.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
         }
 
@@ -1148,7 +1150,9 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getSourcePermanentSnapshot()).isSameAs(perm);
+            Permanent snapshot = gameData.stack.getFirst().getSourcePermanentSnapshot();
+            assertThat(snapshot).isNotSameAs(perm);
+            assertThat(snapshot.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
         }
 
         @Test

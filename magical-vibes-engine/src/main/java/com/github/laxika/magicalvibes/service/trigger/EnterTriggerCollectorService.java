@@ -325,6 +325,11 @@ public class EnterTriggerCollectorService {
             return true;
         }
 
+        UUID affectedPermanentId = effect instanceof AnimatePermanentsEffect
+                && !(match.rawEffect() instanceof TriggeringCardConditionalEffect)
+                ? match.permanent().getId()
+                : enteringPermanentId;
+
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -333,7 +338,7 @@ public class EnterTriggerCollectorService {
                     match.permanent().getCard().getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
                     null,
-                    enteringPermanentId);
+                    affectedPermanentId);
             entry.setTriggeringCardId(pe.enteringCard().getId());
             entry.setTriggeringPermanentId(enteringPermanentId);
             entry.setNonTargeting(true);

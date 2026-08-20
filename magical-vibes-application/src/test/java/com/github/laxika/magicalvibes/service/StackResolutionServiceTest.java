@@ -286,6 +286,7 @@ class StackResolutionServiceTest {
         void skipsStateBasedActionsWhenAwaitingInput() {
             Card card = createCreature("ETB Creature");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
+            when(gameQueryService.findPermanentById(eq(gd), any())).thenReturn(new Permanent(card));
             doAnswer(inv -> {
                 gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
                 return null;
