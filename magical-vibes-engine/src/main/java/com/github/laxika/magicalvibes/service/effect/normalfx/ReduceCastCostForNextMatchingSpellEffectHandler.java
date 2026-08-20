@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-@Component
+@Component("reduceCastCostForNextMatchingSpellNormalEffectHandler")
 public class ReduceCastCostForNextMatchingSpellEffectHandler implements NormalEffectHandlerBean {
 
     @Override
