@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
+import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
@@ -587,6 +588,24 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies targets for Ashling's Command's targeted modes")
+        void castsAshlingsCommandWithTargetsForEachChosenMode() {
+            giveAiPriority();
+            giveManaSources(Island::new, 4);
+            giveManaSources(Mountain::new, 1);
+            Permanent elemental = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new AirElemental());
+            AshlingsCommand command = new AshlingsCommand();
+            testHarness.setHand(aiTestPlayer, List.of(command));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds())
+                    .containsExactly(elemental.getId(), human.getId());
         }
 
         @Test

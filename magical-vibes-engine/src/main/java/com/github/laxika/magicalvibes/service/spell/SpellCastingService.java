@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -728,19 +729,26 @@ public class SpellCastingService {
      * <p>
      * {@code TargetLegalityService} skips its target-type check for modal cards because the card's
      * SPELL slot still holds the raw {@code ChooseOneEffect}, which exposes no target types. Here the
-     * chosen mode's effects are already unwrapped, so their {@code targetSpec()}s answer the question
-     * — a mode that admits no player (Far's bounce) must not accept one.
+     * chosen mode's effects are already unwrapped, so their {@code targetSpec()}s and any explicit
+     * mode target filter answer the question — a mode that admits no player (Far's bounce) must not
+     * accept one.
      */
-    private static void validateModalTargetKind(GameData gameData, boolean wasModal,
+    private static void validateModalTargetKind(GameData gameData, boolean wasModal, Card card,
                                                 List<CardEffect> resolvedSpellEffects, UUID targetId) {
         if (!wasModal || targetId == null || !gameData.playerIds.contains(targetId)) {
             return;
         }
         Set<TargetType> allowed = EffectResolution.computeAllowedTargets(
                 resolvedSpellEffects, List.of(), false, false);
-        if (!allowed.contains(TargetType.PLAYER)) {
+        if (!allowed.contains(TargetType.PLAYER)
+                && !targetFilterAllowsPlayer(card.getCastTimeTargetFilter())) {
             throw new IllegalStateException("This spell cannot target players");
         }
+    }
+
+    private static boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof PlayerPredicateTargetFilter;
     }
 
     /**
@@ -1925,7 +1933,7 @@ public class SpellCastingService {
                     targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD);
                 }
             } else {
-                validateModalTargetKind(gameData, wasModal, filteredSpellEffects, targetId);
+                validateModalTargetKind(gameData, wasModal, card, filteredSpellEffects, targetId);
                 List<CardEffect> primaryTargetEffects = effectsForTargetPosition(
                         card, targetingSpellEffects, targetIds.size());
                 targetLegalityService.validateSpellTargeting(gameData, card, primaryTargetEffects,

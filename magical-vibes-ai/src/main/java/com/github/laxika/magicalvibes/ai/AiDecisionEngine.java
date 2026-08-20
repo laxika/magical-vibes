@@ -3069,6 +3069,14 @@ public abstract class AiDecisionEngine {
     }
 
     private boolean modeAdmitsTarget(ChooseOneEffect.ChooseOneOption option, TargetPredicate.Kind kind) {
+        if (kind == TargetPredicate.Kind.PLAYER
+                && AiTargetSelector.targetFilterAllowsPlayer(option.targetFilter())) {
+            return true;
+        }
+        if (kind == TargetPredicate.Kind.PERMANENT
+                && AiTargetSelector.targetFilterAllowsPermanent(option.targetFilter())) {
+            return true;
+        }
         return option.effects().stream().anyMatch(effect -> effect.targetSpec().admits(kind));
     }
 

@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -944,10 +945,13 @@ public class TargetLegalityService {
                 Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
                         spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), card.isAura(), card.isEnchantPlayer());
 
-                if (target != null && !allowedTargets.contains(TargetType.PERMANENT)) {
+                if (target != null && !allowedTargets.contains(TargetType.PERMANENT)
+                        && !targetFilterAllowsPermanent(effectiveTargetFilter)) {
                     return Optional.of("This spell can only target players");
                 }
-                if (target == null && gameData.playerIds.contains(targetId) && !allowedTargets.contains(TargetType.PLAYER)) {
+                if (target == null && gameData.playerIds.contains(targetId)
+                        && !allowedTargets.contains(TargetType.PLAYER)
+                        && !targetFilterAllowsPlayer(effectiveTargetFilter)) {
                     return Optional.of("This spell cannot target players");
                 }
             }
@@ -1002,6 +1006,18 @@ public class TargetLegalityService {
         if (effectReason.isPresent()) return effectReason;
 
         return Optional.empty();
+    }
+
+    private static boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof PlayerPredicateTargetFilter;
+    }
+
+    private static boolean targetFilterAllowsPermanent(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter
+                || targetFilter instanceof OwnedPermanentPredicateTargetFilter
+                || targetFilter instanceof PermanentPredicateTargetFilter;
     }
 
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone) {

@@ -87,6 +87,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -204,6 +208,23 @@ class MediumAiDecisionEngineTest {
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
+    }
+
+    private Card chooseTwoWithExplicitOptionFilters() {
+        Card card = new Card();
+        card.setName("Choose Two with Explicit Option Filters");
+        card.setType(CardType.INSTANT);
+        card.setManaCost("{3}{U}{R}");
+        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption(
+                        "Draw with a permanent target", new DrawCardEffect(1),
+                        TargetFilters.creatureYouControl()),
+                new ChooseOneEffect.ChooseOneOption(
+                        "Draw with a player target", new DrawCardEffect(1),
+                        new PlayerPredicateTargetFilter(
+                                new PlayerRelationPredicate(PlayerRelation.ANY),
+                                "Target must be a player"))), 2));
+        return card;
     }
 
     private Card creatureWithCreatureTypeAdditionalCost() {
@@ -1643,6 +1664,29 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies targets for choose-two modes with explicit option filters")
+    void castsChooseTwoWithTargetsForEachExplicitOptionFilter() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiIslands(4);
+        giveAiMountains(1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(aiPlayer, new AirElemental());
+        harness.setHand(aiPlayer, List.of(chooseTwoWithExplicitOptionFilters()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactly(elemental.getId(), human.getId());
     }
 
     @Test

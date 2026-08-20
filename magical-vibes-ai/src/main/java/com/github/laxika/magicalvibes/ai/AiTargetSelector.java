@@ -516,12 +516,12 @@ class AiTargetSelector {
         return Math.max(0, gameData.getLife(playerId) / lifeCostPerTarget);
     }
 
-    private static boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {
+    static boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {
         return targetFilter instanceof AnyTargetPredicateTargetFilter
                 || targetFilter instanceof PlayerPredicateTargetFilter;
     }
 
-    private static boolean targetFilterAllowsPermanent(TargetFilter targetFilter) {
+    static boolean targetFilterAllowsPermanent(TargetFilter targetFilter) {
         return targetFilter instanceof AnyTargetPredicateTargetFilter
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter
                 || targetFilter instanceof OwnedPermanentPredicateTargetFilter

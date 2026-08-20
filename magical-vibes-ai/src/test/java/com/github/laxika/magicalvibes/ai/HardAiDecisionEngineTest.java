@@ -118,12 +118,14 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -2056,8 +2058,8 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
-    @DisplayName("Hard AI validates modal player-or-planeswalker target candidates")
-    void castsModalPlayerOrPlaneswalkerSpellAtPlayer() {
+    @DisplayName("Hard AI supplies a modal option's explicit player target")
+    void castsModalSpellWithExplicitPlayerTarget() {
         pinLibrariesAndHands();
         giveAiPriority(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -2071,13 +2073,15 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         modalSpell.setType(CardType.SORCERY);
         modalSpell.setManaCost("{R}{W}");
         modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
-                        new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
+                new ChooseOneEffect.ChooseOneOption("Draw for target", new DrawCardEffect(1),
+                        new PlayerPredicateTargetFilter(
+                                new PlayerRelationPredicate(PlayerRelation.ANY),
+                                "Target must be a player")),
                 new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
         harness.setHand(player1, List.of(modalSpell));
 
         HardAiDecisionEngine ai = createHardAi(player1);
-        ai.handleEvent(AiDecisionKind.GAME_STATE);
+        assertThat(ai.tryCastSpell(gd)).isTrue();
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
