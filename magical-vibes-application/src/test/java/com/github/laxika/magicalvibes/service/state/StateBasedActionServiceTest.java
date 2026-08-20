@@ -39,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -108,6 +109,18 @@ class StateBasedActionServiceTest {
                 eq(Keyword.START_YOUR_ENGINES))).thenReturn(false);
         // Lethal-damage SBA reads losesAllAbilities via computeStaticBonus (Ogre Enforcer path).
         lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(EMPTY_BONUS);
+        lenient().when(gameQueryService.withQueryScope(any(), any())).thenAnswer(invocation ->
+                invocation.<Supplier<?>>getArgument(1).get());
+    }
+
+    @Test
+    @DisplayName("Lethal permanent checks share one read-only query scope")
+    void lethalPermanentChecksShareQueryScope() {
+        gd.playerBattlefields.get(player1Id).add(new Permanent(createCreatureCard("Creature")));
+
+        sut.performStateBasedActions(gd);
+
+        verify(gameQueryService, atLeastOnce()).withQueryScope(eq(gd), any());
     }
 
     private static Card createCreatureCard(String name) {

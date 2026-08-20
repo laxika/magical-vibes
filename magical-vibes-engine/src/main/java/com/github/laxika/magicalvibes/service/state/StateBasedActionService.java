@@ -226,28 +226,34 @@ public class StateBasedActionService {
 
         List<DeathEntry> toDie = new ArrayList<>();
         List<DeathEntry> lethalDamageCandidates = new ArrayList<>();
-        for (Permanent p : permanents) {
-            if (processedIds.contains(p.getId())) {
-                continue;
+        gameQueryService.withQueryScope(gameData, () -> {
+            for (Permanent p : permanents) {
+                if (processedIds.contains(p.getId())) {
+                    continue;
+                }
+                if (gameQueryService.isCreature(gameData, p)
+                        && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
+                } else if (gameQueryService.isCreature(gameData, p)
+                        && isDestroyedByLethalDamage(gameData, p)
+                        && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)) {
+                    // CR 704.5g — creature with damage >= toughness is destroyed, and
+                    // CR 704.5h — creature dealt damage by a deathtouch source since the last check
+                    // is destroyed (regeneration can replace either)
+                    lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
+                } else if (gameQueryService.isPlaneswalker(gameData, p)
+                        && p.getCounterCount(CounterType.LOYALTY) <= 0) {
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
+                } else if (gameQueryService.isBattle(gameData, p)
+                        && p.getCounterCount(CounterType.DEFENSE) <= 0
+                        && !battleDefeatSupport.hasDefeatTriggerOnStack(gameData, p.getId())) {
+                    // CR 704.5v — battle with no defense counters is put into the graveyard unless a
+                    // "when this battle is defeated" ability is still on the stack.
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
+                }
             }
-            if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
-            } else if (gameQueryService.isCreature(gameData, p)
-                    && isDestroyedByLethalDamage(gameData, p)
-                    && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)) {
-                // CR 704.5g — creature with damage >= toughness is destroyed, and
-                // CR 704.5h — creature dealt damage by a deathtouch source since the last check
-                // is destroyed (regeneration can replace either)
-                lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
-            } else if (gameQueryService.isPlaneswalker(gameData, p) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
-            } else if (gameQueryService.isBattle(gameData, p) && p.getCounterCount(CounterType.DEFENSE) <= 0
-                    && !battleDefeatSupport.hasDefeatTriggerOnStack(gameData, p.getId())) {
-                // CR 704.5v — battle with no defense counters is put into the graveyard unless a
-                // "when this battle is defeated" ability is still on the stack.
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
-            }
-        }
+            return null;
+        });
 
         boolean replacementPerformed = false;
         for (DeathEntry candidate : lethalDamageCandidates) {
