@@ -64,8 +64,21 @@ public class CounterSupport {
     }
 
     public StackEntry findCounterTarget(GameData gameData, UUID targetCardId, StackEntry counterSource) {
+        return findCounterTarget(gameData, targetCardId, counterSource, false);
+    }
+
+    public StackEntry findCounterTargetExcludingSource(GameData gameData, UUID targetCardId,
+                                                        StackEntry counterSource) {
+        return findCounterTarget(gameData, targetCardId, counterSource, true);
+    }
+
+    private StackEntry findCounterTarget(GameData gameData, UUID targetCardId, StackEntry counterSource,
+                                         boolean excludeSource) {
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
+            if (excludeSource && se == counterSource) {
+                continue;
+            }
             if (se.getCard().getId().equals(targetCardId)) {
                 targetEntry = se;
                 break;

@@ -28,6 +28,8 @@ import java.util.Set;
  *                        for {@link PreventionScope#NEXT_TO_TARGET_CREATURE} an optional narrowing of the legal target
  * @param gainLife        whether the controller gains life equal to damage prevented by a
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
+ * @param sourcePredicate damage sources matching this predicate for
+ *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES}
  */
 public record PreventDamageEffect(
         PreventionScope scope,
@@ -36,7 +38,8 @@ public record PreventDamageEffect(
         Set<CardColor> sourceColors,
         PermanentPredicate exemptPredicate,
         PermanentPredicate victimPredicate,
-        boolean gainLife
+        boolean gainLife,
+        PermanentPredicate sourcePredicate
 ) implements CardEffect {
 
     public PreventDamageEffect(PreventionScope scope,
@@ -45,7 +48,17 @@ public record PreventDamageEffect(
                                Set<CardColor> sourceColors,
                                PermanentPredicate exemptPredicate,
                                PermanentPredicate victimPredicate) {
-        this(scope, amount, combatOnly, sourceColors, exemptPredicate, victimPredicate, false);
+        this(scope, amount, combatOnly, sourceColors, exemptPredicate, victimPredicate, false, null);
+    }
+
+    public PreventDamageEffect(PreventionScope scope,
+                               DynamicAmount amount,
+                               boolean combatOnly,
+                               Set<CardColor> sourceColors,
+                               PermanentPredicate exemptPredicate,
+                               PermanentPredicate victimPredicate,
+                               boolean gainLife) {
+        this(scope, amount, combatOnly, sourceColors, exemptPredicate, victimPredicate, gainLife, null);
     }
 
     public PreventDamageEffect {
@@ -82,6 +95,10 @@ public record PreventDamageEffect(
         }
         if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
             throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
+        }
+        if ((sourcePredicate != null) != (scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES)) {
+            throw new IllegalArgumentException(
+                    "sourcePredicate is exactly the ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES parameter: " + scope);
         }
     }
 
@@ -258,6 +275,13 @@ public record PreventDamageEffect(
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */
     public static PreventDamageEffect allToControllerFromAttackers() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS, null, false, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt to you this turn by sources matching {@code sourcePredicate}." */
+    public static PreventDamageEffect allToControllerFromMatchingSources(PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
     }
 
     /** "Prevent all damage that sources of the given colors would deal this turn" (Luminesce). */

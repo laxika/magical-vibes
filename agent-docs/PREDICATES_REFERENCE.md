@@ -303,6 +303,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
+| `PlayerAttackedThisTurnPredicate` | `()` | players who declared at least one attacker this turn (evaluated against `GameData.playersDeclaredAttackersThisTurn`). Used by Fire and Brimstone's "target player who attacked this turn" |
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerDamagedBySourceThisTurnPredicate` | `()` | players dealt damage **by the ability's own source permanent** this turn, combat or noncombat (evaluated against `GameData.combatDamageToPlayersThisTurn` + `noncombatDamageToPlayersThisTurn`, both keyed by source permanent id). Source-relative: `TargetLegalityService.matchesPlayerPredicate` needs the source permanent id, which the activated-ability validation, valid-target enumeration and resolution-time recheck paths supply; any other path passes `null` and matches nobody. Used by Wicked Akuba's `{B}` ability |

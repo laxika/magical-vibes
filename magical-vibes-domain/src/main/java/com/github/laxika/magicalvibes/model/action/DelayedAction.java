@@ -75,6 +75,7 @@ public sealed interface DelayedAction permits
         DelayedDestroyCreatureDamagedByWatchedCreature,
         DelayedSacrificeSourceWhenTargetLeaves,
         DelayedSacrificeTargetWhenSourceLeaves,
+        DelayedDestroyTargetWhenSourceLeaves,
         DelayedSacrificeTargetPermanentAtEndStep,
         DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost,
         DelayedCoinFlipSacrificeTargetPermanentAtEndStep,

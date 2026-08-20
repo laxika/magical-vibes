@@ -579,6 +579,10 @@ public class GraveyardChoiceHandlerService {
             }
             battlefieldEntryService.applyAsEntersExileCounters(gameData, context.controllerId(),
                     context.enteringPermanentId(), exiledCount, context.countersPerCard());
+            if (!context.counterTypes().isEmpty() && exiledCount > 0) {
+                playerInputService.beginAsEntersCounterTypeChoice(gameData, context, exiledCount);
+                return;
+            }
             battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
                     context.targetId(), context.wasCastFromHand(), context.etbMode(), context.xValue(),
                     context.kicked(), context.targetIds());

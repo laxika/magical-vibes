@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "165")
+@CardRegistration(set = "DRK", collectorNumber = "54")
 public class UncleIstvan extends Card {
 
     public UncleIstvan() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "363")
 @CardRegistration(set = "4ED", collectorNumber = "314")
+@CardRegistration(set = "DRK", collectorNumber = "101")
 public class DiabolicMachine extends Card {
 
     public DiabolicMachine() {

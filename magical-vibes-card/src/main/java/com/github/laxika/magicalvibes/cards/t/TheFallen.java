@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToOpponentsAndPlaneswalkersDamagedBySourceEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "38")
+@CardRegistration(set = "DRK", collectorNumber = "53")
 public class TheFallen extends Card {
 
     public TheFallen() {

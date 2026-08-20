@@ -307,10 +307,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  top of their library (Bone Mask). */
     record PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                              boolean exileFromLibrary,
-                                             Card damageSourceControllerCard) implements PermanentChoiceContext {
+                                             Card damageSourceControllerCard,
+                                             boolean preventHalfDamage) implements PermanentChoiceContext {
         public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                                  boolean exileFromLibrary) {
-            this(controllerId, gainLife, exileFromLibrary, null);
+            this(controllerId, gainLife, exileFromLibrary, null, false);
         }
     }
 

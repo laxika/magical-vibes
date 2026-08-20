@@ -3,14 +3,35 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Redirects a spell that has exactly one target to a new legal target chosen by this effect's controller.
  *
- * @param creatureTargetsOnly when {@code true} the redirection only happens if the target spell's single
- *                            target is a creature, and the new target must be another creature (Meddle).
- *                            When {@code false} any single target may be redirected (Deflection, Shunt, Swerve).
+ * @param newTargetKind controls whether the new target may be any legal target, only a creature,
+ *                      or only a player
  */
-public record ChangeTargetOfTargetSpellWithSingleTargetEffect(boolean creatureTargetsOnly) implements CardEffect {
+public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind) implements CardEffect {
+
+    public enum NewTargetKind {
+        ANY,
+        CREATURE,
+        PLAYER
+    }
 
     public ChangeTargetOfTargetSpellWithSingleTargetEffect() {
-        this(false);
+        this(NewTargetKind.ANY);
+    }
+
+    public ChangeTargetOfTargetSpellWithSingleTargetEffect(boolean creatureTargetsOnly) {
+        this(creatureTargetsOnly ? NewTargetKind.CREATURE : NewTargetKind.ANY);
+    }
+
+    public static ChangeTargetOfTargetSpellWithSingleTargetEffect playersOnly() {
+        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.PLAYER);
+    }
+
+    public boolean creatureTargetsOnly() {
+        return newTargetKind == NewTargetKind.CREATURE;
+    }
+
+    public boolean playerTargetsOnly() {
+        return newTargetKind == NewTargetKind.PLAYER;
     }
 
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }

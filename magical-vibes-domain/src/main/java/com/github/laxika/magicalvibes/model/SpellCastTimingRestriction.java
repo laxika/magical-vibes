@@ -76,6 +76,11 @@ public enum SpellCastTimingRestriction {
     OPPONENTS_TURN,
 
     /**
+     * "Cast this spell only during an opponent's upkeep." Festival.
+     */
+    OPPONENTS_UPKEEP,
+
+    /**
      * "Cast this spell only before the combat damage step." Blood Frenzy. Legal for any player in
      * any step that precedes the combat damage step of the current turn, so it covers the beginning
      * phase, the precombat main phase and the first three combat steps, but not the combat damage

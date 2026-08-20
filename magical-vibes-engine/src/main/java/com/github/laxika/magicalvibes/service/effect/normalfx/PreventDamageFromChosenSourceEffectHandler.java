@@ -93,7 +93,10 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             case NEXT_DAMAGE_TO_CONTROLLER -> {
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceChoice(
                         controllerId, e.gainLife(), e.exileFromLibrary(),
-                        e.damageSourceController() ? entry.getCard() : null);
+                        e.damageSourceController() ? entry.getCard() : null, e.preventHalfDamage());
+                String prevention = e.preventHalfDamage()
+                        ? "prevent half that damage, rounded down"
+                        : "prevent that damage";
                 String rider = e.damageSourceController()
                         ? " If damage is prevented this way, this spell deals that much damage to that source's controller."
                         : e.gainLife()
@@ -102,7 +105,7 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                                 ? " and exile that many cards from the top of your library."
                                 : ".";
                 prompt = "Choose a " + label
-                        + "source. The next time it would deal damage to you this turn, prevent that damage"
+                        + "source. The next time it would deal damage to you this turn, " + prevention
                         + rider;
             }
             case NEXT_DAMAGE_TO_ANY_TARGET -> {

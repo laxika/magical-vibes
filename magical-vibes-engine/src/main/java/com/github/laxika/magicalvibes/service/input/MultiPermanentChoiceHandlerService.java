@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -126,6 +127,7 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CulturalExchangeSupport
             culturalExchangeSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final WormsOfTheEarthEffectHandler wormsOfTheEarthEffectHandler;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -184,6 +186,19 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != choice.requiredCount()) {
             throw new IllegalStateException("Exactly " + choice.requiredCount()
                     + " lands must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
+                && permanentIds.size() != 2) {
+            throw new IllegalStateException("Exactly two lands must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands worms
+                && permanentIds.stream().anyMatch(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent == null
+                            || !worms.playerId().equals(gameQueryService.findPermanentController(gameData, id))
+                            || !gameQueryService.isLand(gameData, permanent);
+                })) {
+            throw new IllegalStateException("A selected permanent is no longer a land you control");
         }
         if (context instanceof MultiPermanentChoiceContext.CulturalExchange culturalExchange
                 && !culturalExchange.firstSelection()
@@ -373,6 +388,11 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
             handleForcedSacrifice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx) {
+            wormsOfTheEarthEffectHandler.sacrificeAndDestroy(
+                    gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrificeThenDamageIfSubtype ctx) {
             handleForcedSacrificeThenDamageIfSubtype(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedDestroy ctx) {

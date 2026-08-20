@@ -102,7 +102,14 @@ public class GraveyardTargetOperationState {
     public record AsEntersGraveyardExileContext(UUID enteringPermanentId, UUID controllerId, Card card,
                                                 UUID targetId, boolean wasCastFromHand, int etbMode,
                                                 int xValue, boolean kicked, List<UUID> targetIds,
-                                                int countersPerCard) {
+                                                int countersPerCard, List<CounterType> counterTypes) {
+        public AsEntersGraveyardExileContext(UUID enteringPermanentId, UUID controllerId, Card card,
+                                             UUID targetId, boolean wasCastFromHand, int etbMode,
+                                             int xValue, boolean kicked, List<UUID> targetIds,
+                                             int countersPerCard) {
+            this(enteringPermanentId, controllerId, card, targetId, wasCastFromHand, etbMode,
+                    xValue, kicked, targetIds, countersPerCard, List.of());
+        }
     }
 
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {

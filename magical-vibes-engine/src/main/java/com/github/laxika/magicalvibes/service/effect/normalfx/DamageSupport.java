@@ -116,6 +116,16 @@ public class DamageSupport {
                 || !damageSource.getId().equals(entry.getSourcePermanentId()))) {
             rawDamage *= gameQueryService.getSourceDamageMultiplier(gameData, sourceControllerId, damageSource);
         }
+        if (target.isDamageCantBePreventedOrRedirectedThisTurn()) {
+            boolean previous = gameData.damageCantBePreventedThisTurn;
+            gameData.damageCantBePreventedThisTurn = true;
+            try {
+                return dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource,
+                        true, true);
+            } finally {
+                gameData.damageCantBePreventedThisTurn = previous;
+            }
+        }
         boolean sourceDamagePrevented = source != null
                 ? gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
                 : gameQueryService.isDamageFromStackEntryPrevented(gameData, entry);
@@ -136,18 +146,18 @@ public class DamageSupport {
             gameData.damageCantBePreventedThisTurn = true;
             try {
                 return dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource,
-                        cantBeRedirected);
+                        cantBeRedirected, false);
             } finally {
                 gameData.damageCantBePreventedThisTurn = previous;
             }
         }
         return dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource,
-                cantBeRedirected);
+                cantBeRedirected, false);
     }
 
     private int dealCreatureDamageFromSource(GameData gameData, StackEntry entry, Permanent target,
                                              int rawDamage, Permanent damageSource,
-                                             boolean cantBeRedirected) {
+                                             boolean cantBeRedirected, boolean targetDamageUnpreventable) {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
         rawDamage = Math.max(0, rawDamage);
@@ -157,20 +167,20 @@ public class DamageSupport {
         }
         // Energy Storm and Hidden Retreat: prevent damage dealt by instant/sorcery spells themselves
         // (not fight/bite damage from permanents that a spell merely caused to deal damage).
-        if (damageSource == null
+        if (!targetDamageUnpreventable && damageSource == null
                 && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
                     "'s damage is prevented."));
             return 0;
         }
-        if (damageSource == null
+        if (!targetDamageUnpreventable && damageSource == null
                 && gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
             gainLifeForTargetSpellDamage(gameData, entry, rawDamage);
             gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
                     "'s damage is prevented."));
             return 0;
         }
-        if (damageSource == null
+        if (!targetDamageUnpreventable && damageSource == null
                 && gameQueryService.isDamageFromTargetingSpellPrevented(gameData, entry, target)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
@@ -256,7 +266,7 @@ public class DamageSupport {
             processSourceRedirectDamage(gameData);
         }
         // Apply target+source-specific prevention shields (e.g. Healing Grace)
-        if (sourcePermId != null) {
+        if (!targetDamageUnpreventable && sourcePermId != null) {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from
             // the chosen source to any target; red rider queues reflected damage)
@@ -270,7 +280,8 @@ public class DamageSupport {
         UUID swansSourceControllerId = damageSource != null
                 ? gameQueryService.findPermanentController(gameData, damageSource.getId())
                 : entry.getControllerId();
-        if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, rawDamage, swansSourceControllerId)) {
+        if (!targetDamageUnpreventable
+                && damagePreventionService.applySwansSourceControllerDraw(gameData, target, rawDamage, swansSourceControllerId)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
@@ -278,11 +289,13 @@ public class DamageSupport {
         Set<CardColor> sourceColors = damageSource != null
                 ? gameQueryService.getEffectiveColors(gameData, damageSource)
                 : sourceCardColors(entry.getEffectiveDamageSourceCard());
-        if (damagePreventionService.isColorDamagePreventedForTarget(gameData, target.getId(), sourceColors)) {
+        if (!targetDamageUnpreventable
+                && damagePreventionService.isColorDamagePreventedForTarget(gameData, target.getId(), sourceColors)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
-        if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, sourceColors)) {
+        if (!targetDamageUnpreventable
+                && gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, sourceColors)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
@@ -290,28 +303,33 @@ public class DamageSupport {
         if (sharedColorSource == null && entry != null && entry.getSourcePermanentId() != null) {
             sharedColorSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         }
-        if (gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(gameData, target, sharedColorSource)) {
+        if (!targetDamageUnpreventable
+                && gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(gameData, target, sharedColorSource)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
         // Gideon's Intervention: prevent all damage to permanents you control from sources with the chosen name.
         String preventionSourceName = (damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard()).getName();
-        if (gameQueryService.isDamagePreventable(gameData)
+        if (!targetDamageUnpreventable
+                && gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, targetControllerId, preventionSourceName)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
         // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Noncombat
         // path — combat damage is prevented in DamagePreventionService.applyCreaturePreventionShield.
-        if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, entry, damageSource)) {
+        if (!targetDamageUnpreventable
+                && gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, entry, damageSource)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
-        int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
+        int damage = targetDamageUnpreventable
+                ? rawDamage
+                : damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
         // N of that damage." Applied before recording/triggers so reflection and damage-counting see the
         // reduced amount; the loyalty branch below then removes the reduced amount.
-        if (target.getCard().hasType(CardType.PLANESWALKER)) {
+        if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, targetControllerId, damage);
             damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, targetControllerId, damage);
         }
@@ -506,9 +524,11 @@ public class DamageSupport {
                     gameQueryService.findPermanentController(gameData, target.getId()));
         }
 
-        damage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
-                gameData, target, entry.getSourcePermanentId(), damage);
-        processSourceRedirectDamage(gameData);
+        if (!target.isDamageCantBePreventedOrRedirectedThisTurn()) {
+            damage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
+                    gameData, target, entry.getSourcePermanentId(), damage);
+            processSourceRedirectDamage(gameData);
+        }
         if (damage <= 0) return;
 
         if (entry.getSourcePermanentId() != null) {
@@ -640,7 +660,8 @@ public class DamageSupport {
 
     public boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
         Card source = entry.getEffectiveDamageSourceCard();
-        if (gameQueryService.isDamagePreventable(gameData)
+        if (!target.isDamageCantBePreventedOrRedirectedThisTurn()
+                && gameQueryService.isDamagePreventable(gameData)
                 && (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)
                     || gameQueryService.hasProtectionFromDamageSource(gameData, target, source,
                         entry.getControllerId()))) {
@@ -705,15 +726,19 @@ public class DamageSupport {
             // dealDamageToPlayer handles per-permanent prevention (permanentsPreventedFromDealingDamage)
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         } else {
-            if (isDamageSourcePreventedWithLog(gameData, entry)) return;
-            if (gameQueryService.isDamagePreventable(gameData)
+            if (!targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                    && isDamageSourcePreventedWithLog(gameData, entry)) return;
+            if (!targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                    && gameQueryService.isDamagePreventable(gameData)
                     && (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
                         || gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, source,
                             entry.getControllerId()))) {
                 gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
                 return;
             }
-            if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+            if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)
+                    && !(targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                    && gameQueryService.isCreature(gameData, targetPermanent))) {
                 Permanent damageSourcePermanent = entry.getSourcePermanentId() == null
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -939,6 +964,7 @@ public class DamageSupport {
         }
         if (sourceDamagePrevented
                 || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
+                || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, sourcePermanent)
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));

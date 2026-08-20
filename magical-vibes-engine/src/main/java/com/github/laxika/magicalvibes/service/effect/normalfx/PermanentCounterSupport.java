@@ -238,6 +238,11 @@ public class PermanentCounterSupport {
                 target.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO) + count);
                 yield "+1/+0";
             }
+            case PLUS_TWO_PLUS_ZERO -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.PLUS_TWO_PLUS_ZERO, target.getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO) + count);
+                yield "+2/+0";
+            }
             case PLUS_ONE_PLUS_TWO -> {
                 if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) { yield null; }
                 target.setCounterCount(CounterType.PLUS_ONE_PLUS_TWO, target.getCounterCount(CounterType.PLUS_ONE_PLUS_TWO) + count);
@@ -282,6 +287,11 @@ public class PermanentCounterSupport {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + count);
                 yield "+0/+1";
+            }
+            case PLUS_ZERO_PLUS_TWO -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.PLUS_ZERO_PLUS_TWO, target.getCounterCount(CounterType.PLUS_ZERO_PLUS_TWO) + count);
+                yield "+0/+2";
             }
             case CARRION -> { target.setCounterCount(CounterType.CARRION, target.getCounterCount(CounterType.CARRION) + count); yield "carrion"; }
             case CUBE -> { target.setCounterCount(CounterType.CUBE, target.getCounterCount(CounterType.CUBE) + count); yield "cube"; }
@@ -442,8 +452,10 @@ public class PermanentCounterSupport {
             case LOYALTY -> "loyalty";
             case PLUS_ONE_PLUS_ONE -> "+1/+1";
             case PLUS_ONE_PLUS_ZERO -> "+1/+0";
+            case PLUS_TWO_PLUS_ZERO -> "+2/+0";
             case PLUS_ONE_PLUS_TWO -> "+1/+2";
             case PLUS_TWO_PLUS_TWO -> "+2/+2";
+            case PLUS_ZERO_PLUS_TWO -> "+0/+2";
             case MINUS_ONE_MINUS_ONE -> "-1/-1";
             case MINUS_ONE_MINUS_ZERO -> "-1/-0";
             case MINUS_TWO_MINUS_TWO -> "-2/-2";

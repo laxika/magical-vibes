@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "221")
+@CardRegistration(set = "DRK", collectorNumber = "74")
 public class SistersOfTheFlame extends Card {
 
     public SistersOfTheFlame() {

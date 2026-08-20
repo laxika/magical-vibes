@@ -742,6 +742,9 @@ public class CastingPermissionService {
                     !playerId.equals(gameData.activePlayerId)
                             && gameData.currentStep.isBeforeAttackersDeclared();
             case OPPONENTS_TURN -> !playerId.equals(gameData.activePlayerId);
+            case OPPONENTS_UPKEEP ->
+                    gameData.currentStep == TurnStep.UPKEEP
+                            && !playerId.equals(gameData.activePlayerId);
             case BEFORE_COMBAT_DAMAGE -> gameData.currentStep.isBeforeCombatDamage();
             case AFTER_COMBAT ->
                     gameData.currentStep.ordinal() > TurnStep.END_OF_COMBAT.ordinal();

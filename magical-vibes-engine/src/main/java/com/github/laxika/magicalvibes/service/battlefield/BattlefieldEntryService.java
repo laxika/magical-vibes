@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -244,6 +245,9 @@ public class BattlefieldEntryService {
         int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
+            return;
+        }
+        if (!applyRequiredGraveyardExileReplacement(gameData, controllerId, permanent, xValue)) {
             return;
         }
         if (!applyEntryCostReplacement(gameData, controllerId, permanent)) {
@@ -791,6 +795,28 @@ public class BattlefieldEntryService {
                 permanent.getCard().getName() + " — Sacrifice " + effect.description()
                         + "? (Choose yourself to decline; " + permanent.getCard().getName()
                         + " is then put into its owner's graveyard.)");
+        return false;
+    }
+
+    private boolean applyRequiredGraveyardExileReplacement(GameData gameData, UUID controllerId,
+                                                           Permanent permanent, int xValue) {
+        ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect effect = permanent.getCard()
+                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
+                .map(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
+                .findFirst().orElse(null);
+        if (effect == null || xValue <= 0) {
+            return true;
+        }
+
+        long creatureCardCount = gameData.playerGraveyards.getOrDefault(controllerId, List.of()).stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .count();
+        if (creatureCardCount >= xValue) {
+            return true;
+        }
+
+        putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, null);
         return false;
     }
 
@@ -1563,13 +1589,21 @@ public class BattlefieldEntryService {
         // "As this creature enters, pay any amount of life" (Minion of the Wastes). The payment is a
         // choice made during entry, before ETB triggers; the amount is stored on the permanent so a
         // characteristic-defining power/toughness can read it back.
-        boolean needsLifePayment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof PayAnyAmountOfLifeOnEnterEffect);
-        if (needsLifePayment) {
+        PayAnyAmountOfLifeOnEnterEffect lifePayment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(PayAnyAmountOfLifeOnEnterEffect.class::isInstance)
+                .map(PayAnyAmountOfLifeOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (lifePayment != null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             int life = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
-            playerInputService.beginPayAnyAmountOfLifeChoice(gameData, controllerId, life,
+            int maxLife = life;
+            if (lifePayment.maxAmount() != null) {
+                int maximum = amountEvaluationService.evaluate(gameData, lifePayment.maxAmount(),
+                        AmountContext.forEnteringPermanent(controllerId, justEntered, xValue));
+                maxLife = Math.min(maxLife, Math.max(0, maximum));
+            }
+            playerInputService.beginPayAnyAmountOfLifeChoice(gameData, controllerId, maxLife,
                     new ChoiceContext.PayAnyAmountOfLifeAsEnters(justEntered.getId(), controllerId, card,
                             targetId, wasCastFromHand, etbMode, kicked));
             return;
@@ -1583,7 +1617,13 @@ public class BattlefieldEntryService {
                         .filter(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
                         .map(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
-        boolean needsGraveyardExile = limitedGraveyardExile != null
+        ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect requiredGraveyardExile =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
+                        .map(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
+                        .findFirst().orElse(null);
+        boolean needsGraveyardExile = requiredGraveyardExile != null
+                || limitedGraveyardExile != null
                 || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect);
         if (needsGraveyardExile) {
@@ -1591,7 +1631,7 @@ public class BattlefieldEntryService {
                     .getOrDefault(controllerId, List.of()).stream()
                     .filter(c -> c.hasType(CardType.CREATURE))
                     .toList();
-            int maxExiledCards = limitedGraveyardExile == null
+            int maxExiledCards = limitedGraveyardExile == null && requiredGraveyardExile == null
                     ? creatureCards.size()
                     : Math.min(Math.max(xValue, 0), creatureCards.size());
             if (!creatureCards.isEmpty() && maxExiledCards > 0) {
@@ -1601,9 +1641,11 @@ public class BattlefieldEntryService {
                         new GraveyardTargetOperationState.AsEntersGraveyardExileContext(
                                 justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode,
                                 xValue, kicked, targetIds,
-                                limitedGraveyardExile == null ? 0 : limitedGraveyardExile.countersPerCard());
+                                limitedGraveyardExile == null ? 0 : limitedGraveyardExile.countersPerCard(),
+                                requiredGraveyardExile == null ? List.of() : requiredGraveyardExile.counterTypes());
                 playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
                         new ArrayList<>(creatureCards), maxExiledCards,
+                        requiredGraveyardExile == null ? 0 : maxExiledCards,
                         limitedGraveyardExile == null
                                 ? card.getName() + " — Exile any number of creature cards from your graveyard."
                                 : card.getName() + " — Exile up to " + xValue
@@ -1630,6 +1672,27 @@ public class BattlefieldEntryService {
                     permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
             log.info("Game {} - {} enters with {} +1/+1 counter(s) from exiled creature cards",
                     gameData.id, permanent.getCard().getName(), count);
+        }
+    }
+
+    public void applyAsEntersChosenCounterType(GameData gameData, UUID controllerId,
+                                                UUID enteringPermanentId, CounterType counterType,
+                                                int exiledCardCount) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        if (permanent == null || exiledCardCount <= 0
+                || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
+            return;
+        }
+
+        int count = gameQueryService.replaceCounters(gameData, permanent, counterType, exiledCardCount);
+        if (count <= 0) {
+            return;
+        }
+        permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
+        permanentCounterSupport.recordCounterPlacedOnCreature(gameData, permanent, controllerId);
+        if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
         }
     }
 

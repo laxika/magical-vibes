@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "194")
+@CardRegistration(set = "DRK", collectorNumber = "63")
 public class Fissure extends Card {
 
     public Fissure() {

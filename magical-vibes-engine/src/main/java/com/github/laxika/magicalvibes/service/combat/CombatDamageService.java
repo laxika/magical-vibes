@@ -2220,7 +2220,9 @@ public class CombatDamageService {
             // Malignus: prevention may not reduce the step's damage below the part of it dealt by
             // sources whose damage can't be prevented.
             int unpreventable = Math.min(entry.getValue(), unpreventableDamageTaken.getOrDefault(idx, 0));
-            int dmg = Math.max(unpreventable,
+            int dmg = perm.isDamageCantBePreventedOrRedirectedThisTurn()
+                    ? entry.getValue()
+                    : Math.max(unpreventable,
                     damagePreventionService.applyCreaturePreventionShield(gameData, perm, entry.getValue(), true));
             if (dmg > 0) {
                 recordCombatMarkedDamage(perm, dmg, damageTakenBySource.getOrDefault(idx, Map.of()));
@@ -2754,7 +2756,8 @@ public class CombatDamageService {
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, defenderId, atk.getCard().getName()))
                     && !(gameQueryService.isDamagePreventable(gameData)
                             && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, defenderId, atk.getCard().getName()))
-                    && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, attackerColor)) {
+                    && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, attackerColor)
+                    && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, defenderId, atk)) {
                 UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
                 damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
                 // Apply target+source-specific prevention shields (e.g. Healing Grace)
@@ -2875,6 +2878,17 @@ public class CombatDamageService {
                                                    Map<Integer, Integer> unpreventableDamageTakenMap,
                                                    Set<Integer> deathtouchDamagedSet,
                                                    Map<Integer, Map<UUID, Integer>> damageTakenBySourceMap) {
+        if (target.isDamageCantBePreventedOrRedirectedThisTurn()) {
+            damageTakenMap.merge(targetIdx, damage, Integer::sum);
+            unpreventableDamageTakenMap.merge(targetIdx, damage, Integer::sum);
+            damageTakenBySourceMap
+                    .computeIfAbsent(targetIdx, ignored -> new HashMap<>())
+                    .merge(source.getId(), damage, Integer::sum);
+            if (damage > 0 && sourceStats.deathtouch()) {
+                deathtouchDamagedSet.add(targetIdx);
+            }
+            return;
+        }
         // Apply source-specific redirect shields (e.g. Harm's Way) per-source for creature targets
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetControllerId != null) {

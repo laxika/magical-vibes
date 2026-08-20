@@ -139,14 +139,16 @@ public class CharacteristicState {
         this.powerDelta = counterDelta + plusOnePlusTwo + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 - 2 * minusTwoMinusOne
-                - 2 * minusTwoMinusTwo;
+                - 2 * minusTwoMinusTwo
+                + 2 * permanent.getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO);
         // +0/+1 counters (e.g. Sacred Boon) add toughness only; -0/-1 (Essence Flare) and
         // -0/-2 (Greater Werewolf / Spirit Shackle) subtract toughness only.
         this.toughnessDelta = counterDelta + 2 * plusOnePlusTwo + permanent.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
                 - minusTwoMinusOne
-                - 2 * minusTwoMinusTwo;
+                - 2 * minusTwoMinusTwo
+                + 2 * permanent.getCounterCount(CounterType.PLUS_ZERO_PLUS_TWO);
     }
 
     /**

@@ -104,7 +104,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     EACH_DRAW_TRIGGERED,
     /** Marker slot: the controller may skip their turn-based draw-step draw. Detected by presence
      *  (not effect type) in {@code StepTriggerService.handleDrawStep}, which offers the controller a
-     *  may-ability to replace the draw. Used by Island Sanctuary (holds an {@code IslandSanctuaryEffect}). */
+     *  may-ability to replace the draw. Used by Fasting and Island Sanctuary. */
     MAY_SKIP_DRAW_STEP_DRAW,
     END_STEP_TRIGGERED,
     /** End-step trigger fired from a card sitting in its owner's graveyard ("At the beginning of the

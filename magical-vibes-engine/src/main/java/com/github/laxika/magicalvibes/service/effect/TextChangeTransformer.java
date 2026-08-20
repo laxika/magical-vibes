@@ -205,7 +205,8 @@ public final class TextChangeTransformer {
                                 filter, label, prevention.sourceChosenColor(),
                                 prevention.sourceSharesColorWithImprintedCard(),
                                 prevention.sourceActivationManaColor(), prevention.exileFromLibrary(),
-                                prevention.damageRedSourceController(), prevention.damageSourceController());
+                                prevention.damageRedSourceController(), prevention.damageSourceController(),
+                                prevention.preventHalfDamage());
             }
             case GrantColorEffect grant -> {
                 CardColor color = substitution.fromColor() != null && grant.color() == substitution.fromColor()

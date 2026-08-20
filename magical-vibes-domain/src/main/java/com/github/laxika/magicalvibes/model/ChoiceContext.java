@@ -414,13 +414,33 @@ public sealed interface ChoiceContext {
 
     /**
      * "As this creature enters, pay any amount of life" (Minion of the Wastes). The controller
-     * picks 0..their life total as {@code permanentId} enters; on the answer that much life is
+     * picks 0..the offered maximum as {@code permanentId} enters; on the answer that much life is
      * paid, the amount is stored via {@code Permanent.setChosenNumber(int)}, and the deferred
      * enter-the-battlefield triggers of {@code card} are processed.
      */
     record PayAnyAmountOfLifeAsEnters(UUID permanentId, UUID controllerId, Card card, UUID targetId,
                                       boolean wasCastFromHand, int etbMode,
                                       boolean kicked) implements ChoiceContext {}
+
+    /** The controller chooses the counter type for a creature's as-enters replacement. */
+    record AsEntersCounterTypeChoice(UUID permanentId, UUID controllerId, Card card, UUID targetId,
+                                     boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                     List<UUID> targetIds, int exiledCardCount,
+                                     List<CounterType> counterTypes) implements ChoiceContext {
+        public AsEntersCounterTypeChoice {
+            targetIds = List.copyOf(targetIds);
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public static String label(CounterType counterType) {
+            return switch (counterType) {
+                case PLUS_TWO_PLUS_ZERO -> "+2/+0";
+                case PLUS_ONE_PLUS_ONE -> "+1/+1";
+                case PLUS_ZERO_PLUS_TWO -> "+0/+2";
+                default -> counterType.name().toLowerCase().replace('_', ' ');
+            };
+        }
+    }
 
     /**
      * Choosing how many {@code counterType} counters to remove from {@code permanentId} as a

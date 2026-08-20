@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import java.util.List;
 import java.util.Map;
@@ -182,6 +183,11 @@ public sealed interface MultiPermanentChoiceContext {
                                java.util.List<UUID> accumulatedSacrificeIds) {
             this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false);
         }
+    }
+
+    /** Worms of the Earth: choose exactly two lands to sacrifice for its upkeep choice. */
+    record WormsOfTheEarthSacrificeLands(UUID playerId, Card sourceCard, WormsOfTheEarthEffect effect)
+            implements MultiPermanentChoiceContext {
     }
 
     /** The target player chooses a creature and a planeswalker to sacrifice when possible. */

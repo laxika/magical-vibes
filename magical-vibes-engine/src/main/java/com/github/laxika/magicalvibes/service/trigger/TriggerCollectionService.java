@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTri
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
@@ -58,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellReferencingEffect;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -789,14 +791,19 @@ public class TriggerCollectionService {
                             break;
                         }
                     }
-                    gameData.stack.add(new StackEntry(
+                    StackEntry selfCastTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             spellCard,
                             castingPlayerId,
                             spellCard.getName() + "'s ability",
                             new ArrayList<>(selfCastTriggeredEffects),
                             selfCastX
-                    ));
+                    );
+                    if (selfCastTriggeredEffects.stream()
+                            .anyMatch(TriggeringSpellReferencingEffect.class::isInstance)) {
+                        selfCastTrigger.setTriggeringCardId(spellCard.getId());
+                    }
+                    gameData.stack.add(selfCastTrigger);
                     log.info("Game {} - {} self-cast trigger queued for {}",
                             gameData.id, spellCard.getName(), castingPlayerId);
                 }
@@ -5589,6 +5596,38 @@ public class TriggerCollectionService {
             gameLogService.append(gameData,
                     GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
             log.info("Game {} - {} delayed leave-trigger fires (source {} left); sacrifice target {}",
+                    gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
+                    delayed.targetPermanentId());
+        }
+    }
+
+    /**
+     * Fires delayed "when this artifact leaves the battlefield this turn, destroy that creature"
+     * triggers (War Barge). Drains matching registrations and enqueues a non-targeting destruction
+     * for each captured target. Called from every leave path in
+     * {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}.
+     */
+    public void processDelayedDestroyTargetWhenSourceLeaves(GameData gameData, Permanent leavingPermanent) {
+        if (!gameData.hasDelayedAction(DelayedDestroyTargetWhenSourceLeaves.class)) {
+            return;
+        }
+        UUID leavingId = leavingPermanent.getId();
+        for (DelayedDestroyTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
+                DelayedDestroyTargetWhenSourceLeaves.class,
+                d -> leavingId.equals(d.watchedPermanentId()))) {
+            StackEntry se = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(List.of(new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId()))),
+                    null,
+                    List.of());
+            se.setNonTargeting(true);
+            gameData.enqueueTrigger(se);
+            gameLogService.append(gameData,
+                    GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
+            log.info("Game {} - {} delayed leave-trigger fires (source {} left); destroy target {}",
                     gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
                     delayed.targetPermanentId());
         }

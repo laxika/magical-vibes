@@ -258,9 +258,17 @@ public class AbilityActivationService {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
-        boolean chosenLandManaReplacement = permanent.getCard().hasType(CardType.LAND)
+        boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)
+                && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()));
+        ManaColor controllerLandFixedColor = playerControlsLand
+                ? gameData.landManaFixedColorThisTurn.get(playerId)
+                : null;
+        boolean chosenLandManaReplacement = playerControlsLand
+                && controllerLandFixedColor == null
                 && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
-        ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
+        ManaColor fixedLandColor = controllerLandFixedColor != null
+                ? controllerLandFixedColor
+                : permanent.getCard().hasType(CardType.LAND)
                 ? gameQueryService.fixedLandManaColor(gameData, permanent)
                 : null;
         boolean anyColorReplacement = permanent.getCard().hasType(CardType.LAND)

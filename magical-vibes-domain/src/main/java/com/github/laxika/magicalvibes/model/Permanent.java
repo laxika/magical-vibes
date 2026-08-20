@@ -189,6 +189,8 @@ public class Permanent {
     /** When true, this Damping Engine's restriction is ignored until end of turn. */
     @Setter private boolean dampingEngineEffectIgnoredThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
+    /** If true, damage that would be dealt to this creature can't be prevented or redirected this turn. */
+    @Setter private boolean damageCantBePreventedOrRedirectedThisTurn;
     /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
      *  (Bone Shaman's activated ability). Cleared at end of turn. */
     @Setter private boolean damagedCreaturesCantRegenerateThisTurn;
@@ -651,6 +653,7 @@ public class Permanent {
         this.blockedWithoutBlockers = source.blockedWithoutBlockers;
         this.dampingEngineEffectIgnoredThisTurn = source.dampingEngineEffectIgnoredThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
+        this.damageCantBePreventedOrRedirectedThisTurn = source.damageCantBePreventedOrRedirectedThisTurn;
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = source.exileDamagedCreaturesInsteadOfDyingThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
@@ -1042,6 +1045,7 @@ public class Permanent {
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO)
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
@@ -1057,6 +1061,7 @@ public class Permanent {
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
+                + 2 * getCounterCount(CounterType.PLUS_ZERO_PLUS_TWO)
                 - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO);
     }
@@ -1075,6 +1080,7 @@ public class Permanent {
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO)
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
@@ -1086,6 +1092,7 @@ public class Permanent {
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
+                + 2 * getCounterCount(CounterType.PLUS_ZERO_PLUS_TWO)
                 - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO);
     }
@@ -1326,6 +1333,7 @@ public class Permanent {
         this.auraEffectsIgnoredThisTurn = false;
         this.dampingEngineEffectIgnoredThisTurn = false;
         this.cantRegenerateThisTurn = false;
+        this.damageCantBePreventedOrRedirectedThisTurn = false;
         this.damagedCreaturesCantRegenerateThisTurn = false;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;

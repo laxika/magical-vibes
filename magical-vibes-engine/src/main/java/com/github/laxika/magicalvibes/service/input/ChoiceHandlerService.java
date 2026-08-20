@@ -307,6 +307,10 @@ public class ChoiceHandlerService {
             handlePayAnyAmountOfLifeAsEnters(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.AsEntersCounterTypeChoice ctx) {
+            handleAsEntersCounterTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RemoveCountersForManaChoice ctx) {
             handleRemoveCountersForManaChoice(gameData, player, colorName, ctx);
             return;
@@ -2312,6 +2316,11 @@ public class ChoiceHandlerService {
 
     private void handlePayAnyAmountOfLifeAsEnters(GameData gameData, Player player, String numberName,
                                                   ChoiceContext.PayAnyAmountOfLifeAsEnters ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(numberName)) {
+            throw new IllegalArgumentException("Invalid life payment: " + numberName);
+        }
         int paid = Integer.parseInt(numberName);
 
         gameData.interaction.clearAwaitingInput();
@@ -2333,6 +2342,40 @@ public class ChoiceHandlerService {
         battlefieldEntryService.processCreatureETBEffects(gameData, ctx.controllerId(), ctx.card(),
                 ctx.targetId(), ctx.wasCastFromHand(), ctx.etbMode(), ctx.kicked());
 
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private void handleAsEntersCounterTypeChoice(GameData gameData, Player player, String choice,
+                                                  ChoiceContext.AsEntersCounterTypeChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter type choice: " + choice);
+        }
+        CounterType counterType = ctx.counterTypes().stream()
+                .filter(type -> ChoiceContext.AsEntersCounterTypeChoice.label(type).equals(choice))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid counter type choice: " + choice));
+
+        gameData.interaction.clearAwaitingInput();
+        battlefieldEntryService.applyAsEntersChosenCounterType(gameData, ctx.controllerId(),
+                ctx.permanentId(), counterType, 1);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses a " + choice + " counter for ", ctx.card(), "."));
+
+        if (ctx.exiledCardCount() > 1) {
+            playerInputService.beginAsEntersCounterTypeChoice(gameData,
+                    new ChoiceContext.AsEntersCounterTypeChoice(
+                            ctx.permanentId(), ctx.controllerId(), ctx.card(), ctx.targetId(),
+                            ctx.wasCastFromHand(), ctx.etbMode(), ctx.xValue(), ctx.kicked(),
+                            ctx.targetIds(), ctx.exiledCardCount() - 1, ctx.counterTypes()));
+            return;
+        }
+
+        battlefieldEntryService.processCreatureETBEffects(gameData, ctx.controllerId(), ctx.card(),
+                ctx.targetId(), ctx.wasCastFromHand(), ctx.etbMode(), ctx.kicked(), ctx.targetIds());
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }

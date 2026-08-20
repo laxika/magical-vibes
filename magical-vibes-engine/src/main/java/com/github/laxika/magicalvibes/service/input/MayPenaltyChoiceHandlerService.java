@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
@@ -314,9 +315,9 @@ public class MayPenaltyChoiceHandlerService {
 
     public void handleCounterUnlessSacrificesChoice(GameData gameData, Player player, boolean accepted,
                                                     PendingMayAbility ability) {
-        ability.effects().stream()
-                .filter(e -> e instanceof CounterUnlessEffect ce
-                        && ce.ransomKind() == CounterUnlessEffect.RansomKind.SACRIFICE_PERMANENT)
+        CounterUnlessSacrificesEffect sacrificeEffect = ability.effects().stream()
+                .filter(CounterUnlessSacrificesEffect.class::isInstance)
+                .map(CounterUnlessSacrificesEffect.class::cast)
                 .findFirst().orElseThrow();
 
         UUID targetCardId = ability.targetCardId();
@@ -337,7 +338,11 @@ public class MayPenaltyChoiceHandlerService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             List<UUID> validIds = battlefield == null
                     ? List.of()
-                    : battlefield.stream().map(Permanent::getId).toList();
+                    : battlefield.stream()
+                            .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, permanent, sacrificeEffect.filter()))
+                            .map(Permanent::getId)
+                            .toList();
             if (!validIds.isEmpty()) {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.SacrificePermanentThen(controllerId, ability.sourceCard(), null));

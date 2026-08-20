@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
@@ -1418,6 +1419,7 @@ public class StepTriggerService {
                         enchantedPermanentControllerId,
                         perm.getId()
                 );
+                entry.setActivePlayerId(activePlayerId);
                 entry.setTriggeringPermanentPowerAtTrigger(enchantedPermanentPowerAtTrigger);
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
                 gameData.stack.add(entry);
@@ -2231,21 +2233,21 @@ public class StepTriggerService {
             return;
         }
 
-        // Island Sanctuary — "If you would draw a card during your draw step, instead you may skip
-        // that draw." Offer the may-ability instead of the turn-based draw; declining draws normally,
-        // accepting skips the draw and stamps the attack-restriction shield (handled by
-        // MayMiscHandlerService.handleSingleDrawReplacementChoice). Detected by slot presence.
-        Card islandSanctuary = findMaySkipDrawStepDrawSource(gameData, activePlayerId);
-        if (islandSanctuary != null) {
+        DrawStepReplacementSource replacement = findMaySkipDrawStepDrawSource(gameData, activePlayerId);
+        if (replacement != null) {
             gameData.pendingMayAbilities.add(new PendingMayAbility(
-                    islandSanctuary,
+                    replacement.card(),
                     activePlayerId,
-                    List.of(new ReplaceSingleDrawEffect(activePlayerId, DrawReplacementKind.ISLAND_SANCTUARY)),
-                    "Skip your draw? Until your next turn you can only be attacked by creatures with flying and/or islandwalk."
+                    List.of(new ReplaceSingleDrawEffect(activePlayerId, replacement.kind())),
+                    replacement.kind() == DrawReplacementKind.FASTING
+                            ? "Skip your draw step and gain 2 life?"
+                            : "Skip your draw? Until your next turn you can only be attacked by creatures with flying and/or islandwalk."
             ));
 
-            // Draw step triggered abilities (e.g. Howling Mine) still trigger at the beginning of the step.
-            handleDrawStepTriggers(gameData);
+            if (replacement.kind() == DrawReplacementKind.ISLAND_SANCTUARY) {
+                // Draw step triggered abilities (e.g. Howling Mine) still trigger at the beginning of the step.
+                handleDrawStepTriggers(gameData);
+            }
 
             if (!gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 playerInputService.processNextMayAbility(gameData);
@@ -2264,15 +2266,20 @@ public class StepTriggerService {
         }
     }
 
-    private Card findMaySkipDrawStepDrawSource(GameData gameData, UUID playerId) {
+    private DrawStepReplacementSource findMaySkipDrawStepDrawSource(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return null;
         for (Permanent perm : battlefield) {
-            if (!perm.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW).isEmpty()) {
-                return perm.getCard();
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
+                if (effect instanceof MaySkipDrawReplacementEffect replacement) {
+                    return new DrawStepReplacementSource(perm.getCard(), replacement.replacementKind());
+                }
             }
         }
         return null;
+    }
+
+    private record DrawStepReplacementSource(Card card, DrawReplacementKind kind) {
     }
 
     private boolean controlsSkipDrawStep(GameData gameData, UUID playerId) {
@@ -2294,7 +2301,7 @@ public class StepTriggerService {
                         .anyMatch(PlayersSkipUpkeepStepEffect.class::isInstance));
     }
 
-    private void handleDrawStepTriggers(GameData gameData) {
+    public void handleDrawStepTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.DRAW_STEP);
 

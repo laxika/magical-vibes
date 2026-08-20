@@ -1126,7 +1126,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         boolean gainLife = ctx.gainLife();
         gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(
                 controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary(),
-                ctx.damageSourceControllerCard()));
+                ctx.damageSourceControllerCard(), ctx.preventHalfDamage()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenSource.getName();
@@ -1139,7 +1139,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                                         + " deals that much damage to the source's controller."
                         : ".";
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
-                + " this turn, it is prevented" + rider;
+                + " this turn, " + (ctx.preventHalfDamage()
+                ? "half that damage, rounded down, is prevented."
+                : "it is prevented" + rider);
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
 

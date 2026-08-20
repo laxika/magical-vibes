@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "50")
+@CardRegistration(set = "DRK", collectorNumber = "68")
 public class GoblinShrine extends Card {
 
     public GoblinShrine() {

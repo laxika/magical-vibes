@@ -250,6 +250,7 @@ public class TurnCleanupService {
         gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
+        gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
@@ -291,6 +292,7 @@ public class TurnCleanupService {
         gameData.nonbasicLandsFixedManaColorThisTurn = null;
         gameData.allLandsFixedManaColorThisTurn = null;
         gameData.playersWithLandManaChoiceReplacementThisTurn.clear();
+        gameData.landManaFixedColorThisTurn.clear();
         gameData.playersCantPlayLandsThisTurn.clear();
         gameData.playersCantCastSpellTypesThisTurn.clear();
         gameData.playersCantCastNoncreatureSpellsThisTurn.clear();

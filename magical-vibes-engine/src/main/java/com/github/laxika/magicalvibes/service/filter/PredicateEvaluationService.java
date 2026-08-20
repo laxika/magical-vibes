@@ -1525,6 +1525,8 @@ public class PredicateEvaluationService {
                     context == null ? null : context.gameData(), permanent, p.supertype());
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentAttackedDuringControllersLastTurnPredicate ignored ->
+                    matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingOpponentOfSourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();

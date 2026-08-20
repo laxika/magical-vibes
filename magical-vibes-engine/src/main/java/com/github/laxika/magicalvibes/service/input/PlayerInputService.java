@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -234,6 +235,26 @@ public class PlayerInputService {
                                           int maxCount, int minCount, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
                 playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
+    }
+
+    public void beginAsEntersCounterTypeChoice(GameData gameData,
+                                                GraveyardTargetOperationState.AsEntersGraveyardExileContext context,
+                                                int exiledCardCount) {
+        ChoiceContext.AsEntersCounterTypeChoice choiceContext = new ChoiceContext.AsEntersCounterTypeChoice(
+                context.enteringPermanentId(), context.controllerId(), context.card(), context.targetId(),
+                context.wasCastFromHand(), context.etbMode(), context.xValue(), context.kicked(),
+                context.targetIds(), exiledCardCount, context.counterTypes());
+        beginAsEntersCounterTypeChoice(gameData, choiceContext);
+    }
+
+    public void beginAsEntersCounterTypeChoice(GameData gameData,
+                                                ChoiceContext.AsEntersCounterTypeChoice context) {
+        List<String> options = context.counterTypes().stream()
+                .map(ChoiceContext.AsEntersCounterTypeChoice::label)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                context.controllerId(), null, null, context, options,
+                context.card().getName() + " — Choose a counter type."));
     }
 
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {

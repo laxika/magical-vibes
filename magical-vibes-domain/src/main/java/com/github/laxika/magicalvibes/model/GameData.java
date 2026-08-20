@@ -653,6 +653,9 @@ public class GameData {
     public final Set<UUID> playersWithProtectionFromEverythingUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
+    /** Players for whom damage from matching source permanents is prevented this turn. */
+    public final Map<UUID, Set<PermanentPredicate>> playersWithDamageFromMatchingSourcesPrevented =
+            new ConcurrentHashMap<>();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of tokens that would be created under an opponent's control (Crafty Cutpurse). */
@@ -871,6 +874,9 @@ public class GameData {
 
     /** Players whose land taps for mana produce one mana of a color chosen separately per tap. */
     public final Set<UUID> playersWithLandManaChoiceReplacementThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** The mana color the specified players' lands produce instead of any other type this turn. */
+    public final Map<UUID, ManaColor> landManaFixedColorThisTurn = new ConcurrentHashMap<>();
 
     /**
      * Players who tapped a land for mana this turn (Desolation). Recorded whenever a land is tapped
@@ -3116,6 +3122,8 @@ public class GameData {
         copy.playersWithProtectionFromEverythingUntilNextTurn
                 .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
+        this.playersWithDamageFromMatchingSourcesPrevented.forEach((k, v) ->
+                copy.playersWithDamageFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersGatheringTokensThisTurn.addAll(this.playersGatheringTokensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
@@ -3551,6 +3559,7 @@ public class GameData {
         copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;
         copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;
         copy.playersWithLandManaChoiceReplacementThisTurn.addAll(this.playersWithLandManaChoiceReplacementThisTurn);
+        copy.landManaFixedColorThisTurn.putAll(this.landManaFixedColorThisTurn);
         copy.playersWhoTappedLandForManaThisTurn.addAll(this.playersWhoTappedLandForManaThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastSpellTypesThisTurn.putAll(this.playersCantCastSpellTypesThisTurn);

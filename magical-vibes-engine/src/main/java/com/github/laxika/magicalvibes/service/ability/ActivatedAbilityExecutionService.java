@@ -633,7 +633,13 @@ public class ActivatedAbilityExecutionService {
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
 
-        boolean chosenLandManaReplacement = permanent.getCard().hasType(CardType.LAND)
+        boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)
+                && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()));
+        ManaColor controllerLandFixedColor = playerControlsLand
+                ? gameData.landManaFixedColorThisTurn.get(playerId)
+                : null;
+        boolean chosenLandManaReplacement = playerControlsLand
+                && controllerLandFixedColor == null
                 && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
         if (chosenLandManaReplacement) {
             ChoiceContext.ManaColorChoice choiceContext =
@@ -646,7 +652,8 @@ public class ActivatedAbilityExecutionService {
 
         // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
         boolean dampingReplacement = false;
-        if (!chosenLandManaReplacement && permanent.getCard().hasType(CardType.LAND)
+        if (!chosenLandManaReplacement && controllerLandFixedColor == null
+                && permanent.getCard().hasType(CardType.LAND)
                 && isDampingManaReplacementActive(gameData)) {
             int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue);
             if (totalMana >= 2) {
@@ -661,7 +668,9 @@ public class ActivatedAbilityExecutionService {
         boolean twistReplacement = false;
         ManaColor fixedLandColor = null;
         if (!chosenLandManaReplacement && !dampingReplacement && permanent.getCard().hasType(CardType.LAND)) {
-            fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
+            fixedLandColor = controllerLandFixedColor != null
+                    ? controllerLandFixedColor
+                    : gameQueryService.fixedLandManaColor(gameData, permanent);
             if (fixedLandColor != null) {
                 int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
                         * manaMultiplier;

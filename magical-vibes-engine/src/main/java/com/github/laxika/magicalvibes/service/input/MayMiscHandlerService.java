@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -85,6 +86,8 @@ public class MayMiscHandlerService {
     private TriggerCollectionService triggerCollectionService;
     @Autowired @Lazy
     private GraveyardService graveyardService;
+    @Autowired @Lazy
+    private StepTriggerService stepTriggerService;
 
     /** Setter for manual (non-Spring) construction (tests, AI simulator). */
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -93,6 +96,10 @@ public class MayMiscHandlerService {
 
     public void setGraveyardService(GraveyardService graveyardService) {
         this.graveyardService = graveyardService;
+    }
+
+    public void setStepTriggerService(StepTriggerService stepTriggerService) {
+        this.stepTriggerService = stepTriggerService;
     }
 
     public void handleEquipmentAttachChoice(GameData gameData, Player player, boolean accepted,
@@ -227,7 +234,24 @@ public class MayMiscHandlerService {
 
         if (!accepted) {
             drawService.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
+            if (effect.kind() == DrawReplacementKind.FASTING) {
+                stepTriggerService.handleDrawStepTriggers(gameData);
+            }
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.FASTING) {
+            lifeSupport.applyGainLife(gameData, drawingPlayerId, 2, ability.sourceCard().getName());
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " skips their draw step with ",
+                    ability.sourceCard(), " and gains 2 life."));
+            log.info("Game {} - {} skips draw step with {} and gains 2 life",
+                    gameData.id, playerName, ability.sourceCard().getName());
 
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {

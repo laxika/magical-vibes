@@ -1696,7 +1696,7 @@ public class CombatBlockService {
         }
     }
 
-    private int getMaxBlocksForCreature(GameData gameData, Permanent creature, List<Permanent> battlefield) {
+    public int getMaxBlocksForCreature(GameData gameData, Permanent creature, List<Permanent> battlefield) {
         // Check for "can block any number of creatures" on the creature itself
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CanBlockAnyNumberOfCreaturesEffect) {

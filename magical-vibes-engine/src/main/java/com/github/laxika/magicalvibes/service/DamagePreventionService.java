@@ -238,6 +238,7 @@ public class DamagePreventionService {
             damage = applyControlledCreaturesDamageReduction(gameData, permanent, damage);
             if (damage <= 0) return 0;
         }
+        if (permanent.isDamageCantBePreventedOrRedirectedThisTurn()) return damage;
         // Kiora, the Crashing Wave: prevent all damage dealt to the targeted permanent until its
         // controller's next turn begins.
         if (gameQueryService.isDamagePreventable(gameData)
@@ -755,8 +756,9 @@ public class DamagePreventionService {
     }
 
     /**
-     * Applies one-shot Circle-of-Protection shields: if a shield matches this (player, source), the
-     * entire next damage event is prevented and the shield is consumed. Returns the remaining damage.
+     * Applies one-shot chosen-source shields to player damage. A matching shield is consumed by the
+     * next damage event; Dark Sphere shields leave half that event, rounded down, while ordinary
+     * shields prevent the whole event. Returns the remaining damage.
      */
     public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
@@ -765,15 +767,20 @@ public class DamagePreventionService {
             return damage;
         }
         var it = gameData.playerSourceNextDamageShields.iterator();
+        int remaining = damage;
         while (it.hasNext()) {
             var shield = it.next();
             if (shield.playerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
                 it.remove();
-                applyNextSourceShieldRiders(gameData, shield, damage);
-                return 0;
+                int prevented = shield.preventHalfDamage() ? remaining / 2 : remaining;
+                applyNextSourceShieldRiders(gameData, shield, prevented);
+                remaining -= prevented;
+                if (remaining == 0) {
+                    return 0;
+                }
             }
         }
-        return damage;
+        return remaining;
     }
 
     /**

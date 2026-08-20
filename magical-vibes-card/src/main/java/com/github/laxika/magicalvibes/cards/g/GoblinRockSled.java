@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "4ED", collectorNumber = "199")
+@CardRegistration(set = "DRK", collectorNumber = "67")
 public class GoblinRockSled extends Card {
 
     public GoblinRockSled() {

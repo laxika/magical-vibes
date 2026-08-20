@@ -4,8 +4,9 @@ import java.util.UUID;
 
 /**
  * A one-shot damage prevention shield: the next time the chosen source would deal damage to the
- * given player this turn, that entire damage event is prevented and the shield is consumed
- * (Circle of Protection cycle). Distinct from the whole-turn {@code playerSourceDamagePreventionIds}
+ * given player this turn, the event is prevented and the shield is consumed (Circle of Protection
+ * cycle). A half-damage shield leaves half the event, rounded down (Dark Sphere). Distinct from the
+ * whole-turn {@code playerSourceDamagePreventionIds}
  * shield, which keeps preventing every subsequent event from the source.
  *
  * <p>When {@code gainLife} is true, the protected player also gains life equal to the damage
@@ -23,24 +24,26 @@ import java.util.UUID;
  *                 once the shield prevents damage (Bone Mask)
  * @param damageSourceControllerCard card that deals prevented damage to the chosen source's controller
  *                 (Deflecting Palm)
+ * @param preventHalfDamage whether to prevent only half the damage, rounded down (Dark Sphere)
  */
 public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                            boolean coversControlledCreatures,
                                            boolean gainLifeOnlyFromBlackSource,
                                            boolean exileFromLibrary,
-                                           Card damageSourceControllerCard) {
+                                           Card damageSourceControllerCard,
+                                           boolean preventHalfDamage) {
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                         boolean coversControlledCreatures,
                                         boolean gainLifeOnlyFromBlackSource,
                                         boolean exileFromLibrary) {
         this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
-                exileFromLibrary, null);
+                exileFromLibrary, null, false);
     }
 
     /** Convenience constructor for a player-only shield (Circle of Protection, Reverse Damage). */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
-        this(playerId, sourceId, gainLife, false, false, false, null);
+        this(playerId, sourceId, gainLife, false, false, false, null, false);
     }
 
     /** Convenience constructor for a plain prevention shield with no life gain. */

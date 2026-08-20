@@ -1169,6 +1169,17 @@ public class GameQueryService {
                 .anyMatch(SourceDamageCantBePreventedEffect.class::isInstance);
     }
 
+    /** Returns whether this player's active turn-scoped source filters prevent damage from the source. */
+    public boolean isDamageFromMatchingSourcePreventedForPlayer(GameData gameData, UUID playerId,
+                                                                Permanent source) {
+        if (!isDamagePreventable(gameData) || source == null || damageCantBePreventedFromSource(gameData, source)) {
+            return false;
+        }
+        Set<PermanentPredicate> predicates = gameData.playersWithDamageFromMatchingSourcesPrevented.get(playerId);
+        return predicates != null && predicates.stream()
+                .anyMatch(predicate -> predicateEvaluationService.matchesPermanentPredicate(gameData, source, predicate));
+    }
+
     /**
      * Returns {@code true} if the player is able to lose the game (i.e. no
      * {@link CantLoseGameEffect} is controlled by them and no opponent controls a
@@ -4106,9 +4117,13 @@ public class GameQueryService {
      * unaffected. Scans both the permanent's own STATIC effects and effects granted to it.
      */
     public boolean cantBeTargetedByAnySpell(GameData gameData, Permanent target) {
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (isAnySpellRestriction(effect)) {
-                return true;
+        boolean ownAbilitiesActive = !target.isLosesAllAbilitiesUntilEndOfTurn()
+                && !computeStaticBonus(gameData, target).losesAllAbilities();
+        if (ownAbilitiesActive) {
+            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+                if (isActiveAnySpellRestriction(gameData, target, effect)) {
+                    return true;
+                }
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
@@ -4117,6 +4132,17 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    private boolean isActiveAnySpellRestriction(GameData gameData, Permanent target, CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            UUID controllerId = findPermanentController(gameData, target.getId());
+            return controllerId != null
+                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(target, controllerId))
+                    && isActiveAnySpellRestriction(gameData, target, conditional.wrapped());
+        }
+        return isAnySpellRestriction(effect);
     }
 
     /**

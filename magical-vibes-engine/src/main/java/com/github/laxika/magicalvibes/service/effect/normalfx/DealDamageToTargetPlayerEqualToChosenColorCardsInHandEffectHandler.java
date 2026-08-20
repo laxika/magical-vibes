@@ -14,7 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Darigaaz, the Igniter's chosen-color hand reveal and damage. */
+/** Resolves a chosen- or fixed-color hand reveal and damage. */
 @Component
 @RequiredArgsConstructor
 public class DealDamageToTargetPlayerEqualToChosenColorCardsInHandEffectHandler
@@ -38,14 +38,20 @@ public class DealDamageToTargetPlayerEqualToChosenColorCardsInHandEffectHandler
             return;
         }
 
-        if (gameData.chosenSpellColor == null) {
+        DealDamageToTargetPlayerEqualToChosenColorCardsInHandEffect colorEffect =
+                (DealDamageToTargetPlayerEqualToChosenColorCardsInHandEffect) effect;
+        if (colorEffect.fixedColor() == null && gameData.chosenSpellColor == null) {
             gameData.rerunCurrentEffectAfterInteraction = true;
             playerInputService.beginSpellColorChoice(gameData, entry.getControllerId());
             return;
         }
 
-        CardColor chosenColor = gameData.chosenSpellColor;
-        gameData.chosenSpellColor = null;
+        CardColor chosenColor = colorEffect.fixedColor() != null
+                ? colorEffect.fixedColor()
+                : gameData.chosenSpellColor;
+        if (colorEffect.fixedColor() == null) {
+            gameData.chosenSpellColor = null;
+        }
         gameData.rerunCurrentEffectAfterInteraction = false;
 
         playerInteractionSupport.resolveRevealHand(gameData, targetPlayerId);

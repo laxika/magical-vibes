@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <ul>
  *   <li>{@link ChosenSourcePreventionScope#NEXT_DAMAGE_TO_CONTROLLER} — one-shot, protects the
  *       controller; {@code gainLife} additionally gains life equal to the prevented damage
- *       (Reverse Damage; plain: Pentagram of the Ages, the Circle of Protection cycle).</li>
+ *       (Reverse Damage; plain: Pentagram of the Ages, the Circle of Protection cycle), while
+ *       {@code preventHalfDamage} leaves half the event, rounded down (Dark Sphere).</li>
  *   <li>{@link ChosenSourcePreventionScope#NEXT_DAMAGE_TO_ANY_TARGET} — one-shot, protects
  *       whatever the source would damage next (Sanctum Guardian); {@code damageRedSourceController}
  *       adds Honorable Passage's red-source rider.</li>
@@ -46,6 +47,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                    (Honorable Passage)
  * @param damageSourceController       NEXT_DAMAGE_TO_CONTROLLER only: this spell deals prevented damage
  *                                    to the chosen source's controller (Deflecting Palm)
+ * @param preventHalfDamage             NEXT_DAMAGE_TO_CONTROLLER only: prevent half the event,
+ *                                    rounded down (Dark Sphere)
  */
 public record PreventDamageFromChosenSourceEffect(
         ChosenSourcePreventionScope scope,
@@ -59,7 +62,8 @@ public record PreventDamageFromChosenSourceEffect(
         boolean sourceActivationManaColor,
         boolean exileFromLibrary,
         boolean damageRedSourceController,
-        boolean damageSourceController) implements CardEffect {
+        boolean damageSourceController,
+        boolean preventHalfDamage) implements CardEffect {
 
     public PreventDamageFromChosenSourceEffect(
             ChosenSourcePreventionScope scope,
@@ -71,7 +75,7 @@ public record PreventDamageFromChosenSourceEffect(
             boolean exileFromLibrary,
             boolean damageRedSourceController) {
         this(scope, gainLife, false, controllerOnly, sourceFilter, sourceLabel, sourceChosenColor, false,
-                false, exileFromLibrary, damageRedSourceController, false);
+                false, exileFromLibrary, damageRedSourceController, false, false);
     }
 
     public PreventDamageFromChosenSourceEffect(
@@ -85,7 +89,7 @@ public record PreventDamageFromChosenSourceEffect(
             boolean exileFromLibrary,
             boolean damageRedSourceController) {
         this(scope, gainLife, false, controllerOnly, sourceFilter, sourceLabel, sourceChosenColor,
-                false, sourceActivationManaColor, exileFromLibrary, damageRedSourceController, false);
+                false, sourceActivationManaColor, exileFromLibrary, damageRedSourceController, false, false);
     }
 
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage." */
@@ -100,11 +104,18 @@ public record PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, true, false, null, null, false, false, false, false);
     }
 
+    /** Dark Sphere: prevent half the chosen source's next damage to you, rounded down. */
+    public static PreventDamageFromChosenSourceEffect nextHalfDamageToYou() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER,
+                false, false, false, null, null, false, false, false, false, false, false, true);
+    }
+
     /** Deflecting Palm: prevent the damage, then deal it to the chosen source's controller. */
     public static PreventDamageFromChosenSourceEffect nextDamageToYouAndDamageSourceController() {
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER,
-                false, false, false, null, null, false, false, false, false, false, true);
+                false, false, false, null, null, false, false, false, false, false, true, false);
     }
 
     /**
@@ -187,7 +198,7 @@ public record PreventDamageFromChosenSourceEffect(
     public static PreventDamageFromChosenSourceEffect allDamageToYouAndGainLifeForBlackOrRedSource() {
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, true, true, null, null,
-                false, false, false, false, false, false);
+                false, false, false, false, false, false, false);
     }
 
     /** Protective Sphere: prevent all damage to you from a chosen source matching the activation mana's colour. */
@@ -214,6 +225,6 @@ public record PreventDamageFromChosenSourceEffect(
     public static PreventDamageFromChosenSourceEffect allDamageFromSourceSharingColorWithImprintedCard() {
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, false, false, null, null,
-                false, true, false, false, false, false);
+                false, true, false, false, false, false, false);
     }
 }
