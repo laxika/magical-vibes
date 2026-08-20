@@ -902,8 +902,13 @@ public class PredicateEvaluationService {
                 yield gameQueryService.getEffectivePower(gameData, permanent)
                         == gameQueryService.getEffectiveToughness(gameData, permanent);
             }
-            case PermanentHasSupertypePredicate hasSupertypePredicate ->
-                    gameQueryService.hasEffectiveSupertype(gameData, permanent, hasSupertypePredicate.supertype());
+            case PermanentHasSupertypePredicate hasSupertypePredicate -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                if (layered != null) {
+                    yield layered.hasSupertype(hasSupertypePredicate.supertype());
+                }
+                yield gameQueryService.hasEffectiveSupertype(gameData, permanent, hasSupertypePredicate.supertype());
+            }
             case PermanentColorInPredicate colorInPredicate -> {
                 // While a CR 613 layered pass is active, colors come from the layer-5 state
                 // (answering from the state also avoids recursing into computeStaticBonus for
@@ -1419,6 +1424,23 @@ public class PredicateEvaluationService {
         };
     }
 
+    /** Whether a static amount filter needs the live board to evaluate permanent ownership. */
+    public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
+        if (predicate instanceof PermanentOwnedBySourceControllerPredicate) {
+            return true;
+        }
+        if (predicate instanceof PermanentNotPredicate notPredicate) {
+            return requiresGameDataForStaticFilter(notPredicate.predicate());
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOf) {
+            return allOf.predicates().stream().anyMatch(this::requiresGameDataForStaticFilter);
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOf) {
+            return anyOf.predicates().stream().anyMatch(this::requiresGameDataForStaticFilter);
+        }
+        return false;
+    }
+
     private boolean sharesCardTypeWithSourcePermanent(Permanent permanent, FilterContext filterContext) {
         if (filterContext == null || filterContext.sourcePermanentSnapshot() == null) {
             return false;
@@ -1482,6 +1504,14 @@ public class PredicateEvaluationService {
         }
         return switch (predicate) {
             case PermanentNotPredicate p -> !matchesStaticFilter(permanent, p.predicate(), context);
+            case PermanentOwnedBySourceControllerPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                UUID currentControllerId = gameData == null ? null : gameData.findControllerOf(permanent);
+                UUID ownerId = gameData == null ? null : gameData.defaultControllerOf(permanent.getId());
+                yield sourceControllerId != null && sourceControllerId.equals(ownerId)
+                        && currentControllerId != null;
+            }
             case PermanentAllOfPredicate p ->
                     p.predicates().stream().allMatch(nested -> matchesStaticFilter(permanent, nested, context));
             case PermanentAnyOfPredicate p ->

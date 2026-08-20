@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
+import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -1576,7 +1577,7 @@ public class TriggerCollectionService {
                                                    Map<UUID, Integer> damageToPlayers) {
         if (sourceCard == null || sourceControllerId == null || totalDamage <= 0) return;
 
-        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, totalDamage,
+        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
                 damageToPlayers == null ? Map.of() : Map.copyOf(damageToPlayers));
         gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
@@ -5335,12 +5336,55 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.AnyPermanentGraveyard(
                 dyingCard, dyingControllerId, graveyardOwnerId);
         List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
-        if (battlefield == null) {
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                dispatchSlot(gameData, permanent, graveyardOwnerId,
+                        EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+            }
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+        if (graveyard == null) {
             return;
         }
-        for (Permanent permanent : battlefield) {
-            dispatchSlot(gameData, permanent, graveyardOwnerId,
-                    EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+
+        for (Card card : new ArrayList<>(graveyard)) {
+            if (card.getId().equals(dyingCard.getId())) {
+                continue;
+            }
+            for (CardEffect effect : card.getEffects(
+                    EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)) {
+                if (effect instanceof MayPayManaEffect mayPay) {
+                    gameData.queueMayAbility(card, graveyardOwnerId, mayPay, null);
+                } else if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, graveyardOwnerId, may);
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            graveyardOwnerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                }
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} graveyard trigger fires when a creature enters its owner's graveyard",
+                        gameData.id, card.getName());
+            }
+        }
+    }
+
+    /** Fires "whenever you lose a coin flip" triggers for the losing player's battlefield. */
+    public void checkControllerLosesCoinFlipTriggers(GameData gameData, UUID losingPlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(losingPlayerId);
+        if (battlefield == null) return;
+
+        TriggerContext ctx = new TriggerContext.CoinFlipLost(losingPlayerId);
+        for (Permanent perm : List.copyOf(battlefield)) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_LOSES_COIN_FLIP)) {
+                var match = new TriggerMatchContext(gameData, perm, losingPlayerId, effect);
+                registry.dispatch(match, EffectSlot.ON_CONTROLLER_LOSES_COIN_FLIP, effect, ctx);
+            }
         }
     }
 
@@ -5902,26 +5946,33 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Delayed "return that card when it dies this turn" (Graceful Reprieve): if the dying creature's
-     * card was registered, push a triggered ability that returns it from its owner's graveyard to the
-     * battlefield under its owner's control. Fires at most once per registration.
+     * Delayed "return that card when it dies this turn" (Graceful Reprieve, Supernatural Stamina,
+     * Adarkar Valkyrie): if the dying creature's card was registered, push a triggered ability that
+     * returns it from its owner's graveyard to the battlefield. Fires at most once per registration.
      */
     public void triggerDelayedReturnOnDeath(GameData gameData, UUID dyingPermanentCardId, Card graveyardCard, UUID ownerId) {
-        Boolean enterTapped = gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.remove(dyingPermanentCardId);
-        if (enterTapped == null) {
+        List<DelayedReturnOnDeath> delayedReturns = gameData.creaturesReturnedToBattlefieldOnDeathThisTurn
+                .remove(dyingPermanentCardId);
+        if (delayedReturns == null || delayedReturns.isEmpty()) {
             return;
         }
 
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                graveyardCard,
-                ownerId,
-                "Return " + graveyardCard.getName() + " to the battlefield",
-                new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(enterTapped)))
-        ));
+        for (DelayedReturnOnDeath delayedReturn : delayedReturns) {
+            UUID triggerControllerId = delayedReturn.returnUnderController()
+                    ? delayedReturn.controllerId() : ownerId;
 
-        gameLogService.append(gameData, GameLog.cardThen(graveyardCard, " will return to the battlefield (it died this turn)."));
-        log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    graveyardCard,
+                    triggerControllerId,
+                    "Return " + graveyardCard.getName() + " to the battlefield",
+                    new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
+                            delayedReturn.enterTapped(), delayedReturn.returnUnderController())))
+            ));
+
+            gameLogService.append(gameData, GameLog.cardThen(graveyardCard, " will return to the battlefield (it died this turn)."));
+            log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());
+        }
     }
 
     /**

@@ -112,6 +112,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Sunburst", Keyword.SUNBURST);
         KEYWORD_MAP.put("Prototype", Keyword.PROTOTYPE);
         KEYWORD_MAP.put("Rebound", Keyword.REBOUND);
+        KEYWORD_MAP.put("Recover", Keyword.RECOVER);
         KEYWORD_MAP.put("Start your engines!", Keyword.START_YOUR_ENGINES);
         KEYWORD_MAP.put("Max speed", Keyword.MAX_SPEED);
         KEYWORD_MAP.put("Epic", Keyword.EPIC);

@@ -53,6 +53,8 @@ public class ReturnSelfToHandOnCoinFlipLossEffectHandler implements NormalEffect
 
         if (wonFlip && triggerCollectionService != null) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        } else if (!wonFlip && triggerCollectionService != null) {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 
         if (wonFlip) {

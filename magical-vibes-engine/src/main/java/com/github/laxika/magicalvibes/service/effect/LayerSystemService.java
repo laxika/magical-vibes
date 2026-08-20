@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToPermanentsWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
@@ -1395,10 +1396,23 @@ public class LayerSystemService {
                             null, false, false, null, grant.supertype()));
                 }
             }
+            case GrantSupertypeToPermanentsWithCountersEffect grant -> {
+                manage(board, instance);
+                for (PermanentSlot target : slots) {
+                    if (target.permanent().getCounterCount(grant.counterType()) <= 0) continue;
+                    states.get(target.permanent().getId()).addSupertype(grant.supertype());
+                    record(board, instance, target, new L4Contribution(
+                            null, false, false, null, grant.supertype()));
+                }
+            }
             case GrantSupertypeUntilEndOfTurnEffect grant -> {
                 if (instance.floating() == null) return;
                 for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).addSupertype(grant.supertype());
+                    if (grant.gained()) {
+                        states.get(target.permanent().getId()).addSupertype(grant.supertype());
+                    } else {
+                        states.get(target.permanent().getId()).removeSupertype(grant.supertype());
+                    }
                 }
             }
             case SetCardTypesUntilEndOfTurnEffect setTypes -> {

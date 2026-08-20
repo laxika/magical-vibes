@@ -195,6 +195,29 @@ class MayAbilityHandlerServiceTest {
         verify(mayEffectHandlerRegistry, org.mockito.Mockito.never()).getHandler(any());
     }
 
+    @Test
+    @DisplayName("An accepted spell-cast may ability preserves the triggering card ID")
+    void acceptedSpellCastMayAbilityPreservesTriggeringCardId() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        sourceCard.setType(CardType.ENCHANTMENT);
+        UUID sourcePermanentId = UUID.randomUUID();
+        UUID triggeringCardId = UUID.randomUUID();
+        CardEffect effect = new CardEffect() { };
+
+        gd.pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
+                sourceCard, PLAYER1_ID, List.of(effect), "Test Source — effect?", null,
+                sourcePermanentId, triggeringCardId));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
+                PLAYER1_ID, "Test Source — effect?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        assertThat(gd.stack).singleElement()
+                .extracting(StackEntry::getTriggeringCardId)
+                .isEqualTo(triggeringCardId);
+    }
+
     private void acceptMayAbility(CardEffect effect) {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");

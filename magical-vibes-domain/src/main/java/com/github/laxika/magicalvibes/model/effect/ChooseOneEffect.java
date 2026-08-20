@@ -17,7 +17,7 @@ import java.util.List;
  */
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                               boolean allModesWhenOptionalCostPaid)
-        implements CardEffect {
+        implements CombatDamageTriggerContextEffect {
 
     public ChooseOneEffect {
         if (choicesRequired < 1) {
@@ -42,6 +42,31 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax) {
         this(options, optional, choicesRequired, choicesMax, false);
+    }
+
+    /**
+     * Propagates a shared combat-damage context from modal alternatives. This lets a triggered
+     * modal retain context such as the damaged player while its mode is chosen during resolution.
+     * Alternatives with different non-null contexts are deliberately left without a context;
+     * those modals need an effect-specific trigger path to disambiguate their stack entry.
+     */
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        TriggerContext context = null;
+        for (ChooseOneOption option : options) {
+            for (CardEffect effect : option.effects()) {
+                if (effect instanceof CombatDamageTriggerContextEffect contextualEffect) {
+                    TriggerContext candidate = contextualEffect.combatDamageTriggerContext();
+                    if (candidate != null) {
+                        if (context != null && context != candidate) {
+                            return null;
+                        }
+                        context = candidate;
+                    }
+                }
+            }
+        }
+        return context;
     }
 
     /** "Choose one or more —" modal: at least one mode, up to every mode. */

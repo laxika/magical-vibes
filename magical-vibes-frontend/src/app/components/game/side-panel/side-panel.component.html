@@ -348,7 +348,9 @@
 
     @if (choice.targeting.selectingAlternateCostHandCard) {
       <div class="side-prompt prompt-targeting">
-        @if (choice.targeting.alternateCostRevealsHandCard) {
+        @if (choice.targeting.alternateCostExileHandCount > 1) {
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandCount }} {{ choice.targeting.alternateCostExileHandLabel ? choice.targeting.alternateCostExileHandLabel + ' cards' : 'cards' }} in your hand to exile for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedHandIndices().length }}/{{ choice.targeting.alternateCostExileHandCount }})</span>
+        } @else if (choice.targeting.alternateCostRevealsHandCard) {
           <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card in your hand to reveal for {{ choice.targeting.alternateCostCardName }}</span>
         } @else if (choice.targeting.alternateCostDiscardsHandCard) {
           <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a card' }} in your hand to discard for {{ choice.targeting.alternateCostCardName }}</span>
@@ -356,6 +358,9 @@
           <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card in your hand to exile for {{ choice.targeting.alternateCostCardName }}</span>
         }
         <div class="side-prompt-buttons">
+          @if (choice.targeting.alternateCostExileHandCount > 1) {
+            <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCostHandCards()" [disabled]="choice.targeting.alternateCostSelectedHandIndices().length !== choice.targeting.alternateCostExileHandCount">Cast</button>
+          }
           <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
         </div>
       </div>

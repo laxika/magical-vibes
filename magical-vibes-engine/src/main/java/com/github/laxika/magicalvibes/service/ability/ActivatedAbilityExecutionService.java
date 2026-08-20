@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
@@ -143,6 +144,43 @@ public class ActivatedAbilityExecutionService {
     private final EquipSupport equipSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameMutationCoordinator mutationCoordinator;
+
+    /** Puts an ability activated from a spell on the stack. */
+    public void completeStackActivationAfterCosts(GameData gameData, Player player,
+                                                   StackEntry sourceStackEntry,
+                                                   ActivatedAbility ability) {
+        List<CardEffect> snapshotEffects = ability.getEffects().stream()
+                .filter(effect -> !(effect instanceof CostEffect))
+                .toList();
+        StackEntry abilityEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                sourceStackEntry.getCard(),
+                player.getId(),
+                sourceStackEntry.getCard().getName() + "'s ability",
+                snapshotEffects,
+                0,
+                sourceStackEntry.getCard().getId(),
+                null,
+                Map.of(),
+                Zone.STACK,
+                List.of(),
+                List.of());
+        abilityEntry.setSourceStackCardId(sourceStackEntry.getCard().getId());
+        abilityEntry.setTargetFilter(ability.getTargetFilter());
+        gameData.stack.add(abilityEntry);
+        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
+        gameData.priorityPassedBy.clear();
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
+        }
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+        }
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
 
     /**
      * Completes an activated ability activation after all additional costs (mana, sacrifice creature,
@@ -629,6 +667,7 @@ public class ActivatedAbilityExecutionService {
 
     private void doResolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects, int xValue) {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
+        boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
 
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
@@ -677,7 +716,11 @@ public class ActivatedAbilityExecutionService {
                 if (totalMana > 0) {
                     twistReplacement = true;
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    pool.add(fixedLandColor, totalMana);
+                    if (snowSource) {
+                        pool.addSnowMana(fixedLandColor, totalMana);
+                    } else {
+                        pool.add(fixedLandColor, totalMana);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(fixedLandColor, totalMana);
                     }
@@ -763,7 +806,11 @@ public class ActivatedAbilityExecutionService {
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 if (amount > 0) {
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    pool.add(award.color(), amount);
+                    if (snowSource) {
+                        pool.addSnowMana(award.color(), amount);
+                    } else {
+                        pool.add(award.color(), amount);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(award.color(), amount);
                     }

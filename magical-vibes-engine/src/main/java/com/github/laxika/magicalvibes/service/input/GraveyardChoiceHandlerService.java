@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +70,7 @@ public class GraveyardChoiceHandlerService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileMatchingCardsFromGraveyardAndLibrarySupport
             exileMatchingCardsSupport;
+    private final DestructionSupport destructionSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -540,6 +543,11 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        if (gameData.graveyardTargetOperation.cumulativeUpkeepPayment != null) {
+            handleCumulativeUpkeepPayment(gameData, player, cardIds);
+            return;
+        }
+
         var exileMatchingContext = gameData.graveyardTargetOperation.resolutionTimeExileMatchingCardsResume;
         if (exileMatchingContext != null) {
             gameData.graveyardTargetOperation.resolutionTimeExileMatchingCardsResume = null;
@@ -552,8 +560,9 @@ public class GraveyardChoiceHandlerService {
                             gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
                     if (gameData.interaction.isAwaitingInput()) {
                         return;
-                    }
-                }
+        }
+    }
+
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
             return;
@@ -847,6 +856,76 @@ public class GraveyardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleCumulativeUpkeepPayment(GameData gameData, Player player, List<UUID> cardIds) {
+        GraveyardTargetOperationState.CumulativeUpkeepPaymentContext context =
+                gameData.graveyardTargetOperation.cumulativeUpkeepPayment;
+        List<UUID> selectedCardIds = new ArrayList<>(context.selectedCardIds());
+        selectedCardIds.addAll(cardIds);
+
+        gameData.interaction.clearAwaitingInput();
+        if (context.remainingPayments() > 1) {
+            int remainingPayments = context.remainingPayments() - 1;
+            gameData.graveyardTargetOperation.cumulativeUpkeepPayment =
+                    new GraveyardTargetOperationState.CumulativeUpkeepPaymentContext(
+                            context.sourceControllerId(), context.sourceCard(), context.sourcePermanentId(),
+                            context.forcedCost(), context.cardsPerPayment(), remainingPayments, selectedCardIds);
+            playerInputService.beginMultiGraveyardChoice(gameData, context.sourceControllerId(),
+                    cumulativeUpkeepCandidateCards(gameData, selectedCardIds), context.cardsPerPayment(),
+                    context.cardsPerPayment(), "Choose " + context.cardsPerPayment()
+                            + " cards from a single graveyard for cumulative upkeep ("
+                            + remainingPayments + " payment(s) remaining).");
+            return;
+        }
+
+        List<Card> selectedCards = selectedCardIds.stream()
+                .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                .toList();
+        if (selectedCards.stream().anyMatch(java.util.Objects::isNull)) {
+            resolveUnpaidCumulativeUpkeep(gameData, context);
+            return;
+        }
+
+        gameData.graveyardTargetOperation.cumulativeUpkeepPayment = null;
+        gameData.graveyardTargetOperation.singleGraveyard = false;
+        for (int i = 0; i < selectedCardIds.size(); i++) {
+            UUID cardId = selectedCardIds.get(i);
+            Card card = selectedCards.get(i);
+            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+            gameData.playerDecks.get(ownerId).addLast(card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", card, " on the bottom of its owner's library."));
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private List<Card> cumulativeUpkeepCandidateCards(GameData gameData, List<UUID> selectedCardIds) {
+        Set<UUID> excludedIds = new HashSet<>(selectedCardIds);
+        List<Card> cards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(card -> !excludedIds.contains(card.getId()))
+                    .forEach(cards::add);
+        }
+        return cards;
+    }
+
+    private void resolveUnpaidCumulativeUpkeep(GameData gameData,
+                                                GraveyardTargetOperationState.CumulativeUpkeepPaymentContext context) {
+        gameData.graveyardTargetOperation.cumulativeUpkeepPayment = null;
+        gameData.graveyardTargetOperation.singleGraveyard = false;
+        StackEntry syntheticEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.sourceControllerId(),
+                context.sourceCard().getName() + "'s ability",
+                List.of(context.forcedCost()),
+                null,
+                context.sourcePermanentId());
+        destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, context.forcedCost());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private boolean canAssignEachFilter(GameData gameData, List<UUID> cardIds,

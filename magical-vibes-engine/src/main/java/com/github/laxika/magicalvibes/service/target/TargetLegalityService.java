@@ -272,7 +272,8 @@ public class TargetLegalityService {
         }
         if (targetCardIds.isEmpty()) {
             boolean zeroTargetsAllowed = effects.stream().anyMatch(effect ->
-                    effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
+                    effect instanceof ExileCardsFromGraveyardEffect
+                            || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
                             && returnEffect.minTargets() == 0)
                     || xValue != null && xValue == 0 && effects.stream()
                     .anyMatch(effect -> effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect
@@ -357,8 +358,11 @@ public class TargetLegalityService {
             if (effect instanceof ExileCardsFromGraveyardEffect exileEffect) {
                 // "Exile up to N target cards from graveyards" (e.g. Faerie Macabre) — any graveyard,
                 // no more than N distinct targets, each still present in a graveyard.
-                if (targetCardIds.size() > exileEffect.maxTargets()) {
+                if (!exileEffect.xScaled() && targetCardIds.size() > exileEffect.maxTargets()) {
                     throw new IllegalStateException("Cannot target more than " + exileEffect.maxTargets() + " cards");
+                }
+                if (exileEffect.xScaled() && xValue != null && targetCardIds.size() > xValue) {
+                    throw new IllegalStateException("Cannot target more than " + xValue + " cards");
                 }
                 if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
                     throw new IllegalStateException("Cannot target the same card twice");

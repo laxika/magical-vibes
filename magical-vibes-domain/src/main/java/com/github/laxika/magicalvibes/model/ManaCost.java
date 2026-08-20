@@ -40,6 +40,7 @@ public class ManaCost {
     private final Map<ManaColor, Integer> coloredCosts;
     private final Map<ManaColor, Integer> phyrexianCosts;
     private final List<HybridSymbol> hybridCosts;
+    private final int snowCost;
     private final int xSymbolCount;
     /** When true, canPay/pay may spend cumulative-upkeep-only mana buckets. */
     private final boolean cumulativeUpkeepPayment;
@@ -50,6 +51,7 @@ public class ManaCost {
 
     public ManaCost(String manaCostString, boolean cumulativeUpkeepPayment) {
         int generic = 0;
+        int snow = 0;
         int xCount = 0;
         Map<ManaColor, Integer> colored = new EnumMap<>(ManaColor.class);
         Map<ManaColor, Integer> phyrexian = new EnumMap<>(ManaColor.class);
@@ -60,6 +62,8 @@ public class ManaCost {
             String symbol = matcher.group(1);
             if (symbol.equals("X")) {
                 xCount++;
+            } else if (symbol.equals("S")) {
+                snow++;
             } else if (symbol.endsWith("/P")) {
                 // Phyrexian mana (e.g. R/P) — can be paid with its color or 2 life. Hybrid
                 // Phyrexian symbols such as R/G/P can use either listed color or 2 life.
@@ -107,19 +111,26 @@ public class ManaCost {
         this.coloredCosts = colored;
         this.phyrexianCosts = phyrexian;
         this.hybridCosts = hybrid;
+        this.snowCost = snow;
         this.xSymbolCount = xCount;
         this.cumulativeUpkeepPayment = cumulativeUpkeepPayment;
     }
 
     private ManaCost(int genericCost, Map<ManaColor, Integer> coloredCosts,
                      Map<ManaColor, Integer> phyrexianCosts, List<HybridSymbol> hybridCosts,
-                     int xSymbolCount, boolean cumulativeUpkeepPayment) {
+                     int snowCost, int xSymbolCount, boolean cumulativeUpkeepPayment) {
         this.genericCost = genericCost;
         this.coloredCosts = new EnumMap<>(coloredCosts);
         this.phyrexianCosts = new EnumMap<>(phyrexianCosts);
         this.hybridCosts = List.copyOf(hybridCosts);
+        this.snowCost = snowCost;
         this.xSymbolCount = xSymbolCount;
         this.cumulativeUpkeepPayment = cumulativeUpkeepPayment;
+    }
+
+    private ManaCost(ManaCost source, int snowCost) {
+        this(source.genericCost, source.coloredCosts, source.phyrexianCosts, source.hybridCosts,
+                snowCost, source.xSymbolCount, source.cumulativeUpkeepPayment);
     }
 
     /**
@@ -149,7 +160,7 @@ public class ManaCost {
         }
         return new ManaCost(
                 Math.max(0, genericCost - genericReduction),
-                remainingColored, phyrexianCosts, hybridCosts, xSymbolCount,
+                remainingColored, phyrexianCosts, hybridCosts, snowCost, xSymbolCount,
                 cumulativeUpkeepPayment);
     }
 
@@ -175,8 +186,8 @@ public class ManaCost {
             removeMatchingHybridSymbols(remainingHybrid, entry.getKey(), remaining);
         }
         return new ManaCost(
-                genericCost, remainingColored, remainingPhyrexian, remainingHybrid, xSymbolCount,
-                cumulativeUpkeepPayment);
+                genericCost, remainingColored, remainingPhyrexian, remainingHybrid, snowCost,
+                xSymbolCount, cumulativeUpkeepPayment);
     }
 
     private static int reduceColoredComponent(Map<ManaColor, Integer> components,
@@ -311,7 +322,7 @@ public class ManaCost {
     }
 
     public int getManaValue() {
-        int total = genericCost;
+        int total = genericCost + snowCost;
         for (int count : coloredCosts.values()) {
             total += count;
         }
@@ -675,6 +686,10 @@ public class ManaCost {
                 : new ManaPool(pool);
     }
 
+    private ManaCost withoutSnowCost() {
+        return new ManaCost(this, 0);
+    }
+
     private boolean canPayWithBlueAsAnyColor(ManaPool pool, Predicate<ManaPool> plainCheck) {
         return findBlueAsAnyColorPlan(pool, plainCheck) != null;
     }
@@ -703,6 +718,14 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue) {
+        if (snowCost > 0) {
+            if (pool.getSnowManaTotal() < snowCost) {
+                return false;
+            }
+            ManaPool remaining = copyManaPool(pool);
+            remaining.removeSnowMana(snowCost);
+            return withoutSnowCost().canPay(remaining, xValue);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten);
@@ -733,6 +756,15 @@ public class ManaCost {
 
     /** Checks payment with a chosen X value and an independent generic-cost modifier. */
     public boolean canPayWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost) {
+        if (snowCost > 0) {
+            if (pool.getSnowManaTotal() < snowCost) {
+                return false;
+            }
+            ManaPool remaining = copyManaPool(pool);
+            remaining.removeSnowMana(snowCost);
+            return withoutSnowCost().canPayWithAdditionalGenericCost(
+                    remaining, xValue, additionalGenericCost);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten);
@@ -927,6 +959,15 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext) {
+        if (snowCost > 0) {
+            if (pool.getSnowManaTotal() < snowCost) {
+                return false;
+            }
+            ManaPool remaining = copyManaPool(pool);
+            remaining.removeSnowMana(snowCost);
+            return withoutSnowCost().canPay(remaining, xValue, artifactContext, myrContext,
+                    restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten);
@@ -1310,6 +1351,20 @@ public class ManaCost {
                                                     Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
                                                     Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                                     boolean powerstoneContext) {
+        if (snowCost > 0) {
+            if (pool.getSnowManaTotal() < snowCost) {
+                return false;
+            }
+            ManaPool remaining = copyManaPool(pool);
+            remaining.removeSnowMana(snowCost);
+            return withoutSnowCost().canPayWithAdditionalGenericCost(
+                    remaining, xValue, additionalGenericCost, artifactContext, myrContext,
+                    restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                    subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    powerstoneContext);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten);
@@ -1682,6 +1737,9 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue) {
+        if (snowCost > 0) {
+            pool.removeSnowMana(snowCost);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }
@@ -1715,6 +1773,9 @@ public class ManaCost {
 
     /** Pays with a chosen X value and an independent generic-cost modifier. */
     public void payWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost) {
+        if (snowCost > 0) {
+            pool.removeSnowMana(snowCost);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }
@@ -2119,6 +2180,9 @@ public class ManaCost {
                                               boolean restrictedRedContext, boolean kickedOnlyGreenContext,
                                               boolean instantSorceryOnlyColorlessContext,
                                               boolean powerstoneContext) {
+        if (snowCost > 0) {
+            pool.removeSnowMana(snowCost);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }
@@ -2360,6 +2424,9 @@ public class ManaCost {
                                              Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
                                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                              boolean powerstoneContext) {
+        if (snowCost > 0) {
+            pool.removeSnowMana(snowCost);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }
@@ -2757,7 +2824,7 @@ public class ManaCost {
         EnumMap<ManaColor, Integer> noPhyrexianCosts = new EnumMap<>(ManaColor.class);
         return new ManaCost(
                 Math.max(0, genericCost + additionalGenericCost - genericOnlyContributions), coloredCosts,
-                noPhyrexianCosts, hybridCosts, 0, cumulativeUpkeepPayment);
+                noPhyrexianCosts, hybridCosts, 0, 0, cumulativeUpkeepPayment);
     }
 
     private static boolean canTreatConvokeAsRegularMana(ManaPool pool) {
@@ -2779,7 +2846,7 @@ public class ManaCost {
         EnumMap<ManaColor, Integer> noPhyrexianCosts = new EnumMap<>(ManaColor.class);
         ManaCost remainingCost = new ManaCost(
                 remainingGeneric, remainingColored, noPhyrexianCosts, canonicalHybrids, 0,
-                cumulativeUpkeepPayment);
+                0, cumulativeUpkeepPayment);
         if (remainingCost.canPay(pool)) {
             return remainingCost;
         }

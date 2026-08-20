@@ -28,7 +28,12 @@ import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControl
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -48,10 +53,13 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -82,6 +90,7 @@ import java.util.function.Predicate;
 public class DestructionSupport {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CreatureControlService creatureControlService;
     private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
@@ -97,6 +106,7 @@ public class DestructionSupport {
     private final RemoveAllCountersEffectHandler removeAllCountersHandler;
     private final PhasingService phasingService;
     private final ExileSelfEffectHandler exileSelfEffectHandler;
+    private final ExileSourceCardFromGraveyardEffectHandler exileSourceCardFromGraveyardEffectHandler;
     private final LibraryExileSupport libraryExileSupport;
     private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
     private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
@@ -444,6 +454,20 @@ public class DestructionSupport {
         return ids;
     }
 
+    /** Collects matching permanents on other players' battlefields for a gain-control cost. */
+    public List<UUID> collectPermanentIdsNotControlledBy(GameData gameData, UUID playerId,
+            PermanentPredicate filter) {
+        FilterContext context = FilterContext.of(gameData).withSourceControllerId(playerId);
+        List<UUID> ids = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!controllerId.equals(playerId)
+                    && predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)) {
+                ids.add(permanent.getId());
+            }
+        });
+        return ids;
+    }
+
     /**
      * Permanents the player controls that carry at least one counter of any kind — the legal
      * choices for {@link com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost}.
@@ -553,6 +577,52 @@ public class DestructionSupport {
             return;
         }
 
+        if (context.effect().forcedCost() instanceof GainControlOfPermanentsCost gainCost) {
+            UUID payerId = context.controllerId();
+            UUID currentControllerId = gameData.findControllerOf(target);
+            FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(payerId);
+            if (currentControllerId == null || currentControllerId.equals(payerId)
+                    || !predicateEvaluationService.matchesPermanentPredicate(
+                    target, gainCost.filter(), filterContext)) {
+                resolveForcedCostElseEffectsFromContext(gameData, context);
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            gainPermanentControl(gameData, target, payerId, context.sourceCard().getName());
+            int remaining = gainCost.count() - 1;
+            if (remaining <= 0) {
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            List<UUID> remainingIds = collectPermanentIdsNotControlledBy(gameData, payerId, gainCost.filter());
+            if (remainingIds.size() < remaining) {
+                resolveForcedCostElseEffectsFromContext(gameData, context);
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            ForcedCostOrElseEffect remainingEffect = new ForcedCostOrElseEffect(
+                    new GainControlOfPermanentsCost(remaining, gainCost.filter()), context.effect().elseEffects(),
+                    false, false, false, false, context.effect().paidEffects());
+            if (remainingIds.size() == 1) {
+                Permanent remainingTarget = gameQueryService.findPermanentById(gameData, remainingIds.getFirst());
+                if (remainingTarget != null) {
+                    gainPermanentControl(gameData, remainingTarget, payerId, context.sourceCard().getName());
+                }
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ForcedCostOrElse(
+                    payerId, context.sourcePermanentId(), context.sourceCard(), remainingEffect));
+            playerInputService.beginPermanentChoice(gameData, payerId, remainingIds,
+                    "Choose a permanent to gain control of.");
+            clearForcedCostOrElseState(gameData);
+            return;
+        }
+
         if (context.effect().forcedCost() instanceof RemoveCounterFromControlledPermanentCost) {
             // "unless you remove a counter from a permanent you control" — the chosen permanent
             // sheds a counter instead of being sacrificed.
@@ -560,6 +630,26 @@ public class DestructionSupport {
         } else {
             sacrificeAndLog(gameData, target, context.controllerId());
         }
+        gameData.forcedCostOrElseSourceControllerId = null;
+        gameData.forcedCostOrElseRemainingPlayers.clear();
+    }
+
+    public void gainPermanentControl(GameData gameData, Permanent target, UUID controllerId, String sourceCardName) {
+        creatureControlService.applyControlEffect(gameData, controllerId, target,
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null,
+                sourceCardName);
+    }
+
+    private void resolveForcedCostElseEffectsFromContext(GameData gameData,
+            PermanentChoiceContext.ForcedCostOrElse context) {
+        StackEntry syntheticEntry = new StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(), context.controllerId(), context.sourceCard().getName() + "'s ability",
+                List.of(context.effect()), null, context.sourcePermanentId());
+        resolveForcedCostElseEffects(gameData, syntheticEntry, context.effect());
+    }
+
+    private void clearForcedCostOrElseState(GameData gameData) {
         gameData.forcedCostOrElseSourceControllerId = null;
         gameData.forcedCostOrElseRemainingPlayers.clear();
     }
@@ -605,6 +695,8 @@ public class DestructionSupport {
             } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
                 exileSelfEffectHandler.resolve(gameData, entry, exileSelf);
+            } else if (elseEffect instanceof ExileSourceCardFromGraveyardEffect exileSource) {
+                exileSourceCardFromGraveyardEffectHandler.resolve(gameData, entry, exileSource);
             } else if (elseEffect instanceof PhaseOutEffect phaseOut
                     && phaseOut.subject() == PhaseOutSubject.SOURCE) {
                 // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).

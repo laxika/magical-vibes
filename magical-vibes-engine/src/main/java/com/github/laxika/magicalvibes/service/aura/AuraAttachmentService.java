@@ -113,7 +113,8 @@ public class AuraAttachmentService {
                         boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
-                        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                        boolean wentToGraveyard = graveyardService.addCardToGraveyard(
+                                gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
                         if (wentToGraveyard && hadOilCounter) {
                             gameData.recordPermanentWithOilCounterPutIntoGraveyard();
                         }
@@ -201,7 +202,8 @@ public class AuraAttachmentService {
                     boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
                     it.remove();
                     gameData.expireFloatingEffectsForDepartedSource(p.getId());
-                    boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                    boolean wentToGraveyard = graveyardService.addCardToGraveyard(
+                            gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
                     if (wentToGraveyard && hadOilCounter) {
                         gameData.recordPermanentWithOilCounterPutIntoGraveyard();
                     }

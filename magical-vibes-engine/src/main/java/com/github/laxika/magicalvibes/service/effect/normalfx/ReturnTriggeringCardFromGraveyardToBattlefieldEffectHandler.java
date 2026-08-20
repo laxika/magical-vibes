@@ -15,8 +15,9 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Returns the triggering card (Graceful Reprieve) from its owner's graveyard to the battlefield under
- * its owner's control. Fizzles silently if the card is no longer in a graveyard.
+ * Returns the triggering card from its owner's graveyard to the battlefield under its owner's
+ * control, or under the triggered ability controller's control for Adarkar Valkyrie. Fizzles
+ * silently if the card is no longer in a graveyard.
  */
 @Component
 @RequiredArgsConstructor
@@ -42,7 +43,11 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
         }
 
         boolean enterTapped = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect).enterTapped();
+        boolean returnUnderController = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect)
+                .returnUnderController();
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-        graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, card, null, null, enterTapped);
+        UUID battlefieldControllerId = returnUnderController ? entry.getControllerId() : ownerId;
+        graveyardReturnSupport.putCardOntoBattlefield(
+                gameData, battlefieldControllerId, card, null, null, enterTapped);
     }
 }

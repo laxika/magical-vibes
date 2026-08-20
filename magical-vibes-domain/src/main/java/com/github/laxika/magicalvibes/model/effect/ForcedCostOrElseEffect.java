@@ -35,19 +35,30 @@ public record ForcedCostOrElseEffect(
         boolean optional,
         boolean anyPlayerMayPay,
         boolean payerIsEnchantedController,
-        boolean payerIsDefendingPlayer
+        boolean payerIsDefendingPlayer,
+        List<CardEffect> paidEffects
 ) implements CardEffect {
+    public ForcedCostOrElseEffect {
+        paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
+    }
+
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects) {
-        this(forcedCost, elseEffects, false, false, false, false);
+        this(forcedCost, elseEffects, false, false, false, false, List.of());
     }
 
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional) {
-        this(forcedCost, elseEffects, optional, false, false, false);
+        this(forcedCost, elseEffects, optional, false, false, false, List.of());
     }
 
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional,
                                   boolean anyPlayerMayPay) {
-        this(forcedCost, elseEffects, optional, anyPlayerMayPay, false, false);
+        this(forcedCost, elseEffects, optional, anyPlayerMayPay, false, false, List.of());
+    }
+
+    /** "You may pay the cost; if you do, resolve {@code paidEffects}." */
+    public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional,
+                                  List<CardEffect> paidEffects) {
+        this(forcedCost, elseEffects, optional, false, false, false, paidEffects);
     }
 
     /**
@@ -56,7 +67,7 @@ public record ForcedCostOrElseEffect(
      */
     public static ForcedCostOrElseEffect defendingPlayerMayPay(CostEffect forcedCost,
                                                                List<CardEffect> elseEffects) {
-        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, false, true);
+        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, false, true, List.of());
     }
 
     /**
@@ -66,6 +77,6 @@ public record ForcedCostOrElseEffect(
      */
     public static ForcedCostOrElseEffect enchantedControllerMayPay(CostEffect forcedCost,
                                                                    List<CardEffect> elseEffects) {
-        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, true, false);
+        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, true, false, List.of());
     }
 }

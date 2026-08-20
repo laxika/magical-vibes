@@ -372,6 +372,8 @@ public class MultiPermanentChoiceHandlerService {
             handleOwnPermanentCounterPlacement(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer ctx) {
             handleOwnPermanentCounterPlacementByPlayer(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.OpponentCreatureCounterPlacement ctx) {
+            handleOpponentCreatureCounterPlacement(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference ctx) {
             handleOwnPermanentCounterPlacementWithChosenReference(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AwakeningCounterPlacement) {
@@ -1472,6 +1474,44 @@ public class MultiPermanentChoiceHandlerService {
                 placementEntry.setControllerId(context.placingPlayerId());
                 permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, target,
                         context.counterType(), context.count());
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleOpponentCreatureCounterPlacement(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.OpponentCreatureCounterPlacement context) {
+        Permanent target = permanentIds.isEmpty() ? null
+                : gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+        if (target != null && gameQueryService.isCreature(gameData, target)
+                && !gameQueryService.cantHaveCounters(gameData, target)
+                && (context.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target))
+                && (context.counterType() != CounterType.MINUS_ONE_MINUS_ONE
+                || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target))
+                && gameData.pendingEffectResolutionEntry != null) {
+            StackEntry placementEntry = new StackEntry(gameData.pendingEffectResolutionEntry);
+            placementEntry.setControllerId(context.placingPlayerId());
+            permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, target,
+                    context.counterType(), 1);
+        }
+
+        int remainingCount = context.remainingCount() - 1;
+        if (remainingCount > 0) {
+            UUID opponentId = gameQueryService.getOpponentId(gameData, context.placingPlayerId());
+            List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, opponentId,
+                    permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
+                            && (context.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))
+                            && (context.counterType() != CounterType.MINUS_ONE_MINUS_ONE
+                            || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)));
+            if (!candidates.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, context.placingPlayerId(), candidates, 1,
+                        new MultiPermanentChoiceContext.OpponentCreatureCounterPlacement(
+                                context.counterType(), remainingCount, context.placingPlayerId()),
+                        "Choose a creature to put a counter on.");
+                return;
             }
         }
 

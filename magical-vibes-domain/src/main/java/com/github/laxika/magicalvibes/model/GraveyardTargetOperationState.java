@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
@@ -19,6 +20,17 @@ public class GraveyardTargetOperationState {
      * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.
      */
     public boolean singleGraveyard;
+    /** In-progress cumulative-upkeep payments, one single-graveyard choice per age counter. */
+    public CumulativeUpkeepPaymentContext cumulativeUpkeepPayment;
+
+    public record CumulativeUpkeepPaymentContext(UUID sourceControllerId, Card sourceCard,
+                                                  UUID sourcePermanentId, ForcedCostOrElseEffect forcedCost,
+                                                  int cardsPerPayment, int remainingPayments,
+                                                  List<UUID> selectedCardIds) {
+        public CumulativeUpkeepPaymentContext {
+            selectedCardIds = List.copyOf(selectedCardIds);
+        }
+    }
     /** Target player for effects like "Target player shuffles ... from their graveyard" */
     public UUID targetPlayerId;
     /** Whether the spell is being cast with flashback */

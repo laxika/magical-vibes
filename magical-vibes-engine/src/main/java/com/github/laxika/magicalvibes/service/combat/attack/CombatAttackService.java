@@ -683,6 +683,7 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             attacker.setAttacking(true);
+            attacker.setAttackedOrBlockedSinceLastUpkeep(true);
             UUID attackTarget = resolvedTargets.get(idx);
             attacker.setAttackTarget(attackTarget);
             // "Attacked you this turn" only counts attacks aimed at the player, not at a planeswalker

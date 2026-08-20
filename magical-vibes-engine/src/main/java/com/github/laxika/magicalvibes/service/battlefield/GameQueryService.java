@@ -172,10 +172,12 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagePreventionBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedSpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
@@ -195,6 +197,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -259,6 +262,11 @@ public class GameQueryService {
     @Autowired
     @Lazy
     private ConditionEvaluationService conditionEvaluationService;
+
+    /** Resolves conditional static markers consumed directly by combat and other query paths. */
+    @Autowired
+    @Lazy
+    private StaticEffectConditionResolver staticEffectConditionResolver;
 
     /**
      * Evaluates dynamic amounts used by static effects that are queried outside the layered pass,
@@ -446,6 +454,17 @@ public class GameQueryService {
         }
         CharacteristicState activeState = gameData != null
                 ? LayerSystemService.activeStateFor(permanent.getId()) : null;
+        if (activeState == null && gameData != null && layerSystemService.activePass(gameData) == null) {
+            LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+            try {
+                activeState = LayerSystemService.activeStateFor(permanent.getId());
+                if (activeState != null) {
+                    return activeState.hasSupertype(supertype);
+                }
+            } finally {
+                layerSystemService.endPass(pass);
+            }
+        }
         if (activeState != null) {
             return activeState.hasSupertype(supertype)
                     && !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
@@ -6200,6 +6219,9 @@ public class GameQueryService {
                 .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) {
             return true;
         }
+        if (isCombatDamage && hasActiveStaticEffect(gameData, creature, PreventAllCombatDamageBySelfEffect.class)) {
+            return true;
+        }
         if (isCombatDamage && gameData.preventAllCombatDamageByAttackingCreatures && creature.isAttacking()) {
             return true;
         }
@@ -6216,12 +6238,39 @@ public class GameQueryService {
         return false;
     }
 
+    /** Returns whether a permanent's own static slot currently carries the requested effect. */
+    public boolean hasActiveStaticEffect(GameData gameData, Permanent source,
+                                         Class<? extends CardEffect> effectType) {
+        UUID controllerId = findPermanentController(gameData, source.getId());
+        if (controllerId == null) return false;
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
+                .anyMatch(effectType::isInstance);
+    }
+
     /** Returns whether Ethereal Haze-style prevention applies to damage from this source. */
     public boolean isDamageByCreaturePrevented(GameData gameData, Permanent source) {
         return isDamagePreventable(gameData)
                 && gameData.preventAllDamageByCreatures
                 && source != null
                 && isCreature(gameData, source);
+    }
+
+    /** Returns whether this creature's damage to the target creature is covered by its own static prevention. */
+    public boolean isDamageFromPermanentSourceToCreaturePrevented(GameData gameData, Permanent source,
+                                                                   Permanent target) {
+        if (!isDamagePreventable(gameData) || source == null || target == null
+                || !isCreature(gameData, source) || !isCreature(gameData, target)) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, source.getId());
+        if (controllerId == null) return false;
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
+                .filter(DamagePreventionBySelfEffect.class::isInstance)
+                .map(DamagePreventionBySelfEffect.class::cast)
+                .anyMatch(effect -> effect.targetFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.targetFilter()));
     }
 
     /**

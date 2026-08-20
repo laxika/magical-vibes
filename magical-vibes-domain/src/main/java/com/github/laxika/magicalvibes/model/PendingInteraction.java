@@ -37,6 +37,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
         PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
+        PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
         PendingInteraction.BrilliantUltimatumPileChoice,
         PendingInteraction.BrilliantUltimatumPlayChoice,
@@ -70,6 +71,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
         PendingInteraction.RevealedFreeCastGroup,
+        PendingInteraction.RippleFreeCastGroup,
         PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
         PendingInteraction.TargetLibraryDestinationChoice,
@@ -409,6 +411,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Choice of a card exiled with a permanent to put into its owner's graveyard as a cost. */
+    record PutCardExiledWithSourceIntoGraveyardCostChoice(
+            UUID playerId, UUID sourcePermanentId, int abilityIndex, int xValue,
+            UUID targetId, Zone targetZone, java.util.List<UUID> targetIds,
+            java.util.Map<UUID, Integer> damageAssignments, java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public PutCardExiledWithSourceIntoGraveyardCostChoice {
+            targetIds = targetIds == null ? null : java.util.List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? null : java.util.Map.copyOf(damageAssignments);
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
     /**
      * Brilliant Ultimatum: the opponent separates the exiled cards into two piles by choosing
      * which cards belong to pile 1. Unselected cards form pile 2. Only stable card identities are
@@ -696,8 +722,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                     int xValue, int manaMultiplier, boolean creatureSource) {
     }
 
+    record ActivatedAbilityRevealContext(UUID sourcePermanentId, int abilityIndex, int xValue,
+                                         UUID targetId, Zone targetZone, java.util.List<UUID> targetIds,
+                                         java.util.Map<UUID, Integer> damageAssignments) {
+
+        public ActivatedAbilityRevealContext {
+            targetIds = targetIds != null ? java.util.List.copyOf(targetIds) : java.util.List.of();
+            damageAssignments = damageAssignments != null ? java.util.Map.copyOf(damageAssignments) : java.util.Map.of();
+        }
+    }
+
     record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String cardName, ManaAbilityRevealContext manaAbilityContext)
+                                                String cardName, ManaAbilityRevealContext manaAbilityContext,
+                                                ActivatedAbilityRevealContext activatedAbilityContext)
             implements PendingInteraction {
 
         public RevealAnyNumberOfCardsFromHandChoice {
@@ -706,7 +743,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                    String cardName) {
-            this(playerId, validCardIds, cardName, null);
+            this(playerId, validCardIds, cardName, null, null);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName, ManaAbilityRevealContext manaAbilityContext) {
+            this(playerId, validCardIds, cardName, manaAbilityContext, null);
         }
 
         @Override
@@ -716,7 +758,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
+            int required = activatedAbilityContext == null ? 0 : activatedAbilityContext.xValue();
+            return new InteractionOptions.MultiCardPick(validCardIds, required,
+                    activatedAbilityContext == null ? validCardIds.size() : required);
         }
     }
 
@@ -1812,6 +1856,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                  int castsRemaining) implements PendingInteraction {
 
         public RevealedFreeCastGroup {
+            heldCards = java.util.List.copyOf(heldCards);
+        }
+    }
+
+    /** Carry-over state for Ripple's multiple optional free casts. */
+    record RippleFreeCastGroup(UUID ownerId, UUID casterId, String cardName,
+                               java.util.List<Card> heldCards) implements PendingInteraction {
+
+        public RippleFreeCastGroup {
             heldCards = java.util.List.copyOf(heldCards);
         }
     }

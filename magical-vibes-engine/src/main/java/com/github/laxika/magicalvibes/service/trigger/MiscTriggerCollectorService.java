@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -788,18 +789,44 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         Permanent permanent = match.permanent();
 
+        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), match.controllerId(), effect);
+        gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        log.info("Game {} - {} triggers on winning a coin flip", gameData.id, permanent.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_COIN_FLIP)
+    private boolean handleCoinFlipLostDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Permanent permanent = match.permanent();
+        UUID choosingPlayerId = gameQueryService.getOpponentId(gameData, match.controllerId());
+        if (choosingPlayerId == null) {
+            return true;
+        }
+
+        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), choosingPlayerId, effect);
+        gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        log.info("Game {} - {} triggers on losing a coin flip", gameData.id, permanent.getCard().getName());
+        return true;
+    }
+
+    private void enqueueCoinFlipTrigger(GameData gameData, Permanent permanent, UUID controllerId,
+            UUID choosingPlayerId, CardEffect effect) {
+        if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    permanent.getCard(), controllerId, List.of(effect), permanent.getId(), choosingPlayerId));
+            return;
+        }
         gameData.enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 permanent.getCard(),
-                match.controllerId(),
+                controllerId,
                 permanent.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
                 permanent.getId()
         ));
-        gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
-        log.info("Game {} - {} triggers on winning a coin flip", gameData.id, permanent.getCard().getName());
-        return true;
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)

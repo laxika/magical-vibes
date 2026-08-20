@@ -184,6 +184,15 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Invalid card index: " + cardIndex);
         }
 
+        if (cardIndex >= 0
+                && librarySearch.allowCastFromLibraryWhileSearching()
+                && (targetPlayerId == null || targetPlayerId.equals(playerId))
+                && sourceCards == null
+                && librarySearchSupport.isLibrarySearchCastableCard(searchCards.get(cardIndex))) {
+            handleLibrarySearchCast(gameData, player, activeSearch, searchCards.get(cardIndex));
+            return;
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
@@ -1254,6 +1263,30 @@ public class LibraryChoiceHandlerService {
                             chosenCard.getName(), followUp.grimReminderSearch().lifeLoss())));
         }
         finishSearchAndResume(gameData);
+    }
+
+    private void handleLibrarySearchCast(GameData gameData, Player player,
+                                         PendingInteraction.LibrarySearch activeSearch, Card card) {
+        LibrarySearchParams librarySearch = activeSearch.params();
+        spellCastingService.castCardFromLibraryWhileSearching(gameData, player, card);
+        gameData.interaction.clearAwaitingInput();
+
+        List<Card> remainingCards = librarySearch.cards().stream()
+                .filter(searchCard -> !searchCard.getId().equals(card.getId()))
+                .toList();
+        if (remainingCards.isEmpty()) {
+            UUID deckOwnerId = librarySearch.targetPlayerId() != null
+                    ? librarySearch.targetPlayerId() : player.getId();
+            if (librarySearch.shuffleAfterSelection()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                librarySearch.withCards(new ArrayList<>(remainingCards)),
+                activeSearch.messagePrompt(), activeSearch.messageCanFailToFind()));
     }
 
     /**

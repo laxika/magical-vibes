@@ -32,6 +32,7 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.ability.AbilityActivationService abilityActivationService;
 
     @Override
     public Class<PendingInteraction.RevealAnyNumberOfCardsFromHandChoice> handledType() {
@@ -70,6 +71,13 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
                 .stream()
                 .filter(card -> uniqueIds.contains(card.getId()))
                 .toList();
+
+        PendingInteraction.ActivatedAbilityRevealContext abilityContext = interaction.activatedAbilityContext();
+        if (abilityContext != null) {
+            abilityActivationService.handleActivatedAbilityRevealCardsChosen(
+                    gameData, player, interaction, selectedCardIds(chosenCardIds));
+            return;
+        }
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());
         if (selectedCards.isEmpty()) {
@@ -119,5 +127,9 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
         }
         entry.setEventValue(selectedCards.size());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private List<UUID> selectedCardIds(List<UUID> chosenCardIds) {
+        return List.copyOf(chosenCardIds);
     }
 }

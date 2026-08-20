@@ -647,10 +647,12 @@ class CombatAttackServiceTest extends BaseCardTest {
         assertThat(declare(List.of(index(bears), index(angel)))).isEqualTo(CombatResult.AUTO_PASS_ONLY);
 
         assertThat(bears.isAttacking()).isTrue();
+        assertThat(bears.isAttackedOrBlockedSinceLastUpkeep()).isTrue();
         assertThat(bears.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(bears.isTapped()).isTrue();
         // CR 702.20b: vigilance means attacking doesn't cause the creature to tap.
         assertThat(angel.isAttacking()).isTrue();
+        assertThat(angel.isAttackedOrBlockedSinceLastUpkeep()).isTrue();
         assertThat(angel.isTapped()).isFalse();
         assertThat(bystander.isAttacking()).isFalse();
 

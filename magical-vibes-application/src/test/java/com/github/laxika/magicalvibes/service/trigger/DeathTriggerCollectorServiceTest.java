@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1065,6 +1066,19 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
             svc.handleAnyCreatureDeathPutCounters(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("BoostSelfEffect sets sourcePermanentId")
+        void boostSelfSetsSourcePermanentId() {
+            Card watcher = createCreature("Gristle Grinner", 3, 3);
+            var effect = new BoostSelfEffect(2, 2);
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
+
+            svc.handleAnyCreatureDeathBoostSelf(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }

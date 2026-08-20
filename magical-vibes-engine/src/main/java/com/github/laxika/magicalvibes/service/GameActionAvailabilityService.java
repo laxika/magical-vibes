@@ -482,6 +482,9 @@ public class GameActionAvailabilityService {
 
     private boolean isPlayableAsSpell(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                       int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
+        if (card.isCastOnlyFromGraveyard()) {
+            return false;
+        }
         if (castingPermissionService.isSpellCastingFromHandRestricted(gameData, playerId)) {
             return false;
         }

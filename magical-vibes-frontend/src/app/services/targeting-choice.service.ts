@@ -359,11 +359,13 @@ export class TargetingChoiceService {
   alternateCostDiscardsHandCard = false;
   alternateCostRequiresTarget = false;
   alternateCostSelectedIds = signal<string[]>([]);
+  alternateCostSelectedHandIndices = signal<number[]>([]);
   selectingAlternateCostHandCard = false;
   /** Hand index to exile when confirming an exile-from-hand alternate cast (pre-removal index). */
   private pendingAlternateExileHandIndex: number | null = null;
   private pendingAlternateHandCardIndices: number[] = [];
   private pendingAlternateHandCardDiscards = false;
+  private pendingAlternateExileHandIndices: number[] = [];
 
   choosingBehold = false;
   selectingBeholdPermanent = false;
@@ -1243,6 +1245,9 @@ export class TargetingChoiceService {
         }
       } else {
         msg.discardHandCardIndex = alternateHandCardIndices[0];
+        if (this.pendingAlternateExileHandIndices.length > 1) {
+          msg.discardHandCardIndices = this.pendingAlternateExileHandIndices;
+        }
       }
       if (this.gameSignal()?.hand?.[cardIndex]?.keywords?.includes('MORPH')) {
         msg.morph = true;
@@ -1250,6 +1255,7 @@ export class TargetingChoiceService {
       this.pendingAlternateExileHandIndex = null;
       this.pendingAlternateHandCardIndices = [];
       this.pendingAlternateHandCardDiscards = false;
+      this.pendingAlternateExileHandIndices = [];
     }
     if (this.pendingGraveyardCastDiscardHandIndex != null) {
       msg.discardHandCardIndex = this.pendingGraveyardCastDiscardHandIndex;
@@ -2377,6 +2383,16 @@ export class TargetingChoiceService {
     if (!this.selectingAlternateCostHandCard) return;
     if (handIndex === this.alternateCostCardIndex) return;
     if (this.pendingAlternateHandCardIndices.includes(handIndex)) return;
+    if (!this.alternateCostDiscardsHandCard && this.alternateCostExileHandCount > 1) {
+      const selected = this.alternateCostSelectedHandIndices();
+      if (selected.includes(handIndex)) {
+        this.alternateCostSelectedHandIndices.set(selected.filter(index => index !== handIndex));
+      } else if (selected.length < this.alternateCostExileHandCount) {
+        this.alternateCostSelectedHandIndices.set([...selected, handIndex]);
+      }
+      return;
+    }
+    if (this.pendingAlternateHandCardIndices.includes(handIndex)) return;
     const spellIndex = this.alternateCostCardIndex;
     this.pendingAlternateHandCardIndices.push(handIndex);
     const requiredHandCardCount = this.alternateCostDiscardsHandCard
@@ -2402,6 +2418,21 @@ export class TargetingChoiceService {
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
+    this.continuePlayCard(spellIndex);
+  }
+
+  isAlternateCostHandCardSelected(handIndex: number): boolean {
+    return this.alternateCostSelectedHandIndices().includes(handIndex);
+  }
+
+  confirmAlternateCostHandCards(): void {
+    if (!this.selectingAlternateCostHandCard || this.alternateCostExileHandCount <= 1) return;
+    const selected = this.alternateCostSelectedHandIndices();
+    if (selected.length !== this.alternateCostExileHandCount) return;
+    const spellIndex = this.alternateCostCardIndex;
+    this.resetAlternateCostState();
+    this.pendingAlternateExileHandIndex = selected[0];
+    this.pendingAlternateExileHandIndices = selected;
     this.continuePlayCard(spellIndex);
   }
 
@@ -2455,9 +2486,11 @@ export class TargetingChoiceService {
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
+    this.alternateCostSelectedHandIndices.set([]);
     this.pendingAlternateExileHandIndex = null;
     this.pendingAlternateHandCardIndices = [];
     this.pendingAlternateHandCardDiscards = false;
+    this.pendingAlternateExileHandIndices = [];
   }
 
   toggleExileCounterCostPermanent(permanentId: string): void {
@@ -2617,7 +2650,8 @@ export class TargetingChoiceService {
       if (perm.tapped) return false;
       if (perm.summoningSick && isPermanentCreature(perm)) return false;
     }
-    if (ability.requiresXValue && this.availableXCounters(perm, ability) < 1) return false;
+    if (ability.requiresXValue && !ability.xValueFromCardsInHandColor
+      && this.availableXValue(perm, ability) < 1) return false;
     if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
         && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
@@ -2630,6 +2664,14 @@ export class TargetingChoiceService {
     return this.myBattlefieldFn()
       .filter(p => isPermanentCreature(p))
       .reduce((sum, p) => sum + (p.counters?.['PLUS_ONE_PLUS_ONE'] ?? 0), 0);
+  }
+
+  private availableXValue(perm: Permanent, ability: ActivatedAbilityView): number {
+    if (ability.xValueFromCardsInHandColor) {
+      return this.gameSignal()?.hand?.filter(card =>
+        card.colors?.includes(ability.xValueFromCardsInHandColor!)).length ?? 0;
+    }
+    return this.availableXCounters(perm, ability);
   }
 
   /** MTGO-style: an ability whose cost exceeds the floating pool is still activatable when
@@ -2697,8 +2739,8 @@ export class TargetingChoiceService {
       this.choosingXValue = true;
       this.xValueCardIndex = permanentIndex;
       this.xValueCardName = perm.card.name;
-      this.xValueInput = 1;
-      this.xValueMaximum = this.availableXCounters(perm, ability);
+      this.xValueInput = ability.xValueFromCardsInHandColor ? 0 : 1;
+      this.xValueMaximum = this.availableXValue(perm, ability);
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       return;

@@ -35,6 +35,8 @@ import java.util.UUID;
  *                          {@code SourceCardPower} for abilities that have no source permanent at
  *                          all (scavenge activates from the graveyard). {@code null} outside stack
  *                          resolution
+ * @param stackEntry        the stack entry currently being resolved, when one exists. Used by
+ *                          amounts that read counters from a spell's stack object
  * @param chosenPermanentPowerAtTrigger last-known effective power captured for an entering permanent
  *                          carried as the chosen permanent; used if that permanent leaves before
  *                          resolution
@@ -54,6 +56,7 @@ public record AmountContext(
         UUID chosenPermanentId,
         List<String> repeatedAdditionalCosts,
         Card sourceCard,
+        StackEntry stackEntry,
         Integer chosenPermanentPowerAtTrigger,
         Integer triggeringPermanentPowerAtTrigger,
         int sacrificedPower,
@@ -65,7 +68,7 @@ public record AmountContext(
                          int xValue, int eventValue, boolean staticEvaluation,
                          UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard) {
         this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
-                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null, null, 0, 0);
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null, null, null, 0, 0);
     }
 
     /** Convenience for the common case with no repeatable additional cost payments. */
@@ -96,6 +99,7 @@ public record AmountContext(
     public AmountContext withControllerId(UUID otherControllerId) {
         return new AmountContext(otherControllerId, sourcePermanent, targetPermanentId, xValue,
                 eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
+                stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
                 sacrificedPower, sacrificedToughness);
     }
@@ -104,7 +108,7 @@ public record AmountContext(
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
                 entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
-                entry.getRepeatedAdditionalCosts(), entry.getCard(), entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getRepeatedAdditionalCosts(), entry.getCard(), entry, entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getSacrificedPower(),
                 entry.getSacrificedToughness());

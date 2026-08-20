@@ -246,6 +246,13 @@ public class ExileSupport {
             return;
         }
 
+        if (chosenCard.isCastOnlyFromGraveyard()) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                    " cannot be cast from exile and stays exiled."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Determine spell type
         StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
         List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getEffects(EffectSlot.SPELL));

@@ -131,6 +131,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
 
     /**
@@ -498,6 +499,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleDefendingPlayerChoosesCreatureToBlock(GameData gameData, UUID permanentId,
                                                             PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock context) {
         defendingPlayerChoosesCreatureToBlockEffectHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleBalduvianWarlordChoosesAttacker(GameData gameData, UUID permanentId,
+                                                      PermanentChoiceContext.BalduvianWarlordChoosesAttacker context) {
+        balduvianWarlordEffectHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1313,6 +1320,8 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         if (wonFlip) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, ctx.controllerId());
+        } else {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, ctx.controllerId());
         }
 
         gameData.sourceNextDamageToAnyTargetShields.add(wonFlip

@@ -128,6 +128,15 @@ public class ExileFreeCastQueueSupport {
         }
 
         Card card = exiledEntry.card();
+        if (card.isCastOnlyFromGraveyard()) {
+            if (asCopy) {
+                gameData.removeFromExile(cardId);
+            }
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    asCopy ? " cannot be cast from exile." : " cannot be cast from exile and stays exiled."));
+            castNextFromQueue(gameData, playerId);
+            return;
+        }
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         String playerName = gameData.playerIdToName.get(playerId);

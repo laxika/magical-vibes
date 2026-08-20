@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -122,6 +123,78 @@ class DamageTriggerCollectorServiceTest {
     private TriggerMatchContext match(Permanent perm, UUID controllerId,
             com.github.laxika.magicalvibes.model.effect.CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Test
+    @DisplayName("queues life gain for damage from a controlled noncreature source")
+    void queuesLifeGainForControlledNoncreatureSource() {
+        Permanent tamanoa = createPermanent("Tamanoa");
+        Card sourceCard = new Card();
+        sourceCard.setName("Shock");
+        sourceCard.setType(CardType.INSTANT);
+        GainLifeEffect effect = new GainLifeEffect(new EventValue());
+        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, player1Id, 2,
+                Map.of(player2Id, 2));
+
+        boolean result = registry.dispatch(
+                match(tamanoa, player1Id, effect), EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("does not queue life gain for damage from a creature source")
+    void doesNotQueueLifeGainForCreatureSource() {
+        Permanent tamanoa = createPermanent("Tamanoa");
+        Card sourceCard = createCard("Grizzly Bears");
+        GainLifeEffect effect = new GainLifeEffect(new EventValue());
+        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, player1Id, 2,
+                Map.of(player2Id, 2));
+
+        boolean result = registry.dispatch(
+                match(tamanoa, player1Id, effect), EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("does not queue life gain for a noncreature source controlled by another player")
+    void doesNotQueueLifeGainForAnotherPlayersSource() {
+        Permanent tamanoa = createPermanent("Tamanoa");
+        Card sourceCard = new Card();
+        sourceCard.setName("Shock");
+        sourceCard.setType(CardType.INSTANT);
+        GainLifeEffect effect = new GainLifeEffect(new EventValue());
+        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, player2Id, 2,
+                Map.of(player1Id, 2));
+
+        boolean result = registry.dispatch(
+                match(tamanoa, player1Id, effect), EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("uses the current type of a permanent damage source")
+    void usesCurrentTypeOfPermanentSource() {
+        Permanent tamanoa = createPermanent("Tamanoa");
+        Permanent source = createPermanent("Animated Artifact");
+        GainLifeEffect effect = new GainLifeEffect(new EventValue());
+        var ctx = new TriggerContext.SourceDealsDamage(source.getCard(), player1Id, source.getId(), 2,
+                Map.of(player2Id, 2));
+
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+        when(gameQueryService.isCreature(gd, source)).thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(tamanoa, player1Id, effect), EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

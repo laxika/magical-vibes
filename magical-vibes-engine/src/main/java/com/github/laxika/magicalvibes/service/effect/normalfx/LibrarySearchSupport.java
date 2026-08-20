@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -601,6 +602,19 @@ public class LibrarySearchSupport {
                 || card.getAdditionalTypes().stream().anyMatch(cardTypes::contains);
     }
 
+    /** Returns whether {@code card} carries a permission to be cast during its owner's library search. */
+    public boolean isLibrarySearchCastableCard(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(LibrarySearchCastPermission.class::isInstance);
+    }
+
+    /** Returns the cards in {@code playerId}'s library that may be cast during that search. */
+    public List<Card> librarySearchCastableCards(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null) return List.of();
+        return deck.stream().filter(this::isLibrarySearchCastableCard).toList();
+    }
+
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind) {
         String playerName = gameData.playerIdToName.get(playerId);
@@ -635,6 +649,25 @@ public class LibrarySearchSupport {
                 return;
             }
             params = params.withCards(restricted);
+        }
+
+        boolean ownLibrarySearch = (params.targetPlayerId() == null || params.targetPlayerId().equals(playerId))
+                && !params.sourceSideboard()
+                && params.sourceCards() == null;
+        if (ownLibrarySearch) {
+            params = params.withAllowCastFromLibraryWhileSearching(true);
+            List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
+            if (!castableCards.isEmpty()) {
+                Set<UUID> existingCardIds = params.cards().stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
+                List<Card> cards = new ArrayList<>(params.cards());
+                castableCards.stream()
+                        .filter(card -> !existingCardIds.contains(card.getId()))
+                        .forEach(cards::add);
+                if (cards.size() > params.cards().size()) {
+                    params = params.withCards(cards);
+                    prompt += " You may also cast a card with a library-search permission.";
+                }
+            }
         }
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(

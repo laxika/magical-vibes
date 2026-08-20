@@ -323,9 +323,14 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
+        Permanent effectiveDamageSource = damageSource;
+        if (effectiveDamageSource == null && entry != null && entry.getSourcePermanentId() != null) {
+            effectiveDamageSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        }
         int damage = targetDamageUnpreventable
                 ? rawDamage
-                : damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
+                : damagePreventionService.applyCreaturePreventionShield(
+                gameData, target, rawDamage, false, effectiveDamageSource);
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
         // N of that damage." Applied before recording/triggers so reflection and damage-counting see the
         // reduced amount; the loyalty branch below then removes the reduced amount.

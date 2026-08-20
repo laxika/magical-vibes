@@ -14,6 +14,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "195")
+@CardRegistration(set = "CSP", collectorNumber = "79")
 public class Cryoclasm extends Card {
 
     public Cryoclasm() {

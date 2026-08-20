@@ -237,6 +237,8 @@ public class Card {
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
     /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
     private List<ActivatedAbility> handActivatedAbilities = new ArrayList<>();
+    /** Abilities activatable while this card is a spell on the stack (e.g. Lightning Storm). */
+    private List<ActivatedAbility> stackActivatedAbilities = new ArrayList<>();
 
     public Card() {
         this.id = UUID.randomUUID();
@@ -336,6 +338,7 @@ public class Card {
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(source.handActivatedAbilities);
+        this.stackActivatedAbilities = new ArrayList<>(source.stackActivatedAbilities);
     }
 
     /**
@@ -872,6 +875,13 @@ public class Card {
                 .findFirst();
     }
 
+    /** Whether this card's casting permissions prohibit casting it from every zone except graveyard. */
+    public boolean isCastOnlyFromGraveyard() {
+        return getCastingOption(GraveyardCast.class)
+                .map(GraveyardCast::onlyFromGraveyard)
+                .orElse(false);
+    }
+
     /**
      * Flashback casting option on this card, or on its back face when only the back half is
      * castable from the graveyard (aftermath-style split cards such as Farm // Market).
@@ -924,6 +934,11 @@ public class Card {
     public void addHandActivatedAbility(ActivatedAbility ability) {
         assertMutable();
         handActivatedAbilities.add(ability);
+    }
+
+    public void addStackActivatedAbility(ActivatedAbility ability) {
+        assertMutable();
+        stackActivatedAbilities.add(ability);
     }
 
     /**

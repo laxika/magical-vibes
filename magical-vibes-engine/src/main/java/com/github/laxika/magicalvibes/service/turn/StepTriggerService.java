@@ -2849,7 +2849,9 @@ public class StepTriggerService {
     public void processPendingExileReturns(GameData gameData, TurnStep step) {
         List<PendingExileReturn> matching = gameData.drainDelayedActions(PendingExileReturn.class,
                 p -> p.returnStep() == step
-                        && (!p.onlyOnControllersTurn() || p.controllerId().equals(gameData.activePlayerId)));
+                        && (!p.onlyOnControllersTurn()
+                        || (p.timingControllerId() != null
+                        ? p.timingControllerId() : p.controllerId()).equals(gameData.activePlayerId)));
         if (matching.isEmpty()) {
             return;
         }
@@ -2929,6 +2931,7 @@ public class StepTriggerService {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<Permanent> returnedPermanents = new ArrayList<>();
         for (Card card : returningCards) {
             Permanent perm = new Permanent(card);
             if (pending.returnTapped()) {
@@ -2953,6 +2956,7 @@ public class StepTriggerService {
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, perm, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(perm);
+            returnedPermanents.add(perm);
             String playerName = gameData.playerIdToName.get(controllerId);
             String attackText = pending.returnAttacking() && attackTargetId != null
                     ? " tapped and attacking" : "";
@@ -2963,6 +2967,38 @@ public class StepTriggerService {
         }
         for (Card card : returningCards) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+        }
+
+        if (pending.discardControllerCardsEqualToReturnedToughness()
+                && pending.followUpSourceCard() != null
+                && pending.timingControllerId() != null) {
+            int returnedIndex = -1;
+            for (int i = 0; i < returningCards.size(); i++) {
+                if (returningCards.get(i).getId().equals(pending.card().getId())) {
+                    returnedIndex = i;
+                    break;
+                }
+            }
+            if (returnedIndex >= 0) {
+                Permanent returned = returnedPermanents.get(returnedIndex);
+                if (gameQueryService.isCreature(gameData, returned)) {
+                    int discardCount = Math.max(0, gameQueryService.getEffectiveToughness(gameData, returned));
+                    if (discardCount > 0) {
+                        StackEntry discardEntry = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                pending.followUpSourceCard(),
+                                pending.timingControllerId(),
+                                pending.followUpSourceCard().getName() + "'s delayed trigger — discard "
+                                        + discardCount + " cards",
+                                new ArrayList<>(List.of(new DiscardEffect(
+                                        discardCount, DiscardRecipient.CONTROLLER))));
+                        discardEntry.setNonTargeting(true);
+                        gameData.stack.add(discardEntry);
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(pending.followUpSourceCard(), "'s delayed trigger discards cards."));
+                    }
+                }
+            }
         }
     }
 
@@ -4472,9 +4508,16 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                        // Targeting triggered ability — queue for target selection
-                        gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
-                                perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                        if (perm.getCard().getSpellTargets().size() > 1
+                                || etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
+                            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId(),
+                                    List.of(), 0, 0));
+                        } else {
+                            // Targeting triggered ability — queue for target selection
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                        }
                     } else {
                         StackEntry entry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,

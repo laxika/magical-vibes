@@ -26,7 +26,10 @@ public record PendingExileReturn(
         boolean onlyOnControllersTurn,
         boolean grantHaste,
         boolean returnAttacking,
-        boolean returnToGraveyard) implements DelayedAction {
+        boolean returnToGraveyard,
+        UUID timingControllerId,
+        Card followUpSourceCard,
+        boolean discardControllerCardsEqualToReturnedToughness) implements DelayedAction {
 
     public PendingExileReturn {
         additionalCards = additionalCards == null ? List.of() : List.copyOf(additionalCards);
@@ -35,7 +38,7 @@ public record PendingExileReturn(
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
-                additionalCards, false, false, false, false);
+                additionalCards, false, false, false, false, null, null, false);
     }
 
     public PendingExileReturn(Card card, UUID controllerId) {
@@ -64,18 +67,26 @@ public record PendingExileReturn(
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
                               boolean onlyOnControllersTurn, boolean grantHaste) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
-                additionalCards, onlyOnControllersTurn, grantHaste, false, false);
+                additionalCards, onlyOnControllersTurn, grantHaste, false, false,
+                null, null, false);
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
                               boolean onlyOnControllersTurn, boolean grantHaste, boolean returnAttacking) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
-                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, false);
+                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, false,
+                null, null, false);
     }
 
     public static PendingExileReturn toGraveyard(Card card, UUID ownerId) {
         return new PendingExileReturn(card, ownerId, false, false, TurnStep.END_STEP, 0, List.of(),
-                false, false, false, true);
+                false, false, false, true, null, null, false);
+    }
+
+    public static PendingExileReturn forControllerNextUpkeepWithToughnessDiscard(
+            Card card, UUID ownerId, UUID timingControllerId, Card sourceCard, List<Card> additionalCards) {
+        return new PendingExileReturn(card, ownerId, false, false, TurnStep.UPKEEP, 0, additionalCards,
+                true, false, false, false, timingControllerId, sourceCard, true);
     }
 }

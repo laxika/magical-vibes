@@ -991,11 +991,9 @@ public class PermanentRemovalService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(leaving, " is exiled instead of being put into a graveyard."));
             } else {
-                boolean enteredGraveyard = selfGraveyardTriggerSuppressed
-                        ? graveyardService.addCardToGraveyard(gameData, ownerId, leaving,
-                                Zone.BATTLEFIELD, controllerId, target.getId(), true)
-                        : graveyardService.addCardToGraveyard(gameData, ownerId, leaving,
-                                Zone.BATTLEFIELD, controllerId, target.getId());
+                boolean enteredGraveyard = graveyardService.addCardToGraveyard(
+                        gameData, ownerId, leaving, Zone.BATTLEFIELD, controllerId, target,
+                        selfGraveyardTriggerSuppressed);
                 if (enteredGraveyard) {
                     wentToGraveyard = true;
                 } else if (gameData.findExiledCard(leaving.getId()) != null) {

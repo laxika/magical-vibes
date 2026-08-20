@@ -210,6 +210,10 @@ public class CharacteristicState {
         supertypes.add(supertype);
     }
 
+    public void removeSupertype(CardSupertype supertype) {
+        supertypes.remove(supertype);
+    }
+
     public void addSubtype(CardSubtype subtype) {
         if (!subtypes.contains(subtype)) {
             subtypes.add(subtype);

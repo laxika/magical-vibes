@@ -105,6 +105,29 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         String baseDesc = describe(filter, boundValue, bound);
 
         if (matchingCards.isEmpty()) {
+            if (!librarySearchSupport.librarySearchCastableCards(gameData, controllerId).isEmpty()) {
+                LibrarySearchDestination destination = effect.destination();
+                String prompt = buildPrompt(baseDesc, destination, restricted, count,
+                        effect.requireDifferentNames());
+                librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
+                        LibrarySearchParams.builder(controllerId, new ArrayList<>())
+                                .remainingCount(count)
+                                .canFailToFind(true)
+                                .destination(destination)
+                                .filterPredicate(restricted ? filter : null)
+                                .requireDifferentNames(effect.requireDifferentNames())
+                                .manaValueBound(boundValue, bound != null && bound.exact())
+                                .grantHaste(effect.grantHaste())
+                                .exileAtEndStep(effect.exileAtEndStep())
+                                .returnToHandAtEndStep(effect.returnToHandAtEndStep())
+                                .animateFound(effect.animateFound())
+                                .shuffleAfterSelection(effect.shuffleAfterSelection())
+                                .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
+                                        ? entry.getBeholdChosenSubtype() : null)
+                                .build(),
+                        prompt, true);
+                return;
+            }
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }

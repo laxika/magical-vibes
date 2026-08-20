@@ -65,6 +65,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
         register(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class,
                 this::projectExileInstantOrSorcerySpellCostChoice);
+        register(PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice.class,
+                this::projectPutCardExiledWithSourceIntoGraveyardCostChoice);
         register(PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
                 this::projectBrilliantUltimatumPileSeparationChoice);
         register(PendingInteraction.BrilliantUltimatumPileChoice.class,
@@ -312,6 +314,16 @@ public class InteractionPromptProjectionRegistry {
                 "Choose an instant or sorcery spell you control to exile as an activation cost.");
     }
 
+    private InteractionPromptMessage projectPutCardExiledWithSourceIntoGraveyardCostChoice(
+            GameData gameData,
+            PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a card exiled with this permanent to put into its owner's graveyard as an activation cost.");
+    }
+
     private InteractionPromptMessage projectBrilliantUltimatumPileSeparationChoice(
             GameData gameData,
             PendingInteraction.BrilliantUltimatumPileSeparationChoice interaction) {
@@ -441,8 +453,13 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews,
-                interaction.validCardIds().size(),
-                "Choose any number of cards to reveal from your hand for "
+                interaction.activatedAbilityContext() == null
+                        ? interaction.validCardIds().size()
+                        : interaction.activatedAbilityContext().xValue(),
+                interaction.activatedAbilityContext() == null
+                        ? "Choose any number of cards to reveal from your hand for "
+                        : "Choose " + interaction.activatedAbilityContext().xValue()
+                                + " cards to reveal from your hand for "
                         + interaction.cardName() + ".");
     }
 

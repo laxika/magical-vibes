@@ -2220,12 +2220,28 @@ public class CombatDamageService {
             // Malignus: prevention may not reduce the step's damage below the part of it dealt by
             // sources whose damage can't be prevented.
             int unpreventable = Math.min(entry.getValue(), unpreventableDamageTaken.getOrDefault(idx, 0));
+            int sourceSpecificDamage = entry.getValue();
+            Map<UUID, Integer> bySource = damageTakenBySource.getOrDefault(idx, Map.of());
+            if (!perm.isDamageCantBePreventedOrRedirectedThisTurn() && !bySource.isEmpty()) {
+                sourceSpecificDamage = 0;
+                for (var sourceEntry : bySource.entrySet()) {
+                    Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceEntry.getKey());
+                    int sourceDamage = sourceEntry.getValue();
+                    if (damageSource == null
+                            || gameQueryService.damageCantBePreventedFromSource(gameData, damageSource)) {
+                        sourceSpecificDamage += sourceDamage;
+                    } else {
+                        sourceSpecificDamage += damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
+                                gameData, perm, damageSource, sourceDamage, true);
+                    }
+                }
+            }
             int dmg = perm.isDamageCantBePreventedOrRedirectedThisTurn()
                     ? entry.getValue()
                     : Math.max(unpreventable,
-                    damagePreventionService.applyCreaturePreventionShield(gameData, perm, entry.getValue(), true));
+                    damagePreventionService.applyCreaturePreventionShield(gameData, perm, sourceSpecificDamage, true));
             if (dmg > 0) {
-                recordCombatMarkedDamage(perm, dmg, damageTakenBySource.getOrDefault(idx, Map.of()));
+                recordCombatMarkedDamage(perm, dmg, bySource);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
                 // CR 702.2b — the deathtouch memory only sticks when damage was actually dealt,
                 // not when a prevention shield consumed the whole step's damage.
@@ -2476,7 +2492,9 @@ public class CombatDamageService {
                 String targetName = gameData.playerIdToName.get(targetId);
                 gameLogService.append(gameData, GameLog.text(damage + " damage is redirected to " + targetName + "."));
 
-                int redirectEffective = damagePreventionService.applyCombatPlayerPreventionShield(gameData, targetId, damage);
+                Permanent damageSource = gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
+                int redirectEffective = damagePreventionService.applyCombatPlayerPreventionShield(
+                        gameData, targetId, damage, damageSource);
                 processPendingRedirectDamage(gameData);
                 redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                         gameData, targetId, redirectEffective);
@@ -2496,7 +2514,9 @@ public class CombatDamageService {
 
                 gameLogService.append(gameData, GameLog.textCardText(damage + " damage is redirected to ", targetPerm.getCard(), "."));
 
-                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage, true);
+                Permanent damageSource = gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
+                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(
+                        gameData, targetPerm, damage, true, damageSource);
                 if (effectiveDamage > 0) {
                     // Record only — the state-based action check (CR 704.5g) performs any
                     // destruction once the current damage event finishes.
@@ -2971,7 +2991,8 @@ public class CombatDamageService {
             return;
         }
         if (gameQueryService.dealsCounterDamageToCreatures(gameData, source)) {
-            int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
+            int afterShield = damagePreventionService.applyCreaturePreventionShield(
+                    gameData, target, damage, true, source);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 // Vizier of Remedies reduces the -1/-1 counters; the deathtouch marking below still

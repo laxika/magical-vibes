@@ -1363,6 +1363,9 @@ public class SpellCastingService {
         }
 
         Card handCardForTiming = gameData.playerHands.get(playerId).get(cardIndex);
+        if (handCardForTiming.isCastOnlyFromGraveyard()) {
+            throw new IllegalStateException("Card cannot be cast from hand");
+        }
         if (handCardForTiming.hasType(CardType.LAND)
                 ? castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 : castingPermissionService.isSpellCastingFromHandRestricted(gameData, playerId)) {
@@ -1679,7 +1682,7 @@ public class SpellCastingService {
             var exileHandCost = altCast.getCost(ExileCardsFromHandCastingCost.class);
             if (exileHandCost.isPresent()) {
                 validateExileFromHandAlternateCost(gameData, playerId, card, exileHandCost.get(),
-                        discardHandCardIndex, cardIndex, effectiveXValue);
+                        discardHandCardIndex, discardHandCardIndices, cardIndex, effectiveXValue);
             }
 
             validateAlternateDiscardCosts(gameData, playerId, card, alternateDiscardCosts,
@@ -2281,7 +2284,7 @@ public class SpellCastingService {
                 } else {
                     payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
-                            alternateDiscardHandCardIndices,
+                            hasDiscardHandAlternateCost ? alternateDiscardHandCardIndices : discardHandCardIndices,
                             cardIndex, manaCostX);
                 }
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
@@ -2513,7 +2516,7 @@ public class SpellCastingService {
                 } else {
                     payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
-                            alternateDiscardHandCardIndices,
+                            hasDiscardHandAlternateCost ? alternateDiscardHandCardIndices : discardHandCardIndices,
                             cardIndex, resolvedXValue);
                 }
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
@@ -4873,6 +4876,9 @@ public class SpellCastingService {
             throw new IllegalStateException("Card not found in exile");
         }
         Card card = exiledEntry.card();
+        if (card.isCastOnlyFromGraveyard()) {
+            throw new IllegalStateException("Card cannot be cast from exile");
+        }
         if (!card.hasType(CardType.LAND)
                 && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) {
             throw new IllegalStateException("Card can't be cast from exile");
@@ -5256,6 +5262,9 @@ public class SpellCastingService {
         }
 
         Card card = deck.getFirst();
+        if (card.isCastOnlyFromGraveyard()) {
+            throw new IllegalStateException("Card cannot be cast from library");
+        }
         boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, card);
         if (card.hasType(CardType.LAND)) {
             if (!freeTopPlay && !castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId)) {
@@ -5366,6 +5375,69 @@ public class SpellCastingService {
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    /** Casts a card from its owner's library during an active library search. */
+    public void castCardFromLibraryWhileSearching(GameData gameData, Player player, Card card) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        UUID playerId = player.getId();
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null || deck.stream().noneMatch(libraryCard -> libraryCard.getId().equals(card.getId()))) {
+            throw new IllegalStateException("Card is no longer in the library");
+        }
+        if (card.isCastOnlyFromGraveyard()) {
+            throw new IllegalStateException("Card cannot be cast from the library");
+        }
+        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
+            throw new IllegalStateException("Spells cannot be cast from libraries");
+        }
+        if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, 0)) {
+            throw new IllegalStateException("Card is not playable");
+        }
+
+        int effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, 0);
+        validateXValueCap(gameData, card, playerId, effectiveXValue);
+
+        AdditionalSpellCostService.ExtractedCosts additionalCosts = additionalSpellCostService.peek(card);
+        if (additionalCosts.any() && additionalCosts.chooseXValueCost() == null) {
+            throw new IllegalStateException("Cannot cast " + card.getName()
+                    + " from the library while searching because its additional cast cost is not supported");
+        }
+        if (additionalCosts.chooseXValueCost() != null) {
+            additionalSpellCostService.validateChooseXValueCost(card, additionalCosts.chooseXValueCost(), effectiveXValue);
+        }
+
+        paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue, Zone.LIBRARY);
+        deck.removeIf(libraryCard -> libraryCard.getId().equals(card.getId()));
+
+        Card castCard = isModalSpell(card) ? card.createRuntimeCopy() : card;
+        List<CardEffect> effectsToResolve = castCard.hasType(CardType.SORCERY)
+                || castCard.hasType(CardType.INSTANT)
+                ? new ArrayList<>(castCard.getEffects(EffectSlot.SPELL))
+                : new ArrayList<>();
+        additionalSpellCostService.extractAndRemove(effectsToResolve);
+        effectiveXValue = unwrapChooseOneEffect(castCard, effectsToResolve, effectiveXValue);
+
+        gameData.stack.add(new StackEntry(
+                cardTypeToStackEntryType(castCard.getType()), castCard, playerId, castCard.getName(),
+                effectsToResolve, effectiveXValue, (UUID) null, null
+        ));
+        gameData.recordSpellCast(playerId, castCard);
+        gameData.priorityPassedBy.clear();
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " casts ", castCard, " from their library while searching."));
+        log.info("Game {} - {} casts {} from their library while searching",
+                gameData.id, player.getUsername(), castCard.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, castCard, playerId, Zone.LIBRARY);
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     // --- Mana payment ---
@@ -6972,20 +7044,22 @@ public class SpellCastingService {
         // Exile card(s) from hand (spell already removed — adjust index like discard additional costs)
         var exileHandCost = altCast.getCost(ExileCardsFromHandCastingCost.class);
         if (exileHandCost.isPresent()) {
-            int effectiveIndex = validateExileFromHandAlternateCost(gameData, playerId, card, exileHandCost.get(),
-                    discardHandCardIndex, spellCardIndex, xValue);
+            List<Integer> effectiveIndices = validateExileFromHandAlternateCost(gameData, playerId, card,
+                    exileHandCost.get(), discardHandCardIndex, discardHandCardIndices, spellCardIndex, xValue);
             List<Card> hand = gameData.playerHands.get(playerId);
-            Card toExile = hand.remove(effectiveIndex);
-            exileService.exileCard(gameData, playerId, toExile);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(toExile)
-                    .text(" from their hand for ")
-                    .card(card)
-                    .text(".")
-                    .build());
-            log.info("Game {} - {} exiles {} from hand as alternate casting cost",
-                    gameData.id, player.getUsername(), toExile.getName());
+            for (int effectiveIndex : effectiveIndices) {
+                Card toExile = hand.remove(effectiveIndex);
+                exileService.exileCard(gameData, playerId, toExile);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(toExile)
+                        .text(" from their hand for ")
+                        .card(card)
+                        .text(".")
+                        .build());
+                log.info("Game {} - {} exiles {} from hand as alternate casting cost",
+                        gameData.id, player.getUsername(), toExile.getName());
+            }
         }
 
         List<AlternateDiscardSelection> discardSelections = validateAlternateDiscardCosts(
@@ -7069,40 +7143,59 @@ public class SpellCastingService {
     }
 
     /**
-     * Validates exile-from-hand alternate casting cost. {@code discardHandCardIndex} is into the
-     * pre-removal hand (including the spell at {@code spellCardIndex}). Returns the index into the
-     * current hand after the spell has been removed.
+     * Validates exile-from-hand alternate casting cost. The supplied indices are into the
+     * pre-removal hand (including the spell at {@code spellCardIndex}); the returned indices are
+     * into the current hand after the spell has been removed, in descending order for safe removal.
      */
-    private int validateExileFromHandAlternateCost(GameData gameData, UUID playerId, Card card,
-                                                   ExileCardsFromHandCastingCost cost,
-                                                   Integer discardHandCardIndex, int spellCardIndex, int xValue) {
+    private List<Integer> validateExileFromHandAlternateCost(GameData gameData, UUID playerId, Card card,
+                                                             ExileCardsFromHandCastingCost cost,
+                                                             Integer discardHandCardIndex,
+                                                             List<Integer> discardHandCardIndices,
+                                                             int spellCardIndex, int xValue) {
         String label = cost.label() != null ? cost.label() + " card" : "a card";
         List<Card> hand = gameData.playerHands.get(playerId);
-        if (discardHandCardIndex == null || discardHandCardIndex == spellCardIndex || hand == null) {
-            throw new IllegalStateException("Must exile " + label + " from your hand to cast " + card.getName());
+        List<Integer> requestedIndices;
+        if (cost.count() == 1 && discardHandCardIndex != null) {
+            requestedIndices = List.of(discardHandCardIndex);
+        } else if (discardHandCardIndices != null && !discardHandCardIndices.isEmpty()) {
+            requestedIndices = discardHandCardIndices;
+        } else if (discardHandCardIndex != null) {
+            requestedIndices = List.of(discardHandCardIndex);
+        } else {
+            requestedIndices = List.of();
         }
-        // Before hand.remove(spell): index is absolute. After: shift past the removed spell.
+
+        if (hand == null || requestedIndices.size() != cost.count()
+                || requestedIndices.stream().anyMatch(index -> index == null)
+                || requestedIndices.stream().distinct().count() != requestedIndices.size()) {
+            throw new IllegalStateException("Must exile " + cost.count() + " " + label
+                    + (cost.count() == 1 ? "" : "s") + " from your hand to cast " + card.getName());
+        }
+
         boolean spellStillInHand = spellCardIndex >= 0 && spellCardIndex < hand.size()
                 && hand.get(spellCardIndex) == card;
-        int effectiveIndex = (!spellStillInHand && spellCardIndex >= 0 && discardHandCardIndex > spellCardIndex)
-                ? discardHandCardIndex - 1
-                : discardHandCardIndex;
-        if (spellStillInHand && (discardHandCardIndex < 0 || discardHandCardIndex >= hand.size())) {
-            throw new IllegalStateException("Must exile " + label + " from your hand to cast " + card.getName());
+        int preRemovalHandSize = hand.size() + (spellStillInHand ? 0 : 1);
+        List<Integer> effectiveIndices = new ArrayList<>();
+        for (Integer requestedIndex : requestedIndices) {
+            if (requestedIndex < 0 || requestedIndex >= preRemovalHandSize || requestedIndex == spellCardIndex) {
+                throw new IllegalStateException("Must exile " + cost.count() + " " + label
+                        + (cost.count() == 1 ? "" : "s") + " from your hand to cast " + card.getName());
+            }
+            int validationIndex = spellStillInHand ? requestedIndex : requestedIndex > spellCardIndex
+                    ? requestedIndex - 1 : requestedIndex;
+            Card toExile = hand.get(validationIndex);
+            if (cost.predicate() != null
+                    && !predicateEvaluationService.matchesCardPredicate(toExile, cost.predicate(), toExile.getId())) {
+                throw new IllegalStateException("Exiled card must be " + label);
+            }
+            // Shoal cycle: the exiled card's mana value must be the X chosen for the spell.
+            if (cost.manaValueEqualsX() && toExile.getManaValue() != xValue) {
+                throw new IllegalStateException("Exiled card must have mana value " + xValue);
+            }
+            effectiveIndices.add(requestedIndex > spellCardIndex ? requestedIndex - 1 : requestedIndex);
         }
-        if (!spellStillInHand && (effectiveIndex < 0 || effectiveIndex >= hand.size())) {
-            throw new IllegalStateException("Must exile " + label + " from your hand to cast " + card.getName());
-        }
-        Card toExile = hand.get(spellStillInHand ? discardHandCardIndex : effectiveIndex);
-        if (cost.predicate() != null
-                && !predicateEvaluationService.matchesCardPredicate(toExile, cost.predicate(), toExile.getId())) {
-            throw new IllegalStateException("Exiled card must be " + label);
-        }
-        // Shoal cycle: the exiled card's mana value must be the X chosen for the spell.
-        if (cost.manaValueEqualsX() && toExile.getManaValue() != xValue) {
-            throw new IllegalStateException("Exiled card must have mana value " + xValue);
-        }
-        return spellStillInHand ? discardHandCardIndex : effectiveIndex;
+        effectiveIndices.sort((first, second) -> Integer.compare(second, first));
+        return effectiveIndices;
     }
 
     private List<AlternateDiscardSelection> validateAlternateDiscardCosts(

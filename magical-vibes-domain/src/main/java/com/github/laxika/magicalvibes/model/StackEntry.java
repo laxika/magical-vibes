@@ -35,6 +35,9 @@ public class StackEntry {
     private boolean targetIdOverriddenForEffectResolution;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
+    private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    /** Card id of the spell whose stack object is the source of this ability. */
+    @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
     private final Zone targetZone;
@@ -495,6 +498,8 @@ public class StackEntry {
         this.targetId = source.targetId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.counters.putAll(source.counters);
+        this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
@@ -568,6 +573,18 @@ public class StackEntry {
 
     public Map<EffectSlot, List<CardEffect>> getGrantedTriggeredEffectsOnEntry() {
         return grantedTriggeredEffectsOnEntry;
+    }
+
+    public int getCounterCount(CounterType counterType) {
+        return counters.getOrDefault(counterType, 0);
+    }
+
+    public void setCounterCount(CounterType counterType, int count) {
+        if (count <= 0) {
+            counters.remove(counterType);
+        } else {
+            counters.put(counterType, count);
+        }
     }
 
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")

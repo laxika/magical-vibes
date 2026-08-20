@@ -63,6 +63,9 @@ public class Permanent {
      *  cleared at turn start — it stays set until an effect that reads a "since your last upkeep"
      *  window consumes it (Wiitigo's upkeep trigger clears it after resolving). */
     @Setter private boolean blockedOrWasBlockedSinceLastUpkeep;
+    /** Set when this permanent attacks, blocks, or becomes blocked and consumed by a
+     *  "since your last upkeep" effect. */
+    @Setter private boolean attackedOrBlockedSinceLastUpkeep;
     /** Set when this permanent's "whenever this becomes the target of a spell or ability for the first
      *  time each turn, counter that spell or ability" trigger (Glyph Keeper) has already fired this
      *  turn, so it won't trigger again until the flag is reset at the next turn start. */
@@ -610,6 +613,7 @@ public class Permanent {
         this.blockedThisTurn = source.blockedThisTurn;
         this.blockedThisCombat = source.blockedThisCombat;
         this.blockedOrWasBlockedSinceLastUpkeep = source.blockedOrWasBlockedSinceLastUpkeep;
+        this.attackedOrBlockedSinceLastUpkeep = source.attackedOrBlockedSinceLastUpkeep;
         this.becomeTargetCounterUsedThisTurn = source.becomeTargetCounterUsedThisTurn;
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);

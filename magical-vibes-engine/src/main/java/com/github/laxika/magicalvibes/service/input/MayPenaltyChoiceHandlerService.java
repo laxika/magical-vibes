@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
@@ -42,10 +44,13 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHand
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -1492,6 +1497,7 @@ public class MayPenaltyChoiceHandlerService {
                         player.getUsername() + " pays " + lifeAmount + " life. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} life to avoid penalty ({})", gameData.id,
                         player.getUsername(), lifeAmount, ability.sourceCard().getName());
+                forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, 0);
                 clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -1517,6 +1523,25 @@ public class MayPenaltyChoiceHandlerService {
             }
         }
 
+        if (accepted && effect.forcedCost() instanceof DiscardCardTypeCost discardCost) {
+            List<Integer> validIndices = matchingHandIndices(gameData, decidingPlayerId, discardCost);
+            if (validIndices.size() >= discardCost.count()) {
+                gameData.discardCausedByOpponent = false;
+                playerInputService.beginDiscardChoice(gameData, decidingPlayerId, validIndices,
+                        "Choose a card to discard for cumulative upkeep.", discardCost.count());
+                return;
+            }
+            // The hand changed since the may prompt; fall through to the unpaid branch.
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
+            forcedCostOrElseEffectHandler.payFlipCoins(
+                    gameData, decidingPlayerId, ability.sourceCard(), flipCost.count());
+            clearAnyPlayerPayState(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // Use the cost stored on the pending ability — it already reflects any dynamic
             // reduction (Draco's Domain) resolved when the prompt was created.
@@ -1528,7 +1553,12 @@ public class MayPenaltyChoiceHandlerService {
                     || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
                             && gameData.getLife(decidingPlayerId) >= lifeAmount);
             if (cost.canPay(pool) && canPayLife) {
+                var manaBefore = pool.getAllManaTotals();
                 cost.pay(pool);
+                var manaSpent = ManaPool.coloredManaSpent(manaBefore, pool.getAllManaTotals(), null);
+                int blackOrRedSpent = manaSpent.getOrDefault(ManaColor.BLACK, 0)
+                        + manaSpent.getOrDefault(ManaColor.RED, 0);
+                forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, blackOrRedSpent);
                 if (lifeAmount > 0) {
                     gameData.playerLifeTotals.put(
                             decidingPlayerId, gameData.getLife(decidingPlayerId) - lifeAmount);
@@ -1556,6 +1586,18 @@ public class MayPenaltyChoiceHandlerService {
             if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
                 return;
             }
+        }
+
+        if (accepted && effect.forcedCost() instanceof OpponentGainsLifeCost lifeCost
+                && forcedCostOrElseEffectHandler.payOpponentGainsLifeCost(
+                gameData, sourceControllerId, lifeCost, ability.sourceCard(), StackEntryType.TRIGGERED_ABILITY)) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted && forcedCostOrElseEffectHandler.beginCumulativeUpkeepGraveyardPayment(
+                gameData, ability, sourceControllerId)) {
+            return;
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost exileCost) {
@@ -1673,6 +1715,49 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but no eligible creature remains — fall through to the penalty.
         }
 
+        if (accepted && effect.forcedCost() instanceof PutCounterOnOpponentCreatureCost counterCost) {
+            UUID opponentId = gameQueryService.getOpponentId(gameData, decidingPlayerId);
+            List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, opponentId,
+                    permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
+                            && (counterCost.counterType() != CounterType.MINUS_ONE_MINUS_ONE
+                            || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                            && (counterCost.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)));
+            if (!candidates.isEmpty()) {
+                StackEntry counterEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                        ability.sourceCard().getName() + "'s ability", List.of(effect),
+                        ability.targetCardId(), ability.sourcePermanentId());
+                counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                if (forcedCostOrElseEffectHandler.putCounterOnChosenPermanent(
+                        gameData, decidingPlayerId, candidates, counterEntry, counterCost)) {
+                    if (candidates.size() == 1) {
+                        clearAnyPlayerPayState(gameData);
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    }
+                    return;
+                }
+            }
+        }
+
+        if (accepted && effect.forcedCost() instanceof GainControlOfPermanentsCost gainCost) {
+            UUID payerId = effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer()
+                    ? decidingPlayerId : sourceControllerId;
+            List<UUID> candidates = destructionSupport.collectPermanentIdsNotControlledBy(
+                    gameData, payerId, gainCost.filter());
+            if (candidates.size() >= gainCost.count()
+                    && forcedCostOrElseEffectHandler.beginGainControlPayment(
+                    gameData, payerId, candidates, ability.sourceCard(), ability.sourcePermanentId(),
+                    effect, gainCost.count())) {
+                if (candidates.size() == 1) {
+                    clearAnyPlayerPayState(gameData);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            // Accepted but no eligible permanent remains — fall through to the penalty.
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {
             List<UUID> candidates =
                     destructionSupport.collectPermanentIdsWithAnyCounter(gameData, sourceControllerId);
@@ -1781,12 +1866,26 @@ public class MayPenaltyChoiceHandlerService {
     }
 
     private int effectiveLifeAmount(GameData gameData, UUID payerId, PendingMayAbility ability,
-                                    PayLifeCost cost) {
+            PayLifeCost cost) {
         Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
         int sourceCounterCount = cost.perSourceCounter() == null || source == null
                 ? 0
                 : source.getCounterCount(cost.perSourceCounter());
         return cost.effectiveAmount(gameData.getLife(payerId), sourceCounterCount);
+    }
+
+    private List<Integer> matchingHandIndices(GameData gameData, UUID playerId,
+            DiscardCardTypeCost cost) {
+        List<Integer> matchingIndices = new ArrayList<>();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        for (int i = 0; hand != null && i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
+                matchingIndices.add(i);
+            }
+        }
+        return matchingIndices;
     }
 
     /** Queues the next APNAP player for an anyPlayerMayPay ForcedCostOrElse, or returns false if none remain. */

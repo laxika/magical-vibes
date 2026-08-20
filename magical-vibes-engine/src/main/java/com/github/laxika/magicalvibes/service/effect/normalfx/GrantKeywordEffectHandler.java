@@ -142,6 +142,42 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (grant.scope() == GrantScope.ENCHANTED_CREATURE
+                || grant.scope() == GrantScope.ENCHANTED_PERMANENT
+                || grant.scope() == GrantScope.EQUIPPED_CREATURE) {
+            Permanent source = entry.getSourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            Permanent target = source == null || source.getAttachedTo() == null
+                    ? null : gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+            boolean creatureScope = grant.scope() == GrantScope.ENCHANTED_CREATURE
+                    || grant.scope() == GrantScope.EQUIPPED_CREATURE;
+            if (target == null || (creatureScope && !gameQueryService.isCreature(gameData, target))) {
+                return;
+            }
+            if (grant.grantCondition() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
+                return;
+            }
+
+            Set<Keyword> grantableKeywords = grantableKeywords(gameData, target, grant.keywords());
+            if (grantableKeywords.isEmpty()) {
+                return;
+            }
+            addLegacyBucket(target, grant.duration(), grantableKeywords);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                    entry.getCard().getName(), null, entry.getControllerId(),
+                    new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
+                            grant.duration(), grant.grantCondition()),
+                    target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+
+            String keywordNames = formatKeywords(grant.keywords());
+            gameLogService.append(gameData, GameLog.builder().card(target.getCard())
+                    .text(" gains " + keywordNames + " " + durationLabel(grant.duration()) + ".").build());
+            log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(),
+                    grant.keywords(), grant.scope());
+            return;
+        }
+
         if (grant.scope() == GrantScope.ALL_CREATURES) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)

@@ -14,6 +14,8 @@ import java.util.UUID;
 public class ManaPool {
 
     private final EnumMap<ManaColor, Integer> pool = new EnumMap<>(ManaColor.class);
+    /** Snow mana is a tag on regular mana, like creature mana, and is not a separate mana type. */
+    private final EnumMap<ManaColor, Integer> snowMana = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> creatureMana = new EnumMap<>(ManaColor.class);
     /**
      * Mana that may only be spent to cast spells (e.g. mana from lands tapped via Piracy). Tracked as a
@@ -140,6 +142,7 @@ public class ManaPool {
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
+            snowMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
         abilityOnlyMana.put(color, 0);
@@ -165,6 +168,7 @@ public class ManaPool {
      */
     public ManaPool(ManaPool source) {
         pool.putAll(source.pool);
+        snowMana.putAll(source.snowMana);
         creatureMana.putAll(source.creatureMana);
         spellOnlyMana.putAll(source.spellOnlyMana);
         abilityOnlyMana.putAll(source.abilityOnlyMana);
@@ -263,9 +267,50 @@ public class ManaPool {
         pool.merge(color, amount, Integer::sum);
     }
 
+    /** Adds mana produced by a snow source. The mana keeps its normal color and gains the snow tag. */
+    public void addSnowMana(ManaColor color, int amount) {
+        add(color, amount);
+        addSnowManaTag(color, amount);
+    }
+
+    /** Copies a snow tag onto mana already present in this pool. */
+    public void addSnowManaTag(ManaColor color, int amount) {
+        snowMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getSnowMana(ManaColor color) {
+        return snowMana.getOrDefault(color, 0);
+    }
+
+    public int getSnowManaTotal() {
+        return snowMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Spends one snow mana of the given color, if available. */
+    public void removeSnowMana(ManaColor color) {
+        if (getSnowMana(color) > 0) {
+            remove(color);
+        }
+    }
+
+    /** Spends up to {@code amount} snow mana, preserving the ordinary mana payment API. */
+    public void removeSnowMana(int amount) {
+        for (ManaColor color : ManaColor.values()) {
+            int toRemove = Math.min(amount, getSnowMana(color));
+            for (int i = 0; i < toRemove; i++) {
+                removeSnowMana(color);
+            }
+            amount -= toRemove;
+            if (amount == 0) {
+                return;
+            }
+        }
+    }
+
     public void clear() {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
+            snowMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
@@ -460,6 +505,10 @@ public class ManaPool {
 
     public void remove(ManaColor color) {
         pool.merge(color, -1, Integer::sum);
+        int snow = snowMana.getOrDefault(color, 0);
+        if (snow > 0) {
+            snowMana.put(color, snow - 1);
+        }
         int promotedAbilityOnly = promotedAbilityOnlyMana.getOrDefault(color, 0);
         if (promotedAbilityOnly > 0) {
             promotedAbilityOnlyMana.put(color, promotedAbilityOnly - 1);
@@ -1355,6 +1404,7 @@ public class ManaPool {
 
             pool.put(color, current - amount);
             pool.merge(ManaColor.COLORLESS, amount, Integer::sum);
+            moveTaggedManaToColorless(snowMana, color, amount);
             moveTaggedManaToColorless(creatureMana, color, amount);
             moveTaggedManaToColorless(spellOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedAbilityOnlyMana, color, amount);
@@ -1442,6 +1492,7 @@ public class ManaPool {
         }
 
         clampColorTag(creatureMana, protectedColors);
+        clampColorTag(snowMana, protectedColors);
         clampColorTag(spellOnlyMana, protectedColors);
         clampColorTag(hasteGrantingMana, protectedColors);
         clampColorTag(uncounterableGrantingMana, protectedColors);

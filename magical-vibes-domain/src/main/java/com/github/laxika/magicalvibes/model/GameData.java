@@ -298,8 +298,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> creatureCardsDamagedBySourceThatDiedThisTurn = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → poison counters to give its controller when it dies this turn. */
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
-    /** Delayed trigger: creature card ID → whether it re-enters tapped, to return it to the battlefield under its owner's control if it dies this turn (Graceful Reprieve, Supernatural Stamina). */
-    public final Map<UUID, Boolean> creaturesReturnedToBattlefieldOnDeathThisTurn = new ConcurrentHashMap<>();
+    /** Delayed triggers: creature card ID → return details if it dies this turn (Graceful Reprieve, Supernatural Stamina, Adarkar Valkyrie). */
+    public final Map<UUID, List<DelayedReturnOnDeath>> creaturesReturnedToBattlefieldOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → effect registrations to resolve if it dies this turn (Skeletonize, Initiate of Blood). */
     public final Map<UUID, List<DelayedEffectOnDeath>> creatureTriggeringEffectOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → permanent ids of the creatures it returned under a player's control. */
@@ -3387,7 +3387,8 @@ public class GameData {
         this.creatureCardsDamagedBySourceThatDiedThisTurn.forEach((k, v) ->
                 copy.creatureCardsDamagedBySourceThatDiedThisTurn.put(k, new HashSet<>(v)));
         copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
-        copy.creaturesReturnedToBattlefieldOnDeathThisTurn.putAll(this.creaturesReturnedToBattlefieldOnDeathThisTurn);
+        this.creaturesReturnedToBattlefieldOnDeathThisTurn.forEach((k, v) ->
+                copy.creaturesReturnedToBattlefieldOnDeathThisTurn.put(k, new ArrayList<>(v)));
         this.creatureTriggeringEffectOnDeathThisTurn.forEach((k, v) ->
                 copy.creatureTriggeringEffectOnDeathThisTurn.put(k, new ArrayList<>(v)));
         this.seraphReturnedCreatures.forEach((k, v) ->
@@ -3434,6 +3435,7 @@ public class GameData {
         copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
         copy.graveyardTargetOperation.anyNumber = this.graveyardTargetOperation.anyNumber;
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
+        copy.graveyardTargetOperation.cumulativeUpkeepPayment = this.graveyardTargetOperation.cumulativeUpkeepPayment;
         copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null

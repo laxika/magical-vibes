@@ -148,6 +148,7 @@ public final class EffectResolution {
             }
         }
         for (CardEffect e : spellEffects) {
+            if (e instanceof CostEffect) continue;
             collectTargetTypes(e, result);
         }
         for (CardEffect e : etbEffects) {

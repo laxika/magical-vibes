@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSuppo
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +56,7 @@ public class PermanentChoiceSpellHandlerService {
     private final SpellCastingService spellCastingService;
     private final ChandraTorchExileCastSupport chandraTorchExileCastSupport;
     private final TargetLegalityService targetLegalityService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -67,7 +69,8 @@ public class PermanentChoiceSpellHandlerService {
                                               PsychicBattleSupport psychicBattleSupport,
                                               @Lazy SpellCastingService spellCastingService,
                                               @Lazy ChandraTorchExileCastSupport chandraTorchExileCastSupport,
-                                              TargetLegalityService targetLegalityService) {
+                                              TargetLegalityService targetLegalityService,
+                                              InteractionHandlerRegistry interactionHandlerRegistry) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -80,6 +83,7 @@ public class PermanentChoiceSpellHandlerService {
         this.spellCastingService = spellCastingService;
         this.chandraTorchExileCastSupport = chandraTorchExileCastSupport;
         this.targetLegalityService = targetLegalityService;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -180,13 +184,42 @@ public class PermanentChoiceSpellHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, lct.cardToCast(), lct.controllerId(), false);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            if (lct.cardsToBottom() != null) {
+                beginBottomReorder(gameData, lct.controllerId(), lct.cardsToBottom());
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+        } else if (lct.cardsToBottom() != null) {
+            List<Card> uncastCards = new ArrayList<>(lct.cardsToBottom());
+            uncastCards.add(lct.cardToCast());
+            beginBottomReorder(gameData, lct.controllerId(), uncastCards);
+            log.info("Game {} - {} Ripple cast target no longer exists", gameData.id, lct.cardToCast().getName());
         } else {
             graveyardService.addCardToGraveyard(gameData, lct.controllerId(), lct.cardToCast());
             gameLogService.append(gameData, GameLog.cardThen(lct.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
             log.info("Game {} - {} cast-from-library target no longer exists", gameData.id, lct.cardToCast().getName());
         }
 
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private void beginBottomReorder(GameData gameData, UUID ownerId, List<Card> cards) {
+        if (cards.isEmpty()) {
+            return;
+        }
+        if (cards.size() == 1) {
+            gameData.playerDecks.get(ownerId).add(cards.getFirst());
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryReorder(
+                ownerId,
+                new ArrayList<>(cards),
+                true,
+                ownerId,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
     }
 
     public void handleExileCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.ExileCastSpellTarget ect) {

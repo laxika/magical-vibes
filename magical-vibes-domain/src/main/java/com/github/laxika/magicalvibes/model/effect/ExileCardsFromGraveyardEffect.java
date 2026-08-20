@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Exile up to {@code maxTargets} target cards from graveyard(s) and gain life for it. The targets
  * are chosen as the spell/ability goes on the stack; choosing zero cards covers a "you may" clause.
  *
- * @param maxTargets            how many graveyard cards may be chosen ("up to N target cards")
+ * @param maxTargets            how many graveyard cards may be chosen ("up to N target cards");
+ *                              {@code 0} means the limit comes from the ability's X value
  * @param lifeGain              life gained — a flat amount (Rooftop Percher's 3) unless
  *                              {@code lifeGainPerExiledCard} is set; 0 = no life gain
  * @param lifeGainPerExiledCard when {@code true}, {@code lifeGain} is granted once per card actually
@@ -49,6 +50,11 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                          boolean singleGraveyard) {
         this(maxTargets, 0, false, null, false, conditionalFilter,
                 conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard);
+    }
+
+    /** Whether the maximum target count is supplied by the ability's X value. */
+    public boolean xScaled() {
+        return maxTargets == 0;
     }
 
     @Override

@@ -913,6 +913,14 @@ public class GameTestHarness {
         castInstantWithDiscard(player, cardIndex, targetId, exileHandCardIndex);
     }
 
+    /** Cast a targeted instant using an exile-from-hand alternate cost with multiple cards. */
+    public void castInstantWithAlternateExileFromHand(Player player, int cardIndex, UUID targetId,
+                                                      List<Integer> exileHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, List.of(), null, List.of(), false, exileHandCardIndices.getFirst(), exileHandCardIndices);
+    }
+
     /** Cast a multi-target instant using an exile-from-hand alternate casting cost. */
     public void castInstantWithAlternateExileFromHand(Player player, int cardIndex, List<UUID> targetIds,
                                                       int exileHandCardIndex) {
@@ -1343,6 +1351,11 @@ public class GameTestHarness {
     public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
+    }
+
+    public void activateStackAbility(Player player, UUID stackCardId, int abilityIndex, int discardHandCardIndex) {
+        ensurePriority(player);
+        gameService.activateStackAbility(gameData, player, stackCardId, abilityIndex, discardHandCardIndex);
     }
 
     /** Activates a mana ability the way the client does while paying for something. */

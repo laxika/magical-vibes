@@ -82,6 +82,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -427,6 +428,29 @@ class SpellCastingServiceTest {
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isZero();
             assertThat(gd.playerHands.get(player1Id)).containsExactly(spell);
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Exiles every selected card for a multi-card hand alternate cost")
+        void exilesMultipleCardsForAlternateCost() {
+            Card spell = createSorcery("Multi-exile Spell", "{5}{W}{W}");
+            spell.addCastingOption(new AlternateHandCast(List.of(
+                    new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.WHITE), "white", 2))));
+            Card firstWhiteCard = createInstant("White Card One", "{W}");
+            firstWhiteCard.setColor(CardColor.WHITE);
+            firstWhiteCard.setColors(List.of(CardColor.WHITE));
+            Card secondWhiteCard = createInstant("White Card Two", "{1}{W}");
+            secondWhiteCard.setColor(CardColor.WHITE);
+            secondWhiteCard.setColors(List.of(CardColor.WHITE));
+            setHand(player1Id, List.of(spell, firstWhiteCard, secondWhiteCard));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any())).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, null, null, null, List.of(), List.of(), false,
+                    null, null, List.of(), null, null, false, 1, List.of(1, 2));
+
+            verify(exileService, times(2)).exileCard(eq(gd), eq(player1Id), any(Card.class));
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
         }
 
         @Test

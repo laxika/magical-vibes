@@ -726,7 +726,7 @@ public class TriggeredAbilityQueueService {
             // There are always valid targets (at least the players, or filtered permanents)
             gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+            playerInputService.beginAnyTargetChoice(gameData, pending.choosingPlayerId(),
                     validPermanentTargets, validPlayerTargets, prompt);
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),

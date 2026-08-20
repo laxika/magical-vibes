@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEffect;
@@ -996,6 +997,38 @@ public class DamageTriggerCollectorService {
                         + gameData.playerIdToName.get(recipientId) + "."));
         log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
                 sd.totalDamage(), gameData.playerIdToName.get(recipientId));
+        return true;
+    }
+
+    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    private boolean handleGainLifeOnNoncreatureSourceDamage(TriggerMatchContext match,
+            GainLifeEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (sd.totalDamage() <= 0 || !match.controllerId().equals(sd.sourceControllerId())) return false;
+        boolean creatureSource = sd.sourceCard().hasType(CardType.CREATURE);
+        if (sd.sourcePermanentId() != null) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(match.gameData(), sd.sourcePermanentId());
+            if (sourcePermanent != null) {
+                creatureSource = gameQueryService.isCreature(match.gameData(), sourcePermanent);
+            }
+        }
+        if (creatureSource) return false;
+
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                watcher.getId());
+        entry.setEventValue(sd.totalDamage());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers for {} damage from a noncreature source",
+                match.gameData().id, watcher.getCard().getName(), sd.totalDamage());
         return true;
     }
 

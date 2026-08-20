@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
@@ -245,6 +246,8 @@ public class AmountEvaluationService {
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
+            case CountersOnStackEntryCard c ->
+                    countCountersOnStackEntryCard(gameData, c, ctx);
             case TimesSourceRegeneratedThisTurn ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTimesRegeneratedThisTurn();
             case CreaturesDevoured ignored ->
@@ -638,13 +641,17 @@ public class AmountEvaluationService {
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx,
                                 boolean includeSourceIfAbsent) {
-        // In static evaluation the filter context carries a null GameData: type and keyword checks then
+        // In static evaluation ordinary filters use a null GameData: type and keyword checks then
         // use intrinsic values, so counting never calls computeStaticBonus on other permanents
-        // (which could recurse back into the count being computed). The P/T leaves are exempt —
-        // they route through GameQueryService's recursion-safe accessors. The source identity is
-        // supplied either way: it costs no query, and without it source-relative predicates
-        // silently match nothing.
-        FilterContext filterContext = GameQueryService.isStaticEvaluationActive()
+        // (which could recurse back into the count being computed). Ownership-sensitive filters
+        // retain live board context because ownership is not intrinsic to a Permanent. The P/T
+        // leaves are exempt — they route through GameQueryService's recursion-safe accessors. The
+        // source identity is supplied either way: it costs no query, and without it source-relative
+        // predicates silently match nothing.
+        boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
+        boolean ownershipNeedsBoard = staticEvaluation
+                && predicateEvaluationService.requiresGameDataForStaticFilter(count.filter());
+        FilterContext filterContext = staticEvaluation && !ownershipNeedsBoard
                 ? FilterContext.empty()
                 : FilterContext.of(gameData);
         filterContext = filterContext.withSourceControllerId(ctx.controllerId());
@@ -667,7 +674,10 @@ public class AmountEvaluationService {
                         && permanent.getId().equals(ctx.sourcePermanent().getId())) {
                     continue;
                 }
-                if (predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext)) {
+                boolean matchesFilter = ownershipNeedsBoard
+                        ? predicateEvaluationService.matchesStaticFilter(permanent, count.filter(), filterContext)
+                        : predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext);
+                if (matchesFilter) {
                     matches++;
                 }
             }
@@ -847,6 +857,22 @@ public class AmountEvaluationService {
     private int countCountersOnLinkedPermanent(GameData gameData, CountersOnLinkedPermanent count) {
         Permanent linked = gameQueryService.findPermanentById(gameData, count.linkedPermanentId());
         return linked == null ? 0 : linked.getCounterCount(count.counterType());
+    }
+
+    private int countCountersOnStackEntryCard(GameData gameData, CountersOnStackEntryCard amount,
+                                              AmountContext ctx) {
+        if (ctx.stackEntry() != null) {
+            return ctx.stackEntry().getCounterCount(amount.counterType());
+        }
+        if (ctx.sourceCard() == null) {
+            return 0;
+        }
+        return gameData.stack.stream()
+                .filter(entry -> entry.getCard() != null)
+                .filter(entry -> entry.getCard().getId().equals(ctx.sourceCard().getId()))
+                .findFirst()
+                .map(entry -> entry.getCounterCount(amount.counterType()))
+                .orElse(0);
     }
 
     private int countColorManaSymbolsInHand(

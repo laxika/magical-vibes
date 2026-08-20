@@ -49,7 +49,8 @@ public record LibrarySearchParams(
         boolean sourceSideboard,
         CardSubtype battlefieldIfChosenBeholdType,
         Integer battlefieldIfManaValueAtMost,
-        boolean placeBattlefieldCardsSimultaneously
+        boolean placeBattlefieldCardsSimultaneously,
+        boolean allowCastFromLibraryWhileSearching
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -76,7 +77,19 @@ public record LibrarySearchParams(
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
-                placeBattlefieldCardsSimultaneously);
+                placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching);
+    }
+
+    public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
+        return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
+                remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
+                returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                placeBattlefieldCardsSimultaneously, allow);
     }
 
     public static class Builder {
@@ -117,6 +130,7 @@ public record LibrarySearchParams(
         private CardSubtype battlefieldIfChosenBeholdType;
         private Integer battlefieldIfManaValueAtMost;
         private boolean placeBattlefieldCardsSimultaneously;
+        private boolean allowCastFromLibraryWhileSearching;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -279,6 +293,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder allowCastFromLibraryWhileSearching(boolean allowCastFromLibraryWhileSearching) {
+            this.allowCastFromLibraryWhileSearching = allowCastFromLibraryWhileSearching;
+            return this;
+        }
+
         public Builder battlefieldIfChosenBeholdType(CardSubtype battlefieldIfChosenBeholdType) {
             this.battlefieldIfChosenBeholdType = battlefieldIfChosenBeholdType;
             return this;
@@ -304,7 +323,7 @@ public record LibrarySearchParams(
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                     returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
-                    placeBattlefieldCardsSimultaneously);
+                    placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching);
         }
     }
 }

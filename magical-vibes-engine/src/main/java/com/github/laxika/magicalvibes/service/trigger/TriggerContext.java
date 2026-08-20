@@ -159,6 +159,9 @@ public sealed interface TriggerContext {
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
 
+    /** Context for triggers that fire when a player loses a coin flip. */
+    record CoinFlipLost(UUID losingPlayerId) implements TriggerContext {}
+
     /**
      * Context for noncombat-damage-to-opponent triggers (ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).
      */
@@ -435,14 +438,19 @@ public sealed interface TriggerContext {
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}
 
     /**
-     * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers (Justice). Carries the damage source object,
-     * its controller (the reflection recipient), and the total damage the source dealt in this
-     * event (already summed across every simultaneous target).
+     * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers. Carries the damage source object, its
+     * controller, the source permanent when applicable, and the total damage the source dealt in
+     * this event (already summed across every simultaneous target).
      */
-    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
-                             Map<UUID, Integer> damageToPlayers) implements TriggerContext {
+    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                             int totalDamage, Map<UUID, Integer> damageToPlayers) implements TriggerContext {
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
-            this(sourceCard, sourceControllerId, totalDamage, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, Map.of());
+        }
+
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
+                                 Map<UUID, Integer> damageToPlayers) {
+            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers);
         }
     }
 

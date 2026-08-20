@@ -128,6 +128,8 @@ public class ActivatedAbility {
      * {@link #withXValueFromControlledCreatureCounters()}.
      */
     private boolean xValueFromControlledCreatureCounters;
+    /** Color of cards in the controller's hand that bounds the chosen xValue, or null. */
+    private CardColor xValueFromCardsInHandColor;
     /**
      * Whole-game activation cap for "Activate only once" (e.g. Goblin Ski Patrol). Null = no such
      * cap. Counted per permanent object in {@code GameData.activatedAbilityUsesThisGame}, so a
@@ -279,6 +281,7 @@ public class ActivatedAbility {
         copy.requiresXValue = this.requiresXValue;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
+        copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
@@ -563,6 +566,18 @@ public class ActivatedAbility {
         this.requiresXValue = true;
         this.xValueFromControlledCreatureCounters = true;
         return this;
+    }
+
+    /** Marks the ability as choosing X from cards of the given color in the controller's hand. */
+    public ActivatedAbility withXValueFromCardsInHand(CardColor color) {
+        this.requiresXValue = true;
+        this.xValueFromCardsInHandColor = color;
+        return this;
+    }
+
+    /** Backward-compatible shorthand for abilities that reveal white cards from hand. */
+    public ActivatedAbility withXValueFromWhiteCardsInHand() {
+        return withXValueFromCardsInHand(CardColor.WHITE);
     }
 
     /**

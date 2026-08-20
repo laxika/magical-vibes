@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
@@ -1518,6 +1519,23 @@ class StepTriggerServiceTest {
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Controller end-step multi-target effect queues slot-by-slot target selection")
+        void controllerEndStepMultiTargetEffectQueuesMultiTargetSelection() {
+            Card card = createCardWithName("Magmatic Core");
+            DealDividedDamageEffect effect = DealDividedDamageEffect.xAmongTargetCreaturesAtResolution();
+            card.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
+                    "Target must be a creature."), 0, 99)
+                    .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, effect);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)).isTrue();
         }
 
         @Test

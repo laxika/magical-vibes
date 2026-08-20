@@ -61,6 +61,11 @@ public class ExileFreeCastSupport {
         }
 
         Card card = exiledEntry.card();
+        if (card.isCastOnlyFromGraveyard()) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast from exile and stays exiled."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         String playerName = player.getUsername();
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));

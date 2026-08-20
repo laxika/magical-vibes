@@ -1,15 +1,23 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -20,12 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
@@ -40,10 +47,89 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     private final com.github.laxika.magicalvibes.service.DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final GraveyardService graveyardService;
+    private final LifeSupport lifeSupport;
+    private final CoinFlipCostSupport coinFlipCostSupport;
+
+    @Autowired
+    public ForcedCostOrElseEffectHandler(DestructionSupport destructionSupport,
+            GameQueryService gameQueryService, PredicateEvaluationService predicateEvaluationService,
+            PlayerInputService playerInputService, LibraryExileSupport libraryExileSupport,
+            GraveyardTopExileSupport graveyardTopExileSupport, PermanentCounterSupport permanentCounterSupport,
+            com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
+            com.github.laxika.magicalvibes.service.DrawService drawService,
+            com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService,
+            GraveyardService graveyardService, LifeSupport lifeSupport,
+            CoinFlipCostSupport coinFlipCostSupport) {
+        this.destructionSupport = destructionSupport;
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.playerInputService = playerInputService;
+        this.libraryExileSupport = libraryExileSupport;
+        this.graveyardTopExileSupport = graveyardTopExileSupport;
+        this.permanentCounterSupport = permanentCounterSupport;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.drawService = drawService;
+        this.amountEvaluationService = amountEvaluationService;
+        this.graveyardService = graveyardService;
+        this.lifeSupport = lifeSupport;
+        this.coinFlipCostSupport = coinFlipCostSupport;
+    }
+
+    /** Compatibility constructor for focused handler tests that do not use life-gain costs. */
+    public ForcedCostOrElseEffectHandler(DestructionSupport destructionSupport,
+            GameQueryService gameQueryService, PredicateEvaluationService predicateEvaluationService,
+            PlayerInputService playerInputService, LibraryExileSupport libraryExileSupport,
+            GraveyardTopExileSupport graveyardTopExileSupport, PermanentCounterSupport permanentCounterSupport,
+            com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
+            com.github.laxika.magicalvibes.service.DrawService drawService,
+            com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService,
+            GraveyardService graveyardService) {
+        this(destructionSupport, gameQueryService, predicateEvaluationService, playerInputService,
+                libraryExileSupport, graveyardTopExileSupport, permanentCounterSupport,
+                interactionHandlerRegistry, drawService, amountEvaluationService, graveyardService, null, null);
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return ForcedCostOrElseEffect.class;
+    }
+
+    public void resolvePaidEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect,
+            int xValue) {
+        enqueuePaidEffects(gameData, entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(),
+                entry.getSourcePermanentSnapshot(), effect.paidEffects(), xValue);
+    }
+
+    public void resolvePaidEffects(GameData gameData, PendingMayAbility ability, ForcedCostOrElseEffect effect,
+            int xValue) {
+        enqueuePaidEffects(gameData, ability.sourceCard(), ability.controllerId(), ability.sourcePermanentId(),
+                ability.sourcePermanentSnapshot(), effect.paidEffects(), xValue);
+    }
+
+    public void payFlipCoins(GameData gameData, UUID playerId, Card sourceCard, int count) {
+        if (coinFlipCostSupport != null) {
+            coinFlipCostSupport.pay(gameData, playerId, sourceCard, count);
+        }
+    }
+
+    private void enqueuePaidEffects(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, List<CardEffect> paidEffects, int xValue) {
+        if (paidEffects.isEmpty()) {
+            return;
+        }
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        int pendingIndex = gameData.pendingEffectResolutionIndex;
+        if (pendingEntry != null
+                && pendingEntry.getCard().getId().equals(sourceCard.getId())
+                && pendingIndex >= 0
+                && pendingIndex <= pendingEntry.getEffectsToResolve().size()) {
+            pendingEntry.insertEffectsToResolve(pendingIndex, paidEffects);
+            return;
+        }
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
+                sourceCard.getName() + "'s ability", new ArrayList<>(paidEffects), xValue, sourcePermanentId);
+        entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        gameData.enqueueTrigger(entry);
     }
 
     /**
@@ -63,9 +149,72 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         return Optional.of(true);
     }
 
+    public boolean beginCumulativeUpkeepGraveyardPayment(GameData gameData, PendingMayAbility ability,
+                                                         UUID controllerId) {
+        ForcedCostOrElseEffect forcedCost = ability.effects().stream()
+                .filter(ForcedCostOrElseEffect.class::isInstance)
+                .map(ForcedCostOrElseEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (forcedCost == null
+                || !(forcedCost.forcedCost() instanceof PutCardsFromSingleGraveyardOnBottomOfLibraryCost cost)
+                || !hasEnoughCumulativeUpkeepCards(gameData, cost)) {
+            return false;
+        }
+
+        gameData.graveyardTargetOperation.cumulativeUpkeepPayment =
+                new GraveyardTargetOperationState.CumulativeUpkeepPaymentContext(
+                        controllerId, ability.sourceCard(), ability.sourcePermanentId(), forcedCost,
+                        cost.cardsPerPayment(), cost.payments(), List.of());
+        gameData.graveyardTargetOperation.singleGraveyard = true;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
+                allGraveyardCards(gameData), cost.cardsPerPayment(), cost.cardsPerPayment(),
+                "Choose " + cost.cardsPerPayment()
+                        + " cards from a single graveyard for the first cumulative upkeep payment.");
+        return true;
+    }
+
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ForcedCostOrElseEffect) effect;
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
+            UUID payer = resolvePayer(gameData, entry, e);
+            if (payer == null || coinFlipCostSupport == null) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), payer, List.of(e),
+                        entry.getCard().getName() + " - Flip " + flipCost.count() + " coin(s)?",
+                        entry.getTargetId(), null, entry.getSourcePermanentId()));
+                return;
+            }
+            coinFlipCostSupport.pay(gameData, payer, entry.getCard(), flipCost.count());
+            return;
+        }
+
+        if (e.forcedCost() instanceof DiscardCardTypeCost discardCost) {
+            UUID payer = resolvePayer(gameData, entry, e);
+            List<Integer> validIndices = matchingHandIndices(gameData, payer, discardCost);
+            if (payer == null || validIndices.size() < discardCost.count()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), payer, List.of(e),
+                        entry.getCard().getName() + " - Discard " + discardCost.count()
+                                + " card(s) to pay cumulative upkeep?",
+                        entry.getTargetId(), null, entry.getSourcePermanentId()));
+                return;
+            }
+            gameData.discardCausedByOpponent = false;
+            playerInputService.beginDiscardChoice(gameData, payer, validIndices,
+                    "Choose a card to discard for cumulative upkeep.", discardCost.count());
+            return;
+        }
 
         if (e.forcedCost() instanceof PayLifeCost payLifeCost) {
             UUID payer = resolvePayer(gameData, entry, e);
@@ -181,6 +330,42 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             libraryExileSupport.exileTopCards(gameData, entry.getControllerId(), exileCost.count());
+            return;
+        }
+
+        if (e.forcedCost() instanceof PutCardsFromSingleGraveyardOnBottomOfLibraryCost cost) {
+            if (!hasEnoughCumulativeUpkeepCards(gameData, cost)) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Put " + cost.cardsPerPayment()
+                                + " card(s) from a single graveyard on the bottom of their owner's library "
+                                + "for each of " + cost.payments() + " cumulative upkeep payment(s)?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+            return;
+        }
+
+        if (e.forcedCost() instanceof OpponentGainsLifeCost lifeCost) {
+            UUID sourceControllerId = entry.getControllerId();
+            if (!canPayOpponentGainsLifeCost(gameData, sourceControllerId)) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), sourceControllerId, List.of(e),
+                        entry.getCard().getName() + " - Have an opponent gain "
+                                + lifeCost.amount() + " life?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            payOpponentGainsLifeCost(gameData, sourceControllerId, lifeCost, entry.getCard(), entry.getEntryType());
             return;
         }
 
@@ -389,6 +574,58 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.forcedCost() instanceof PutCounterOnOpponentCreatureCost counterCost) {
+            UUID payerId = resolvePayer(gameData, entry, e);
+            UUID opponentId = payerId == null ? null : gameQueryService.getOpponentId(gameData, payerId);
+            List<UUID> candidates = opponentId == null
+                    ? List.of()
+                    : destructionSupport.collectCreatureIds(gameData, opponentId,
+                            permanent -> canPutCounterOnPermanent(gameData, permanent, counterCost.counterType()));
+            if (candidates.isEmpty()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                String counterName = permanentCounterSupport.counterTypeName(counterCost.counterType());
+                String counterText = counterCost.count() == 1
+                        ? "a " + counterName + " counter"
+                        : counterCost.count() + " " + counterName + " counters";
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), payerId, List.of(e),
+                        entry.getCard().getName() + " - Put " + counterText
+                                + " on a creature an opponent controls?",
+                        entry.getTargetId(), null, entry.getSourcePermanentId(), null,
+                        0, 0, null, null, null, entry.getSourcePermanentSnapshot(),
+                        entry.getControllerId(), null));
+                return;
+            }
+            if (!putCounterOnChosenPermanent(gameData, payerId, candidates, entry, counterCost)) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+            }
+            return;
+        }
+
+        if (e.forcedCost() instanceof GainControlOfPermanentsCost gainCost) {
+            UUID payerId = resolvePayer(gameData, entry, e);
+            List<UUID> candidates = payerId == null
+                    ? List.of()
+                    : destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId, gainCost.filter());
+            if (candidates.size() < gainCost.count()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), payerId, List.of(e),
+                        entry.getCard().getName() + " - Gain control of " + gainCost.count()
+                                + " permanent(s)?", entry.getTargetId(), null, entry.getSourcePermanentId()));
+                return;
+            }
+            beginGainControlPayment(gameData, payerId, candidates, entry.getCard(), entry.getSourcePermanentId(),
+                    e, gainCost.count());
+            return;
+        }
+
         if (e.forcedCost() instanceof SacrificeMultiplePermanentsCost multiCost) {
             resolveMultiplePermanentSacrifice(gameData, entry, e, multiCost);
             return;
@@ -454,6 +691,24 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                         "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
     }
 
+    private boolean hasEnoughCumulativeUpkeepCards(GameData gameData,
+                                                    PutCardsFromSingleGraveyardOnBottomOfLibraryCost cost) {
+        int availablePayments = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+            availablePayments += graveyard.size() / cost.cardsPerPayment();
+        }
+        return availablePayments >= cost.payments();
+    }
+
+    private List<Card> allGraveyardCards(GameData gameData) {
+        List<Card> cards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            cards.addAll(gameData.playerGraveyards.getOrDefault(playerId, List.of()));
+        }
+        return cards;
+    }
+
     /**
      * The player who is asked to pay: the source's controller by default, the stack entry's
      * {@code targetId} for "that player may …" (Mind Whip / Pillar Tombs of Aku), or the defending
@@ -473,6 +728,20 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
         }
         return entry.getControllerId();
+    }
+
+    private List<Integer> matchingHandIndices(GameData gameData, UUID playerId,
+            com.github.laxika.magicalvibes.model.effect.HandCardCost cost) {
+        List<Integer> matchingIndices = new ArrayList<>();
+        List<Card> hand = playerId == null ? null : gameData.playerHands.get(playerId);
+        for (int i = 0; hand != null && i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
+                matchingIndices.add(i);
+            }
+        }
+        return matchingIndices;
     }
 
     private int effectiveLifeAmount(GameData gameData, UUID payer, StackEntry entry,
@@ -508,9 +777,16 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     /** Pays a creature-counter forced cost, pausing for a creature choice when needed. */
     public boolean putCounterOnChosenPermanent(GameData gameData, UUID payerId, List<UUID> candidates,
             StackEntry entry, PutCounterOnControlledCreatureCost cost) {
+        return putCounterOnChosenPermanent(gameData, payerId, candidates, entry,
+                cost.counterType(), cost.count());
+    }
+
+    /** Pays an opponent-creature counter forced cost, pausing for a creature choice when needed. */
+    public boolean putCounterOnChosenPermanent(GameData gameData, UUID payerId, List<UUID> candidates,
+            StackEntry entry, PutCounterOnOpponentCreatureCost cost) {
         if (candidates.size() == 1) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, candidates.getFirst());
-            if (permanent == null || !canPutCounterOnPermanent(gameData, permanent, cost)) {
+            if (permanent == null || !canPutCounterOnPermanent(gameData, permanent, cost.counterType())) {
                 return false;
             }
             StackEntry placementEntry = new StackEntry(entry);
@@ -521,18 +797,44 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, 1,
-                new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer(
+                new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.OpponentCreatureCounterPlacement(
                         cost.counterType(), cost.count(), payerId),
+                "Choose a creature to put a counter on.");
+        return true;
+    }
+
+    private boolean putCounterOnChosenPermanent(GameData gameData, UUID payerId, List<UUID> candidates,
+            StackEntry entry, com.github.laxika.magicalvibes.model.CounterType counterType, int count) {
+        if (candidates.size() == 1) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, candidates.getFirst());
+            if (permanent == null || !canPutCounterOnPermanent(gameData, permanent, counterType)) {
+                return false;
+            }
+            StackEntry placementEntry = new StackEntry(entry);
+            placementEntry.setControllerId(payerId);
+            permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, permanent,
+                    counterType, count);
+            return true;
+        }
+
+        playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, 1,
+                new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer(
+                        counterType, count, payerId),
                 "Choose a creature to put a counter on.");
         return true;
     }
 
     private boolean canPutCounterOnPermanent(GameData gameData, Permanent permanent,
             PutCounterOnControlledCreatureCost cost) {
+        return canPutCounterOnPermanent(gameData, permanent, cost.counterType());
+    }
+
+    private boolean canPutCounterOnPermanent(GameData gameData, Permanent permanent,
+            com.github.laxika.magicalvibes.model.CounterType counterType) {
         if (gameQueryService.cantHaveCounters(gameData, permanent)) {
             return false;
         }
-        return switch (cost.counterType()) {
+        return switch (counterType) {
             case MINUS_ONE_MINUS_ONE -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent);
             case PLUS_ONE_PLUS_ONE -> !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent);
             default -> true;
@@ -554,6 +856,47 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             destructionSupport.createTokenForPlayer(gameData, opponentId, cost.tokenTemplate(), sourceName,
                     sourceSetCode);
         }
+    }
+
+    /** Whether the source controller's opponent can gain the life required by the cost. */
+    public boolean canPayOpponentGainsLifeCost(GameData gameData, UUID sourceControllerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, sourceControllerId);
+        return opponentId != null && gameQueryService.canPlayerGainLife(gameData, opponentId);
+    }
+
+    /** Pays an opponent-life-gain cost through the normal life-gain replacement and trigger path. */
+    public boolean payOpponentGainsLifeCost(GameData gameData, UUID sourceControllerId,
+            OpponentGainsLifeCost cost, Card sourceCard,
+            com.github.laxika.magicalvibes.model.StackEntryType sourceEntryType) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, sourceControllerId);
+        if (opponentId == null || !gameQueryService.canPlayerGainLife(gameData, opponentId)) {
+            return false;
+        }
+        lifeSupport.applyGainLife(gameData, opponentId, cost.amount(), null, sourceCard, sourceEntryType);
+        return true;
+    }
+
+    /** Pays a gain-control forced cost, prompting when more than one permanent is eligible. */
+    public boolean beginGainControlPayment(GameData gameData, UUID payerId, List<UUID> candidates,
+            com.github.laxika.magicalvibes.model.Card sourceCard, UUID sourcePermanentId,
+            ForcedCostOrElseEffect effect, int count) {
+        if (candidates.size() < count) {
+            return false;
+        }
+        if (count == 1 && candidates.size() == 1) {
+            Permanent target = gameQueryService.findPermanentById(gameData, candidates.getFirst());
+            if (target == null) {
+                return false;
+            }
+            destructionSupport.gainPermanentControl(gameData, target, payerId, sourceCard.getName());
+            return true;
+        }
+        ForcedCostOrElseEffect choiceEffect = effect;
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ForcedCostOrElse(
+                payerId, sourcePermanentId, sourceCard, choiceEffect));
+        playerInputService.beginPermanentChoice(gameData, payerId, candidates,
+                "Choose a permanent to gain control of.");
+        return true;
     }
 
     /**

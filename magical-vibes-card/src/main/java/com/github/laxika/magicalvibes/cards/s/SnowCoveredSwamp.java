@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ICE", collectorNumber = "372")
+@CardRegistration(set = "CSP", collectorNumber = "153")
 public class SnowCoveredSwamp extends Card {
 
     public SnowCoveredSwamp() {

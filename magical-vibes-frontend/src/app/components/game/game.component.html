@@ -609,8 +609,8 @@
             [class.playable]="isCardPlayable($index)"
             [class.casting-pending]="choice.targeting.payingForCast && choice.targeting.pendingCastCardIndex === $index"
             [class.choosable-card]="(choice.choosingFromHand && choice.isChoosableCard($index)) || choice.targeting.isBuybackDiscardSelectable($index)"
-            [class.alternate-cost-selected]="choice.targeting.isBuybackDiscardSelected($index)"
-            (click)="choice.targeting.choosingBuybackDiscard ? choice.targeting.toggleBuybackDiscard($index) : (choice.choosingFromHand ? choice.chooseCardFromHand($index) : playCard($index))"
+            [class.alternate-cost-selected]="choice.targeting.isBuybackDiscardSelected($index) || choice.targeting.isAlternateCostHandCardSelected($index)"
+            (click)="choice.targeting.selectingAlternateCostHandCard ? choice.targeting.selectAlternateCostHandCard($index) : (choice.targeting.choosingBuybackDiscard ? choice.targeting.toggleBuybackDiscard($index) : (choice.choosingFromHand ? choice.chooseCardFromHand($index) : playCard($index)))"
             (mouseenter)="onCardHover(card)"
             (mouseleave)="onCardHoverEnd()" />
         }

@@ -41,6 +41,8 @@ public class FlipCoinDoubleOrPreventNextCombatDamageFromAttackingCreatureEffectH
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName + "."));
         if (wonFlip) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        } else {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 
         gameData.sourceNextDamageToAnyTargetShields.add(wonFlip

@@ -1185,6 +1185,20 @@ public class GameService {
         }
     }
 
+    public void activateStackAbility(GameData gameData, Player player, UUID stackCardId,
+                                     Integer abilityIndex, Integer discardHandCardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateStackAbility(gameData, actionPlayer, stackCardId, abilityIndex,
+                        discardHandCardIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateStackAbility(gameData, player, stackCardId,
+                    abilityIndex, discardHandCardIndex);
+        }
+    }
+
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
         activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null, null);
     }

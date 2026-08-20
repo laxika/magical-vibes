@@ -27,6 +27,7 @@ public enum CardSubtype {
     ASSASSIN("Assassin"),
     WALL("Wall"),
     BARD("Bard"),
+    BARBARIAN("Barbarian"),
     BEAR("Bear"),
     BERSERKER("Berserker"),
     BADGER("Badger"),

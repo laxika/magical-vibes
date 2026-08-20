@@ -81,6 +81,7 @@ public enum Keyword {
     SUNBURST,
     PROTOTYPE,
     REBOUND,
+    RECOVER,
     START_YOUR_ENGINES,
     MAX_SPEED,
     EPIC,

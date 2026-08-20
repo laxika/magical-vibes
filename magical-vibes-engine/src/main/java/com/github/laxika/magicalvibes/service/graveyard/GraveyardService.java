@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
@@ -248,7 +249,8 @@ public class GraveyardService {
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false, null, null, false);
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
+                null, null, null, false);
     }
 
     /**
@@ -258,7 +260,7 @@ public class GraveyardService {
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, null, false);
+                battlefieldControllerId, null, null, false);
     }
 
     /**
@@ -268,33 +270,52 @@ public class GraveyardService {
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId, UUID battlefieldPermanentId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, battlefieldPermanentId, false);
+                battlefieldControllerId, battlefieldPermanentId, null, false);
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId, UUID battlefieldPermanentId,
                                       boolean selfGraveyardTriggerSuppressed) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, battlefieldPermanentId, selfGraveyardTriggerSuppressed);
+                battlefieldControllerId, battlefieldPermanentId, null, selfGraveyardTriggerSuppressed);
+    }
+
+    /**
+     * Moves a permanent card to its owner's graveyard while preserving its last battlefield state
+     * for triggers that resolve after the permanent has left the battlefield.
+     */
+    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                      UUID battlefieldControllerId, Permanent battlefieldSnapshot) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
+                battlefieldControllerId, battlefieldSnapshot == null ? null : battlefieldSnapshot.getId(),
+                battlefieldSnapshot, false);
+    }
+
+    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                      UUID battlefieldControllerId, Permanent battlefieldSnapshot,
+                                      boolean selfGraveyardTriggerSuppressed) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
+                battlefieldControllerId, battlefieldSnapshot == null ? null : battlefieldSnapshot.getId(),
+                battlefieldSnapshot, selfGraveyardTriggerSuppressed);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryCreatureCardsTrigger, null, null, false);
+                suppressLibraryCreatureCardsTrigger, null, null, null, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger,
                                        UUID battlefieldControllerId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryCreatureCardsTrigger, battlefieldControllerId, null, false);
+                suppressLibraryCreatureCardsTrigger, battlefieldControllerId, null, null, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryCreatureCardsTrigger,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
-                                       boolean selfGraveyardTriggerSuppressed) {
+                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         // CR 614.7 — self-replacement effects apply first
 
@@ -410,11 +431,8 @@ public class GraveyardService {
             return false;
         }
 
-        if (sourceZone == Zone.BATTLEFIELD && battlefieldHasExilePermanentsReplacement(gameData)) {
-            exileService.exileCard(gameData, ownerId, card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: permanent exiled instead of graveyard",
-                    gameData.id, card.getName());
+        if (sourceZone == Zone.BATTLEFIELD
+                && tryApplyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, battlefieldSnapshot)) {
             return false;
         }
 
@@ -452,7 +470,8 @@ public class GraveyardService {
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
         collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
         if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed) {
-            collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card, battlefieldPermanentId);
+            collectPutIntoGraveyardFromBattlefieldTriggers(
+                    gameData, ownerId, card, battlefieldPermanentId, battlefieldSnapshot);
         }
         if (!card.isToken() && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -637,7 +656,8 @@ public class GraveyardService {
      * on the stack under its owner's control.
      */
     private void collectPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID ownerId, Card card,
-                                                                  UUID battlefieldPermanentId) {
+                                                                 UUID battlefieldPermanentId,
+                                                                 Permanent battlefieldSnapshot) {
         for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -646,7 +666,7 @@ public class GraveyardService {
                         card, ownerId, new ArrayList<>(List.of(effect))));
                 continue;
             }
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
                     ownerId,
@@ -654,7 +674,11 @@ public class GraveyardService {
                     new ArrayList<>(List.of(effect)),
                     null,
                     battlefieldPermanentId
-            ));
+            );
+            if (battlefieldSnapshot != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(battlefieldSnapshot));
+            }
+            gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());
         }
@@ -911,7 +935,8 @@ public class GraveyardService {
 
     public static boolean hasExilePermanentsInsteadOfGraveyardReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof ExilePermanentsInsteadOfGraveyardEffect);
+                .anyMatch(e -> e instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
+                        && replacement.filter() == null && !replacement.excludeSource());
     }
 
     private boolean enchantedPlayerHasBottomOfLibraryReplacement(GameData gameData, UUID ownerId) {
@@ -981,12 +1006,40 @@ public class GraveyardService {
         return false;
     }
 
-    private boolean battlefieldHasExilePermanentsReplacement(GameData gameData) {
+    private boolean tryApplyBattlefieldExilePermanentsReplacement(GameData gameData, UUID ownerId, Card card,
+                                                                   Permanent battlefieldSnapshot) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (hasExilePermanentsInsteadOfGraveyardReplacementEffect(p.getCard())) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement)) {
+                        continue;
+                    }
+                    if (replacement.excludeSource() && battlefieldSnapshot != null
+                            && p.getId().equals(battlefieldSnapshot.getId())) {
+                        continue;
+                    }
+                    PermanentPredicate filter = replacement.filter();
+                    if (filter != null && (battlefieldSnapshot == null
+                            || !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, battlefieldSnapshot, filter))) {
+                        continue;
+                    }
+                    if (replacement.trackWithSource()) {
+                        exileService.exileCard(gameData, ownerId, card, p.getId());
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                card.getName() + " is exiled with ", p.getCard(),
+                                " instead of being put into a graveyard."));
+                        log.info("Game {} - {} is exiled with {} instead of graveyard",
+                                gameData.id, card.getName(), p.getCard().getName());
+                    } else {
+                        exileService.exileCard(gameData, ownerId, card);
+                        gameLogService.append(gameData, GameLog.cardThen(card,
+                                " is exiled instead of being put into a graveyard."));
+                        log.info("Game {} - {} replacement effect: permanent exiled instead of graveyard",
+                                gameData.id, card.getName());
+                    }
                     return true;
                 }
             }
