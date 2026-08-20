@@ -43,6 +43,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -72,6 +73,9 @@ class GameLifecycleEventSequenceTest {
         actionAvailability = mock(GameActionAvailabilityService.class);
         gameLogs = mock(GameLogService.class);
         gameQueryService = mock(GameQueryService.class);
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> invocation
+                        .getArgument(1, java.util.function.Supplier.class).get());
         outcomeService = new GameOutcomeService(
                 gameQueryService,
                 gameLogs,

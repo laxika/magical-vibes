@@ -12,14 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetToSourcePermanentEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -44,15 +42,16 @@ class PermanentTimestampTest {
     @Mock private com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
     @Mock private com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
-    @Mock private GraveyardTargetingService graveyardTargetingService;
-    @Mock private ETBTokenTargetService etbTokenTargetService;
-    @Mock private com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver etbEffectResolver;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    @Mock private com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
+    @Mock private PermanentRemovalService permanentRemovalService;
+    @Mock private AsEntersInteractionService asEntersInteractionService;
+    @Mock private EtbTriggerService etbTriggerService;
 
-    @InjectMocks private BattlefieldEntryService battlefieldEntryService;
+    private BattlefieldEntryService battlefieldEntryService;
 
     private GameData gd;
     private UUID player1Id;
@@ -60,6 +59,14 @@ class PermanentTimestampTest {
 
     @BeforeEach
     void setUp() {
+        BattlefieldPlacementService placementService = new BattlefieldPlacementService(
+                gameQueryService, gameLogService, playerInputService, permanentCopierService,
+                triggerCollectionService, amountEvaluationService, conditionEvaluationService,
+                predicateEvaluationService, permanentCounterSupport, graveyardService,
+                permanentRemovalService);
+        battlefieldEntryService = new BattlefieldEntryService(
+                placementService, asEntersInteractionService, etbTriggerService);
+
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -224,8 +231,6 @@ class PermanentTimestampTest {
             assertThat(copy.nextTimestamp()).isEqualTo(counter + 1);
         }
     }
-
-    // ===== Helper methods =====
 
     private Card createCard(String name) {
         Card card = new Card();
