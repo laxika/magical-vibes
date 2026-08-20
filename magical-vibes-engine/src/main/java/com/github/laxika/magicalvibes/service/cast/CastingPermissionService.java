@@ -492,7 +492,7 @@ public class CastingPermissionService {
 
     public Set<String> getForbiddenCardNames(GameData gameData, UUID castingPlayerId) {
         Set<String> forbidden = new HashSet<>();
-        Set<String> nontokenPermanentNames = getNontokenPermanentNames(gameData);
+        Set<String> nontokenPermanentNames = null;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -531,6 +531,9 @@ public class CastingPermissionService {
                         }
                     }
                     if (effect instanceof CardNameRestrictionEffect restriction) {
+                        if (nontokenPermanentNames == null) {
+                            nontokenPermanentNames = getNontokenPermanentNames(gameData);
+                        }
                         forbidden.addAll(restriction.forbiddenSpellNames(nontokenPermanentNames));
                     }
                 }
@@ -551,7 +554,7 @@ public class CastingPermissionService {
      * spell-casting filters (they aren't spells), so the name check has its own entry point here.
      */
     public boolean isLandPlayForbiddenByChosenName(GameData gameData, Card card) {
-        Set<String> nontokenPermanentNames = getNontokenPermanentNames(gameData);
+        Set<String> nontokenPermanentNames = null;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -563,9 +566,13 @@ public class CastingPermissionService {
                         return true;
                     }
                     if (effect instanceof CardNameRestrictionEffect restriction
-                            && !card.getSupertypes().contains(CardSupertype.BASIC)
-                            && restriction.forbiddenNonbasicLandNames(nontokenPermanentNames).contains(card.getName())) {
-                        return true;
+                            && !card.getSupertypes().contains(CardSupertype.BASIC)) {
+                        if (nontokenPermanentNames == null) {
+                            nontokenPermanentNames = getNontokenPermanentNames(gameData);
+                        }
+                        if (restriction.forbiddenNonbasicLandNames(nontokenPermanentNames).contains(card.getName())) {
+                            return true;
+                        }
                     }
                 }
             }
