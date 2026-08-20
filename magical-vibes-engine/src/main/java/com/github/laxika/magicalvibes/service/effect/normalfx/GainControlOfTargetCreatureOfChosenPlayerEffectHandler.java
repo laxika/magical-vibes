@@ -47,7 +47,9 @@ public class GainControlOfTargetCreatureOfChosenPlayerEffectHandler implements N
         Permanent source = sourcePermanentId == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || !source.isTapped()) {
+        Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+        if (source == null || !source.isTapped() || sourceSnapshot == null
+                || source.getUntapSequence() != sourceSnapshot.getUntapSequence()) {
             return;
         }
 

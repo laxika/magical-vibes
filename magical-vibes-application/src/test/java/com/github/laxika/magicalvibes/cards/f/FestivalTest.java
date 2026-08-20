@@ -36,7 +36,7 @@ class FestivalTest extends BaseCardTest {
     @Test
     @DisplayName("The attack restriction clears at the next turn")
     void restrictionClearsAtNextTurn() {
-        Permanent bear = addCreatureReady(player2);
+        Permanent bear = addCreatureReady(player1);
         castFestivalDuringOpponentUpkeep();
 
         harness.forceStep(TurnStep.CLEANUP);
@@ -45,7 +45,7 @@ class FestivalTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThat(harness.getCombatAttackService()
-                .getAttackableCreatureIndices(gd, player2.getId())).contains(0);
+                .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
         assertThat(bear.isCantAttackThisTurn()).isFalse();
     }
 

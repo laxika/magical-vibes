@@ -399,6 +399,9 @@ public class StackResolutionService {
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
+        if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
+            return;
+        }
         registerBeheldCardReturn(gameData, entry, perm);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());

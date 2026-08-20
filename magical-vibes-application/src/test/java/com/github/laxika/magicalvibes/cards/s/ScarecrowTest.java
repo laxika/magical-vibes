@@ -20,7 +20,7 @@ class ScarecrowTest extends BaseCardTest {
     @DisplayName("Prevents damage from flying creatures but not nonflying creatures")
     void preventsDamageFromFlyingCreaturesOnly() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player1, new Scarecrow());
+        addCreatureReady(player1, new Scarecrow());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

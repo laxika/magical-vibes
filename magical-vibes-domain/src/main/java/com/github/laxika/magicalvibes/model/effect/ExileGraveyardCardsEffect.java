@@ -68,8 +68,12 @@ public record ExileGraveyardCardsEffect(
         //   OWN / DYING_CREATURE_CONTROLLER /
         //   ALL_PLAYERS / ALL_OPPONENTS     -> no single validated target -> NONE
         return switch (scope) {
-            case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
-            case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
+            case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(filter == null
+                    ? TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS)
+                    : TargetPredicates.graveyardCards(filter, GraveyardSearchScope.ALL_GRAVEYARDS));
+            case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(filter == null
+                    ? TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)
+                    : TargetPredicates.graveyardCards(filter, GraveyardSearchScope.OPPONENT_GRAVEYARD));
             case TARGET_PLAYER_ENTIRE, TARGET_PLAYER_ALL_MATCHING -> TargetSpec.benign(TargetPredicates.player());
             default -> TargetSpec.NONE;
         };

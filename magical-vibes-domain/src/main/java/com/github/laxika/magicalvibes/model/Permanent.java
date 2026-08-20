@@ -29,6 +29,7 @@ public class Permanent {
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
+    private int untapSequence;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
      *  Post) has been paid for this permanent, so the re-entry after the choice isn't replaced again. */
     @Setter private boolean entryCostPaid;
@@ -596,6 +597,7 @@ public class Permanent {
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
+        this.untapSequence = source.untapSequence;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
@@ -850,6 +852,9 @@ public class Permanent {
         if (this.tapped && getCounterCount(CounterType.STUN) > 0) {
             setCounterCount(CounterType.STUN, getCounterCount(CounterType.STUN) - 1);
             return;
+        }
+        if (this.tapped) {
+            this.untapSequence++;
         }
         this.tapped = false;
     }
@@ -1321,6 +1326,7 @@ public class Permanent {
         this.basePowerOverride = 0;
         this.baseToughnessOverride = 0;
         this.cantBeBlocked = false;
+        this.cantAttackThisTurn = false;
         this.cantBlockThisTurn = false;
         this.additionalBlocksUntilEndOfTurn = 0;
         this.mustBlockThisTurnIfAble = false;

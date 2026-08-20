@@ -943,6 +943,7 @@ public class DamageSupport {
         Set<CardColor> sourceColors = sourcePermanent == null
                 ? sourceCardColors(source)
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
+        UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
         // Tok-Tok, Volcano Born: a source of a matching colour deals that much damage plus N instead.
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getDamageToPlayerColorSourceBonus(gameData,
@@ -957,13 +958,13 @@ public class DamageSupport {
             return;
         }
         boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
-                gameData, playerId, entry.getSourcePermanentId());
+                gameData, playerId, damageSourceId);
         if (sourceDamagePrevented) {
             damagePreventionService.applySourceDamagePreventionForPlayer(
-                    gameData, playerId, entry.getSourcePermanentId(), rawDamage, sourceColors);
+                    gameData, playerId, damageSourceId, rawDamage, sourceColors);
         }
         if (sourceDamagePrevented
-                || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
+                || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, damageSourceId)
                 || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, sourcePermanent)
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
@@ -988,22 +989,22 @@ public class DamageSupport {
             return;
         }
         // Apply source-specific redirect shields (e.g. Harm's Way) before general prevention
-        rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+        rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, damageSourceId, rawDamage);
         processSourceRedirectDamage(gameData);
         rawDamage = damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
-                gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                gameData, playerId, damageSourceId, rawDamage);
         processSourceRedirectDamage(gameData);
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(
-                gameData, entry.getSourcePermanentId(), rawDamage);
+                gameData, damageSourceId, rawDamage);
         processEyeForAnEyeReflections(gameData);
         // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
         rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
-                gameData, entry.getSourcePermanentId(), null, rawDamage);
+                gameData, damageSourceId, null, rawDamage);
         processSourceRedirectDamage(gameData);
         // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
         rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(
-                gameData, playerId, null, entry.getSourcePermanentId(), rawDamage, false);
+                gameData, playerId, null, damageSourceId, rawDamage, false);
         processSourceRedirectDamage(gameData);
         // Martyrdom: redirect the next N damage to the player onto the creature carrying the ability.
         rawDamage = damagePreventionService.applyPlayerNextDamageRedirectShields(gameData, playerId, rawDamage);
@@ -1012,15 +1013,15 @@ public class DamageSupport {
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
             // Apply target+source-specific prevention shields (e.g. Healing Grace)
-            if (entry.getSourcePermanentId() != null) {
-                rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+            if (damageSourceId != null) {
+                rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, playerId, damageSourceId, rawDamage);
                 // Eye for an Eye: reflect the next damage this source deals to the player back at the
                 // source's controller. Does not reduce the damage dealt here; schedules a reflection.
-                damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, damageSourceId, rawDamage);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
-                rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, damageSourceId, rawDamage);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
-                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, entry.getSourcePermanentId(), rawDamage, playerId);
+                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, damageSourceId, rawDamage, playerId);
                 processEyeForAnEyeReflections(gameData);
             }
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);

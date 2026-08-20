@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
@@ -312,6 +313,8 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
                     slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
+                    slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AnimatePermanentsEffect.class,
                     slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
     })
     private boolean handleEnteringPermanentSelfEffect(TriggerMatchContext match, CardEffect effect,

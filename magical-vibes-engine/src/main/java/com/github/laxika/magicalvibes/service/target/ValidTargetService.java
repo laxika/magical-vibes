@@ -387,7 +387,7 @@ public class ValidTargetService {
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId,
+                    if (isValidPlayerTarget(gameData, positionFilter, playerId, controllerId,
                             abilitySourcePermanentId, sourceCard)) {
                         validPlayerIds.add(playerId);
                     }

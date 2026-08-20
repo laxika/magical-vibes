@@ -1562,7 +1562,7 @@ public class ActivatedAbilityExecutionService {
                 effectivePermanentTargetIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
-        stackEntry.setSourcePermanentSnapshot(permanent);
+        stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         if (tracksSacrificedCard) {
             stackEntry.setSacrificedCardSnapshot(permanent.getChosenCard());
         }

@@ -57,6 +57,7 @@ class WhippoorwillTest extends BaseCardTest {
     void damageCannotBeRedirectedAwayFromMarkedCreature() {
         Permanent attendants = addReady(player1, new OraclesAttendants());
         Permanent target = addReadyStats(player1, 3, 3);
+        addReady(player1, new Whippoorwill());
         Permanent attacker = addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -64,7 +65,7 @@ class WhippoorwillTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
 
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 2, null, target.getId());
         harness.passBothPriorities();
 
         harness.forceActivePlayer(player2);
