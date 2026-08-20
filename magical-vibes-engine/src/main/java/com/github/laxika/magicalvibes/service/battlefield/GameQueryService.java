@@ -324,7 +324,8 @@ public class GameQueryService {
                     grantedActivatedAbilities, grantedEffects, grantedColors, grantedSubtypes,
                     grantedCardTypes, grantedSupertypes, colorOverriding, subtypeOverriding,
                     landSubtypeOverriding, cardTypeOverriding, removedKeywords,
-                    basePTOverridden, basePowerOverride, baseToughnessOverride,
+                    basePTOverridden, basePowerOverride != null ? basePowerOverride : 0,
+                    baseToughnessOverride != null ? baseToughnessOverride : 0,
                     losesAllAbilities, false, ptSwitched, null);
         }
     }
@@ -3377,7 +3378,8 @@ public class GameQueryService {
                 accumulator.isSubtypeOverriding(), accumulator.isLandSubtypeOverriding(),
                 accumulator.isCardTypeOverriding(),
                 removedKeywords, accumulator.isBasePTOverridden(),
-                accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride(),
+                accumulator.getBasePowerOverride() != null ? accumulator.getBasePowerOverride() : 0,
+                accumulator.getBaseToughnessOverride() != null ? accumulator.getBaseToughnessOverride() : 0,
                 losesAllAbilities, losesAllNonManaAbilities, ptSwitched, accumulator.getName());
     }
 
