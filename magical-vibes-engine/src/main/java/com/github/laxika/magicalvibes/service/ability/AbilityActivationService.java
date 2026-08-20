@@ -3151,7 +3151,7 @@ public class AbilityActivationService {
                     permanent.setChosenPermanentId(tapChoiceIds.getFirst());
                 }
             }
-            if (handlePermanentChoiceCost(gameData, player, permanent, effectiveIndex,
+            if (handlePermanentChoiceCost(gameData, player, permanent, ability, effectiveIndex,
                     effectiveXValue, targetId, targetZone, handler)) {
                 return;
             }
@@ -3328,7 +3328,8 @@ public class AbilityActivationService {
     }
 
     private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
-                                               int abilityIndex, int xValue, UUID targetId, Zone targetZone,
+                                               ActivatedAbility ability, int abilityIndex, int xValue,
+                                               UUID targetId, Zone targetZone,
                                                PermanentChoiceCostHandler handler) {
         int required = handler.requiredCount();
         if (required <= 0) return false;
@@ -3349,7 +3350,7 @@ public class AbilityActivationService {
         List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
                 playerId, source.getId(), abilityIndex, xValue, targetId, targetZone,
-                handler.costEffect(), required));
+                handler.costEffect(), required, List.of(), ability, new Permanent(source)));
         playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                 handler.getPromptMessage(required));
         mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -3366,12 +3367,17 @@ public class AbilityActivationService {
                                                     UUID chosenPermanentId) {
         UUID playerId = player.getId();
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (sourcePermanent == null && context.sourcePermanentSnapshot() != null) {
+            sourcePermanent = new Permanent(context.sourcePermanentSnapshot());
+        }
         if (sourcePermanent == null) {
             throw new IllegalStateException("Source permanent no longer exists");
         }
 
         int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
-        ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
+        ActivatedAbility ability = context.ability() != null
+                ? context.ability()
+                : resolveAbility(gameData, sourcePermanent, context.abilityIndex());
         List<CardEffect> abilityEffects = ability.getEffects();
         if (!abilityEffects.contains(context.costEffect())) {
             if (!(context.costEffect() instanceof CostEffect)) {
@@ -3466,7 +3472,8 @@ public class AbilityActivationService {
                 List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
                         playerId, context.sourcePermanentId(), context.abilityIndex(), context.xValue(),
-                        context.targetId(), context.targetZone(), context.costEffect(), remaining, chosenSoFar));
+                        context.targetId(), context.targetZone(), context.costEffect(), remaining, chosenSoFar,
+                        ability, new Permanent(sourcePermanent)));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
                 mutationCoordinator.invalidateAllPlayerViews(gameData);

@@ -186,6 +186,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** {@code lifeGainerId} is the sacrificing player for Devour Flesh, the controller otherwise. */
     record SacrificeCreatureControllerGainsLifeEqualToToughness(UUID sacrificingPlayerId, UUID lifeGainerId, String sourceCardName) implements PermanentChoiceContext {}
 
+    /**
+     * An activated ability whose permanent-choice cost is being paid one choice at a time.
+     * The ability definition and source snapshot are retained because paying an earlier choice
+     * may remove the source from the battlefield before the remaining choices are answered.
+     */
     record ActivatedAbilityCostChoice(UUID activatingPlayerId,
                                       UUID sourcePermanentId,
                                       Integer abilityIndex,
@@ -194,14 +199,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       Zone targetZone,
                                       CardEffect costEffect,
                                       int remaining,
-                                      List<UUID> chosenSoFar) implements PermanentChoiceContext {
+                                      List<UUID> chosenSoFar,
+                                      ActivatedAbility ability,
+                                      Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
 
         /** Permanents already paid toward this cost, for costs whose valid choices depend on prior
          *  picks (e.g. "tap two creatures that share a creature type"). Empty for count-only costs. */
         public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
                                           Integer xValue, UUID targetId, Zone targetZone, CardEffect costEffect,
                                           int remaining) {
-            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, costEffect, remaining, List.of());
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, costEffect,
+                    remaining, List.of(), null, null);
+        }
+
+        public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
+                                          Integer xValue, UUID targetId, Zone targetZone, CardEffect costEffect,
+                                          int remaining, List<UUID> chosenSoFar) {
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, costEffect,
+                    remaining, chosenSoFar, null, null);
         }
     }
 
