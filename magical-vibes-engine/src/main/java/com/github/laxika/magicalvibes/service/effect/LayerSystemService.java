@@ -78,6 +78,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -506,8 +507,16 @@ public class LayerSystemService {
     }
 
     private static boolean hasFullTextCopyEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(HaveFullTextOfTopCreatureCardInGraveyardEffect.class::isInstance);
+        List<CardEffect> staticEffects = card.getEffects(EffectSlot.STATIC);
+        if (staticEffects.isEmpty()) {
+            return false;
+        }
+        for (CardEffect effect : staticEffects) {
+            if (effect instanceof HaveFullTextOfTopCreatureCardInGraveyardEffect) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Card buildFullTextCopy(Card original, Card topCreature) {
@@ -775,6 +784,9 @@ public class LayerSystemService {
 
     /** Order-independent enum-collection hash: HashSet iteration order must not affect it. */
     private static long hashEnums(long h, Iterable<? extends Enum<?>> values) {
+        if (values instanceof Collection<?> collection && collection.isEmpty()) {
+            return mix(h, -1);
+        }
         long sum = 0;
         int count = 0;
         for (Enum<?> value : values) {

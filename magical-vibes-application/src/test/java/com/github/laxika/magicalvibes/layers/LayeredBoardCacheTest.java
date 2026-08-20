@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +76,21 @@ class LayeredBoardCacheTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isFalse();
 
         bear.getGrantedSubtypes().add(CardSubtype.ELF);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    void directMutableCardFieldMutationInvalidates() {
+        add(player1, new ElvishChampion());
+        Permanent bear = add(player1, new GrizzlyBears());
+        Card mutableBear = TestCards.mutableCard(bear);
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isFalse();
+
+        mutableBear.setSubtypes(List.of(CardSubtype.ELF));
+
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isTrue();
     }

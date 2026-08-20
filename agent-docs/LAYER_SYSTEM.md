@@ -1617,3 +1617,19 @@ and any deviations from this document.
     PredicateEvaluationServiceTest, the staticfx suite, RustedRelicTest, WardenOfTheWallTest,
     TetsukoUmezawaFugitiveTest, EnsnaringBridgeTest, the metalcraft, animation, Splicer/Golem,
     divergence and Domain batches. All green.
+
+20. **Structural fingerprint empty-collection fast path (2026-08-20).** JProfiler showed layer-board
+    fingerprinting was a major part of MCTS simulation time, with enum-collection hashing as its
+    largest component. `hashEnums` now returns immediately for empty `Collection` instances, which
+    are the common case across a permanent's mutable keyword, type and color collections. The
+    full-text-copy probe likewise avoids stream allocation and exits immediately when a card has no
+    static effects. Empty fields retain an explicit hash marker, so their positions cannot disappear
+    from the structural representation. Fingerprint validation remains structural rather than
+    epoch-only, so direct field and collection mutation continues to invalidate cached boards; a new
+    `LayeredBoardCacheTest.directMutableCardFieldMutationInvalidates` case pins mutable card subtype
+    changes after cache population. In a back-to-back opt-in 24-permanent layer benchmark under the
+    same competing system load, best steady-state throughput increased from 30,247 to 38,755
+    queries/s and mutation-heavy throughput from 20,989 to 24,603 queries/s. End-to-end MCTS benchmark
+    runs were not comparable because a concurrent long-running JVM changed CPU pressure between
+    variants, so no MCTS pass-count claim is recorded here. **Verification:** `LayeredBoardCacheTest`,
+    `LayerPassBenchmarkTest`, `MCTSBenchmarkTest`, and all 74 `HardAiDecisionEngineTest` cases passed.
