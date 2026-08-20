@@ -5,7 +5,6 @@
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner codex
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner muse
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner codex -Effort xhigh
-#   .\scripts\review-cards.ps1 sos 1 20 -Parallelism 10
 #
 # The muse runner drives the claude CLI against Meta's Muse endpoint and needs
 # $env:MODEL_API_KEY to be set first:
@@ -39,12 +38,7 @@ param(
     # Reasoning effort for the codex runner. Defaults to "xhigh" and is ignored
     # by the other runners.
     [ValidateSet("low", "medium", "high", "xhigh", "max")]
-    [string] $Effort,
-
-    # Maximum number of card reviews to run at the same time. Use 1 to run
-    # reviews sequentially.
-    [ValidateRange(1, 100)]
-    [int] $Parallelism = 10
+    [string] $Effort
 )
 
 $ErrorActionPreference = "Stop"
@@ -101,13 +95,12 @@ $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or pres
 
 $total = $To - $From + 1
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$effectiveParallelism = [Math]::Min($Parallelism, $total)
 
 if ($Runner -eq "codex") {
-    Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort  Parallelism: $effectiveParallelism"
+    Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort"
 }
 else {
-    Write-Host "Runner: $Runner  Model: $Model  Parallelism: $effectiveParallelism"
+    Write-Host "Runner: $Runner  Model: $Model"
 }
 
 $cardInfoLauncher = Join-Path $PSScriptRoot "..\mcp\card-info\start.ps1"
@@ -166,93 +159,29 @@ $reviewJob = {
     }
 }
 
-$runningJobs = @{}
-$cardIdsByJobId = @{}
-$nextCardId = $From
-$started = 0
 $completed = 0
-$failure = $null
 
-try {
-    while ($runningJobs.Count -gt 0 -or ($nextCardId -le $To -and $null -eq $failure)) {
-        while ($null -eq $failure -and $runningJobs.Count -lt $effectiveParallelism -and $nextCardId -le $To) {
-            $started++
-            Write-Host ""
-            Write-Host "############################################################"
-            Write-Host "# Starting [$started/$total] review-card $SetCode $nextCardId"
-            Write-Host "############################################################"
+foreach ($cardId in $From..$To) {
+    Write-Host ""
+    Write-Host "############################################################"
+    Write-Host "# Starting [$($completed + 1)/$total] review-card $SetCode $cardId"
+    Write-Host "############################################################"
 
-            $job = Start-Job -ScriptBlock $reviewJob -ArgumentList @(
-                $Runner,
-                $Model,
-                $Effort,
-                $repositoryRoot,
-                $SetCode,
-                $nextCardId,
-                $systemPrompt
-            )
-            $runningJobs[$job.Id] = $job
-            $cardIdsByJobId[$job.Id] = $nextCardId
-            $nextCardId++
-        }
+    $result = & $reviewJob $Runner $Model $Effort $repositoryRoot $SetCode $cardId $systemPrompt
+    $completed++
 
-        if ($runningJobs.Count -eq 0) {
-            break
-        }
-
-        $completedJob = Wait-Job -Job @($runningJobs.Values) -Any
-        $completedCardId = $cardIdsByJobId[$completedJob.Id]
-        try {
-            $result = Receive-Job -Job $completedJob
-        }
-        catch {
-            $result = [pscustomobject] @{
-                CardId = $completedCardId
-                ExitCode = 1
-                Output = @($_.Exception.Message)
-            }
-        }
-        if ($null -eq $result) {
-            $result = [pscustomobject] @{
-                CardId = $completedCardId
-                ExitCode = 1
-                Output = @("Review job ended without returning a result. Job state: $($completedJob.State).")
-            }
-        }
-        $runningJobs.Remove($completedJob.Id)
-        $cardIdsByJobId.Remove($completedJob.Id)
-        Remove-Job -Job $completedJob
-        $completed++
-
-        Write-Host ""
-        Write-Host "############################################################"
-        Write-Host "# Completed [$completed/$total] review-card $SetCode $($result.CardId)"
-        Write-Host "############################################################"
-        foreach ($line in @($result.Output)) {
-            Write-Host $line
-        }
-
-        if ($result.ExitCode -ne 0) {
-            Write-Warning "$cliName exited with code $($result.ExitCode) for $SetCode $($result.CardId). No new reviews will be started."
-            if ($null -eq $failure) {
-                $failure = $result
-            }
-        }
+    Write-Host ""
+    Write-Host "############################################################"
+    Write-Host "# Completed [$completed/$total] review-card $SetCode $($result.CardId)"
+    Write-Host "############################################################"
+    foreach ($line in @($result.Output)) {
+        Write-Host $line
     }
-}
-finally {
-    foreach ($job in @($runningJobs.Values)) {
-        if ($job.State -eq "Running") {
-            Stop-Job -Job $job
-        }
-        Receive-Job -Job $job | Out-Null
-        Remove-Job -Job $job -Force
-    }
-}
 
-if ($null -ne $failure) {
-    Write-Error "Review failed for $SetCode $($failure.CardId) with exit code $($failure.ExitCode). Already-running reviews were allowed to finish."
-    exit $failure.ExitCode
+    if ($result.ExitCode -ne 0) {
+        Write-Error "Review failed for $SetCode $($result.CardId) with exit code $($result.ExitCode)."
+        exit $result.ExitCode
+    }
 }
 
 Write-Host ""
