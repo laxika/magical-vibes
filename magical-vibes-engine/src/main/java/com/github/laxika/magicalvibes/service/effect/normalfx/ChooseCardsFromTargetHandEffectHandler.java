@@ -86,7 +86,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
                             e.upTo(), e.exileAllCopiesOfChosenNames(), 0, e.imprintOnSource(),
-                            e.grantPlayPermission(), e.returnAtNextEndStep());
+                            e.grantPlayPermission(), e.returnAtNextEndStep(), e.exilePlayOpponentTax());
                 } else {
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,

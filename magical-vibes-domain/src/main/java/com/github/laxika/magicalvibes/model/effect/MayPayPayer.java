@@ -37,5 +37,8 @@ public enum MayPayPayer {
     TARGET_PLAYER_OR_PERMANENT_CONTROLLER,
 
     /** The player whose action caused the trigger, carried on the stack entry's {@code targetId}. */
-    TRIGGERING_PLAYER
+    TRIGGERING_PLAYER,
+
+    /** The controller of the spell that caused the trigger. */
+    TRIGGERING_SPELL_CONTROLLER
 }

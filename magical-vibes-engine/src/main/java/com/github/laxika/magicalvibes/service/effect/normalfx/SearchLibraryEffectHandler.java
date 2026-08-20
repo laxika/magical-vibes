@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,10 +58,16 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SearchLibraryEffect) effect);
+        doResolve(gameData, entry, (SearchLibraryEffect) effect, LibrarySearchFollowUp.NONE);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect) {
+    void resolveWithFollowUp(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
+                             LibrarySearchFollowUp followUp) {
+        doResolve(gameData, entry, effect, followUp);
+    }
+
+    private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
+                           LibrarySearchFollowUp followUp) {
         UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
                 ? entry.getActivePlayerId() : entry.getControllerId();
         if (controllerId == null) return;
@@ -121,6 +128,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                                 .exileAtEndStep(effect.exileAtEndStep())
                                 .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                                 .animateFound(effect.animateFound())
+                                .battlefieldCounter(effect.battlefieldCounter())
+                                .followUp(followUp)
                                 .shuffleAfterSelection(effect.shuffleAfterSelection())
                                 .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
                                         ? entry.getBeholdChosenSubtype() : null)
@@ -158,6 +167,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                         .animateFound(effect.animateFound())
                         .battlefieldCounter(effect.battlefieldCounter())
+                        .followUp(followUp)
                         .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
                                 ? entry.getBeholdChosenSubtype() : null)
@@ -211,6 +221,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                             ? ", reveal it, then shuffle and put that card on top."
                             : ", then shuffle and put that card on top.");
             case EXILE -> "Search your library for a " + desc + " to exile" + remaining + ".";
+            case EXILE_FOR_MAY_CAST -> "Search your library for a " + desc + " to exile" + remaining + ".";
             case EXILE_PLAYABLE_ANY_NUMBER -> "Search your library for matching cards to exile (any number).";
             case GRAVEYARD -> count > 1
                     ? "Search your library for a " + desc + " to put into your graveyard" + remaining + "."

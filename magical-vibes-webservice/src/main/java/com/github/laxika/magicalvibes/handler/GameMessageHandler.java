@@ -632,6 +632,7 @@ public class GameMessageHandler implements MessageHandler {
             case SCRY_ORDER -> new InteractionAnswer.ScryOrder(request.order(), request.secondOrder());
             case CARD_ORDER -> new InteractionAnswer.CardOrder(request.order());
             case HAND_TOP_BOTTOM -> new InteractionAnswer.HandTopBottom(request.index(), request.secondIndex());
+            case HAND_BOTTOM_EXILE -> new InteractionAnswer.HandBottomExile(request.index(), request.secondIndex());
         };
     }
 

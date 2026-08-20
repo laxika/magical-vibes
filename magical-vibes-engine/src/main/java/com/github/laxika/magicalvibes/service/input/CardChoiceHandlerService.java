@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -91,6 +92,7 @@ public class CardChoiceHandlerService {
     private final LifeSupport lifeSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final EquipSupport equipSupport;
+    private final ExileSupport exileSupport;
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -868,7 +870,8 @@ public class CardChoiceHandlerService {
                     discardMode, exileMode, chosenCards, null, prompt, false, revealedHandChoice.optional(),
                     false, null, null, 0, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames(),
                     false, revealedHandChoice.shuffleIntoLibraryMode(), false,
-                    revealedHandChoice.grantPlayPermission(), revealedHandChoice.returnAtNextEndStep()));
+                    revealedHandChoice.grantPlayPermission(), revealedHandChoice.returnAtNextEndStep(),
+                    revealedHandChoice.exilePlayOpponentTax()));
         } else {
             finishRevealedHandChoice(gameData, player, revealedHandChoice, chosenCards);
         }
@@ -961,7 +964,13 @@ public class CardChoiceHandlerService {
                     exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
                 }
                 if (revealedHandChoice.grantPlayPermission()) {
-                    gameData.exilePlayPermissions.put(exiled.getId(), player.getId());
+                    if (revealedHandChoice.exilePlayOpponentTax() > 0) {
+                        exileSupport.grantPlayWhileExiledWithOpponentTax(
+                                gameData, exiled.getId(), targetPlayerId, player.getId(),
+                                revealedHandChoice.exilePlayOpponentTax());
+                    } else {
+                        gameData.exilePlayPermissions.put(exiled.getId(), player.getId());
+                    }
                 }
                 if (revealedHandChoice.returnAtNextEndStep()) {
                     gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
@@ -1389,6 +1398,32 @@ public class CardChoiceHandlerService {
             log.info("Game {} - Source permanent left battlefield, {} exiled without imprinting", gameData.id, card.getName());
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    public void handleExileFromHandWithRefineCountersChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.ExileFromHandWithRefineCountersChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.ExileFromHandWithRefineCountersChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        if (!choice.validIndices().contains(cardIndex)) {
+            log.warn("Game {} - {} sent invalid refine-counter card index {}, re-prompting",
+                    gameData.id, player.getUsername(), cardIndex);
+            playerInputService.beginExileFromHandWithRefineCountersChoice(gameData, player.getId(),
+                    new ArrayList<>(choice.validIndices()), "Choose a card from your hand to exile.",
+                    choice.counterCount());
+            return;
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card card = hand.remove(cardIndex);
+        exileService.exileCard(gameData, player.getId(), card);
+        gameData.exiledCardRefineCounters.put(card.getId(), choice.counterCount());
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is exiled with " + choice.counterCount() + " refine counters."));
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

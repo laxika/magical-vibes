@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -54,6 +55,8 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -62,7 +65,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatur
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -1212,6 +1218,107 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_COPIES_SPELL — SpellCopyTriggerEffect")
+    class ControllerSpellCopyTrigger {
+
+        @Test
+        @DisplayName("puts triggered ability on stack for a matching copied spell")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Clever Lumimancer");
+            var effect = new SpellCopyTriggerEffect(null, List.of(new BoostSelfEffect(2, 2)));
+            Card spellCard = createInstant("Lightning Bolt");
+            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
+        }
+
+        @Test
+        @DisplayName("queues target selection for a targeted copied spell trigger")
+        void queuesTargetSelectionForTargetedCopiedSpell() {
+            Permanent perm = createPermanent("Symmetry Sage");
+            var effect = new SpellCopyTriggerEffect(
+                    null,
+                    List.of(SetBasePowerToughnessEffect.powerOnly(2)),
+                    TargetFilters.creatureYouControl());
+            Card spellCard = createInstant("Lightning Bolt");
+            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isTrue();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("queues graveyard target selection for a copied spell trigger")
+        void queuesGraveyardTargetSelectionForCopiedSpell() {
+            Permanent perm = createPermanent("Extus, Oriq Overlord");
+            var returnCreature = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .targetGraveyard(true)
+                    .build();
+            var effect = new SpellCopyTriggerEffect(null, List.of(returnCreature));
+            Card spellCard = createInstant("Lightning Bolt");
+            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("puts triggered ability on stack for a matching copied spell controlled by an opponent")
+        void putsTriggeredAbilityOnStackForOpponentCopy() {
+            Permanent perm = createPermanent("Mage Hunter");
+            var effect = new SpellCopyTriggerEffect(null,
+                    List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)));
+            Card spellCard = createInstant("Lightning Bolt");
+            StackEntry copiedSpell = new StackEntry(spellCard, player2Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player2Id);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
         }
     }
 

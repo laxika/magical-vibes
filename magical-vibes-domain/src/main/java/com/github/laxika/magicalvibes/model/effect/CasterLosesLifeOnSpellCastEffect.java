@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 /**
  * Trigger descriptor for "whenever a player casts a [filter] spell, that player loses N life"
  * (Soot Imp). Lives in the {@code ON_ANY_PLAYER_CASTS_SPELL} or
- * {@code ON_CONTROLLER_CASTS_SPELL} slot; the collector filters the cast
+ * {@code ON_CONTROLLER_CASTS_SPELL} or {@code ON_OPPONENT_CASTS_SPELL} slot; the collector filters the cast
  * spell by {@code spellFilter} and queues a {@link LoseLifeEffect} with recipient
  * {@link LoseLifeRecipient#TARGET_PLAYER} whose target is preset to the casting player — so the
  * loss falls on the caster ("that player"), never a chosen target.

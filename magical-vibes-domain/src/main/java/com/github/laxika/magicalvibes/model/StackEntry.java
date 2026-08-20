@@ -24,6 +24,7 @@ public class StackEntry {
 
     private final StackEntryType entryType;
     private final Card card;
+    private Card castCard;
     @Setter private UUID controllerId;
     /** The player whose upkeep caused this entry's each-upkeep trigger, when applicable. */
     @Setter private UUID activePlayerId;
@@ -130,6 +131,7 @@ public class StackEntry {
      *  "if its prowl cost was paid" ETB trigger can gate on it (CR 702.75). */
     @Setter private boolean prowl;
     @Setter private boolean castForForetell;
+    @Setter private boolean alternateCost;
     /** Whether this spell was cast for its madness cost. */
     @Setter private boolean madness;
     /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
@@ -151,6 +153,7 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
      */
     @Setter private int eventValue;
+    @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
     /**
@@ -191,6 +194,7 @@ public class StackEntry {
      */
     @Setter private UUID triggeringCardId;
     @Setter private long triggeringCardGraveyardEntryVersion;
+    @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
@@ -502,6 +506,7 @@ public class StackEntry {
     public StackEntry(StackEntry source) {
         this.entryType = source.entryType;
         this.card = source.card;
+        this.castCard = source.castCard;
         this.controllerId = source.controllerId;
         this.activePlayerId = source.activePlayerId;
         this.description = source.description;
@@ -544,6 +549,7 @@ public class StackEntry {
         this.physicalCard = source.physicalCard;
         this.prowl = source.prowl;
         this.castForForetell = source.castForForetell;
+        this.alternateCost = source.alternateCost;
         this.overloaded = source.overloaded;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
@@ -553,6 +559,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
@@ -561,6 +568,8 @@ public class StackEntry {
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.triggeringCardIds = source.triggeringCardIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
         this.sacrificedPermanentSnapshot = source.sacrificedPermanentSnapshot == null
@@ -664,7 +673,15 @@ public class StackEntry {
      * like Blazing Torch the damage source is the equipment, not the equipped creature.
      */
     public Card getEffectiveDamageSourceCard() {
-        return damageSourceCard != null ? damageSourceCard : card;
+        return damageSourceCard != null ? damageSourceCard : getCard();
+    }
+
+    public Card getCard() {
+        return castCard != null ? castCard : card;
+    }
+
+    public void setCastCard(Card castCard) {
+        this.castCard = freezeCard(castCard);
     }
 
     public void setBestowOriginalCard(Card bestowOriginalCard) {
@@ -817,7 +834,8 @@ public class StackEntry {
         if (castWithOmen && card.getBackFaceCard() != null) {
             return card.getBackFaceCard();
         }
-        return castWithFlashback ? card.graveyardCastHalf() : card;
+        Card effectiveCard = getCard();
+        return castWithFlashback ? effectiveCard.graveyardCastHalf() : effectiveCard;
     }
 
     /**

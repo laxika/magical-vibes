@@ -54,6 +54,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.AlternateCastXValueChoice.class, this::projectAlternateCastXValueChoice);
         register(PendingInteraction.Scry.class, this::projectScry);
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
+        register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
@@ -92,6 +93,14 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
+        register(PendingInteraction.EcologicalAppreciationSearchChoice.class,
+                this::projectEcologicalAppreciationSearchChoice);
+        register(PendingInteraction.EcologicalAppreciationOpponentChoice.class,
+                this::projectEcologicalAppreciationOpponentChoice);
+        register(PendingInteraction.VerdantMasterySearchChoice.class,
+                this::projectVerdantMasterySearchChoice);
+        register(PendingInteraction.VerdantMasteryLandChoice.class,
+                this::projectVerdantMasteryLandChoice);
         register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
         register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
         register(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
@@ -132,6 +141,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ExileFromHandChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.ImprintFromHandChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.ExileFromHandWithRefineCountersChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.DiscardCostChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
@@ -227,6 +238,15 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()),
                 "Look at the top " + interaction.cards().size()
                         + " cards of your library. Choose one to put into your hand.");
+    }
+
+    private InteractionPromptMessage projectHandBottomExileChoice(
+            GameData gameData, PendingInteraction.HandBottomExileChoice interaction) {
+        return InteractionPromptMessage.handBottomExile(
+                cardViews(interaction.cards()),
+                "Look at the top " + interaction.cards().size()
+                        + " cards of your library. Choose one to put into your hand and one to put"
+                        + " on the bottom of your library. Exile the rest.");
     }
 
     private InteractionPromptMessage projectLibraryReorder(
@@ -503,6 +523,50 @@ public class InteractionPromptProjectionRegistry {
                 "Search your library for " + interaction.count()
                         + " cards to reveal. Your opponent chooses one of them for your hand; "
                         + "the rest go into your graveyard.");
+    }
+
+    private InteractionPromptMessage projectEcologicalAppreciationSearchChoice(
+            GameData gameData, PendingInteraction.EcologicalAppreciationSearchChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                Math.min(4, interaction.pool().size()),
+                "Choose up to four creature cards with different names and mana value "
+                        + interaction.maxManaValue() + " or less to reveal.");
+    }
+
+    private InteractionPromptMessage projectEcologicalAppreciationOpponentChoice(
+            GameData gameData, PendingInteraction.EcologicalAppreciationOpponentChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                2,
+                "Choose two cards to shuffle into the library. Put the rest onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectVerdantMasterySearchChoice(
+            GameData gameData, PendingInteraction.VerdantMasterySearchChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                Math.min(4, interaction.pool().size()),
+                "Choose up to four basic land cards to reveal for Verdant Mastery.");
+    }
+
+    private InteractionPromptMessage projectVerdantMasteryLandChoice(
+            GameData gameData, PendingInteraction.VerdantMasteryLandChoice interaction) {
+        if (interaction.chooseForOpponent()) {
+            return InteractionPromptMessage.multiCardPick(
+                    new ArrayList<>(interaction.validCardIds()),
+                    cardViews(interaction.cards()),
+                    1,
+                    "Choose one basic land card to put onto the battlefield tapped under an opponent's control.");
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                2,
+                "Choose two basic land cards to put onto the battlefield tapped under your control.");
     }
 
     private InteractionPromptMessage projectPermanentAuctionChoice(

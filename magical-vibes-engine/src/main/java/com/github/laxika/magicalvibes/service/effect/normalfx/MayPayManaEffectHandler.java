@@ -59,6 +59,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetPlayerOrPermanentController(gameData,
                     entry.getTargetId());
             case TRIGGERING_PLAYER -> entry.getTargetId();
+            case TRIGGERING_SPELL_CONTROLLER -> entry.getTargetId();
             case ANY_PLAYER -> null;
         };
         if (payer == null) {

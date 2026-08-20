@@ -33,12 +33,27 @@ public record ConditionContext(
         UUID triggeringPermanentId,
         Integer triggeringPermanentPowerAtTrigger,
         Card sacrificedCard,
-        List<String> repeatedAdditionalCosts
+        List<String> repeatedAdditionalCosts,
+        boolean alternateCost
 ) {
     public ConditionContext {
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
                 ? List.of()
                 : List.copyOf(repeatedAdditionalCosts);
+    }
+
+    public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
+                            Card sourceCard, boolean kicked, boolean buyback, boolean prowl,
+                            boolean madness, boolean castForForetell, boolean overloaded,
+                            Zone sourceZone, int xValue, UUID targetId, Card triggeringCard,
+                            boolean staticEvaluation, boolean putCounterCostPaid,
+                            boolean beholdCostPaid, UUID triggeringPermanentId,
+                            Integer triggeringPermanentPowerAtTrigger, Card sacrificedCard,
+                            List<String> repeatedAdditionalCosts) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
+                madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
+                staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
+                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -113,7 +128,7 @@ public record ConditionContext(
                 entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
                 entry.isPutCounterCostPaid(), entry.isBeholdCostPaid(), entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard(),
-                entry.getRepeatedAdditionalCosts());
+                entry.getRepeatedAdditionalCosts(), entry.isAlternateCost());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -168,6 +183,6 @@ public record ConditionContext(
                 kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone,
                 copiedXValue, copiedTargetId, copiedTriggeringCard, staticEvaluation,
                 putCounterCostPaid, beholdCostPaid, copiedTriggeringPermanentId,
-                copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts);
+                copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost);
     }
 }

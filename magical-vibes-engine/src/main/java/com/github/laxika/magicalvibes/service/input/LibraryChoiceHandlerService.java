@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -494,6 +495,15 @@ public class LibraryChoiceHandlerService {
                 finishSearchAndResume(gameData);
                 return;
             }
+            if (destination == LibrarySearchDestination.EXILE_FOR_MAY_CAST) {
+                if (shuffleAfterSelection) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                }
+                gameLogService.append(gameData, GameLog.text(player.getUsername()
+                        + " stops searching. Library is shuffled."));
+                finishSearchAndResume(gameData);
+                return;
+            }
             // A pile search stopped early still shuffles whatever was already exiled into it.
             if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
                 gameData.shuffleExilePile(librarySearch.sourcePermanentId());
@@ -766,6 +776,26 @@ public class LibraryChoiceHandlerService {
                 return;
             }
             castCardWithoutPaying(gameData, player, chosenCard);
+            return;
+        }
+
+        if (destination == LibrarySearchDestination.EXILE_FOR_MAY_CAST) {
+            boolean castable = canCastWithoutPaying(gameData, playerId, chosenCard);
+            exileService.exileCard(gameData, deckOwnerId, chosenCard);
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles ", chosenCard,
+                    shuffleAfterSelection ? ". Library is shuffled." : "."));
+            if (castable) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        chosenCard,
+                        playerId,
+                        List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
+                        "Cast " + chosenCard.getName() + " without paying its mana cost?",
+                        chosenCard.getId()));
+            }
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -1210,7 +1240,7 @@ public class LibraryChoiceHandlerService {
                 case REVEAL_ONLY -> "back into their library";
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, EXILE_FOR_MAY_CAST -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
                 case EXILE_PLAYABLE_ANY_NUMBER -> throw new IllegalStateException(
@@ -1249,6 +1279,16 @@ public class LibraryChoiceHandlerService {
 
         if (toBattlefield) {
             performStateBasedActionsIfResolutionComplete(gameData);
+        }
+
+        LibrarySearchFollowUp.SelectedCardFollowUp selectedCardFollowUp = followUp.selectedCardFollowUp();
+        if (selectedCardFollowUp != null
+                && gameData.pendingEffectResolutionEntry != null
+                && predicateEvaluationService.matchesCardPredicate(
+                        chosenCard, selectedCardFollowUp.predicate(), null, gameData, playerId)) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(selectedCardFollowUp.effect()));
         }
 
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp)) return;
@@ -2712,6 +2752,64 @@ public class LibraryChoiceHandlerService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, ctx.controllerId(), false);
         finishSearchAndResume(gameData);
+    }
+
+    public void castTopCardFromLibraryForMana(GameData gameData, UUID controllerId, Card cardToCast,
+                                               String manaCost) {
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(cardToCast.getId())) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " is no longer on top of the library and cannot be cast."));
+            return;
+        }
+
+        deck.removeFirst();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
+
+        LegalModalOptions modalOptions = legalModalOptions(gameData, cardToCast, controllerId);
+        if (modalOptions != null) {
+            Card runtimeCard = cardToCast.createRuntimeCopy();
+            playerInputService.beginLibraryCastModeChoice(gameData, controllerId, runtimeCard,
+                    modalOptions.effect(), spellType, modalOptions.modeIndices());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " casts ", runtimeCard, " by paying " + manaCost + " — choosing mode."));
+            return;
+        }
+
+        List<CardEffect> spellEffects = cardToCast.getType().isPermanentType()
+                ? List.of()
+                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+        if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
+            List<UUID> validTargets = computeCastWithoutPayingTargets(
+                    gameData, cardToCast, spellEffects, controllerId);
+            if (validTargets.isEmpty()) {
+                deck.addFirst(cardToCast);
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                        " has no legal targets and stays on top of the library."));
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.LibraryCastSpellTarget(
+                            cardToCast, controllerId, spellEffects, spellType));
+            playerInputService.beginPermanentChoice(gameData, controllerId, validTargets,
+                    "Choose a target for " + cardToCast.getName() + ".");
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " casts ", cardToCast,
+                    " by paying " + manaCost + " — choosing target."));
+            return;
+        }
+
+        gameData.stack.add(new StackEntry(
+                spellType, cardToCast, controllerId, cardToCast.getName(),
+                spellEffects, 0, (UUID) null, null));
+        gameData.recordSpellCast(controllerId, cardToCast);
+        gameData.priorityPassedBy.clear();
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " casts ", cardToCast, " by paying " + manaCost + "."));
+        log.info("Game {} - {} casts {} from the top of the library by paying {}",
+                gameData.id, playerName, cardToCast.getName(), manaCost);
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, controllerId, false);
     }
 
     /**

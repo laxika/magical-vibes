@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,7 +66,11 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     List<Integer> remainingInstantManaValueToHandPicks,
                                     BasicLandSearchQueue basicLandSearchQueue,
                                     GrimReminderSearch grimReminderSearch,
-                                    List<UUID> remainingEachPlayerLandToBattlefieldSearches) {
+                                    List<UUID> remainingEachPlayerLandToBattlefieldSearches,
+                                    SelectedCardFollowUp selectedCardFollowUp) {
+
+    public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
+    }
 
     /** Completion data for Grim Reminder's reveal-only library search. */
     public record GrimReminderSearch(int lifeLoss) {
@@ -241,6 +246,32 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         remainingEachPlayerLandToBattlefieldSearches = List.copyOf(remainingEachPlayerLandToBattlefieldSearches);
     }
 
+    public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
+                                 List<UUID> remainingEachPlayerBasicLandSearches,
+                                 boolean eachPlayerSearchTapped,
+                                 PendingOpponentExileChoice opponentExileChoice,
+                                 UUID imprintSourcePermanentId,
+                                 List<UUID> remainingEachPlayerToHandSearches,
+                                 int eachPlayerToHandCount,
+                                 boolean eachPlayerToHandCreatureOnly,
+                                 List<UUID> remainingEachPlayerCreatureToBattlefieldSearches,
+                                 List<UUID> remainingTargetPlayerTopSearches,
+                                 SecondBoundedPick secondBoundedPick,
+                                 SameNamePickQueue remainingSameNamePicks,
+                                 List<ToHandPick> remainingToHandPicks,
+                                 List<Integer> remainingInstantManaValueToHandPicks,
+                                 BasicLandSearchQueue basicLandSearchQueue,
+                                 GrimReminderSearch grimReminderSearch,
+                                 List<UUID> remainingEachPlayerLandToBattlefieldSearches) {
+        this(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
+                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
+                remainingEachPlayerToHandSearches, eachPlayerToHandCount, eachPlayerToHandCreatureOnly,
+                remainingEachPlayerCreatureToBattlefieldSearches, remainingTargetPlayerTopSearches,
+                secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
+                remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch,
+                remainingEachPlayerLandToBattlefieldSearches, null);
+    }
+
     /** Backward-compatible constructor for follow-ups that do not use targeted top searches. */
     public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
                                  List<UUID> remainingEachPlayerBasicLandSearches,
@@ -292,6 +323,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     public static LibrarySearchFollowUp forBasicLandToHand() {
         return forBasicLandToHand(1, null);
+    }
+
+    public static LibrarySearchFollowUp forSelectedCard(CardPredicate predicate, CardEffect effect) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
+                new SelectedCardFollowUp(predicate, effect));
     }
 
     /**

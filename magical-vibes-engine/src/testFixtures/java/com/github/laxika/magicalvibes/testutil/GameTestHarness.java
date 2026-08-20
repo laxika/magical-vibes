@@ -1625,7 +1625,10 @@ public class GameTestHarness {
     }
 
     public void handleCardChosen(Player player, int cardIndex) {
-        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.CardIndexChosen(cardIndex));
+        InteractionAnswer answer = gameData.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch
+                ? new InteractionAnswer.LibraryCardChosen(cardIndex)
+                : new InteractionAnswer.CardIndexChosen(cardIndex);
+        gameService.handleInteractionAnswer(gameData, player, answer);
     }
 
     public void handleGraveyardCardChosen(Player player, int cardIndex) {

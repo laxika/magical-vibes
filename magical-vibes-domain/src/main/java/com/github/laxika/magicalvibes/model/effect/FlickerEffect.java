@@ -38,7 +38,19 @@ public record FlickerEffect(
         int plusOnePlusOneCountersOnReturn,
         boolean returnUnderController,
         boolean grantHaste,
-        boolean returnAtOwnerNextEndStep) implements CardEffect {
+        boolean returnAtOwnerNextEndStep,
+        boolean plusOnePlusOneCountersOnlyOnCreatures,
+        int loyaltyCountersOnPlaneswalkersOnReturn) implements CardEffect {
+
+    public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+                         TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+                         CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+                         boolean returnUnderController, boolean grantHaste,
+                         boolean returnAtOwnerNextEndStep) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
+                returnAtOwnerNextEndStep, false, 0);
+    }
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
                          TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
@@ -69,6 +81,12 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStepWithCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, counters, false, false);
+    }
+
+    public static FlickerEffect exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(int counters) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, counters, false, false,
+                false, true, counters);
     }
 
     /** Exile this permanent, return it under your control at the beginning of the next end step (Argent Sphinx). */

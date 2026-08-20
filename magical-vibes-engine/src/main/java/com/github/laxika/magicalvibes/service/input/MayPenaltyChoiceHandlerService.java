@@ -238,9 +238,9 @@ public class MayPenaltyChoiceHandlerService {
                 || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
         if (!targetEntry.isCopy() && !isAbility) {
             if (exileIfCountered) {
-                exileService.exileCard(gameData, counteredControllerId, targetEntry.getCard());
+                exileService.exileCard(gameData, counteredControllerId, targetEntry.getPhysicalCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, counteredControllerId, targetEntry.getCard());
+                graveyardService.addCardToGraveyard(gameData, counteredControllerId, targetEntry.getPhysicalCard());
             }
         }
 
@@ -371,7 +371,7 @@ public class MayPenaltyChoiceHandlerService {
         boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
         if (!targetEntry.isCopy() && !isAbility) {
-            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getPhysicalCard());
         }
 
         GameLog.Builder counterLog = GameLog.builder().card(targetEntry.getCard())

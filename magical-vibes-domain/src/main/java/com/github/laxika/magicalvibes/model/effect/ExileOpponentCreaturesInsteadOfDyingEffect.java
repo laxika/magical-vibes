@@ -13,11 +13,21 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param nontokenOnly whether token creatures are excluded
  * @param addIceCounter whether the exiled card receives an ice counter
  */
-public record ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, boolean addIceCounter)
+public record ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, boolean addIceCounter,
+                                                         CardEffect whenExiledEffect)
         implements CardEffect {
 
+    public ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, boolean addIceCounter) {
+        this(nontokenOnly, addIceCounter, null);
+    }
+
+    public ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly,
+                                                       CardEffect whenExiledEffect) {
+        this(nontokenOnly, false, whenExiledEffect);
+    }
+
     public ExileOpponentCreaturesInsteadOfDyingEffect() {
-        this(false, false);
+        this(false, false, null);
     }
 
     public static ExileOpponentCreaturesInsteadOfDyingEffect withIceCounter() {

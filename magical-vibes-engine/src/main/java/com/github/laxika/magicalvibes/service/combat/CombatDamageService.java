@@ -1153,7 +1153,10 @@ public class CombatDamageService {
                     gameData, creature, EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, creature, EffectSlot.ON_DAMAGE_TO_PLAYER));
-            for (CardEffect effect : allDamageEffects) {
+            for (CardEffect rawEffect : allDamageEffects) {
+                CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
+                        ? amountAware.snapshotCombatDamage(damageDealt)
+                        : rawEffect;
                 // CR 603.4 — a triggered ability with an intervening "if" clause only triggers when
                 // the condition is met at trigger time (it is re-checked on resolution by
                 // EffectResolutionService). Applies to every condition, not just metalcraft.

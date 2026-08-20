@@ -61,8 +61,9 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
         log.info("Game {} - {} milled {} card(s), condition {}",
                 gameData.id, entry.getCard().getName(), milled.size(), matched ? "met" : "not met");
 
-        if (matched) {
-            dispatch(gameData, entry, e.thenEffect());
+        CardEffect followUp = matched ? e.thenEffect() : e.elseEffect();
+        if (followUp != null) {
+            dispatch(gameData, entry, followUp);
         }
     }
 

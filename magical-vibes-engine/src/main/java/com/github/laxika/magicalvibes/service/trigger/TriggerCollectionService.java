@@ -203,6 +203,23 @@ public class TriggerCollectionService {
         checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
     }
 
+    public void checkSpellCopyTriggers(GameData gameData, StackEntry copiedSpell) {
+        if (copiedSpell.getEntryType() != StackEntryType.INSTANT_SPELL
+                && copiedSpell.getEntryType() != StackEntryType.SORCERY_SPELL) {
+            return;
+        }
+
+        UUID copyingPlayerId = copiedSpell.getControllerId();
+        TriggerContext.SpellCopy context = new TriggerContext.SpellCopy(copiedSpell, copyingPlayerId);
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (playerId.equals(copyingPlayerId)) {
+                dispatchSlot(gameData, permanent, playerId, EffectSlot.ON_CONTROLLER_COPIES_SPELL, context);
+            } else {
+                dispatchSlot(gameData, permanent, playerId, EffectSlot.ON_OPPONENT_COPIES_SPELL, context);
+            }
+        });
+    }
+
     /**
      * Fires delayed "until end of turn, whenever you cast a [filter] spell, …" triggers registered
      * this turn (Mountain Titan). One trigger per registration. Registrations that require their
@@ -220,6 +237,10 @@ public class TriggerCollectionService {
                 continue;
             }
             if (!predicateEvaluationService.matchesCardPredicate(spellCard, delayed.spellFilter(), null)) continue;
+
+            if (delayed.oneShot()) {
+                gameData.delayedActions.remove(delayed);
+            }
 
             if (delayed.targetFilter() != null) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -246,6 +267,7 @@ public class TriggerCollectionService {
                     null,
                     delayed.sourcePermanentId());
             entry.setTriggeringCardId(spellCard.getId());
+            entry.setEventValue(spellCard.getManaValue());
             entry.setNonTargeting(true);
             gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.cardTextCard(
@@ -813,7 +835,11 @@ public class TriggerCollectionService {
 
                 // "for each spell cast before it this turn" — this spell is already recorded, so
                 // subtract it out. Count is fixed here (spells cast after can't precede this one).
-                int copies = gameData.getTotalSpellsCastThisTurnCount() - 1;
+                int copies = storm.instantOrSorceryOnly()
+                        ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
+                                .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                                .count() - 1
+                        : gameData.getTotalSpellsCastThisTurnCount() - 1;
                 StackEntry snapshot = new StackEntry(spellEntry);
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -6281,6 +6307,25 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(graveyardOwnerId);
         for (Permanent perm : battlefield) {
             dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD, ctx);
+        }
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosen) {
+        triggeredAbilityQueueService.queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId,
+                sourcePermanentId, chosen);
+    }
+
+    public void checkControllerCardsExiledDuringTurnTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return;
+
+        var ctx = new TriggerContext.CardsExiledDuringTurn(activePlayerId);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, activePlayerId,
+                    EffectSlot.ON_CONTROLLER_CARDS_EXILED_DURING_TURN, ctx);
         }
     }
 

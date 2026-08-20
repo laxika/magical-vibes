@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.ExilePermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -265,6 +266,11 @@ public class GraveyardReturnSupport {
         if (effect.returnToHandAtEndStep() && returnedPermanent != null) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     returnedPermanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+        }
+
+        if (effect.exileAtNextUpkeep() && returnedPermanent != null) {
+            gameData.queueDelayedAction(new ExilePermanentAtNextUpkeep(
+                    controllerId, returnedPermanent.getId(), entry.getCard()));
         }
 
         if (effect.gainLifeEqualToManaValue()) {
@@ -1756,7 +1762,8 @@ public class GraveyardReturnSupport {
         for (int i = 0; i < graveyard.size(); i++) {
             if ((trackedIds == null || trackedIds.contains(graveyard.get(i).getId()))
                     && predicateEvaluationService.matchesCardPredicate(graveyard.get(i), next.filter(), null)
-                    && !next.excludedManaValues().contains(graveyard.get(i).getManaValue())) {
+                    && !next.excludedManaValues().contains(graveyard.get(i).getManaValue())
+                    && !next.excludedCardIds().contains(graveyard.get(i).getId())) {
                 matchingIndices.add(i);
             }
         }
@@ -1773,7 +1780,7 @@ public class GraveyardReturnSupport {
                     new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter(),
                             next.destination(), next.skipRemainingOnDecline(), next.mandatory(),
                             next.fromBattlefieldThisTurn(), next.distinctManaValues(),
-                            next.excludedManaValues()));
+                            next.excludedManaValues(), next.excludedCardIds()));
         }
 
         GraveyardChoiceDestination destination = next.destination();

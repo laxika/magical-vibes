@@ -91,6 +91,7 @@ public sealed interface DelayedAction permits
         DrawCardsAtNextUpkeep,
         DrawCardsAtNextEndStep,
         ExileToOwnerGraveyardAtNextUpkeep,
+        ExilePermanentAtNextUpkeep,
         PutCounterOnPermanentAtNextUpkeep,
         RevokeExilePlayPermissionAtNextUpkeep,
         TransformSourceAtNextUpkeep,

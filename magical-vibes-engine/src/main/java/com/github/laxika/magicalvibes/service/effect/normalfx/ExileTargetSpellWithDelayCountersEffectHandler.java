@@ -63,7 +63,7 @@ public class ExileTargetSpellWithDelayCountersEffectHandler implements NormalEff
             return;
         }
 
-        exileService.exileCard(gameData, target.getControllerId(), target.getCard());
+    exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
         gameData.delayedSpellExiles.add(new GameData.DelayedSpellExile(
                 targetCardId, target.getControllerId(), counters, snapshot));
 

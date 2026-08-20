@@ -1392,6 +1392,12 @@ public class CastingCostService {
                         || e instanceof GraveyardCardTargetCostReductionEffect);
     }
 
+    public boolean hasBattlefieldTargetBasedCastCostReduction(GameData gameData, UUID playerId) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance);
+    }
+
     public boolean hasPerTargetCastCostReduction(GameData gameData, UUID playerId, Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(PerTargetCastCostReductionEffect.class::isInstance)

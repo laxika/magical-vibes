@@ -114,6 +114,7 @@ public enum CardSubtype {
     DRONE("Drone"),
     SPAWN("Spawn"),
     WARRIOR("Warrior"),
+    WARLOCK("Warlock"),
     METATHRAN("Metathran"),
     VAMPIRE("Vampire"),
     NOBLE("Noble"),

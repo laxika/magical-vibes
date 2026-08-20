@@ -23,8 +23,26 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               boolean imprintOnSource,
                                               boolean revealHand,
                                               boolean grantPlayPermission,
-                                              boolean returnAtNextEndStep)
+                                              boolean returnAtNextEndStep,
+                                              int exilePlayOpponentTax)
         implements CombatDamageTriggerContextEffect {
+
+    public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
+                                           List<CardType> includedTypes,
+                                           HandChoiceDestination destination,
+                                           boolean returnOnSourceLeave,
+                                           CardPredicate filter,
+                                           int declineFallbackDiscardCount,
+                                           boolean upTo,
+                                           boolean exileAllCopiesOfChosenNames,
+                                           boolean imprintOnSource,
+                                           boolean revealHand,
+                                           boolean grantPlayPermission,
+                                           boolean returnAtNextEndStep) {
+        this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
+                declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
+                revealHand, grantPlayPermission, returnAtNextEndStep, 0);
+    }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
                                            List<CardType> includedTypes,
@@ -89,6 +107,13 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            HandChoiceDestination destination, boolean imprintOnSource) {
         this(new Fixed(count), excludedTypes, List.of(), destination, false, null,
                 0, false, false, imprintOnSource, true, false, false);
+    }
+
+    public static ChooseCardsFromTargetHandEffect exileAndGrantPlayPermission(
+            int count, List<CardType> excludedTypes, int exilePlayOpponentTax) {
+        return new ChooseCardsFromTargetHandEffect(new Fixed(count), excludedTypes, List.of(),
+                HandChoiceDestination.EXILE, false, null,
+                0, false, false, false, true, true, false, exilePlayOpponentTax);
     }
 
     /** "You may choose a card; if you don't, that player discards N cards." */

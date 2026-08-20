@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -356,6 +357,73 @@ public class Card {
         return new Card(this);
     }
 
+    /**
+     * Creates a runtime copy with this card's identity and the supplied face's characteristics.
+     * The copy is used for a modal double-faced spell after its face has been chosen; keeping the
+     * id from this card lets stack targets and zone movement continue to refer to the physical card.
+     */
+    public Card createRuntimeCopyWithFace(Card face) {
+        Card copy = new Card(this);
+        copy.copyFaceCharacteristicsFrom(face);
+        return copy;
+    }
+
+    private void copyFaceCharacteristicsFrom(Card face) {
+        assertMutable();
+        this.name = face.name;
+        this.type = face.type;
+        this.manaCost = face.manaCost;
+        this.parsedManaCost = face.parsedManaCost;
+        this.color = face.color;
+        this.colors = face.colors;
+        this.colorIdentity = face.colorIdentity;
+        this.additionalTypes = face.additionalTypes;
+        this.supertypes = face.supertypes;
+        this.subtypes = face.subtypes;
+        this.cardText = face.cardText;
+        this.power = face.power;
+        this.toughness = face.toughness;
+        this.keywords = face.keywords;
+        this.loyalty = face.loyalty;
+        this.defense = face.defense;
+        this.xColorRestrictions = face.xColorRestrictions == null
+                ? null
+                : EnumSet.copyOf(face.xColorRestrictions);
+        this.xValueCap = face.xValueCap;
+        this.token = face.token;
+        this.cantBeCopied = face.cantBeCopied;
+        this.sacrificeAtEndStep = face.sacrificeAtEndStep;
+        this.requiresCreatureMana = face.requiresCreatureMana;
+        this.enchantPlayer = face.enchantPlayer;
+        this.additionalCostPerExtraTarget = face.additionalCostPerExtraTarget;
+        this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
+        this.additionalLifeCostPerTarget = face.additionalLifeCostPerTarget;
+        this.allowSharedTargets = face.allowSharedTargets;
+        this.multiTargetConstraint = face.multiTargetConstraint;
+        this.spellTargets.clear();
+        this.spellTargets.addAll(face.spellTargets);
+        this.effectTargetIndexMap.clear();
+        this.effectTargetIndexMap.putAll(face.effectTargetIndexMap);
+        this.castTimeTargetFilter = face.castTimeTargetFilter;
+        this.watermark = face.watermark;
+        this.castingOptions = new ArrayList<>(face.castingOptions);
+        this.morphCost = face.morphCost;
+        this.morphRevealCost = face.morphRevealCost;
+        this.spellCastTimingRestriction = face.spellCastTimingRestriction;
+        this.castCondition = face.castCondition;
+        this.flashCastCondition = face.flashCastCondition;
+        this.attachRestriction = face.attachRestriction;
+        this.effectRegistrations.clear();
+        face.effectRegistrations.forEach((slot, regs) ->
+                this.effectRegistrations.put(slot, new ArrayList<>(regs)));
+        this.effectCache.clear();
+        this.sagaChapterTargetFilters.clear();
+        this.sagaChapterTargetFilters.putAll(face.sagaChapterTargetFilters);
+        this.activatedAbilities = new ArrayList<>(face.activatedAbilities);
+        this.graveyardActivatedAbilities = new ArrayList<>(face.graveyardActivatedAbilities);
+        this.handActivatedAbilities = new ArrayList<>(face.handActivatedAbilities);
+    }
+
     // ── Freeze guard ─────────────────────────────────────────────────
 
     /**
@@ -568,6 +636,13 @@ public class Card {
             case SpellCastTriggerEffect e -> {
                 for (CardEffect resolvedEffect : e.resolvedEffects()) {
                     registerEffectTargetIndex(resolvedEffect, targetIndex);
+                }
+            }
+            case ChooseOneForTargetPermanentEffect e -> {
+                for (var option : e.options()) {
+                    for (CardEffect optionEffect : option.effects()) {
+                        registerEffectTargetIndex(optionEffect, targetIndex);
+                    }
                 }
             }
             // Triggering conditionals (e.g. Diregraf Captain's "whenever another Zombie you control

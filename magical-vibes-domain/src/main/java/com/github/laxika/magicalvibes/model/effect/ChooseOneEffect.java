@@ -19,6 +19,8 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                               boolean allModesWhenOptionalCostPaid)
         implements CombatDamageTriggerContextEffect {
 
+    public static final String NO_MODE_LABEL = "Choose no modes";
+
     public ChooseOneEffect {
         if (choicesRequired < 1) {
             throw new IllegalArgumentException("choicesRequired must be >= 1");

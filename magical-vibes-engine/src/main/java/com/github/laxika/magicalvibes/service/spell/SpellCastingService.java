@@ -2460,6 +2460,7 @@ public class SpellCastingService {
                 );
             }
             entry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
+            entry.setAlternateCost(usingAlternateCost);
             entry.setCastTransformed(castModalBackFace);
             if (kicked && kickerEffect != null) {
                 entry.setKicked(true);
@@ -3358,6 +3359,7 @@ public class SpellCastingService {
             // Prowl (CR 702.75): flag the sorcery/instant entry so a "if this spell's prowl cost was
             // paid" SPELL effect can gate on it (e.g. Notorious Throng's extra turn).
             if (usingAlternateCost && !gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setAlternateCost(true);
                 AlternateHandCast altHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
                 if (altHandCast != null && !altHandCast.prowlDamageSubtypes().isEmpty()) {
                     gameData.stack.getLast().setProwl(true);

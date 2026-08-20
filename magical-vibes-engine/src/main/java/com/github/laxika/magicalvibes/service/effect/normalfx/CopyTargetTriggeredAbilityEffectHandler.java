@@ -67,7 +67,7 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
         copyEntry.setChosenPermanentId(targetEntry.getChosenPermanentId());
         copyEntry.setAttackedTargetId(targetEntry.getAttackedTargetId());
 
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText(
                 "A copy of ", targetEntry.getCard(), "'s triggered ability is created."));

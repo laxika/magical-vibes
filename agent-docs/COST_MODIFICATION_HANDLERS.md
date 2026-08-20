@@ -1,5 +1,7 @@
 # Cast-Cost Modification Handlers (`costmod`)
 
+One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect`. Its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell; `GameData.recordSpellCast` consumes it after a successful matching cast.
+
 `ReduceColoredCastCostForMatchingSpellsEffectHandler` handles battlefield reductions that remove
 only matching colored components from a spell's mana cost. Unmatched colored reduction does not
 reduce generic mana; Ragemonger uses this for `{B}{R}`.
@@ -98,7 +100,9 @@ it compares against the imprinted card rather than a predicate.
 their own records. Their reductions depend on the being-cast spell's chosen targets, which the
 generic cost-modifier path (and `ConditionContext.forCasting`) does not carry; they are resolved
 inline in `CastingCostService.computeTargetBasedCostReduction(gameData, player, card, targetIds)`,
-not through the handler registry.
+not through the handler registry. When `ReduceOwnCastCostIfTargetingPermanentEffect` is carried
+by a battlefield permanent, it reduces that controller's spells once per effect when any chosen
+permanent target matches; the spell-self form continues to inspect its first target.
 
 `ReduceOwnCastCostIfTargetingGraveyardCardEffect` is the corresponding target-gated record for a
 graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the

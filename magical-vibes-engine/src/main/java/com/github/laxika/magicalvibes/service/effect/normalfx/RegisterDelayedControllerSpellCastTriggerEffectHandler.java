@@ -31,6 +31,7 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
                 entry.getCard(),
                 e.spellFilter(),
                 e.resolvedEffects(),
+                e.oneShot(),
                 e.sourceMustRemainOnBattlefield(),
                 e.targetFilter()));
         log.info("Game {} - {} registers a delayed spell-cast trigger for this turn",

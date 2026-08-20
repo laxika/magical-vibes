@@ -26,12 +26,14 @@ import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessP
 import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.ExilePermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
@@ -179,6 +181,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtEndSt
 import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -406,6 +409,27 @@ public class StepTriggerService {
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed upkeep counter trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
+            }
+        }
+
+        if (gameData.hasDelayedAction(ExilePermanentAtNextUpkeep.class)) {
+            List<ExilePermanentAtNextUpkeep> pendingExiles = gameData.drainDelayedActions(
+                    ExilePermanentAtNextUpkeep.class, a -> a.controllerId().equals(gameData.activePlayerId));
+            for (ExilePermanentAtNextUpkeep action : pendingExiles) {
+                if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
+                    continue;
+                }
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
+                        action.permanentId(), (UUID) null);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed upkeep exile trigger pushed onto stack",
                         gameData.id, action.sourceCard().getName());
             }
         }
@@ -1491,6 +1515,25 @@ public class StepTriggerService {
                                 GameLog.cardThen(card, "'s upkeep ability triggers (exiled with egg counters)."));
                         log.info("Game {} - {} egg counter upkeep trigger pushed onto stack", gameData.id, card.getName());
                     }
+                }
+            }
+        }
+
+        // Cards exiled with refine counters trigger for their owner at upkeep.
+        if (!gameData.exiledCardRefineCounters.isEmpty()) {
+            List<Card> exiledCards = gameData.getPlayerExiledCards(activePlayerId);
+            for (Card card : new ArrayList<>(exiledCards)) {
+                Integer refineCounters = gameData.exiledCardRefineCounters.get(card.getId());
+                if (refineCounters != null && refineCounters > 0) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            activePlayerId,
+                            card.getName() + "'s refine counter ability",
+                            new ArrayList<>(List.of(new RemoveRefineCounterFromExiledCardEffect(card.getId())))
+                    ));
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, "'s refine counter ability triggers."));
                 }
             }
         }
@@ -3025,13 +3068,20 @@ public class StepTriggerService {
                 perm.setAttacking(true);
                 perm.setAttackTarget(attackTargetId);
             }
+            boolean isCreature = card.hasType(CardType.CREATURE);
             if (pending.plusOnePlusOneCounters() > 0
+                    && (!pending.plusOnePlusOneCountersOnlyOnCreatures() || isCreature)
                     && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, perm, controllerId)) {
                 int counters = gameQueryService.doublePlusOnePlusOneCounters(
                         gameData, perm, controllerId, pending.plusOnePlusOneCounters());
                 if (counters > 0) {
                     perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
                 }
+            }
+            if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+                int loyalty = gameQueryService.replaceCounters(gameData, controllerId, CounterType.LOYALTY,
+                        card.getLoyalty() + pending.loyaltyCountersOnPlaneswalkers(), isCreature);
+                perm.setCounterCount(CounterType.LOYALTY, loyalty);
             }
             perm.setEnteredFromExile(true);
             if (pending.grantHaste()) {
@@ -4865,6 +4915,11 @@ public class StepTriggerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            return;
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
@@ -4956,8 +5011,13 @@ public class StepTriggerService {
         List<CardEffect> mayEffects = combatEffects.stream()
                 .filter(e -> e instanceof MayEffect && e.targetSpec() == TargetSpec.NONE)
                 .toList();
+        List<ChooseOneEffect> modalEffects = new ArrayList<>();
         List<CardEffect> mandatoryEffects = new ArrayList<>();
         for (CardEffect effect : combatEffects) {
+            if (effect instanceof ChooseOneEffect chooseOne) {
+                modalEffects.add(chooseOne);
+                continue;
+            }
             // Targets are chosen when a triggered ability is put on the stack, before the
             // resolution-time may choice. Keep targeted MayEffects in the targeting flow.
             if (effect instanceof MayEffect && effect.targetSpec() == TargetSpec.NONE) {
@@ -4983,6 +5043,14 @@ public class StepTriggerService {
 
         for (CardEffect effect : mayEffects) {
             gameData.queueMayAbility(perm.getCard(), controllerId, (MayEffect) effect, null, perm.getId());
+        }
+
+        for (ChooseOneEffect effect : modalEffects) {
+            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    perm.getCard(), controllerId, effect, perm.getId()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            log.info("Game {} - {} beginning-of-combat trigger queued for mode selection",
+                    gameData.id, perm.getCard().getName());
         }
 
         if (mandatoryEffects.isEmpty()) {

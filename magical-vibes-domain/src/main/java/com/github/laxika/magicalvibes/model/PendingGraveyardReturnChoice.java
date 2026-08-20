@@ -24,22 +24,25 @@ import java.util.UUID;
  * @param distinctManaValues      if {@code true}, each selected card must have a mana value not
  *                                already selected in this queued return flow
  * @param excludedManaValues      mana values already selected in this queued return flow
+ * @param excludedCardIds         card IDs that cannot be selected in this queued return flow
  */
 public record PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
                                            GraveyardChoiceDestination destination,
                                            boolean skipRemainingOnDecline,
                                            boolean mandatory, boolean fromBattlefieldThisTurn,
-                                           boolean distinctManaValues, Set<Integer> excludedManaValues) {
+                                           boolean distinctManaValues, Set<Integer> excludedManaValues,
+                                           Set<UUID> excludedCardIds) {
 
     public PendingGraveyardReturnChoice {
         excludedManaValues = excludedManaValues == null ? Set.of() : Set.copyOf(excludedManaValues);
+        excludedCardIds = excludedCardIds == null ? Set.of() : Set.copyOf(excludedCardIds);
     }
 
     public PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
                                         GraveyardChoiceDestination destination,
                                         boolean skipRemainingOnDecline) {
         this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, false, false,
-                false, Set.of());
+                false, Set.of(), Set.of());
     }
 
     public PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
@@ -47,6 +50,15 @@ public record PendingGraveyardReturnChoice(UUID playerId, int remainingCount, Ca
                                         boolean skipRemainingOnDecline, boolean mandatory,
                                         boolean fromBattlefieldThisTurn) {
         this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, mandatory,
-                fromBattlefieldThisTurn, false, Set.of());
+                fromBattlefieldThisTurn, false, Set.of(), Set.of());
+    }
+
+    public PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
+                                        GraveyardChoiceDestination destination,
+                                        boolean skipRemainingOnDecline, boolean mandatory,
+                                        boolean fromBattlefieldThisTurn, boolean distinctManaValues,
+                                        Set<Integer> excludedManaValues) {
+        this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, mandatory,
+                fromBattlefieldThisTurn, distinctManaValues, excludedManaValues, Set.of());
     }
 }

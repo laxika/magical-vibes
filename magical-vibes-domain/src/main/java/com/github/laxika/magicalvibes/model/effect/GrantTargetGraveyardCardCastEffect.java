@@ -9,13 +9,23 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * stack during resolution.
  *
  * <p>{@code exileInsteadOfGraveyard} adds the companion replacement "if that spell would be put into
- * a graveyard, exile it instead" (Toshiro Umezawa).</p>
+ * a graveyard, exile it instead" (Toshiro Umezawa). {@code additionalGenericCost} adds a
+ * conditional generic cost when the spell does not target a creature controlled by its caster
+ * (Mavinda, Students' Advocate).</p>
  */
 public record GrantTargetGraveyardCardCastEffect(
         CardPredicate filter,
         GraveyardSearchScope scope,
-        boolean exileInsteadOfGraveyard
+        boolean exileInsteadOfGraveyard,
+        int additionalGenericCost
 ) implements CardEffect {
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(scope)); }
+    public GrantTargetGraveyardCardCastEffect(
+            CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard) {
+        this(filter, scope, exileInsteadOfGraveyard, 0);
+    }
+
+    @Override public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.graveyardCards(filter, scope));
+    }
 }

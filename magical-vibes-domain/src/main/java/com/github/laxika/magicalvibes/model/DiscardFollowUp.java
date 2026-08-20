@@ -39,7 +39,29 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount,
                               UUID thenEffectTargetId, boolean plaguecrafter,
                               int eachPlayerNoDiscardCount, boolean thenEffectUsesDiscardedManaValue,
-                              UUID rummageDrawPlayerId) {
+                              UUID rummageDrawPlayerId,
+                              CardType thenEffectAlternateCardType,
+                              CardEffect thenEffectAlternate) {
+
+    public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
+                           List<UUID> remainingEachPlayerDiscards,
+                           UUID eachPlayerControllerId, int eachPlayerAmount,
+                           int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                           UUID boostPermanentId, int boostPower, int boostToughness,
+                           Card thenEffectSourceCard, CardEffect thenEffect,
+                           CardPredicate thenEffectCondition, Permanent enteringPermanent,
+                           UUID enteringControllerId, UUID plusOnePlusOneCounterPermanentId,
+                           int plusOnePlusOneCounterAmount, UUID thenEffectTargetId,
+                           boolean plaguecrafter, int eachPlayerNoDiscardCount,
+                           boolean thenEffectUsesDiscardedManaValue, UUID rummageDrawPlayerId) {
+        this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards,
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition, enteringPermanent, enteringControllerId,
+                plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId,
+                plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue,
+                rummageDrawPlayerId, null, null);
+    }
 
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            List<UUID> remainingEachPlayerDiscards, UUID eachPlayerControllerId,
@@ -162,9 +184,17 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
      */
     public static DiscardFollowUp thenEffect(Card sourceCard, CardEffect thenEffect,
                                               CardPredicate condition, UUID thenEffectTargetId) {
+        return thenEffect(sourceCard, thenEffect, condition, thenEffectTargetId, null, null);
+    }
+
+    public static DiscardFollowUp thenEffect(Card sourceCard, CardEffect thenEffect,
+                                              CardPredicate condition, UUID thenEffectTargetId,
+                                              CardType alternateCardType,
+                                              CardEffect alternateThenEffect) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
                 sourceCard, thenEffect, condition, null, null, null, 0,
-                thenEffectTargetId, false, 0, false);
+                thenEffectTargetId, false, 0, false, null,
+                alternateCardType, alternateThenEffect);
     }
 
     /** Push a reflexive effect whose target filters use the discarded card's mana value as X. */

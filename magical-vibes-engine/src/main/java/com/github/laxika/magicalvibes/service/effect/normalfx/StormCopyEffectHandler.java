@@ -51,7 +51,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
 
-            gameData.stack.add(copyEntry);
+            copySupport.addCopyToStack(gameData, copyEntry);
 
             gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
 

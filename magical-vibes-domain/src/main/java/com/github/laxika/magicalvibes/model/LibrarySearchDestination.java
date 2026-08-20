@@ -38,8 +38,10 @@ public enum LibrarySearchDestination {
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the
-     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
+    *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
     EXILE_FOR_FREE_CAST,
+    /** Exile the chosen card face up and offer its controller a one-time free cast. */
+    EXILE_FOR_MAY_CAST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
     /** Gifts Ungiven — the chosen cards are held out of every zone until an opponent has chosen

@@ -50,6 +50,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
     ON_CONTROLLER_FORETELLS,
+    /** Triggers when the controller copies an instant or sorcery spell. */
+    ON_CONTROLLER_COPIES_SPELL,
+    /** Triggers when an opponent copies an instant or sorcery spell. */
+    ON_OPPONENT_COPIES_SPELL,
     ON_CONTROLLER_COUNTERS_SPELL,
     /** "Whenever a spell you've cast is countered, ..." */
     ON_CONTROLLER_SPELL_COUNTERED,
@@ -734,6 +738,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever the controller of this card proliferates while this card is in that
      *  player's graveyard. */
     GRAVEYARD_ON_CONTROLLER_PROLIFERATES,
+    /** Triggers whenever one or more cards are put into exile during this permanent controller's turn. */
+    ON_CONTROLLER_CARDS_EXILED_DURING_TURN,
     /** Triggers whenever one or more creature cards leave the controller's graveyard. */
     ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever one or more artifact and/or creature cards leave the controller's graveyard. */

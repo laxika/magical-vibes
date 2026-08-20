@@ -85,8 +85,8 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         }
         UUID ownerId = entry.getOwnerId();
         List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
-        if (graveyard != null && graveyard.remove(entry.getCard())) {
-            gameData.addCardToHand(ownerId, entry.getCard());
+        if (graveyard != null && graveyard.remove(entry.getPhysicalCard())) {
+            gameData.addCardToHand(ownerId, entry.getPhysicalCard());
         }
     }
 

@@ -286,7 +286,11 @@ public class EffectResolutionService {
                 boolean rerunCurrentEffect = gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
                         || gameData.resolvingMayEffectFromStack
                         || gameData.rerunCurrentEffectAfterInteraction;
-                if (rerunCurrentEffect && effectToResolve != effect) {
+                // A handler may replace the parent wrapper while resolving a nested effect (for
+                // example Learn inside a conditional ETB or a declined may branch). Preserve that
+                // handler replacement instead of restoring the transient unwrapped effect here.
+                if (rerunCurrentEffect && effectToResolve != effect
+                        && entry.getEffectsToResolve().get(i) == effect) {
                     entry.replaceEffectToResolve(i, effectToResolve);
                 }
                 gameData.pendingEffectResolutionEntry = entry;

@@ -168,4 +168,9 @@ public record InteractionPromptMessage(
         return of(InteractionShape.HAND_TOP_BOTTOM, prompt, null, cards, null, null, null, null,
                 null, null, null, null, null, null, null);
     }
+
+    public static InteractionPromptMessage handBottomExile(List<CardView> cards, String prompt) {
+        return of(InteractionShape.HAND_BOTTOM_EXILE, prompt, null, cards, null, null, null, null,
+                null, null, null, null, null, null, null);
+    }
 }

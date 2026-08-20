@@ -37,7 +37,11 @@ public class LibraryRevealSupport {
     }
 
     public TopCardsResult takeTopCardsFromLibrary(GameData gameData, StackEntry entry, int count, boolean broadcastLook) {
-        UUID controllerId = entry.getControllerId();
+        return takeTopCardsFromLibrary(gameData, entry, entry.getControllerId(), count, broadcastLook);
+    }
+
+    public TopCardsResult takeTopCardsFromLibrary(GameData gameData, StackEntry entry, UUID controllerId,
+                                                  int count, boolean broadcastLook) {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
 
@@ -75,6 +79,12 @@ public class LibraryRevealSupport {
 
     public List<String> collectAllCardNamesInGame(GameData gameData) {
         return collectCardNamesInGame(gameData, card -> true);
+    }
+
+    /** Every distinct card name in the game that has none of the excluded card types. */
+    public List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
+        Set<CardType> excluded = Set.copyOf(excludedTypes);
+        return collectCardNamesInGame(gameData, card -> !matchesCardTypes(card, excluded));
     }
 
     /** Every distinct card name in the game except basic land card names (Desperate Research). */

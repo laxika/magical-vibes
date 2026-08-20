@@ -103,6 +103,14 @@ class FlickerEffectHandlerTest {
         return card;
     }
 
+    private Card createPlaneswalkerCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.PLANESWALKER);
+        card.setLoyalty(3);
+        return card;
+    }
+
     @Nested
     @DisplayName("TARGET, return at end step")
     class TargetAtStep {
@@ -161,6 +169,30 @@ class FlickerEffectHandlerTest {
                                 .extracting(Card::getName)
                                 .containsExactly("Llanowar Elves");
                         assertThat(pending.returnTapped()).isTrue();
+                    });
+        }
+
+        @Test
+        @DisplayName("Preserves type-specific return counters in the pending action")
+        void preservesTypeSpecificReturnCounters() {
+            Permanent target = new Permanent(createPlaneswalkerCard("Jace Beleren"));
+            Card sourceCard = createCreatureCard("Semester's End");
+            FlickerEffect effect = FlickerEffect.exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(1);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+                    .singleElement()
+                    .satisfies(pending -> {
+                        assertThat(pending.plusOnePlusOneCounters()).isEqualTo(1);
+                        assertThat(pending.plusOnePlusOneCountersOnlyOnCreatures()).isTrue();
+                        assertThat(pending.loyaltyCountersOnPlaneswalkers()).isEqualTo(1);
                     });
         }
 

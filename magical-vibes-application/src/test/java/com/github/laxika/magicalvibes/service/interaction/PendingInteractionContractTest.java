@@ -79,6 +79,7 @@ class PendingInteractionContractTest {
             PendingInteraction.DiscardChoice.class,
             PendingInteraction.ExileFromHandChoice.class,
             PendingInteraction.ImprintFromHandChoice.class,
+            PendingInteraction.ExileFromHandWithRefineCountersChoice.class,
             PendingInteraction.DiscardCostChoice.class,
             PendingInteraction.AttackerDeclaration.class,
             PendingInteraction.BlockerDeclaration.class);

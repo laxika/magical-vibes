@@ -22,6 +22,7 @@ import java.util.UUID;
  *   <li>{@code CARD_ORDER} — {@code order}</li>
  *   <li>{@code SCRY_ORDER} — {@code order} (top) and {@code secondOrder} (bottom)</li>
  *   <li>{@code HAND_TOP_BOTTOM} — {@code index} (to hand) and {@code secondIndex} (to top)</li>
+ *   <li>{@code HAND_BOTTOM_EXILE} — {@code index} (to hand) and {@code secondIndex} (to bottom)</li>
  * </ul>
  */
 public record InteractionAnswerRequest(

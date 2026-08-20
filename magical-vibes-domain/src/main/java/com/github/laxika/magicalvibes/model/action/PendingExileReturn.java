@@ -29,7 +29,22 @@ public record PendingExileReturn(
         boolean returnToGraveyard,
         UUID timingControllerId,
         Card followUpSourceCard,
-        boolean discardControllerCardsEqualToReturnedToughness) implements DelayedAction {
+        boolean discardControllerCardsEqualToReturnedToughness,
+        boolean plusOnePlusOneCountersOnlyOnCreatures,
+        int loyaltyCountersOnPlaneswalkers) implements DelayedAction {
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped,
+                              boolean returnToHand, TurnStep returnStep,
+                              int plusOnePlusOneCounters, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste,
+                              boolean returnAttacking, boolean returnToGraveyard,
+                              UUID timingControllerId, Card followUpSourceCard,
+                              boolean discardControllerCardsEqualToReturnedToughness) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking,
+                returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, false, 0);
+    }
 
     public PendingExileReturn {
         additionalCards = additionalCards == null ? List.of() : List.copyOf(additionalCards);
@@ -88,5 +103,15 @@ public record PendingExileReturn(
             Card card, UUID ownerId, UUID timingControllerId, Card sourceCard, List<Card> additionalCards) {
         return new PendingExileReturn(card, ownerId, false, false, TurnStep.UPKEEP, 0, additionalCards,
                 true, false, false, false, timingControllerId, sourceCard, true);
+    }
+
+    public static PendingExileReturn withCountersOnReturn(
+            Card card, UUID controllerId, boolean returnTapped, TurnStep returnStep,
+            int plusOnePlusOneCounters, boolean plusOnePlusOneCountersOnlyOnCreatures,
+            int loyaltyCountersOnPlaneswalkers, List<Card> additionalCards) {
+        return new PendingExileReturn(card, controllerId, returnTapped, false, returnStep,
+                plusOnePlusOneCounters, additionalCards, false, false, false, false,
+                null, null, false, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers);
     }
 }

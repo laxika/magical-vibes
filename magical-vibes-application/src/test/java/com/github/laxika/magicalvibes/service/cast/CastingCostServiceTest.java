@@ -1007,6 +1007,35 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Battlefield permanent reduction applies to any spell targeting a matching permanent")
+        void battlefieldPermanentReductionApplies() {
+            var predicate = new PermanentIsCreaturePredicate();
+            Card killian = new Card();
+            killian.setName("Killian, Ink Duelist");
+            killian.setType(CardType.CREATURE);
+            killian.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            predicate, 2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(killian));
+
+            Card spell = new Card();
+            spell.setName("Target Spell");
+            spell.setType(CardType.INSTANT);
+            Card bearCard = new Card();
+            bearCard.setName("Bear");
+            bearCard.setType(CardType.CREATURE);
+            Permanent bear = new Permanent(bearCard);
+            gd.playerBattlefields.get(player2Id).add(bear);
+
+            when(gameQueryService.findPermanentById(gd, bear.getId())).thenReturn(bear);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(bear), eq(predicate), any(FilterContext.class))).thenReturn(true);
+
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(bear.getId())))
+                    .isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("Stack-entry reduction applies when first target is a matching spell on the stack")
         void stackEntryReductionApplies() {
             var predicate = new com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate(

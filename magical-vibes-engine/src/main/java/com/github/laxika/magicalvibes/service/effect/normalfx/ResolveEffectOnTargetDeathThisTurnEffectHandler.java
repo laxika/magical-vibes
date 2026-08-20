@@ -31,11 +31,11 @@ public class ResolveEffectOnTargetDeathThisTurnEffectHandler implements NormalEf
         var e = (ResolveEffectOnTargetDeathThisTurnEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
-            log.info("Game {} - Target creature no longer on battlefield, delayed death trigger not registered", gameData.id);
+            log.info("Game {} - Target permanent no longer on battlefield, delayed death trigger not registered", gameData.id);
             return;
         }
 
-        gameData.creatureTriggeringEffectOnDeathThisTurn
+        gameData.permanentTriggeringEffectOnDeathThisTurn
                 .computeIfAbsent(target.getCard().getId(), k -> Collections.synchronizedList(new ArrayList<>()))
                 .add(new DelayedEffectOnDeath(e.effect(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
 

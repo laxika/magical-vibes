@@ -6242,7 +6242,8 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the given stack entry represents an instant or sorcery spell
      * that should have lifelink due to a {@link GrantLifelinkToControllerSpellsByColorEffect}
-     * on the controller's battlefield. The spell's color must match the effect's required color.
+     * on the controller's battlefield. A non-null required color must match the spell's color;
+     * a null required color matches every spell.
      */
     public boolean shouldControllerSpellHaveLifelink(GameData gameData, StackEntry entry) {
         if (entry == null) return false;
@@ -6254,7 +6255,7 @@ public class GameQueryService {
             if (!playerId.equals(entry.getControllerId())) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantLifelinkToControllerSpellsByColorEffect glse
-                        && entry.getCard().getColors().contains(glse.color())) {
+                        && (glse.color() == null || entry.getCard().getColors().contains(glse.color()))) {
                     hasLifelink[0] = true;
                 }
             }

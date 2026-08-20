@@ -671,10 +671,18 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
-     * Comply: the controller names a card; until their next turn, their opponents can't cast spells
-     * with that name. Stamped on {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
+     * Comply / Academic Probation: the controller names a card; until their next turn, their
+     * opponents can't cast spells with that name. Stamped on
+     * {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
      */
-    record OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId) implements ChoiceContext {}
+    record OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId,
+                                                           boolean restrictToAllowedNames)
+            implements ChoiceContext {
+
+        public OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId) {
+            this(controllerId, false);
+        }
+    }
 
     /**
      * The target player names a card, then reveals the top card of their library. If it matches

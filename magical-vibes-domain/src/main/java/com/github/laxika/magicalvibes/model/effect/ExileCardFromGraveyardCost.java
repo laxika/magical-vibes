@@ -15,30 +15,45 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param requiredSubtype           the card subtype required (null = any), e.g. "Exile an Elf card" (Scarred Vinebreeder)
  * @param alternateType             a second acceptable card type (null = none); a card of either type qualifies,
  *                                  e.g. "Exile an instant or sorcery card from your graveyard" (Disciple of the Ring)
+ * @param trackExiledManaValue      if true, the exiled card's mana value is stored as the X value
  */
 public record ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                          boolean imprintOnSource, boolean trackExiledPower,
-                                         CardSubtype requiredSubtype, CardType alternateType) implements CostEffect {
+                                         CardSubtype requiredSubtype, CardType alternateType,
+                                         boolean trackExiledManaValue) implements CostEffect {
+
+    public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
+                                      boolean imprintOnSource, boolean trackExiledPower,
+                                      CardSubtype requiredSubtype, CardType alternateType) {
+        this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower,
+                requiredSubtype, alternateType, false);
+    }
 
     public ExileCardFromGraveyardCost(CardType requiredType) {
-        this(requiredType, false, false, false, null, null);
+        this(requiredType, false, false, false, null, null, false);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, CardType alternateType) {
-        this(requiredType, false, false, false, null, alternateType);
+        this(requiredType, false, false, false, null, alternateType, false);
     }
 
     public ExileCardFromGraveyardCost(CardSubtype requiredSubtype) {
-        this(null, false, false, false, requiredSubtype, null);
+        this(null, false, false, false, requiredSubtype, null, false);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                       boolean imprintOnSource) {
-        this(requiredType, payExiledCardManaCost, imprintOnSource, false, null, null);
+        this(requiredType, payExiledCardManaCost, imprintOnSource, false, null, null, false);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                       boolean imprintOnSource, boolean trackExiledPower) {
-        this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower, null, null);
+        this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower, null, null, false);
+    }
+
+    public static ExileCardFromGraveyardCost trackingExiledManaValue(CardType requiredType,
+                                                                      CardType alternateType) {
+        return new ExileCardFromGraveyardCost(requiredType, false, false, false,
+                null, alternateType, true);
     }
 }

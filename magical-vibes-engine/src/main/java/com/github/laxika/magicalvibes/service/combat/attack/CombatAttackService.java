@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
@@ -961,6 +962,7 @@ public class CombatAttackService {
                                     attacker.getId()
                             );
                             attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                            attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
                             gameData.stack.add(attackTrigger);
                         }
 
@@ -1554,7 +1556,8 @@ public class CombatAttackService {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
                     if (effect instanceof ConditionalEffect conditional
-                            && conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
+                            && (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
+                            || conditional.condition() instanceof OpponentAttacksPlaneswalker)
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
                         continue;

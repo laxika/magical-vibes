@@ -139,6 +139,11 @@ public class ChoiceHandlerService {
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid nonbasic land card name: " + colorName);
         }
+        if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx
+                && ctx.restrictToAllowedNames()
+                && !colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid restricted card name: " + colorName);
+        }
 
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
             handleDevotionManaColorChosen(gameData, player, colorName, ctx);
@@ -1377,6 +1382,15 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (ctx.triggerTime() && ctx.effect().optional()
+                && ChooseOneEffect.NO_MODE_LABEL.equals(chosenLabel)) {
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses no modes for ", ctx.sourceCard(), "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
                 .filter(o -> o.label().equals(chosenLabel))
                 .findFirst()
@@ -1454,6 +1468,16 @@ public class ChoiceHandlerService {
 
     private void handleMultipleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
             ChoiceContext.ChooseModeChoice ctx) {
+        if (ctx.triggerTime() && ctx.effect().optional()
+                && ctx.chosenLabels().isEmpty()
+                && ChooseOneEffect.NO_MODE_LABEL.equals(chosenLabel)) {
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses no modes for ", ctx.sourceCard(), "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
                 .filter(o -> o.label().equals(chosenLabel))
                 .findFirst()
@@ -1473,7 +1497,22 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         if (ctx.triggerTime()) {
-            throw new IllegalStateException("Multi-mode trigger-time choices are not supported");
+            List<ChooseOneEffect.ChooseOneOption> selectedModes = ctx.effect().options().stream()
+                    .filter(option -> chosenLabels.contains(option.label()))
+                    .toList();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses " + chosenLabels + " for ", ctx.sourceCard(), "."));
+            triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(),
+                    ctx.controllerId(), ctx.sourcePermanentId(), selectedModes);
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+                triggerCollectionService.processNextEntersTriggerTarget(gameData);
+            }
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
         }
 
         List<CardEffect> selectedEffects = ctx.effect().options().stream()
@@ -1578,9 +1617,23 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses mode \"{}\" for {} as it goes on the stack", gameData.id,
                 player.getUsername(), chosen.label(), ctx.sourceCard().getName());
 
-        turnProgressionService.queueChosenModeUpkeepTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
+        if (ctx.consumeMode()) {
+            turnProgressionService.queueChosenModeUpkeepTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
+                    ctx.sourcePermanentId(), chosen);
+            turnProgressionService.processNextUpkeepModalTrigger(gameData);
+            return;
+        }
+
+        triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
                 ctx.sourcePermanentId(), chosen);
-        turnProgressionService.processNextUpkeepModalTrigger(gameData);
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ChoiceContext.DrawReplacementChoice ctx) {

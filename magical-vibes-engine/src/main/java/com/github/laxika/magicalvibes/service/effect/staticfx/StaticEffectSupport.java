@@ -124,6 +124,10 @@ public class StaticEffectSupport {
         if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            if ((scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES)
+                    && context.target().getId().equals(context.source().getId())) {
+                return false;
+            }
             boolean ownCheck = scope == GrantScope.ALL_CREATURES
                     || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                     || (scope == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield())

@@ -1613,6 +1613,13 @@ public class PlayerInputService {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, null, remainingCount);
     }
 
+    public void beginExileFromHandWithRefineCountersChoice(GameData gameData, UUID playerId,
+                                                            List<Integer> validIndices, String prompt,
+                                                            int counterCount) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandWithRefineCountersChoice(
+                playerId, new ArrayList<>(validIndices), prompt, counterCount));
+    }
+
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                          UUID playPermissionControllerId, int remainingCount) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,

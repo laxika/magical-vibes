@@ -62,7 +62,8 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard().getName() + " — Choose " + e.cardDescription() + " to discard.",
                 1, DiscardFollowUp.thenEffect(entry.getCard(),
                         e.useEntryTarget() && entry.getTargetId() == null ? null : e.thenEffect(),
-                        e.condition(), e.useEntryTarget() ? entry.getTargetId() : null));
+                        e.condition(), e.useEntryTarget() ? entry.getTargetId() : null,
+                        e.alternateCardType(), e.alternateThenEffect()));
 
         String logEntry = playerName + " is choosing " + e.cardDescription() + " to discard.";
         gameLogService.append(gameData, GameLog.text(logEntry));

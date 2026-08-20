@@ -26,32 +26,40 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                                StackEntryPredicate stackEntryFilter,
                                                                List<CardEffect> resolvedEffects,
+                                                               boolean oneShot,
                                                                boolean sourceMustRemainOnBattlefield,
                                                                TargetFilter targetFilter)
         implements CardEffect {
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects) {
-        this(spellFilter, null, resolvedEffects, true, null);
+        this(spellFilter, null, resolvedEffects, false, true, null);
     }
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects,
                                                             boolean sourceMustRemainOnBattlefield) {
-        this(spellFilter, null, resolvedEffects, sourceMustRemainOnBattlefield, null);
+        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, null);
     }
 
     public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                             List<CardEffect> resolvedEffects,
                                                             boolean sourceMustRemainOnBattlefield,
                                                             TargetFilter targetFilter) {
-        this(spellFilter, null, resolvedEffects, sourceMustRemainOnBattlefield, targetFilter);
+        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, targetFilter);
+    }
+
+    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
+                                                            List<CardEffect> resolvedEffects,
+                                                            boolean oneShot,
+                                                            boolean sourceMustRemainOnBattlefield) {
+        this(spellFilter, null, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null);
     }
 
     public static RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(
             StackEntryPredicate stackEntryFilter, List<CardEffect> resolvedEffects,
             boolean sourceMustRemainOnBattlefield) {
         return new RegisterDelayedControllerSpellCastTriggerEffect(
-                null, stackEntryFilter, resolvedEffects, sourceMustRemainOnBattlefield, null);
+                null, stackEntryFilter, resolvedEffects, false, sourceMustRemainOnBattlefield, null);
     }
 }

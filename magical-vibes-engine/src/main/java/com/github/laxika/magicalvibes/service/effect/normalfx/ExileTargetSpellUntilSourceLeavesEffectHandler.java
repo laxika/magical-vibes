@@ -61,7 +61,7 @@ public class ExileTargetSpellUntilSourceLeavesEffectHandler implements NormalEff
         }
 
         UUID sourcePermanentId = findSourcePermanentId(gameData, entry);
-        exileService.exileCard(gameData, target.getControllerId(), target.getCard(), sourcePermanentId);
+    exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard(), sourcePermanentId);
 
         gameLogService.append(gameData,
                 GameLog.cardTextCard(target.getCard(), " is exiled by ", entry.getCard(), "."));

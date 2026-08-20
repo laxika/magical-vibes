@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -124,13 +125,23 @@ public class DestructionSupport {
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
+        beginNextDestroyRestChoice(gameData, choosers, protectedIds, sourceName,
+                new PermanentIsCreaturePredicate(), "Choose a creature to keep.", false);
+    }
+
+    public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                           List<UUID> protectedIds, String sourceName,
+                                           PermanentPredicate destructionFilter, String choicePrompt,
+                                           boolean requiresChoice) {
         if (choosers.isEmpty()) return;
         PendingForcedSacrifice next = choosers.getFirst();
         List<PendingForcedSacrifice> remainingChoosers = List.copyOf(choosers.subList(1, choosers.size()));
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
-                new MultiPermanentChoiceContext.DestroyRestChoice(remainingChoosers, List.copyOf(protectedIds), sourceName),
-                "Choose a creature to keep. The rest will be destroyed.");
+                new MultiPermanentChoiceContext.DestroyRestChoice(
+                        remainingChoosers, List.copyOf(protectedIds), sourceName,
+                        destructionFilter, choicePrompt, requiresChoice),
+                choicePrompt + " The rest will be destroyed.");
     }
 
     public void completeDestroyRestChoice(GameData gameData, List<UUID> permanentIds,
@@ -141,22 +152,30 @@ public class DestructionSupport {
 
         if (!context.remainingChoosers().isEmpty()) {
             // More players need to choose — prompt the next one
-            beginNextDestroyRestChoice(gameData, context.remainingChoosers(), protectedIds, context.sourceName());
+            beginNextDestroyRestChoice(gameData, context.remainingChoosers(), protectedIds, context.sourceName(),
+                    context.destructionFilter(), context.choicePrompt(), context.requiresChoice());
             return;
         }
 
         // All players have chosen — destroy all non-protected creatures
         String sourceName = context.sourceName();
-        performDestroyAllCreaturesExcept(gameData, sourceName != null ? sourceName : "unknown", protectedIds);
+        performDestroyAllMatchingExcept(gameData, sourceName != null ? sourceName : "unknown", protectedIds,
+                context.destructionFilter());
     }
 
     public void performDestroyAllCreaturesExcept(GameData gameData, String sourceName, List<UUID> protectedIdList) {
+        performDestroyAllMatchingExcept(gameData, sourceName, protectedIdList, new PermanentIsCreaturePredicate());
+    }
+
+    public void performDestroyAllMatchingExcept(GameData gameData, String sourceName,
+                                                List<UUID> protectedIdList, PermanentPredicate filter) {
         Set<UUID> protectedIds = new HashSet<>(protectedIdList);
 
         List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm) && !protectedIds.contains(perm.getId())) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, perm, filter)
+                        && !protectedIds.contains(perm.getId())) {
                     toDestroy.add(perm);
                 }
             }

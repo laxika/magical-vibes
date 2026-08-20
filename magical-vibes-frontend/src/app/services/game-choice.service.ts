@@ -286,6 +286,9 @@ export class GameChoiceService {
       case 'HAND_TOP_BOTTOM':
         this.library.handleChooseHandTopBottom(msg);
         break;
+      case 'HAND_BOTTOM_EXILE':
+        this.library.handleChooseHandBottomExile(msg);
+        break;
     }
   }
 

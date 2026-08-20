@@ -37,7 +37,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         // Group-aimed damage (e.g. Goblin Barrage's kicked "4 damage to target player or
         // planeswalker"): resolve against the declared target group's chosen target rather
         // than the entry's single target.
-        UUID targetId = e.targetGroup() >= 0
+        UUID targetId = entry.isTargetIdOverriddenForEffectResolution()
+                ? entry.getTargetId()
+                : e.targetGroup() >= 0
                 ? entry.targetsForGroup(e.targetGroup()).stream().findFirst().orElse(null)
                 : entry.getTargetId();
         if (targetId == null) return;

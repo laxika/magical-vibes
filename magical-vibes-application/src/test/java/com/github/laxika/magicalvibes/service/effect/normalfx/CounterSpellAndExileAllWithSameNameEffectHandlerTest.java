@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,13 +27,18 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class CounterSpellAndExileAllWithSameNameEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private ExileService exileService;
+    @Mock private DrawService drawService;
+    @Mock private PlayerInputService playerInputService;
     @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
     @Mock private StateTriggerService stateTriggerService;
@@ -59,7 +66,7 @@ class CounterSpellAndExileAllWithSameNameEffectHandlerTest {
         gd.playerHands.put(player1Id, new ArrayList<>());
         gd.playerDecks.put(player1Id, new ArrayList<>());
         handler = new CounterSpellAndExileAllWithSameNameEffectHandler(
-                counterSupport, graveyardService, gameLogService);
+                counterSupport, graveyardService, drawService, playerInputService, gameLogService);
     }
 
     private Card creature(String name) {
@@ -114,5 +121,24 @@ class CounterSpellAndExileAllWithSameNameEffectHandlerTest {
                 new CounterSpellAndExileAllWithSameNameEffect());
 
         assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Offers any-number same-name exile and retains the hand-exile draw rider")
+    void offersAnyNumberChoice() {
+        Card bears = creature("Grizzly Bears");
+        StackEntry bearsEntry = new StackEntry(StackEntryType.CREATURE_SPELL, bears, player1Id,
+                bears.getName(), List.of());
+        gd.stack.add(bearsEntry);
+
+        gd.playerGraveyards.get(player1Id).add(creature("Grizzly Bears"));
+        gd.playerHands.get(player1Id).add(creature("Grizzly Bears"));
+        gd.playerDecks.get(player1Id).add(creature("Grizzly Bears"));
+
+        handler.resolve(gd, counterboreEntry(bears.getId()),
+                new CounterSpellAndExileAllWithSameNameEffect(true, true));
+
+        verify(playerInputService).beginMultiZoneExileChoice(
+                eq(gd), eq(player2Id), anyList(), eq(player1Id), eq("Grizzly Bears"), eq(true));
     }
 }

@@ -45,7 +45,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
         copyEntry.setTargetFilter(snapshot.getTargetFilter());
         copyEntry.setDamageSourceCard(snapshot.getDamageSourceCard());
 
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", snapshot.getCard(), "'s ability is created."));
         log.info("Game {} - copy of {}'s ability created for controller", gameData.id, snapshot.getCard().getName());

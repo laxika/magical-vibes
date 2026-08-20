@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * "Return up to {@code maxCount} target permanents to their owners' hands." Modeled as a
  * resolution-time multi-select over every permanent on the battlefield (the controller may
@@ -8,5 +10,18 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code ReturnUpToNTargetPermanentsToHandEffectHandler}, completed via
  * {@code MultiPermanentChoiceContext.ReturnTargetPermanentsToHand}.
  */
-public record ReturnUpToNTargetPermanentsToHandEffect(int maxCount) implements CardEffect {
+public record ReturnUpToNTargetPermanentsToHandEffect(
+        int maxCount,
+        PermanentPredicate filter,
+        boolean opponentChooses
+) implements CardEffect {
+
+    public ReturnUpToNTargetPermanentsToHandEffect(int maxCount) {
+        this(maxCount, null, false);
+    }
+
+    public static ReturnUpToNTargetPermanentsToHandEffect opponentChooses(
+            int maxCount, PermanentPredicate filter) {
+        return new ReturnUpToNTargetPermanentsToHandEffect(maxCount, filter, true);
+    }
 }

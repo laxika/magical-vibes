@@ -1679,7 +1679,8 @@ export class GameComponent implements OnInit, OnDestroy {
     return c.choosingFromHand || c.choosingFromList || c.awaitingMayAbility
       || c.choosingPermanent || c.choosingMultiplePermanents || c.choosingGraveyardCards
       || c.revealingHand || c.choosingFromGraveyard || c.awaitingXValueChoice
-      || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
+      || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary
+      || c.library.choosingHandTopBottom || c.library.choosingHandBottomExile
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.harmonizing || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent || t.choosingBuyback

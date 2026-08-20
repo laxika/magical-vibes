@@ -42,11 +42,15 @@ import java.util.List;
  * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
  * "that player".</p>
  */
-public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
+public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
         implements CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
-        this(steps, 0);
+        this(steps, 0, false);
+    }
+
+    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount) {
+        this(steps, controllerDrawCount, false);
     }
 
     public SequenceEffect {
@@ -70,9 +74,19 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
         return new SequenceEffect(List.of(steps), 2);
     }
 
+    /** Creates a sequence that triggers only when its source permanent was sacrificed. */
+    public static SequenceEffect sacrificeOnly(CardEffect... steps) {
+        return new SequenceEffect(List.of(steps), 0, true);
+    }
+
     @Override
     public boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) {
         return controllerDrawCount == 0 || controllerDrawCount == cardsDrawnThisTurn;
+    }
+
+    @Override
+    public boolean onlyTriggersOnSacrifice() {
+        return onlyIfSacrificed;
     }
     @Override
     public TargetSpec targetSpec() {

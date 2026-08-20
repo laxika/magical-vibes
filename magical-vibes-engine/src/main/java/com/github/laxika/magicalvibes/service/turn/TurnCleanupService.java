@@ -273,6 +273,7 @@ public class TurnCleanupService {
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
         gameData.temporaryGlobalTriggeredAbilities.clear();
         gameData.creatureDeathTriggerWatchers.clear();
+        gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.pendingNextDrawLookAtTop.clear();
@@ -300,6 +301,7 @@ public class TurnCleanupService {
         gameData.playersCantCastNoncreatureSpellsThisTurn.clear();
         gameData.playersCantActivateAbilitiesThisTurn.clear();
         gameData.playersCantActivateNonManaAbilitiesThisTurn.clear();
+        gameData.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.clear();
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
@@ -309,6 +311,7 @@ public class TurnCleanupService {
         gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
+        gameData.nextSpellCostReductionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellsGrantedHasteOnEntry.clear();

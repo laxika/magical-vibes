@@ -30,6 +30,7 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                                 Card sourceCard,
                                                 CardPredicate spellFilter,
                                                 List<CardEffect> resolvedEffects,
+                                                boolean oneShot,
                                                 boolean sourceMustRemainOnBattlefield,
                                                 TargetFilter targetFilter)
         implements DelayedAction {
@@ -37,7 +38,8 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
     public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
                                              Card sourceCard, CardPredicate spellFilter,
                                              List<CardEffect> resolvedEffects) {
-        this(controllerId, sourcePermanentId, sourceCard, spellFilter, resolvedEffects, true, null);
+        this(controllerId, sourcePermanentId, sourceCard, spellFilter, resolvedEffects,
+                false, true, null);
     }
 
     public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
@@ -45,6 +47,14 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                              List<CardEffect> resolvedEffects,
                                              boolean sourceMustRemainOnBattlefield) {
         this(controllerId, sourcePermanentId, sourceCard, spellFilter, resolvedEffects,
-                sourceMustRemainOnBattlefield, null);
+                false, sourceMustRemainOnBattlefield, null);
+    }
+
+    public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
+                                             Card sourceCard, CardPredicate spellFilter,
+                                             List<CardEffect> resolvedEffects, boolean oneShot,
+                                             boolean sourceMustRemainOnBattlefield) {
+        this(controllerId, sourcePermanentId, sourceCard, spellFilter, resolvedEffects,
+                oneShot, sourceMustRemainOnBattlefield, null);
     }
 }

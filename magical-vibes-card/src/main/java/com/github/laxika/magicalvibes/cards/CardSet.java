@@ -115,6 +115,7 @@ public enum CardSet {
     SET_ULG("ULG"),
     SET_DFT("DFT"),
     SET_PLS("PLS"),
+    SET_STX("STX"),
     SET_TDM("TDM");
 
     @Getter

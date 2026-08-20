@@ -8,12 +8,15 @@ import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.UUID;
 import java.util.Map;
+import java.util.List;
 
 /**
  * Sealed hierarchy of trigger event contexts.
  * Each record carries the event-specific data that trigger collectors may need.
  */
 public sealed interface TriggerContext {
+
+    record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {}
 
     default boolean causedByCreatureDying() {
         return false;
@@ -445,6 +448,8 @@ public sealed interface TriggerContext {
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}
+
+    record CardsExiledDuringTurn(UUID activePlayerId) implements TriggerContext {}
 
     /**
      * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers. Carries the damage source object, its

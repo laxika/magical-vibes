@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -549,6 +550,7 @@ public class SpellCastTriggerCollectorService {
 
     @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
     private boolean handleCasterLosesLifeOnSpellCast(TriggerMatchContext match,
             CasterLosesLifeOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1689,6 +1691,56 @@ public class SpellCastTriggerCollectorService {
     }
 
     // ── Shared helpers ─────────────────────────────────────────────────
+
+    @CollectsTrigger(value = SpellCopyTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_COPIES_SPELL)
+    @CollectsTrigger(value = SpellCopyTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_COPIES_SPELL)
+    private boolean handleSpellCopyTrigger(TriggerMatchContext match,
+            SpellCopyTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCopy spellCopy = (TriggerContext.SpellCopy) ctx;
+        if (trigger.spellFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                spellCopy.copiedSpell().getCard(), trigger.spellFilter(),
+                match.permanent().getOriginalCard().getId(), match.gameData(),
+                spellCopy.copyingPlayerId())) {
+            return false;
+        }
+
+        List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        boolean needsPlayerTarget = resolved.stream()
+                .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PLAYER));
+        boolean needsPermanentTarget = resolved.stream()
+                .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PERMANENT));
+        if (trigger.targetFilter() != null && (needsPlayerTarget || needsPermanentTarget)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    match.permanent().getCard(), match.controllerId(), resolved,
+                    needsPlayerTarget && !needsPermanentTarget, trigger.targetFilter(), 0,
+                    match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                    "'s triggered ability triggers — choose a target."));
+            return true;
+        }
+
+        boolean needsGraveyardTarget = resolved.stream()
+                .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (needsGraveyardTarget) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    match.permanent().getCard(), match.controllerId(), resolved));
+            return true;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                resolved,
+                spellCopy.copyingPlayerId(),
+                match.permanent().getId());
+        entry.setTriggeringCardId(spellCopy.copiedSpell().getCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        return true;
+    }
 
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId) {

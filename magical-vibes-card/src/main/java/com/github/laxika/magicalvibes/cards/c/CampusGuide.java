@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "FDN", collectorNumber = "251")
+@CardRegistration(set = "STX", collectorNumber = "252")
 public class CampusGuide extends Card {
 
     public CampusGuide() {

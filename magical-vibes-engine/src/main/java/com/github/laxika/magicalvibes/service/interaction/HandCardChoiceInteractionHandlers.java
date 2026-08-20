@@ -145,6 +145,32 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    /** EXILE_FROM_HAND_WITH_REFINE_COUNTERS_CHOICE — exile the selected card with refine counters. */
+    @Component
+    public static class ExileFromHandWithRefineCountersChoiceInteractionHandler
+            extends Base<PendingInteraction.ExileFromHandWithRefineCountersChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public ExileFromHandWithRefineCountersChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.ExileFromHandWithRefineCountersChoice> handledType() {
+            return PendingInteraction.ExileFromHandWithRefineCountersChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.ExileFromHandWithRefineCountersChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handleExileFromHandWithRefineCountersChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
     /**
      * ACTIVATED_ABILITY_DISCARD_COST_CHOICE — discard a card as an activation cost. Matching
      * the originating begin site, no "Awaiting …" log line is emitted on prompt.

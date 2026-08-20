@@ -796,6 +796,18 @@ public class GameActionAvailabilityService {
             }
         }
 
+        if (castingCostService.hasBattlefieldTargetBasedCastCostReduction(gameData, playerId)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            for (UUID targetId : validTargets.validPermanentIds()) {
+                int reduction = castingCostService.computeTargetBasedCostReduction(
+                        gameData, playerId, card, List.of(targetId));
+                if (reduction > 0 && cost.canPay(pool, additionalCost - reduction)) {
+                    return true;
+                }
+            }
+        }
+
         if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && castingCostService.hasPerTargetCastCostReduction(gameData, playerId, card)) {
             ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(

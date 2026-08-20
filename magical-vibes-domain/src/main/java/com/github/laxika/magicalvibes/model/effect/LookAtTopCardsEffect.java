@@ -85,8 +85,19 @@ public record LookAtTopCardsEffect(
         boolean gainLifeEqualToChosenCardManaValue,
         DynamicAmount chooseManaValueAtMost,
         CardEffect effectIfNoCardChosen,
-        boolean recordChosenCount
+        boolean recordChosenCount,
+        int loseLifePerSelectedCard
 ) implements CardEffect {
+
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            CardEffect effectIfNoCardChosen, boolean recordChosenCount) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                effectIfNoCardChosen, recordChosenCount, 0);
+    }
 
     /** Canonical form without an effect for the no-card branch. */
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
@@ -163,6 +174,13 @@ public record LookAtTopCardsEffect(
     /** Up to {@code chooseCount} cards to hand, the rest into the graveyard. */
     public static LookAtTopCardsEffect chooseNToHandRestToGraveyard(int lookCount, int chooseCount) {
         return chooseNToHandRestToGraveyard(lookCount, chooseCount, null, false);
+    }
+
+    public static LookAtTopCardsEffect mayChooseAnyNumberToHandRestToGraveyardLoseLife(
+            int lookCount, int lifeLossPerSelectedCard) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), null,
+                LookDestination.GRAVEYARD, false, LibrarySearchDestination.HAND, true,
+                false, null, null, false, lifeLossPerSelectedCard);
     }
 
     /** Reveal the top cards, put one into hand, the rest into the graveyard, and gain life equal

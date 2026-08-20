@@ -4550,6 +4550,10 @@ public class AbilityActivationService {
      * (possibly negative) loyalty delta the activation will apply.
      */
     private int validateLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
+        if (gameData.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.contains(playerId)) {
+            throw new IllegalStateException(
+                    "You can't activate planeswalkers' loyalty abilities this turn");
+        }
         if (!gameQueryService.allowsInstantSpeedLoyaltyActivation(permanent)) {
             if (!playerId.equals(gameData.activePlayerId)) {
                 throw new IllegalStateException("Loyalty abilities can only be activated on your turn");
@@ -5085,7 +5089,7 @@ public class AbilityActivationService {
 
         gameData.stack.remove(entry);
         if (!entry.isCopy()) {
-            gameData.addToExile(entry.getOwnerId(), entry.getCard());
+            gameData.addToExile(entry.getOwnerId(), entry.getPhysicalCard());
         }
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", entry.getCard(), " from the stack as an activation cost."));

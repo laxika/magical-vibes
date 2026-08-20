@@ -247,13 +247,15 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * "Each player chooses a creature to keep, the rest are destroyed" (destroy-rest flow).
+     * "Choose a matching permanent to keep, the rest are destroyed" (destroy-rest flow).
      * {@code remainingChoosers} and {@code protectedIds} advance across re-begins exactly as
-     * in {@link ForcedSacrifice}; after the last chooser, every creature not in
+     * in {@link ForcedSacrifice}; after the last chooser, every matching permanent not in
      * {@code protectedIds} is destroyed. {@code sourceName} is kept for the completion log.
      */
     record DestroyRestChoice(java.util.List<PendingForcedSacrifice> remainingChoosers,
-                             java.util.List<UUID> protectedIds, String sourceName)
+                             java.util.List<UUID> protectedIds, String sourceName,
+                             com.github.laxika.magicalvibes.model.filter.PermanentPredicate destructionFilter,
+                             String choicePrompt, boolean requiresChoice)
             implements MultiPermanentChoiceContext {
     }
 
@@ -335,6 +337,10 @@ public sealed interface MultiPermanentChoiceContext {
     /** Tap the chosen permanents to boost the source by the number tapped (Siege Striker). */
     record TapAnyNumberBoostSelf(UUID sourcePermanentId, int powerPerPermanent, int toughnessPerPermanent)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses any number of untapped permanents to tap. */
+    record TapAnyNumberPermanents() implements MultiPermanentChoiceContext {
     }
 
     /**
@@ -621,17 +627,28 @@ public sealed interface MultiPermanentChoiceContext {
      * The current player's picks and the already completed players' picks are carried separately so
      * a multi-typed permanent can be chosen for more than one listed type.
      */
-    record EachPlayerSacrificeOneOfEachTypeChoice(java.util.List<UUID> playerIds, int playerIndex,
-                                                  int typeIndex, java.util.List<UUID> accumulatedIds,
-                                                  java.util.List<UUID> currentPlayerIds,
-                                                  String sourceName)
+      record EachPlayerSacrificeOneOfEachTypeChoice(java.util.List<UUID> playerIds, int playerIndex,
+                                                    int typeIndex, java.util.List<UUID> accumulatedIds,
+                                                    java.util.List<UUID> currentPlayerIds,
+                                                    String sourceName)
             implements MultiPermanentChoiceContext {
         public EachPlayerSacrificeOneOfEachTypeChoice {
             playerIds = java.util.List.copyOf(playerIds);
             accumulatedIds = java.util.List.copyOf(accumulatedIds);
             currentPlayerIds = java.util.List.copyOf(currentPlayerIds);
-        }
-    }
+          }
+      }
+
+      /** Deadly Brew: each player chooses a creature or planeswalker before all are sacrificed. */
+      record EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice(
+              UUID effectControllerId, java.util.List<UUID> playerIds, int playerIndex,
+              java.util.Map<UUID, UUID> chosenByPlayer,
+              String sourceName) implements MultiPermanentChoiceContext {
+          public EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice {
+              playerIds = java.util.List.copyOf(playerIds);
+              chosenByPlayer = java.util.Map.copyOf(chosenByPlayer);
+          }
+      }
 
     /**
      * Global Ruin: the current player chose a land for the current basic land type. The kept

@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastForForetellCost;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -82,6 +83,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanA
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
+import com.github.laxika.magicalvibes.model.condition.ControllerEndStep;
 import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
@@ -170,6 +172,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGainedLifeThisTurn;
@@ -356,6 +359,8 @@ public class ConditionEvaluationService {
                     ctx.putCounterCostPaid();
             case CastForForetellCost ignored ->
                     ctx.castForForetell();
+            case CastForAlternateCost ignored ->
+                    ctx.alternateCost();
             case RepeatedAdditionalCostPaid c ->
                     ctx.repeatedAdditionalCosts().contains(c.manaCost());
             case CastForMadnessCost ignored ->
@@ -558,6 +563,8 @@ public class ConditionEvaluationService {
                     countMatchingAttackers(gameData, ctx, c.predicate()) >= c.minimum();
             case OpponentAttacksWithAtLeastCreatures c ->
                     countOpponentAttackersAtControllerOrPlaneswalkers(gameData, ctx) >= c.minimum();
+            case OpponentAttacksPlaneswalker ignored ->
+                    opponentAttacksPlaneswalker(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
                     countAttackingCreaturesOfSubtype(gameData, ctx.controllerId(), c.subtype()) >= c.minimum();
             case HasAttacker c ->
@@ -744,6 +751,10 @@ public class ConditionEvaluationService {
                             && ctx.controllerId().equals(gameData.activePlayerId)
                             && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                             || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN);
+            case ControllerEndStep ignored ->
+                    ctx.controllerId() != null
+                            && ctx.controllerId().equals(gameData.activePlayerId)
+                            && gameData.currentStep == TurnStep.END_STEP;
             case ControllerOwnTurnCountAtMost c ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
                             && gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0) <= c.maxTurns();
@@ -920,7 +931,7 @@ public class ConditionEvaluationService {
             case TopCardOfLibraryColor c ->
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);
             case TopCardOfLibraryType c ->
-                    isTopCardOfLibraryType(gameData, resolveLibraryOwner(ctx, c.libraryOwner()), c);
+                    isTopCardOfLibraryType(gameData, resolveLibraryOwner(gameData, ctx, c.libraryOwner()), c);
             case BlockedByMinCreatures c ->
                     countBlockersOfSource(gameData, ctx) >= c.minBlockers();
             case ImprintedCardMatches c -> imprintedCardMatches(gameData, ctx, c);
@@ -1908,6 +1919,27 @@ public class ConditionEvaluationService {
                 .count();
     }
 
+    private boolean opponentAttacksPlaneswalker(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (controllerId == null || attackingPlayerId == null || controllerId.equals(attackingPlayerId)) {
+            return false;
+        }
+
+        List<Permanent> controlledPermanents = gameData.playerBattlefields.get(controllerId);
+        List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
+        if (controlledPermanents == null || attackers == null) return false;
+
+        Set<UUID> controlledPlaneswalkerIds = controlledPermanents.stream()
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        return attackers.stream()
+                .filter(Permanent::isAttacking)
+                .anyMatch(attacker -> controlledPlaneswalkerIds.contains(attacker.getAttackTarget()));
+    }
+
     private boolean controlsMatchingPermanentsWithSameName(GameData gameData, ConditionContext ctx,
                                                             int minimum, PermanentPredicate filter) {
         if (ctx.controllerId() == null) return false;
@@ -2224,9 +2256,10 @@ public class ConditionEvaluationService {
         return deck.getFirst().hasType(c.cardType());
     }
 
-    private UUID resolveLibraryOwner(ConditionContext ctx, LibraryOwner owner) {
+    private UUID resolveLibraryOwner(GameData gameData, ConditionContext ctx, LibraryOwner owner) {
         return switch (owner) {
             case CONTROLLER -> ctx.controllerId();
+            case OPPONENT -> gameQueryService.getOpponentId(gameData, ctx.controllerId());
             case TARGET_PLAYER, ENCHANTED_PERMANENT_CONTROLLER -> ctx.targetId();
         };
     }

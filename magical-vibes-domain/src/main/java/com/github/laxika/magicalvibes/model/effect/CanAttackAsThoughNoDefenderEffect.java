@@ -1,11 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static effect: this creature can attack as though it didn't have defender.
- * Typically wrapped in a ConditionalEffect (e.g. with a Metalcraft condition)
- * so the creature can only attack when the condition is met.
+ * This creature can attack as though it didn't have defender. In a static slot
+ * it is a continuous permission; in a resolving ability it grants the source
+ * permanent that permission until end of turn.
  */
 public record CanAttackAsThoughNoDefenderEffect() implements NoDefenderAttackPermissionEffect {
+
+    @Override
+    public TargetSpec targetSpec() {
+        return new TargetSpec(null, false, null, true, 1);
+    }
 
     @Override
     public boolean grantsCarrierAttackAsThoughNoDefender() {

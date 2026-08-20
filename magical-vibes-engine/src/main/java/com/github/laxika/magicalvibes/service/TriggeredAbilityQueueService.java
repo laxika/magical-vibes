@@ -561,13 +561,28 @@ public class TriggeredAbilityQueueService {
 
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, ChooseOneEffect.ChooseOneOption chosen) {
-        List<CardEffect> effects = new ArrayList<>(chosen.effects());
+        queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId, sourcePermanentId, List.of(chosen));
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes) {
+        List<CardEffect> effects = chosenModes.stream()
+                .flatMap(option -> option.effects().stream())
+                .toList();
         boolean needsTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         if (needsTarget) {
-            gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
-                    sourceCard, controllerId, effects, sourcePermanentId, null, null, chosen.targetFilter()));
+            if (sourceCard.getSpellTargets().size() > 1) {
+                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        sourceCard, controllerId, effects, sourcePermanentId,
+                        List.of(), 0, 0));
+            } else {
+                TargetFilter targetFilter = chosenModes.size() == 1
+                        ? chosenModes.getFirst().targetFilter() : null;
+                gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
+                        sourceCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
+            }
             return;
         }
 

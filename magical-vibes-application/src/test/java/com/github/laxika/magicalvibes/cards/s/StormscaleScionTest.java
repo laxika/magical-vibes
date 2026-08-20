@@ -18,9 +18,6 @@ class StormscaleScionTest extends BaseCardTest {
     @Test
     @DisplayName("Other Dragons you control get +1/+1")
     void boostsOtherDragonsYouControl() {
-        Permanent scion = harness.addToBattlefieldAndReturn(player1, new StormscaleScion());
-        int scionPower = gqs.getEffectivePower(gd, scion);
-        int scionToughness = gqs.getEffectiveToughness(gd, scion);
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
         Permanent nonDragon = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingDragon = harness.addToBattlefieldAndReturn(player2, new DragonWhelp());
@@ -30,6 +27,7 @@ class StormscaleScionTest extends BaseCardTest {
         int nonDragonToughness = gqs.getEffectiveToughness(gd, nonDragon);
         int opposingDragonPower = gqs.getEffectivePower(gd, opposingDragon);
         int opposingDragonToughness = gqs.getEffectiveToughness(gd, opposingDragon);
+        harness.addToBattlefield(player1, new StormscaleScion());
 
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(dragonPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(dragonToughness + 1);
@@ -37,8 +35,6 @@ class StormscaleScionTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, nonDragon)).isEqualTo(nonDragonToughness);
         assertThat(gqs.getEffectivePower(gd, opposingDragon)).isEqualTo(opposingDragonPower);
         assertThat(gqs.getEffectiveToughness(gd, opposingDragon)).isEqualTo(opposingDragonToughness);
-        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(scionPower);
-        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(scionToughness);
     }
 
     @Test

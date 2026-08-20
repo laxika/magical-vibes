@@ -71,6 +71,7 @@ public class GraveyardTargetOperationState {
      * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
      */
     public boolean resolutionTimeExileCreateZombieTokenCopyResume;
+    public boolean resolutionTimeDragonApproachResume;
     /** Resolution-time choice for Chandra, Heart of Fire's graveyard-and-library exile. */
     public ExileMatchingCardsFromGraveyardAndLibraryContext resolutionTimeExileMatchingCardsResume;
     /** Resolution-time optional filtered exile whose successful choice has a life-loss rider. */
@@ -91,6 +92,17 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
     /** The land chosen by the resolution-time exile choice, or {@code null} for decline. */
     public UUID resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId;
+    public boolean resolutionTimeExileOwnGraveyardCardPutCountersResume;
+    public boolean resolutionTimeExileOwnGraveyardCardPutCountersChoiceMade;
+    public UUID resolutionTimeExileOwnGraveyardCardPutCountersChosenCardId;
+    public boolean resolutionTimeExileOneOfDiscardedCardsResume;
+    public boolean resolutionTimeExileOneOfDiscardedCardsChoiceMade;
+    public List<UUID> resolutionTimeExileOneOfDiscardedCardsCandidateIds = List.of();
+    public UUID resolutionTimeExileOneOfDiscardedCardsChosenCardId;
+    public UUID resolutionTimeExileOneOfDiscardedCardsSourcePermanentId;
+    public boolean resolutionTimePutOnBottomThenExileTopCardsResume;
+    public boolean resolutionTimePutOnBottomThenExileTopCardsChoiceMade;
+    public UUID resolutionTimePutOnBottomThenExileTopCardsChosenCardId;
     /** Whether an optional graveyard exile with a reflexive follow-up is awaiting its answer. */
     public boolean resolutionTimeExileThenEffectResume;
     /** Whether the optional graveyard exile with a reflexive follow-up has been answered. */

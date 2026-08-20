@@ -37,10 +37,9 @@ public class ReturnTargetSpellOrPermanentToHandEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
+        List<UUID> targetIds = entry.getTargetId() != null
+                ? List.of(entry.getTargetId())
+                : entry.targetsForEffect(effect);
 
         boolean returnedPermanent = false;
         for (UUID targetId : targetIds) {

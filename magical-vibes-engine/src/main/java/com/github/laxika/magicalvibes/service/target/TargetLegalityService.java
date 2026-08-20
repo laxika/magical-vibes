@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -316,6 +317,11 @@ public class TargetLegalityService {
                     && anyGraveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD) {
                 // "Exile up to N target cards from a single graveyard" (Rag Dealer) — any player's
                 // graveyard, at most N distinct cards, and all of them in the same graveyard.
+                if (anyGraveyardEffect.exactTargetCount()
+                        && targetCardIds.size() != anyGraveyardEffect.count()) {
+                    throw new IllegalStateException("Must select exactly " + anyGraveyardEffect.count()
+                            + " target cards");
+                }
                 if (targetCardIds.size() > anyGraveyardEffect.count()) {
                     throw new IllegalStateException("Cannot target more than " + anyGraveyardEffect.count() + " cards");
                 }
@@ -1123,6 +1129,37 @@ public class TargetLegalityService {
     }
 
     /**
+     * Validates the targets chosen for one spell target group when the number of targets in an
+     * earlier group is supplied separately, such as a divided-damage assignment map.
+     */
+    public void validateSpellTargetGroup(GameData gameData, Card card, int groupIndex,
+                                         List<UUID> targetIds, UUID controllerId,
+                                         int xValue, boolean kicked) {
+        SpellTarget group = card.getSpellTargets().stream()
+                .filter(candidate -> candidate.getIndex() == groupIndex)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown spell target group"));
+        int minTargets = kicked ? group.getKickedMinTargets() : group.getMinTargets();
+        if (group.isXScaled()) {
+            minTargets = Math.min(xValue, minTargets);
+        }
+        int maxTargets = effectiveGroupMaxTargets(gameData, controllerId, null, group, xValue, kicked);
+        validateMultiTargetCount(targetIds, minTargets, maxTargets);
+
+        int positionOffset = card.getSpellTargets().stream()
+                .filter(candidate -> candidate.getIndex() < groupIndex)
+                .mapToInt(candidate -> effectiveGroupMaxTargets(
+                        gameData, controllerId, null, candidate, xValue, kicked))
+                .sum();
+        PermanentPredicate declaredRestriction = EffectResolution
+                .declaredPermanentRestriction(card.getEffects(EffectSlot.SPELL)).orElse(null);
+        for (int i = 0; i < targetIds.size(); i++) {
+            validateMultiSpellTargetPosition(gameData, card, targetIds.get(i), controllerId,
+                    positionOffset + i, groupIndex, group.getFilter(), declaredRestriction, kicked);
+        }
+    }
+
+    /**
      * Validates the permanent target groups that follow a separately stored primary target.
      */
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
@@ -1251,6 +1288,77 @@ public class TargetLegalityService {
         }
 
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
+    }
+
+    private void validateMultiSpellTargetPosition(GameData gameData, Card card, UUID targetId,
+                                                   UUID controllerId, int positionIndex,
+                                                   int groupIndex, TargetFilter positionFilter,
+                                                   PermanentPredicate declaredRestriction,
+                                                   boolean kicked) {
+        if (gameData.playerIds.contains(targetId)) {
+            if (!card.doesPositionAllowPlayerTargets(positionIndex)) {
+                throw new IllegalStateException("This spell cannot target players");
+            }
+            if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                validatePlayerTargetable(gameData, targetId, controllerId, card);
+                validatePlayerPredicate(gameData, controllerId, targetId, anyFilter.playerPredicate(),
+                        anyFilter.errorMessage());
+                return;
+            }
+            if (positionFilter instanceof PlayerPredicateTargetFilter playerFilter) {
+                validatePlayerTargetable(gameData, targetId, controllerId, card);
+                validatePlayerPredicate(gameData, controllerId, targetId, playerFilter.predicate(),
+                        playerFilter.errorMessage());
+                return;
+            }
+            if (EffectResolution.needsTarget(card)) {
+                validatePlayerTargetable(gameData, targetId, controllerId, card);
+            }
+            return;
+        }
+
+        if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+            validateGraveyardCardTarget(gameData, card, graveyardFilter, targetId, controllerId);
+            return;
+        }
+        if (isSpellOnStack(gameData, targetId)) {
+            validateSpellTargetOnStack(gameData, targetId, positionFilter, controllerId);
+            return;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) {
+            throw new IllegalStateException("Invalid target");
+        }
+
+        if (positionFilter != null) {
+            predicateEvaluationService.validateTargetFilter(targetFilterForKickedCast(positionFilter, kicked), target,
+                    filterContext(gameData, card.getId(), controllerId));
+        } else if (card.getTargetFilter() != null) {
+            predicateEvaluationService.validateTargetFilter(targetFilterForKickedCast(card.getTargetFilter(), kicked), target,
+                    filterContext(gameData, card.getId(), controllerId));
+        } else if (declaredRestriction != null) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
+                    filterContext(gameData, card.getId(), controllerId))) {
+                throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
+            }
+        } else if (!gameQueryService.isCreature(gameData, target)
+                && !targetGroupAllowsPlaneswalkers(card, groupIndex)) {
+            throw new IllegalStateException(target.getCard().getName() + " is not a creature");
+        }
+
+        if (EffectResolution.needsTarget(card)) {
+            checkSpellPermanentTargetableReason(gameData, target, card, controllerId,
+                    card.getEffects(EffectSlot.SPELL), positionFilter)
+                    .ifPresent(reason -> { throw new IllegalStateException(reason); });
+        }
+    }
+
+    private boolean targetGroupAllowsPlaneswalkers(Card card, int groupIndex) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(effect -> card.getEffectTargetIndex(effect) == groupIndex)
+                .anyMatch(effect -> effect.targetSpec().declares(TargetPredicates.anyTarget())
+                        || effect.targetSpec().declares(TargetPredicates.creatureOrPlaneswalker())
+                        || effect.targetSpec().declares(TargetPredicates.playerOrPlaneswalker()));
     }
 
     /**

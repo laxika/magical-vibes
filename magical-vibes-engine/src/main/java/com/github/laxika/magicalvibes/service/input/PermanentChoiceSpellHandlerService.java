@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -240,6 +241,19 @@ public class PermanentChoiceSpellHandlerService {
         boolean isGraveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
 
         if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
+            if (ect.genericCostReduction() > 0) {
+                try {
+                    spellCastingService.playCardFromExileAsResolutionCast(gameData,
+                            new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
+                            ect.cardToCast().getId(), 0, permanentId);
+                } catch (IllegalStateException ex) {
+                    gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                    log.info("Game {} - reduced-cost exile cast of {} could not be completed",
+                            gameData.id, ect.cardToCast().getName());
+                }
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             StackEntry entry = isGraveyardTarget
                     ? new StackEntry(
                             ect.spellType(),
@@ -281,6 +295,13 @@ public class PermanentChoiceSpellHandlerService {
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId());
+            if (ect.genericCostReduction() > 0) {
+                gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
+                        "'s target is no longer valid and it stays exiled."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             graveyardService.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
             gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
             log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
@@ -313,8 +334,10 @@ public class PermanentChoiceSpellHandlerService {
                 // The full target set was pre-validated before prompting, so this only happens if a
                 // remaining slot's targets vanished mid-selection. The spell can't be legally cast:
                 // a copy ceases to exist (CR 707.10a), a real card goes to its owner's graveyard.
-                if (!ect.copy()) {
-                    gameData.spellsGrantedHasteOnEntry.remove(card.getId());
+                gameData.spellsGrantedHasteOnEntry.remove(card.getId());
+                if (ect.genericCostReduction() > 0) {
+                    gameData.exilePlayCostModifiers.remove(card.getId());
+                } else if (!ect.copy()) {
                     graveyardService.addCardToGraveyard(gameData, ect.controllerId(), card);
                 }
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s targets are no longer valid."));
@@ -325,7 +348,8 @@ public class PermanentChoiceSpellHandlerService {
             }
 
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
-                    card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen));
+                    card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
+                    ect.genericCostReduction()));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
@@ -333,6 +357,20 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         // Every target slot is filled — put the spell on the stack preserving the declared order.
+        if (ect.genericCostReduction() > 0) {
+            try {
+                spellCastingService.playCardFromExileAsResolutionCast(gameData,
+                        new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
+                        card.getId(), 0, chosen);
+            } catch (IllegalStateException ex) {
+                gameData.exilePlayCostModifiers.remove(card.getId());
+                log.info("Game {} - reduced-cost multi-target exile cast of {} could not be completed",
+                        gameData.id, card.getName());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         StackEntry entry = new StackEntry(
                 ect.spellType(),
                 card,

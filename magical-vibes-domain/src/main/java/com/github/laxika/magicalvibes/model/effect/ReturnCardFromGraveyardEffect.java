@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.Builder;
@@ -286,8 +288,9 @@ public record ReturnCardFromGraveyardEffect(
         boolean battlefieldIfCreatureElseExile,
         boolean shuffleGraveyardBeforeRandomSelection,
         DynamicAmount dynamicMaxManaValue,
-        boolean unearth
-) implements CardEffect {
+        boolean unearth,
+        boolean exileAtNextUpkeep
+) implements CombatDamageAmountAwareEffect {
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -309,5 +312,25 @@ public record ReturnCardFromGraveyardEffect(
         // one place the own/opponent/all narrowing lives, so the kept validator and every
         // enumeration path read the same value.
         return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard(source)) : TargetSpec.NONE;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return dynamicMaxManaValue;
+    }
+
+    @Override
+    public ReturnCardFromGraveyardEffect snapshotCombatDamage(int damageDealt) {
+        if (dynamicMaxManaValue == null) {
+            return this;
+        }
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(damageDealt);
+        CardPredicate combinedFilter = filter == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
+        return toBuilder()
+                .filter(combinedFilter)
+                .dynamicMaxManaValue(null)
+                .build();
     }
 }

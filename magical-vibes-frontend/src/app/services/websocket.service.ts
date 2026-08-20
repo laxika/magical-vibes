@@ -487,7 +487,7 @@ export interface GameOverNotification {
 export type InteractionShape =
   'CARD_INDEX_PICK' | 'GRAVEYARD_INDEX_PICK' | 'LIBRARY_INDEX_PICK' | 'PERMANENT_PICK' |
   'MULTI_CARD_PICK' | 'MULTI_PERMANENT_PICK' | 'LIST_PICK' | 'ACCEPT_DECLINE' |
-  'NUMBER_PICK' | 'SCRY_ORDER' | 'CARD_ORDER' | 'HAND_TOP_BOTTOM';
+  'NUMBER_PICK' | 'SCRY_ORDER' | 'CARD_ORDER' | 'HAND_TOP_BOTTOM' | 'HAND_BOTTOM_EXILE';
 
 // The single prompt message for every pending interaction. The shape selects the input UI
 // and the answer payload; the optional fields carry the shape's data (unused fields are null).

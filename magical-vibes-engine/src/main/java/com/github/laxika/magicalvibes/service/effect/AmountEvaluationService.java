@@ -56,6 +56,9 @@ import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongStudyCounterCardsInExile;
+import com.github.laxika.magicalvibes.model.amount.DistinctPowersAmongControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.DyingPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentPower;
@@ -86,6 +89,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCre
 import com.github.laxika.magicalvibes.model.amount.UnspentMana;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
+import com.github.laxika.magicalvibes.model.amount.LandsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.LastMilledCardColorSymbols;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
@@ -234,6 +238,30 @@ public class AmountEvaluationService {
                     countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctManaValuesAmongControlledPermanents ignored ->
                     countDistinctManaValuesAmongControlledPermanents(gameData, ctx);
+            case DistinctManaValuesAmongStudyCounterCardsInExile ignored ->
+                    (int) gameData.exiledCards.stream()
+                            .filter(entry -> ctx.controllerId() != null
+                                    && ctx.controllerId().equals(entry.ownerId()))
+                            .map(entry -> entry.card())
+                            .filter(card -> gameData.exiledCardsWithStudyCounters.contains(card.getId()))
+                            .filter(card -> !card.hasType(CardType.LAND))
+                            .map(Card::getManaValue)
+                            .distinct()
+                            .count();
+            case DistinctPowersAmongControlledCreatures ignored ->
+                    (int) gameData.playerBattlefields.getOrDefault(ctx.controllerId(), List.of()).stream()
+                            .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                            .map(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                            .distinct()
+                            .count();
+            case DyingPermanentManaValue ignored ->
+                    ctx.stackEntry() == null || ctx.stackEntry().getDyingPermanentManaValue() == null
+                            ? 0 : ctx.stackEntry().getDyingPermanentManaValue();
+            case LandsEnteredBattlefieldThisTurn ignored ->
+                    (int) gameData.permanentsEnteredBattlefieldThisTurn
+                            .getOrDefault(ctx.controllerId(), List.of()).stream()
+                            .filter(card -> card.hasType(CardType.LAND))
+                            .count();
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
             case ForetoldCardsInExile c ->

@@ -5,7 +5,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Look at (or, when {@code reveal}, reveal) the top {@code count} cards of your library. You may put
@@ -39,7 +43,23 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         List<CardSubtype> subtypePicks,
         LookDestination restDestination,
         boolean reveal,
-        LibrarySearchDestination chosenDestination) implements CardEffect {
+        LibrarySearchDestination chosenDestination,
+        CardPredicate firstPredicate,
+        String firstPrompt,
+        CardPredicate secondPredicate,
+        String secondPrompt,
+        boolean randomRest,
+        LibraryScope scope,
+        UUID playerId) implements CardEffect {
+
+    public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+            DynamicAmount count, CardType firstType, CardType secondType,
+            List<CardSubtype> subtypePicks, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination) {
+        this(count, firstType, secondType, subtypePicks, restDestination, reveal,
+                chosenDestination, null, null, null, null, false,
+                LibraryScope.CONTROLLER, null);
+    }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
             int count, CardType firstType, CardType secondType, List<CardSubtype> subtypePicks,
@@ -84,5 +104,23 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 count, CardType.CREATURE, CardType.LAND, List.of(),
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true, LibrarySearchDestination.BATTLEFIELD);
+    }
+
+    public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect landAndInstantOrSorceryToHandRestOnBottomRandom(
+            int count) {
+        return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+                new Fixed(count), null, null, List.of(), LookDestination.BOTTOM_OF_LIBRARY, false,
+                LibrarySearchDestination.HAND,
+                new CardTypePredicate(CardType.LAND), "a land card",
+                new CardAnyOfPredicate(List.of(new CardTypePredicate(CardType.INSTANT),
+                        new CardTypePredicate(CardType.SORCERY))),
+                "an instant or sorcery card", true, LibraryScope.EACH_PLAYER, null);
+    }
+
+    public LookAtTopCardsRevealTwoTypesToHandThenRestEffect forPlayer(UUID playerId) {
+        return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+                count, firstType, secondType, subtypePicks, restDestination, reveal,
+                chosenDestination, firstPredicate, firstPrompt, secondPredicate, secondPrompt,
+                randomRest, LibraryScope.CONTROLLER, playerId);
     }
 }
