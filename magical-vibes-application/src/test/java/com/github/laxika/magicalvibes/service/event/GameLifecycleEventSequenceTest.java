@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -170,7 +171,11 @@ class GameLifecycleEventSequenceTest {
         gameData.playerBattlefields.put(player1Id, gameData.newBattlefieldList());
         gameData.playerBattlefields.put(player2Id, gameData.newBattlefieldList());
         when(gameQueryService.getPriorityPlayerId(gameData)).thenReturn(player1Id);
-        when(actionAvailability.getPlayableCardIndices(gameData, player1Id)).thenReturn(List.of());
+        when(actionAvailability.getPlayableCardIndices(any(GameData.class), any(UUID.class)))
+                .thenReturn(List.of());
+        when(actionAvailability.getPotentialPlayableCardIndices(
+                any(GameData.class), any(UUID.class), any()))
+                .thenReturn(List.of());
 
         StepTriggerService stepTriggers = mock(StepTriggerService.class);
         CombatService combat = mock(CombatService.class);
