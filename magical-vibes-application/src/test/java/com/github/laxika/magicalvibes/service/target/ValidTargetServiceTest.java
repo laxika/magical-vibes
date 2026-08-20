@@ -415,7 +415,7 @@ class ValidTargetServiceTest {
                     gameData, spell, player1Id, null);
 
             assertThat(response.validPermanentIds()).contains(creature.getId());
-            assertThat(response.validPlayerIds()).containsExactly(player2Id);
+            assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
             assertThat(response.prompt()).isEqualTo("Select a target for Test Card");
         }
 
@@ -1311,7 +1311,7 @@ class ValidTargetServiceTest {
                     gameData, sourceCard, ability, player1Id, 0, List.of());
 
             // The position-specific opponent filter excludes the ability controller.
-            assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+            assertThat(response.validPlayerIds()).containsExactly(player2Id);
             assertThat(response.validPermanentIds()).isEmpty();
             assertThat(response.prompt()).isEqualTo("Select targets for Test Creature ability");
         }

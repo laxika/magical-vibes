@@ -40,8 +40,12 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 // Inline creature stubs â€” controllers differ from the default player2Id
                 when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
                 when(gameQueryService.findPermanentController(eq(gd), eq(elves.getId()))).thenReturn(player2Id);
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(bears), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(elves), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(bears), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(elves), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
                 stubNoKeywordsOnSource(entry);
 
                 massDamageHandler.resolve(gd, entry, effect);
@@ -67,7 +71,9 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
                 // Inline creature stubs â€” controller is player1Id, not the default player2Id
                 when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player1Id);
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(angel), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(angel), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
                 stubNoKeywordsOnSource(entry);
 
                 massDamageHandler.resolve(gd, entry, effect);
@@ -94,8 +100,12 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 // Inline creature stubs â€” controllers differ from the default player2Id
                 when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player2Id);
                 when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(angel), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(bears), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(angel), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(bears), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
                 stubNoKeywordsOnSource(entry);
                 stubPlayerDamageCore(player1Id);
                 stubPlayerDamageCore(player2Id);

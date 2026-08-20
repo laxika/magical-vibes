@@ -82,7 +82,8 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
                 stubNoDamageMultiplier();
                 when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player2Id);
                 // Prevention shield reduces damage to 0
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(bears), anyInt())).thenReturn(0);
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(bears), anyInt(), eq(false), nullable(Permanent.class))).thenReturn(0);
                 stubNoKeywordsOnSource(entry);
                 when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
