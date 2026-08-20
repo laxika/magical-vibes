@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TheThreeSeasons.class, Forest.class, Shock.class,
+        SnowCoveredForest.class, SnowCoveredIsland.class})
 class TheThreeSeasonsTest extends BaseCardTest {
 
     @Test
@@ -32,6 +35,7 @@ class TheThreeSeasonsTest extends BaseCardTest {
         addSaga(0);
 
         triggerChapter();
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, third);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
@@ -43,10 +47,12 @@ class TheThreeSeasonsTest extends BaseCardTest {
         Card snowForest = new SnowCoveredForest();
         Card snowIsland = new SnowCoveredIsland();
         Card nonsnowForest = new Forest();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(snowForest, nonsnowForest, snowIsland));
         addSaga(1);
 
         triggerChapter();
+        harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -67,9 +73,10 @@ class TheThreeSeasonsTest extends BaseCardTest {
         harness.setGraveyard(player2, new ArrayList<>(opponentCards));
         harness.setLibrary(player1, List.of(new Shock()));
         harness.setLibrary(player2, List.of(new Forest()));
-        addSaga(2);
+        Permanent saga = addSaga(2);
 
         triggerChapter();
+        harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -84,7 +91,7 @@ class TheThreeSeasonsTest extends BaseCardTest {
                 ownCards.get(0).getId(), ownCards.get(1).getId(), ownCards.get(2).getId(),
                 opponentCards.get(0).getId(), opponentCards.get(1).getId()));
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCards.get(3));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCards.get(3), saga.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsAll(ownCards.subList(0, 3));
         assertThat(gd.playerDecks.get(player2.getId())).containsAll(opponentCards);
@@ -100,6 +107,7 @@ class TheThreeSeasonsTest extends BaseCardTest {
         addSaga(2);
 
         triggerChapter();
+        harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
                 List.of(ownCards.get(0).getId(), ownCards.get(1).getId(), ownCards.get(2).getId(),

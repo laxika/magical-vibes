@@ -47,7 +47,8 @@ public class AwardRestrictedManaEffectHandler implements NormalEffectHandlerBean
         }
         UUID controllerId = entry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(controllerId);
-        e.applyTo(pool, amount);
+        e.restriction().applyTo(pool, e.color(), amount,
+                source != null ? source.getChosenSubtype() : null);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " adds " + amount + " " + e.color().getCode()

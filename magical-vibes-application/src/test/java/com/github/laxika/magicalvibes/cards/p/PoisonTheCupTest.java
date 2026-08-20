@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,12 +18,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PoisonTheCup.class, Forest.class, GrizzlyBears.class, Island.class})
 class PoisonTheCupTest extends BaseCardTest {
 
     @Test
     void destroysTargetCreature() {
-        GrizzlyBears target = new GrizzlyBears();
-        harness.addToBattlefield(player2, target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new PoisonTheCup()));
         addSpellMana();
 
@@ -37,10 +39,9 @@ class PoisonTheCupTest extends BaseCardTest {
     void foretoldSpellScriesTwoAfterDestroyingTargetCreature() {
         Card topCard = new Forest();
         Card secondCard = new Island();
-        GrizzlyBears target = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         PoisonTheCup spell = new PoisonTheCup();
         harness.setLibrary(player1, List.of(topCard, secondCard));
-        harness.addToBattlefield(player2, target);
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

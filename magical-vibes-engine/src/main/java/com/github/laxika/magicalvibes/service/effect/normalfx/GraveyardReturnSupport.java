@@ -81,6 +81,7 @@ public class GraveyardReturnSupport {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PermanentCounterSupport permanentCounterSupport;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -286,6 +287,14 @@ public class GraveyardReturnSupport {
         }
         if (effect.requiresManaValueAtMostX() && card.getManaValue() > entry.getXValue()) {
             return false;
+        }
+        if (effect.dynamicMaxManaValue() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            int maximum = amountEvaluationService.evaluate(gameData, effect.dynamicMaxManaValue(),
+                    com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source));
+            if (card.getManaValue() > maximum) {
+                return false;
+            }
         }
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, entry, sourceCardId);

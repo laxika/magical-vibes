@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TergridGodOfFright.class, CruelEdict.class, Distress.class, GrizzlyBears.class, Shock.class})
 class TergridGodOfFrightTest extends BaseCardTest {
 
     @Test
@@ -40,13 +42,12 @@ class TergridGodOfFrightTest extends BaseCardTest {
     @Test
     void returnsAnOpponentsSacrificedNontokenPermanentUnderItsControl() {
         harness.addToBattlefield(player1, new TergridGodOfFright());
-        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player2, sacrificed.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -81,6 +82,7 @@ class TergridGodOfFrightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent lantern = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player2, List.of());
         harness.activateAbility(player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
 

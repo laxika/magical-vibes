@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -17,7 +19,8 @@ class GreatHallOfStarnheimTest extends BaseCardTest {
     @Test
     @DisplayName("Enters tapped and taps for black mana")
     void entersTappedAndTapsForBlack() {
-        harness.addToBattlefield(player1, new GreatHallOfStarnheim());
+        harness.setHand(player1, List.of(new GreatHallOfStarnheim()));
+        harness.playLand(player1, 0);
         Permanent land = findPermanent(player1, "Great Hall of Starnheim");
 
         assertThat(land.isTapped()).isTrue();

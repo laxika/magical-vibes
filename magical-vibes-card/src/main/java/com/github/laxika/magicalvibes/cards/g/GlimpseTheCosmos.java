@@ -17,6 +17,7 @@ public class GlimpseTheCosmos extends Card {
     public GlimpseTheCosmos() {
         addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
         addCastingOption(new GraveyardCast(
-                new PermanentHasSubtypePredicate(CardSubtype.GIANT), "{U}", List.of(), null, true));
+                new PermanentHasSubtypePredicate(CardSubtype.GIANT), "{U}", List.of(), null,
+                false, true));
     }
 }

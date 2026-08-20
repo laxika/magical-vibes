@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
@@ -552,8 +553,13 @@ public class ActivatedAbilityExecutionService {
                 .filter(CostEffect.class::isInstance)
                 .map(CostEffect.class::cast)
                 .anyMatch(CostEffect::tracksSacrificedCard);
+        boolean recordsSacrificedPermanentSnapshot = abilityEffects.stream()
+                .filter(SacrificeCreatureCost.class::isInstance)
+                .map(SacrificeCreatureCost.class::cast)
+                .anyMatch(SacrificeCreatureCost::recordSacrificedPermanentSnapshot);
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
-                targetZone, targetIds, damageAssignments, tracksSacrificedCard);
+                targetZone, targetIds, damageAssignments, tracksSacrificedCard,
+                recordsSacrificedPermanentSnapshot);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -921,7 +927,8 @@ public class ActivatedAbilityExecutionService {
                 int amount = amountEvaluationService.evaluate(gameData, arm.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 if (amount > 0) {
-                    arm.applyTo(gameData.playerManaPools.get(playerId), amount);
+                    arm.restriction().applyTo(gameData.playerManaPools.get(playerId), arm.color(), amount,
+                            permanent.getChosenSubtype());
                 }
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 ahg.applyTo(gameData.playerManaPools.get(playerId));
@@ -1554,7 +1561,8 @@ public class ActivatedAbilityExecutionService {
                                     Zone targetZone,
                                     List<UUID> targetIds,
                                     Map<UUID, Integer> damageAssignments,
-                                    boolean tracksSacrificedCard) {
+                                    boolean tracksSacrificedCard,
+                                    boolean recordsSacrificedPermanentSnapshot) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -1612,6 +1620,9 @@ public class ActivatedAbilityExecutionService {
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         if (tracksSacrificedCard) {
             stackEntry.setSacrificedCardSnapshot(permanent.getChosenCard());
+        }
+        if (recordsSacrificedPermanentSnapshot) {
+            stackEntry.setSacrificedPermanentSnapshot(permanent.getChosenSacrificedPermanentSnapshot());
         }
         Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());
         stackEntry.setActivationManaSpent(activationManaSpent == null ? Map.of() : Map.copyOf(activationManaSpent));

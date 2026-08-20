@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -1108,9 +1109,16 @@ public class TriggeredAbilityQueueService {
 
             // Find the graveyard-targeting effect to extract its filter
             CardPredicate filter = null;
+            int maxTargets = 1;
+            int minTargets = 1;
             for (CardEffect effect : pending.effects()) {
                 if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
+                    break;
+                } else if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
+                    filter = returnEffect.filter();
+                    maxTargets = returnEffect.maxTargets();
+                    minTargets = returnEffect.minTargets();
                     break;
                 }
             }
@@ -1142,7 +1150,8 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.chapterName = pending.chapterName();
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards,
+                    Math.min(maxTargets, matchingCards.size()), minTargets,
                     pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
                             + " — Choose target " + filterLabel + " from your graveyard.");
 

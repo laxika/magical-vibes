@@ -3311,6 +3311,10 @@ public class AbilityActivationService {
         if (costEffect instanceof CostEffect cost && cost.tracksSacrificedCard() && sacrificed != null) {
             source.setChosenCard(sacrificed.getCard());
         }
+        if (costEffect instanceof SacrificeCreatureCost creatureCost
+                && creatureCost.recordSacrificedPermanentSnapshot() && sacrificed != null) {
+            source.setChosenSacrificedPermanentSnapshot(new Permanent(sacrificed));
+        }
         if (!(costEffect instanceof SacrificePermanentCost)
                 || sacrificed == null
                 || !sacrificed.getCard().hasType(CardType.LAND)) {
@@ -5414,6 +5418,10 @@ public class AbilityActivationService {
         validateActivationLimitPerGame(gameData, playerId, permanent, ability, abilityIndex);
 
         Integer maxActivationsPerTurn = ability.getMaxActivationsPerTurn();
+        if (ability.isBoast() && maxActivationsPerTurn != null
+                && gameQueryService.hasExtraBoastActivation(gameData, playerId)) {
+            maxActivationsPerTurn++;
+        }
         if (maxActivationsPerTurn == null && ability.getMaxActivationsPerTurnAmount() == null) {
             return;
         }

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTap
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -119,6 +120,7 @@ public class DestructionSupport {
     private final BoostAllOwnCreaturesEffectHandler boostAllOwnCreaturesHandler;
     private final BounceSupport bounceSupport;
     private final EnergyCountersEffectHandler energyCountersEffectHandler;
+    private final DrawCardEffectHandler drawCardEffectHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -679,6 +681,8 @@ public class DestructionSupport {
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
+            } else if (elseEffect instanceof DrawCardEffect draw) {
+                drawCardEffectHandler.resolve(gameData, entry, draw);
             } else if (elseEffect instanceof ReturnToHandEffect returnToHand
                     && returnToHand.scope() == BounceScope.SELF) {
                 bounceSupport.applyReturnSelfToHand(gameData, entry);

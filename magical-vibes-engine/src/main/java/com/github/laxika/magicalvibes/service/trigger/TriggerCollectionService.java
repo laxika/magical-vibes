@@ -1988,8 +1988,6 @@ public class TriggerCollectionService {
         // sacrifice-self / sacrifice-as-cost paths that funnel through this method.
         checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
 
-        checkOpponentNontokenPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
-
         // "When you sacrifice this" — the sacrificed card's own sacrifice-only death triggers
         collectSelfSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, castingSpell);
 
@@ -2006,7 +2004,8 @@ public class TriggerCollectionService {
                                                                   Card sacrificedCard) {
         if (sacrificedCard == null || sacrificedCard.isToken()) return;
 
-        var ctx = new TriggerContext.OpponentPermanentSacrificed(sacrificingPlayerId, sacrificedCard);
+        var ctx = new TriggerContext.OpponentNontokenPermanentSacrificed(
+                sacrificingPlayerId, sacrificedCard);
         for (UUID controllerId : gameData.orderedPlayerIds) {
             if (controllerId.equals(sacrificingPlayerId)) continue;
 
@@ -2132,6 +2131,7 @@ public class TriggerCollectionService {
             if (targetControllersWithAllyTrigger.add(controllerId)) {
                 collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, spellEntry);
             }
+            collectAllyPermanentBecomesTargetOfOpponentTriggers(gameData, controllerId, spellEntry);
             collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
                     gameData, targetPermanent, controllerId, spellEntry);
             collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry);
@@ -2238,6 +2238,7 @@ public class TriggerCollectionService {
                 if (targetControllersWithAllyTrigger.add(controllerId)) {
                     collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, abilityEntry);
                 }
+                collectAllyPermanentBecomesTargetOfOpponentTriggers(gameData, controllerId, abilityEntry);
                 collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
                         gameData, targetPermanent, controllerId, abilityEntry);
             }
@@ -2368,6 +2369,36 @@ public class TriggerCollectionService {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} another-ally-permanent-becomes-target-of-opponent trigger queued",
                     gameData.id, source.getCard().getName());
+        }
+    }
+
+    private void collectAllyPermanentBecomesTargetOfOpponentTriggers(
+            GameData gameData, UUID targetControllerId, StackEntry triggeringEntry) {
+        if (targetControllerId.equals(triggeringEntry.getControllerId())) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : battlefield) {
+            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
+                    EffectSlot.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source,
+                    EffectSlot.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+            if (effects.isEmpty()) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    targetControllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    effects,
+                    null,
+                    source.getId()
+            );
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            gameData.stack.add(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         }
     }
 
@@ -3067,10 +3098,20 @@ public class TriggerCollectionService {
             effects.addAll(perm.getPersistentTriggeredEffects(
                     EffectSlot.ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE));
             for (CardEffect effect : effects) {
-                TriggerMatchContext match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                registry.dispatch(match,
-                        EffectSlot.ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE,
-                        effect, context);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        damagedPermanent.getId(),
+                        perm.getId());
+                entry.setNonTargeting(true);
+                entry.setEventValue(excessDamage);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} triggers (opponent permanent dealt excess damage)",
+                        gameData.id, perm.getCard().getName());
             }
         });
     }
@@ -4153,7 +4194,8 @@ public class TriggerCollectionService {
         }
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(watcher.getOriginalCard().getId())
-                .withSourceControllerId(watcherOwnerId);
+                .withSourceControllerId(watcherOwnerId)
+                .withSourcePermanentSnapshot(watcher);
         if (!predicateEvaluationService.matchesPermanentPredicate(triggeringPermanent, conditional.predicate(), filterContext)) {
             return null;
         }

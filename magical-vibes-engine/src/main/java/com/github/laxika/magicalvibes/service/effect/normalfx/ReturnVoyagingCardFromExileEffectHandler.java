@@ -38,6 +38,8 @@ public class ReturnVoyagingCardFromExileEffectHandler implements NormalEffectHan
                 || !gameData.removeFromExile(cardId)) {
             return;
         }
+        gameData.exiledVoyageCounters.remove(cardId);
+        gameData.exiledVoyageControllerIds.remove(cardId);
 
         Permanent permanent = new Permanent(exiled.card());
         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, voyageCounters);

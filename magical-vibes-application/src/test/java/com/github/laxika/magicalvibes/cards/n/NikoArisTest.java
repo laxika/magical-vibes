@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NikoAris.class, Forest.class, GrizzlyBears.class, HillGiant.class})
 class NikoArisTest extends BaseCardTest {
 
     @Test
@@ -29,6 +31,7 @@ class NikoArisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castPlaneswalker(player1, 0, 1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         List<Permanent> shards = gd.playerBattlefields.get(player1.getId()).stream()
@@ -46,6 +49,7 @@ class NikoArisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castPlaneswalker(player1, 0, 1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         int shardIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Shard"));

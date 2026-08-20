@@ -301,12 +301,13 @@ public class PredicateEvaluationService {
                     gameQueryService.cardHasType(card, p.cardType(), gameData, cardOwnerId);
             case CardSubtypePredicate p ->
                     gameQueryService.cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
-            case CardHasSourceChosenSubtypePredicate ignored -> {
+            case CardHasSourceChosenSubtypePredicate p -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
                 }
                 Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
-                if (source == null || source.getChosenSubtype() == null || !card.hasType(CardType.CREATURE)) {
+                if (source == null || source.getChosenSubtype() == null
+                        || p.creatureOnly() && !card.hasType(CardType.CREATURE)) {
                     yield false;
                 }
                 yield gameQueryService.cardHasSubtype(card, source.getChosenSubtype(), gameData, cardOwnerId)

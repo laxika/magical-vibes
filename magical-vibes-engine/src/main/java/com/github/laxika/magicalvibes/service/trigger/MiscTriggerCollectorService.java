@@ -323,8 +323,8 @@ public class MiscTriggerCollectorService {
     private boolean handleOpponentNontokenPermanentSacrificed(TriggerMatchContext match,
                                                                CardEffect effect,
                                                                TriggerContext ctx) {
-        TriggerContext.OpponentPermanentSacrificed sacrificed =
-                (TriggerContext.OpponentPermanentSacrificed) ctx;
+        TriggerContext.OpponentNontokenPermanentSacrificed sacrificed =
+                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -335,6 +335,8 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId());
         entry.setNonTargeting(true);
         entry.setTriggeringCardId(sacrificed.sacrificedCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(sacrificed.sacrificedCard().getId()));
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
@@ -1325,29 +1327,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on controlled-source noncombat damage ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), damage.damageAmount());
-        return true;
-    }
-
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
-    private boolean handleOpponentNontokenPermanentSacrificeDefault(TriggerMatchContext match,
-                                                                      CardEffect effect,
-                                                                      TriggerContext ctx) {
-        TriggerContext.OpponentNontokenPermanentSacrificed sacrifice =
-                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        );
-        entry.setTriggeringCardId(sacrifice.sacrificedCard().getId());
-        entry.setTriggeringCardGraveyardEntryVersion(
-                match.gameData().graveyardEntryVersion(sacrifice.sacrificedCard().getId()));
-        match.gameData().enqueueTrigger(entry);
         return true;
     }
 

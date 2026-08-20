@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InvasionOfTheGiants.class, ChandraNalaar.class, Forest.class, HillGiant.class, Shock.class})
 class InvasionOfTheGiantsTest extends BaseCardTest {
 
     @Test
@@ -81,6 +83,7 @@ class InvasionOfTheGiantsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.GIANT));

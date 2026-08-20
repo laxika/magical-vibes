@@ -348,6 +348,10 @@ public class DamageSupport {
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
         if (damage > 0) {
             gameData.recordDamageToPermanent(target.getId(), damage);
+            if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                    || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
+                gameData.recordQualifyingDamageControllerToPermanent(target.getId(), sourceControllerId);
+            }
             gameData.recordDamageDealtBySource(
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage);
             gameData.recordDamageRecipientBySource(sourcePermId, target.getId());
@@ -403,6 +407,17 @@ public class DamageSupport {
         Card sourceCard = damageSource != null ? damageSource.getCard() : entry.getCard();
         String sourceName = sourceCard.getName();
 
+        boolean sourceHasDeathtouch = damage > 0
+                && gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
+        int excessDamage = target.getCard().hasType(CardType.PLANESWALKER)
+                ? Math.max(0, damage - target.getCounterCount(CounterType.LOYALTY))
+                : computeExcessDamageToCreature(gameData, target, damage,
+                        target.getMarkedDamage(), sourceHasDeathtouch);
+        if (excessDamage > 0) {
+            triggerCollectionService.checkOpponentPermanentDealtExcessDamageTriggers(
+                    gameData, target, targetControllerId, excessDamage);
+        }
+
         // CR 120.3c — damage dealt to a planeswalker removes that many loyalty counters
         // (the SBA check reaps it at 0 loyalty). A permanent that is also a creature
         // additionally gets the damage marked below (CR 120.3e).
@@ -446,9 +461,6 @@ public class DamageSupport {
 
         // CR 702.2b — deathtouch applies only to damage this source actually dealt, so a hit
         // that was fully prevented must not mark the creature for a deathtouch kill.
-        boolean sourceHasDeathtouch = damage > 0
-                && gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
-
         // Infect and wither both deal creature damage as -1/-1 counters (CR 702.90 / 702.80).
         // Soul-Scar Mage likewise replaces its controller's noncombat damage to an opponent's
         // creature with that many -1/-1 counters. This helper is the noncombat damage path only

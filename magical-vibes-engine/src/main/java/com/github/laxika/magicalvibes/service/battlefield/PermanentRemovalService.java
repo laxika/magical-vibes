@@ -877,7 +877,8 @@ public class PermanentRemovalService {
      * Liesa, Forgotten Archangel: true when a player other than {@code controllerId} controls a
      * permanent with "if a creature an opponent controls would die, exile it instead".
      */
-    private boolean opponentExilesDyingCreatures(GameData gameData, UUID controllerId) {
+    private ExileOpponentCreaturesInsteadOfDyingEffect opponentDyingCreatureExileReplacement(
+            GameData gameData, UUID controllerId, Card dyingCard) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
                 continue;
@@ -887,13 +888,18 @@ public class PermanentRemovalService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)) {
-                    return true;
+                ExileOpponentCreaturesInsteadOfDyingEffect effect = permanent.getCard()
+                        .getEffects(EffectSlot.STATIC).stream()
+                        .filter(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)
+                        .map(ExileOpponentCreaturesInsteadOfDyingEffect.class::cast)
+                        .filter(candidate -> !candidate.nontokenOnly() || !dyingCard.isToken())
+                        .findFirst().orElse(null);
+                if (effect != null) {
+                    return effect;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -980,13 +986,19 @@ public class PermanentRemovalService {
         int exiledFromBattlefield = 0;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
+        ExileOpponentCreaturesInsteadOfDyingEffect opponentExileReplacement = wasCreature
+                ? opponentDyingCreatureExileReplacement(gameData, controllerId, target.getCard())
+                : null;
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
-                || (wasCreature && opponentExilesDyingCreatures(gameData, controllerId))
+                || opponentExileReplacement != null
                 || (wasCreature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard()))
                 || (wasCreature && damagerExilesDyingCreature(gameData, target));
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
                 exileService.exileCard(gameData, ownerId, leaving);
+                if (opponentExileReplacement != null && opponentExileReplacement.addIceCounter()) {
+                    gameData.exiledCardsWithIceCounters.add(leaving.getId());
+                }
                 exiledFromBattlefield++;
                 gameLogService.append(gameData,
                         GameLog.cardThen(leaving, " is exiled instead of being put into a graveyard."));

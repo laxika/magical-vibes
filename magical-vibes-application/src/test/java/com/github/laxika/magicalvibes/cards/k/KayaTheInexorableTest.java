@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IonasJudgment;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TyvarKell;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KayaTheInexorable.class, GrizzlyBears.class, IonasJudgment.class, Shock.class, TyvarKell.class})
 class KayaTheInexorableTest extends BaseCardTest {
 
     @Test
@@ -54,7 +57,9 @@ class KayaTheInexorableTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, creature.getId());
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, battlefieldIndex(kaya), 1, null, creature.getId());
+        harness.setHand(player1, List.of(new IonasJudgment()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castSorcery(player1, 0, creature.getId());
         resolveAllTriggers();
 
         harness.assertInHand(player1, "Grizzly Bears");

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowExtraBoastActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInstantSpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraExhaustActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
@@ -4722,6 +4723,10 @@ public class GameQueryService {
      */
     public boolean hasExtraLoyaltyActivation(GameData gameData, UUID playerId) {
         return playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraLoyaltyActivationEffect.class);
+    }
+
+    public boolean hasExtraBoastActivation(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraBoastActivationEffect.class);
     }
 
     /** Returns whether a global static effect locks the given planeswalker's loyalty abilities. */

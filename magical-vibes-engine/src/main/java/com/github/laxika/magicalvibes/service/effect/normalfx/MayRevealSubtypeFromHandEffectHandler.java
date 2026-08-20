@@ -6,12 +6,19 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class MayRevealSubtypeFromHandEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -22,11 +29,14 @@ public class MayRevealSubtypeFromHandEffectHandler implements NormalEffectHandle
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MayRevealSubtypeFromHandEffect reveal = (MayRevealSubtypeFromHandEffect) effect;
         List<Card> hand = gameData.playerHands.get(entry.getControllerId());
-        if (hand == null || hand.stream().noneMatch(card -> card.getSubtypes().contains(reveal.subtype()))) {
+        if (hand == null || hand.stream().noneMatch(card -> gameQueryService.cardHasSubtype(
+                card, reveal.subtype(), gameData, entry.getControllerId()))) {
             return;
         }
-        gameData.queueMayAbility(entry.getCard(), entry.getControllerId(),
+        gameData.queueMayAbilityForPlayer(entry.getCard(), entry.getControllerId(),
                 new MayEffect(reveal.thenEffect(), reveal.prompt()),
-                entry.getTargetId(), entry.getSourcePermanentId());
+                entry.getTargetId(), entry.getSourcePermanentId(), entry.getControllerId(),
+                entry.getSourcePermanentSnapshot());
+        playerInputService.processNextMayAbility(gameData);
     }
 }

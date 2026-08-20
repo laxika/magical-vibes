@@ -47,7 +47,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -140,7 +139,8 @@ class CastingPermissionServiceTest {
             Card goblin = new Card();
             goblin.setType(CardType.CREATURE);
             when(predicateEvaluationService.matchesCardPredicate(
-                    eq(goblin), any(CardPredicate.class), isNull())).thenReturn(true);
+                    eq(goblin), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player1Id)))
+                    .thenReturn(true);
 
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isTrue();
         }

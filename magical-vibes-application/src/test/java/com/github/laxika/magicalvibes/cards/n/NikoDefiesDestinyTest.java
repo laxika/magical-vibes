@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NikoDefiesDestiny.class, AuguryRaven.class, DoomskarOracle.class, GrizzlyBears.class})
 class NikoDefiesDestinyTest extends BaseCardTest {
 
     @Test
@@ -29,6 +31,7 @@ class NikoDefiesDestinyTest extends BaseCardTest {
         addSaga(0);
 
         triggerChapter();
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
     }
@@ -38,10 +41,11 @@ class NikoDefiesDestinyTest extends BaseCardTest {
     void chapterIIManaPaysForetellAndForetellSpell() {
         DoomskarOracle oracle = new DoomskarOracle();
         harness.setHand(player1, List.of(oracle));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         addSaga(1);
 
         triggerChapter();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.foretell(player1, 0);
 
         gd.turnNumber++;
@@ -56,6 +60,7 @@ class NikoDefiesDestinyTest extends BaseCardTest {
     void chapterIIIReturnsCardWithForetell() {
         GrizzlyBears nonForetellCard = new GrizzlyBears();
         AuguryRaven foretellCard = new AuguryRaven();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(nonForetellCard, foretellCard));
         addSaga(2);
 

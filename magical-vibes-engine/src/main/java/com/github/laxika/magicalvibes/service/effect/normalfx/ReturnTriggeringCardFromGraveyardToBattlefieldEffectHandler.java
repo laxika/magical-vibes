@@ -35,17 +35,29 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card card = entry.getCard();
-        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        UUID triggeringCardId = entry.getTriggeringCardId();
+        Card card = triggeringCardId == null
+                ? null
+                : gameQueryService.findCardInGraveyardById(gameData, triggeringCardId);
+        UUID ownerId = triggeringCardId == null
+                ? null
+                : gameQueryService.findGraveyardOwnerById(gameData, triggeringCardId);
         if (ownerId == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card is no longer in a graveyard)."));
+            return;
+        }
+
+        long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
+        if (expectedEntryVersion != 0
+                && gameData.graveyardEntryVersion(triggeringCardId) != expectedEntryVersion) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card is no longer in the expected graveyard entry)."));
             return;
         }
 
         boolean enterTapped = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect).enterTapped();
         boolean returnUnderController = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect)
                 .returnUnderController();
-        permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+        permanentRemovalService.removeCardFromGraveyardById(gameData, triggeringCardId);
         UUID battlefieldControllerId = returnUnderController ? entry.getControllerId() : ownerId;
         graveyardReturnSupport.putCardOntoBattlefield(
                 gameData, battlefieldControllerId, card, null, null, enterTapped);

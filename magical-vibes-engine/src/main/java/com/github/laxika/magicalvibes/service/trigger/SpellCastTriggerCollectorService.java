@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -751,7 +752,8 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(),
+                match.permanent().getCard().getId(),
                 match.gameData(), sc.castingPlayerId())) {
             return false;
         }
@@ -823,6 +825,38 @@ public class SpellCastTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenCopyOfTargetedSpellPermanentEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCreateTokenCopyOfTargetedSpellPermanent(TriggerMatchContext match,
+            CreateTokenCopyOfTargetedSpellPermanentEffect ignored, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.spellCard().hasType(CardType.INSTANT) && !sc.spellCard().hasType(CardType.SORCERY)) {
+            return false;
+        }
+        StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        if (spellEntry == null) {
+            return false;
+        }
+        boolean targetsOtherControlledPermanent = spellEntry.getDeclaredTargetIds().stream()
+                .filter(targetId -> !targetId.equals(match.permanent().getId()))
+                .map(targetId -> gameQueryService.findPermanentById(match.gameData(), targetId))
+                .filter(java.util.Objects::nonNull)
+                .anyMatch(target -> match.controllerId().equals(match.gameData().findControllerOf(target)));
+        if (!targetsOtherControlledPermanent) {
+            return false;
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CreateTokenCopyOfTargetedSpellPermanentEffect(
+                        new StackEntry(spellEntry)))),
+                null,
+                match.permanent().getId()));
         return true;
     }
 

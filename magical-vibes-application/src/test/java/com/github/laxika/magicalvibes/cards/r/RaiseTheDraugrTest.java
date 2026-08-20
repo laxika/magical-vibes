@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RaiseTheDraugr.class, GrizzlyBears.class, YoungWolf.class})
 class RaiseTheDraugrTest extends BaseCardTest {
 
     @Test
@@ -33,7 +35,8 @@ class RaiseTheDraugrTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(creature.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Raise the Draugr");
     }
 
     @Test
@@ -60,7 +63,9 @@ class RaiseTheDraugrTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
                 .containsExactlyInAnyOrder(firstBear.getId(), secondBear.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(wolf);
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .contains(wolf.getId());
+        harness.assertInGraveyard(player1, "Raise the Draugr");
     }
 
     @Test

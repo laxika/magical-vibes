@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
@@ -192,6 +193,33 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ForcedCostOrElseEffect) effect;
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost cost) {
+            List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
+            List<Card> candidates = graveyard == null ? List.of() : graveyard.stream()
+                    .filter(card -> cost.requiredType() == null || card.hasType(cost.requiredType()))
+                    .filter(card -> cost.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null))
+                    .toList();
+            if (candidates.size() < cost.count()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (candidates.size() == cost.count()) {
+                for (Card card : candidates) {
+                    graveyard.remove(card);
+                    gameData.addToExile(entry.getControllerId(), card);
+                }
+                return;
+            }
+            gameData.graveyardTargetOperation.card = entry.getCard();
+            gameData.graveyardTargetOperation.controllerId = entry.getControllerId();
+            gameData.graveyardTargetOperation.effects = List.of(e);
+            gameData.graveyardTargetOperation.sourcePermanentId = entry.getSourcePermanentId();
+            playerInputService.beginMultiGraveyardChoice(gameData, entry.getControllerId(), candidates,
+                    cost.count(), cost.count(), "Choose " + cost.count() + " cards to exile from your graveyard.");
+            return;
+        }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
             UUID payer = resolvePayer(gameData, entry, e);
@@ -666,10 +694,15 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                     return;
                 }
                 UUID sourcePermanentId = entry.getSourcePermanentId();
+                FilterContext costFilterContext = FilterContext.of(gameData)
+                        .withSourceCardId(entry.getCard().getId())
+                        .withSourceControllerId(sourceControllerId)
+                        .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
                 List<UUID> matchingPermanentIds = destructionSupport.collectPermanentIds(gameData, payerId,
                         p -> (!sacrificePermanent.excludeSource() || !p.getId().equals(sourcePermanentId))
-                                && predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificePermanent.filter()));
+                                && predicateEvaluationService.matchesPermanentPredicate(
+                                p, sacrificePermanent.filter(), costFilterContext));
 
                 if (matchingPermanentIds.isEmpty()) {
                     destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);

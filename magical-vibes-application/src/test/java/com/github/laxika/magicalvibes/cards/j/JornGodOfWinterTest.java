@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.r.RimeDryad;
+import com.github.laxika.magicalvibes.cards.b.BorealOutrider;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.k.KaldringTheRimestaff;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JornGodOfWinter.class, KaldringTheRimestaff.class, Forest.class,
+        SnowCoveredForest.class, BorealOutrider.class})
 class JornGodOfWinterTest extends BaseCardTest {
 
     @Test
@@ -55,7 +58,7 @@ class JornGodOfWinterTest extends BaseCardTest {
     @Test
     void targetedSnowPermanentSpellEntersTapped() {
         addKaldring();
-        Card snowCreature = new RimeDryad();
+        Card snowCreature = new BorealOutrider();
         harness.setGraveyard(player1, List.of(snowCreature));
         harness.addMana(player1, ManaColor.GREEN, 5);
 

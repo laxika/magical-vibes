@@ -385,7 +385,11 @@ public class GameService {
             if (pool == null || !cost.canPayForForetell(pool)) {
                 throw new IllegalStateException("Not enough mana to foretell");
             }
-            cost.payForForetell(pool);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+            } else {
+                cost.payForForetell(pool);
+            }
             hand.remove(cardIndex);
             gameData.addForetoldCardToExile(player.getId(), card, foretellCost);
             triggerCollectionService.checkControllerForetellTriggers(gameData, player.getId(), card);

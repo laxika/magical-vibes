@@ -3222,6 +3222,7 @@ public class GameData {
         copy.domainStateVersion = this.domainStateVersion;
         copy.timestampCounter = this.timestampCounter;
         copy.graveyardEntryVersion = this.graveyardEntryVersion;
+        copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.combatDamageFirstStrikeAssignmentPhase = this.combatDamageFirstStrikeAssignmentPhase;
@@ -3317,6 +3318,8 @@ public class GameData {
         this.pendingSourceDamageForReflection.forEach((sourceId, pending) ->
                 copy.pendingSourceDamageForReflection.put(sourceId, pending.copy()));
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
+        copy.foretoldCardIds.addAll(this.foretoldCardIds);
+        copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
@@ -3325,6 +3328,12 @@ public class GameData {
         // --- Map<UUID, String/Integer> ---
         copy.playerIdToName.putAll(this.playerIdToName);
         copy.imprintedCards.putAll(this.imprintedCards);
+        copy.exiledVoyageCounters.putAll(this.exiledVoyageCounters);
+        copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
+        copy.foretoldCardCosts.putAll(this.foretoldCardCosts);
+        this.pendingNextInstantSorceryCopyThisTurnMaxManaValues.forEach((playerId, maxManaValues) ->
+                copy.pendingNextInstantSorceryCopyThisTurnMaxManaValues.put(
+                        playerId, new ArrayList<>(maxManaValues)));
         this.notedMana.forEach((cardId, mana) -> copy.notedMana.put(cardId, new EnumMap<>(mana)));
         this.abilityActivationManaSpent.forEach((cardId, mana) ->
                 copy.abilityActivationManaSpent.put(cardId, new EnumMap<>(mana)));

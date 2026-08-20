@@ -39,6 +39,7 @@ class AxgardArmoryTest extends BaseCardTest {
         Card aura = new SpectralSteel();
         Card equipment = new ShortSword();
         harness.addToBattlefield(player1, new AxgardArmory());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(aura, equipment, new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 2);
@@ -70,6 +71,7 @@ class AxgardArmoryTest extends BaseCardTest {
     void findsEquipmentWithoutAura() {
         Card equipment = new ShortSword();
         harness.addToBattlefield(player1, new AxgardArmory());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), equipment));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 2);

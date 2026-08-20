@@ -583,6 +583,31 @@ public class ManaCost {
         }
     }
 
+    private void applySnowManaAsAnyColor(ManaPool pool) {
+        pool.setSnowManaSpendableAsAnyColor(false);
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            ManaColor target = entry.getKey();
+            if (target == ManaColor.COLORLESS) {
+                continue;
+            }
+            int deficit = Math.max(0, entry.getValue() - pool.get(target));
+            for (ManaColor source : ManaColor.values()) {
+                if (source == target || deficit == 0) {
+                    continue;
+                }
+                int tagged = pool.getSnowMana(source);
+                int untagged = pool.get(source) - tagged;
+                int nativeDemand = coloredCosts.getOrDefault(source, 0);
+                int convertible = Math.max(0, tagged - Math.max(0, nativeDemand - untagged));
+                int toConvert = Math.min(deficit, convertible);
+                for (int i = 0; i < toConvert; i++) {
+                    pool.convertSnowMana(source, target);
+                }
+                deficit -= toConvert;
+            }
+        }
+    }
+
     /** Converts only the mana needed for this cost's colored requirements. */
     private void applyAllManaAsAnyColor(ManaPool pool) {
         pool.setAllManaSpendableAsAnyColor(false);
@@ -730,6 +755,11 @@ public class ManaCost {
             remaining.removeSnowMana(snowCost);
             return withoutSnowCost().canPay(remaining, xValue);
         }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            ManaPool rewritten = new ManaPool(pool);
+            applySnowManaAsAnyColor(rewritten);
+            return canPay(rewritten, xValue);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten);
@@ -768,6 +798,11 @@ public class ManaCost {
             remaining.removeSnowMana(snowCost);
             return withoutSnowCost().canPayWithAdditionalGenericCost(
                     remaining, xValue, additionalGenericCost);
+        }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            ManaPool rewritten = new ManaPool(pool);
+            applySnowManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost);
         }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
@@ -1011,7 +1046,7 @@ public class ManaCost {
 
         int remaining = pool.getTotal();
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remaining -= entry.getValue();
+            remaining -= Math.min(entry.getValue(), pool.get(entry.getKey()));
         }
 
         if (artifactContext) {
@@ -1135,7 +1170,7 @@ public class ManaCost {
 
         int remaining = pool.getTotal();
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remaining -= entry.getValue();
+            remaining -= Math.min(entry.getValue(), pool.get(entry.getKey()));
         }
         if (artifactContext) {
             remaining += pool.getArtifactOnlyColorless();
@@ -1368,6 +1403,17 @@ public class ManaCost {
                     artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
                     powerstoneContext);
+        }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applySnowManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost,
+                    artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                    instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                    subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext,
+                    manaValueAtLeastFourContext, subtypeOrPlaneswalkerSpellContext,
+                    subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
         }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
@@ -1753,6 +1799,9 @@ public class ManaCost {
         if (snowCost > 0) {
             pool.removeSnowMana(snowCost);
         }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            applySnowManaAsAnyColor(pool);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }
@@ -1788,6 +1837,9 @@ public class ManaCost {
     public void payWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost) {
         if (snowCost > 0) {
             pool.removeSnowMana(snowCost);
+        }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            applySnowManaAsAnyColor(pool);
         }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
@@ -2195,6 +2247,9 @@ public class ManaCost {
                                               boolean powerstoneContext) {
         if (snowCost > 0) {
             pool.removeSnowMana(snowCost);
+        }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            applySnowManaAsAnyColor(pool);
         }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);

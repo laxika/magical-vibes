@@ -126,6 +126,10 @@ class StackResolutionServiceTest {
                 .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(gameQueryService.replaceCounters(any(), any(), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(4));
+        lenient().when(gameQueryService.replaceCounters(any(), any(), any(), anyInt(), any()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(gameQueryService.replaceCounters(any(), any(), any(), any(), anyInt(), any()))
+                .thenAnswer(inv -> inv.getArgument(4));
     }
 
     private Card createCreature(String name) {

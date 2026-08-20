@@ -24,7 +24,7 @@ class EgonGodOfDeathTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(first, second));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(egon);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -40,7 +40,7 @@ class EgonGodOfDeathTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawCard));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(egon);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(graveyardCard);

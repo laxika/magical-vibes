@@ -9,11 +9,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TheTricksterGodsHeist.class, DarksteelAxe.class, DarksteelRelic.class,
+        Forest.class, GrizzlyBears.class})
 class TheTricksterGodsHeistTest extends BaseCardTest {
 
     @Test
@@ -26,6 +29,7 @@ class TheTricksterGodsHeistTest extends BaseCardTest {
         triggerChapter();
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.handlePermanentChosen(player1, opposingCreature.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -48,6 +52,7 @@ class TheTricksterGodsHeistTest extends BaseCardTest {
                 .doesNotContain(basicLand.getId());
         harness.handlePermanentChosen(player1, ownArtifact.getId());
         harness.handlePermanentChosen(player1, opposingArtifact.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

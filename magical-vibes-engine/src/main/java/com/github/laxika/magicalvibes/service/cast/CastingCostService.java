@@ -660,7 +660,8 @@ public class CastingCostService {
                                 .withSourceControllerId(activatingPlayerId)
                                 .withSourcePermanentSnapshot(permanent)
                                 .withSourcePermanentId(permanent.getId()))) {
-                    reduction += reducer.genericCostReduction();
+                    reduction += evaluateActivatedAbilityCostReduction(
+                            gameData, reducer, permanent, activatingPlayerId);
                 }
             }
         }

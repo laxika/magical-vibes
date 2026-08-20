@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -741,20 +742,21 @@ public class StackResolutionService {
         }
 
         Card card = entry.getCard();
+        Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
 
-        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, characteristics, entry.getTargetId(),
                 entry.getXValue())) {
             return;
         }
 
         // "As enters" card name choice (e.g. Pithing Needle, Phyrexian Revoker, Sorcerous Spyglass)
         // — name must be chosen BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
-        if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
+        if (beginChooseCardNameOnEnter(gameData, controllerId, characteristics)) {
             return;
         }
 
-        Permanent perm = createEnteringPermanent(entry, card, card);
+        Permanent perm = createEnteringPermanent(entry, card, characteristics);
 
         // Gather Specimens (CR 614.1): an artifact creature that would enter under an opponent's
         // control instead enters under the gatherer's control. Resolve up front so the log, ETB
@@ -1151,8 +1153,11 @@ public class StackResolutionService {
         };
 
         boolean needsPlayerTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-        boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                || !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
+        boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e ->
+                e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                        || e instanceof ReturnTargetCardsFromGraveyardToHandEffect);
         if (needsPlayerTarget && needsPermanentTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     card, controllerId, new ArrayList<>(chapterEffects), false,

@@ -145,6 +145,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1348,11 +1349,15 @@ public class SpellCastingService {
                 throw new IllegalStateException("Only lands can be played from graveyard");
             }
             Card landFace = selectedModalDoubleFacedLandFace(graveyardCard, effectiveXValue);
+            boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
             permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
             gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
             Permanent permanent = new Permanent(graveyardCard);
             permanent.setCard(landFace);
+            if (entersTapped) {
+                permanent.tap();
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
@@ -1500,6 +1505,7 @@ public class SpellCastingService {
                 .forEach(modal -> validateOptionalCostModalSelection(
                         modal, additionalCosts, costSelection, modeEncoding));
         effectiveXValue = unwrapChooseOneEffect(card, filteredSpellEffects, effectiveXValue);
+        boolean castModalBackFace = card.isModalDoubleFaced() && effectiveXValue == 1;
         // A mode that brought its own total cost (a split card's half, or its fuse mode) was never
         // the cost the playability pre-check cleared — that check only needs *some* mode to be
         // affordable — so the mode actually chosen has to be paid for here.
@@ -2212,6 +2218,8 @@ public class SpellCastingService {
             int manaCostX = effectiveXValue;
             int stackX = effectiveXValue;
             UUID stackTarget = (card.hasType(CardType.PLANESWALKER)) ? null : targetId;
+            Card castCharacteristics = castModalBackFace ? card.getBackFaceCard() : card;
+            StackEntryType permanentEntryType = cardTypeToStackEntryType(castCharacteristics.getType());
 
             // CR 601.2h: a cast either completes or leaves the game state untouched — reject an
             // unpayable non-mana additional cost up front, before any cost is consumed. A throw
@@ -2338,7 +2346,7 @@ public class SpellCastingService {
                 // card and attaches the Aura to it (StackResolutionService.resolveEnchantmentSpell), and
                 // so on-resolution fizzle checks look in the graveyard rather than on the battlefield.
                 entry = new StackEntry(
-                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        permanentEntryType, card, playerId, castCharacteristics.getName(),
                         List.of(), stackX, targetId, null, Map.of(), Zone.GRAVEYARD, List.of(), List.of()
                 );
             } else if (!targetIds.isEmpty() && card.isAura()) {
@@ -2348,22 +2356,23 @@ public class SpellCastingService {
                 List<UUID> etbTargets = targetIds.size() > 1
                         ? new ArrayList<>(targetIds.subList(1, targetIds.size())) : List.of();
                 entry = new StackEntry(
-                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        permanentEntryType, card, playerId, castCharacteristics.getName(),
                         List.of(), stackX, auraTarget, null, Map.of(), null, List.of(), etbTargets
                 );
             } else if (!targetIds.isEmpty()) {
                 // Multi-target creature (e.g. Burning Sun's Avatar ETB with multiple targets)
                 entry = new StackEntry(
-                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        permanentEntryType, card, playerId, castCharacteristics.getName(),
                         List.of(), stackX, targetIds
                 );
             } else {
                 entry = new StackEntry(
-                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        permanentEntryType, card, playerId, castCharacteristics.getName(),
                         List.of(), stackX, stackTarget, null
                 );
             }
             entry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
+            entry.setCastTransformed(castModalBackFace);
             if (kicked && kickerEffect != null) {
                 entry.setKicked(true);
             }
@@ -4567,7 +4576,9 @@ public class SpellCastingService {
 
         boolean grantedPermanentCast = grantedGraveyardCardCast
                 && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND;
-        if (isGraveyardCast || grantedPermanentCast || isGrantedGraveyardCast
+        boolean graveyardCastPermanent = isGraveyardCast
+                && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND;
+        if (graveyardCastPermanent || grantedPermanentCast || isGrantedGraveyardCast
                 || (isGrantedCyclingGraveyardCast && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND)
                 || (isGrantedGraveyardPlay && card.getType().isPermanentType() && card.getType() != CardType.LAND)) {
             // GraveyardCast / granted graveyard cast: permanent spell — enters battlefield on resolution, no exile
@@ -4601,6 +4612,7 @@ public class SpellCastingService {
                     List.of(), 0, targetId, null
             );
             stackEntry.setSourceZone(Zone.GRAVEYARD);
+            stackEntry.setEntersTapped(gameData.graveyardCardsEnterTapped.remove(card.getId()));
             gameData.stack.add(stackEntry);
             if (grantedGraveyardCardCast) {
                 consumeGraveyardCardCastPermission(gameData, playerId, card);
@@ -4641,7 +4653,8 @@ public class SpellCastingService {
         // A one-shot permission (Toshiro Umezawa) on an instant or sorcery card lands here rather than
         // in the permanent-spell branch above.
         boolean grantedInstantOrSorceryCast = grantedGraveyardCardCast && !grantedPermanentCast;
-        if (isGrantedGraveyardPlay || isGrantedCyclingGraveyardCast || grantedInstantOrSorceryCast) {
+        if (isGraveyardCast || isGrantedGraveyardPlay || isGrantedCyclingGraveyardCast
+                || grantedInstantOrSorceryCast) {
             StackEntryType entryType = card.hasType(CardType.INSTANT)
                     ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
             StackEntry stackEntry;
@@ -4658,6 +4671,9 @@ public class SpellCastingService {
                 );
             }
             stackEntry.setSourceZone(Zone.GRAVEYARD);
+            if (isGraveyardCast && graveyardCastOpt.orElseThrow().exileAfterResolution()) {
+                stackEntry.setExileInsteadOfGraveyard(true);
+            }
             if (grantedInstantOrSorceryCast) {
                 GameData.GraveyardCardCastPermission permission =
                         consumeGraveyardCardCastPermission(gameData, playerId, card);
@@ -4832,10 +4848,11 @@ public class SpellCastingService {
         // Retrace (CR 702.81) keeps the normal graveyard disposition — unlike flashback it is not
         // exiled after resolving, so it can be retraced again. Bösium Strip uses the exile-instead
         // replacement without granting the flashback keyword.
-        if (isMayCastTopInstantOrSorcery) {
+        if (isMayCastTopInstantOrSorcery
+                || (isGraveyardCast && graveyardCastOpt.orElseThrow().exileAfterResolution())) {
             stackEntry.setExileInsteadOfGraveyard(true);
-        } else {
-            stackEntry.setCastWithFlashback(!isRetrace);
+        } else if (flashbackOpt.isPresent() || grantedFlashback || emblemFlashback || isJumpStart) {
+            stackEntry.setCastWithFlashback(true);
         }
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         gameData.stack.add(stackEntry);
@@ -4896,10 +4913,16 @@ public class SpellCastingService {
                 gameData, playerId, exileCardId);
         boolean sourceFreeCast = castingPermissionService.hasFreeCastFromExiledWithSource(
                 gameData, playerId, exileCardId);
+        boolean castForForetell = gameData.foretoldCardIds.contains(exileCardId)
+                && playerId.equals(exiledEntry.ownerId())
+                && gameData.turnNumber > exiledEntry.exiledTurnNumber();
         boolean hasPermission = resolutionCast
                 || (permittedPlayer != null && permittedPlayer.equals(playerId))
-                || sourceCounterCost.isPresent();
+                || sourceCounterCost.isPresent()
+                || castForForetell;
         boolean anyManaType = castingPermissionService.hasAnyManaTypePermission(
+                gameData, playerId, exileCardId);
+        boolean snowManaAsAnyColor = castingPermissionService.hasSnowManaAsAnyColorPermission(
                 gameData, playerId, exileCardId);
         int additionalCounterCost = permittedPlayer != null && permittedPlayer.equals(playerId)
                 ? 0 : sourceCounterCost.orElse(0);
@@ -4986,6 +5009,37 @@ public class SpellCastingService {
         int phyrexianManaPaidWithLife = 0;
         if (playWithoutPaying) {
             // Cast without paying its mana cost — no payment.
+        } else if (castForForetell) {
+            ManaCost cost = gameData.foretoldCardCosts.get(exileCardId);
+            if (cost == null) {
+                throw new IllegalStateException("Foretell cost is unavailable");
+            }
+            cost = castingCostService.applyColoredManaCostReductions(gameData, playerId, card, cost);
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaPool.ForetellPaymentState paymentState = pool.beginForetellPayment();
+            try {
+                int additionalCost = castingCostService.getCastCostModifier(
+                        gameData, playerId, card, effectiveXValue);
+                if (!cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                        false, false, false, false, true)) {
+                    throw new IllegalStateException("Not enough mana to pay spell");
+                }
+                int manaBefore = pool.getTotalAllMana();
+                cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                        false, false, false, false, true);
+                gameData.addSpellCastManaSpent(card.getId(), manaBefore - pool.getTotalAllMana());
+            } finally {
+                pool.endForetellPayment(paymentState);
+            }
+        } else if (snowManaAsAnyColor && card.getManaCost() != null) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            pool.setSnowManaSpendableAsAnyColor(true);
+            try {
+                phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
+                        gameData, playerId, card, effectiveXValue, Zone.EXILE);
+            } finally {
+                pool.setSnowManaSpendableAsAnyColor(false);
+            }
         } else if (anyManaType && card.getManaCost() != null) {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, new ManaCost(card.getManaCost()));
@@ -5131,6 +5185,7 @@ public class SpellCastingService {
             );
         }
         stackEntry.setSourceZone(Zone.EXILE);
+        stackEntry.setCastForForetell(castForForetell);
         if (!exiledEntry.ownerId().equals(playerId)) {
             stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         }
@@ -5500,6 +5555,8 @@ public class SpellCastingService {
                                  boolean kicked, int extraCostReduction, int targetingTax,
                                  int additionalGenericCost, String additionalManaCost,
                                  String escalateManaSuffix) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        var snowManaBefore = pool.getSnowManaTotals();
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
@@ -5507,6 +5564,7 @@ public class SpellCastingService {
                         phyrexianLifeCount, kicked, extraCostReduction, targetingTax, additionalGenericCost,
                         additionalManaCost, escalateManaSuffix, Zone.HAND);
         gameData.addSpellCastManaSpent(card.getId(), payment.manaSpent());
+        recordSnowManaSpent(gameData, card, snowManaBefore, pool.getSnowManaTotals());
         applyUncounterableGrantingMana(gameData, playerId, card);
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
@@ -5521,17 +5579,36 @@ public class SpellCastingService {
      */
     public int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card, int effectiveXValue,
                                                 Zone sourceZone) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        var snowManaBefore = pool.getSnowManaTotals();
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, List.of(),
                         null, false, 0, 0, 0, "", "", sourceZone);
         gameData.addSpellCastManaSpent(card.getId(), payment.manaSpent());
+        recordSnowManaSpent(gameData, card, snowManaBefore, pool.getSnowManaTotals());
         applyUncounterableGrantingMana(gameData, playerId, card);
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
+    }
+
+    private void recordSnowManaSpent(GameData gameData, Card card,
+                                     EnumMap<ManaColor, Integer> before,
+                                     EnumMap<ManaColor, Integer> after) {
+        EnumMap<ManaColor, Integer> spent = new EnumMap<>(ManaColor.class);
+        int total = 0;
+        for (ManaColor color : ManaColor.values()) {
+            int amount = Math.max(0, before.getOrDefault(color, 0) - after.getOrDefault(color, 0));
+            if (amount > 0) {
+                spent.put(color, amount);
+                total += amount;
+            }
+        }
+        gameData.setSpellCastSnowManaSpent(card.getId(), total);
+        gameData.setSpellCastSnowManaSpentByColor(card.getId(), spent);
     }
 
     private int hasteGrantingManaAvailable(GameData gameData, UUID playerId) {
@@ -5674,23 +5751,47 @@ public class SpellCastingService {
                                         int additionalGenericCost, String additionalManaCost,
                                         String escalateManaSuffix, Zone sourceZone) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        if (!card.hasType(CardType.CREATURE)) {
-            return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
-                    convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
-                    additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone);
-        }
-
-        EnumMap<ManaColor, Integer> regularManaBefore = new EnumMap<>(ManaColor.class);
-        for (ManaColor color : ManaColor.values()) {
-            regularManaBefore.put(color, pool.get(color));
-        }
-        EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
+        Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
+                ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
+                || card.getKeywords().contains(Keyword.CHANGELING))
+                ? EnumSet.allOf(CardSubtype.class)
+                : nullToEmpty(gameQueryService.getCardSubtypes(card, gameData, playerId))
+                : Set.of();
+        ManaPool.SubtypeOrLegendaryCreatureManaState subtypeOrLegendaryMana =
+                subtypeOrLegendaryCreatureContext.isEmpty()
+                        ? null
+                        : pool.promoteSubtypeOrLegendaryCreatureMana(subtypeOrLegendaryCreatureContext);
+        boolean creatureOrEnchantment = card.hasType(CardType.CREATURE)
+                || card.hasType(CardType.ENCHANTMENT);
+        ManaPool.CreatureOrEnchantmentSpellManaState creatureOrEnchantmentMana = creatureOrEnchantment
+                ? pool.promoteCreatureOrEnchantmentSpellOnlyMana()
+                : null;
         try {
-            return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
-                    convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
-                    additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone);
+            if (!card.hasType(CardType.CREATURE)) {
+                return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
+                        convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
+                        additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone);
+            }
+
+            EnumMap<ManaColor, Integer> regularManaBefore = new EnumMap<>(ManaColor.class);
+            for (ManaColor color : ManaColor.values()) {
+                regularManaBefore.put(color, pool.get(color));
+            }
+            EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
+            try {
+                return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
+                        convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
+                        additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone);
+            } finally {
+                pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
+            }
         } finally {
-            pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
+            if (creatureOrEnchantmentMana != null) {
+                pool.restorePromotedCreatureOrEnchantmentSpellOnlyMana(creatureOrEnchantmentMana);
+            }
+            if (subtypeOrLegendaryMana != null) {
+                pool.restorePromotedSubtypeOrLegendaryCreatureMana(subtypeOrLegendaryMana);
+            }
         }
     }
 

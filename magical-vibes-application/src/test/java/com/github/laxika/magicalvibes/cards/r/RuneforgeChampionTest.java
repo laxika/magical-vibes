@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RuneforgeChampion.class, RuneOfSustenance.class, GrizzlyBears.class})
 class RuneforgeChampionTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,11 @@ class RuneforgeChampionTest extends BaseCardTest {
         castChampion();
 
         resolveEnterTheBattlefieldTrigger(true);
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
 
         harness.assertInHand(player1, "Rune of Sustenance");
         harness.assertNotInGraveyard(player1, "Rune of Sustenance");
@@ -39,13 +46,12 @@ class RuneforgeChampionTest extends BaseCardTest {
 
         resolveEnterTheBattlefieldTrigger(true);
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search).isNotNull();
-        assertThat(search.params().cards()).containsExactly(rune);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.pool()).containsExactly(rune);
 
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
         harness.assertInHand(player1, "Rune of Sustenance");
     }
 
@@ -66,10 +72,11 @@ class RuneforgeChampionTest extends BaseCardTest {
     @DisplayName("A Rune spell can be cast for one generic mana")
     void castsRuneForOneMana() {
         harness.addToBattlefield(player1, new RuneforgeChampion());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new RuneOfSustenance()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0);
+        harness.castEnchantment(player1, 0, target.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();

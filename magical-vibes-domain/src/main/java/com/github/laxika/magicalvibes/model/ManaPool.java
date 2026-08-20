@@ -117,7 +117,6 @@ public class ManaPool {
     /** Per-color mana that can only be spent to cast creature or enchantment spells. */
     private final EnumMap<ManaColor, Integer> creatureOrEnchantmentSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Temporary regular-pool tag used while paying a creature or enchantment spell. */
-    private final EnumMap<ManaColor, Integer> promotedCreatureOrEnchantmentSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
     private final EnumMap<ManaColor, Integer> creatureSpellOrAbilityMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with mana value 4 or greater. */
@@ -230,7 +229,6 @@ public class ManaPool {
         partySpellOrAbilityMana.putAll(source.partySpellOrAbilityMana);
         creatureSpellOnlyMana.putAll(source.creatureSpellOnlyMana);
         creatureOrEnchantmentSpellOnlyMana.putAll(source.creatureOrEnchantmentSpellOnlyMana);
-        promotedCreatureOrEnchantmentSpellOnlyMana.putAll(source.promotedCreatureOrEnchantmentSpellOnlyMana);
         creatureSpellOrAbilityMana.putAll(source.creatureSpellOrAbilityMana);
         manaValueAtLeastFourOnlyMana.putAll(source.manaValueAtLeastFourOnlyMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.exiledCardOnlyMana.entrySet()) {
@@ -312,6 +310,22 @@ public class ManaPool {
 
     public int getSnowManaTotal() {
         return snowMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Returns a defensive snapshot of the snow tags currently available by color. */
+    public EnumMap<ManaColor, Integer> getSnowManaTotals() {
+        return new EnumMap<>(snowMana);
+    }
+
+    /** Changes the color a snow mana may be spent as while retaining its snow tag. */
+    public boolean convertSnowMana(ManaColor from, ManaColor to) {
+        if (from == to || getSnowMana(from) <= 0) {
+            return false;
+        }
+        remove(from);
+        add(to);
+        addSnowManaTag(to, 1);
+        return true;
     }
 
     /** Spends one snow mana of the given color, if available. */
@@ -1564,15 +1578,19 @@ public class ManaPool {
     }
 
     /** Temporarily exposes this restricted mana to the ordinary spell-payment algorithm. */
-    public void promoteCreatureOrEnchantmentSpellOnlyMana() {
+    public CreatureOrEnchantmentSpellManaState promoteCreatureOrEnchantmentSpellOnlyMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, pool.getOrDefault(color, 0));
             int amount = getCreatureOrEnchantmentSpellOnlyMana(color);
+            promoted.put(color, amount);
             if (amount > 0) {
                 pool.merge(color, amount, Integer::sum);
                 creatureOrEnchantmentSpellOnlyMana.put(color, 0);
-                promotedCreatureOrEnchantmentSpellOnlyMana.merge(color, amount, Integer::sum);
             }
         }
+        return new CreatureOrEnchantmentSpellManaState(regularBefore, promoted);
     }
 
     public void addSubtypeOrLegendaryCreatureMana(CardSubtype subtype, ManaColor color, int amount) {
@@ -1617,16 +1635,82 @@ public class ManaPool {
         }
     }
 
-    /** Restores the unspent portion of temporarily promoted restricted mana. */
-    public void restorePromotedCreatureOrEnchantmentSpellOnlyMana() {
+    /** Temporarily exposes matching subtype-or-legendary creature mana to spell payment. */
+    public SubtypeOrLegendaryCreatureManaState promoteSubtypeOrLegendaryCreatureMana(
+            Set<CardSubtype> subtypes) {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<CardSubtype, EnumMap<ManaColor, Integer>> promoted = new EnumMap<>(CardSubtype.class);
         for (ManaColor color : ManaColor.values()) {
-            int remaining = promotedCreatureOrEnchantmentSpellOnlyMana.getOrDefault(color, 0);
+            regularBefore.put(color, get(color));
+        }
+        for (CardSubtype subtype : subtypes) {
+            EnumMap<ManaColor, Integer> bucket = subtypeOrLegendaryCreatureMana.get(subtype);
+            if (bucket == null) {
+                continue;
+            }
+            EnumMap<ManaColor, Integer> amounts = new EnumMap<>(ManaColor.class);
+            for (ManaColor color : ManaColor.values()) {
+                int amount = bucket.getOrDefault(color, 0);
+                amounts.put(color, amount);
+                if (amount > 0) {
+                    pool.merge(color, amount, Integer::sum);
+                    bucket.put(color, 0);
+                }
+            }
+            promoted.put(subtype, amounts);
+        }
+        return new SubtypeOrLegendaryCreatureManaState(regularBefore, promoted);
+    }
+
+    /** Restores the unspent portion of temporarily promoted subtype-or-legendary mana. */
+    public void restorePromotedSubtypeOrLegendaryCreatureMana(
+            SubtypeOrLegendaryCreatureManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promotedTotal = state.promoted().values().stream()
+                    .mapToInt(amounts -> amounts.getOrDefault(color, 0))
+                    .sum();
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promotedTotal - get(color));
+            int remaining = Math.max(0, promotedTotal - spent);
+            if (remaining == 0) {
+                continue;
+            }
+            pool.merge(color, -remaining, Integer::sum);
+            for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : state.promoted().entrySet()) {
+                if (remaining == 0) {
+                    break;
+                }
+                int restore = Math.min(remaining, entry.getValue().getOrDefault(color, 0));
+                if (restore > 0) {
+                    bucketFor(subtypeOrLegendaryCreatureMana, entry.getKey()).merge(color, restore, Integer::sum);
+                    remaining -= restore;
+                }
+            }
+        }
+    }
+
+    public record SubtypeOrLegendaryCreatureManaState(
+            Map<ManaColor, Integer> regularBefore,
+            Map<CardSubtype, EnumMap<ManaColor, Integer>> promoted) {
+    }
+
+    /** Restores the unspent portion of temporarily promoted restricted mana. */
+    public void restorePromotedCreatureOrEnchantmentSpellOnlyMana(
+            CreatureOrEnchantmentSpellManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promoted = state.promoted().getOrDefault(color, 0);
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promoted - pool.getOrDefault(color, 0));
+            int remaining = Math.max(0, promoted - spent);
             if (remaining > 0) {
                 pool.merge(color, -remaining, Integer::sum);
                 creatureOrEnchantmentSpellOnlyMana.merge(color, remaining, Integer::sum);
             }
-            promotedCreatureOrEnchantmentSpellOnlyMana.put(color, 0);
         }
+    }
+
+    public record CreatureOrEnchantmentSpellManaState(Map<ManaColor, Integer> regularBefore,
+                                                        Map<ManaColor, Integer> promoted) {
     }
 
     /** Adds mana spendable only to cast creature spells or activate abilities of creature sources (Gwenna). */

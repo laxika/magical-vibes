@@ -164,6 +164,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReboundCastFromExileEffect;
@@ -182,9 +183,12 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -2797,13 +2801,36 @@ public class StepTriggerService {
                 default -> String.valueOf(newLoreCount);
             };
 
-            boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-            boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-            if (needsPermanentTarget) {
+            boolean needsPlayerTarget = chapterEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            boolean needsPermanentTarget = chapterEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    || !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
+            boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e ->
+                    e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                            || e instanceof ReturnTargetCardsFromGraveyardToHandEffect);
+            if (needsPlayerTarget && needsPermanentTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        card, activePlayerId, new ArrayList<>(chapterEffects), false,
+                        sagaChapterAnyTargetFilter(chapterEffects), 0, saga.getId()));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
+                log.info("Game {} - {} chapter {} triggers (awaiting any target selection)",
+                        gameData.id, card.getName(), chapterName);
+            } else if (needsPlayerTarget) {
+                gameData.queueInteraction(
+                        new PermanentChoiceContext.SagaChapterPlayerTarget(card, activePlayerId,
+                                new ArrayList<>(chapterEffects), saga.getId(), chapterName));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
+                log.info("Game {} - {} chapter {} triggers (awaiting player target selection)",
+                        gameData.id, card.getName(), chapterName);
+            } else if (needsPermanentTarget) {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName,
-                                card.getSagaChapterTargetFilters(chapterSlot)));
+                                card.getSagaChapterTargetFilters(chapterSlot),
+                                card.getSagaChapterTargetGroups(chapterSlot), List.of(), 0));
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
                 log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
@@ -2835,9 +2862,31 @@ public class StepTriggerService {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
+            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+        }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
             triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
         }
+    }
+
+    private TargetFilter sagaChapterAnyTargetFilter(List<CardEffect> chapterEffects) {
+        CardEffect permanentTargetEffect = chapterEffects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                .findFirst()
+                .orElseThrow();
+        var permanentPredicate = permanentTargetEffect.targetSpec().targetPredicate()
+                .permanentRestriction().orElse(new PermanentTruePredicate());
+        PlayerRelation relation = chapterEffects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                .map(CardEffect::targetPlayerRelation)
+                .findFirst()
+                .orElse(PlayerRelation.ANY);
+        return new AnyTargetPredicateTargetFilter(permanentPredicate,
+                new PlayerRelationPredicate(relation), "target opponent or planeswalker");
     }
 
     /**
