@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlizzardSpecter.class, GrizzlyBears.class})
 class BlizzardSpecterTest extends BaseCardTest {
 
     private static final String RETURN_MODE = "That player returns a permanent they control to its owner's hand.";
@@ -50,6 +52,12 @@ class BlizzardSpecterTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, DISCARD_MODE);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");

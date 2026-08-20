@@ -63,6 +63,7 @@ class CostEffectClassificationTest {
             "PutCounterOnOpponentCreatureCost",
             "PutTypedCounterOnSourceCost",
             "PutCardsFromSingleGraveyardOnBottomOfLibraryCost",
+            "PutCardExiledWithSourceIntoGraveyardCost",
             "PutCardFromHandOnTopOfLibraryCost",
             "PutSelfOnBottomOfOwnersLibraryCost",
             "ReduceActivationCostPerCounterEffect",
