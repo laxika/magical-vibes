@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -62,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -107,6 +110,9 @@ class MiscTriggerCollectorServiceTest {
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks
     private MiscTriggerCollectorService sut;
@@ -206,6 +212,21 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("graveyard-leave trigger skips a false intervening turn condition")
+    void graveyardLeaveTriggerSkipsFalseInterveningCondition() {
+        Permanent perm = createPermanent("Kishla Skimmer");
+        var effect = new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(1));
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(player1Id);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

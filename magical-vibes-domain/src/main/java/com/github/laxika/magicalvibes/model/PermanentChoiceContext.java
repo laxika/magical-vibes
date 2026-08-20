@@ -334,10 +334,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                              boolean exileFromLibrary,
                                              Card damageSourceControllerCard,
-                                             boolean preventHalfDamage) implements PermanentChoiceContext {
+                                             boolean preventHalfDamage,
+                                             boolean drawCards) implements PermanentChoiceContext {
         public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                                  boolean exileFromLibrary) {
-            this(controllerId, gainLife, exileFromLibrary, null, false);
+            this(controllerId, gainLife, exileFromLibrary, null, false, false);
+        }
+
+        public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
+                                                 boolean exileFromLibrary, Card damageSourceControllerCard) {
+            this(controllerId, gainLife, exileFromLibrary, damageSourceControllerCard, false, false);
         }
     }
 
@@ -404,7 +410,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Remembers the attack target for each token entering tapped and attacking. */
     record CreateTokensAttacking(UUID controllerId, Card sourceCard,
                                  com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenEffect,
-                                 int amount, int tokenCount,
+                                 int amount, int tokenCount, boolean sacrificeAtEndStep,
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
 
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */

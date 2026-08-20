@@ -173,6 +173,7 @@ export interface Card {
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
   hasConvoke: boolean;
+  hasHarmonize?: boolean;
   hasPhyrexianMana: boolean;
   phyrexianManaCount: number;
   token: boolean;

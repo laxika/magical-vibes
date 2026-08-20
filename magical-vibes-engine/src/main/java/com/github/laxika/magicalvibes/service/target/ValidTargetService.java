@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantHarmonizeToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
@@ -38,6 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -890,7 +893,16 @@ public class ValidTargetService {
         }
 
         // Hexproof from color (blocks opponent's abilities of the specified color)
-        Set<CardColor> effectiveSourceColors = gameQueryService.getEffectiveCardColors(gameData, sourceCard);
+        Set<CardColor> effectiveSourceColors = targetLegalityService.effectiveSourceColors(gameData, sourceCard);
+        if (effectiveSourceColors.size() == 1
+                && gameQueryService.hasHexproofFromMonocolored(gameData, perm)
+                && !(gameQueryService.isCreature(gameData, perm)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, controllerId))) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
+            if (targetController != null && !targetController.equals(controllerId)) {
+                return false;
+            }
+        }
         if (effectiveSourceColors.stream()
                 .anyMatch(color -> isBlockedByHexproofFromColor(gameData, perm, color, controllerId))) {
             return false;
@@ -1165,10 +1177,12 @@ public class ValidTargetService {
                         if (!matchesReturnCardFilter(gameData, rge, c, card.getId())) {
                             continue;
                         }
-                        if (rge.requiresManaValueEqualsX() && c.getManaValue() != effectiveXValue) {
+                        int requiredManaValue = effectiveXValue
+                                + (rge.requiresManaValueEqualsX() ? rge.manaValueXOffset() : 0);
+                        if (rge.requiresManaValueEqualsX() && c.getManaValue() != requiredManaValue) {
                             continue;
                         }
-                        if (rge.requiresManaValueAtMostX() && c.getManaValue() > effectiveXValue) {
+                        if (rge.requiresManaValueAtMostX() && c.getManaValue() > requiredManaValue) {
                             continue;
                         }
                         if (rge.targetPutIntoGraveyardFromBattlefieldThisTurn()
@@ -1206,6 +1220,7 @@ public class ValidTargetService {
         }
         int effectiveXValue = xValue != null ? xValue : 0;
         List<UUID> validIds = new ArrayList<>();
+        boolean costDerivedManaValueTarget = hasCostDerivedManaValueTarget(ability.getEffects());
 
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ExileGraveyardCardsEffect ge
@@ -1229,6 +1244,18 @@ public class ValidTargetService {
                         if (!excludeIds.contains(c.getId())
                                 && matchesGraveyardEffectTypeFilter(
                                 gameData, effect, c, sourceCardId, controllerId, effectiveXValue)) {
+                            if (effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                                    && returnEffect.requiresManaValueEqualsX()
+                                    && !costDerivedManaValueTarget
+                                    && c.getManaValue() != effectiveXValue + returnEffect.manaValueXOffset()) {
+                                continue;
+                            }
+                            if (effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                                    && returnEffect.requiresManaValueAtMostX()
+                                    && !costDerivedManaValueTarget
+                                    && c.getManaValue() > effectiveXValue) {
+                                continue;
+                            }
                             validIds.add(c.getId());
                         }
                     }
@@ -1237,6 +1264,15 @@ public class ValidTargetService {
             }
         }
         return validIds;
+    }
+
+    private boolean hasCostDerivedManaValueTarget(List<CardEffect> effects) {
+        boolean tracksSacrificedManaValue = effects.stream().anyMatch(effect ->
+                effect instanceof SacrificeCreatureCost creatureCost && creatureCost.trackSacrificedManaValue()
+                        || effect instanceof SacrificePermanentCost permanentCost && permanentCost.trackSacrificedManaValue());
+        return tracksSacrificedManaValue && effects.stream().anyMatch(effect ->
+                effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && (returnEffect.requiresManaValueEqualsX() || returnEffect.requiresManaValueAtMostX()));
     }
 
     /**
@@ -1266,6 +1302,8 @@ public class ValidTargetService {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
             return e.cardTypes().stream().anyMatch(c::hasType);
+        } else if (effect instanceof GrantHarmonizeToTargetGraveyardCardEffect) {
+            return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e && e.filter() != null) {

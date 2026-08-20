@@ -9,5 +9,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * non-targeting effect that applies to the same permanent.
  */
 public record PutCounterOnChosenOwnPermanentEffect(CounterType counterType, int count,
-                                                    PermanentPredicate predicate) implements CardEffect {
+                                                    PermanentPredicate predicate,
+                                                    boolean recordPlacement) implements CardEffect {
+
+    public PutCounterOnChosenOwnPermanentEffect(CounterType counterType, int count,
+                                                PermanentPredicate predicate) {
+        this(counterType, count, predicate, false);
+    }
 }

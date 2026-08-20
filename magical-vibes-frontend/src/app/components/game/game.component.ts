@@ -654,7 +654,8 @@ export class GameComponent implements OnInit, OnDestroy {
   playFlashback(index: number): void {
     if (this.isFlashbackPlayable(index)) {
       const card = this.myGraveyard[index];
-      if (card?.needsTarget || card?.additionalBeholdFlashbackOnly || card?.graveyardCastRequiresDiscard) {
+      if (card?.needsTarget || card?.additionalBeholdFlashbackOnly || card?.graveyardCastRequiresDiscard
+          || card?.hasHarmonize) {
         this.choice.targeting.startFlashbackTargeting(index, card);
       } else {
         this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, flashback: true });
@@ -1349,6 +1350,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.harmonizing) {
+      if (perm && isPermanentCreature(perm) && !perm.tapped) {
+        this.choice.targeting.toggleHarmonizeCreature(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.choosingKickerPermanent) {
       if (perm && this.choice.targeting.canSelectKickerPermanent(perm)) {
         this.choice.targeting.toggleKickerPermanent(perm.id);
@@ -1654,6 +1661,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.selectingExileCounterCost) { t.cancelExileCounterCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
     if (t.convoking) { t.cancelConvoke(); return true; }
+    if (t.harmonizing) { t.cancelHarmonize(); return true; }
     if (t.targetingGraveyard) { t.cancelGraveyardTargeting(); return true; }
     if (t.targetingExile) { t.cancelExileTargeting(); return true; }
     if (t.multiTargeting) { t.cancelMultiTargeting(); return true; }
@@ -1673,7 +1681,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || c.revealingHand || c.choosingFromGraveyard || c.awaitingXValueChoice
       || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
-      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.harmonizing || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent || t.choosingBuyback
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard || t.selectingGraveyardCastDiscard || t.selectingExileCounterCost

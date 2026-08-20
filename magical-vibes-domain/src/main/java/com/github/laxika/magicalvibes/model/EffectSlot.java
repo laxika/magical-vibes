@@ -651,6 +651,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers whenever a creature the controller controls dies, while this card is in the
+     *  controller's graveyard. Like {@link #ON_ALLY_CREATURE_DIES} but fired from the graveyard.
+     *  Checked in {@code TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers}. */
+    GRAVEYARD_ON_ALLY_CREATURE_DIES,
     /** Triggers from a graveyard when a creature enters from that graveyard or is cast from it. */
     GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD,
     /** Triggers whenever an artifact the controller controls enters the battlefield, while this card is
@@ -676,6 +680,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
+    /** Triggers once for each counter put on a creature the controller controls. */
+    ON_ALLY_COUNTER_PUT_ON_CREATURE,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
      *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
      *  lands (no counter, no trigger). Used by Renegade Krasis. */
@@ -761,6 +767,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers whenever a creature or creature spell controlled by the same player becomes the
+     *  target of a spell or ability controlled by an opponent. Fires on all permanents with this
+     *  slot on that player's battlefield. Checked in {@code TriggerCollectionService}. */
+    ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     /** Triggers whenever the controller of this permanent, or any permanent they control, becomes
      *  the target of a spell or ability controlled by an opponent. Fires for all permanent types
      *  and for player targets. Checked in {@code TriggerCollectionService} from both the spell and

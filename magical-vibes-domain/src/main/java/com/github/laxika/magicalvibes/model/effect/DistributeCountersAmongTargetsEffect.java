@@ -71,8 +71,14 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
             CounterType counterType, DynamicAmount total) {
+        return chosenAmongTargetCreatures(counterType, total, null);
+    }
+
+    /** Chosen counter distribution narrowed by a permanent predicate. */
+    public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
+            CounterType counterType, DynamicAmount total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, total, DivisionMode.CHOSEN, false, false, null);
+                counterType, total, DivisionMode.CHOSEN, false, false, targetRestriction);
     }
 
     /**

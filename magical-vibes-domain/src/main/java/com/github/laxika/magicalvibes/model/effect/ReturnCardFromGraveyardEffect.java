@@ -116,6 +116,8 @@ import java.util.Set;
  *                             its owner's hand at the beginning of the next end step (Cauldron Dance)
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
+ * @param manaValueXOffset     offset added to X when {@link #requiresManaValueEqualsX} is enabled
+ *                             (e.g. a target with mana value X plus one)
  * @param requiresManaValueAtMostX {@code true} to restrict targeting to cards whose mana value is
  *                             less than or equal to the spell's X value (e.g. Profane Command)
  * @param grantColor           when non-null, permanently grants this color to the returned creature
@@ -199,6 +201,8 @@ import java.util.Set;
  *                             only meaningful for {@code BATTLEFIELD}
  * @param enterWithCounterCount number of {@link #enterWithCounter} counters to place; ignored when
  *                             {@code enterWithCounter} is null (defaults to {@code 0})
+ * @param enterWithCounters     counter types to put on the returned permanent as it enters; one
+ *                             counter of each type is placed
  * @param linkToSource         {@code true} to record the reanimated permanent on the source permanent's
  *                             {@code chosenPermanentId} (Coffin Queen), so a later
  *                             {@link RemoveLinkedPermanentEffect} trigger can still name "that creature"
@@ -247,6 +251,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean sacrificeAtEndStep,
         boolean returnToHandAtEndStep,
         boolean requiresManaValueEqualsX,
+        int manaValueXOffset,
         boolean requiresManaValueAtMostX,
         CardColor grantColor,
         CardSubtype grantSubtype,
@@ -275,6 +280,7 @@ public record ReturnCardFromGraveyardEffect(
         CreateTokenEffect createTokensEffect,
         CounterType enterWithCounter,
         int enterWithCounterCount,
+        Set<CounterType> enterWithCounters,
         boolean linkToSource,
         boolean battlefieldIfCreatureElseHand,
         boolean battlefieldIfCreatureElseExile,
@@ -293,6 +299,7 @@ public record ReturnCardFromGraveyardEffect(
         private int randomCount = 1;
         private Set<Keyword> grantKeywords = Set.of();
         private List<CardSubtype> grantSubtypes = List.of();
+        private Set<CounterType> enterWithCounters = Set.of();
     }
 
     @Override

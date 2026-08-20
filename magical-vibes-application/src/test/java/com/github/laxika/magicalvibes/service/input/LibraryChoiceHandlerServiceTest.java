@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
@@ -75,6 +76,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
     private LibraryChoiceHandlerService service;
 
@@ -106,7 +108,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
-                permanentControlSupport);
+                permanentControlSupport, permanentCounterSupport);
         registry.register(new LibraryRevealChoiceInteractionHandler(service));
         registry.register(new LibraryReorderInteractionHandler(
                 gameLogService, mock(WarpWorldService.class), inputCompletionService));
@@ -223,6 +225,24 @@ class LibraryChoiceHandlerServiceTest {
         Card card = createCard(name);
         card.setType(type);
         return card;
+    }
+
+    @Test
+    @DisplayName("Puts the requested counter on a card entering from a library")
+    void putsCounterOnLibraryCardEnteringBattlefield() {
+        Card forest = createBasicLand("Forest");
+        gd.playerDecks.get(player1Id).add(forest);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(forest))
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                .battlefieldCounter(CounterType.STUN)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a land", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(permanentCounterSupport).placeCounterOnPermanent(
+                eq(gd), isNull(), any(), eq(CounterType.STUN), eq(1));
     }
 
     @Test

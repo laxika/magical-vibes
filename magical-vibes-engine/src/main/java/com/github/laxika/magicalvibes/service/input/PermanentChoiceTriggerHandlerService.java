@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -812,7 +814,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (chosenTargets.size() < context.tokenCount()) {
             beginCreateTokensAttackingTargetChoice(gameData, new PermanentChoiceContext.CreateTokensAttacking(
                     context.controllerId(), context.sourceCard(), context.tokenEffect(),
-                    context.amount(), context.tokenCount(), chosenTargets));
+                    context.amount(), context.tokenCount(), context.sacrificeAtEndStep(), chosenTargets));
             return;
         }
 
@@ -823,6 +825,13 @@ public class PermanentChoiceTriggerHandlerService {
             Permanent token = gameQueryService.findPermanentById(gameData, createdIds.get(i));
             if (token != null && !chosenTargets.isEmpty()) {
                 token.setAttackTarget(chosenTargets.get(i % chosenTargets.size()));
+            }
+        }
+
+        if (context.sacrificeAtEndStep()) {
+            for (UUID createdId : createdIds) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        createdId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }
         }
 

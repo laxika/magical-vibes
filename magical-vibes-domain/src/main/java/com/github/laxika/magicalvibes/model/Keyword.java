@@ -19,6 +19,7 @@ public enum Keyword {
     INDESTRUCTIBLE,
     CONVOKE,
     IMPROVISE,
+    HARMONIZE,
     HASTE,
     TRAMPLE,
     LIFELINK,
@@ -86,7 +87,8 @@ public enum Keyword {
     MAX_SPEED,
     EPIC,
     TOXIC,
-    COMPLEATED;
+    COMPLEATED,
+    MOBILIZE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

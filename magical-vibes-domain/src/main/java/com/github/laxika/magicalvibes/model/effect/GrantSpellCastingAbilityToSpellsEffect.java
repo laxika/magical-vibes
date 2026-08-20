@@ -21,10 +21,11 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
         if (grantedAbility != Keyword.CONSPIRE
                 && grantedAbility != Keyword.CONVOKE
                 && grantedAbility != Keyword.IMPROVISE
-                && grantedAbility != Keyword.REBOUND) {
+                && grantedAbility != Keyword.REBOUND
+                && grantedAbility != Keyword.DELVE) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
-                            + "; only CONSPIRE, CONVOKE, IMPROVISE, and REBOUND do");
+                            + "; only CONSPIRE, CONVOKE, IMPROVISE, REBOUND, and DELVE do");
         }
     }
 }

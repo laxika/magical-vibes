@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -95,6 +96,7 @@ public class CardChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final GraveyardTargetingSupport graveyardTargetingSupport;
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -543,6 +545,48 @@ public class CardChoiceHandlerService {
             Card sourceCard = followUp.thenEffectSourceCard();
             TargetSpec targetSpec = thenEffect.targetSpec();
             boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;
+            GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(List.of(thenEffect));
+            if (!hasPreboundTarget && graveyardTarget != null) {
+                List<Card> matchingCards = new ArrayList<>();
+                for (UUID graveyardOwnerId : graveyardTarget.scope().graveyardOwners(
+                        gameData.orderedPlayerIds, playerId)) {
+                    List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+                    if (graveyard == null) {
+                        continue;
+                    }
+                    for (Card card : graveyard) {
+                        if (predicateEvaluationService.matchesCardPredicate(
+                                card, graveyardTarget.filter(), sourceCard.getId())) {
+                            matchingCards.add(card);
+                        }
+                    }
+                }
+                if (!matchingCards.isEmpty() || graveyardTarget.minTargets() == 0) {
+                    gameData.graveyardTargetOperation.card = sourceCard;
+                    gameData.graveyardTargetOperation.controllerId = playerId;
+                    gameData.graveyardTargetOperation.effects = List.of(thenEffect);
+                    gameData.graveyardTargetOperation.entryType = null;
+                    gameData.graveyardTargetOperation.xValue = 0;
+                    gameData.graveyardTargetOperation.anyNumber = false;
+                    gameData.graveyardTargetOperation.singleGraveyard = false;
+                    gameData.graveyardTargetOperation.targetPlayerId = null;
+                    gameData.graveyardTargetOperation.flashback = false;
+                    gameData.graveyardTargetOperation.sourcePermanentId = null;
+                    gameData.graveyardTargetOperation.chapterName = null;
+                    gameData.graveyardTargetOperation.permanentTargetIds = null;
+
+                    String zoneLabel = switch (graveyardTarget.scope()) {
+                        case CONTROLLERS_GRAVEYARD -> "your graveyard";
+                        case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
+                        case ALL_GRAVEYARDS -> "a graveyard";
+                    };
+                    playerInputService.beginMultiGraveyardChoice(gameData, playerId, matchingCards,
+                            graveyardTarget.maxTargets(), graveyardTarget.minTargets(),
+                            sourceCard.getName() + " — Choose target card from " + zoneLabel + " "
+                                    + graveyardTarget.destination() + ".");
+                    return;
+                }
+            }
             boolean needsTarget = !hasPreboundTarget && (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                     || targetSpec.admits(TargetPredicate.Kind.PLAYER));
             if (needsTarget) {

@@ -102,6 +102,8 @@ public class ManaPool {
      * {@link #subtypeCreatureMana}, which is spell-only.
      */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeSpellOrAbilityMana = new HashMap<>();
+    /** Per-color mana that can only be spent to cast spells with any of the matching subtypes. */
+    private final Map<Set<CardSubtype>, EnumMap<ManaColor, Integer>> subtypeSpellOnlyMana = new HashMap<>();
     /** Per-subtype, per-color mana spendable only for creature spells or creature-source abilities. */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeCreatureSourceSpellOrAbilityMana = new HashMap<>();
     /** Per-restriction, per-color mana that can only be spent on a subtype or matching planeswalker spell. */
@@ -219,6 +221,9 @@ public class ManaPool {
         this.spentUncounterableGrantingMana = source.spentUncounterableGrantingMana;
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeSpellOrAbilityMana.entrySet()) {
             subtypeSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
+        }
+        for (Map.Entry<Set<CardSubtype>, EnumMap<ManaColor, Integer>> entry : source.subtypeSpellOnlyMana.entrySet()) {
+            subtypeSpellOnlyMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeCreatureSourceSpellOrAbilityMana.entrySet()) {
             subtypeCreatureSourceSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
@@ -393,6 +398,7 @@ public class ManaPool {
         uncounterableSubtypeCreatureMana.clear();
         spentUncounterableGrantingMana = false;
         subtypeSpellOrAbilityMana.clear();
+        subtypeSpellOnlyMana.clear();
         subtypeCreatureSourceSpellOrAbilityMana.clear();
         subtypeOrPlaneswalkerSpellMana.clear();
         subtypeOrLegendaryCreatureMana.clear();
@@ -469,6 +475,11 @@ public class ManaPool {
             }
         }
         for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
+            for (int value : colorMap.values()) {
+                total += value;
+            }
+        }
+        for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOnlyMana.values()) {
             for (int value : colorMap.values()) {
                 total += value;
             }
@@ -1350,6 +1361,51 @@ public class ManaPool {
         }).merge(color, amount, Integer::sum);
     }
 
+    public void addSubtypeSpellOnlyMana(Set<CardSubtype> subtypes, ManaColor color, int amount) {
+        subtypeSpellOnlyMana.computeIfAbsent(Set.copyOf(subtypes), k -> {
+            EnumMap<ManaColor, Integer> m = new EnumMap<>(ManaColor.class);
+            for (ManaColor c : ManaColor.values()) m.put(c, 0);
+            return m;
+        }).merge(color, amount, Integer::sum);
+    }
+
+    public int getSubtypeSpellOnlyManaForColor(Set<CardSubtype> subtypes, ManaColor color) {
+        int total = 0;
+        for (Map.Entry<Set<CardSubtype>, EnumMap<ManaColor, Integer>> entry : subtypeSpellOnlyMana.entrySet()) {
+            if (entry.getKey().stream().anyMatch(subtypes::contains)) {
+                total += entry.getValue().getOrDefault(color, 0);
+            }
+        }
+        return total;
+    }
+
+    public int getSubtypeSpellOnlyManaTotal(Set<CardSubtype> subtypes) {
+        int total = 0;
+        for (Map.Entry<Set<CardSubtype>, EnumMap<ManaColor, Integer>> entry : subtypeSpellOnlyMana.entrySet()) {
+            if (entry.getKey().stream().anyMatch(subtypes::contains)) {
+                total += entry.getValue().values().stream().mapToInt(Integer::intValue).sum();
+            }
+        }
+        return total;
+    }
+
+    public void removeSubtypeSpellOnlyMana(Set<CardSubtype> subtypes, ManaColor color, int amount) {
+        int remaining = amount;
+        for (Map.Entry<Set<CardSubtype>, EnumMap<ManaColor, Integer>> entry : subtypeSpellOnlyMana.entrySet()) {
+            if (remaining <= 0) {
+                break;
+            }
+            if (!entry.getKey().stream().anyMatch(subtypes::contains)) {
+                continue;
+            }
+            EnumMap<ManaColor, Integer> colorMap = entry.getValue();
+            int available = colorMap.getOrDefault(color, 0);
+            int removed = Math.min(remaining, available);
+            colorMap.put(color, available - removed);
+            remaining -= removed;
+        }
+    }
+
     /** Adds mana spendable for any of the given subtypes, sharing one bucket for the party types. */
     public void addSubtypeSpellOrAbilityMana(Set<CardSubtype> subtypes, ManaColor color, int amount) {
         if (containsPartySubtype(subtypes)) {
@@ -1832,6 +1888,7 @@ public class ManaPool {
         moveColoredManaToColorlessBuckets(subtypeOrLegendaryCreatureMana);
         moveColoredManaToColorlessBuckets(uncounterableSubtypeCreatureMana);
         moveColoredManaToColorlessBuckets(subtypeSpellOrAbilityMana);
+        moveColoredManaToColorlessBuckets(subtypeSpellOnlyMana);
         moveColoredManaToColorlessBuckets(subtypeCreatureSourceSpellOrAbilityMana);
         moveColoredManaToColorlessBuckets(subtypeOrPlaneswalkerSpellMana);
         moveColoredManaToColorless(partySpellOrAbilityMana);
@@ -1922,6 +1979,7 @@ public class ManaPool {
         drainColorMap(subtypeCreatureMana, protectedColors);
         drainColorMap(uncounterableSubtypeCreatureMana, protectedColors);
         drainColorMap(subtypeSpellOrAbilityMana, protectedColors);
+        drainColorMap(subtypeSpellOnlyMana, protectedColors);
         drainColorMap(subtypeCreatureSourceSpellOrAbilityMana, protectedColors);
         drainColorMap(subtypeOrPlaneswalkerSpellMana, protectedColors);
         drainColorMap(exiledCardOnlyMana, protectedColors);
@@ -2020,6 +2078,9 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOnlyMana.values()) {
+                amount += colorMap.getOrDefault(color, 0);
+            }
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureSourceSpellOrAbilityMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
@@ -2067,6 +2128,9 @@ public class ManaPool {
                 amount += colorMap.getOrDefault(color, 0);
             }
             for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
+                amount += colorMap.getOrDefault(color, 0);
+            }
+            for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOnlyMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureSourceSpellOrAbilityMana.values()) {

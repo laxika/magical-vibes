@@ -66,15 +66,20 @@ public class PutCounterOnChosenOwnPermanentEffectHandler implements NormalEffect
             Permanent chosen = gameQueryService.findPermanentById(gameData, eligibleIds.getFirst());
             if (chosen != null) {
                 entry.setChosenPermanentId(chosen.getId());
-                permanentCounterSupport.placeCounterOnPermanent(gameData, entry, chosen,
+                int placed = permanentCounterSupport.placeCounterOnPermanent(gameData, entry, chosen,
                         e.counterType(), e.count());
+                if (e.recordPlacement() && placed > 0
+                        && !entry.getCounteredPermanentIdsThisResolution().contains(chosen.getId())) {
+                    entry.getCounteredPermanentIdsThisResolution().add(chosen.getId());
+                    entry.setEventValue(entry.getEventValue() + 1);
+                }
             }
             return;
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, 1,
                 new MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference(
-                        e.counterType(), e.count()),
+                        e.counterType(), e.count(), e.recordPlacement()),
                 "Choose a permanent to put counters on.");
     }
 }

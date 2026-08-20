@@ -24,6 +24,9 @@ public class EachPlayerLosesFractionOfLifeRoundedUpEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerLosesFractionOfLifeRoundedUpEffect) effect;
         for (UUID playerId : gameData.orderedPlayerIds) {
+            if (e.opponentsOnly() && playerId.equals(entry.getControllerId())) {
+                continue;
+            }
             int currentLife = gameData.getLife(playerId);
             int lifeLoss = (currentLife + e.divisor() - 1) / e.divisor();
             if (lifeLoss > 0) {

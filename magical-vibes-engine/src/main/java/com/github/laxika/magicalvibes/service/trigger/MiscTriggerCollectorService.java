@@ -1748,6 +1748,12 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
+        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilS
 import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
+import com.github.laxika.magicalvibes.model.effect.EndureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -286,6 +287,36 @@ public class EnterTriggerCollectorService {
         }
         enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(),
                 findEnteringPermanentId(match, pe.enteringCard()));
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = EndureEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyNontokenCreatureEndure(TriggerMatchContext match,
+                                                     EndureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    enteringPermanentId,
+                    match.permanent().getId());
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
+        }
         logTriggered(match);
         return true;
     }

@@ -548,6 +548,7 @@ public class SpellCastTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCasterLosesLifeOnSpellCast(TriggerMatchContext match,
             CasterLosesLifeOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -557,12 +558,13 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
         // "that player" = the caster; preset the target so the loss falls on them, not a choice.
+        int amount = trigger.useSpellManaValue() ? sc.spellCard().getManaValue() : trigger.amount();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new LoseLifeEffect(trigger.amount(), LoseLifeRecipient.TARGET_PLAYER)))
+                new ArrayList<>(List.of(new LoseLifeEffect(amount, LoseLifeRecipient.TARGET_PLAYER)))
         );
         entry.setTargetId(sc.castingPlayerId());
         match.gameData().stack.add(entry);

@@ -30,6 +30,7 @@ on what the mana may pay for.
 | All lands of a subtype are creatures of a color | `k/KormusBell.java` | STATIC `AllLandsAreCreaturesEffect(1, 1, CardSubtype.SWAMP, CardColor.BLACK)` — adds the fourth argument when the oracle text names a color ("1/1 black creatures"). A land is colorless on its own (CR 202.2), so the color has to be granted here for lords like Bad Moon to see it |
 | X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, new XValue()) + AnimatePermanentsEffect(0, 0, [ELEMENTAL], [HASTE], null, {}, TARGET, PERMANENT) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
 | Check land | `d/DragonskullSummit.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(0, PermanentHasAnySubtypePredicate), new EntersTappedEffect())` + 2 mana abilities — enters tapped unless you control a matching permanent |
+| Check land with one-shot spell protection | `m/MistriseVillage.java` | Check-land replacement + `{T}` blue mana + `{U},{T}` `MakeNextSpellUncounterableThisTurnEffect` |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 3+ other lands |
 | Slow land | `d/DeathcapGlade.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(1, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 1 or fewer other lands |
 | Conditional reveal-or-tapped land | `f/FortifiedBeachhead.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(0, subtype), new RevealSubtypeOrEntersTappedEffect(subtype))` + mana abilities — the reveal choice applies only when you don't control a matching subtype |
@@ -51,6 +52,7 @@ on what the mana may pay for.
 | Utility land (destroy + each player search) | `f/FieldOfRuin.java` | colorless mana ability + {2},{T},Sacrifice: DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect + opponent nonbasic land filter (PermanentAllOfPredicate: land + not basic + not controlled by source controller) |
 | Party mana land | `b/BaseCamp.java` | STATIC `EntersTappedEffect` + `{T}` colorless mana + `{T}` any-color mana restricted to Cleric, Rogue, Warrior, or Wizard spells and abilities |
 | Artifact-copy land | `t/TheMycosynthGardens.java` | `{T}` colorless mana + `{1}`, `{T}` any-color mana + `{X}`, `{T}` permanent copy of a target nontoken artifact you control with mana value X; use `BecomeCopyOfTargetArtifactWithManaValueXEffect` with an X-relative controlled-artifact target filter |
+| Dragon and Omen mana land | `m/MaelstromOfTheSpiritDragon.java` | `{T}` colorless mana + `{T}` any-color mana restricted to Dragon or Omen spells + `{4},{T},Sacrifice` Dragon tutor to hand |
 
 ## Spells
 
@@ -314,3 +316,4 @@ on what the mana may pay for.
 | Bounce creature unless controller pays | `c/CrystalShard.java` | Activated `{3},{T}` or `{U},{T}` + `ReturnTargetCreatureUnlessControllerPaysEffect("{1}")` — the target creature's controller pays to keep it; inability or decline returns it |
 | Reveal hand and discard duplicate nonlands | `h/HintOfInsanity.java` | `RevealHandAndDiscardDuplicateNonlandCardsEffect()` — reveal the target player's hand, then automatically discard every nonland card whose name appears more than once in that hand |
 | Targeted reveal + filtered hand/graveyard exile | `t/ThoughtDistortion.java` | STATIC CantBeCounteredEffect + target opponent + RevealTargetHandEffect + ExileMatchingCardsFromTargetPlayerHandEffect(filter) + ExileGraveyardCardsEffect(TARGET_PLAYER_ALL_MATCHING, filter), with `filter = CardAllOf(Not(CREATURE), Not(LAND))` |
+| Delayed attack-token land | `d/DalkovanEncampment.java` | Check-land replacement + `{T}` white mana + `{2}{W},{T}` `RegisterDelayedAttackTokenCreationEffect` with a two-token tapped-and-attacking Warrior blueprint and next-end-step sacrifice |

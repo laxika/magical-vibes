@@ -46,8 +46,9 @@ public class AttachMatchingEquipmentToCreatedPermanentEffectHandler implements N
 
         var attachmentFilter = ((AttachMatchingEquipmentToCreatedPermanentEffect) effect).equipmentFilter();
         FilterContext context = FilterContext.of(gameData)
-                .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId());
+                .withSourceCardId(entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourceControllerId(entry.getControllerId());
         List<Permanent> equipmentPermanents = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
             if (GameQueryService.permanentHasSubtype(permanent, CardSubtype.EQUIPMENT)

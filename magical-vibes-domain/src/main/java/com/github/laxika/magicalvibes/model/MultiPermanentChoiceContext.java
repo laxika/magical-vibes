@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,15 @@ import java.util.UUID;
  * active record (records are immutable, shallow copy).
  */
 public sealed interface MultiPermanentChoiceContext {
+
+    record SagaChapterCounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, String chapterName, CounterType counterType,
+                                          int total) implements MultiPermanentChoiceContext {
+
+        public SagaChapterCounterDistribution {
+            effects = List.copyOf(effects);
+        }
+    }
 
     /** Exile a permanent the damaged player controls (combat damage trigger). */
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
@@ -298,8 +308,13 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Put counters on the chosen permanent and remember it for a following effect. */
-    record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count)
+    record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count,
+                                                            boolean recordPlacement)
             implements MultiPermanentChoiceContext {
+
+        public OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count) {
+            this(counterType, count, false);
+        }
     }
 
     /** Put an awakening counter on each chosen land (they become 8/8 Elementals). */

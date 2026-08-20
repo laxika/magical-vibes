@@ -110,6 +110,7 @@ import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
@@ -1269,6 +1270,16 @@ public class AbilityActivationService {
                 handler.getPromptMessage(required));
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         return true;
+    }
+
+    private Integer trackedSacrificedManaValue(CardEffect costEffect, Permanent chosen) {
+        if (costEffect instanceof SacrificeCreatureCost cost && cost.trackSacrificedManaValue()) {
+            return chosen.getCard().getManaValue();
+        }
+        if (costEffect instanceof SacrificePermanentCost cost && cost.trackSacrificedManaValue()) {
+            return chosen.getCard().getManaValue();
+        }
+        return null;
     }
 
     /**
@@ -3151,7 +3162,7 @@ public class AbilityActivationService {
                     permanent.setChosenPermanentId(tapChoiceIds.getFirst());
                 }
             }
-            if (handlePermanentChoiceCost(gameData, player, permanent, ability, effectiveIndex,
+            if (handlePermanentChoiceCost(gameData, player, permanent, ability, abilityEffects, effectiveIndex,
                     effectiveXValue, targetId, targetZone, handler)) {
                 return;
             }
@@ -3332,8 +3343,8 @@ public class AbilityActivationService {
     }
 
     private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
-                                               ActivatedAbility ability, int abilityIndex, int xValue,
-                                               UUID targetId, Zone targetZone,
+                                               ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                               int abilityIndex, int xValue, UUID targetId, Zone targetZone,
                                                PermanentChoiceCostHandler handler) {
         int required = handler.requiredCount();
         if (required <= 0) return false;
@@ -3343,6 +3354,12 @@ public class AbilityActivationService {
             for (UUID id : validIds) {
                 Permanent chosen = gameQueryService.findPermanentById(gameData, id);
                 if (chosen != null) {
+                    Integer costDerivedXValue = trackedSacrificedManaValue(handler.costEffect(), chosen);
+                    if (costDerivedXValue != null) {
+                        targetLegalityService.validateActivatedAbilityTargetingAfterCostSelection(
+                                gameData, player.getId(), ability, abilityEffects, targetId, targetZone,
+                                source.getCard(), costDerivedXValue);
+                    }
                     recordSacrificedLandCard(handler.costEffect(), source, abilityIndex, chosen);
                     handler.validateAndPay(gameData, player, chosen);
                     recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
@@ -3445,6 +3462,12 @@ public class AbilityActivationService {
         // Remember the tapped creature so ChosenPermanentPower reads its power at resolution (Impelled Giant).
         if (context.costEffect() instanceof TapCreatureCost tapCost && tapCost.trackTappedCreaturePower()) {
             sourcePermanent.setChosenPermanentId(chosenPermanentId);
+        }
+        Integer costDerivedXValue = trackedSacrificedManaValue(context.costEffect(), chosen);
+        if (costDerivedXValue != null) {
+            targetLegalityService.validateActivatedAbilityTargetingAfterCostSelection(
+                    gameData, playerId, ability, abilityEffects, context.targetId(), context.targetZone(),
+                    sourcePermanent.getCard(), costDerivedXValue);
         }
         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
         recordSacrificedLandCard(context.costEffect(), sourcePermanent, effectiveIndex, chosen);
@@ -3771,7 +3794,7 @@ public class AbilityActivationService {
         // Angel of Jubilation: life payments and creature sacrifices can't be used as ability costs
         if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                if (effect instanceof PayLifeCost) {
+                if (effect instanceof PayLifeCost || effect instanceof PayXLifeCost) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
                 }
                 if (effect instanceof SacrificeCreatureCost) {
@@ -3842,6 +3865,13 @@ public class AbilityActivationService {
             int needed = payLifeCost.get().effectiveAmount(life, sourceCounterCount(permanent, payLifeCost.get()));
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(PayXLifeCost.class::isInstance)) {
+            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            if (life < xValue) {
+                throw new IllegalStateException("Not enough life to pay (need " + xValue + ", have " + life + ")");
             }
         }
 
@@ -5542,7 +5572,7 @@ public class AbilityActivationService {
      * other permanent types stay usable.
      */
     private void validateNotBlockedByOpponentsTurnRestriction(GameData gameData, UUID playerId, Permanent permanent) {
-        if (!gameQueryService.isLockedOutByOpponentsTurnRestriction(gameData, playerId)) return;
+        if (!gameQueryService.isLockedOutByOpponentsTurnAbilityRestriction(gameData, playerId)) return;
         if (!gameQueryService.isCreature(gameData, permanent)
                 && !gameQueryService.isArtifact(gameData, permanent)
                 && !gameQueryService.isEnchantment(gameData, permanent)) return;

@@ -157,6 +157,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         FilterContext filterContext = filterContextFor(gameData, entry);
         List<Permanent> matching = battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
+                .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
                 .toList();
 
         if (matching.isEmpty()) {
@@ -232,6 +233,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
             List<Permanent> matching = battlefield.stream()
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
+                    .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
                     .toList();
 
             if (matching.isEmpty()) {

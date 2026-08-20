@@ -103,6 +103,7 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
+        register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
@@ -629,6 +630,19 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, required,
                 interaction.sourceName() + " — exile " + required + " permanent"
                         + (required == 1 ? "" : "s") + " you control and/or cards from your hand.");
+    }
+
+    private InteractionPromptMessage projectBeholdChoice(
+            GameData gameData, PendingInteraction.BeholdChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .map(Permanent::getCard).toList(), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectAttachAurasChoice(

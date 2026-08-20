@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
@@ -1593,6 +1595,18 @@ public class GameQueryService {
         return false;
     }
 
+    /**
+     * Returns {@code true} if the given player has cast at least two spells matching
+     * {@code filter} this turn.
+     */
+    public boolean hasControllerCastTwoOrMoreSpellsThisTurn(
+            GameData gameData, UUID controllerId, CardPredicate filter) {
+        return gameData.getSpellsCastThisTurn(controllerId).stream()
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId()))
+                .limit(2)
+                .count() == 2;
+    }
+
     public boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card, Keyword ability) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
@@ -1818,6 +1832,21 @@ public class GameQueryService {
         }
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(CantBecomeUntappedEffect.class::isInstance);
+    }
+
+    /** Returns whether the permanent cannot be sacrificed during its controller's end step. */
+    public boolean cantBeSacrificed(GameData gameData, Permanent permanent) {
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (gameData.currentStep != TurnStep.END_STEP
+                || controllerId == null
+                || !controllerId.equals(gameData.activePlayerId)) {
+            return false;
+        }
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBeSacrificedEffect.class::isInstance)) {
+            return true;
+        }
+        return hasGrantedEffect(gameData, permanent, CantBeSacrificedEffect.class);
     }
 
     boolean cantHaveCountersForController(GameData gameData, Permanent permanent, UUID controllerId) {
@@ -4371,6 +4400,37 @@ public class GameQueryService {
         return isColorSourceRestriction(effect, sourceColor) && ((TargetingRestrictionEffect) effect).opponentOnly();
     }
 
+    /** Returns whether opponents' monocolored spells and abilities can't target this permanent. */
+    public boolean hasHexproofFromMonocolored(GameData gameData, Permanent target) {
+        return hasMonocoloredSourceRestriction(gameData, target, true);
+    }
+
+    /** Returns whether monocolored spells and abilities can't target this permanent. */
+    public boolean cantBeTargetedByMonocoloredSources(GameData gameData, Permanent target) {
+        return hasMonocoloredSourceRestriction(gameData, target, false);
+    }
+
+    private boolean hasMonocoloredSourceRestriction(GameData gameData, Permanent target, boolean opponentOnly) {
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (isMonocoloredSourceRestriction(effect, opponentOnly)) {
+                return true;
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (isMonocoloredSourceRestriction(effect, opponentOnly)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isMonocoloredSourceRestriction(CardEffect effect, boolean opponentOnly) {
+        return effect instanceof TargetingRestrictionEffect restriction
+                && restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                && restriction.mode() == TargetColorMode.MONOCOLORED
+                && restriction.opponentOnly() == opponentOnly;
+    }
+
     /**
      * Returns {@code true} if the target permanent can't be the target of spells or abilities from
      * sources of the given color, no matter who controls them (Suq'Ata Firewalker). Unlike
@@ -4928,6 +4988,16 @@ public class GameQueryService {
      */
     public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
                                                         Permanent triggeringPermanent) {
+        return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent, false);
+    }
+
+    /**
+     * Returns the number of additional copies for a triggered ability sourced by a permanent,
+     * optionally restricting matching static effects to triggers directly caused by an attack.
+     */
+    public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
+                                                        Permanent triggeringPermanent,
+                                                        boolean attackTrigger) {
         if (controllerId == null || triggeringPermanent == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
@@ -4942,6 +5012,7 @@ public class GameQueryService {
             }
             for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AdditionalTriggeredAbilityEffect additional
+                        && (!additional.attackOnly() || attackTrigger)
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 triggeringPermanent, additional.sourcePredicate(), filterContext)
                         && (additional.condition() == null
@@ -5856,6 +5927,20 @@ public class GameQueryService {
     }
 
     /**
+     * True if {@code playerId} is locked out by the activated-ability half of a controller's
+     * turn restriction.
+     */
+    public boolean isLockedOutByOpponentsTurnAbilityRestriction(GameData gameData, UUID playerId) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return false;
+        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof OpponentsCantCastOrActivateDuringYourTurnEffect restriction
+                        && restriction.restrictsActivatedAbilities()));
+    }
+
+    /**
      * True if {@code playerId} cannot cast spells or activate abilities because a
      * {@link PlayersCanCastAndActivateOnlyDuringOwnTurnEffect} (City of Solitude) is on the
      * battlefield and it is not currently that player's turn. Mana abilities are included.
@@ -5979,7 +6064,7 @@ public class GameQueryService {
             if (sourceControllerId != null) controllerId = sourceControllerId;
         }
         return (damage + bonus) * getDamageMultiplier(gameData)
-                * getControllerDamageMultiplier(gameData, controllerId, entry, false)
+                * getControllerDamageMultiplier(gameData, controllerId, entry, false, source)
                 * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
     }
 
@@ -6673,7 +6758,7 @@ public class GameQueryService {
 
         // Grand Abolisher: on the opponent's turn, abilities of the controller's artifacts,
         // creatures and enchantments are locked. Lands keep producing.
-        if (controllerId != null && isLockedOutByOpponentsTurnRestriction(gameData, controllerId)
+        if (controllerId != null && isLockedOutByOpponentsTurnAbilityRestriction(gameData, controllerId)
                 && (isCreature(gameData, permanent) || isArtifact(gameData, permanent)
                         || isEnchantment(gameData, permanent))) {
             return false;

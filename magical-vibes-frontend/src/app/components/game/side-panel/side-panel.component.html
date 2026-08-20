@@ -267,6 +267,17 @@
       </div>
     }
 
+    @if (choice.targeting.harmonizing) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Tap up to one creature to reduce the cost of {{ choice.targeting.harmonizeCardName }}</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmHarmonize()">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.skipHarmonize()">Skip Harmonize</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelHarmonize()">Cancel</button>
+        </div>
+      </div>
+    }
+
     @if (choice.targeting.choosingAlternateCost) {
       <div class="side-prompt prompt-targeting">
         <span class="side-prompt-text">Cast {{ choice.targeting.alternateCostCardName }} &mdash; choose how to pay:</span>

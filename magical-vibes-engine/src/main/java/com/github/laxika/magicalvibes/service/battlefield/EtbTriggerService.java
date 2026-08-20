@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -119,6 +120,16 @@ public class EtbTriggerService {
     public void processLandETBEffects(GameData gameData, UUID controllerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseModeOnEnterEffect.class::isInstance)
+                .map(ChooseModeOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && modeChoice != null
+                && enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+            playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
+                    enteringPermanent.getId(), modeChoice.modes());
+            return;
+        }
         ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseColorEffect)
                 .map(e -> (ChooseColorEffect) e)
@@ -178,6 +189,16 @@ public class EtbTriggerService {
                                           List<UUID> convokeCreatureIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseModeOnEnterEffect.class::isInstance)
+                .map(ChooseModeOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && modeChoice != null
+                && enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+            playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
+                    enteringPermanent.getId(), modeChoice.modes());
+            return;
+        }
         ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
                 .map(ChooseSubtypeOnEnterEffect.class::cast)
@@ -225,6 +246,7 @@ public class EtbTriggerService {
                 // "As enters, choose a creature type" is a replacement-style choice made during entry
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
                 .filter(e -> !(e instanceof ChooseSubtypeOnEnterEffect))
+                .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
                 .filter(e -> !(e instanceof ReplacementEffect))
                 // Conditional as-enters replacements ("if kicked, enters with N counters") are
                 // handled during entry, not by the triggered-ability pipeline.

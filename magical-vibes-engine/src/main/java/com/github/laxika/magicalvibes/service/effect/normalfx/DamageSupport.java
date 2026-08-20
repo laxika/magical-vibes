@@ -1040,10 +1040,17 @@ public class DamageSupport {
                 damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, damageSourceId, rawDamage);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, damageSourceId, rawDamage);
+                damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
                 rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, damageSourceId, rawDamage, playerId);
                 processEyeForAnEyeReflections(gameData);
             }
+            // Apply one-shot chosen-source prevention to permanents and spells.
+            UUID sourceId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId()
+                    : source.getId();
+            rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, sourceId, rawDamage);
+            processEyeForAnEyeReflections(gameData);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);

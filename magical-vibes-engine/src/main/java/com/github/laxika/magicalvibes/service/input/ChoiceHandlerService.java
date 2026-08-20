@@ -150,9 +150,19 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.ManaColorSpellChoice ctx) {
+            handleManaColorSpellChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.SagaChapterCounterAssignment ctx) {
+            handleSagaChapterCounterAssignment(gameData, player, colorName, colorChoice, ctx);
             return;
         }
 
@@ -1358,6 +1368,10 @@ public class ChoiceHandlerService {
      */
     private void handleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
             ChoiceContext.ChooseModeChoice ctx) {
+        if (ctx.asEnters()) {
+            handleAsEntersModeChoice(gameData, player, chosenLabel, ctx);
+            return;
+        }
         if (ctx.effect().choicesRequired() > 1) {
             handleMultipleChooseModeChoice(gameData, player, chosenLabel, ctx);
             return;
@@ -1497,6 +1511,51 @@ public class ChoiceHandlerService {
             return;
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleManaColorSpellChosen(GameData gameData, Player player, String colorName,
+                                             ChoiceContext.ManaColorSpellChoice ctx) {
+        ManaColor manaColor = ManaColor.valueOf(colorName);
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.addSubtypeSpellOnlyMana(ctx.subtypes(), manaColor, ctx.amount());
+
+        String subtypeLabel = ctx.subtypes().stream()
+                .map(CardSubtype::getDisplayName)
+                .toList()
+                .toString();
+        String logEntry = player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " " + colorName.toLowerCase()
+                + " mana (" + subtypeLabel + " spells only).";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} adds {} {} mana for {} spells only", gameData.id,
+                player.getUsername(), ctx.amount(), colorName.toLowerCase(), subtypeLabel);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleAsEntersModeChoice(GameData gameData, Player player, String chosenLabel,
+            ChoiceContext.ChooseModeChoice ctx) {
+        ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
+                .filter(o -> o.label().equals(chosenLabel))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source != null) {
+            source.getChosenModeLabels().add(chosen.label());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
+            log.info("Game {} - {} chooses as-enters mode \"{}\" for {}", gameData.id,
+                    player.getUsername(), chosen.label(), ctx.sourceCard().getName());
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, player.getId(), source.getCard(), null, false);
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2375,6 +2434,56 @@ public class ChoiceHandlerService {
 
         // Resumes the paused upkeep may-ability resolution when present; otherwise auto-passes
         // (the "as this enters" ETB choice, which has no pending stack-effect resolution).
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSagaChapterCounterAssignment(
+            GameData gameData, Player player, String numberText,
+            PendingInteraction.ColorChoice colorChoice,
+            ChoiceContext.SagaChapterCounterAssignment ctx) {
+        if (!colorChoice.options().contains(numberText)) {
+            throw new IllegalArgumentException("Invalid counter assignment: " + numberText);
+        }
+
+        int chosen = Integer.parseInt(numberText);
+        UUID targetId = ctx.targetIds().get(ctx.nextTargetIndex());
+        java.util.Map<UUID, Integer> assignments = new java.util.LinkedHashMap<>(ctx.assignments());
+        assignments.put(targetId, chosen);
+        int assigned = assignments.values().stream().mapToInt(Integer::intValue).sum();
+        int nextTargetIndex = ctx.nextTargetIndex() + 1;
+
+        if (nextTargetIndex < ctx.targetIds().size()) {
+            gameData.interaction.clearAwaitingInput();
+            ChoiceContext.SagaChapterCounterAssignment next =
+                    new ChoiceContext.SagaChapterCounterAssignment(
+                            ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
+                            ctx.chapterName(), ctx.counterType(), ctx.targetIds(), assignments, ctx.total(),
+                            nextTargetIndex);
+            playerInputService.beginSagaChapterCounterAssignmentChoice(gameData, player.getId(), next);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        if (assigned != ctx.total()) {
+            throw new IllegalStateException("Counter assignments must total " + ctx.total());
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ctx.sourceCard(),
+                ctx.controllerId(),
+                ctx.sourceCard().getName() + "'s chapter " + ctx.chapterName() + " ability",
+                new java.util.ArrayList<>(ctx.effects()),
+                0,
+                null,
+                ctx.sourcePermanentId(),
+                assignments,
+                null,
+                List.of(),
+                ctx.targetIds()));
+        gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
+                "'s chapter " + ctx.chapterName() + " counter distribution is set."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -204,6 +204,7 @@ public class CardViewFactory {
                 card.getLoyalty(),
                 card.getKeywords().contains(Keyword.CONVOKE)
                         || card.getKeywords().contains(Keyword.IMPROVISE),
+                card.getKeywords().contains(Keyword.HARMONIZE),
                 hasPhyrexianMana,
                 phyrexianManaCount,
                 card.isToken(),

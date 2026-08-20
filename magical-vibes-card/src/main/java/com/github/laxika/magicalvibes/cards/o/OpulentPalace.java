@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "238")
+@CardRegistration(set = "TDM", collectorNumber = "264")
 public class OpulentPalace extends Card {
 
     public OpulentPalace() {

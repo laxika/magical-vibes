@@ -1047,6 +1047,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | This permanent becomes target of any spell or ability |
 | `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Global monitor: a creature you control becomes target of opponent's spell/ability. Used by Shapers' Sanctuary |
 | `ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Global monitor: a permanent you control becomes target of opponent's spell/ability. Player targets do not count. Used by Battle Mammoth |
+| `ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Global monitor: a creature or creature spell you control becomes target of opponent's spell/ability. Used by Surrak, Elusive Hunter |
 | `ON_EQUIPPED_CREATURE_DIES` | Equipped creature dies |
 | `ON_EQUIPPED_CREATURE_TRANSFORMS` | Equipped creature transforms (either direction) |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted permanent dies (graveyard only) |
@@ -1097,3 +1098,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_TRANSFORM_TO_BACK_FACE` | This permanent transforms to back face |
 | `ON_TRANSFORM_TO_FRONT_FACE` | This permanent transforms back to front face |
 | `ON_PLAYER_LOSES_GAME` | A player loses the game (fired in `GameOutcomeService`; 2-player engine ends before it resolves) |
+| `GRAVEYARD_ON_ALLY_CREATURE_DIES` | Like ON_ALLY_CREATURE_DIES but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect` to filter the dying creature. A `MayEffect` inner is queued as a may-ability; anything else (e.g. `MayPayManaEffect`) goes on the stack. A source card that dies in the same event does not trigger. Scanned in `TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers`. Used by Furious Forebear |

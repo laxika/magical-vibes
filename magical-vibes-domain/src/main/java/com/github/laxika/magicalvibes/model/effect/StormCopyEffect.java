@@ -15,10 +15,16 @@ import java.util.UUID;
  * @param spellSnapshot   snapshot of the spell on the stack at trigger time
  * @param castingPlayerId the player who cast the spell (and controls the copies)
  * @param copies          number of copies to create
+ * @param tokenCopy       whether the copies enter the battlefield as tokens when they resolve
  */
 public record StormCopyEffect(
         StackEntry spellSnapshot,
         UUID castingPlayerId,
-        int copies
+        int copies,
+        boolean tokenCopy
 ) implements CardEffect {
+
+    public StormCopyEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies) {
+        this(spellSnapshot, castingPlayerId, copies, false);
+    }
 }

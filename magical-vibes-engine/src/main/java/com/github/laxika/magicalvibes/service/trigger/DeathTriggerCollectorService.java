@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
@@ -2461,6 +2462,42 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId(),
                 List.of()
         ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    /**
+     * "When this permanent leaves the battlefield, the imprinted card's owner creates an X/X token."
+     * The source is already gone by the time the trigger resolves, so the blueprint's dynamic
+     * power/toughness is evaluated here against the leaving permanent and frozen into the queued effect.
+     */
+    @CollectsTrigger(value = CreateTokenForImprintedCardOwnerEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfLeavesCreateTokenForImprintedCardOwner(TriggerMatchContext match,
+            CreateTokenForImprintedCardOwnerEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        Card imprintedCard = match.gameData().getImprintedCard(match.permanent().getCard());
+        if (imprintedCard == null) {
+            return false;
+        }
+
+        CreateTokenEffect blueprint = effect.tokenEffect();
+        AmountContext amountContext = new AmountContext(sl.controllerId(), match.permanent(), null, 0, 0);
+        CreateTokenEffect frozen = blueprint.withPowerToughness(
+                amountEvaluationService.evaluate(match.gameData(), blueprint.power(), amountContext),
+                amountEvaluationService.evaluate(match.gameData(), blueprint.toughness(), amountContext));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CreateTokenForImprintedCardOwnerEffect(frozen))),
+                match.permanent().getId(),
+                List.of()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         logSelfLeaves(match);
         return true;
     }

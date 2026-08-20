@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "233")
 @CardRegistration(set = "KHM", collectorNumber = "194")
+@CardRegistration(set = "TDM", collectorNumber = "159")
 public class SnakeskinVeil extends Card {
 
     public SnakeskinVeil() {

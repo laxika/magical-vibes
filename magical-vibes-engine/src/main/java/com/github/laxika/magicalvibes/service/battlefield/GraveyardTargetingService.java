@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -941,6 +942,70 @@ public class GraveyardTargetingService {
         String filterLabel = CardPredicateUtils.describeFilter(filter);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from " + targetPlayerName + "'s graveyard.");
+    }
+
+    /**
+     * Begins the next cast-time graveyard target group for a spell that has more than one such
+     * group. Empty groups are recorded without opening a pointless prompt.
+     */
+    public boolean beginNextSpellGraveyardChoice(GameData gameData) {
+        var operation = gameData.graveyardTargetOperation;
+        while (true) {
+            if (operation.activeSpellGraveyardChoiceEffect == null) {
+                if (operation.pendingSpellGraveyardChoiceEffects == null
+                        || operation.pendingSpellGraveyardChoiceEffects.isEmpty()) {
+                    return false;
+                }
+                operation.activeSpellGraveyardChoiceEffect =
+                    operation.pendingSpellGraveyardChoiceEffects.remove(0);
+            }
+
+            CardEffect choiceEffect = operation.activeSpellGraveyardChoiceEffect;
+            if (choiceEffect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
+                List<Card> matchingCards = matchingCardsInGraveyard(gameData, operation.controllerId,
+                        returnEffect.filter(), operation.card.getId());
+                if (returnEffect.requireSharedCreatureType()) {
+                    matchingCards.removeIf(candidate -> matchingCards.stream()
+                            .noneMatch(other -> !other.getId().equals(candidate.getId())
+                                    && gameQueryService.shareCreatureType(candidate, other)));
+                }
+                if (!matchingCards.isEmpty()) {
+                    handleUpToNGraveyardSpellTargeting(gameData, operation.controllerId, operation.card,
+                            operation.entryType, returnEffect, returnEffect.maxTargets(), operation.effects);
+                    return true;
+                }
+            } else if (choiceEffect instanceof ShuffleTargetCardsFromGraveyardIntoLibraryEffect shuffleEffect) {
+                UUID targetPlayerId = operation.targetPlayerId;
+                if (targetPlayerId == null) {
+                    throw new IllegalStateException("Must target a player");
+                }
+                List<Card> matchingCards = matchingCardsInGraveyard(gameData, targetPlayerId,
+                        shuffleEffect.filter(), operation.card.getId());
+                if (!matchingCards.isEmpty()) {
+                    handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, operation.controllerId,
+                            targetPlayerId, operation.card, operation.entryType, shuffleEffect.filter(),
+                            shuffleEffect.maxTargets(), operation.effects);
+                    return true;
+                }
+            } else {
+                throw new IllegalStateException("Unsupported spell graveyard target group: "
+                        + choiceEffect.getClass().getSimpleName());
+            }
+
+            operation.spellGraveyardCardIdsByEffect.put(choiceEffect, List.of());
+            operation.activeSpellGraveyardChoiceEffect = null;
+        }
+    }
+
+    private List<Card> matchingCardsInGraveyard(GameData gameData, UUID playerId,
+                                                 CardPredicate filter, UUID sourceCardId) {
+        List<Card> graveyard = targetableGraveyard(gameData, playerId);
+        if (graveyard == null) {
+            return new ArrayList<>();
+        }
+        return graveyard.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, sourceCardId))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
     public void handleExactNTargetPlayerGraveyardSpellTargeting(GameData gameData, UUID controllerId,

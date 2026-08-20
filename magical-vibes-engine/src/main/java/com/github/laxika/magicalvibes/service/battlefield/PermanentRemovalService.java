@@ -647,6 +647,9 @@ public class PermanentRemovalService {
             switch (kind.op()) {
                 case EXILE -> removePermanentToExile(gameData, perm);
                 case SACRIFICE -> {
+                    if (gameQueryService.cantBeSacrificed(gameData, perm)) {
+                        continue;
+                    }
                     UUID sacrificeControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
                     boolean sacrificed = removePermanentToGraveyard(gameData, perm);
                     if (sacrificed && sacrificeControllerId != null) {
@@ -1048,6 +1051,7 @@ public class PermanentRemovalService {
                         gameData, target.getOriginalCard(), ownerId, controllerId);
                 triggerCollectionService.checkAllyCreatureDeathTriggers(
                         gameData, controllerId, target, dyingPowerAtDeath);
+                triggerCollectionService.checkGraveyardAllyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());

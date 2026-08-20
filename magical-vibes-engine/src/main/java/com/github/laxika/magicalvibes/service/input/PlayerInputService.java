@@ -227,6 +227,21 @@ public class PlayerInputService {
                 maxCount, context, prompt));
     }
 
+    public void beginSagaChapterCounterAssignmentChoice(
+            GameData gameData, UUID playerId, ChoiceContext.SagaChapterCounterAssignment context) {
+        int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
+        int remaining = context.total() - assigned;
+        int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
+        int maxForTarget = remaining - (remainingTargets - 1);
+        List<String> options = IntStream.rangeClosed(1, maxForTarget)
+                .mapToObj(Integer::toString)
+                .toList();
+        String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, options,
+                "Choose how many " + counterLabel + " counters to put on the target creature."));
+    }
+
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
         beginMultiGraveyardChoice(gameData, playerId, cards, maxCount, 0, prompt);
     }
@@ -559,7 +574,7 @@ public class PlayerInputService {
             UUID sourcePermanentId, boolean consumeMode, List<String> chosenLabels) {
         ChoiceContext.ChooseModeChoice ctx =
                 new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect, triggerTime,
-                        sourcePermanentId, consumeMode, chosenLabels);
+                        sourcePermanentId, consumeMode, chosenLabels, false);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .filter(label -> !ctx.chosenLabels().contains(label))
@@ -572,6 +587,23 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a mode for {}", gameData.id, playerName, sourceCard.getName());
+    }
+
+    public void beginChooseModeOnEnterChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            UUID sourcePermanentId, List<String> modes) {
+        com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect =
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(modes.stream()
+                        .map(mode -> new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                                mode, List.of()))
+                        .toList());
+        ChoiceContext.ChooseModeChoice ctx = new ChoiceContext.ChooseModeChoice(
+                sourceCard, controllerId, effect, sourcePermanentId, true);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, sourcePermanentId, null, ctx, modes, sourceCard.getName() + " - Choose one."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose an as-enters mode for {}", gameData.id, playerName,
+                sourceCard.getName());
     }
 
     public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,

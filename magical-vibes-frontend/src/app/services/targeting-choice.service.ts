@@ -84,6 +84,12 @@ export class TargetingChoiceService {
     this.convokeSelectedCreatureIds.set([]);
     this.pendingMultiTargetIds = [];
     this.pendingConvokeCard = null;
+    this.harmonizing = false;
+    this.harmonizeCardIndex = -1;
+    this.harmonizeCardName = '';
+    this.harmonizeSelectedPermanentId.set(null);
+    this.pendingHarmonizeCard = null;
+    this.pendingHarmonizePermanentId = null;
     // Kicker
     this.choosingKicker = false;
     this.kickerCardIndex = -1;
@@ -221,7 +227,7 @@ export class TargetingChoiceService {
    */
   get selectingCastTarget(): boolean {
     return this.selectingTarget || this.targetingSpell || this.multiTargeting
-      || this.targetingGraveyard || this.targetingExile;
+      || this.targetingGraveyard || this.targetingExile || this.harmonizing;
   }
 
   // --- Ability picker state ---
@@ -296,6 +302,13 @@ export class TargetingChoiceService {
   convokeSelectedCreatureIds = signal<string[]>([]);
   private pendingMultiTargetIds: string[] = [];
   private pendingConvokeCard: Card | null = null;
+
+  harmonizing = false;
+  harmonizeCardIndex = -1;
+  harmonizeCardName = '';
+  harmonizeSelectedPermanentId = signal<string | null>(null);
+  private pendingHarmonizeCard: Card | null = null;
+  private pendingHarmonizePermanentId: string | null = null;
 
   // --- Kicker state ---
   choosingKicker = false;
@@ -1049,6 +1062,10 @@ export class TargetingChoiceService {
       this.graveyardCastDiscardCardName = card.name;
       return;
     }
+    if (card.hasHarmonize) {
+      this.startHarmonizeSelection(graveyardIndex, card);
+      return;
+    }
     this.continueFlashbackPlay(graveyardIndex, card);
   }
 
@@ -1063,7 +1080,9 @@ export class TargetingChoiceService {
     this.selectingGraveyardCastDiscard = false;
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
-    if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
+    if (card.hasHarmonize) {
+      this.startHarmonizeSelection(graveyardIndex, card);
+    } else if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
       this.continueFlashbackPlay(graveyardIndex, card);
     } else {
       this.sendPlayCardMessage(graveyardIndex, null);
@@ -1102,6 +1121,66 @@ export class TargetingChoiceService {
     this.validTargetIds.set(allIds);
     this.validTargetPlayerIds.set(new Set());
     this.targetingPrompt = 'Choose a target for ' + card.name + ' (flashback).';
+  }
+
+  startHarmonizeSelection(graveyardIndex: number, card: Card): void {
+    this.pendingFlashback = true;
+    this.harmonizing = true;
+    this.harmonizeCardIndex = graveyardIndex;
+    this.harmonizeCardName = card.name;
+    this.harmonizeSelectedPermanentId.set(null);
+    this.pendingHarmonizeCard = card;
+  }
+
+  toggleHarmonizeCreature(permanentId: string): void {
+    if (!this.harmonizing) return;
+    this.harmonizeSelectedPermanentId.set(
+      this.harmonizeSelectedPermanentId() === permanentId ? null : permanentId);
+  }
+
+  isHarmonizeSelected(permanentId: string): boolean {
+    return this.harmonizeSelectedPermanentId() === permanentId;
+  }
+
+  confirmHarmonize(): void {
+    if (!this.harmonizing) return;
+    const card = this.pendingHarmonizeCard;
+    const cardIndex = this.harmonizeCardIndex;
+    this.pendingHarmonizePermanentId = this.harmonizeSelectedPermanentId();
+    this.clearHarmonizeState();
+    if (card?.needsTarget) {
+      this.continueFlashbackPlay(cardIndex, card);
+    } else {
+      this.sendPlayCardMessage(cardIndex, null);
+    }
+  }
+
+  skipHarmonize(): void {
+    if (!this.harmonizing) return;
+    const card = this.pendingHarmonizeCard;
+    const cardIndex = this.harmonizeCardIndex;
+    this.pendingHarmonizePermanentId = null;
+    this.clearHarmonizeState();
+    if (card?.needsTarget) {
+      this.continueFlashbackPlay(cardIndex, card);
+    } else {
+      this.sendPlayCardMessage(cardIndex, null);
+    }
+  }
+
+  cancelHarmonize(): void {
+    if (!this.harmonizing) return;
+    this.clearHarmonizeState();
+    this.pendingFlashback = false;
+    this.pendingHarmonizePermanentId = null;
+  }
+
+  private clearHarmonizeState(): void {
+    this.harmonizing = false;
+    this.harmonizeCardIndex = -1;
+    this.harmonizeCardName = '';
+    this.harmonizeSelectedPermanentId.set(null);
+    this.pendingHarmonizeCard = null;
   }
 
   // ========== Casting from exile / top of library ==========
@@ -1287,6 +1366,10 @@ export class TargetingChoiceService {
     if (this.pendingFlashback) {
       msg.flashback = true;
       this.pendingFlashback = false;
+    }
+    if (this.pendingHarmonizePermanentId != null) {
+      msg.alternateCostSacrificePermanentIds = [this.pendingHarmonizePermanentId];
+      this.pendingHarmonizePermanentId = null;
     }
     if (this.pendingFromExileCardId != null) {
       msg.fromExileCardId = this.pendingFromExileCardId;
@@ -1837,6 +1920,7 @@ export class TargetingChoiceService {
     // A completed cast consumes these in sendPlayCardMessage before we get here;
     // clearing them covers the cancel paths so the flags can't leak into a later cast.
     this.pendingFlashback = false;
+    this.pendingHarmonizePermanentId = null;
     this.selectingGraveyardCastDiscard = false;
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';

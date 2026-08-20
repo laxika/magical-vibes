@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class GraveyardTargetOperationState {
@@ -33,6 +35,12 @@ public class GraveyardTargetOperationState {
     }
     /** Target player for effects like "Target player shuffles ... from their graveyard" */
     public UUID targetPlayerId;
+    /** Remaining cast-time graveyard target groups for spells with more than one such group. */
+    public List<CardEffect> pendingSpellGraveyardChoiceEffects = List.of();
+    /** The cast-time graveyard target group currently being answered. */
+    public CardEffect activeSpellGraveyardChoiceEffect;
+    /** Selected graveyard cards kept separately for each cast-time target group. */
+    public final Map<CardEffect, List<UUID>> spellGraveyardCardIdsByEffect = new IdentityHashMap<>();
     /** Whether the spell is being cast with flashback */
     public boolean flashback;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
@@ -83,6 +91,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
     /** The land chosen by the resolution-time exile choice, or {@code null} for decline. */
     public UUID resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId;
+    /** Whether an optional graveyard exile with a reflexive follow-up is awaiting its answer. */
+    public boolean resolutionTimeExileThenEffectResume;
+    /** Whether the optional graveyard exile with a reflexive follow-up has been answered. */
+    public boolean resolutionTimeExileThenEffectChoiceMade;
+    /** The card chosen for the optional graveyard exile, or {@code null} for decline. */
+    public UUID resolutionTimeExileThenEffectChosenCardId;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore). When set,
      * {@code GraveyardChoiceHandlerService.handleGraveyardCardChosen} only records the chosen card on

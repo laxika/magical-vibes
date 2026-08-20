@@ -34,6 +34,12 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted && ability.targetCardId() != null) {
+            if (grantsHaste(ability)) {
+                var exiled = gameData.findExiledCard(ability.targetCardId());
+                if (exiled != null && exiled.card().hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE)) {
+                    gameData.spellsGrantedHasteOnEntry.add(ability.targetCardId());
+                }
+            }
             if (isExclusive(ability)) {
                 // "Cast a spell from among those cards" — one offer per exiled card was queued, so
                 // withdraw the siblings; only a single spell may be cast (Shell of the Last Kappa).
@@ -51,5 +57,10 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
     private boolean isExclusive(PendingMayAbility ability) {
         return ability.effects().stream()
                 .anyMatch(effect -> effect instanceof MayPlayExiledCardWithoutPayingManaCostEffect e && e.exclusive());
+    }
+
+    private boolean grantsHaste(PendingMayAbility ability) {
+        return ability.effects().stream()
+                .anyMatch(effect -> effect instanceof MayPlayExiledCardWithoutPayingManaCostEffect e && e.grantHaste());
     }
 }

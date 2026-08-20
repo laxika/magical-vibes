@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -176,6 +177,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtEndStepUnlessConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
@@ -1512,6 +1514,28 @@ public class StepTriggerService {
             gameLogService.append(gameData,
                     GameLog.cardThen(delayedCard, "'s delay counter ability triggers."));
             log.info("Game {} - {} delay counter upkeep trigger pushed onto stack", gameData.id, delayedCard.getName());
+        }
+
+        // Suspend: remove a time counter from every suspended spell owned by the active player.
+        for (GameData.SuspendedSpellExile pending : new ArrayList<>(gameData.suspendedSpellExiles)) {
+            if (!pending.ownerId().equals(activePlayerId)) {
+                continue;
+            }
+            var suspendedEntry = gameData.findExiledCard(pending.cardId());
+            if (suspendedEntry == null) {
+                continue;
+            }
+            Card suspendedCard = suspendedEntry.card();
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    suspendedCard,
+                    activePlayerId,
+                    suspendedCard.getName() + "'s suspend ability",
+                    new ArrayList<>(List.of(new RemoveSuspendCounterFromExiledSpellEffect(pending.cardId())))
+            ));
+
+            gameLogService.append(gameData, GameLog.cardThen(suspendedCard, "'s suspend ability triggers."));
+            log.info("Game {} - {} suspend upkeep trigger pushed onto stack", gameData.id, suspendedCard.getName());
         }
 
         // Phase-in targeted triggers were queued during the untap-step phasing action; choose targets
@@ -4945,6 +4969,7 @@ public class StepTriggerService {
                     && (conditional.condition() instanceof AllOf
                         || conditional.condition() instanceof ControlsPermanentCount
                         || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower
+                        || conditional.condition() instanceof ControllerCastTwoOrMoreSpellsThisTurn
                         || conditional.condition() instanceof MaxSpeed)) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, controllerId))) {

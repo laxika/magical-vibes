@@ -970,6 +970,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
     }
 
+    public void castInstantWithBehold(Player player, int cardIndex, UUID targetId,
+                                      List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, beholdPermanentIds, beholdHandCardIndices, null);
+    }
+
     public void castInstantWithRepeatedCosts(Player player, int cardIndex, UUID targetId,
                                               List<String> repeatedAdditionalCosts) {
         ensurePriority(player);

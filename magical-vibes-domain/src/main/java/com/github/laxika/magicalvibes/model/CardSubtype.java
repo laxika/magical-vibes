@@ -168,8 +168,8 @@ public enum CardSubtype {
     SAPROLING("Saproling"),
     TREEFOLK("Treefolk"),
     TRILOBITE("Trilobite"),
-    TURTLE("Turtle"),
     TROLL("Troll"),
+    TURTLE("Turtle"),
     MASTICORE("Masticore"),
     DINOSAUR("Dinosaur"),
     SPHINX("Sphinx"),
@@ -247,7 +247,8 @@ public enum CardSubtype {
     SOLTARI("Soltari"),
     ZUBERA("Zubera"),
     YANLING("Yanling"),
-    MITE("Mite");
+    MITE("Mite"),
+    OMEN("Omen");
 
     @Getter
     private final String displayName;

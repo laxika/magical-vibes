@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -89,12 +90,14 @@ public class CastingPermissionService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
+    private final StaticEffectConditionResolver staticEffectConditionResolver;
 
     public CastingPermissionService(GameQueryService gameQueryService,
                                     PredicateEvaluationService predicateEvaluationService,
                                     ConditionEvaluationService conditionEvaluationService) {
         this(gameQueryService, predicateEvaluationService, conditionEvaluationService,
-                new AmountEvaluationService(predicateEvaluationService, gameQueryService));
+                new AmountEvaluationService(predicateEvaluationService, gameQueryService),
+                new StaticEffectConditionResolver(conditionEvaluationService));
     }
 
     /**
@@ -669,6 +672,22 @@ public class CastingPermissionService {
     }
 
     /**
+     * Returns true when the card's own conditional flash permission is the permission being used
+     * outside normal sorcery timing. An additional cost tied to that permission must be paid before
+     * the cast proceeds.
+     */
+    public boolean isUsingCardFlashPermission(GameData gameData, UUID playerId, Card card) {
+        if (sorceryTimingAvailable(gameData, playerId) || !hasMetFlashCastCondition(gameData, playerId, card)) {
+            return false;
+        }
+        return !card.hasType(CardType.INSTANT)
+                && !card.getKeywords().contains(Keyword.FLASH)
+                && !hasFlashGrantForCard(gameData, playerId, card)
+                && !grantsItselfFlashTiming(card)
+                && !hasAvailableFlashAlternateCast(gameData, playerId, card);
+    }
+
+    /**
      * True if the card itself says "you may cast this spell as though it had flash" — the Mirage
      * flash clause. Unlike a battlefield flash grant this needs no permission source; the trade-off
      * (sacrifice at the next cleanup step) is applied when the permanent enters.
@@ -807,7 +826,8 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PlayLandsFromGraveyardEffect) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof PlayLandsFromGraveyardEffect) {
                     return true;
                 }
             }

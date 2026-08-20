@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileW
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SearchLibraryForCardsToExileWithSourceEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
@@ -101,8 +99,7 @@ public class SearchLibraryForCardsToExileWithSourceEffectHandler implements Norm
 
     private UUID resolveSourcePermanentId(GameData gameData, StackEntry entry, UUID controllerId) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId != null
-                && gameQueryService.findPermanentById(gameData, sourcePermanentId) != null) {
+        if (sourcePermanentId != null) {
             return sourcePermanentId;
         }
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);

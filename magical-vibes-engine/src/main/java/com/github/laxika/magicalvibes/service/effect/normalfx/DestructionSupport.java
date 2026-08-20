@@ -536,7 +536,8 @@ public class DestructionSupport {
     }
 
     public void performSacrificeCreatureForPlayer(GameData gameData, UUID targetPlayerId) {
-        List<UUID> creatureIds = collectCreatureIds(gameData, targetPlayerId, p -> true);
+        List<UUID> creatureIds = collectCreatureIds(gameData, targetPlayerId,
+                p -> !gameQueryService.cantBeSacrificed(gameData, p));
 
         if (creatureIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);

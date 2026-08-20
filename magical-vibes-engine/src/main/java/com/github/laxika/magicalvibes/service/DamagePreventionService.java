@@ -880,8 +880,16 @@ public class DamagePreventionService {
     private void applyNextSourceShieldRiders(GameData gameData, PlayerSourceNextDamageShield shield, int damage) {
         gainLifeForNextSourceShield(gameData, shield, damage);
         exileFromLibraryForNextSourceShield(gameData, shield, damage);
+        if (shield.drawCards()) {
+            for (int i = 0; i < damage; i++) {
+                drawService.resolveDrawCard(gameData, shield.playerId());
+            }
+        }
         if (shield.damageSourceControllerCard() != null) {
             UUID sourceControllerId = gameQueryService.findPermanentController(gameData, shield.sourceId());
+            if (sourceControllerId == null) {
+                sourceControllerId = shield.sourceControllerId();
+            }
             if (sourceControllerId != null) {
                 gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
                         sourceControllerId, damage, shield.damageSourceControllerCard(), shield.playerId()));

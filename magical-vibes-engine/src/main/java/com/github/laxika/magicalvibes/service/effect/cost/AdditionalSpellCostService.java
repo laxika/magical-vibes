@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.cost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -356,6 +357,16 @@ public class AdditionalSpellCostService {
                 chooseCreatureTypeCost);
     }
 
+    /** Adds additional costs granted by permanents before extracting the spell's cast costs. */
+    public ExtractedCosts extractAndRemove(GameData gameData, UUID playerId, Card card,
+                                           List<CardEffect> effects) {
+        if (effects.stream().noneMatch(DelveCost.class::isInstance)
+                && gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.DELVE)) {
+            effects.add(new DelveCost());
+        }
+        return extractAndRemove(effects);
+    }
+
     /**
      * Resolves the X value supplied by an additional cost whose payment count defines X.
      * This is needed before cast-time target validation, while payment itself still happens later.
@@ -372,6 +383,11 @@ public class AdditionalSpellCostService {
     /** Reads the card's additional cast costs without touching the card (for gating queries). */
     public ExtractedCosts peek(Card card) {
         return extractAndRemove(new ArrayList<>(card.getEffects(EffectSlot.SPELL)));
+    }
+
+    /** Reads printed and battlefield-granted additional cast costs without touching the card. */
+    public ExtractedCosts peek(GameData gameData, UUID playerId, Card card) {
+        return extractAndRemove(gameData, playerId, card, new ArrayList<>(card.getEffects(EffectSlot.SPELL)));
     }
 
     private <T extends CardEffect> T removeFirst(List<CardEffect> effects, Class<T> type) {
@@ -552,7 +568,7 @@ public class AdditionalSpellCostService {
                 // Fixed BeholdCost is a flashback-only additional cost. Optional chosen-type
                 // BeholdCost is payable by declining the optional cost.
                 case BeholdCost cost -> {
-                    if (includeFlashbackOnlyCosts && !cost.chosenCreatureType()) {
+                    if (includeFlashbackOnlyCosts && !cost.optional() && !cost.chosenCreatureType()) {
                         long matchingPermanents = battlefield.stream()
                                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                                         gameData, p, new PermanentHasSubtypePredicate(cost.subtype())))
@@ -850,6 +866,9 @@ public class AdditionalSpellCostService {
                 ? selection.beholdPermanentIds() : List.of();
         List<Integer> handIndices = selection.beholdHandCardIndices() != null
                 ? selection.beholdHandCardIndices() : List.of();
+        if (permanentIds.isEmpty() && handIndices.isEmpty() && cost.optional()) {
+            return;
+        }
         if (permanentIds.size() + handIndices.size() != cost.count()) {
             throw new IllegalStateException("Must behold exactly " + cost.count() + " "
                     + cost.subtype().name().toLowerCase());

@@ -110,6 +110,7 @@ public sealed interface DynamicAmount permits
         TargetPlayerPoisonCounters,
         TimesSourceRegeneratedThisTurn,
         TargetManaValue,
+        TargetPermanentColorCount,
         TargetSpellManaValue,
         TargetSpellPower,
         TargetToughness,

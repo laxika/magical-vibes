@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "237")
+@CardRegistration(set = "TDM", collectorNumber = "263")
 public class NomadOutpost extends Card {
 
     public NomadOutpost() {

@@ -125,6 +125,8 @@ combat damage step is processed.
 | `ON_ALLY_PERMANENT_TRANSFORMS` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
 | `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
+| `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` (non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
+| `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
@@ -146,6 +148,7 @@ combat damage step is processed.
 | `ON_ANY_PLAYER_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any attacking player; attacking player stored as non-targeting `targetId`) | Non-targeting (Total War) |
 | `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`; `TriggeringPermanentConditionalEffect` filters which attackers trigger) | Non-targeting (Caltrops, Windreader Sphinx) |
 | `ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (spell controller's battlefield; targeted creature stored as non-targeting `targetId`, listener as `sourcePermanentId`) | Becomes-target |
+| `ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (controller's battlefield; handles both creature permanents and creature spells targeted by an opponent) | Becomes-target |
 | `ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted creature's controller's battlefield; spell path only; the triggered ability uses the shared ETB multi-target picker so optional targets can be declined) | Becomes-target |
 | `ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (one trigger per other permanent, opponent-only; targeted permanent stored as non-targeting `triggeringPermanentId`) | Becomes-target |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`) | Becomes-target |
@@ -303,6 +306,10 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
+`ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
+the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
+is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same
+slot for first-time-per-creature wording and keys the marker to the watcher and triggering creature),
 `ON_SELF_EVOLVES` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
 actually places the +1/+1 counter),
 `ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE` (Flourishing Defenses; global watcher — fires on

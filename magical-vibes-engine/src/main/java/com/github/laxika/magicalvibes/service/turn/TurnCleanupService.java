@@ -304,6 +304,7 @@ public class TurnCleanupService {
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
@@ -325,6 +326,8 @@ public class TurnCleanupService {
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
+        gameData.pendingNextSpellCopyThisTurnCount.clear();
+        gameData.pendingNextSpellUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();

@@ -9,9 +9,11 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +44,7 @@ public class StackEntry {
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
     private final Zone targetZone;
     @Setter private List<UUID> targetCardIds;
+    private Map<CardEffect, List<UUID>> targetCardIdsByEffect = Map.of();
     @Setter private TargetFilter targetFilter;
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
@@ -59,6 +62,7 @@ public class StackEntry {
     @Setter private boolean exileInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
+    @Setter private boolean castWithOmen;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -101,6 +105,8 @@ public class StackEntry {
     @Setter private boolean buyback;
     /** Whether this spell's put-counter additional cost was paid. */
     @Setter private boolean putCounterCostPaid;
+    /** Whether this spell's optional behold additional cost was paid. */
+    @Setter private boolean beholdCostPaid;
     /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
@@ -145,6 +151,8 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
      */
     @Setter private int eventValue;
+    /** Permanent ids that received counters during the current effect resolution. */
+    private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
     /**
      * The per-permanent player payload behind this entry — one entry per permanent involved in the
      * event, holding that permanent's controller. Stamped by
@@ -509,6 +517,7 @@ public class StackEntry {
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
+        this.targetCardIdsByEffect = copyTargetCardIdsByEffect(source.targetCardIdsByEffect);
         this.targetFilter = source.targetFilter;
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
@@ -517,6 +526,7 @@ public class StackEntry {
         this.castWithFlashback = source.castWithFlashback;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
+        this.castWithOmen = source.castWithOmen;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
@@ -525,6 +535,7 @@ public class StackEntry {
         this.kicked = source.kicked;
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
+        this.beholdCostPaid = source.beholdCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
@@ -542,6 +553,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
@@ -667,6 +679,34 @@ public class StackEntry {
         this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
     }
 
+    public void setTargetCardIdsByEffect(Map<CardEffect, List<UUID>> targetCardIdsByEffect) {
+        if (targetCardIdsByEffect == null || targetCardIdsByEffect.isEmpty()) {
+            this.targetCardIdsByEffect = Map.of();
+            return;
+        }
+        IdentityHashMap<CardEffect, List<UUID>> copy = new IdentityHashMap<>();
+        targetCardIdsByEffect.forEach((effect, cardIds) -> copy.put(effect,
+                cardIds == null ? List.of() : List.copyOf(cardIds)));
+        this.targetCardIdsByEffect = Collections.unmodifiableMap(copy);
+    }
+
+    public List<UUID> getTargetCardIdsForEffect(CardEffect effect) {
+        List<UUID> effectTargetCardIds = targetCardIdsByEffect.get(effect);
+        return effectTargetCardIds != null ? effectTargetCardIds
+                : targetCardIds == null ? List.of() : targetCardIds;
+    }
+
+    private static Map<CardEffect, List<UUID>> copyTargetCardIdsByEffect(
+            Map<CardEffect, List<UUID>> source) {
+        if (source.isEmpty()) {
+            return Map.of();
+        }
+        IdentityHashMap<CardEffect, List<UUID>> copy = new IdentityHashMap<>();
+        source.forEach((effect, cardIds) -> copy.put(effect,
+                cardIds == null ? List.of() : List.copyOf(cardIds)));
+        return Collections.unmodifiableMap(copy);
+    }
+
     public void setSacrificedCard(Card sacrificedCard) {
         this.sacrificedCard = freezeCard(sacrificedCard);
     }
@@ -773,6 +813,9 @@ public class StackEntry {
     private Card targetingCard() {
         if (card == null) {
             return null;
+        }
+        if (castWithOmen && card.getBackFaceCard() != null) {
+            return card.getBackFaceCard();
         }
         return castWithFlashback ? card.graveyardCastHalf() : card;
     }

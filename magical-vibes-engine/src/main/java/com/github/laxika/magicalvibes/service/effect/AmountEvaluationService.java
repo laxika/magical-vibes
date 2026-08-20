@@ -114,6 +114,7 @@ import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.amount.TargetPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
@@ -223,6 +224,8 @@ public class AmountEvaluationService {
                     sumPermanentManaValues(gameData, s, ctx);
             case AttachedPermanentColorCount ignored ->
                     attachedPermanentColorCount(gameData, ctx);
+            case TargetPermanentColorCount ignored ->
+                    targetPermanentColorCount(gameData, ctx);
             case BasicLandTypesAmongControlledLands domainAmount ->
                     countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
@@ -496,6 +499,12 @@ public class AmountEvaluationService {
         }
         Permanent attached = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
         return attached == null ? 0 : gameQueryService.getEffectiveColors(gameData, attached).size();
+    }
+
+    private int targetPermanentColorCount(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        return target == null ? 0 : gameQueryService.getEffectiveColors(gameData, target).size();
     }
 
     private int targetEffectivePower(GameData gameData, AmountContext ctx) {

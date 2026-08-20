@@ -65,6 +65,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -136,6 +137,7 @@ public class BattlefieldPlacementService {
         List<String> repeatedAdditionalCosts = request.repeatedAdditionalCosts();
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
+        Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
         int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
@@ -203,6 +205,14 @@ public class BattlefieldPlacementService {
         permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                 gameData, permanent, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE),
                 controllerId, simultaneouslyEntered);
+        for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
+            if (counter.getKey() == CounterType.PLUS_ONE_PLUS_ONE
+                    || counter.getKey() == CounterType.MINUS_ONE_MINUS_ONE) {
+                continue;
+            }
+            int added = counter.getValue() - countersBeforeEntry.getOrDefault(counter.getKey(), 0);
+            permanentCounterSupport.fireCounterPutOnControlledCreatureTriggers(gameData, permanent, added);
+        }
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());

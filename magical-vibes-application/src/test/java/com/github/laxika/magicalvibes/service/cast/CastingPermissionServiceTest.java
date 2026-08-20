@@ -18,12 +18,15 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -86,6 +89,22 @@ class CastingPermissionServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+    }
+
+    @Test
+    @DisplayName("conditional graveyard-land permission applies only when its condition is met")
+    void conditionalGraveyardLandPermission() {
+        Card siege = new Card();
+        SourceHasChosenMode sultai = new SourceHasChosenMode("Sultai");
+        siege.addEffect(EffectSlot.STATIC,
+                new ConditionalEffect(sultai, new PlayLandsFromGraveyardEffect()));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(siege));
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(sultai), any())).thenReturn(false);
+        assertThat(svc.canPlayLandsFromGraveyard(gd, player1Id)).isFalse();
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(sultai), any())).thenReturn(true);
+        assertThat(svc.canPlayLandsFromGraveyard(gd, player1Id)).isTrue();
     }
 
     @Nested

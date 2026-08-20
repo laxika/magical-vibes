@@ -46,6 +46,7 @@ public class CombatTriggerService {
 
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final GameQueryService gameQueryService;
 
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
@@ -134,55 +135,23 @@ public class CombatTriggerService {
 
                     if (effectsForStack.isEmpty()) return;
 
-                    if (autoTargetOpponent) {
-                        // Auto-targeted combat trigger — goes directly on the stack
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                auraOwnerId,
-                                perm.getCard().getName() + "'s triggered ability",
-                                effectsForStack,
-                                combatOpponent.getId(),
-                                perm.getId()
-                        );
-                        trigger.setNonTargeting(true);
-                        trigger.setTriggeringPermanentId(creature.getId());
-                        captureEquippedCreatureDamageSource(trigger, creature, finalCreatureControllerId, effectsForStack);
-                        // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
-                        // (e.g. equipment-granted Afflict) can resolve.
-                        trigger.setAttackedTargetId(creature.getAttackTarget());
-                        gameData.stack.add(trigger);
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
-                                gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                    } else {
-                        // Check if any effect needs a permanent target — queue for target selection
-                        boolean needsTarget = effectsForStack.stream()
-                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                        if (needsTarget) {
-                            gameData.queueInteraction(
-                                    new PermanentChoiceContext.AttackTriggerTarget(
-                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
-                            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                            log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
-                                    gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                        } else {
-                            UUID triggeringPlayerId = effectsForStack.stream()
-                                    .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
-                                    ? finalCreatureControllerId
-                                    : null;
+                    int previousCopies = slot == EffectSlot.ON_ATTACK
+                            ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
+                            : -1;
+                    try {
+                        if (autoTargetOpponent) {
+                            // Auto-targeted combat trigger — goes directly on the stack
                             StackEntry trigger = new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
                                     perm.getCard(),
                                     auraOwnerId,
                                     perm.getCard().getName() + "'s triggered ability",
                                     effectsForStack,
-                                    triggeringPlayerId,
+                                    combatOpponent.getId(),
                                     perm.getId()
                             );
-                            if (triggeringPlayerId != null) {
-                                trigger.setNonTargeting(true);
-                            }
+                            trigger.setNonTargeting(true);
+                            trigger.setTriggeringPermanentId(creature.getId());
                             // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());
@@ -190,13 +159,60 @@ public class CombatTriggerService {
                             captureEquippedCreatureDamageSource(trigger, creature, finalCreatureControllerId, effectsForStack);
                             gameData.stack.add(trigger);
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                            log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
+                            log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                        } else {
+                            // Check if any effect needs a permanent target — queue for target selection
+                            boolean needsTarget = effectsForStack.stream()
+                                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                            if (needsTarget) {
+                                gameData.queueInteraction(
+                                        new PermanentChoiceContext.AttackTriggerTarget(
+                                                perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
+                                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                                log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
+                                        gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                            } else {
+                                UUID triggeringPlayerId = effectsForStack.stream()
+                                        .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
+                                        ? finalCreatureControllerId
+                                        : null;
+                                StackEntry trigger = new StackEntry(
+                                        StackEntryType.TRIGGERED_ABILITY,
+                                        perm.getCard(),
+                                        auraOwnerId,
+                                        perm.getCard().getName() + "'s triggered ability",
+                                        effectsForStack,
+                                        triggeringPlayerId,
+                                        perm.getId()
+                                );
+                                if (triggeringPlayerId != null) {
+                                    trigger.setNonTargeting(true);
+                                }
+                                // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
+                                // (e.g. equipment-granted Afflict) can resolve.
+                                trigger.setAttackedTargetId(creature.getAttackTarget());
+                                trigger.setTriggeringPermanentId(creature.getId());
+                                gameData.stack.add(trigger);
+                                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                                log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
+                                        gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                            }
+                        }
+                    } finally {
+                        if (previousCopies >= 0) {
+                            gameData.restoreTriggeredAbilityCopies(previousCopies);
                         }
                     }
                 }
             }
         });
+    }
+
+    private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {
+        return gameData.beginTriggeredAbilityCopies(1 +
+                gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                        gameData, controllerId, source, true));
     }
 
     /**

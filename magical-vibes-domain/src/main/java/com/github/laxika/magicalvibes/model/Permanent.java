@@ -1223,7 +1223,12 @@ public class Permanent {
         CounterType keywordCounter = switch (keyword) {
             case FLYING -> CounterType.FLYING;
             case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
+            case DEATHTOUCH -> CounterType.DEATHTOUCH;
+            case DECAYED -> CounterType.DECAYED;
             case LIFELINK -> CounterType.LIFELINK;
+            case REACH -> CounterType.REACH;
+            case TRAMPLE -> CounterType.TRAMPLE;
+            case HEXPROOF -> CounterType.HEXPROOF;
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
             default -> null;
         };

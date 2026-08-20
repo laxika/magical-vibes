@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
@@ -1254,6 +1255,21 @@ class CastingCostServiceTest {
                 eq(source), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
         assertThat(svc.getTargetingSpellCostModifier(gd, player2Id, source.getId(), null)).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Spell-self targeting cost increase applies to a matching first target")
+    void targetingSpellCostModifierIncludesSpellSelfIncrease() {
+        var predicate = new PermanentHasSubtypePredicate(CardSubtype.DRAGON);
+        Card spell = new Card();
+        spell.addEffect(EffectSlot.STATIC,
+                new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 2));
+        Permanent dragon = new Permanent(new Card());
+
+        when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
+        when(predicateEvaluationService.matchesPermanentPredicate(gd, dragon, predicate)).thenReturn(true);
+
+        assertThat(svc.getTargetingSpellCostModifier(gd, player1Id, spell, dragon.getId(), null)).isEqualTo(2);
     }
 
     @Test

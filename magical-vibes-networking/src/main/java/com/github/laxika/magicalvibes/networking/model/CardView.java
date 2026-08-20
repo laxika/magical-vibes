@@ -53,6 +53,7 @@ public record CardView(
         List<ActivatedAbilityView> activatedAbilities,
         Integer loyalty,
         boolean hasConvoke,
+        boolean hasHarmonize,
         boolean hasPhyrexianMana,
         int phyrexianManaCount,
         boolean token,

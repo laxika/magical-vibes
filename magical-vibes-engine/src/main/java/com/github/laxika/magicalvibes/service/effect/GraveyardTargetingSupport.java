@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -42,6 +44,13 @@ public class GraveyardTargetingSupport {
                     if (nested != null) {
                         return nested;
                     }
+                }
+            }
+            if (targetEffect instanceof DiscardCardThenEffect discardThen
+                    && discardThen.thenEffect() != null) {
+                Target nested = findTarget(List.of(discardThen.thenEffect()));
+                if (nested != null) {
+                    return nested;
                 }
             }
             Target target = targetOf(targetEffect);
@@ -89,6 +98,13 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets) {
             return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                     "to your hand", returnTargets.maxTargets(), returnTargets.minTargets());
+        }
+        if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnTargets) {
+            int maxTargets = returnTargets.xScaled() ? 1
+                    : returnTargets.hasTotalManaValueCap() ? Integer.MAX_VALUE : returnTargets.maxTargets();
+            int minTargets = returnTargets.xScaled() ? 1 : 0;
+            return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                    "to the battlefield", maxTargets, minTargets);
         }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             String destination = switch (returnEffect.destination()) {

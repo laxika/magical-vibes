@@ -122,6 +122,12 @@ public record TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS_AND_ABILITIES, true, colors, TargetColorMode.BLOCKED_COLORS, true);
     }
 
+    /** Hexproof from monocolored sources â€” opponents' monocolored spells and abilities can't target. */
+    public static TargetingRestrictionEffect hexproofFromMonocolored() {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS_AND_ABILITIES, true, Set.of(), TargetColorMode.MONOCOLORED, true);
+    }
+
     /**
      * Can't be the target of spells of the given colors or abilities from sources of those colors,
      * regardless of who controls them — unlike {@link #hexproofFromColors(Set)}, the permanent's own

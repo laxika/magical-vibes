@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -350,6 +351,17 @@ public class ActivatedAbilityExecutionService {
                     int amount = cost.effectiveAmount(currentLife, sourceCounterCount);
                     if (amount > 0) {
                         lifeSupport.applyLifeLoss(gameData, playerId, amount, permanent.getCard().getName());
+                    }
+                });
+
+        int xLifeCost = effectiveXValue;
+        abilityEffects.stream()
+                .filter(PayXLifeCost.class::isInstance)
+                .findFirst()
+                .ifPresent(cost -> {
+                    if (xLifeCost > 0) {
+                        lifeSupport.applyLifeLoss(gameData, playerId, xLifeCost,
+                                permanent.getCard().getName());
                     }
                 });
 

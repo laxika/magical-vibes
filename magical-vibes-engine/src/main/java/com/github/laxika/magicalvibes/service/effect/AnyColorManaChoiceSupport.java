@@ -85,16 +85,20 @@ public final class AnyColorManaChoiceSupport {
         if (amount <= 0) {
             return false;
         }
-        ChoiceContext.ManaColorChoice choiceContext =
+        ChoiceContext choiceContext =
                 choiceContext(gameData, playerId, effect, amount, fromCreature, chosenSubtype, sourceCard);
         if (choiceContext == null) {
             return false;
         }
         if (effect.sourceBecomesProducedColorUntilEndOfTurn()) {
-            choiceContext = choiceContext.withSourcePermanentId(sourcePermanentId);
+            if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+                choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
+            }
         }
         if (recipientPlayerId != null) {
-            choiceContext = choiceContext.withRecipientPlayerId(recipientPlayerId);
+            if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+                choiceContext = manaColorChoice.withRecipientPlayerId(recipientPlayerId);
+            }
         }
         List<ManaColor> allowedColors = effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 ? imprintedCardColors(gameData, sourceCard)
@@ -118,20 +122,20 @@ public final class AnyColorManaChoiceSupport {
         return true;
     }
 
-    private static ChoiceContext.ManaColorChoice choiceContext(GameData gameData,
-                                                               UUID playerId,
-                                                               AwardAnyColorManaEffect effect,
-                                                               int amount,
-                                                               boolean fromCreature,
-                                                               CardSubtype chosenSubtype,
-                                                               Card sourceCard) {
+    private static ChoiceContext choiceContext(GameData gameData,
+                                               UUID playerId,
+                                               AwardAnyColorManaEffect effect,
+                                               int amount,
+                                               boolean fromCreature,
+                                               CardSubtype chosenSubtype,
+                                               Card sourceCard) {
         if (effect.anyColorCombination()) {
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount, ManaColor.COLORS);
             return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
         }
 
-        ChoiceContext.ManaColorChoice choice = switch (effect.restriction()) {
+        ChoiceContext choice = switch (effect.restriction()) {
             case NONE, INSTANT_SORCERY_COPY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
             case ABILITIES -> ChoiceContext.ManaColorChoice.abilityOnly(playerId, amount);
@@ -154,8 +158,9 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype());
             case CREATURE_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.creatureSpellOrAbilityOnly(playerId, amount);
-            case SUBTYPE_SPELL ->
-                    new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype());
+            case SUBTYPE_SPELL -> effect.spellOnlySubtypes().isEmpty()
+                    ? new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype())
+                    : new ChoiceContext.ManaColorSpellChoice(playerId, amount, effect.spellOnlySubtypes());
             case CHOSEN_SUBTYPE_CREATURE -> chosenSubtype == null
                     ? null
                     : new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, chosenSubtype);
@@ -175,7 +180,8 @@ public final class AnyColorManaChoiceSupport {
             case PARTY_SPELL_OR_ABILITY ->
                     ChoiceContext.ManaColorChoice.partySpellOrAbility(playerId, amount);
         };
-        return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
+        return effect.grantsAdditionalPlusOneCounter() && choice instanceof ChoiceContext.ManaColorChoice manaChoice
+                ? manaChoice.withAdditionalPlusOneCounter() : choice;
     }
 
     private static List<ManaColor> imprintedCardColors(GameData gameData, Card sourceCard) {

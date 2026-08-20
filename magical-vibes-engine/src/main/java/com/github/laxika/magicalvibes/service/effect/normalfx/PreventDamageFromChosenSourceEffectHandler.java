@@ -93,17 +93,24 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             case NEXT_DAMAGE_TO_CONTROLLER -> {
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceChoice(
                         controllerId, e.gainLife(), e.exileFromLibrary(),
-                        e.damageSourceController() ? entry.getCard() : null, e.preventHalfDamage());
+                        e.damageSourceController() ? entry.getCard() : null,
+                        e.preventHalfDamage(), e.drawCards());
                 String prevention = e.preventHalfDamage()
                         ? "prevent half that damage, rounded down"
                         : "prevent that damage";
-                String rider = e.damageSourceController()
-                        ? " If damage is prevented this way, this spell deals that much damage to that source's controller."
-                        : e.gainLife()
-                        ? " and gain that much life."
-                        : e.exileFromLibrary()
-                                ? " and exile that many cards from the top of your library."
-                                : ".";
+                String rider;
+                if (e.damageSourceController() && e.drawCards()) {
+                    rider = " If damage is prevented this way, this spell deals that much damage to that source's controller"
+                            + " and you draw that many cards.";
+                } else if (e.damageSourceController()) {
+                    rider = " If damage is prevented this way, this spell deals that much damage to that source's controller.";
+                } else if (e.gainLife()) {
+                    rider = " and gain that much life.";
+                } else if (e.exileFromLibrary()) {
+                    rider = " and exile that many cards from the top of your library.";
+                } else {
+                    rider = ".";
+                }
                 prompt = "Choose a " + label
                         + "source. The next time it would deal damage to you this turn, " + prevention
                         + rider;

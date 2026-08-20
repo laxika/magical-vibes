@@ -354,6 +354,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
     public final List<DelayedSpellExile> delayedSpellExiles = Collections.synchronizedList(new ArrayList<>());
+    /** Spells exiled with suspend counters and waiting for their owners' upkeeps. */
+    public final List<SuspendedSpellExile> suspendedSpellExiles = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → remaining combat-damage-only prevention shields for this turn. */
     public final Map<UUID, Integer> playerCombatDamagePreventionShields = new ConcurrentHashMap<>();
@@ -932,6 +934,10 @@ public class GameData {
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Card IDs that have been granted harmonize until end of turn. The harmonize cost for these
+     * cards equals their mana cost. Cleared at end of turn. */
+    public final Set<UUID> cardsGrantedHarmonizeUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     /** Card IDs that have been granted embalm until end of turn (e.g. Cursecloth Wrappings).
      *  The embalm cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedEmbalmUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -1040,6 +1046,11 @@ public class GameData {
     /** Pending mana-value-limited one-shot spell copy triggers for the current turn. */
     public final Map<UUID, List<Integer>> pendingNextInstantSorceryCopyThisTurnMaxManaValues =
             new ConcurrentHashMap<>();
+    /** Pending one-shot "when you next cast a spell this turn, copy that spell" delayed triggers. */
+    public final Map<UUID, Integer> pendingNextSpellCopyThisTurnCount = new ConcurrentHashMap<>();
+
+    /** Pending one-shot grants that make the next spell cast this turn uncounterable. */
+    public final Map<UUID, Integer> pendingNextSpellUncounterableThisTurnCount = new ConcurrentHashMap<>();
 
     /** Pending one-shot loyalty-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
@@ -1079,6 +1090,9 @@ public class GameData {
      *                      counter is removed so the spell keeps its X value and targets
      */
     public record DelayedSpellExile(UUID cardId, UUID controllerId, int counters, StackEntry originalEntry) {}
+
+    /** A spell exiled with suspend counters, waiting to be cast by its owner when the last counter is removed. */
+    public record SuspendedSpellExile(UUID cardId, UUID ownerId, int counters) {}
 
     /** Spell names a player has already resolved while controlling (for Paradigm's "first time" check). */
     public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
@@ -1394,6 +1408,10 @@ public class GameData {
     /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect}
      *  this turn (e.g. Ghoulish Procession). Cleared at start of new turn. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks source permanent IDs to creature IDs whose first counter-placement trigger has fired
+     *  this turn. Cleared at start of new turn. */
+    public final Map<UUID, Set<UUID>> oncePerCreatureTriggersFiredThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks permanents that have added mana with a source ability this turn. */
     public final Set<UUID> permanentsThatAddedManaWithAbilityThisTurn = ConcurrentHashMap.newKeySet();
@@ -2279,6 +2297,7 @@ public class GameData {
                 .merge(card.getName(), 1, Integer::sum);
         consumeNextSpellFlashGrant(playerId, card);
         consumeNextCreatureSpellEmpowerments(playerId, card);
+        consumeNextSpellUncounterableGrant(playerId, card);
     }
 
     /** Records that a creature spell cast by {@code playerId} was countered by an opponent this turn. */
@@ -2332,6 +2351,13 @@ public class GameData {
             if (grant.additionalPlusOneCounters() > 0) {
                 spellAdditionalEnterCounters.merge(card.getId(), grant.additionalPlusOneCounters(), Integer::sum);
             }
+        }
+    }
+
+    /** Makes the next spell cast by the player uncounterable and consumes all pending grants. */
+    private void consumeNextSpellUncounterableGrant(UUID playerId, Card card) {
+        if (pendingNextSpellUncounterableThisTurnCount.remove(playerId) != null) {
+            spellsMadeUncounterable.add(card.getId());
         }
     }
 
@@ -2837,6 +2863,7 @@ public class GameData {
             exilePlayWithoutPayingManaCost.remove(cardId);
             exileInsteadOfGraveyard.remove(cardId);
             exiledCardHitCounters.remove(cardId);
+            suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
         }
         return removed;
     }
@@ -3428,6 +3455,8 @@ public class GameData {
         });
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->
+                copy.oncePerCreatureTriggersFiredThisTurn.put(k, new HashSet<>(v)));
         copy.permanentsThatAddedManaWithAbilityThisTurn.addAll(this.permanentsThatAddedManaWithAbilityThisTurn);
         this.firstResolutionTriggerKeysThisTurn.forEach((k, v) -> {
             Set<String> keys = ConcurrentHashMap.newKeySet();
@@ -3475,6 +3504,7 @@ public class GameData {
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
+        copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) -> {
@@ -3578,6 +3608,13 @@ public class GameData {
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
         copy.graveyardTargetOperation.cumulativeUpkeepPayment = this.graveyardTargetOperation.cumulativeUpkeepPayment;
         copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
+        copy.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects =
+                this.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects == null
+                        ? List.of() : new ArrayList<>(this.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects);
+        copy.graveyardTargetOperation.activeSpellGraveyardChoiceEffect =
+                this.graveyardTargetOperation.activeSpellGraveyardChoiceEffect;
+        copy.graveyardTargetOperation.spellGraveyardCardIdsByEffect.putAll(
+                this.graveyardTargetOperation.spellGraveyardCardIdsByEffect);
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);
@@ -3726,6 +3763,7 @@ public class GameData {
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.pendingNextSpellUncounterableThisTurnCount.putAll(this.pendingNextSpellUncounterableThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
         copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
@@ -3839,6 +3877,7 @@ public class GameData {
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
         this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->

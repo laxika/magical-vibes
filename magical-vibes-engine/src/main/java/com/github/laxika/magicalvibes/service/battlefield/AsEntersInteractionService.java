@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
@@ -183,6 +184,20 @@ public class AsEntersInteractionService {
             playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId,
                     colorChoice);
             return;
+        }
+
+        ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseModeOnEnterEffect.class::isInstance)
+                .map(ChooseModeOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (modeChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            if (justEntered.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+                playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
+                        justEntered.getId(), modeChoice.modes());
+                return;
+            }
         }
 
         // "As this creature enters, choose a basic land type" — a choice made during entry

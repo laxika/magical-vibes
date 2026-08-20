@@ -219,6 +219,11 @@ public class GrantedAbilityViewFactory {
             }
             return "Can't be targeted by spells or abilities";
         }
+        if (restriction.mode() == TargetColorMode.MONOCOLORED) {
+            return restriction.opponentOnly() && restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                    ? "Hexproof from monocolored"
+                    : "Can't be the target of monocolored spells or abilities";
+        }
         String colors = enumPhrase(restriction.colors());
         if (restriction.mode() == TargetColorMode.BLOCKED_COLORS) {
             if (restriction.opponentOnly()) {

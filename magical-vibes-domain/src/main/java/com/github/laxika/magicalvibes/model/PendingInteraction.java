@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -61,6 +62,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PainsRewardBidChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
+        PendingInteraction.BeholdChoice,
         PendingInteraction.AttachAurasChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
@@ -1072,6 +1074,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Resolution-time choice of a matching permanent you control or card in your hand to behold. */
+    record BeholdChoice(UUID playerId, java.util.List<UUID> validCardIds, String prompt,
+                        BeholdEffect effect) implements PendingInteraction {
+
+        public BeholdChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
     /**
      * "Attach to this creature any number of Auras on the battlefield and put onto the battlefield
      * attached to it any number of Aura cards from your graveyard and/or hand" (Bruna, Light of
@@ -1143,11 +1164,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * exact begin-time text.
      */
     record MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
-                                String prompt, int minCount) implements PendingInteraction {
+                                String prompt, int minCount, boolean reorderToLibraryTop) implements PendingInteraction {
 
         /** Optional choice ({@code minCount} 0) — the shape used by every graveyard-targeting flow. */
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount, String prompt) {
-            this(playerId, cards, maxCount, prompt, 0);
+            this(playerId, cards, maxCount, prompt, 0, false);
+        }
+
+        public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
+                                    String prompt, int minCount) {
+            this(playerId, cards, maxCount, prompt, minCount, false);
         }
 
         /** The selectable card IDs, in begin-time order (derived from {@link #cards}). */

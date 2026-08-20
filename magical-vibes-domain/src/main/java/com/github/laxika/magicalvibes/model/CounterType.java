@@ -125,18 +125,28 @@ public enum CounterType {
     VITALITY,
     VORTEX,
     WAGE,
+    DEATHTOUCH,
+    DECAYED,
     FLYING,
     FIRST_STRIKE,
+    HEXPROOF,
+    INDESTRUCTIBLE,
     LIFELINK,
-    WINCH,
-    INDESTRUCTIBLE;
+    REACH,
+    TRAMPLE,
+    WINCH;
 
     public Keyword grantedKeyword() {
         return switch (this) {
             case FLYING -> Keyword.FLYING;
             case FIRST_STRIKE -> Keyword.FIRST_STRIKE;
+            case DEATHTOUCH -> Keyword.DEATHTOUCH;
+            case DECAYED -> Keyword.DECAYED;
             case LIFELINK -> Keyword.LIFELINK;
+            case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
+            case REACH -> Keyword.REACH;
+            case TRAMPLE -> Keyword.TRAMPLE;
             default -> null;
         };
     }

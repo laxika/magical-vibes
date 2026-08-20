@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
@@ -12,10 +13,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public sealed interface ChoiceContext {
 
+    record SagaChapterCounterAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId, String chapterName, CounterType counterType,
+                                         List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                         int nextTargetIndex) implements ChoiceContext {
+
+        public SagaChapterCounterAssignment {
+            effects = List.copyOf(effects);
+            targetIds = List.copyOf(targetIds);
+            assignments = Map.copyOf(new java.util.LinkedHashMap<>(assignments));
+        }
+    }
+
     record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) implements ChoiceContext {}
 
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn)
             implements ChoiceContext {}
+
+    record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes) implements ChoiceContext {
+        public ManaColorSpellChoice {
+            subtypes = Set.copyOf(subtypes);
+        }
+    }
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
@@ -923,27 +942,33 @@ public sealed interface ChoiceContext {
      * permanent whose consumed modes are recorded, and the chosen mode's effects become their own
      * triggered ability (with that mode's targets) rather than being spliced into a resolution.
      * A targeted modal trigger also sets {@code triggerTime} without setting {@code consumeMode}.
+     * {@code asEnters} records a named mode on a permanent before its ETB abilities are collected.
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                             boolean triggerTime, UUID sourcePermanentId, boolean consumeMode,
-                            List<String> chosenLabels) implements ChoiceContext {
+                            List<String> chosenLabels, boolean asEnters) implements ChoiceContext {
 
         public ChooseModeChoice {
             chosenLabels = chosenLabels == null ? List.of() : List.copyOf(chosenLabels);
         }
 
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) {
-            this(sourceCard, controllerId, effect, false, null, false, List.of());
+            this(sourceCard, controllerId, effect, false, null, false, List.of(), false);
         }
 
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 boolean triggerTime, UUID sourcePermanentId, boolean consumeMode) {
-            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, consumeMode, List.of());
+            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, consumeMode, List.of(), false);
         }
 
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 boolean triggerTime, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, false, List.of());
+            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, false, List.of(), false);
+        }
+
+        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                UUID sourcePermanentId, boolean asEnters) {
+            this(sourceCard, controllerId, effect, false, sourcePermanentId, false, List.of(), asEnters);
         }
     }
 

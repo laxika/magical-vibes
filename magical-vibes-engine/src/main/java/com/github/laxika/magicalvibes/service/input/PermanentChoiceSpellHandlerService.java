@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -264,6 +265,9 @@ public class PermanentChoiceSpellHandlerService {
             );
             entry.setCopy(ect.copy());
             entry.setSourceZone(Zone.EXILE);
+            if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
+                entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
+            }
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
@@ -276,6 +280,7 @@ public class PermanentChoiceSpellHandlerService {
             triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), Zone.EXILE);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
+            gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId());
             graveyardService.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
             gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
             log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
@@ -309,6 +314,7 @@ public class PermanentChoiceSpellHandlerService {
                 // remaining slot's targets vanished mid-selection. The spell can't be legally cast:
                 // a copy ceases to exist (CR 707.10a), a real card goes to its owner's graveyard.
                 if (!ect.copy()) {
+                    gameData.spellsGrantedHasteOnEntry.remove(card.getId());
                     graveyardService.addCardToGraveyard(gameData, ect.controllerId(), card);
                 }
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s targets are no longer valid."));
@@ -338,6 +344,9 @@ public class PermanentChoiceSpellHandlerService {
         );
         entry.setCopy(ect.copy());
         entry.setSourceZone(Zone.EXILE);
+        if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
+            entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
+        }
         gameData.stack.add(entry);
 
         gameData.recordSpellCast(ect.controllerId(), card);

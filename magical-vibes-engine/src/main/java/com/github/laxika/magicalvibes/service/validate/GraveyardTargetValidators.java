@@ -118,11 +118,25 @@ public class GraveyardTargetValidators {
                         "Target must be a card put into a graveyard from the battlefield this turn");
             }
         }
-        if (effect.requiresManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
-            throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
+        int requiredManaValue = ctx.xValue()
+                + (effect.requiresManaValueEqualsX() ? effect.manaValueXOffset() : 0);
+        if (effect.requiresManaValueEqualsX()
+                && !ctx.deferCostDerivedXValueChecks()
+                && graveyardCard.getManaValue() != requiredManaValue) {
+            if (effect.manaValueXOffset() == 0) {
+                throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
+            }
+            throw new IllegalStateException("Target card's mana value must equal X plus "
+                    + effect.manaValueXOffset() + " (" + requiredManaValue + ")");
         }
-        if (effect.requiresManaValueAtMostX() && graveyardCard.getManaValue() > ctx.xValue()) {
-            throw new IllegalStateException("Target card's mana value must be " + ctx.xValue() + " or less");
+        if (effect.requiresManaValueAtMostX()
+                && !ctx.deferCostDerivedXValueChecks()
+                && graveyardCard.getManaValue() > requiredManaValue) {
+            if (effect.manaValueXOffset() == 0) {
+                throw new IllegalStateException("Target card's mana value must be " + ctx.xValue() + " or less");
+            }
+            throw new IllegalStateException("Target card's mana value must be X plus "
+                    + effect.manaValueXOffset() + " or less (" + requiredManaValue + ")");
         }
         if (effect.maxManaValueEqualsLifeGainedThisTurn()) {
             UUID controllerId = tvs.findSourcePermanentController(ctx);

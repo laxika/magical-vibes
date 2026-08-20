@@ -157,6 +157,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .exileAtEndStep(effect.exileAtEndStep())
                         .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                         .animateFound(effect.animateFound())
+                        .battlefieldCounter(effect.battlefieldCounter())
                         .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
                                 ? entry.getBeholdChosenSubtype() : null)

@@ -66,6 +66,8 @@ public class TriggeredAbilityQueueService {
     private final PlayerInputService playerInputService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SagaChapterCounterDistributionSupport
+            sagaChapterCounterDistributionSupport;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
 
@@ -966,13 +968,13 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             PermanentChoiceContext.SagaChapterTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
 
-            // Collect valid creature targets, applying any saga target filter
-            List<UUID> validCreatureTargets = collectSagaChapterTargets(gameData, pending);
+            // Collect valid permanent targets, applying any saga target filter
+            List<UUID> validPermanentTargets = collectSagaChapterTargets(gameData, pending);
 
             gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
 
-            if (validCreatureTargets.isEmpty()) {
-                // "Up to one target creature" — no valid targets, push ability with no target
+            if (validPermanentTargets.isEmpty()) {
+                // No valid targets, push the ability with no target
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
@@ -983,23 +985,50 @@ public class TriggeredAbilityQueueService {
                         pending.sourcePermanentId()
                 ));
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                        "'s chapter " + pending.chapterName() + " has no valid creature targets."));
+                        "'s chapter " + pending.chapterName() + " has no valid targets."));
                 log.info("Game {} - {} chapter {} no valid targets, pushed with null target",
                         gameData.id, pending.sourceCard().getName(), pending.chapterName());
                 continue;
             }
 
             // "Up to one" — add controller player ID as a "skip" option
-            List<UUID> allChoices = new ArrayList<>(validCreatureTargets);
+            var counterDistribution = sagaChapterCounterDistributionSupport
+                    .findFixedDistribution(pending.effects());
+            if (counterDistribution.isPresent()) {
+                int maxTargets = Math.min(counterDistribution.get().total(), validPermanentTargets.size());
+                gameData.interaction.setPermanentChoiceContext(pending);
+                playerInputService.beginMultiPermanentChoice(
+                        gameData,
+                        pending.controllerId(),
+                        validPermanentTargets,
+                        maxTargets,
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext
+                                .SagaChapterCounterDistribution(
+                                pending.sourceCard(), pending.controllerId(), pending.effects(),
+                                pending.sourcePermanentId(), pending.chapterName(),
+                                counterDistribution.get().counterType(), counterDistribution.get().total()),
+                        pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
+                                + " — Choose one, two, or three target creatures.");
+
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s chapter " + pending.chapterName() + " - choose creatures for counter distribution."));
+                log.info("Game {} - {} chapter {} awaiting counter distribution targets",
+                        gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                return;
+            }
+
+            List<UUID> allChoices = new ArrayList<>(validPermanentTargets);
             List<UUID> playerChoices = List.of(pending.controllerId());
+            boolean creaturesOnly = sagaChapterTargetsCreaturesOnly(pending);
+            String targetDescription = creaturesOnly ? "target creature" : "target permanent";
 
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), allChoices, playerChoices,
                     pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
-                            + " — Choose target creature, or yourself to skip.");
+                            + " — Choose " + targetDescription + ", or yourself to skip.");
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                    "'s chapter " + pending.chapterName() + " - choose target creature."));
+                    "'s chapter " + pending.chapterName() + " - choose " + targetDescription + "."));
             log.info("Game {} - {} chapter {} awaiting target selection", gameData.id, pending.sourceCard().getName(), pending.chapterName());
             return;
         }
@@ -1172,6 +1201,7 @@ public class TriggeredAbilityQueueService {
             CardPredicate filter = null;
             boolean lifeGainedCap = false;
             boolean manaValueEqualsX = false;
+            int manaValueXOffset = 0;
             boolean manaValueAtMostX = false;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             GraveyardTargetingSupport.Target describedTarget =
@@ -1185,6 +1215,7 @@ public class TriggeredAbilityQueueService {
                 filter = returnEffect.filter();
                 lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
                 manaValueEqualsX = returnEffect.requiresManaValueEqualsX();
+                manaValueXOffset = returnEffect.manaValueXOffset();
                 manaValueAtMostX = returnEffect.requiresManaValueAtMostX();
                 scope = returnEffect.source();
             } else if (describedTarget != null) {
@@ -1241,7 +1272,8 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
-                    if (manaValueEqualsX && graveyardCard.getManaValue() != pending.xValue()) {
+                    if (manaValueEqualsX
+                            && graveyardCard.getManaValue() != pending.xValue() + manaValueXOffset) {
                         continue;
                     }
                     if (graveyardCard.getManaValue() > maxManaValue) {
@@ -1452,7 +1484,7 @@ public class TriggeredAbilityQueueService {
     }
 
     /**
-     * Collects valid creature targets for a saga chapter, applying any target predicate
+     * Collects valid permanent targets for a saga chapter, applying any target predicate
      * declared by the chapter's effects and any chapter-level target filters.
      */
     private List<UUID> collectSagaChapterTargets(GameData gameData,
@@ -1474,12 +1506,13 @@ public class TriggeredAbilityQueueService {
                         .withSourceControllerId(pending.controllerId())
                 : null;
 
-        List<UUID> validCreatureTargets = new ArrayList<>();
+        boolean creaturesOnly = targetPredicate == null;
+        List<UUID> validPermanentTargets = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (!gameQueryService.isCreature(gameData, p)) continue;
+                if (creaturesOnly && !gameQueryService.isCreature(gameData, p)) continue;
                 if (targetPredicate != null
                         && !predicateEvaluationService.matchesPermanentPredicate(p, targetPredicate, filterContext)) {
                     continue;
@@ -1488,10 +1521,17 @@ public class TriggeredAbilityQueueService {
                         && !predicateEvaluationService.matchesFilters(p, chapterFilters, filterContext)) {
                     continue;
                 }
-                validCreatureTargets.add(p.getId());
+                validPermanentTargets.add(p.getId());
             }
         }
-        return validCreatureTargets;
+        return validPermanentTargets;
+    }
+
+    private boolean sagaChapterTargetsCreaturesOnly(PermanentChoiceContext.SagaChapterTarget pending) {
+        return pending.effects().stream()
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                .map(EffectResolution::targetPredicateOf)
+                .allMatch(java.util.Objects::isNull);
     }
 
     private List<UUID> collectSagaChapterTargetGroup(GameData gameData,

@@ -1140,18 +1140,28 @@ public class PermanentChoiceBattlefieldHandlerService {
         boolean gainLife = ctx.gainLife();
         gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(
                 controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary(),
-                ctx.damageSourceControllerCard(), ctx.preventHalfDamage()));
+                ctx.damageSourceControllerCard(), ctx.preventHalfDamage(), ctx.drawCards(),
+                findDamageSourceController(gameData, permanentId)));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenSource.getName();
-        String rider = gainLife
-                ? " and " + playerName + " gains that much life."
-                : ctx.exileFromLibrary()
-                        ? " and " + playerName + " exiles that many cards from the top of their library."
-                        : ctx.damageSourceControllerCard() != null
-                                ? " and " + ctx.damageSourceControllerCard().getName()
-                                        + " deals that much damage to the source's controller."
-                        : ".";
+        String rider;
+        if (ctx.drawCards() && ctx.damageSourceControllerCard() != null) {
+            rider = " and " + ctx.damageSourceControllerCard().getName()
+                    + " deals that much damage to the source's controller, and " + playerName
+                    + " draws that many cards.";
+        } else if (ctx.drawCards()) {
+            rider = " and " + playerName + " draws that many cards.";
+        } else if (gainLife) {
+            rider = " and " + playerName + " gains that much life.";
+        } else if (ctx.exileFromLibrary()) {
+            rider = " and " + playerName + " exiles that many cards from the top of their library.";
+        } else if (ctx.damageSourceControllerCard() != null) {
+            rider = " and " + ctx.damageSourceControllerCard().getName()
+                    + " deals that much damage to the source's controller.";
+        } else {
+            rider = ".";
+        }
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
                 + " this turn, " + (ctx.preventHalfDamage()
                 ? "half that damage, rounded down, is prevented."
@@ -1160,6 +1170,20 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private UUID findDamageSourceController(GameData gameData, UUID sourceId) {
+        UUID permanentController = gameQueryService.findPermanentController(gameData, sourceId);
+        if (permanentController != null) {
+            return permanentController;
+        }
+        return gameData.stack.stream()
+                .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .map(StackEntry::getControllerId)
+                .findFirst()
+                .orElse(null);
     }
 
     public void handlePreventNextDamageFromSourceToYouAndYourCreaturesChoice(

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,11 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
+        if (queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect())));
+            return;
+        }
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),

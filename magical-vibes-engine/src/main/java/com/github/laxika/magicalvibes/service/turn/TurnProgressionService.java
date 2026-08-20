@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHand
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
@@ -519,6 +521,8 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerBoost.class);
         gameData.clearDelayedActions(DelayedNontokenAttackTokenCreation.class);
+        gameData.clearDelayedActions(DelayedAttackTokenCreation.class);
+        gameData.clearDelayedActions(DelayedAttackUntap.class);
         gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerGainLife.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
@@ -551,6 +555,7 @@ public class TurnProgressionService {
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
+        gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();

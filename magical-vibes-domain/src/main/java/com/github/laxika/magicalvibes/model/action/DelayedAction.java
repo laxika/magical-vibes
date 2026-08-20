@@ -46,6 +46,8 @@ public sealed interface DelayedAction permits
         DelayedCreateToken,
         DelayedExileCreatedPermanentsAtEndStep,
         DelayedNontokenAttackTokenCreation,
+        DelayedAttackTokenCreation,
+        DelayedAttackUntap,
         DelayedLoseLifeAndReturnFromGraveyard,
         DelayedGraveyardToHandReturn,
         DiscardCardsAtNextEndStep,

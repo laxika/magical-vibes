@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -35,7 +37,8 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
 
         int tokenCount = create.amount() * gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         PermanentChoiceContext.CreateTokensAttacking context = new PermanentChoiceContext.CreateTokensAttacking(
-                entry.getControllerId(), entry.getCard(), create.tokenEffect(), create.amount(), tokenCount, List.of());
+                entry.getControllerId(), entry.getCard(), create.tokenEffect(), create.amount(), tokenCount,
+                create.sacrificeAtEndStep(), List.of());
         beginTargetChoice(gameData, context);
     }
 

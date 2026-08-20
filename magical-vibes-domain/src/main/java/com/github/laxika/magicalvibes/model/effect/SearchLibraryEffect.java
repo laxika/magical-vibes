@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -28,6 +29,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@code animateFound} likewise applies to battlefield destinations only: every permanent the search
  * put onto the battlefield is animated by that {@link AnimatePermanentsEffect} as it enters (Nissa,
  * Worldwaker's "those lands become 4/4 Elemental creatures with trample").
+ * {@code battlefieldCounter} optionally puts one counter on each permanent the search puts onto the
+ * battlefield, before its enters-the-battlefield triggers are processed.
  * {@code searchPlayer} selects whose library is searched; it defaults to the stack entry's
  * controller and can use the active player for effects such as Oath of Lieges.
  * {@code shuffleAfterSelection} controls whether the search interaction shuffles immediately after
@@ -53,8 +56,20 @@ public record SearchLibraryEffect(
         LibrarySearchPlayer searchPlayer,
         boolean onlyIfSacrificed,
         boolean battlefieldIfChosenBeholdType,
-        boolean shuffleAfterSelection
+        boolean shuffleAfterSelection,
+        CounterType battlefieldCounter
 ) implements CardEffect {
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
+                               LibrarySearchPlayer searchPlayer, boolean onlyIfSacrificed,
+                               boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer,
+                onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection, null);
+    }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
@@ -98,6 +113,13 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
                 LibrarySearchPlayer.CONTROLLER, false, false, true);
+    }
+
+    /** Single card matching {@code filter} to the battlefield with one counter on it. */
+    public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
+                               CounterType battlefieldCounter) {
+        this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
+                LibrarySearchPlayer.CONTROLLER, false, false, true, battlefieldCounter);
     }
 
     /** Up to {@code count} cards matching {@code filter} to the given destination. */

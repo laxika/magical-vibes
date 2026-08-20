@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardTargetCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
@@ -471,8 +472,42 @@ public class CastingCostService {
      */
     public int getTargetingSpellCostModifier(GameData gameData, UUID casterId, UUID targetId,
                                              List<UUID> targetIds) {
+        return getTargetingSpellCostModifier(gameData, casterId, null, targetId, targetIds);
+    }
+
+    /**
+     * Net generic-mana adjustment for a spell's chosen targets, including cost modifiers carried
+     * by the spell itself.
+     */
+    public int getTargetingSpellCostModifier(GameData gameData, UUID casterId, Card card, UUID targetId,
+                                             List<UUID> targetIds) {
         return getTargetingSubtypeTax(gameData, casterId, targetId, targetIds, false)
-                - getTargetingControlledPermanentReduction(gameData, casterId, targetId, targetIds);
+                - getTargetingControlledPermanentReduction(gameData, casterId, targetId, targetIds)
+                + getOwnTargetingCastCostIncrease(gameData, card, targetId, targetIds);
+    }
+
+    private int getOwnTargetingCastCostIncrease(GameData gameData, Card card, UUID targetId,
+                                                List<UUID> targetIds) {
+        if (card == null) {
+            return 0;
+        }
+        UUID firstTargetId = targetId != null
+                ? targetId
+                : targetIds != null && !targetIds.isEmpty() ? targetIds.getFirst() : null;
+        if (firstTargetId == null) {
+            return 0;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, firstTargetId);
+        if (target == null) {
+            return 0;
+        }
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(IncreaseOwnCastCostIfTargetingPermanentEffect.class::isInstance)
+                .map(IncreaseOwnCastCostIfTargetingPermanentEffect.class::cast)
+                .filter(effect -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, target, effect.predicate()))
+                .mapToInt(IncreaseOwnCastCostIfTargetingPermanentEffect::amount)
+                .sum();
     }
 
     private int getTargetingControlledPermanentReduction(GameData gameData, UUID casterId, UUID targetId,
@@ -1547,7 +1582,9 @@ public class CastingCostService {
     /** Returns the maximum generic mana reduction currently available from delve, if present. */
     public int maximumDelveReduction(GameData gameData, UUID playerId, Card card,
                                      int effectiveXValue, int additionalGenericCost) {
-        if (additionalSpellCostService.peek(card).delveCost() == null) {
+        if (additionalSpellCostService.peek(card).delveCost() == null
+                && !gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card,
+                com.github.laxika.magicalvibes.model.Keyword.DELVE)) {
             return 0;
         }
         ManaCost manaCost = card.getParsedManaCost();
@@ -1569,5 +1606,10 @@ public class CastingCostService {
     /** True when the card carries any non-mana additional cast cost. */
     public boolean hasAdditionalSpellCosts(Card card) {
         return additionalSpellCostService.peek(card).any();
+    }
+
+    /** True when the card carries printed or battlefield-granted non-mana additional cast costs. */
+    public boolean hasAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
+        return additionalSpellCostService.peek(gameData, playerId, card).any();
     }
 }

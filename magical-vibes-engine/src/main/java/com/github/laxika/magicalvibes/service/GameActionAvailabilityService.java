@@ -305,6 +305,12 @@ public class GameActionAvailabilityService {
                     : new ManaPool(pool);
             pool.promoteForetellSpellOnlyMana();
         }
+
+        if (card.getCastingOption(OmenCast.class).isPresent() && card.getBackFaceCard() != null
+                && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
+                extraConvokeMana, additionalGenericCost, ctx)) {
+            return true;
+        }
         // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
         // mutating the caller's pool. Only copy when the player actually has the permission (rare).
         if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {
@@ -493,6 +499,7 @@ public class GameActionAvailabilityService {
                 : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
         }
@@ -513,6 +520,7 @@ public class GameActionAvailabilityService {
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen
                 || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
+                || !subtypeSpellOnlyContext.isEmpty()
                 || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
                 || !subtypeOrLegendaryCreatureContext.isEmpty()
                 || powerstoneContext;
@@ -520,7 +528,8 @@ public class GameActionAvailabilityService {
                 ? totalCost.canPay(paymentPool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
-                Set.of(), subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext)
+                Set.of(), subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                subtypeSpellOnlyContext)
                 : totalCost.canPay(pool, kickerXValue);
     }
 
@@ -648,6 +657,7 @@ public class GameActionAvailabilityService {
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
         }
@@ -676,6 +686,7 @@ public class GameActionAvailabilityService {
         }
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
+                || !subtypeSpellOnlyContext.isEmpty()
                 || !subtypeOrPlaneswalkerSpellContext.isEmpty()
                 || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
                 || !subtypeOrLegendaryCreatureContext.isEmpty() || powerstoneContext;
@@ -688,7 +699,7 @@ public class GameActionAvailabilityService {
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    powerstoneContext)
+                    powerstoneContext, subtypeSpellOnlyContext)
                     : cost.canPayWithAdditionalGenericCost(paymentPool, 0, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
@@ -947,20 +958,27 @@ public class GameActionAvailabilityService {
             }
             var disturb = card.getCastingOption(DisturbCast.class);
             Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
+            var harmonize = card.getCastingOption(HarmonizeCast.class);
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
+            boolean grantedHarmonize = harmonize.isEmpty() && flashback.isEmpty() && !isDisturb
+                    && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
+            boolean isHarmonize = (harmonize.isPresent() && flashback.isEmpty() && !isDisturb) || grantedHarmonize;
             boolean grantedFlashback = flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
-            boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !grantedFlashback
+            boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback
                     && castingPermissionService.hasEmblemGrantedFlashback(gameData, playerId, card);
             boolean grantedGraveyardCardCast = flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && !grantedFlashback
                     && !emblemFlashback
                     && castingPermissionService.hasGrantedGraveyardCardCastPermission(gameData, card, playerId);
             boolean isGrantedGraveyardPlay = flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedGraveyardCardCast
@@ -968,6 +986,7 @@ public class GameActionAvailabilityService {
             boolean isGraveyardCast = graveyardCast.isPresent()
                     && flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedGraveyardCardCast
@@ -976,7 +995,7 @@ public class GameActionAvailabilityService {
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
-            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast
+            if (flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast
                     && !isGrantedGraveyardPlay && !isGraveyardCast
                     && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
@@ -985,6 +1004,7 @@ public class GameActionAvailabilityService {
 
             boolean isGrantedCyclingGraveyardCast = flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedGraveyardCardCast
@@ -996,6 +1016,7 @@ public class GameActionAvailabilityService {
             boolean isJumpStart = card.getCastingOption(JumpStartCast.class).isPresent()
                     && flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedGraveyardCardCast
@@ -1010,6 +1031,7 @@ public class GameActionAvailabilityService {
             boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
                     && flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedGraveyardCardCast
@@ -1023,6 +1045,7 @@ public class GameActionAvailabilityService {
 
             boolean isMayCastTopInstantOrSorcery = flashback.isEmpty()
                     && !isDisturb
+                    && !isHarmonize
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedGraveyardCardCast
@@ -1034,7 +1057,7 @@ public class GameActionAvailabilityService {
                     && !isRetrace
                     && castingPermissionService.canCastTopInstantOrSorceryFromGraveyard(gameData, playerId, card);
 
-            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast && !isGraveyardCast
+            if (flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast && !isGraveyardCast
                     && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isJumpStart && !isRetrace
                     && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
                 continue;
@@ -1058,6 +1081,10 @@ public class GameActionAvailabilityService {
                 manaCostStr = graveyardAlternateManaCost;
             } else if (isDisturb) {
                 manaCostStr = disturb.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
+            } else if (isHarmonize) {
+                manaCostStr = harmonize.map(h -> h.getCost(ManaCastingCost.class)
+                                .map(ManaCastingCost::manaCost).orElse(null))
+                        .orElse(castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost());
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
                     || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
@@ -1079,14 +1106,17 @@ public class GameActionAvailabilityService {
             int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, cardHasFlashback);
             // Flashback-only mana (e.g. Altar of the Lost) can be spent on any spell with flashback
             // cast from a graveyard, but not on GraveyardCast-only or Muldrotha-style non-flashback casts.
-            if (cardHasFlashback) {
-                if (!cost.canPayFlashback(pool, additionalCost)) {
-                    continue;
-                }
-            } else {
-                if (!cost.canPay(pool, additionalCost)) {
-                    continue;
-                }
+            boolean canPayMana = cardHasFlashback
+                    ? cost.canPayFlashback(pool, additionalCost)
+                    : cost.canPay(pool, additionalCost);
+            if (isHarmonize) {
+                canPayMana = canPayMana || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))
+                        .mapToInt(permanent -> Math.max(0, gameQueryService.getEffectivePower(gameData, permanent)))
+                        .anyMatch(power -> cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost - power));
+            }
+            if (!canPayMana) {
+                continue;
             }
 
             // For GraveyardCast with ExileNCardsFromGraveyardCost, check that enough

@@ -32,6 +32,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentRemovalService permanentRemovalService;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
 
@@ -98,6 +99,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 simultaneouslyEntered.add(permanent);
                 returnedCards.add(card);
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, graveyardOwnerId, permanent, card);
+                if (e.counterType() != null && e.counterCount() > 0) {
+                    permanentCounterSupport.placeCounterOnPermanent(
+                            gameData, entry, permanent, e.counterType(), e.counterCount());
+                }
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);

@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -773,13 +775,39 @@ public class TargetLegalityService {
                                                   Zone targetZone,
                                                   Card sourceCard,
                                                   int xValue) {
+        validateActivatedAbilityTargeting(gameData, playerId, ability, abilityEffects, targetId, targetZone,
+                sourceCard, xValue, hasCostDerivedManaValueTarget(abilityEffects));
+    }
+
+    public void validateActivatedAbilityTargetingAfterCostSelection(GameData gameData,
+                                                                     UUID playerId,
+                                                                     ActivatedAbility ability,
+                                                                     List<CardEffect> abilityEffects,
+                                                                     UUID targetId,
+                                                                     Zone targetZone,
+                                                                     Card sourceCard,
+                                                                     int xValue) {
+        validateActivatedAbilityTargeting(gameData, playerId, ability, abilityEffects, targetId, targetZone,
+                sourceCard, xValue, false);
+    }
+
+    private void validateActivatedAbilityTargeting(GameData gameData,
+                                                   UUID playerId,
+                                                   ActivatedAbility ability,
+                                                   List<CardEffect> abilityEffects,
+                                                   UUID targetId,
+                                                   Zone targetZone,
+                                                   Card sourceCard,
+                                                   int xValue,
+                                                   boolean deferCostDerivedXValueChecks) {
         // "Up to N" abilities (minTargets=0) allow choosing zero targets (CR 115.1d)
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
         }
 
         targetValidationService.validateEffectTargets(abilityEffects,
-                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue));
+                new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
+                        null, null, deferCostDerivedXValueChecks));
 
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -841,6 +869,15 @@ public class TargetLegalityService {
                         + " can't be targeted by spells or abilities that can target only Walls");
             }
         }
+    }
+
+    private boolean hasCostDerivedManaValueTarget(List<CardEffect> effects) {
+        boolean tracksSacrificedManaValue = effects.stream().anyMatch(effect ->
+                effect instanceof SacrificeCreatureCost creatureCost && creatureCost.trackSacrificedManaValue()
+                        || effect instanceof SacrificePermanentCost permanentCost && permanentCost.trackSacrificedManaValue());
+        return tracksSacrificedManaValue && effects.stream().anyMatch(effect ->
+                effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && (returnEffect.requiresManaValueEqualsX() || returnEffect.requiresManaValueAtMostX()));
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
@@ -2042,6 +2079,30 @@ public class TargetLegalityService {
     }
 
     private Set<CardColor> effectiveSpellColors(GameData gameData, StackEntry entry) {
+        return effectiveSourceColors(gameData, entry);
+    }
+
+    Set<CardColor> effectiveSourceColors(GameData gameData, Card sourceCard) {
+        if (sourceCard == null) {
+            return Set.of();
+        }
+        UUID sourcePermanentId = findSourcePermanentIdByCardId(gameData, sourceCard.getId());
+        if (sourcePermanentId != null) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (sourcePermanent != null) {
+                return Set.copyOf(gameQueryService.getEffectiveColors(gameData, sourcePermanent));
+            }
+        }
+        return gameQueryService.getEffectiveCardColors(gameData, sourceCard);
+    }
+
+    private Set<CardColor> effectiveSourceColors(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (sourcePermanent != null) {
+                return Set.copyOf(gameQueryService.getEffectiveColors(gameData, sourcePermanent));
+            }
+        }
         return gameQueryService.getEffectiveCardColors(gameData, entry.getCard());
     }
 
@@ -2067,6 +2128,15 @@ public class TargetLegalityService {
 
     private boolean isHexproofFromColorBlocked(GameData gameData, Permanent targetPerm, StackEntry entry) {
         if (entry.getCard() == null) return false;
+        Set<CardColor> sourceColors = effectiveSourceColors(gameData, entry);
+        if (sourceColors.size() == 1 && gameQueryService.hasHexproofFromMonocolored(gameData, targetPerm)
+                && !(gameQueryService.isCreature(gameData, targetPerm)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, entry.getControllerId()))) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
+            if (targetController != null && !targetController.equals(entry.getControllerId())) {
+                return true;
+            }
+        }
         var sourceColor = entry.getCard().getColor();
         if (sourceColor == null) return false;
         if (gameQueryService.cantBeTargetedByColorSources(gameData, targetPerm, sourceColor)) return true;
@@ -2077,6 +2147,16 @@ public class TargetLegalityService {
 
     private void validateHexproofFromColor(GameData gameData, Permanent target, Card sourceCard, UUID sourcePlayerId) {
         if (sourceCard == null) return;
+        if (effectiveSourceColors(gameData, sourceCard).size() == 1
+                && gameQueryService.hasHexproofFromMonocolored(gameData, target)
+                && !(gameQueryService.isCreature(gameData, target)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId))) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+            if (targetController != null && !targetController.equals(sourcePlayerId)) {
+                throw new IllegalStateException(target.getCard().getName()
+                        + " has hexproof from monocolored");
+            }
+        }
         var sourceColor = sourceCard.getColor();
         if (sourceColor == null) return;
         if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
@@ -2095,6 +2175,15 @@ public class TargetLegalityService {
 
     private String hexproofFromColorReason(GameData gameData, Permanent target, Card sourceCard, UUID sourcePlayerId) {
         if (sourceCard == null) return null;
+        if (effectiveSourceColors(gameData, sourceCard).size() == 1
+                && gameQueryService.hasHexproofFromMonocolored(gameData, target)
+                && !(gameQueryService.isCreature(gameData, target)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId))) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+            if (targetController != null && !targetController.equals(sourcePlayerId)) {
+                return target.getCard().getName() + " has hexproof from monocolored";
+            }
+        }
         var sourceColor = sourceCard.getColor();
         if (sourceColor == null) return null;
         if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {

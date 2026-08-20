@@ -43,6 +43,7 @@ public record LibrarySearchParams(
         boolean exileAtEndStep,
         boolean returnToHandAtEndStep,
         AnimatePermanentsEffect animateFound,
+        CounterType battlefieldCounter,
         boolean repeatUntilDecline,
         CreateTokenEffect tokenTemplate,
         String sourceSetCode,
@@ -75,7 +76,7 @@ public record LibrarySearchParams(
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching);
     }
@@ -87,7 +88,7 @@ public record LibrarySearchParams(
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 placeBattlefieldCardsSimultaneously, allow);
     }
@@ -123,6 +124,7 @@ public record LibrarySearchParams(
         private boolean exileAtEndStep;
         private boolean returnToHandAtEndStep;
         private AnimatePermanentsEffect animateFound;
+        private CounterType battlefieldCounter;
         private boolean repeatUntilDecline;
         private CreateTokenEffect tokenTemplate;
         private String sourceSetCode;
@@ -273,6 +275,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder battlefieldCounter(CounterType battlefieldCounter) {
+            this.battlefieldCounter = battlefieldCounter;
+            return this;
+        }
+
         public Builder repeatUntilDecline(boolean repeatUntilDecline) {
             this.repeatUntilDecline = repeatUntilDecline;
             return this;
@@ -321,7 +328,7 @@ public record LibrarySearchParams(
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                    returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                    returnToHandAtEndStep, animateFound, battlefieldCounter, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                     placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching);
         }

@@ -13,7 +13,7 @@ import java.util.UUID;
  * prevented this way (Reverse Damage).
  *
  * @param playerId the protected player
- * @param sourceId the chosen source permanent
+ * @param sourceId the chosen source permanent or spell card
  * @param gainLife whether the protected player gains life equal to the prevented damage
  * @param coversControlledCreatures also shield creatures the protected player controls, so the
  *                 shield is consumed by the chosen source's next damage to the player <em>or</em>
@@ -25,25 +25,39 @@ import java.util.UUID;
  * @param damageSourceControllerCard card that deals prevented damage to the chosen source's controller
  *                 (Deflecting Palm)
  * @param preventHalfDamage whether to prevent only half the damage, rounded down (Dark Sphere)
+ * @param drawCards                 the protected player draws cards equal to the prevented damage
+ *                 (New Way Forward)
+ * @param sourceControllerId        fallback controller for a chosen spell source, which is not a battlefield permanent
  */
 public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                            boolean coversControlledCreatures,
                                            boolean gainLifeOnlyFromBlackSource,
                                            boolean exileFromLibrary,
                                            Card damageSourceControllerCard,
-                                           boolean preventHalfDamage) {
+                                           boolean preventHalfDamage,
+                                           boolean drawCards,
+                                           UUID sourceControllerId) {
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                         boolean coversControlledCreatures,
                                         boolean gainLifeOnlyFromBlackSource,
                                         boolean exileFromLibrary) {
         this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
-                exileFromLibrary, null, false);
+                exileFromLibrary, null, false, false, null);
+    }
+
+    public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
+                                        boolean coversControlledCreatures,
+                                        boolean gainLifeOnlyFromBlackSource,
+                                        boolean exileFromLibrary,
+                                        Card damageSourceControllerCard) {
+        this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
+                exileFromLibrary, damageSourceControllerCard, false, false, null);
     }
 
     /** Convenience constructor for a player-only shield (Circle of Protection, Reverse Damage). */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
-        this(playerId, sourceId, gainLife, false, false, false, null, false);
+        this(playerId, sourceId, gainLife, false, false, false, null, false, false, null);
     }
 
     /** Convenience constructor for a plain prevention shield with no life gain. */

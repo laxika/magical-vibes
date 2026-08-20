@@ -49,6 +49,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                    to the chosen source's controller (Deflecting Palm)
  * @param preventHalfDamage             NEXT_DAMAGE_TO_CONTROLLER only: prevent half the event,
  *                                    rounded down (Dark Sphere)
+ * @param drawCards                    NEXT_DAMAGE_TO_CONTROLLER only: this spell's controller draws cards
+ *                                    equal to the damage prevented (New Way Forward)
  */
 public record PreventDamageFromChosenSourceEffect(
         ChosenSourcePreventionScope scope,
@@ -63,7 +65,28 @@ public record PreventDamageFromChosenSourceEffect(
         boolean exileFromLibrary,
         boolean damageRedSourceController,
         boolean damageSourceController,
-        boolean preventHalfDamage) implements CardEffect {
+        boolean preventHalfDamage,
+        boolean drawCards) implements CardEffect {
+
+    public PreventDamageFromChosenSourceEffect(
+            ChosenSourcePreventionScope scope,
+            boolean gainLife,
+            boolean gainLifeForBlackOrRedSource,
+            boolean controllerOnly,
+            PermanentPredicate sourceFilter,
+            String sourceLabel,
+            boolean sourceChosenColor,
+            boolean sourceSharesColorWithImprintedCard,
+            boolean sourceActivationManaColor,
+            boolean exileFromLibrary,
+            boolean damageRedSourceController,
+            boolean damageSourceController,
+            boolean preventHalfDamage) {
+        this(scope, gainLife, gainLifeForBlackOrRedSource, controllerOnly, sourceFilter, sourceLabel,
+                sourceChosenColor, sourceSharesColorWithImprintedCard, sourceActivationManaColor,
+                exileFromLibrary, damageRedSourceController, damageSourceController,
+                preventHalfDamage, false);
+    }
 
     public PreventDamageFromChosenSourceEffect(
             ChosenSourcePreventionScope scope,
@@ -75,7 +98,7 @@ public record PreventDamageFromChosenSourceEffect(
             boolean exileFromLibrary,
             boolean damageRedSourceController) {
         this(scope, gainLife, false, controllerOnly, sourceFilter, sourceLabel, sourceChosenColor, false,
-                false, exileFromLibrary, damageRedSourceController, false, false);
+                false, exileFromLibrary, damageRedSourceController, false, false, false);
     }
 
     public PreventDamageFromChosenSourceEffect(
@@ -89,7 +112,7 @@ public record PreventDamageFromChosenSourceEffect(
             boolean exileFromLibrary,
             boolean damageRedSourceController) {
         this(scope, gainLife, false, controllerOnly, sourceFilter, sourceLabel, sourceChosenColor,
-                false, sourceActivationManaColor, exileFromLibrary, damageRedSourceController, false, false);
+                false, sourceActivationManaColor, exileFromLibrary, damageRedSourceController, false, false, false);
     }
 
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage." */
@@ -116,6 +139,13 @@ public record PreventDamageFromChosenSourceEffect(
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER,
                 false, false, false, null, null, false, false, false, false, false, true, false);
+    }
+
+    /** New Way Forward: prevent the damage, reflect it at the chosen source's controller, and draw that many cards. */
+    public static PreventDamageFromChosenSourceEffect nextDamageToYouAndDamageSourceControllerAndDrawCards() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER,
+                false, false, false, null, null, false, false, false, false, false, true, false, true);
     }
 
     /**

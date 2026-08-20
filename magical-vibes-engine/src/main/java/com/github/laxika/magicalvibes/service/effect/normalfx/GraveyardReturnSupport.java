@@ -398,8 +398,10 @@ public class GraveyardReturnSupport {
                 || conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
                 ConditionContext.forCasting(controllerId)));
         boolean enterWithCounter = effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
+        boolean enterWithCounters = effect.enterWithCounters() != null && !effect.enterWithCounters().isEmpty();
         if (!effect.enterWithMannequinCounter()
                 && !enterWithCounter
+                && !enterWithCounters
                 && !effect.exileIfLeavesBattlefield()
                 && !effect.unearth()
                 && !plusOneCounters
@@ -422,6 +424,12 @@ public class GraveyardReturnSupport {
             if (enterWithCounter) {
                 p.setCounterCount(effect.enterWithCounter(),
                         p.getCounterCount(effect.enterWithCounter()) + effect.enterWithCounterCount());
+            }
+            if (enterWithCounters) {
+                for (CounterType counterType : effect.enterWithCounters()) {
+                    p.setCounterCount(counterType, p.getCounterCount(counterType) + 1);
+                    p.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                }
             }
             if (effect.exileIfLeavesBattlefield()) {
                 p.setExileIfLeavesBattlefield(true);

@@ -13,6 +13,8 @@
 
 All paths relative to `cards/`.
 
+| Graveyard ally creature dies -> may pay to return self to hand | `f/FuriousForebear.java` | `GRAVEYARD_ON_ALLY_CREATURE_DIES` + `MayPayManaEffect("{1}{W}", ReturnSourceCardFromGraveyardToOwnerHandEffect(), ...)`; the graveyard collector skips a source card that dies in the same event |
+
 ## Triggered creatures
 
 | Pattern | Reference | Notes |

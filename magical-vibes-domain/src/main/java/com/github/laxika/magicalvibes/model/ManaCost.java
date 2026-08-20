@@ -1290,6 +1290,38 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext,
+                          boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                          boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext,
+                          Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
+                          boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext,
+                          boolean manaValueAtLeastFourContext,
+                          Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                          boolean powerstoneContext, Set<CardSubtype> subtypeSpellOnlyContext) {
+        return canPayWithAdditionalGenericCost(pool, xValue, 0, artifactContext, myrContext,
+                restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, Set.of(), powerstoneContext, subtypeSpellOnlyContext);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext,
+                          boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                          boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext,
+                          Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
+                          boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext,
+                          boolean manaValueAtLeastFourContext,
+                          Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                          Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                          boolean powerstoneContext, Set<CardSubtype> subtypeSpellOnlyContext) {
+        return canPayWithAdditionalGenericCost(pool, xValue, 0, artifactContext, myrContext,
+                restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, subtypeSpellOnlyContext);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext,
                            boolean restrictedRedContext, boolean kickedOnlyGreenContext,
                            boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext,
                            Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
@@ -1415,6 +1447,28 @@ public class ManaCost {
                     manaValueAtLeastFourContext, subtypeOrPlaneswalkerSpellContext,
                     subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
         }
+        return canPayWithAdditionalGenericCost(pool, xValue, additionalGenericCost, artifactContext, myrContext,
+                restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, Set.of());
+    }
+
+    public boolean canPayWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost,
+                                                    boolean artifactContext, boolean myrContext,
+                                                    boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                                                    boolean instantSorceryOnlyColorlessContext,
+                                                    Set<CardSubtype> subtypeCreatureContext,
+                                                    Set<CardSubtype> subtypeSpellOrAbilityContext,
+                                                    boolean creatureSpellOnlyContext,
+                                                    boolean artifactAbilityOnlyContext,
+                                                    boolean legendarySpellOnlyContext,
+                                                    boolean manaValueAtLeastFourContext,
+                                                    Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                                                    Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                                                    boolean powerstoneContext,
+                                                    Set<CardSubtype> subtypeSpellOnlyContext) {
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten);
@@ -1424,7 +1478,7 @@ public class ManaCost {
                     subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
                     artifactAbilityOnlyContext, legendarySpellOnlyContext,
                     manaValueAtLeastFourContext, subtypeOrPlaneswalkerSpellContext,
-                    subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
+                    subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext, subtypeSpellOnlyContext);
         }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
@@ -1433,7 +1487,7 @@ public class ManaCost {
                     subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
                     legendarySpellOnlyContext, manaValueAtLeastFourContext,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    powerstoneContext));
+                    powerstoneContext, subtypeSpellOnlyContext));
         }
         if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
             return canPayWithBlueAsAnyColor(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
@@ -1442,7 +1496,7 @@ public class ManaCost {
                     subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
                     legendarySpellOnlyContext, manaValueAtLeastFourContext,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    powerstoneContext));
+                    powerstoneContext, subtypeSpellOnlyContext));
         }
         if (pool.isWhiteSpendableAsAnyColor()) {
             ManaPool rewritten = new ManaPool(pool);
@@ -1453,7 +1507,7 @@ public class ManaCost {
                     subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
                     legendarySpellOnlyContext, manaValueAtLeastFourContext,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    powerstoneContext);
+                    powerstoneContext, subtypeSpellOnlyContext);
         }
         boolean hasCreatureCtx = subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty();
         boolean hasSpellOrAbilityCtx = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
@@ -1461,10 +1515,11 @@ public class ManaCost {
                 && !subtypeCreatureSourceSpellOrAbilityContext.isEmpty();
         boolean hasSubtypeOrPlaneswalkerSpellCtx = subtypeOrPlaneswalkerSpellContext != null
                 && !subtypeOrPlaneswalkerSpellContext.isEmpty();
+        boolean hasSpellOnlyCtx = subtypeSpellOnlyContext != null && !subtypeSpellOnlyContext.isEmpty();
         if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !hasCreatureSourceSpellOrAbilityCtx
                 && !hasSubtypeOrPlaneswalkerSpellCtx
                 && !creatureSpellOnlyContext && !artifactAbilityOnlyContext && !legendarySpellOnlyContext
-                && !manaValueAtLeastFourContext && !powerstoneContext) {
+                && !manaValueAtLeastFourContext && !powerstoneContext && !hasSpellOnlyCtx) {
             return canPayWithAdditionalGenericCost(pool, xValue, additionalGenericCost,
                     artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
                     instantSorceryOnlyColorlessContext, powerstoneContext);
@@ -1475,6 +1530,7 @@ public class ManaCost {
                 ? subtypeCreatureSourceSpellOrAbilityContext : Set.of();
         Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerCtx =
                 hasSubtypeOrPlaneswalkerSpellCtx ? subtypeOrPlaneswalkerSpellContext : Set.of();
+        Set<CardSubtype> spellOnlyCtx = hasSpellOnlyCtx ? subtypeSpellOnlyContext : Set.of();
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
         int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
 
@@ -1487,6 +1543,7 @@ public class ManaCost {
             }
             available += pool.getSubtypeCreatureManaForColor(creatureCtx, entry.getKey());
             available += pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, entry.getKey());
+            available += pool.getSubtypeSpellOnlyManaForColor(spellOnlyCtx, entry.getKey());
             available += pool.getSubtypeCreatureSourceSpellOrAbilityManaForColor(
                     creatureSourceSoaCtx, entry.getKey());
             available += pool.getSubtypeOrPlaneswalkerSpellManaForColor(subtypeOrPlaneswalkerCtx, entry.getKey());
@@ -1549,6 +1606,7 @@ public class ManaCost {
         }
         totalUsable += pool.getSubtypeCreatureManaTotal(creatureCtx);
         totalUsable += pool.getSubtypeSpellOrAbilityManaTotal(soaCtx);
+        totalUsable += pool.getSubtypeSpellOnlyManaTotal(spellOnlyCtx);
         totalUsable += pool.getSubtypeCreatureSourceSpellOrAbilityManaTotal(creatureSourceSoaCtx);
         totalUsable += pool.getSubtypeOrPlaneswalkerSpellManaTotal(subtypeOrPlaneswalkerCtx);
         if (creatureSpellOnlyContext) {
@@ -1573,6 +1631,7 @@ public class ManaCost {
                 }
                 amount += pool.getSubtypeCreatureManaForColor(creatureCtx, color);
                 amount += pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, color);
+                amount += pool.getSubtypeSpellOnlyManaForColor(spellOnlyCtx, color);
                 amount += pool.getSubtypeCreatureSourceSpellOrAbilityManaForColor(creatureSourceSoaCtx, color);
                 amount += pool.getSubtypeOrPlaneswalkerSpellManaForColor(subtypeOrPlaneswalkerCtx, color);
                 if (creatureSpellOnlyContext) {
@@ -1987,6 +2046,19 @@ public class ManaCost {
                             Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
                             Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
                             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext) {
+        return payHybrids(pool, artifactContext, restrictedRedContext, kickedOnlyGreenContext,
+                instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext,
+                creatureSpellOnlyContext, subtypeOrPlaneswalkerSpellContext,
+                subtypeCreatureSourceSpellOrAbilityContext, Set.of());
+    }
+
+    private int payHybrids(ManaPool pool, boolean artifactContext, boolean restrictedRedContext,
+                            boolean kickedOnlyGreenContext,
+                            boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext,
+                            Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
+                            Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                            Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                            Set<CardSubtype> subtypeSpellOnlyContext) {
         if (hybridCosts.isEmpty()) {
             return 0;
         }
@@ -1996,10 +2068,12 @@ public class ManaCost {
                 ? Set.of() : subtypeCreatureSourceSpellOrAbilityContext;
         Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerCtx =
                 subtypeOrPlaneswalkerSpellContext == null ? Set.of() : subtypeOrPlaneswalkerSpellContext;
+        Set<CardSubtype> spellOnlyCtx = subtypeSpellOnlyContext == null ? Set.of() : subtypeSpellOnlyContext;
         Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
             int amount = pool.get(color)
                     + pool.getSubtypeCreatureManaForColor(creatureCtx, color)
+                    + pool.getSubtypeSpellOnlyManaForColor(spellOnlyCtx, color)
                     + pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, color)
                     + pool.getSubtypeCreatureSourceSpellOrAbilityManaForColor(creatureSourceSoaCtx, color)
                     + pool.getSubtypeOrPlaneswalkerSpellManaForColor(subtypeOrPlaneswalkerCtx, color);
@@ -2034,6 +2108,12 @@ public class ManaCost {
             if (fromSubtypeCreature > 0) {
                 pool.removeSubtypeCreatureMana(creatureCtx, color, fromSubtypeCreature);
                 remaining -= fromSubtypeCreature;
+            }
+            int fromSpellOnlySubtype = Math.min(remaining,
+                    pool.getSubtypeSpellOnlyManaForColor(spellOnlyCtx, color));
+            if (fromSpellOnlySubtype > 0) {
+                pool.removeSubtypeSpellOnlyMana(spellOnlyCtx, color, fromSpellOnlySubtype);
+                remaining -= fromSpellOnlySubtype;
             }
             int fromSubtypeSpellOrAbility = Math.min(remaining,
                     pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, color));
@@ -2495,6 +2575,28 @@ public class ManaCost {
         if (snowCost > 0) {
             pool.removeSnowMana(snowCost);
         }
+        payWithAdditionalGenericCost(pool, xValue, additionalGenericCost, artifactContext, myrContext,
+                restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, Set.of());
+    }
+
+    public void payWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost,
+                                             boolean artifactContext, boolean myrContext,
+                                             boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                                             boolean instantSorceryOnlyColorlessContext,
+                                             Set<CardSubtype> subtypeCreatureContext,
+                                             Set<CardSubtype> subtypeSpellOrAbilityContext,
+                                             boolean creatureSpellOnlyContext,
+                                             boolean artifactAbilityOnlyContext,
+                                             boolean legendarySpellOnlyContext,
+                                             boolean manaValueAtLeastFourContext,
+                                             Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                                             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                                             boolean powerstoneContext,
+                                             Set<CardSubtype> subtypeSpellOnlyContext) {
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }
@@ -2505,7 +2607,7 @@ public class ManaCost {
                     subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
                     legendarySpellOnlyContext, manaValueAtLeastFourContext,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    powerstoneContext));
+                    powerstoneContext, subtypeSpellOnlyContext));
         }
         if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
             applyBlueAsAnyColorForPayment(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
@@ -2514,7 +2616,7 @@ public class ManaCost {
                     subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
                     legendarySpellOnlyContext, manaValueAtLeastFourContext,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    powerstoneContext));
+                    powerstoneContext, subtypeSpellOnlyContext));
         }
         if (pool.isWhiteSpendableAsAnyColor()) {
             applyWhiteAsAnyColor(pool);
@@ -2525,10 +2627,11 @@ public class ManaCost {
                 && !subtypeCreatureSourceSpellOrAbilityContext.isEmpty();
         boolean hasSubtypeOrPlaneswalkerSpellCtx = subtypeOrPlaneswalkerSpellContext != null
                 && !subtypeOrPlaneswalkerSpellContext.isEmpty();
+        boolean hasSpellOnlyCtx = subtypeSpellOnlyContext != null && !subtypeSpellOnlyContext.isEmpty();
         if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !hasCreatureSourceSpellOrAbilityCtx
                 && !hasSubtypeOrPlaneswalkerSpellCtx
                 && !creatureSpellOnlyContext && !artifactAbilityOnlyContext && !legendarySpellOnlyContext
-                && !manaValueAtLeastFourContext && !powerstoneContext) {
+                && !manaValueAtLeastFourContext && !powerstoneContext && !hasSpellOnlyCtx) {
             payWithAdditionalGenericCost(pool, xValue, additionalGenericCost, artifactContext,
                     myrContext, restrictedRedContext, kickedOnlyGreenContext,
                     instantSorceryOnlyColorlessContext, powerstoneContext);
@@ -2540,6 +2643,7 @@ public class ManaCost {
                 ? subtypeCreatureSourceSpellOrAbilityContext : Set.of();
         Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerCtx =
                 hasSubtypeOrPlaneswalkerSpellCtx ? subtypeOrPlaneswalkerSpellContext : Set.of();
+        Set<CardSubtype> spellOnlyCtx = hasSpellOnlyCtx ? subtypeSpellOnlyContext : Set.of();
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
         int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
 
@@ -2550,6 +2654,8 @@ public class ManaCost {
                     pool.removeManaValueAtLeastFourOnlyMana(entry.getKey(), 1);
                 } else if (pool.getSubtypeCreatureManaForColor(creatureCtx, entry.getKey()) > 0) {
                     pool.removeSubtypeCreatureMana(creatureCtx, entry.getKey(), 1);
+                } else if (pool.getSubtypeSpellOnlyManaForColor(spellOnlyCtx, entry.getKey()) > 0) {
+                    pool.removeSubtypeSpellOnlyMana(spellOnlyCtx, entry.getKey(), 1);
                 } else if (pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, entry.getKey()) > 0) {
                     pool.removeSubtypeSpellOrAbilityMana(soaCtx, entry.getKey(), 1);
                 } else if (pool.getSubtypeCreatureSourceSpellOrAbilityManaForColor(
@@ -2582,7 +2688,7 @@ public class ManaCost {
         // does. Without this a cost made only of hybrid pips ({R/G}{R/G}) would be free.
         int extraHybridGeneric = payHybrids(pool, artifactContext, restrictedRedContext, kickedOnlyGreenContext,
                 instantSorceryOnlyColorlessContext, creatureCtx, soaCtx, creatureSpellOnlyContext,
-                subtypeOrPlaneswalkerCtx, creatureSourceSoaCtx);
+                subtypeOrPlaneswalkerCtx, creatureSourceSoaCtx, spellOnlyCtx);
 
         int remainingGeneric = genericCost + extraHybridGeneric
                 + xValue * effectiveXMultiplier() + additionalGenericCost;
@@ -2600,6 +2706,25 @@ public class ManaCost {
                     int removeNow = Math.min(toRemove, avail);
                     if (removeNow > 0) {
                         pool.removeSubtypeCreatureMana(creatureCtx, color, removeNow);
+                        toRemove -= removeNow;
+                    }
+                }
+                remainingGeneric -= fromSubtype;
+            }
+        }
+
+        // Spend subtype spell-only mana for generic costs (also fully restricted)
+        if (remainingGeneric > 0) {
+            int subtypeTotal = pool.getSubtypeSpellOnlyManaTotal(spellOnlyCtx);
+            int fromSubtype = Math.min(remainingGeneric, subtypeTotal);
+            if (fromSubtype > 0) {
+                int toRemove = fromSubtype;
+                for (ManaColor color : ManaColor.values()) {
+                    if (toRemove <= 0) break;
+                    int avail = pool.getSubtypeSpellOnlyManaForColor(spellOnlyCtx, color);
+                    int removeNow = Math.min(toRemove, avail);
+                    if (removeNow > 0) {
+                        pool.removeSubtypeSpellOnlyMana(spellOnlyCtx, color, removeNow);
                         toRemove -= removeNow;
                     }
                 }

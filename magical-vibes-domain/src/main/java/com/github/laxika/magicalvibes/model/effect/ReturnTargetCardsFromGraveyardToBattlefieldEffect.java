@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -11,8 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>The one-argument form returns exactly the spell's paid X cards. The fixed-cap form returns up
  * to {@code maxTargets} cards and can restrict them to cards put into the graveyard from the
- * battlefield this turn. The dynamic-cap form is used by ETB abilities whose cap comes from the
- * cast context, such as multikicker payments.</p>
+ * battlefield this turn. It can also put counters on each returned permanent. The dynamic-cap form
+ * is used by ETB abilities whose cap comes from the cast context, such as multikicker payments.</p>
  */
 public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         CardPredicate filter,
@@ -22,32 +23,40 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         DynamicAmount dynamicMaxTargets,
         int maxTotalManaValue,
         CardColor grantColor,
-        CardSubtype grantSubtype
+        CardSubtype grantSubtype,
+        CounterType counterType,
+        int counterCount
 ) implements CardEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter) {
-        this(filter, 0, false, false, null, 0, null, null);
+        this(filter, 0, false, false, null, 0, null, null, null, 0);
     }
 
     /** Creates the fixed-cap form used by up-to-N reanimation spells. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
                                                               boolean fromBattlefieldThisTurn,
                                                               boolean enterTapped) {
-        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0, null, null);
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0, null, null, null, 0);
+    }
+
+    /** Creates a fixed-cap form that puts counters on each returned permanent. */
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              CounterType counterType, int counterCount) {
+        this(filter, maxTargets, false, false, null, 0, null, null, counterType, counterCount);
     }
 
     /** Creates an ETB form whose up-to cap is evaluated from the entering spell's cast context. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter,
                                                               DynamicAmount dynamicMaxTargets) {
-        this(filter, 0, false, false, dynamicMaxTargets, 0, null, null);
+        this(filter, 0, false, false, dynamicMaxTargets, 0, null, null, null, 0);
     }
 
     /** Creates an any-number form capped by the total mana value of the chosen cards. */
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect withinTotalManaValue(
             CardPredicate filter, int maxTotalManaValue) {
         return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
-                filter, 0, false, false, null, maxTotalManaValue, null, null);
+                filter, 0, false, false, null, maxTotalManaValue, null, null, null, 0);
     }
 
     /** Creates a fixed-cap form that also permanently grants a color and subtype. */
@@ -55,7 +64,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean fromBattlefieldThisTurn,
                                                               boolean enterTapped, CardColor grantColor,
                                                               CardSubtype grantSubtype) {
-        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0, grantColor, grantSubtype);
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0, grantColor, grantSubtype,
+                null, 0);
     }
 
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
@@ -64,7 +74,9 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               DynamicAmount dynamicMaxTargets,
                                                               int maxTotalManaValue,
                                                               CardColor grantColor,
-                                                              CardSubtype grantSubtype) {
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -79,6 +91,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.maxTotalManaValue = maxTotalManaValue;
         this.grantColor = grantColor;
         this.grantSubtype = grantSubtype;
+        this.counterType = counterType;
+        this.counterCount = counterCount;
     }
 
     public boolean xScaled() {

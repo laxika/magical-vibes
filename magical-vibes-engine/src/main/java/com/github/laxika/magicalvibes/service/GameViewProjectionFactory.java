@@ -700,7 +700,7 @@ public class GameViewProjectionFactory {
 
         // The from-library-top cast path rejects cards with additional cast costs (no wire for
         // the payment selections) — never advertise them as playable.
-        if (castingCostService.hasAdditionalSpellCosts(topCard)) {
+        if (castingCostService.hasAdditionalSpellCosts(gameData, playerId, topCard)) {
             return playable;
         }
 
