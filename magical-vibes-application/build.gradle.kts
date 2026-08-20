@@ -37,8 +37,13 @@ val copyFrontend = tasks.register<Sync>("copyFrontend") {
     dependsOn(":magical-vibes-frontend:buildAngular")
     from(project(":magical-vibes-frontend").file("dist/magical-vibes-frontend/browser"))
     into(layout.buildDirectory.dir("resources/main/static"))
+    mustRunAfter("processResources")
 }
 
-tasks.named("processResources") {
+tasks.named("bootJar") {
+    dependsOn(copyFrontend)
+}
+
+tasks.named("bootRun") {
     dependsOn(copyFrontend)
 }

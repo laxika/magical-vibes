@@ -21,12 +21,7 @@ $log = Join-Path $buildDir "card-test.log"
 $xmlPath = "$buildDir/test-results/test/TEST-$TestClass.xml"
 
 function Invoke-GradleTest {
-    param([bool] $SkipFrontend)
-
     $gradleArgs = ":magical-vibes-application:test --tests $TestClass --console=plain"
-    if ($SkipFrontend) {
-        $gradleArgs += " -x :magical-vibes-frontend:buildAngular"
-    }
     # Redirect inside cmd so PowerShell 5.1 does not wrap stderr lines in
     # NativeCommandError records.
     & cmd /c ".\gradlew.bat $gradleArgs > `"$log`" 2>&1"
@@ -39,29 +34,7 @@ function Test-XmlFresh {
 }
 
 $startTime = Get-Date
-$exitCode = Invoke-GradleTest -SkipFrontend $true
-
-# A build failure (no fresh test results) whose FAILURE section mentions the
-# frontend usually means stale frontend assets; retry once without skipping
-# buildAngular. Checking only the FAILURE section avoids false positives from
-# the "> Task :magical-vibes-frontend:..." lines every build prints.
-function Test-FrontendFailure {
-    $lines = Get-Content $log
-    $failureStart = -1
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match '^FAILURE:') {
-            $failureStart = $i
-            break
-        }
-    }
-    if ($failureStart -lt 0) { return $false }
-    return [bool]($lines[$failureStart..($lines.Count - 1)] -match 'frontend')
-}
-
-if ($exitCode -ne 0 -and -not (Test-XmlFresh -Since $startTime) -and (Test-FrontendFailure)) {
-    Write-Host "(build failed mentioning frontend - retrying without -x :magical-vibes-frontend:buildAngular)"
-    $exitCode = Invoke-GradleTest -SkipFrontend $false
-}
+$exitCode = Invoke-GradleTest
 
 if ($exitCode -eq 0) {
     $summary = ""
