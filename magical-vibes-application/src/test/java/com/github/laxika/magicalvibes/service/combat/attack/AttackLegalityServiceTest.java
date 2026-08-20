@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +53,38 @@ import static org.assertj.core.api.Assertions.assertThat;
  * here rather than only surfacing as a wrong list of offered attackers deep inside
  * {@code CombatAttackService.getAttackableCreatureIndices} or the AI's attack search.
  */
+@CardUsed({
+        AngelicArbiter.class,
+        AnimateWall.class,
+        BerserkersOfBloodRidge.class,
+        ChandraNalaar.class,
+        ChaosLord.class,
+        CrawWurm.class,
+        CurseOfTheNightlyHunt.class,
+        EnsnaringBridge.class,
+        EvilEyeOfOrmsByGore.class,
+        ForcedWorship.class,
+        Forest.class,
+        FormOfTheDragon.class,
+        GoblinAssault.class,
+        GoblinRabblemaster.class,
+        GrizzlyBears.class,
+        HillGiant.class,
+        InstillEnergy.class,
+        Island.class,
+        LeoninScimitar.class,
+        LightOfDay.class,
+        Okk.class,
+        Pacifism.class,
+        RollingStones.class,
+        SandwurmConvergence.class,
+        ScatheZombies.class,
+        SeaSerpent.class,
+        StormtideLeviathan.class,
+        TrainingDrone.class,
+        WallOfWood.class,
+        WindDrake.class
+})
 class AttackLegalityServiceTest extends BaseCardTest {
 
     @Test

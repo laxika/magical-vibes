@@ -993,8 +993,6 @@ public class MultiPermanentChoiceHandlerService {
 
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext.ForcedSacrifice context) {
-        UUID sacrificingPlayerId = context.sacrificingPlayerId();
-
         boolean simultaneousFlow = context.simultaneousFlow()
                 || !context.accumulatedSacrificeIds().isEmpty()
                 || !context.remainingChoosers().isEmpty();
@@ -1013,31 +1011,10 @@ public class MultiPermanentChoiceHandlerService {
             }
 
             // All players have chosen — sacrifice all simultaneously
-            for (UUID permId : allIds) {
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                    String ownerName = controllerId != null ? gameData.playerIdToName.get(controllerId) : "Unknown";
-                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                    gameLogService.append(gameData, GameLog.playerSacrifices(ownerName, perm.getCard()));
-                    log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
-                    triggerCollectionService.checkAnyCreatureSacrificedTriggers(
-                            gameData, controllerId, perm.getCard());
-                }
-            }
+            destructionSupport.performSimultaneousSacrifice(gameData, allIds);
         } else {
             // Direct forced sacrifice (e.g. Phyrexian Obliterator) — sacrifice immediately
-            for (UUID permId : permanentIds) {
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    String ownerName = sacrificingPlayerId != null ? gameData.playerIdToName.get(sacrificingPlayerId) : "Unknown";
-                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                    gameLogService.append(gameData, GameLog.playerSacrifices(ownerName, perm.getCard()));
-                    log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
-                    triggerCollectionService.checkAnyCreatureSacrificedTriggers(
-                            gameData, sacrificingPlayerId, perm.getCard());
-                }
-            }
+            destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

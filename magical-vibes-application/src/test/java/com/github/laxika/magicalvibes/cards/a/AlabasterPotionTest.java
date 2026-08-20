@@ -1,19 +1,20 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlabasterPotion.class, GrizzlyBears.class})
 class AlabasterPotionTest extends BaseCardTest {
 
     @Nested
@@ -32,6 +33,17 @@ class AlabasterPotionTest extends BaseCardTest {
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(before + 3);
         }
+
+        @Test
+        @DisplayName("Cannot target a creature with the gain-life mode")
+        void cannotTargetCreature() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new AlabasterPotion()));
+            harness.addMana(player1, ManaColor.WHITE, 5);
+
+            assertThatThrownBy(() -> harness.castModalInstantForX(player1, 0, 0, 3, bears.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 
     @Nested
@@ -41,16 +53,13 @@ class AlabasterPotionTest extends BaseCardTest {
         @Test
         @DisplayName("Adds an X-damage prevention shield to a target creature")
         void shieldOnCreature() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
             harness.setHand(player1, List.of(new AlabasterPotion()));
             harness.addMana(player1, ManaColor.WHITE, 5);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castModalInstantForX(player1, 0, 1, 2, targetId);
+            harness.castModalInstantForX(player1, 0, 1, 2, bears.getId());
             harness.passBothPriorities();
 
-            Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(targetId)).findFirst().orElseThrow();
             assertThat(bears.getDamagePreventionShield()).isEqualTo(2);
         }
 
@@ -63,8 +72,25 @@ class AlabasterPotionTest extends BaseCardTest {
             harness.castModalInstantForX(player1, 0, 1, 3, player2.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
             assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Prevents combat damage to the targeted player")
+        void preventsCombatDamageToTargetPlayer() {
+            harness.setLife(player2, 20);
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+            harness.setHand(player1, List.of(new AlabasterPotion()));
+            harness.addMana(player1, ManaColor.WHITE, 5);
+
+            harness.castModalInstantForX(player1, 0, 1, 2, player2.getId());
+            harness.passBothPriorities();
+
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+            resolveCombat();
+
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
         }
     }
 }

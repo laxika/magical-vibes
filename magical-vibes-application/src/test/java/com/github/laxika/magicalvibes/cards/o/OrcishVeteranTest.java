@@ -1,27 +1,29 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.b.BenalishHero;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.cards.i.IcatianJavelineers;
+import com.github.laxika.magicalvibes.cards.m.MindstabThrull;
+import com.github.laxika.magicalvibes.cards.o.OrderOfLeitbur;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OrcishVeteran.class, OrderOfLeitbur.class, IcatianJavelineers.class, MindstabThrull.class})
 class OrcishVeteranTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can't block white creatures with power 2 or greater, but can block other creatures")
     void restrictsBlockingByColorAndPower() {
-        Permanent veteran = addVeteran();
-        Permanent whiteTwoPower = new Permanent(new WhiteKnight());
-        Permanent whiteOnePower = new Permanent(new BenalishHero());
-        Permanent nonwhiteTwoPower = new Permanent(new GrizzlyBears());
+        Permanent veteran = addCreatureReady(player1, new OrcishVeteran());
+        Permanent whiteTwoPower = new Permanent(new OrderOfLeitbur());
+        Permanent whiteOnePower = new Permanent(new IcatianJavelineers());
+        Permanent nonwhiteTwoPower = new Permanent(new MindstabThrull());
         gd.playerBattlefields.get(player2.getId()).add(whiteTwoPower);
         gd.playerBattlefields.get(player2.getId()).add(whiteOnePower);
         gd.playerBattlefields.get(player2.getId()).add(nonwhiteTwoPower);
@@ -37,7 +39,7 @@ class OrcishVeteranTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability grants first strike until end of turn")
     void gainsFirstStrikeUntilEndOfTurn() {
-        Permanent veteran = addVeteran();
+        Permanent veteran = addCreatureReady(player1, new OrcishVeteran());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -50,12 +52,5 @@ class OrcishVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.FIRST_STRIKE)).isFalse();
-    }
-
-    private Permanent addVeteran() {
-        Permanent veteran = new Permanent(new OrcishVeteran());
-        veteran.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(veteran);
-        return veteran;
     }
 }
