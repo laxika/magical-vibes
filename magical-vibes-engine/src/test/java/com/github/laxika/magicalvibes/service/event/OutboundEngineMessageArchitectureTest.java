@@ -30,6 +30,9 @@ class OutboundEngineMessageArchitectureTest {
     private static final String NETWORK_MESSAGE_ROOT =
             "magical-vibes-networking/src/main/java/com/github/laxika/magicalvibes/networking/message";
 
+    private static final Set<String> NON_OUTBOUND_WIRE_TYPES = Set.of(
+            "BlockerAssignment");
+
     private static final Set<String> SESSION_ADAPTERS = Set.of(
             "GameMessageTransport.java",
             "GameSessionTransportAdapter.java");
@@ -149,6 +152,9 @@ class OutboundEngineMessageArchitectureTest {
             String source = Files.readString(path, StandardCharsets.UTF_8);
             String relative = relative(serviceRoot, path);
             for (String messageType : wireTypes(messageRoot)) {
+                if (NON_OUTBOUND_WIRE_TYPES.contains(messageType)) {
+                    continue;
+                }
                 Pattern construction = messageType.equals("InteractionPromptMessage")
                         ? Pattern.compile("\\bInteractionPromptMessage\\s*\\.")
                         : Pattern.compile("\\bnew\\s+" + Pattern.quote(messageType) + "\\s*\\(");

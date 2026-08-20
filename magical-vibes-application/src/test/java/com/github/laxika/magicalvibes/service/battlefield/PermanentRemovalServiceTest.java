@@ -368,7 +368,7 @@ class PermanentRemovalServiceTest {
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isFalse();
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -382,7 +382,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("exiled instead of going to the graveyard")));
         }
 
@@ -397,7 +397,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -412,7 +412,7 @@ class PermanentRemovalServiceTest {
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(stolen.getOriginalCard()),
                     eq(Zone.BATTLEFIELD), eq(player1Id), eq(stolen.getId()));
             verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    any(), any(), any());
+                    any(), any(), any(UUID.class));
         }
 
         @Test
@@ -854,7 +854,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.playerBattlefields.get(player1Id)).contains(golem);
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
