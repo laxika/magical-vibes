@@ -587,11 +587,9 @@ public class DeathTriggerCollectorService {
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
-            Permanent sourcePermanentSnapshot = triggerEffect instanceof ConditionalEffect
-                    ? new Permanent(match.permanent()) : null;
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(triggerEffect)), null,
-                    sourcePermanentSnapshot
+                    new Permanent(match.permanent())
             ));
         } else {
             // A ConditionalEffect's intervening-"if" may be about the dying permanent itself

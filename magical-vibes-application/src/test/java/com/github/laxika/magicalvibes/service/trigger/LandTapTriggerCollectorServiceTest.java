@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -82,6 +83,9 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+
+    @Mock
+    private LifeSupport lifeSupport;
 
     @InjectMocks
     private LandTapTriggerCollectorService sut;
@@ -393,14 +397,12 @@ class LandTapTriggerCollectorServiceTest {
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(1), any()))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
-            when(gameQueryService.canPlayerGetPoisonCounters(gd, player2Id)).thenReturn(true);
-            when(gameQueryService.replacePoisonCounters(gd, player2Id, 1)).thenReturn(1);
 
             registry.dispatch(
                     match(manabarbs, player1Id, effect),
                     EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
-            assertThat(gd.playerPoisonCounters.getOrDefault(player2Id, 0)).isEqualTo(1);
+            verify(lifeSupport).applyPoisonCounters(gd, player2Id, 1, "Manabarbs", player1Id);
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
         }
 

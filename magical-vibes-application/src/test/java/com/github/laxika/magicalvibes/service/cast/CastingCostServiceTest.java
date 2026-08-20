@@ -1379,7 +1379,8 @@ class CastingCostServiceTest {
             gd.playerManaPools.get(player1Id).clear();
             Permanent creature = new Permanent(graveyardCard("Bear", CardType.CREATURE));
             gd.playerBattlefields.get(player1Id).add(creature);
-            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(gd), eq(creature), any(PermanentIsCreaturePredicate.class))).thenReturn(true);
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }
 

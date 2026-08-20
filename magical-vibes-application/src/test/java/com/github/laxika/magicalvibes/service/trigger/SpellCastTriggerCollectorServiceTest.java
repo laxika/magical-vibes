@@ -93,6 +93,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1819,7 +1820,8 @@ class SpellCastTriggerCollectorServiceTest {
             player1Spell.setColors(List.of(CardColor.RED, CardColor.BLUE));
             Card player2Spell = createCard("Player 2 Spell");
             player2Spell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
-            when(predicateEvaluationService.matchesCardPredicate(any(), eq(null), eq(null), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class)))
                     .thenReturn(true);
 
             gd.recordSpellCast(player1Id, player1Spell);
@@ -1846,7 +1848,8 @@ class SpellCastTriggerCollectorServiceTest {
             firstSpell.setColors(List.of(CardColor.RED, CardColor.BLUE));
             Card secondSpell = createCard("Second Spell");
             secondSpell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
-            when(predicateEvaluationService.matchesCardPredicate(any(), eq(null), eq(null), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class)))
                     .thenReturn(true);
 
             gd.recordSpellCast(player1Id, firstSpell);

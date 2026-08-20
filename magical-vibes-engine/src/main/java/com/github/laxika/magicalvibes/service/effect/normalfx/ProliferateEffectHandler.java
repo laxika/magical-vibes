@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -44,9 +43,9 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         // A null amount is the ordinary single event. The dynamic form is used when a preceding
         // resolution step records a variable number of proliferates on the stack entry.
         int totalProliferates = typedEffect.amount() == null
-                ? (int) entry.getEffectsToResolve().stream()
+                ? Math.max(1, (int) entry.getEffectsToResolve().stream()
                         .filter(e -> e instanceof ProliferateEffect)
-                        .count()
+                        .count())
                 : Math.max(0, amountEvaluationService.evaluate(gameData, typedEffect.amount(),
                         AmountContext.forStackEntry(entry, null)));
         totalProliferates = gameQueryService.replaceProliferateCount(
@@ -59,13 +58,7 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         // Collect all permanents with counters (any player's battlefield).
         List<UUID> eligiblePermanentIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                    || p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                    || p.getCounterCount(CounterType.LOYALTY) > 0
-                    || p.getCounterCount(CounterType.SLIME) > 0
-                    || p.getCounterCount(CounterType.HATCHLING) > 0
-                    || p.getCounterCount(CounterType.AWAKENING) > 0
-                    || p.getCounterCount(CounterType.AIM) > 0) {
+            if (p.getCounters().values().stream().anyMatch(count -> count > 0)) {
                 eligiblePermanentIds.add(p.getId());
             }
         });

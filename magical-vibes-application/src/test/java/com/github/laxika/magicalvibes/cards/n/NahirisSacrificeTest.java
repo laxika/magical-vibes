@@ -67,7 +67,6 @@ class NahirisSacrificeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("artifact or creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 }

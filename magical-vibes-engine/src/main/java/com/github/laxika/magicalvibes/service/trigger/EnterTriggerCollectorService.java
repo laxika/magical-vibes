@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCre
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect;
@@ -313,10 +312,6 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
                     slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
-                    slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = AnimatePermanentsEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = AnimatePermanentsEffect.class,
                     slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
     })
     private boolean handleEnteringPermanentSelfEffect(TriggerMatchContext match, CardEffect effect,

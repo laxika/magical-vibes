@@ -141,16 +141,6 @@ public class LandTapTriggerCollectorService {
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                     gameData, tappingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, tappingPlayerId)) {
-                if (gameQueryService.canPlayerGetPoisonCounters(gameData, tappingPlayerId)) {
-                    int poisonAmount = gameQueryService.replacePoisonCounters(gameData, tappingPlayerId, effectiveDamage);
-                    if (poisonAmount > 0) {
-                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(tappingPlayerId, 0);
-                        gameData.playerPoisonCounters.put(tappingPlayerId, currentPoison + poisonAmount);
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                gameData.playerIdToName.get(tappingPlayerId) + " gets " + poisonAmount + " poison counters from ",
-                                sourceCard, "."));
-                    }
-                }
                 lifeSupport.applyPoisonCounters(gameData, tappingPlayerId, effectiveDamage,
                         cardName, match.controllerId());
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {

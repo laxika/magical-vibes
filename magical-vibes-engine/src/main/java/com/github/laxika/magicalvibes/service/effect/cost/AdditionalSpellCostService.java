@@ -186,7 +186,6 @@ public class AdditionalSpellCostService {
                     || sacrificePermanentCost != null || exileCreatureCost != null
                     || sacrificeMultiplePermanentsCost != null
                     || sacrificePermanentOrPayManaCost != null
-                    || sacrificePermanentCost != null || sacrificeMultiplePermanentsCost != null
                     || escalateSacrificeCost != null
                     || escalateTapCost != null
                     || sacrificeAnyNumberCost != null

@@ -208,6 +208,9 @@ class CombatDamageServiceTest {
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(
                 eq(gameData), any(UUID.class), any()))
                 .thenReturn(1);
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(
+                eq(gameData), any(UUID.class), any(), anyBoolean()))
+                .thenReturn(1);
         // Lenient: only consulted for creatures that actually took damage this step.
         lenient().when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))
@@ -363,6 +366,8 @@ class CombatDamageServiceTest {
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.canPlayerGetPoisonCounters(eq(gameData), any(UUID.class)))
                 .thenReturn(true);
+        when(gameQueryService.applyPoisonCounterReplacement(eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameQueryService.replacePoisonCounters(eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
     }

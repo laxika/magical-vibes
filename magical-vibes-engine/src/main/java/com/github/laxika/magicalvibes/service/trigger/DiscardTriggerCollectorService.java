@@ -122,16 +122,6 @@ public class DiscardTriggerCollectorService {
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                     gameData, discardingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
-                if (gameQueryService.canPlayerGetPoisonCounters(gameData, discardingPlayerId)) {
-                    int poisonAmount = gameQueryService.replacePoisonCounters(gameData, discardingPlayerId, effectiveDamage);
-                    if (poisonAmount > 0) {
-                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(discardingPlayerId, 0);
-                        gameData.playerPoisonCounters.put(discardingPlayerId, currentPoison + poisonAmount);
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                gameData.playerIdToName.get(discardingPlayerId) + " gets " + poisonAmount + " poison counters from ",
-                                sourceCard, "."));
-                    }
-                }
                 lifeSupport.applyPoisonCounters(gameData, discardingPlayerId, effectiveDamage,
                         cardName, match.controllerId());
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -76,6 +77,9 @@ class DiscardTriggerCollectorServiceTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+
+    @Mock
+    private LifeSupport lifeSupport;
 
     @InjectMocks
     private DiscardTriggerCollectorService sut;
@@ -249,14 +253,12 @@ class DiscardTriggerCollectorServiceTest {
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any()))
                     .thenReturn(2);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
-            when(gameQueryService.canPlayerGetPoisonCounters(gd, player2Id)).thenReturn(true);
-            when(gameQueryService.replacePoisonCounters(gd, player2Id, 2)).thenReturn(2);
 
             registry.dispatch(
                     match(megrim, player1Id, effect),
                     EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
 
-            assertThat(gd.playerPoisonCounters.getOrDefault(player2Id, 0)).isEqualTo(2);
+            verify(lifeSupport).applyPoisonCounters(gd, player2Id, 2, "Megrim", player1Id);
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
         }
 

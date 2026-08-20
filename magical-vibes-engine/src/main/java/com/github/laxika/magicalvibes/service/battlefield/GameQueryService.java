@@ -6087,10 +6087,9 @@ public class GameQueryService {
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);
             // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls.
-            result *= getDamageToRecipientMultiplier(gameData, findPermanentController(gameData, target.getId()),
-                    controllerId, target.getId());
             result *= getDamageToRecipientMultiplier(
-                    gameData, findPermanentController(gameData, target.getId()), controllerId, true);
+                    gameData, findPermanentController(gameData, target.getId()), controllerId,
+                    target.getId(), true);
             for (int i = 0; i < gameData.combatDamageToCreaturesDoublingsThisTurn; i++) {
                 result *= 2;
             }

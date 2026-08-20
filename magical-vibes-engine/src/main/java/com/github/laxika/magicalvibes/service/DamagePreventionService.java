@@ -72,7 +72,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import org.springframework.beans.factory.ObjectProvider;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -312,7 +311,6 @@ public class DamagePreventionService {
                 queuePhyrexianVindicatorTrigger(gameData, permanent, damage);
                 return 0;
             }
-            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
@@ -914,7 +912,7 @@ public class DamagePreventionService {
             if (shield.lifeGainPlayerId() != null) {
                 lifeSupport.applyGainLife(gameData, shield.lifeGainPlayerId(), damage, "prevented damage");
             }
-            if (shield.token() != null && shield.tokenControllerId() != null && shield.tokenSourceSetCode() != null) {
+            if (shield.token() != null && shield.tokenControllerId() != null) {
                 permanentControlSupportProvider.getObject().applyCreateToken(
                         gameData, shield.tokenControllerId(), shield.token(), damage,
                         shield.tokenSourceSetCode());

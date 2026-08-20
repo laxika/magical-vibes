@@ -507,6 +507,10 @@ class EnterTriggerCollectorServiceTest {
         Card enteringArtifact = new Card();
         enteringArtifact.setName("Artifact");
         enteringArtifact.setType(CardType.ARTIFACT);
+        Permanent enteringPermanent = new Permanent(enteringArtifact);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+        when(gameQueryService.findPermanentById(gd, enteringPermanent.getId())).thenReturn(enteringPermanent);
+        when(gameQueryService.isArtifact(gd, enteringPermanent)).thenReturn(true);
         service.checkAllyArtifactEntersTriggers(gd, player1Id, enteringArtifact);
 
         assertThat(gd.stack).isEmpty();
@@ -526,6 +530,10 @@ class EnterTriggerCollectorServiceTest {
         Card enteringArtifact = new Card();
         enteringArtifact.setName("Entering Artifact");
         enteringArtifact.setType(CardType.ARTIFACT);
+        Permanent enteringPermanent = new Permanent(enteringArtifact);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+        when(gameQueryService.findPermanentById(gd, enteringPermanent.getId())).thenReturn(enteringPermanent);
+        when(gameQueryService.isArtifact(gd, enteringPermanent)).thenReturn(true);
 
         service.checkAllyArtifactEntersTriggers(gd, player1Id, enteringArtifact);
 

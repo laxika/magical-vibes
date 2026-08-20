@@ -19,7 +19,7 @@ class TaintedObserverTest extends BaseCardTest {
         Permanent bears = addCounteredBears();
         harness.addToBattlefield(player1, new TaintedObserver());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -53,7 +53,9 @@ class TaintedObserverTest extends BaseCardTest {
     @Test
     void doesNotTriggerForItsOwnEntry() {
         harness.setHand(player1, List.of(new TaintedObserver()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

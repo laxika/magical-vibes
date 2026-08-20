@@ -845,7 +845,8 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && gameQueryService.isEnchantment(gameData, source);
             }
-            case SourceIsOnBattlefield ignored -> sourcePermanent(gameData, ctx) != null;
+            case SourceIsOnBattlefield ignored -> ctx.sourcePermanentId() != null
+                    && gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId()) != null;
             case SourcePowerAtLeast c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && gameQueryService.getEffectivePower(gameData, source) >= c.threshold();

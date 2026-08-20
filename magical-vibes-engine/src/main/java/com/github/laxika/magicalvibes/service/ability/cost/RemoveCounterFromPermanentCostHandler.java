@@ -59,6 +59,9 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
     public void validateCanPay(GameData gameData, UUID playerId) {
         int available = totalCounters(gameData, playerId);
         if (available < cost.count()) {
+            if (available == 0) {
+                throw new IllegalStateException("No permanent you control has a counter to remove");
+            }
             throw new IllegalStateException("Not enough counters to remove (need "
                     + cost.count() + ", have " + available + ")");
         }

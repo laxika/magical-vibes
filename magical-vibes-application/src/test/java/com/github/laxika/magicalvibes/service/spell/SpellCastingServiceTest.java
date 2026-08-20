@@ -210,6 +210,16 @@ class SpellCastingServiceTest {
         lenient().when(gameQueryService.getEffectiveColors(any(GameData.class), any(Permanent.class)))
                 .thenAnswer(invocation -> new HashSet<>(
                         ((Permanent) invocation.getArgument(1)).getEffectiveColors()));
+        lenient().when(gameQueryService.cardHasType(
+                        any(Card.class), any(CardType.class), any(GameData.class), any(UUID.class)))
+                .thenAnswer(invocation -> ((Card) invocation.getArgument(0))
+                        .hasType(invocation.getArgument(1)));
+        lenient().when(gameQueryService.canCastSpellFromZone(
+                        any(GameData.class), any(Card.class), any(Zone.class)))
+                .thenReturn(true);
+        lenient().when(gameQueryService.canPlayersCastSpellsFromZone(
+                        any(GameData.class), any(Zone.class)))
+                .thenReturn(true);
         lenient().when(castingCostService.getImposedSacrificeRequirementForSpell(
                         any(GameData.class), any(Card.class)))
                 .thenReturn(CastingCostService.ImposedSacrificeRequirement.none());
@@ -436,7 +446,6 @@ class SpellCastingServiceTest {
         void appliesSpellCastingRestrictionsToGraveyardSpells() {
             Card instant = createInstant("Test Instant", "{R}");
             gd.playerGraveyards.get(player1Id).add(instant);
-            when(gameQueryService.canPlayersCastSpellsFromZone(gd, Zone.GRAVEYARD)).thenReturn(true);
             when(castingPermissionService.findFilteredGraveyardPermissionSource(gd, player1Id, instant))
                     .thenReturn(Optional.of(UUID.randomUUID()));
             when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, instant)).thenReturn(false);

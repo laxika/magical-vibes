@@ -1487,50 +1487,13 @@ public class MultiPermanentChoiceHandlerService {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     if (!gameQueryService.cantHaveCounters(gameData, perm)) {
-                        if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                                && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, perm)) {
-                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.PLUS_ONE_PLUS_ONE, 1);
-                            if (placed > 0) {
-                                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
-                                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, perm);
-                            }
-                        }
-                        if (perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
-                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.MINUS_ONE_MINUS_ONE, 1);
-                            if (placed > 0) {
-                                perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + placed);
-                            }
-                            // The proliferating player is the one putting the counter (Nest of Scarabs).
-                            if (placed > 0) {
-                                permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, placed, playerId);
-                            }
-                        }
-                        if (perm.getCounterCount(CounterType.LOYALTY) > 0) {
-                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.LOYALTY, 1);
-                            perm.setCounterCount(CounterType.LOYALTY, perm.getCounterCount(CounterType.LOYALTY) + placed);
-                        }
-                        if (perm.getCounterCount(CounterType.SLIME) > 0) {
-                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.SLIME, 1);
-                            perm.setCounterCount(CounterType.SLIME, perm.getCounterCount(CounterType.SLIME) + placed);
-                        }
-                        if (perm.getCounterCount(CounterType.HATCHLING) > 0) {
-                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.HATCHLING, 1);
-                            perm.setCounterCount(CounterType.HATCHLING, perm.getCounterCount(CounterType.HATCHLING) + placed);
-                        }
-                        if (perm.getCounterCount(CounterType.AWAKENING) > 0) {
-                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.AWAKENING, 1);
-                            perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + placed);
-                        }
-                        if (perm.getCounterCount(CounterType.AIM) > 0) {
-                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.AIM, 1);
-                            perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
-                        }
+                        proliferatePermanent(gameData, playerId, perm);
                     }
                     proliferatedCards.add(perm.getCard());
                 } else if (gameData.playerIds.contains(permId)
                         && gameData.playerPoisonCounters.getOrDefault(permId, 0) > 0) {
                     int placed = gameQueryService.applyPoisonCounterReplacement(gameData, permId, 1);
+                    placed = gameQueryService.replacePoisonCounters(gameData, permId, placed);
                     if (placed > 0) {
                         int currentPoison = gameData.playerPoisonCounters.getOrDefault(permId, 0);
                         gameData.playerPoisonCounters.put(permId, currentPoison + placed);
@@ -1559,13 +1522,7 @@ public class MultiPermanentChoiceHandlerService {
         if (remainingProliferates > 0) {
             List<UUID> eligiblePermanentIds = new ArrayList<>();
             gameData.forEachPermanent((pid, p) -> {
-                if (p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                        || p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                        || p.getCounterCount(CounterType.LOYALTY) > 0
-                        || p.getCounterCount(CounterType.SLIME) > 0
-                        || p.getCounterCount(CounterType.HATCHLING) > 0
-                        || p.getCounterCount(CounterType.AWAKENING) > 0
-                        || p.getCounterCount(CounterType.AIM) > 0) {
+                if (p.getCounters().values().stream().anyMatch(count -> count > 0)) {
                     eligiblePermanentIds.add(p.getId());
                 }
             });
@@ -1596,6 +1553,36 @@ public class MultiPermanentChoiceHandlerService {
 
         // All proliferates done — now check SBA
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void proliferatePermanent(GameData gameData, UUID playerId, Permanent permanent) {
+        int totalPlaced = 0;
+        for (var counter : new ArrayList<>(permanent.getCounters().entrySet())) {
+            CounterType counterType = counter.getKey();
+            if (counter.getValue() <= 0
+                    || (counterType == CounterType.PLUS_ONE_PLUS_ONE
+                    && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))
+                    || (counterType == CounterType.MINUS_ONE_MINUS_ONE
+                    && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))) {
+                continue;
+            }
+            int placed = gameQueryService.replaceCounters(gameData, permanent, counterType, 1);
+            if (placed <= 0) {
+                continue;
+            }
+            permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + placed);
+            totalPlaced += placed;
+            if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, permanent);
+            } else if (counterType == CounterType.MINUS_ONE_MINUS_ONE) {
+                permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
+                        gameData, permanent, placed, playerId);
+            }
+        }
+        if (totalPlaced > 0) {
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, totalPlaced);
+        }
     }
 
     private void handleTapSubtypeBoost(GameData gameData, UUID playerId, List<UUID> permanentIds,

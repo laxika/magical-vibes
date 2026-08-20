@@ -66,7 +66,7 @@ class HexgoldHoverwingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hoverwings.getAttachedTo()).isEqualTo(bears.getId());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }

@@ -462,7 +462,8 @@ public class MayCastHandlerService {
                                     "Choose a target for " + cardToCast.getName() + ".");
 
                             
-                            gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer in a valid graveyard."));
+                            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                                    " is being cast from the graveyard, choosing a target."));
                             log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToCast.getName());
                             return; // Wait for target choice
                         }

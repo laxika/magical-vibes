@@ -1342,7 +1342,10 @@ public class ChoiceHandlerService {
 
     private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
                                                     ChooseOneEffect.ChooseOneOption chosen) {
-        if (gameData.pendingEffectResolutionEntry == null) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null
+                || pendingEntry.getTargetId() != null
+                || !pendingEntry.getTargetIds().isEmpty()) {
             return false;
         }
 

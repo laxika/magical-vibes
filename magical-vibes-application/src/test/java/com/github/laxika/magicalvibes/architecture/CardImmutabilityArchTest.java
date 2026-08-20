@@ -58,6 +58,7 @@ class CardImmutabilityArchTest {
             "ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler", // assembles a fresh non-Aura runtime copy
             "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)
             "TokenCardFactory",        // assembles the fresh token card it just instantiated
+            "TokenCopySupport",        // assembles fresh token-copy cards for copy-effect handlers
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",
             "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
