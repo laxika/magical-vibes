@@ -89,6 +89,26 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final RaceEvaluator raceEvaluator;
     private final AmountEvaluationService amountEvaluationService;
 
+    /** Derived values shared only while one unchanged game state is being evaluated. */
+    private final class DecisionContext {
+        private final GameData gameData;
+        private VirtualManaPool virtualManaPool;
+        private long virtualManaPoolStateVersion = -1;
+
+        private DecisionContext(GameData gameData) {
+            this.gameData = gameData;
+        }
+
+        private VirtualManaPool virtualManaPool() {
+            long stateVersion = gameData.domainStateVersion();
+            if (virtualManaPool == null || virtualManaPoolStateVersion != stateVersion) {
+                virtualManaPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+                virtualManaPoolStateVersion = stateVersion;
+            }
+            return virtualManaPool;
+        }
+    }
+
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 GameService gameService, GameQueryService gameQueryService,
                                 BlockLegalityService blockLegalityService,
@@ -263,6 +283,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
+        DecisionContext decisionContext = new DecisionContext(gameData);
+
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean isActivePlayer = aiPlayer.getId().equals(gameData.activePlayerId);
@@ -274,7 +296,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
             if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN) {
                 // Before normal spell casting, check if burn spells in hand can deal lethal
-                if (tryBurnToFaceLethal(gameData)) {
+                if (tryBurnToFaceLethal(gameData, decisionContext)) {
                     return;
                 }
 
@@ -284,17 +306,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (isAlphaStrikePlusBurnLethalPrecombat(gameData)) {
                     log.info("AI (Hard): Alpha strike + burn plan detected precombat — " +
                             "only casting combat-relevant spells in game {}", gameId);
-                    if (tryCastPrecombatPrioritySpell(gameData)) {
+                    if (tryCastPrecombatPrioritySpell(gameData, decisionContext)) {
                         return;
                     }
-                    if (tryCastCombatRelevantSpellPrecombat(gameData)) {
+                    if (tryCastCombatRelevantSpellPrecombat(gameData, decisionContext)) {
                         return;
                     }
                     // Skip non-combat spells — proceed to combat to execute the plan
                 } else {
                     // Explicit precombat heuristics: removal to clear blockers for lethal,
                     // lords to pump attackers, haste creatures that can join the attack
-                    if (tryCastPrecombatPrioritySpell(gameData)) {
+                    if (tryCastPrecombatPrioritySpell(gameData, decisionContext)) {
                         return;
                     }
 
@@ -302,7 +324,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     // lords/anthems that meaningfully pump, any haste creature.
                     // Non-combat spells (card draw, non-haste creatures, enchantments) are
                     // deferred to postcombat main where they don't delay the attack.
-                    if (tryCastCombatRelevantSpellPrecombat(gameData)) {
+                    if (tryCastCombatRelevantSpellPrecombat(gameData, decisionContext)) {
                         return;
                     }
 
@@ -312,26 +334,26 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     if (hasPotentialAttackers(gameData)) {
                         // Skip general sorcery casting — defer to postcombat
                     } else {
-                        if (tryCastSpellWithInstantAwareness(gameData)) {
+                        if (tryCastSpellWithInstantAwareness(gameData, decisionContext)) {
                             return;
                         }
                     }
                 }
             } else {
                 // Postcombat: cast all remaining spells
-                if (tryCastSpellWithInstantAwareness(gameData)) {
+                if (tryCastSpellWithInstantAwareness(gameData, decisionContext)) {
                     return;
                 }
             }
         }
 
         // Try casting instants with timing evaluation
-        if (tryCastInstantWithTimingEvaluation(gameData)) {
+        if (tryCastInstantWithTimingEvaluation(gameData, decisionContext)) {
             return;
         }
 
         // Try activated abilities on controlled permanents
-        if (tryActivateAbility(gameData)) {
+        if (tryActivateAbility(gameData, decisionContext)) {
             return;
         }
 
@@ -364,11 +386,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      *   <li>Haste creature whose power pushes the attack to lethal or near-lethal</li>
      * </ol>
      */
-    private boolean tryCastPrecombatPrioritySpell(GameData gameData) {
+    private boolean tryCastPrecombatPrioritySpell(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || hand.isEmpty()) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         int opponentLife = gameData.getLife(opponentId);
 
@@ -436,11 +458,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Non-combat spells (card draw, non-haste creatures, enchantments) are skipped
      * so they can be cast in postcombat main instead.
      */
-    private boolean tryCastCombatRelevantSpellPrecombat(GameData gameData) {
+    private boolean tryCastCombatRelevantSpellPrecombat(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || hand.isEmpty()) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
 
         // Gather combat state
@@ -1213,11 +1235,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * while holding mana for one instant, or holding all 5 mana for both instants if
      * their combined value exceeds the sorcery.
      */
-    private boolean tryCastSpellWithInstantAwareness(GameData gameData) {
+    private boolean tryCastSpellWithInstantAwareness(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
 
         // Compute total value of ALL castable sorcery-speed spells (no reservation)
         double totalSorceryValue = estimateTotalCastableValue(gameData, hand, virtualPool, 0);
@@ -1571,11 +1593,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * category-based timing with value multipliers.
      * Only casts if the timing-adjusted value exceeds a minimum threshold.
      */
-    private boolean tryCastInstantWithTimingEvaluation(GameData gameData) {
+    private boolean tryCastInstantWithTimingEvaluation(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
         boolean isOpponentsTurn = !aiPlayer.getId().equals(gameData.activePlayerId);
         TurnStep step = gameData.currentStep;
 
@@ -1916,7 +1938,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Uses timing awareness to only activate combat-oriented abilities during combat
      * and card-draw abilities at end of opponent's turn.
      */
-    private boolean tryActivateAbility(GameData gameData) {
+    private boolean tryActivateAbility(GameData gameData, DecisionContext decisionContext) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         if (battlefield.isEmpty()) return false;
 
@@ -1946,7 +1968,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
 
         record AbilityCandidate(int permanentIndex, int abilityIndex, ActivatedAbility ability,
                                 Permanent permanent, double value, UUID targetId) {}
@@ -2768,11 +2790,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * until they're dead. This is checked before combat — no point attacking if we
      * can just burn them out.
      */
-    private boolean tryBurnToFaceLethal(GameData gameData) {
+    private boolean tryBurnToFaceLethal(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || hand.isEmpty()) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
 
         // Collect castable burn spells that can target a player
         List<Card> castableBurn = new ArrayList<>();
@@ -2819,7 +2841,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             int delveReduction = delveIndices.size();
             CostReductionPlan costReductionPlan = selectCostReductionPlan(
                     gameData, burnCard, null, 0, delveReduction,
-                    manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+                    decisionContext.virtualManaPool());
             if (costReductionPlan == null) {
                 continue;
             }
