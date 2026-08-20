@@ -224,44 +224,9 @@ public class AutoPassService {
                 continue;
             }
 
-            List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, priorityHolder);
-            if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
-                // Priority holder can act — stop and let them decide
-                invalidateForAllPlayers(gameData);
-                return;
-            }
-
-            // The strict check above uses the floating mana pool, which a live AI player
-            // almost never holds outside of a cast — so it would auto-pass an AI straight
-            // through combat even when an instant plus untapped lands gives it a play
-            // (e.g. pumping an unblocked attacker for lethal). Re-check against the
-            // potential pool for live AI players. Headless simulation keeps the strict
-            // behavior: rollouts don't enumerate mid-combat casts, and the extra
-            // potential-pool build per priority window would slow MCTS for nothing.
-            if (!gameData.simulation && hasPolicyDrivenPriority(gameData, priorityHolder)
-                    && !actionAvailabilityService.getPotentialPlayableCardIndices(
-                            gameData, priorityHolder, List.of()).isEmpty()) {
-                invalidateForAllPlayers(gameData);
-                return;
-            }
-
-            // After blockers are declared, stop for the attacking player so they can
-            // respond to blocks (e.g. cast combat tricks or activate abilities).
-            if (gameData.currentStep == TurnStep.DECLARE_BLOCKERS
-                    && priorityHolder.equals(gameData.activePlayerId)
-                    && hasBlockingCreatures(gameData)) {
-                invalidateForAllPlayers(gameData);
-                return;
-            }
-
-            // Never auto-pass the active player through DECLARE_ATTACKERS when
-            // an opponent's effect forces them to attack (e.g. Trove of Temptation)
-            // and attackers have not yet been declared this combat.
-            if (gameData.currentStep == TurnStep.DECLARE_ATTACKERS
-                    && priorityHolder.equals(gameData.activePlayerId)
-                    && !hasAttackingCreatures(gameData, priorityHolder)
-                    && combatAttackService.isOpponentForcedToAttack(gameData, priorityHolder)
-                    && !combatAttackService.getAttackableCreatureIndices(gameData, priorityHolder).isEmpty()) {
+            boolean shouldStop = gameQueryService.withQueryScope(gameData,
+                    () -> shouldStopForAvailableAction(gameData, priorityHolder));
+            if (shouldStop) {
                 invalidateForAllPlayers(gameData);
                 return;
             }
@@ -322,10 +287,14 @@ public class AutoPassService {
                 continue;
             }
 
-            List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, stackPriorityHolder);
-            boolean hasActivatable = hasInstantSpeedActivatedAbility(gameData, stackPriorityHolder);
+            boolean canRespond = gameQueryService.withQueryScope(gameData, () -> {
+                List<Integer> playable =
+                        actionAvailabilityService.getPlayableCardIndices(gameData, stackPriorityHolder);
+                boolean hasActivatable = hasInstantSpeedActivatedAbility(gameData, stackPriorityHolder);
+                return !playable.isEmpty() || hasActivatable;
+            });
 
-            if (!playable.isEmpty() || hasActivatable) {
+            if (canRespond) {
                 // Player can respond to the triggered ability — stop and let them
                 invalidateForAllPlayers(gameData);
                 return;
@@ -349,6 +318,43 @@ public class AutoPassService {
      */
     private boolean shouldStopForPlayableCards(GameData gameData, UUID priorityHolder) {
         return gameData.simulation || hasPolicyDrivenPriority(gameData, priorityHolder);
+    }
+
+    private boolean shouldStopForAvailableAction(GameData gameData, UUID priorityHolder) {
+        List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, priorityHolder);
+        if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
+            return true;
+        }
+
+        // The strict check above uses the floating mana pool, which a live AI player
+        // almost never holds outside of a cast — so it would auto-pass an AI straight
+        // through combat even when an instant plus untapped lands gives it a play
+        // (e.g. pumping an unblocked attacker for lethal). Re-check against the
+        // potential pool for live AI players. Headless simulation keeps the strict
+        // behavior: rollouts don't enumerate mid-combat casts, and the extra
+        // potential-pool build per priority window would slow MCTS for nothing.
+        if (!gameData.simulation && hasPolicyDrivenPriority(gameData, priorityHolder)
+                && !actionAvailabilityService.getPotentialPlayableCardIndices(
+                        gameData, priorityHolder, List.of()).isEmpty()) {
+            return true;
+        }
+
+        // After blockers are declared, stop for the attacking player so they can
+        // respond to blocks (e.g. cast combat tricks or activate abilities).
+        if (gameData.currentStep == TurnStep.DECLARE_BLOCKERS
+                && priorityHolder.equals(gameData.activePlayerId)
+                && hasBlockingCreatures(gameData)) {
+            return true;
+        }
+
+        // Never auto-pass the active player through DECLARE_ATTACKERS when
+        // an opponent's effect forces them to attack (e.g. Trove of Temptation)
+        // and attackers have not yet been declared this combat.
+        return gameData.currentStep == TurnStep.DECLARE_ATTACKERS
+                && priorityHolder.equals(gameData.activePlayerId)
+                && !hasAttackingCreatures(gameData, priorityHolder)
+                && combatAttackService.isOpponentForcedToAttack(gameData, priorityHolder)
+                && !combatAttackService.getAttackableCreatureIndices(gameData, priorityHolder).isEmpty();
     }
 
     /**

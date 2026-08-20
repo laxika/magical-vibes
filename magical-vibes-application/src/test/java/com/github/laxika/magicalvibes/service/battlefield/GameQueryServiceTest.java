@@ -116,12 +116,13 @@ class GameQueryServiceTest {
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
+    private CountingLayerSystemService layerSystemService;
 
     @BeforeEach
     void setUp() {
         PredicateEvaluationService evaluator = new PredicateEvaluationService(gqs);
         ReflectionTestUtils.setField(gqs, "predicateEvaluationService", evaluator);
-        LayerSystemService layerSystemService = new LayerSystemService();
+        layerSystemService = new CountingLayerSystemService();
         ReflectionTestUtils.setField(layerSystemService, "predicateEvaluationService", evaluator);
         ReflectionTestUtils.setField(layerSystemService, "staticEffectRegistry", staticEffectRegistry);
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
@@ -145,6 +146,24 @@ class GameQueryServiceTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    private static final class CountingLayerSystemService extends LayerSystemService {
+        private int beginPassCount;
+
+        @Override
+        public Pass beginPass(GameData gameData) {
+            beginPassCount++;
+            return super.beginPass(gameData);
+        }
+
+        private int beginPassCount() {
+            return beginPassCount;
+        }
+
+        private void resetBeginPassCount() {
+            beginPassCount = 0;
+        }
     }
 
     // ===== Helper methods =====
@@ -905,6 +924,34 @@ class GameQueryServiceTest {
             assertThat(result).isEqualTo("done");
             assertThat(powerInside[0]).isEqualTo(powerOutside).isEqualTo(4);
             assertThat(flyingInside[0]).isEqualTo(flyingOutside).isTrue();
+        }
+
+        @Test
+        @DisplayName("one scope replaces one layered pass per query with one pass for the batch")
+        void batchesLayeredPasses() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes(
+                    "Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            layerSystemService.resetBeginPassCount();
+            runLayeredQueryBatch(perm);
+            int unscopedPasses = layerSystemService.beginPassCount();
+
+            layerSystemService.resetBeginPassCount();
+            gqs.withQueryScope(gd, () -> {
+                runLayeredQueryBatch(perm);
+                return null;
+            });
+            int scopedPasses = layerSystemService.beginPassCount();
+
+            assertThat(unscopedPasses).isEqualTo(4);
+            assertThat(scopedPasses).isEqualTo(1);
+        }
+
+        private void runLayeredQueryBatch(Permanent perm) {
+            gqs.getEffectivePower(gd, perm);
+            gqs.getEffectiveToughness(gd, perm);
+            gqs.hasKeyword(gd, perm, Keyword.FLYING);
+            gqs.isCreature(gd, perm);
         }
 
         @Test

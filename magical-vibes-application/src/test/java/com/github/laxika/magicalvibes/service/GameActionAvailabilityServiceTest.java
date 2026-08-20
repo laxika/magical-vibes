@@ -87,6 +87,10 @@ class GameActionAvailabilityServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
+                        invocation.getArgument(1)).get());
+
         // Real casting services (with the real handler registry) over the mocked collaborators,
         // so the playable-index computation exercises the same cost/permission code paths as production.
         CostModificationSupport support = new CostModificationSupport(gameQueryService, predicateEvaluationService);
@@ -130,6 +134,29 @@ class GameActionAvailabilityServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+    }
+
+    @Nested
+    @DisplayName("layer query scopes")
+    class LayerQueryScopes {
+
+        @Test
+        @DisplayName("Playable-card hand scan runs in one shared query scope")
+        void playableCardScanUsesSharedQueryScope() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+
+            assertThat(svc.getPlayableCardIndices(gd, player1Id)).isEmpty();
+
+            verify(gameQueryService).withQueryScope(same(gd), any());
+        }
+
+        @Test
+        @DisplayName("Complete game-state projection runs in one shared query scope")
+        void gameStateProjectionUsesSharedQueryScope() {
+            assertThat(projectionFactory.createGameStateMessages(gd, List.of(), List.of())).isEmpty();
+
+            verify(gameQueryService).withQueryScope(same(gd), any());
+        }
     }
 
     @Nested

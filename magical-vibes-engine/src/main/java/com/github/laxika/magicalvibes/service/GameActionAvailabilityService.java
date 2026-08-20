@@ -45,7 +45,9 @@ public class GameActionAvailabilityService {
     }
 
     public List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana) {
-        return getPlayableCardIndices(gameData, playerId, extraConvokeMana, gameData.playerManaPools.get(playerId));
+        return gameQueryService.withQueryScope(gameData,
+                () -> getPlayableCardIndices(
+                        gameData, playerId, extraConvokeMana, gameData.playerManaPools.get(playerId)));
     }
 
     /**
@@ -56,6 +58,13 @@ public class GameActionAvailabilityService {
      * carried into the virtual pool, so the strict list isn't always a subset).
      */
     public List<Integer> getPotentialPlayableCardIndices(GameData gameData, UUID playerId, List<Integer> strictIndices) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> getPotentialPlayableCardIndicesWithinQueryScope(
+                        gameData, playerId, strictIndices));
+    }
+
+    private List<Integer> getPotentialPlayableCardIndicesWithinQueryScope(
+            GameData gameData, UUID playerId, List<Integer> strictIndices) {
         // Same gating as getPlayableCardIndices — skip the virtual-pool build for the
         // player who could not act anyway.
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()

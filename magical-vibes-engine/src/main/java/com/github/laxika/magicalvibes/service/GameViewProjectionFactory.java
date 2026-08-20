@@ -79,6 +79,15 @@ public class GameViewProjectionFactory {
             GameData gameData,
             List<GameLogEntryView> newLogEntries,
             Collection<UUID> recipientIds) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> createGameStateMessagesWithinQueryScope(
+                        gameData, newLogEntries, recipientIds));
+    }
+
+    private Map<UUID, GameStateMessage> createGameStateMessagesWithinQueryScope(
+            GameData gameData,
+            List<GameLogEntryView> newLogEntries,
+            Collection<UUID> recipientIds) {
         List<List<PermanentView>> battlefields = getBattlefields(gameData);
         Map<UUID, FaceDownReveal> faceDownReveals = collectFaceDownReveals(gameData);
         List<StackEntryView> stack = getStackViews(gameData);
@@ -714,6 +723,11 @@ public class GameViewProjectionFactory {
     }
 
     public JoinGame getJoinGame(GameData data, UUID playerId) {
+        return gameQueryService.withQueryScope(data,
+                () -> getJoinGameWithinQueryScope(data, playerId));
+    }
+
+    private JoinGame getJoinGameWithinQueryScope(GameData data, UUID playerId) {
         List<CardSubtype> playerGranted = playerId != null
                 ? gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, playerId)
                 : List.of();
