@@ -53,7 +53,7 @@ class RandomAiFuzzTest {
     private static final int MAX_TURNS = 250;
     private static final long POLL_INTERVAL_MS = 200;
     private static final long MAX_GAME_DURATION_MS = 300_000;
-    private static final long AI_DECISION_DELAY_MS = 10;
+    private static final long AI_DECISION_DELAY_MS = 0;
 
     @Test
     void fuzzTestRandomAi() throws Exception {
