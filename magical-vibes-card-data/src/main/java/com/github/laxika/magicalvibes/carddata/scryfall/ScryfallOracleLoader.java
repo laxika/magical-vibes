@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.carddata.SetJsonCache;
 import com.github.laxika.magicalvibes.carddata.SetOracleData;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.OracleData;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -47,8 +48,13 @@ public class ScryfallOracleLoader implements OracleLoader {
 
     private final SetJsonCache cache;
 
+    @Autowired
     public ScryfallOracleLoader(@Value("${card-data.cache-dir:./card-data-cache}") String cacheDir) {
-        this.cache = new SetJsonCache(cacheDir, "", "Scryfall", ScryfallOracleLoader::fetchFromScryfall);
+        this(cacheDir, ScryfallOracleLoader::fetchFromScryfall);
+    }
+
+    ScryfallOracleLoader(String cacheDir, SetJsonCache.Fetcher fetcher) {
+        this.cache = new SetJsonCache(cacheDir, "scryfall-", "Scryfall", fetcher);
     }
 
     @Override
