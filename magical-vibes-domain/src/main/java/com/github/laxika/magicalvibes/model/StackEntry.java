@@ -130,6 +130,8 @@ public class StackEntry {
     /** Whether this spell was cast for its prowl cost — carried to the entering permanent so its
      *  "if its prowl cost was paid" ETB trigger can gate on it (CR 702.75). */
     @Setter private boolean prowl;
+    /** Whether this spell was cast for its spectacle cost. */
+    @Setter private boolean spectacle;
     @Setter private boolean castForForetell;
     @Setter private boolean alternateCost;
     /** Whether this spell was cast for its madness cost. */
@@ -548,6 +550,7 @@ public class StackEntry {
         this.bestowOriginalCard = source.bestowOriginalCard;
         this.physicalCard = source.physicalCard;
         this.prowl = source.prowl;
+        this.spectacle = source.spectacle;
         this.castForForetell = source.castForForetell;
         this.alternateCost = source.alternateCost;
         this.overloaded = source.overloaded;

@@ -4569,6 +4569,36 @@ public class TriggerCollectionService {
 
     // ── Life-gain triggers ──────────────────────────────────────────────
 
+    /** Fires triggers for life actually paid by a player, distinct from ordinary life loss. */
+    public void checkLifePaymentTriggers(GameData gameData, UUID payingPlayerId, int lifePaidAmount) {
+        if (lifePaidAmount <= 0) return;
+
+        var ctx = new TriggerContext.LifePayment(payingPlayerId, lifePaidAmount);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(payingPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : List.copyOf(battlefield)) {
+            List<CardEffect> effects = new ArrayList<>(
+                    perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_PAYS_LIFE));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, perm, EffectSlot.ON_CONTROLLER_PAYS_LIFE));
+            for (CardEffect effect : effects) {
+                CardEffect toDispatch = effect;
+                if (effect instanceof OncePerTurnTriggerEffect once) {
+                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                        continue;
+                    }
+                    toDispatch = once.wrapped();
+                }
+                var match = new TriggerMatchContext(gameData, perm, payingPlayerId, effect);
+                if (dispatch(match, EffectSlot.ON_CONTROLLER_PAYS_LIFE, toDispatch, ctx)
+                        && effect instanceof OncePerTurnTriggerEffect) {
+                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                }
+            }
+        }
+    }
+
     private void increaseActivePlayerSpeedIfEligible(GameData gameData, UUID losingPlayerId) {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null || activePlayerId.equals(losingPlayerId)) {
@@ -5440,12 +5470,19 @@ public class TriggerCollectionService {
      */
     public void checkAllyCreatureOrPlaneswalkerDeathTriggers(GameData gameData, UUID dyingControllerId,
             Permanent dyingPermanent) {
+        checkAllyCreatureOrPlaneswalkerDeathTriggers(gameData, dyingControllerId, dyingPermanent,
+                dyingPermanent.getCard().hasType(CardType.CREATURE));
+    }
+
+    public void checkAllyCreatureOrPlaneswalkerDeathTriggers(GameData gameData, UUID dyingControllerId,
+            Permanent dyingPermanent, boolean wasCreature) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingControllerId);
         if (battlefield == null) return;
 
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingControllerId,
-                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId());
+                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(),
+                dyingPermanent, wasCreature);
 
         for (Permanent perm : battlefield) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES);
@@ -5469,15 +5506,24 @@ public class TriggerCollectionService {
             }
 
             if (!stackEffects.isEmpty()) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        dyingControllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(stackEffects),
-                        null,
-                        perm.getId()
-                ));
+                int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                        + (wasCreature
+                        ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
+                                gameData, dyingControllerId, perm)
+                        : 0));
+                try {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            dyingControllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(stackEffects),
+                            null,
+                            perm.getId()
+                    ));
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
                 anyEffectFired = true;
             }
 
@@ -5513,8 +5559,16 @@ public class TriggerCollectionService {
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,
                                                       UUID dyingPermanentControllerId, UUID dyingCreatureCardId,
                                                       int dyingCreaturePower, int dyingCreatureToughness) {
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId,
+                dyingCreatureCardId, dyingCreaturePower, dyingCreatureToughness, true);
+    }
+
+    public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,
+                                                      UUID dyingPermanentControllerId, UUID dyingCreatureCardId,
+                                                      int dyingCreaturePower, int dyingCreatureToughness,
+                                                      boolean wasCreature) {
         var ctx = new TriggerContext.EnchantedPermanentDeath(dyingPermanentId, dyingPermanentControllerId,
-                dyingCreatureCardId, dyingCreaturePower, dyingCreatureToughness);
+                dyingCreatureCardId, dyingCreaturePower, dyingCreatureToughness, wasCreature);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!dyingPermanentId.equals(perm.getAttachedTo())) return;

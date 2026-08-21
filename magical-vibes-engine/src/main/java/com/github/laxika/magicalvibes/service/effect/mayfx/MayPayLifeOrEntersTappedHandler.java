@@ -48,6 +48,7 @@ public class MayPayLifeOrEntersTappedHandler implements MayEffectHandlerBean {
         if (accepted && canPay) {
             gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - effect.lifeCost());
             triggerCollectionService.checkLifeLossTriggers(gameData, playerId, effect.lifeCost());
+            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, effect.lifeCost());
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + effect.lifeCost() + " life for ", ability.sourceCard(), "."));
             log.info("Game {} - {} pays {} life for {}", gameData.id, player.getUsername(),

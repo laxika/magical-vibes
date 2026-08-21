@@ -151,7 +151,7 @@ public class PermanentCounterSupport {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
         notifyCountersPlaced(gameData, entry, target, counters);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
-        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
@@ -355,6 +355,7 @@ public class PermanentCounterSupport {
             case AIM -> { target.setCounterCount(CounterType.AIM, target.getCounterCount(CounterType.AIM) + count); yield "aim"; }
             case ARROW -> { target.setCounterCount(CounterType.ARROW, target.getCounterCount(CounterType.ARROW) + count); yield "arrow"; }
             case BLAZE -> { target.setCounterCount(CounterType.BLAZE, target.getCounterCount(CounterType.BLAZE) + count); yield "blaze"; }
+            case BLOOD -> { target.setCounterCount(CounterType.BLOOD, target.getCounterCount(CounterType.BLOOD) + count); yield "blood"; }
             case BOUNTY -> { target.setCounterCount(CounterType.BOUNTY, target.getCounterCount(CounterType.BOUNTY) + count); yield "bounty"; }
             case BRIBERY -> { target.setCounterCount(CounterType.BRIBERY, target.getCounterCount(CounterType.BRIBERY) + count); yield "bribery"; }
             case BRICK -> { target.setCounterCount(CounterType.BRICK, target.getCounterCount(CounterType.BRICK) + count); yield "brick"; }
@@ -438,7 +439,7 @@ public class PermanentCounterSupport {
         notifyCountersPlaced(gameData, entry, target, count);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
-            recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
+            recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, count);
         }
 
         Card card = target.getCard();
@@ -959,38 +960,66 @@ public class PermanentCounterSupport {
     }
 
     public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(GameData gameData, Permanent target) {
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, 1);
+    }
+
+    public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(GameData gameData, Permanent target,
+                                                                       int count) {
         if (target == null) {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (controllerId != null) {
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId);
+            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
+            if (gameQueryService.isCreature(gameData, target)) {
+                firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
+            }
         }
     }
 
     public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
             GameData gameData, Permanent target, UUID controllerId) {
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, controllerId, 1);
+    }
+
+    public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+            GameData gameData, Permanent target, UUID controllerId, int count) {
         if (target != null && controllerId != null) {
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId);
+            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
+            if (gameQueryService.isCreature(gameData, target)) {
+                firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
+            }
         }
     }
 
     private void firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(GameData gameData,
-                                                                              UUID controllerId) {
+                                                                              UUID controllerId, int count) {
+        firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
+                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT);
+    }
+
+    private void firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(GameData gameData,
+                                                                            UUID controllerId, int count) {
+        firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
+                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE);
+    }
+
+    private void firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(GameData gameData,
+                                                                              UUID controllerId, int count,
+                                                                              EffectSlot slot) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT);
+            List<CardEffect> effects = source.getCard().getEffects(slot);
             if (effects.isEmpty()) {
                 continue;
             }
             Card card = source.getCard();
-            gameData.stack.add(new StackEntry(
+            StackEntry triggerEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
                     controllerId,
@@ -998,7 +1027,9 @@ public class PermanentCounterSupport {
                     new ArrayList<>(effects),
                     null,
                     source.getId()
-            ));
+            );
+            triggerEntry.setEventValue(count);
+            gameData.stack.add(triggerEntry);
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
             log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
                     card.getName());

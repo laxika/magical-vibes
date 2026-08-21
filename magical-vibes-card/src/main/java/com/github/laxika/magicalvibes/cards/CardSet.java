@@ -65,6 +65,7 @@ public enum CardSet {
     SET_BFZ("BFZ"),
     SET_ZNR("ZNR"),
     SET_RTR("RTR"),
+    SET_RNA("RNA"),
     SET_GTC("GTC"),
     SET_DGM("DGM"),
     SET_INR("INR"),

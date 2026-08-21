@@ -1556,7 +1556,14 @@ public class CombatDamageService {
         if (attackerBattlefield == null) return;
 
         for (Permanent perm : attackerBattlefield) {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER);
+            List<CardEffect> effects = new ArrayList<>(
+                    perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(perm.getTemporaryTriggeredEffects(
+                    EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(perm.getPersistentTriggeredEffects(
+                    EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, perm, EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
             for (CardEffect effect : effects) {
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
                     if (trigger.dealerPredicate() != null

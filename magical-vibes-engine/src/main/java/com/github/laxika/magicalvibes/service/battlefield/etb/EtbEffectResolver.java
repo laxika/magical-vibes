@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
+import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
@@ -112,6 +113,10 @@ public class EtbEffectResolver {
                         ctx.repeatedAdditionalCosts().contains(paid.manaCost()) ? conditional.wrapped() : null;
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
+                // Spectacle branch selection is fixed when the permanent enters.
+                case CastForSpectacleCost ignored ->
+                        ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle()
+                                ? conditional.wrapped() : null;
                 // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.
                 case CastFromZone castFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)

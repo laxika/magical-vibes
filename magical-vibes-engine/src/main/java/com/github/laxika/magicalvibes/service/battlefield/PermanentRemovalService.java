@@ -279,6 +279,14 @@ public class PermanentRemovalService {
      *         {@code false} if it was not on any battlefield
      */
     public boolean removePermanentToExile(GameData gameData, Permanent target) {
+        return removePermanentToExile(gameData, target, null);
+    }
+
+    /**
+     * Removes a permanent to exile and records its cards as exiled with {@code sourcePermanentId}
+     * when one is supplied.
+     */
+    public boolean removePermanentToExile(GameData gameData, Permanent target, UUID sourcePermanentId) {
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
@@ -300,7 +308,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
                 gameData, target, controllerId, Zone.EXILE);
         for (Card leaving : target.cardsLeavingBattlefield()) {
-            exileService.exileCard(gameData, ownerId, leaving);
+            exileService.exileCard(gameData, ownerId, leaving, sourcePermanentId);
         }
         graveyardService.notifyCardsExiledFromBattlefield(gameData, target.cardsLeavingBattlefield().size());
         forgetDamageDealtToDepartedPermanent(gameData, target);
@@ -1054,7 +1062,8 @@ public class PermanentRemovalService {
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
                 || opponentExileReplacement != null
                 || (wasCreature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard()))
-                || (wasCreature && damagerExilesDyingCreature(gameData, target));
+                || (wasCreature && damagerExilesDyingCreature(gameData, target))
+                || (wasCreature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty());
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
                 exileService.exileCard(gameData, ownerId, leaving);
@@ -1103,7 +1112,8 @@ public class PermanentRemovalService {
             // "Whenever a creature or planeswalker you control dies" — fires once even when the
             // dying permanent is both (Ajani's Last Stand).
             if (wasCreature || target.getCard().hasType(CardType.PLANESWALKER)) {
-                triggerCollectionService.checkAllyCreatureOrPlaneswalkerDeathTriggers(gameData, controllerId, target);
+                triggerCollectionService.checkAllyCreatureOrPlaneswalkerDeathTriggers(
+                        gameData, controllerId, target, wasCreature);
             }
             // Any permanent at all is put into a graveyard (Yomiji, Who Bars the Way).
             triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(
@@ -1158,7 +1168,7 @@ public class PermanentRemovalService {
                         gameData, target, controllerId, gameData.currentlyResolvingControllerId);
             }
             triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId,
-                    target.getCard().getId(), target.getEffectivePower(), target.getEffectiveToughness());
+                    target.getCard().getId(), target.getEffectivePower(), target.getEffectiveToughness(), wasCreature);
             // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)
             if (target.getCard().isAura() || target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);

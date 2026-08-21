@@ -483,6 +483,8 @@ public class Permanent {
     @Setter private boolean evoked;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether this permanent was cast for its spectacle cost. */
+    @Setter private boolean spectacle;
     /** Repeatable additional mana payments made to cast this permanent's spell. */
     private List<String> repeatedAdditionalCosts = List.of();
     /** Whether the required tribute counters were placed on this permanent as it entered. */
@@ -519,6 +521,8 @@ public class Permanent {
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
+    /** One-shot permissions for this permanent's next Adapt to ignore existing counters this turn. */
+    private int adaptOverridesUntilEndOfTurn;
     /** Activated abilities granted for as long as this permanent remains on the battlefield
      *  (e.g. Aquitect's Will making a land an Island in addition to its other types — the
      *  granted "{T}: Add {U}" has no duration). Stored on the permanent rather than mutating
@@ -764,6 +768,7 @@ public class Permanent {
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
+        this.spectacle = source.spectacle;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
@@ -774,6 +779,7 @@ public class Permanent {
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
+        this.adaptOverridesUntilEndOfTurn = source.adaptOverridesUntilEndOfTurn;
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
@@ -1344,6 +1350,18 @@ public class Permanent {
         return suppressedStaticEffectsUntilEndOfTurn.contains(effectType);
     }
 
+    public void addAdaptOverrideUntilEndOfTurn() {
+        adaptOverridesUntilEndOfTurn++;
+    }
+
+    public boolean consumeAdaptOverrideUntilEndOfTurn() {
+        if (adaptOverridesUntilEndOfTurn == 0) {
+            return false;
+        }
+        adaptOverridesUntilEndOfTurn--;
+        return true;
+    }
+
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
@@ -1400,6 +1418,7 @@ public class Permanent {
         this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.transientRemovedSubtypes.clear();
         this.temporaryActivatedAbilities.clear();
+        this.adaptOverridesUntilEndOfTurn = 0;
         expireTemporaryTextReplacements();
     }
 

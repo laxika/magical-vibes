@@ -70,10 +70,10 @@ public class GraveyardTargetingSupport {
             return findTarget(List.of(exileThen.thenEffect()));
         }
         if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect exile) {
-            return new Target(null, exile.graveyardScope(), "to exile", 1, 1);
+            return new Target(exile.filter(), exile.graveyardScope(), "to exile", 1, 1);
         }
         if (effect instanceof ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature) {
-            return new Target(exileCreature.filter(), GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
+            return new Target(exileCreature.filter(), exileCreature.graveyardScope(), "to exile", 1, 1);
         }
         if (effect instanceof ExileGraveyardCardsEffect exile) {
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);

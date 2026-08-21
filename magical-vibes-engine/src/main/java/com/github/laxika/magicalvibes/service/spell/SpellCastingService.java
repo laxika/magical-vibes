@@ -2547,6 +2547,9 @@ public class SpellCastingService {
                 if (altHandCast != null && !altHandCast.prowlDamageSubtypes().isEmpty()) {
                     entry.setProwl(true);
                 }
+                if (altHandCast != null && altHandCast.spectacle()) {
+                    entry.setSpectacle(true);
+                }
             }
             if (usingBestowCost) {
                 entry.setBestowOriginalCard(bestowOriginalCard);
@@ -3479,6 +3482,9 @@ public class SpellCastingService {
                 AlternateHandCast altHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
                 if (altHandCast != null && !altHandCast.prowlDamageSubtypes().isEmpty()) {
                     gameData.stack.getLast().setProwl(true);
+                }
+                if (altHandCast != null && altHandCast.spectacle()) {
+                    gameData.stack.getLast().setSpectacle(true);
                 }
             }
             // Overload (CR 702.96a): flag the entry so the "target"→"each" text change is applied
@@ -4777,7 +4783,7 @@ public class SpellCastingService {
                     null, null, null, null,
                     null, null, null,
                     false,
-                    null, null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);
             additionalSpellCostService.validateAll(gameData, player, castHalf, sacOnly, sacSelection, effectiveXValue);
@@ -5834,6 +5840,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         phyrexianLifeCount, kicked, extraCostReduction, targetingTax, additionalGenericCost,
                         additionalManaCost, escalateManaSuffix, Zone.HAND);
@@ -5843,6 +5850,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
 
@@ -5858,6 +5866,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, List.of(),
                         null, false, 0, 0, 0, "", "", sourceZone);
         gameData.addSpellCastManaSpent(card.getId(), payment.manaSpent());
@@ -5866,6 +5875,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
 
@@ -5898,6 +5908,11 @@ public class SpellCastingService {
     private int additionalCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         return pool != null ? pool.getAdditionalCounterGrantingManaTotal() : 0;
+    }
+
+    private int riotGrantingManaAvailable(GameData gameData, UUID playerId) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        return pool != null ? pool.getRiotGrantingManaTotal() : 0;
     }
 
     private String repeatAdditionalTargetManaCost(Card card, int extraTargetCount) {
@@ -6966,6 +6981,17 @@ public class SpellCastingService {
                 - additionalCounterGrantingManaAvailable(gameData, playerId);
         if (spent > 0) {
             gameData.spellAdditionalEnterCounters.merge(card.getId(), spent, Integer::sum);
+        }
+    }
+
+    private void applyRiotGrantingMana(GameData gameData, UUID playerId, Card card,
+                                       int riotGrantingBefore) {
+        if (!card.hasType(CardType.CREATURE)) {
+            return;
+        }
+        int spent = riotGrantingBefore - riotGrantingManaAvailable(gameData, playerId);
+        if (spent > 0) {
+            gameData.spellsGrantedRiotOnEntry.add(card.getId());
         }
     }
 

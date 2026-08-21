@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -95,6 +96,7 @@ public class MayAbilityHandlerService {
     private final ValidTargetService validTargetService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
+    private final TriggerCollectionService triggerCollectionService;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -116,7 +118,8 @@ public class MayAbilityHandlerService {
                                     com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
                                     ValidTargetService validTargetService,
                                     TargetPredicateEvaluationService targetPredicateEvaluationService,
-                                    MayEffectHandlerRegistry mayEffectHandlerRegistry) {
+                                    MayEffectHandlerRegistry mayEffectHandlerRegistry,
+                                    TriggerCollectionService triggerCollectionService) {
         this.inputCompletionService = inputCompletionService;
         this.mayCastHandlerService = mayCastHandlerService;
         this.mayCopyHandlerService = mayCopyHandlerService;
@@ -138,6 +141,7 @@ public class MayAbilityHandlerService {
         this.validTargetService = validTargetService;
         this.targetPredicateEvaluationService = targetPredicateEvaluationService;
         this.mayEffectHandlerRegistry = mayEffectHandlerRegistry;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
@@ -637,6 +641,7 @@ public class MayAbilityHandlerService {
                             && gameData.getLife(player.getId()) >= ability.lifeCost();
                     if (canPayLife) {
                         gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - ability.lifeCost());
+                        triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), ability.lifeCost());
                         gameLogService.append(gameData, GameLog.textCardText(
                                 player.getUsername() + " pays " + ability.lifeCost() + " life for ", ability.sourceCard(), "'s ability."));
                         paidWithLife = true;
@@ -663,6 +668,8 @@ public class MayAbilityHandlerService {
                     if (ability.additionalLifeCost() > 0) {
                         gameData.playerLifeTotals.put(player.getId(),
                                 gameData.getLife(player.getId()) - ability.additionalLifeCost());
+                        triggerCollectionService.checkLifePaymentTriggers(
+                                gameData, player.getId(), ability.additionalLifeCost());
                         gameLogService.append(gameData, GameLog.textCardText(
                                 player.getUsername() + " pays " + ability.additionalLifeCost() + " life for ",
                                 ability.sourceCard(), "'s ability."));

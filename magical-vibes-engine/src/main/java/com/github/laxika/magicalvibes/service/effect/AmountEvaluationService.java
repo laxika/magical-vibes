@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
+import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
@@ -265,6 +266,9 @@ public class AmountEvaluationService {
                             .count();
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
+            case CardsExiledWithSource ignored ->
+                    ctx.sourcePermanent() == null ? 0
+                            : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).size();
             case ForetoldCardsInExile c ->
                     countForetoldCardsInExile(gameData, c, ctx);
             case CardsInGraveyard c ->

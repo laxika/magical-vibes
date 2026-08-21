@@ -143,6 +143,7 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
+import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
@@ -369,6 +370,8 @@ public class ConditionEvaluationService {
                     ctx.madness();
             case CastForProwlCost ignored ->
                     ctx.prowl();
+            case CastForSpectacleCost ignored ->
+                    ctx.spectacle();
             case Overloaded ignored ->
                     ctx.overloaded();
             case Raid ignored ->

@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
+import java.util.Set;
 
 /**
  * Exile permanent(s) and return them to the battlefield under their owner's control (CR 610.3) as
@@ -40,7 +43,27 @@ public record FlickerEffect(
         boolean grantHaste,
         boolean returnAtOwnerNextEndStep,
         boolean plusOnePlusOneCountersOnlyOnCreatures,
-        int loyaltyCountersOnPlaneswalkersOnReturn) implements CardEffect {
+        int loyaltyCountersOnPlaneswalkersOnReturn,
+        Set<Keyword> grantedKeywordsOnReturn) implements CardEffect {
+
+    public FlickerEffect {
+        grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
+                ? Set.of()
+                : Set.copyOf(grantedKeywordsOnReturn);
+    }
+
+    public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+                         TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+                         CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+                         boolean returnUnderController, boolean grantHaste,
+                         boolean returnAtOwnerNextEndStep,
+                         boolean plusOnePlusOneCountersOnlyOnCreatures,
+                         int loyaltyCountersOnPlaneswalkersOnReturn) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
+                returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkersOnReturn, Set.of());
+    }
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
                          TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
@@ -162,6 +185,13 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetWithBonusCounters(CardSubtype bonusSubtype, int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, bonusSubtype, null, counters, false, false);
+    }
+
+    /** Immediate flicker that returns the permanent with the given keywords until end of turn. */
+    public static FlickerEffect flickerTargetWithKeywords(Set<Keyword> keywords) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, keywords);
     }
 
     @Override

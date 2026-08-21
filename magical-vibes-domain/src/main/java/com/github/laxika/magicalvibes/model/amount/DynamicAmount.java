@@ -23,6 +23,7 @@ public sealed interface DynamicAmount permits
         CardsDiscardedByTargetPlayerThisTurn,
         CardsDiscardedOrCycledThisTurn,
         CardsDrawnThisTurn,
+        CardsExiledWithSource,
         CardsInExile,
         ForetoldCardsInExile,
         CardsInGraveyard,

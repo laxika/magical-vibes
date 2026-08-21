@@ -68,11 +68,11 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
                 GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         if (targetCard.hasType(CardType.CREATURE)) {
-            CreateTokenEffect zombie = CreateTokenEffect.blackZombie(1);
+            CreateTokenEffect token = e.tokenTemplate().withAmount(1);
             entry.getCreatedPermanentIds().addAll(
-                    permanentControlSupport.applyCreateToken(gameData, controllerId, zombie, 1,
-                            entry.getCard().getSetCode(), 2, 2));
-            log.info("Game {} - {} creates a Zombie token from exiled creature card",
+                    permanentControlSupport.applyCreateToken(gameData, controllerId, token, 1,
+                            entry.getCard().getSetCode(), token.tokenPower(), token.tokenToughness()));
+            log.info("Game {} - {} creates a token from exiled creature card",
                     gameData.id, playerName);
         }
     }

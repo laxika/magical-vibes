@@ -464,6 +464,7 @@ public class MayMiscHandlerService {
             if (lifeCost > 0) {
                 int life = gameData.getLife(controllerId);
                 gameData.playerLifeTotals.put(controllerId, life - lifeCost);
+                triggerCollectionService.checkLifePaymentTriggers(gameData, controllerId, lifeCost);
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeCost + " life."));
             }
             Card topCard = deck.removeFirst();

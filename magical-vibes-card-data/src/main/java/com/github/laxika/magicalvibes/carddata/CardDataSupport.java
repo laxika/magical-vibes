@@ -100,6 +100,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Madness", Keyword.MADNESS);
         KEYWORD_MAP.put("Escalate", Keyword.ESCALATE);
         KEYWORD_MAP.put("Decayed", Keyword.DECAYED);
+        KEYWORD_MAP.put("Afterlife", Keyword.AFTERLIFE);
         KEYWORD_MAP.put("Blight", Keyword.BLIGHT);
         KEYWORD_MAP.put("Splice", Keyword.SPLICE);
         KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
@@ -107,6 +108,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Phasing", Keyword.PHASING);
         KEYWORD_MAP.put("Buyback", Keyword.BUYBACK);
         KEYWORD_MAP.put("Evolve", Keyword.EVOLVE);
+        KEYWORD_MAP.put("Adapt", Keyword.ADAPT);
         KEYWORD_MAP.put("Offering", Keyword.OFFERING);
         KEYWORD_MAP.put("Delve", Keyword.DELVE);
         KEYWORD_MAP.put("Modular", Keyword.MODULAR);

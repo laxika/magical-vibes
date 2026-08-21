@@ -34,11 +34,13 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
+import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
@@ -230,6 +232,7 @@ public class BattlefieldPlacementService {
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent, conditionalRevealEffect);
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
+        applyRiot(gameData, controllerId, permanent, simultaneouslyEntered);
         if (simultaneouslyEntered.isEmpty()) {
             gameData.activeMysticReflectionsForEntryBatch.clear();
         }
@@ -275,6 +278,39 @@ public class BattlefieldPlacementService {
                 List.of(new UnleashEffect()),
                 permanent.getCard().getName() + " — Unleash: have it enter with a +1/+1 counter?"
                         + " (It can't block as long as it has one.)",
+                null,
+                null,
+                permanent.getId()));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void applyRiot(GameData gameData, UUID controllerId, Permanent permanent,
+                           List<Permanent> simultaneouslyEntered) {
+        boolean grantedRiot = gameData.spellsGrantedRiotOnEntry.remove(permanent.getCard().getId());
+        boolean creature = gameQueryService.isCreature(gameData, permanent);
+        boolean ownRiot = creature && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(RiotEffect.class::isInstance);
+        boolean battlefieldRiot = creature && !permanent.getCard().isToken()
+                && gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(source -> !source.getId().equals(permanent.getId()))
+                .filter(source -> simultaneouslyEntered.stream()
+                        .noneMatch(batchMember -> batchMember.getId().equals(source.getId())))
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(ControlledCreaturesHaveRiotEffect.class::isInstance);
+        if (!ownRiot && !grantedRiot && !battlefieldRiot) {
+            return;
+        }
+        if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            return;
+        }
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                permanent.getCard(),
+                controllerId,
+                List.of(new RiotEffect()),
+                permanent.getCard().getName() + " — Riot: have it enter with a +1/+1 counter?"
+                        + " (Otherwise it gains haste.)",
                 null,
                 null,
                 permanent.getId()));

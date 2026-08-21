@@ -46,6 +46,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | curse, enchant player | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | metalcraft, morbid, conditional | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | quest counter, opponent end step trigger, life-loss condition | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| pay-life trigger, counters from life paid, counter-removal ability | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |

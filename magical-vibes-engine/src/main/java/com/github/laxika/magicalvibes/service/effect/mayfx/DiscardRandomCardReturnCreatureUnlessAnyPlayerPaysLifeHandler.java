@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardReturnCreatu
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
     private final DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler effectHandler;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,6 +44,7 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
         if (accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost())) {
             gameData.playerLifeTotals.put(player.getId(),
                     gameData.getLife(player.getId()) - effect.lifeCost());
+            triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), effect.lifeCost());
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + effect.lifeCost() + " life. (",
                     ability.sourceCard(), ")"));

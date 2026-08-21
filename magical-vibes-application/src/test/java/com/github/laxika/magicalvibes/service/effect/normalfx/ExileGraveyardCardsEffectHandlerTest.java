@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -35,6 +37,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link ExileGraveyardCardsEffectHandler}. Consolidated from the old
@@ -218,5 +221,30 @@ class ExileGraveyardCardsEffectHandlerTest {
             // Controller (player1) is skipped; the only opponent (player2) has an empty graveyard.
             verify(graveyardReturnSupport, never()).beginGraveyardExileChoice(any(), any(), anyInt());
         }
+    }
+
+    @Test
+    @DisplayName("Records the number of matching targeted cards exiled")
+    void recordsMatchingTargetedExiledCardsInEventValue() {
+        Card creature = createCard("Creature");
+        Card noncreature = createCard("Noncreature");
+        gd.playerGraveyards.get(player2Id).addAll(List.of(creature, noncreature));
+        CardPredicate creatureFilter = new CardTruePredicate();
+
+        when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+        when(gameQueryService.findCardInGraveyardById(gd, noncreature.getId())).thenReturn(noncreature);
+        when(gameQueryService.findGraveyardOwnerById(gd, creature.getId())).thenReturn(player2Id);
+        when(gameQueryService.findGraveyardOwnerById(gd, noncreature.getId())).thenReturn(player2Id);
+        when(predicateEvaluationService.matchesCardPredicate(creature, creatureFilter, null)).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(noncreature, creatureFilter, null)).thenReturn(false);
+
+        ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect
+                .targetedFromAnyGraveyardWithEventValue(2, creatureFilter);
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Kaya"),
+                player1Id, "Kaya", List.of(effect), List.of(creature.getId(), noncreature.getId()));
+
+        handler.resolve(gd, entry, effect);
+
+        assertThat(entry.getEventValue()).isEqualTo(1);
     }
 }

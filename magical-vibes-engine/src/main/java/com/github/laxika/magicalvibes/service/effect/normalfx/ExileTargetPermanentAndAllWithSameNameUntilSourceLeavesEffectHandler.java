@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +32,7 @@ public class ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffectHandle
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -50,15 +54,26 @@ public class ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffectHandle
                     gameData.id, entry.getCard().getName());
         }
 
-        String targetName = target.getCard().getName();
+        ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect sameNameEffect =
+                (ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect) effect;
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                .withSourcePermanentId(entry.getSourcePermanentId());
         List<Permanent> toExile = new ArrayList<>();
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            for (Permanent perm : battlefield) {
-                if (perm.getCard().getName().equals(targetName)) {
-                    toExile.add(perm);
-                }
+        toExile.add(target);
+        if (sameNameEffect.sameNameOnlyTargetController()) {
+            if (targetControllerId != null) {
+                addMatchingPermanents(toExile, gameData.playerBattlefields.get(targetControllerId), target,
+                        targetName, sameNameEffect.sameNamePredicate(), filterContext);
             }
-        });
+        } else {
+            gameData.forEachBattlefield((playerId, battlefield) -> addMatchingPermanents(
+                    toExile, battlefield, target, targetName, sameNameEffect.sameNamePredicate(), filterContext));
+        }
 
         for (Permanent perm : toExile) {
             Card card = perm.getOriginalCard();
@@ -78,6 +93,24 @@ public class ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffectHandle
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    private void addMatchingPermanents(List<Permanent> toExile, List<Permanent> battlefield,
+                                       Permanent target, String targetName,
+                                       PermanentPredicate predicate, FilterContext filterContext) {
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent permanent : battlefield) {
+            String permanentName = gameQueryService.getEffectiveName(filterContext.gameData(), permanent);
+            if (!permanent.getId().equals(target.getId())
+                    && targetName != null
+                    && targetName.equals(permanentName)
+                    && (predicate == null || predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, predicate, filterContext))) {
+                toExile.add(permanent);
+            }
+        }
     }
 
     private UUID resolveSourcePermanentId(GameData gameData, StackEntry entry) {

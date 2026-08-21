@@ -1624,7 +1624,8 @@ class AbilityActivationServiceTest {
                     eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.isArtifact(perm)).thenReturn(true);
-            when(castingCostService.getActivatedAbilityActivationTax(gameData, perm)).thenReturn(3);
+            when(castingCostService.getActivatedAbilityActivationTax(
+                    eq(gameData), eq(player1Id), eq(perm), any(), anyBoolean())).thenReturn(3);
 
             ManaPool insufficientPool = new ManaPool();
             insufficientPool.add(ManaColor.COLORLESS, 1);

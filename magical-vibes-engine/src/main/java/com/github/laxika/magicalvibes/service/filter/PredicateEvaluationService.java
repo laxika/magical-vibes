@@ -167,6 +167,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastSourceControllerLifeTotalPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -779,6 +780,21 @@ public class PredicateEvaluationService {
                     }
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= creatureCount;
+            }
+            case PermanentPowerAtMostControlledCreatureCountersPredicate countersPredicate -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                int counterCount = 0;
+                if (controllerBattlefield != null) {
+                    for (Permanent controlledPermanent : controllerBattlefield) {
+                        if (gameQueryService.isCreature(gameData, controlledPermanent)) {
+                            counterCount += controlledPermanent.getCounterCount(countersPredicate.counterType());
+                        }
+                    }
+                }
+                yield gameQueryService.getEffectivePower(gameData, permanent) <= counterCount;
             }
             case PermanentPowerGreaterThanActivePlayerHandSizePredicate ignored -> {
                 if (gameData == null || gameData.activePlayerId == null) {

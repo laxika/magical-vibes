@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentExileCostHandler;
@@ -201,6 +202,7 @@ public class AbilityActivationService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameMutationCoordinator mutationCoordinator;
     private final TapCostSupport tapCostSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     /**
      * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
@@ -791,6 +793,7 @@ public class AbilityActivationService {
 
         gameData.playerLifeTotals.put(playerId, life - 1);
         gameData.lifeLostThisTurn.merge(playerId, 1, Integer::sum);
+        triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, 1);
         gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
 
         String logEntry = player.getUsername() + " pays 1 life to add {C} (Channel).";
@@ -3052,7 +3055,8 @@ public class AbilityActivationService {
                 placedCount = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, placedCount);
                 if (placedCount > 0) {
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placedCount);
-                    gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
+                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                            gameData, permanent, playerId, placedCount);
                     placed = true;
                 }
             } else if (c.powerModifier() == 0 && c.toughnessModifier() < 0) {
@@ -3699,7 +3703,8 @@ public class AbilityActivationService {
             UUID targetId, List<UUID> targetIds, int effectiveXValue) {
         int additionalGenericCost =
                 castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, true)
-                        + castingCostService.getActivatedAbilityActivationTax(gameData, permanent);
+                        + castingCostService.getActivatedAbilityActivationTax(
+                        gameData, playerId, permanent, ability, isManaAbility(ability));
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
         if (abilityCost == null) {
             return additionalGenericCost;
@@ -4778,6 +4783,7 @@ public class AbilityActivationService {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
             gameData.lifeLostThisTurn.merge(playerId, phyrexianLifeCost, Integer::sum);
+            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, phyrexianLifeCost);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana."));
         }

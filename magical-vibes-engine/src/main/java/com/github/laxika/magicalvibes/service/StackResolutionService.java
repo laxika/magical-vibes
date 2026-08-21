@@ -432,6 +432,8 @@ public class StackResolutionService {
         perm.setEvoked(entry.isEvoked());
         // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
         perm.setProwl(entry.isProwl());
+        // Carry spectacle cast context so spectacle-dependent ETB effects can select their branch.
+        perm.setSpectacle(entry.isSpectacle());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
@@ -782,6 +784,7 @@ public class StackResolutionService {
         perm.setEvoked(entry.isEvoked());
         // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
         perm.setProwl(entry.isProwl());
+        perm.setSpectacle(entry.isSpectacle());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing

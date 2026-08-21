@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "GTC", collectorNumber = "137")
+@CardRegistration(set = "RNA", collectorNumber = "147")
 public class TowerDefense extends Card {
 
     public TowerDefense() {

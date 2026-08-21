@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -116,6 +117,7 @@ public class AdditionalSpellCostService {
             PutCountersOnControlledCreatureOrPayManaCost.class,
             PayXLifeCost.class,
             PayLifeCost.class,
+            PayLifeOrSacrificePermanentCost.class,
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
             ExileNCardsFromGraveyardCost.class,
@@ -179,7 +181,8 @@ public class AdditionalSpellCostService {
             BeholdCost beholdSelectionCost,
             DelveCost delveCost,
             RevealCardFromHandCost revealCardCost,
-            ChooseCreatureTypeCost chooseCreatureTypeCost
+            ChooseCreatureTypeCost chooseCreatureTypeCost,
+            PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -193,7 +196,7 @@ public class AdditionalSpellCostService {
                     || tapAnyNumberCost != null || tapMultipleCost != null || returnAnyNumberCost != null
                     || returnPermanentToHand != null
                     || returnCreatureToHand || blightCost != null || putCounterCost != null || putCountersOrPayManaCost != null
-                    || payXLife || payLifeCost != null
+                    || payXLife || payLifeCost != null || payLifeOrSacrificePermanentCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardHand || discardXCardsCost != null
@@ -327,6 +330,8 @@ public class AdditionalSpellCostService {
                 removeFirst(effects, PutCountersOnControlledCreatureOrPayManaCost.class);
         boolean payXLife = effects.removeIf(PayXLifeCost.class::isInstance);
         PayLifeCost payLifeCost = removeFirst(effects, PayLifeCost.class);
+        PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost =
+                removeFirst(effects, PayLifeOrSacrificePermanentCost.class);
         ExileCardFromGraveyardCost exileGraveyardCost = removeFirst(effects, ExileCardFromGraveyardCost.class);
         ExileXCardsFromGraveyardCost exileXCardsCost = removeFirst(effects, ExileXCardsFromGraveyardCost.class);
         ExileNCardsFromGraveyardCost exileNCardsCost = removeFirst(effects, ExileNCardsFromGraveyardCost.class);
@@ -354,7 +359,7 @@ public class AdditionalSpellCostService {
                 discardCost, discardRandomCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost,
-                chooseCreatureTypeCost);
+                chooseCreatureTypeCost, payLifeOrSacrificePermanentCost);
     }
 
     /** Adds additional costs granted by permanents before extracting the spell's cast costs. */
@@ -536,6 +541,15 @@ public class AdditionalSpellCostService {
                     int life = gameData.getLife(playerId);
                     if (life < cost.effectiveAmount(life)) return false;
                 }
+                case PayLifeOrSacrificePermanentCost cost -> {
+                    int life = gameData.getLife(playerId);
+                    boolean canPayLife = lifeAndSacAllowed && life >= cost.lifeAmount();
+                    boolean canSacrifice = battlefield.stream()
+                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, p, cost.filter()))
+                            .anyMatch(p -> !gameQueryService.isCreature(gameData, p) || lifeAndSacAllowed);
+                    if (!canPayLife && !canSacrifice) return false;
+                }
                 // Escalate is payable with a single mode (zero extra payments), so it never blocks
                 // playability by itself — concrete mode+payment selections are validated at cast.
                 case EscalateDiscardCost ignored -> { }
@@ -659,6 +673,24 @@ public class AdditionalSpellCostService {
                             ExtractedCosts costs, CostSelection selection, Integer announcedXValue) {
         if (costs.payLifeCost() != null) {
             validatePayLifeCost(gameData, player, card, costs.payLifeCost());
+        }
+        if (costs.payLifeOrSacrificePermanentCost() != null) {
+            PayLifeOrSacrificePermanentCost cost = costs.payLifeOrSacrificePermanentCost();
+            if (selection.sacrificePermanentId() != null) {
+                Permanent permanent = validateSingleSacrificeCost(gameData, player, card,
+                        selection.sacrificePermanentId(), "a creature or enchantment",
+                        p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    validateCanSacrificeCreatureForCost(gameData, card);
+                }
+            } else {
+                validateCanPayLifeForCost(gameData, card);
+                int life = gameData.getLife(player.getId());
+                if (life < cost.lifeAmount()) {
+                    throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
+                            + " life for " + card.getName());
+                }
+            }
         }
         if (costs.sacrificeCreature()) {
             validateCanSacrificeCreatureForCost(gameData, card);

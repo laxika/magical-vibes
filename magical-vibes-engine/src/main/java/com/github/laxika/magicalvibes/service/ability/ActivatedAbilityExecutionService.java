@@ -353,7 +353,7 @@ public class ActivatedAbilityExecutionService {
                             : permanent.getCounterCount(cost.perSourceCounter());
                     int amount = cost.effectiveAmount(currentLife, sourceCounterCount);
                     if (amount > 0) {
-                        lifeSupport.applyLifeLoss(gameData, playerId, amount, permanent.getCard().getName());
+                        lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
                     }
                 });
 
@@ -820,7 +820,7 @@ public class ActivatedAbilityExecutionService {
             }
             ManaAbilityEffectHandler manaAbilityEffectHandler = manaAbilityEffectHandlerRegistry.getHandler(effect);
             if (manaAbilityEffectHandler != null) {
-                manaAbilityEffectHandler.resolve(gameData, playerId, player, permanent,
+                manaAbilityEffectHandler.resolve(gameData, playerId, player, permanent, effect,
                         manaMultiplier, isCreatureSource);
                 continue;
             }
@@ -929,6 +929,9 @@ public class ActivatedAbilityExecutionService {
                             ofColors.colors().get(0));
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(manaColor, picks);
+                    if (ofColors.grantsRiot()) {
+                        pool.addRiotGrantingMana(manaColor, picks);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, picks);
                     }
@@ -937,6 +940,9 @@ public class ActivatedAbilityExecutionService {
                     // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors());
+                    if (ofColors.grantsRiot()) {
+                        choiceContext = choiceContext.withRiot();
+                    }
                     List<String> colors = ofColors.colors().stream().map(Enum::name).toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));

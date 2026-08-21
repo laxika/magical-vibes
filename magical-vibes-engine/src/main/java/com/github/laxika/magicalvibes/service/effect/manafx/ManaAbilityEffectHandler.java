@@ -13,7 +13,7 @@ public interface ManaAbilityEffectHandler {
     Class<? extends CardEffect> handledEffect();
 
     void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
-                 int manaMultiplier, boolean creatureSource);
+                 CardEffect effect, int manaMultiplier, boolean creatureSource);
 
     default boolean isRevertable() {
         return false;

@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -45,12 +46,7 @@ public class TargetValidationService {
 
     public Optional<String> checkEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
         for (CardEffect effect : effects) {
-            CardEffect effectToValidate = effect;
-            // Unwrap replacement conditional effects to validate the inner effects.
-            // Both paths share the same targeting, so validate the base effect.
-            if (effect instanceof ConditionalReplacementEffect replacement) {
-                effectToValidate = replacement.baseEffect();
-            }
+            CardEffect effectToValidate = unwrapTargetingEffect(effect);
             // The declarative TargetSpec interpreter runs FIRST for every context (it lives in the
             // service, not as a scanned @ValidatesTarget bean, so contexts that build the registry
             // outside Spring still get it). A registered class validator, when present, runs after
@@ -71,6 +67,24 @@ public class TargetValidationService {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Conditional wrappers preserve the wrapped effect's target specification, but cast-time
+     * rules such as an optional graveyard target also need the concrete effect's extra targeting
+     * flags (for example {@code ReturnCardFromGraveyardEffect.upTo()}).
+     */
+    private static CardEffect unwrapTargetingEffect(CardEffect effect) {
+        CardEffect unwrapped = effect;
+        while (true) {
+            if (unwrapped instanceof ConditionalEffect conditional) {
+                unwrapped = conditional.wrapped();
+            } else if (unwrapped instanceof ConditionalReplacementEffect replacement) {
+                unwrapped = replacement.baseEffect();
+            } else {
+                return unwrapped;
+            }
+        }
     }
 
     /**

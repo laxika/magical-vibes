@@ -315,6 +315,14 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.TOP_OF_LIBRARY, false);
     }
 
+    /** You may put one matching card on top of your library and the rest on the bottom randomly. */
+    public static LookAtTopCardsEffect mayPutMatchingOnTopRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.TOP_OF_LIBRARY, true);
+    }
+
     /** You may put one of the looked-at cards on top of your library and the rest into your graveyard. */
     public static LookAtTopCardsEffect mayPutOneOnTopRestToGraveyard(int lookCount) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,

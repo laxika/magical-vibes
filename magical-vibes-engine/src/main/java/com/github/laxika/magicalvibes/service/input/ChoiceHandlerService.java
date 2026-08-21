@@ -679,6 +679,30 @@ public class ChoiceHandlerService {
                 inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
+        } else if (ctx.grantsRiot()) {
+            manaPool.add(manaColor, 1);
+            manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromCreature()) {
+                manaPool.addCreatureMana(manaColor, 1);
+            }
+            if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+                AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+            }
+
+            String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
+                    + " mana (grants riot if spent on a creature spell).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+
+            int remaining = amount - 1;
+            if (remaining > 0) {
+                ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.riotColorCombination(
+                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions());
+                List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
         } else if (ctx.fixedColorOptions() != null) {
             // Filter lands ("Add {R}{R}, {R}{G}, or {G}{G}") — each mana is chosen individually from
             // the fixed color list; add one and re-prompt until all picks have been made.
@@ -786,6 +810,7 @@ public class ChoiceHandlerService {
         if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null
                 && !ctx.creatureSpellOnly() && !ctx.creatureSpellOrAbilityOnly()
                 && !ctx.grantsAdditionalPlusOneCounter()
+                && !ctx.grantsRiot()
                 && !ctx.abilityOnly() && !ctx.artifactSpellOrAbilityOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
@@ -2752,6 +2777,7 @@ public class ChoiceHandlerService {
         Permanent from = gameQueryService.findPermanentById(gameData,
                 ctx.fromPermanentIds().get(ctx.index()));
         Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
+        int countersRemoved = ctx.countersRemoved();
         if (from != null && to != null && chosen > 0
                 && !cantHaveCounter(gameData, to, ctx.counterType())) {
             int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
@@ -2760,22 +2786,33 @@ public class ChoiceHandlerService {
                 if (ctx.counterType() == CounterType.OIL) {
                     gameData.recordOilCounterRemoved(from, moved);
                 }
-                StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-                if (sourceEntry != null) {
-                    permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,
-                            ctx.counterType(), moved);
-                } else {
-                    to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
-                    if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                        UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
-                        if (controllerId != null) {
-                            gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                countersRemoved += moved;
+                if (ctx.countersPerMovedCounter() == 1) {
+                    StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+                    if (sourceEntry != null) {
+                        permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,
+                                ctx.counterType(), moved);
+                    } else {
+                        to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
+                        if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                            UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
+                            if (controllerId != null) {
+                                gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                            }
                         }
                     }
                 }
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(player.getUsername() + " moves " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
-                        .card(from.getCard()).text(" onto ").card(to.getCard()).text(".").build());
+                if (ctx.countersPerMovedCounter() == 1) {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
+                            .card(from.getCard()).text(" and puts ").text(Integer.toString(moved))
+                            .text(" counter" + (moved == 1 ? "" : "s") + " on ")
+                            .card(to.getCard()).text(".").build());
+                } else {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
+                            .card(from.getCard()).text(".").build());
+                }
             }
         }
 
@@ -2786,10 +2823,31 @@ public class ChoiceHandlerService {
                 playerInputService.beginMoveCountersFromControlledPermanentsAmountChoice(
                         gameData, player.getId(), ctx.fromPermanentIds(), nextIndex, ctx.toPermanentId(),
                         ctx.counterType(), ctx.sourceCardName(), next.getCard().getName(),
-                        next.getCounterCount(ctx.counterType()));
+                        next.getCounterCount(ctx.counterType()), ctx.countersPerMovedCounter(), countersRemoved);
                 return;
             }
             nextIndex++;
+        }
+
+        if (ctx.countersPerMovedCounter() > 1 && countersRemoved > 0 && to != null
+                && !cantHaveCounter(gameData, to, ctx.counterType())) {
+            int countersToPlace = countersRemoved * ctx.countersPerMovedCounter();
+            StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+            if (sourceEntry != null) {
+                permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,
+                        ctx.counterType(), countersToPlace);
+            } else {
+                to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + countersToPlace);
+                if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
+                    if (controllerId != null) {
+                        gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                    }
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " puts ").text(Integer.toString(countersToPlace))
+                    .text(" counters on ").card(to.getCard()).text(".").build());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

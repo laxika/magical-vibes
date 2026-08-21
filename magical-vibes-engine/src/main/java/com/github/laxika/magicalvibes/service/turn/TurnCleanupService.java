@@ -256,6 +256,7 @@ public class TurnCleanupService {
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
         gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.clear();
+        gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
         gameData.allDamagePreventionPredicates.clear();
@@ -263,6 +264,7 @@ public class TurnCleanupService {
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.damageCantBePreventedThisTurn = false;
+        gameData.damageLifeFloorsUntilEndOfTurn.clear();
         gameData.playersCantGainLifeThisTurn = false;
         gameData.creaturesCantAttackThisTurn = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
@@ -318,6 +320,7 @@ public class TurnCleanupService {
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellsGrantedHasteOnEntry.clear();
+        gameData.spellsGrantedRiotOnEntry.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
         gameData.guardianAngelTargetsUntilEndOfTurn.clear();

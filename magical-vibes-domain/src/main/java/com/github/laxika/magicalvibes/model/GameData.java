@@ -690,6 +690,8 @@ public class GameData {
     public final Set<UUID> playersExilingUncastEnteringCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, exile nontoken creatures that would enter without having been cast (Mistcaller). */
     public final Set<UUID> playersExilingUncastEnteringNontokenCreaturesThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players whose effects, this turn, exile creatures that would die instead of putting them into graveyards. */
+    public final Set<UUID> playersExilingCreaturesInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players with an active effect that redirects damage dealt to any creature to them. */
@@ -727,6 +729,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> countersLockedPlayersWhileSourceOnBattlefield = new ConcurrentHashMap<>();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
     public boolean damageCantBePreventedThisTurn = false;
+    /** Per-player life floors imposed by resolving effects until end of turn (Angel of Grace). */
+    public final Map<UUID, Integer> damageLifeFloorsUntilEndOfTurn = new ConcurrentHashMap<>();
     /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
     public boolean playersCantGainLifeThisTurn = false;
     /** When true, no creature can attack this turn. Cleared at turn cleanup. */
@@ -995,6 +999,10 @@ public class GameData {
      *  permanent they become enters with haste until end of turn. Consumed by
      *  {@code BattlefieldEntryService} and cleared at end of turn. */
     public final Set<UUID> spellsGrantedHasteOnEntry = ConcurrentHashMap.newKeySet();
+
+    /** Card ids of creature spells paid for with riot-granting mana, so the permanents they become
+     *  enter with riot. Consumed by {@code BattlefieldEntryService} and cleared at end of turn. */
+    public final Set<UUID> spellsGrantedRiotOnEntry = ConcurrentHashMap.newKeySet();
 
     /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
      *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
@@ -3367,6 +3375,8 @@ public class GameData {
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
         copy.playersExilingUncastEnteringNontokenCreaturesThisTurn
                 .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
+        copy.playersExilingCreaturesInsteadOfDyingThisTurn
+                .addAll(this.playersExilingCreaturesInsteadOfDyingThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
@@ -3401,6 +3411,7 @@ public class GameData {
             copy.countersLockedPlayersWhileSourceOnBattlefield.put(sourceId, copied);
         });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
+        copy.damageLifeFloorsUntilEndOfTurn.putAll(this.damageLifeFloorsUntilEndOfTurn);
         copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
         copy.creaturesCantAttackThisTurn = this.creaturesCantAttackThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
@@ -4012,6 +4023,7 @@ public class GameData {
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);
         copy.spellsGrantedHasteOnEntry.addAll(this.spellsGrantedHasteOnEntry);
+        copy.spellsGrantedRiotOnEntry.addAll(this.spellsGrantedRiotOnEntry);
         copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
         copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
         this.guardianAngelTargetsUntilEndOfTurn.forEach((controllerId, targetIds) -> {

@@ -129,6 +129,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
@@ -538,6 +539,14 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleEachOpponentBlightsCreature(GameData gameData, UUID permanentId,
             PermanentChoiceContext.EachOpponentBlightsCreature context) {
         eachOpponentBlightsEffectHandler.completeChoice(gameData, permanentId, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    public void handleEachTargetPlayerLosesLifeAndSacrificesCreature(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.EachTargetPlayerLosesLifeAndSacrificesCreature context) {
+        eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler.completeChoice(gameData, permanentId, context);
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }
@@ -1584,6 +1593,19 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , toSacrifice.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
+
+        if (!ctx.reflexive()) {
+            if (ctx.thenEffect() != null) {
+                StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
+                if (originalEntry == null) {
+                    throw new IllegalStateException("No pending effect resolution for synchronous sacrifice follow-up");
+                }
+                originalEntry.insertEffectsToResolve(
+                        gameData.pendingEffectResolutionIndex, List.of(ctx.thenEffect()));
+            }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         // Execute the "if/when you do" effect by pushing it onto the stack as a triggered ability.
         // A null thenEffect means a bare "sacrifice a permanent" with no follow-up.

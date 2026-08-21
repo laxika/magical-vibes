@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M19", collectorNumber = "127")
 @CardRegistration(set = "KTK", collectorNumber = "95")
 @CardRegistration(set = "M20", collectorNumber = "124")
+@CardRegistration(set = "RNA", collectorNumber = "91")
 public class ActOfTreason extends Card {
 
     public ActOfTreason() {

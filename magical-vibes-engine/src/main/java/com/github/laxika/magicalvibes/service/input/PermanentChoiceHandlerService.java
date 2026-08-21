@@ -331,6 +331,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBlightCreatureChoice(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentBlightsCreature blight) {
             battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
+        } else if (context instanceof PermanentChoiceContext.EachTargetPlayerLosesLifeAndSacrificesCreature loseLifeAndSacrifice) {
+            battlefieldHandler.handleEachTargetPlayerLosesLifeAndSacrificesCreature(gameData, permanentId,
+                    loseLifeAndSacrifice);
         } else if (context instanceof PermanentChoiceContext.ManaAbilityAddToChosenPlayer manaChosen) {
             battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
         } else if (context instanceof PermanentChoiceContext.BendOrBreakOpponentChoice) {

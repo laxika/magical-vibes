@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.KillingWaveEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,6 +39,8 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
+    @Autowired @Lazy
+    private TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -153,6 +158,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
             }
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
+            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, lifeCost);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + lifeCost + " life (" + sourceName + ")."));

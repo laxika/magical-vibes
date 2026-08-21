@@ -37,8 +37,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                              {@code EventValue} amount
  */
 public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
-        SacrificeRecipient recipient, boolean countPerSacrificingPlayer, boolean recordSacrificedCount)
+        SacrificeRecipient recipient, boolean countPerSacrificingPlayer, boolean recordSacrificedCount,
+        boolean recordSacrificedPower)
         implements CardEffect, CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
+
+    public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
+            SacrificeRecipient recipient, boolean countPerSacrificingPlayer,
+            boolean recordSacrificedCount) {
+        this(count, filter, recipient, countPerSacrificingPlayer, recordSacrificedCount, false);
+    }
 
     /** Count evaluated once, from the spell's controller's perspective. */
     public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
@@ -59,7 +66,14 @@ public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate 
 
     /** Returns a copy that records the actual direct sacrifice count for a following effect. */
     public SacrificePermanentsEffect withRecordedSacrificeCount() {
-        return new SacrificePermanentsEffect(count, filter, recipient, countPerSacrificingPlayer, true);
+        return new SacrificePermanentsEffect(count, filter, recipient, countPerSacrificingPlayer, true,
+                recordSacrificedPower);
+    }
+
+    /** Returns a copy that records the sacrificed permanent's effective power for a following effect. */
+    public SacrificePermanentsEffect withRecordedSacrificedPower() {
+        return new SacrificePermanentsEffect(count, filter, recipient, countPerSacrificingPlayer,
+                recordSacrificedCount, true);
     }
 
     @Override

@@ -249,6 +249,27 @@ class SacrificePermanentsEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Records the matching permanent's power before sacrificing it")
+        void recordsSacrificedPower() {
+            Permanent bears = addPermanent(player2Id, "Grizzly Bears", CardType.CREATURE);
+            Permanent giant = addPermanent(player2Id, "Hill Giant", CardType.CREATURE);
+            stubCount(1);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(bears),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(giant),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, giant)).thenReturn(3);
+            StackEntry resolvingEntry = entry(player1Id, player2Id);
+
+            handler.resolve(gd, resolvingEntry, new SacrificePermanentsEffect(
+                    1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER)
+                    .withRecordedSacrificedPower());
+
+            assertThat(resolvingEntry.getEventValue()).isEqualTo(3);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, giant);
+        }
+
+        @Test
         @DisplayName("Prompts multi-permanent ForcedSacrifice choice when more matches than count")
         void promptsForcedSacrificeChoice() {
             Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);

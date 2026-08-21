@@ -33,7 +33,7 @@ public class AwardManaOfColorsInGraveyardEffectHandler implements ManaAbilityEff
 
     @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
-                        int manaMultiplier, boolean creatureSource) {
+                        CardEffect effect, int manaMultiplier, boolean creatureSource) {
         List<ManaColor> availableColors = ManaColor.COLORS.stream()
                 .filter(color -> hasColorInGraveyard(gameData, playerId, color))
                 .toList();

@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -1659,6 +1660,31 @@ class GameQueryServiceTest {
             addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerKeywordEffect(Keyword.SHROUD)));
 
             assertThat(gqs.playerHasShroud(gd, player2Id)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("playerHasHexproof")
+    class PlayerHasHexproof {
+
+        @Test
+        @DisplayName("honors an active conditional controller keyword grant")
+        void honorsActiveConditionalGrant() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gruul Spellbreaker", 3, 3, CardColor.RED,
+                    new ConditionalEffect(new ControllerTurn(), new GrantControllerKeywordEffect(Keyword.HEXPROOF))));
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+            assertThat(gqs.playerHasHexproof(gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("ignores an inactive conditional controller keyword grant")
+        void ignoresInactiveConditionalGrant() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gruul Spellbreaker", 3, 3, CardColor.RED,
+                    new ConditionalEffect(new ControllerTurn(), new GrantControllerKeywordEffect(Keyword.HEXPROOF))));
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+            assertThat(gqs.playerHasHexproof(gd, player1Id)).isFalse();
         }
     }
 

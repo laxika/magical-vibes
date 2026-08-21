@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +64,7 @@ class FlickerEffectHandlerTest {
     @Mock private DrawService drawService;
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private GraveyardReturnSupport graveyardReturnSupport;
+    @Mock private GrantKeywordEffectHandler grantKeywordEffectHandler;
     @InjectMocks
     private ExileSupport exileSupport;
 
@@ -91,7 +94,7 @@ class FlickerEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new FlickerEffectHandler(exileSupport, gameQueryService, predicateEvaluationService,
                 gameLogService, permanentRemovalService, battlefieldEntryService,
-                drawService, amountEvaluationService, graveyardReturnSupport);
+                drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler);
     }
 
     private Card createCreatureCard(String name) {
@@ -109,6 +112,30 @@ class FlickerEffectHandlerTest {
         card.setType(CardType.PLANESWALKER);
         card.setLoyalty(3);
         return card;
+    }
+
+    @Nested
+    @DisplayName("TARGET, immediate return")
+    class TargetImmediate {
+
+        @Test
+        @DisplayName("Applies return-time keyword grants to the new permanent")
+        void appliesReturnKeywords() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Justiciar's Portal");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithKeywords(Set.of(Keyword.FIRST_STRIKE));
+            StackEntry entry = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(grantKeywordEffectHandler).grantToPermanent(
+                    eq(gd), eq(entry), any(Permanent.class), eq(Set.of(Keyword.FIRST_STRIKE)));
+        }
     }
 
     @Nested

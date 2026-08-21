@@ -43,7 +43,7 @@ public class PayXLifeEffectHandler implements NormalEffectHandlerBean {
             entry.setEventValue(chosenValue);
 
             if (chosenValue > 0) {
-                lifeSupport.applyLifeLoss(gameData, controllerId, chosenValue, cardName);
+                lifeSupport.applyLifePayment(gameData, controllerId, chosenValue, cardName);
             }
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + chosenValue + " life for " + cardName + "."));

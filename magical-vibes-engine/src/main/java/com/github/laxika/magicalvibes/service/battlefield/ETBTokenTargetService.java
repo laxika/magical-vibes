@@ -97,7 +97,8 @@ public class ETBTokenTargetService {
                 StackEntryType type = se.getEntryType();
                 boolean isSpell = type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL
                         || type == StackEntryType.CREATURE_SPELL || type == StackEntryType.ENCHANTMENT_SPELL
-                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL;
+                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL
+                        || type == StackEntryType.BATTLE_SPELL;
                 boolean isAbility = type == StackEntryType.ACTIVATED_ABILITY
                         || type == StackEntryType.TRIGGERED_ABILITY;
                 if (!isSpell && !(pending.includeAbilities() && isAbility)) {

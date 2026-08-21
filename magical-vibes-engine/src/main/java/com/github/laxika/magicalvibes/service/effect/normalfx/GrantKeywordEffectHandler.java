@@ -294,6 +294,23 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    void grantToPermanent(GameData gameData, StackEntry entry, Permanent permanent, Set<Keyword> keywords) {
+        Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, keywords);
+        if (grantableKeywords.isEmpty()) {
+            return;
+        }
+
+        addLegacyBucket(permanent, GrantDuration.END_OF_TURN, grantableKeywords);
+        gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                entry.getCard().getName(), null, entry.getControllerId(),
+                new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
+                permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+        String keywordNames = formatKeywords(grantableKeywords);
+        gameLogService.append(gameData, GameLog.builder().card(permanent.getCard())
+                .text(" gains " + keywordNames + " until end of turn.").build());
+        log.info("Game {} - {} gains {} on return", gameData.id, permanent.getCard().getName(), grantableKeywords);
+    }
+
     /**
      * The other attacking creatures sharing the source's attacking band (CR 702.22c). The source
      * itself is excluded, and an empty list is returned when it is not attacking in a band.

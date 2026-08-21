@@ -515,6 +515,11 @@ public class EtbTriggerService {
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack).toList();
 
+        List<Permanent> sourceBattlefield = gameData.playerBattlefields.get(controllerId);
+        boolean sourceWasCastForSpectacle = sourceBattlefield != null
+                && !sourceBattlefield.isEmpty()
+                && sourceBattlefield.getLast().isSpectacle();
+
         // Put non-special effects on the stack as before
         if (!otherEffects.isEmpty()) {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
@@ -637,6 +642,7 @@ public class EtbTriggerService {
                 if (modeTargetFilter != null) {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
+                etbEntry.setSpectacle(sourceWasCastForSpectacle);
                 gameData.stack.add(etbEntry);
                 queueTriggeredAbilityCounters(gameData, etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
@@ -664,6 +670,7 @@ public class EtbTriggerService {
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
+                    extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);
                     gameData.stack.add(extraEtbEntry);
                     queueTriggeredAbilityCounters(gameData, extraEtbEntry);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));

@@ -51,6 +51,7 @@ public sealed interface Condition permits
         CastForMadnessCost,
         CastForForetellCost,
         CastForProwlCost,
+        CastForSpectacleCost,
         CastFromZone,
         CastNotFromHand,
         WasCast,

@@ -54,6 +54,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final GrantKeywordEffectHandler grantKeywordEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -280,6 +281,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         log.info("Game {} - {} flickers {} (immediate return)", gameData.id, entry.getCard().getName(), card.getName());
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, card, null, false);
+
+        if (!e.grantedKeywordsOnReturn().isEmpty()) {
+            grantKeywordEffectHandler.grantToPermanent(gameData, entry, returned, e.grantedKeywordsOnReturn());
+        }
 
         // Apply bonus if the exiled permanent had the required subtype
         if (hadBonusSubtype && e.bonusEffect() instanceof DrawCardEffect drawEffect) {

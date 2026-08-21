@@ -110,6 +110,7 @@ public sealed interface PermanentPredicate permits
         PermanentPowerAtLeastPredicate,
         PermanentPowerAtLeastSourceControllerLifeTotalPredicate,
         PermanentPowerAtMostControlledCreatureCountPredicate,
+        PermanentPowerAtMostControlledCreatureCountersPredicate,
         PermanentPowerAtMostControlledSubtypeCountPredicate,
         PermanentPowerAtMostPredicate,
         PermanentPowerGreaterThanActivePlayerHandSizePredicate,

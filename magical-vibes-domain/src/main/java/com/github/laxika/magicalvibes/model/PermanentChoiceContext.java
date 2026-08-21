@@ -1042,7 +1042,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
-    record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) implements PermanentChoiceContext {}
+    record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect,
+                                  boolean reflexive) implements PermanentChoiceContext {
+        public SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) {
+            this(controllerId, sourceCard, thenEffect, true);
+        }
+    }
 
     /** Victimize: sacrifice a creature, then return the selected graveyard cards if the sacrifice happened. */
     record SacrificePermanentAndReturnTargetCards(UUID controllerId, Card sourceCard,
@@ -1078,6 +1083,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sourcePermanentId,
             List<UUID> remainingOpponentIds,
             int count
+    ) implements PermanentChoiceContext {}
+
+    /** Each targeted player chooses a creature to sacrifice after the life loss has been applied. */
+    record EachTargetPlayerLosesLifeAndSacrificesCreature(
+            UUID choosingPlayerId,
+            UUID sourceControllerId,
+            Card sourceCard,
+            UUID sourcePermanentId,
+            List<UUID> remainingTargetPlayerIds,
+            List<UUID> chosenCreatureIds
     ) implements PermanentChoiceContext {}
 
     /** "Sacrifice a creature. If you do, create X tokens, where X is its toughness." (e.g. Feed the Pack). */

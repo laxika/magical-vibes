@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
@@ -627,13 +628,29 @@ public class CastingCostService {
      * Symmetric — applies regardless of who controls the source or the taxing permanent.
      */
     public int getActivatedAbilityActivationTax(GameData gameData, Permanent sourcePermanent) {
+        return getActivatedAbilityActivationTax(gameData, null, sourcePermanent, null, false);
+    }
+
+    public int getActivatedAbilityActivationTax(GameData gameData, UUID activatingPlayerId,
+                                                Permanent sourcePermanent, ActivatedAbility ability,
+                                                boolean manaAbility) {
         int tax = 0;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilityCostIncreasingEffect taxEffect
+                    ActivatedAbilityCostIncreasingEffect taxEffect = null;
+                    if (effect instanceof ActivatedAbilityCostIncreasingEffect directTax) {
+                        taxEffect = directTax;
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof ActivatedAbilityCostIncreasingEffect wrappedTax
+                            && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(perm, pid))) {
+                        taxEffect = wrappedTax;
+                    }
+                    if (taxEffect != null
+                            && taxEffect.appliesTo(ability, manaAbility, activatingPlayerId, pid)
                             && predicateEvaluationService.matchesPermanentPredicate(
                                     sourcePermanent, taxEffect.affectedPermanents(),
                                     FilterContext.of(gameData)

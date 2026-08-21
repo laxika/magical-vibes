@@ -548,6 +548,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chose other nontoken creatures to exile until the source leaves. */
+    record ExileOwnNontokenCreaturesUntilSourceLeaves(UUID sourcePermanentId)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Static Orb / Stoic Angel: the active player chose up to the cap of the permanents matching
      * {@code filter} that would otherwise untap; only those (plus any permanents the filter excludes)

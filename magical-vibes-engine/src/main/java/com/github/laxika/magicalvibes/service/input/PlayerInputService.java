@@ -907,9 +907,26 @@ public class PlayerInputService {
     public void beginMoveCountersFromControlledPermanentsAmountChoice(
             GameData gameData, UUID playerId, List<UUID> fromPermanentIds, int index,
             UUID toPermanentId, CounterType counterType, String sourceCardName, String fromCardName, int max) {
+        beginMoveCountersFromControlledPermanentsAmountChoice(gameData, playerId, fromPermanentIds, index,
+                toPermanentId, counterType, sourceCardName, fromCardName, max, 1);
+    }
+
+    public void beginMoveCountersFromControlledPermanentsAmountChoice(
+            GameData gameData, UUID playerId, List<UUID> fromPermanentIds, int index,
+            UUID toPermanentId, CounterType counterType, String sourceCardName, String fromCardName,
+            int max, int countersPerMovedCounter) {
+        beginMoveCountersFromControlledPermanentsAmountChoice(gameData, playerId, fromPermanentIds, index,
+                toPermanentId, counterType, sourceCardName, fromCardName, max, countersPerMovedCounter, 0);
+    }
+
+    public void beginMoveCountersFromControlledPermanentsAmountChoice(
+            GameData gameData, UUID playerId, List<UUID> fromPermanentIds, int index,
+            UUID toPermanentId, CounterType counterType, String sourceCardName, String fromCardName,
+            int max, int countersPerMovedCounter, int countersRemoved) {
         ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice choiceContext =
                 new ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice(
-                        fromPermanentIds, index, toPermanentId, counterType, sourceCardName, fromCardName);
+                        fromPermanentIds, index, toPermanentId, counterType, sourceCardName, fromCardName,
+                        countersPerMovedCounter, countersRemoved);
 
         List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
                 .mapToObj(Integer::toString)

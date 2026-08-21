@@ -146,6 +146,9 @@ public sealed interface TriggerContext {
      */
     record LifeLoss(UUID losingPlayerId, int lifeLostAmount) implements TriggerContext {}
 
+    /** Context for life-payment triggers (ON_CONTROLLER_PAYS_LIFE). */
+    record LifePayment(UUID payingPlayerId, int lifePaidAmount) implements TriggerContext {}
+
     /**
      * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
      * {@code sourceCard} and {@code sourceEntryType} identify what caused the life gain
@@ -253,22 +256,30 @@ public sealed interface TriggerContext {
      */
     record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
                          int dyingCreatureToughness, UUID dyingPermanentId,
-                         Permanent dyingPermanent) implements TriggerContext {
+                         Permanent dyingPermanent, boolean wasCreature) implements TriggerContext {
 
         public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
                              int dyingCreatureToughness) {
-            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness, null, null);
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
+                    null, null, true);
         }
 
         public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
                              int dyingCreatureToughness, UUID dyingPermanentId) {
             this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
-                    dyingPermanentId, null);
+                    dyingPermanentId, null, true);
+        }
+
+        public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                             int dyingCreatureToughness, UUID dyingPermanentId,
+                             Permanent dyingPermanent) {
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
+                    dyingPermanentId, dyingPermanent, true);
         }
 
         @Override
         public boolean causedByCreatureDying() {
-            return true;
+            return wasCreature;
         }
     }
 
@@ -294,7 +305,19 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness) implements TriggerContext {}
+                                   int dyingCreatureToughness, boolean wasCreature) implements TriggerContext {
+        public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                       UUID dyingCreatureCardId, int dyingCreaturePower,
+                                       int dyingCreatureToughness) {
+            this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
+                    dyingCreaturePower, dyingCreatureToughness, true);
+        }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return wasCreature;
+        }
+    }
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD triggers.
