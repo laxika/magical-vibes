@@ -93,6 +93,7 @@ public enum CardSet {
     SET_S00("S00"),
     SET_S99("S99"),
     SET_BRB("BRB"),
+    SET_BTD("BTD"),
     SET_PCY("PCY"),
     SET_POR("POR"),
     SET_P02("P02"),
