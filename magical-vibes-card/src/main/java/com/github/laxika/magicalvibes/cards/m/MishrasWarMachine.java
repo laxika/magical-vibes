@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "337")
+@CardRegistration(set = "SUM", collectorNumber = "266")
 public class MishrasWarMachine extends Card {
 
     public MishrasWarMachine() {

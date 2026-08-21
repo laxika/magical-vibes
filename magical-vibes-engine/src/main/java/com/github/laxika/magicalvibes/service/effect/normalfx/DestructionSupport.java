@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -93,6 +94,7 @@ public class DestructionSupport {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final CreatureControlService creatureControlService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
     private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
@@ -418,6 +420,11 @@ public class DestructionSupport {
         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
         effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                 gameData, playerId, effectiveDamage);
+
+        if (effectiveDamage > 0) {
+            gameData.recordDamageToPlayer(playerId, effectiveDamage,
+                    sourceCard.hasType(CardType.ARTIFACT) ? effectiveDamage : 0);
+        }
 
         if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
             if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
@@ -801,8 +808,16 @@ public class DestructionSupport {
             } else if (elseEffect instanceof ReturnToHandEffect returnToHand) {
                 returnToHandEffectHandler.resolve(gameData, entry, returnToHand);
             } else {
-                log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
-                        gameData.id, elseEffect.getClass().getSimpleName());
+                var handler = effectHandlerRegistry.getHandler(elseEffect);
+                if (handler == null) {
+                    log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
+                            gameData.id, elseEffect.getClass().getSimpleName());
+                } else {
+                    handler.resolve(gameData, entry, elseEffect);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        return;
+                    }
+                }
             }
         }
     }

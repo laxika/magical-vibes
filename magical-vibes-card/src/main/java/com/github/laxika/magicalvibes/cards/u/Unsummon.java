@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M20", collectorNumber = "78")
 @CardRegistration(set = "ITP", collectorNumber = "14")
 @CardRegistration(set = "RQS", collectorNumber = "13")
+@CardRegistration(set = "SUM", collectorNumber = "87")
 public class Unsummon extends Card {
 
     public Unsummon() {

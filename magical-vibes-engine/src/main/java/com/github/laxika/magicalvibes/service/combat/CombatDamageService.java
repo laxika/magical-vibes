@@ -151,6 +151,12 @@ public class CombatDamageService {
         // Check for combat damage redirect (e.g. Kjeldoran Royal Guard)
         Permanent redirectTarget = gameData.combatDamageRedirectTarget != null
                 ? gameQueryService.findPermanentById(gameData, gameData.combatDamageRedirectTarget) : null;
+        if (redirectTarget == null) {
+            UUID staticRedirectTargetId = damagePreventionService
+                    .findStaticUnblockedCreatureDamageRedirectTarget(gameData, defenderId);
+            redirectTarget = staticRedirectTargetId == null
+                    ? null : gameQueryService.findPermanentById(gameData, staticRedirectTargetId);
+        }
 
         List<Integer> attackingIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
 
@@ -2439,11 +2445,16 @@ public class CombatDamageService {
 
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
+        int artifactDamage = state.combatDamageDealtToPlayer.entrySet().stream()
+                .filter(entry -> gameQueryService.isArtifact(gameData, entry.getKey()))
+                .mapToInt(Map.Entry::getValue)
+                .sum();
         // Curse of Bloodletting and similar apply to the aggregate player-damage result. General
         // recipient multipliers have already been applied to each attacking source.
         int playerMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId);
         state.damageToDefendingPlayer *= playerMultiplier;
         state.poisonDamageToDefendingPlayer *= playerMultiplier;
+        artifactDamage *= playerMultiplier;
         // Malignus: the part of the damage dealt by sources whose damage can't be prevented is a floor
         // no prevention step below may go under. Redirection and replacement steps still see (and may
         // move) the whole amount, so the floor is re-clamped after each of them.
@@ -2556,7 +2567,7 @@ public class CombatDamageService {
                             .add(defenderId);
                 }
             }
-            gameData.recordDamageToPlayer(defenderId, damageDealt);
+            gameData.recordDamageToPlayer(defenderId, damageDealt, Math.min(damageDealt, artifactDamage));
             triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defenderId, damageDealt);
         }
     }
@@ -2637,7 +2648,13 @@ public class CombatDamageService {
                         int currentLife = gameData.getLife(targetId);
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
-                    gameData.recordDamageToPlayer(targetId, redirectEffective);
+                    Permanent sourcePermanent = redirect.damageSourceId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
+                    boolean artifactSource = sourcePermanent != null
+                            && gameQueryService.isArtifact(gameData, sourcePermanent);
+                    gameData.recordDamageToPlayer(targetId, redirectEffective,
+                            artifactSource ? redirectEffective : 0);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
                 }
@@ -2703,7 +2720,8 @@ public class CombatDamageService {
                     int currentLife = gameData.getLife(targetId);
                     gameData.playerLifeTotals.put(targetId, currentLife - effective);
                 }
-                gameData.recordDamageToPlayer(targetId, effective);
+                gameData.recordDamageToPlayer(targetId, effective,
+                        reflection.eyeCard().hasType(CardType.ARTIFACT) ? effective : 0);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, effective);
             }
         }

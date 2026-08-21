@@ -320,6 +320,7 @@ public class TurnCleanupService {
         gameData.spellsGrantedHasteOnEntry.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
+        gameData.guardianAngelTargetsUntilEndOfTurn.clear();
         gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
         gameData.graveyardCardCastPermissionsUntilEndOfTurn.clear();
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {

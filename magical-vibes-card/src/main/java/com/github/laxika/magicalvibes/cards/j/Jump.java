@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "59")
 @CardRegistration(set = "4ED", collectorNumber = "79")
+@CardRegistration(set = "SUM", collectorNumber = "62")
 public class Jump extends Card {
 
     public Jump() {

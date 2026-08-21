@@ -1297,6 +1297,12 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, targetZone, card));
     }
 
+    public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone,
+                                           UUID sourceControllerId) {
+        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+                new TargetValidationContext(gameData, targetId, targetZone, card, 0, sourceControllerId, null));
+    }
+
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone, int xValue) {
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
                 new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
@@ -2051,6 +2057,16 @@ public class TargetLegalityService {
         if (entry.getTargetId() != null) {
             if (entry.getTargetZone() == Zone.EXILE) {
                 targetFizzled = gameQueryService.findCardInExileById(gameData, entry.getTargetId()) == null;
+                if (!targetFizzled) {
+                    List<CardEffect> exileTargetEffects = entry.getEffectsToResolve().stream()
+                            .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                            .toList();
+                    targetFizzled = targetValidationService.checkEffectTargets(
+                            exileTargetEffects,
+                            new TargetValidationContext(gameData, entry.getTargetId(), Zone.EXILE,
+                                    entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                    entry.getSourcePermanentSnapshot())).isPresent();
+                }
             } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) == null;
                 if (!targetFizzled) {

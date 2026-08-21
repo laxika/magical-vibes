@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "4ED", collectorNumber = "10")
+@CardRegistration(set = "SUM", collectorNumber = "7")
 public class BlueWard extends Card {
 
     public BlueWard() {

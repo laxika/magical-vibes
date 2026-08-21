@@ -141,6 +141,7 @@ public class ValidTargetService {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
         List<UUID> validGraveyardCardIds = new ArrayList<>();
+        List<UUID> validExiledCardIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null ? Set.copyOf(alreadySelectedIds) : Set.of();
 
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
@@ -261,6 +262,11 @@ public class ValidTargetService {
             }
         }
 
+        if (allowedTargets.contains(TargetType.EXILE)) {
+            validExiledCardIds.addAll(computeValidExiledTargetsForSpell(
+                    gameData, card, spellEffects, controllerId, excludeIds, effectiveXValue));
+        }
+
         enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
                 validPermanentIds, validPlayerIds);
 
@@ -274,7 +280,34 @@ public class ValidTargetService {
         int effectiveX = xValue != null ? xValue : 0;
         int responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
                 gameData, card, controllerId, effectiveX, isKicked);
-        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, responseMinTargets, responseMaxTargets, prompt);
+        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
+                validExiledCardIds, responseMinTargets, responseMaxTargets, prompt);
+    }
+
+    private List<UUID> computeValidExiledTargetsForSpell(GameData gameData, Card card,
+                                                          List<CardEffect> spellEffects,
+                                                          UUID controllerId, Set<UUID> excludeIds,
+                                                          int xValue) {
+        FilterContext context = targetFilterContext(gameData, card.getId(), controllerId, xValue);
+        List<UUID> validIds = new ArrayList<>();
+        for (var exiledEntry : gameData.exiledCards) {
+            UUID cardId = exiledEntry.card().getId();
+            if (excludeIds.contains(cardId)) {
+                continue;
+            }
+            boolean valid = spellEffects.stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                    .anyMatch(effect -> targetPredicateEvaluationService.matchesExiledCard(
+                            effect.targetSpec().targetPredicate(), exiledEntry.card(), context)
+                            && targetValidationService.checkEffectTargets(List.of(effect),
+                            new TargetValidationContext(gameData, cardId,
+                                    com.github.laxika.magicalvibes.model.Zone.EXILE, card, xValue,
+                                    controllerId, null)).isEmpty());
+            if (valid) {
+                validIds.add(cardId);
+            }
+        }
+        return validIds;
     }
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, Integer announcedXValue) {
@@ -1063,7 +1096,8 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.EXILE)) {
-            return true;
+            return !computeValidExiledTargetsForSpell(gameData, card, spellEffects, controllerId,
+                    Set.of(), 0).isEmpty();
         }
 
         return false;

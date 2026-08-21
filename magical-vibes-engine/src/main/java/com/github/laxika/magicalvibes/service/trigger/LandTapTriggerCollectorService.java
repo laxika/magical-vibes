@@ -150,7 +150,8 @@ public class LandTapTriggerCollectorService {
                 gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
             }
             if (effectiveDamage > 0) {
-                gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage);
+                gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage,
+                        gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, tappingPlayerId, effectiveDamage);
             }
         }

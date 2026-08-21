@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTur
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerPlayedAtLeastLandsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
@@ -620,6 +621,9 @@ public class ConditionEvaluationService {
             case DidntPlayLandThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.landsPlayedThisTurn.getOrDefault(ctx.controllerId(), 0) == 0;
+            case ControllerPlayedAtLeastLandsThisTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.landsPlayedThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
             case DealtDamageByRedSpellThisTurn ignored ->
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->

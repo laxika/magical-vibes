@@ -31,18 +31,26 @@ public class PermanentCopierService {
      */
     public void applyCloneCopy(Permanent clonePerm, Card target, Integer powerOverride,
                                 Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
-        applyCloneCopy(clonePerm, target, powerOverride, toughnessOverride, additionalTypesOverride, List.of());
+        applyCloneCopy(clonePerm, target, powerOverride, toughnessOverride, additionalTypesOverride, List.of(), true);
     }
 
     public void applyCloneCopy(Permanent clonePerm, Card target, Integer powerOverride,
                                Integer toughnessOverride, Set<CardType> additionalTypesOverride,
                                List<ActivatedAbility> retainedAbilities) {
+        applyCloneCopy(clonePerm, target, powerOverride, toughnessOverride, additionalTypesOverride,
+                retainedAbilities, true);
+    }
+
+    public void applyCloneCopy(Permanent clonePerm, Card target, Integer powerOverride,
+                               Integer toughnessOverride, Set<CardType> additionalTypesOverride,
+                               List<ActivatedAbility> retainedAbilities, boolean copyColor) {
         Card copy = new Card();
         copy.setName(target.getName());
         copy.setType(target.getType());
         copy.setAdditionalTypes(target.getAdditionalTypes());
         copy.setManaCost(target.getManaCost());
-        copy.setColor(target.getColor());
+        copy.setColor(copyColor ? target.getColor() : null);
+        copy.setColors(copyColor ? target.getColors() : List.of());
         copy.setSupertypes(target.getSupertypes());
         copy.setSubtypes(target.getSubtypes());
         copy.setCardText(target.getCardText());

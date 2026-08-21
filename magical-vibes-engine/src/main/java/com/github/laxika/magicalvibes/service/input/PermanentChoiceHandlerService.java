@@ -107,6 +107,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesCreatureYouGainControl(gameData, permanentId, richesChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentForPermanentSacrifice chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentForPermanentSacrifice(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.OpponentChoosesPermanentToSacrifice sacrificeChoice) {
+            battlefieldHandler.handleOpponentChoosesPermanentToSacrifice(gameData, permanentId, sacrificeChoice);
         } else if (context instanceof PermanentChoiceContext.MurmursFromBeyondOpponentChoice murmursChoice) {
             murmursFromBeyondEffectHandler.completeOpponentChoice(gameData, permanentId, murmursChoice);
         } else if (context instanceof PermanentChoiceContext.GuidedPassageOpponentChoice guidedPassageChoice) {

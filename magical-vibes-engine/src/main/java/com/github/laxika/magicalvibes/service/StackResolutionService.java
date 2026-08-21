@@ -161,8 +161,14 @@ public class StackResolutionService {
             gameData.currentlyResolvingControllerId = null;
         }
 
-        // If the ETB handler already set up a user interaction (e.g. Clone copy choice),
-        // skip post-resolution SBA — the creature must remain alive until the choice resolves.
+        // Resolution-time may choices are part of the resolving ability, so present them before
+        // state-based actions can orphan an Aura that the choice may move.
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
+
+        // If the ETB handler or a resolution-time may choice already set up a user interaction,
+        // skip post-resolution SBA until the choice resolves.
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
@@ -536,6 +542,11 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
         // CR 702.146: a spell cast via Disturb has the characteristics of its back face while on the stack.
         Card characteristics = disturbCharacteristics(entry, card);
+
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
+                entry.getXValue())) {
+            return;
+        }
 
         // Reanimation Aura that enchants a creature card in a graveyard (e.g. Animate Dead): return
         // the enchanted card to the battlefield under the Aura's controller and attach the Aura to it.

@@ -801,6 +801,42 @@ public class AbilityActivationService {
     }
 
     /**
+     * Pays {@code {1}} for a Guardian Angel target's next-damage prevention shield. This is a
+     * repeatable special action available to the Guardian Angel spell's controller until cleanup.
+     */
+    public void payGuardianAngel(GameData gameData, Player player, UUID targetId) {
+        UUID playerId = player.getId();
+        Set<UUID> targetIds = gameData.guardianAngelTargetsUntilEndOfTurn.get(playerId);
+        if (targetIds == null || !targetIds.contains(targetId)) {
+            throw new IllegalStateException("You may not pay for Guardian Angel prevention to that target");
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null && !gameData.playerIds.contains(targetId)) {
+            throw new IllegalStateException("Guardian Angel's target is no longer available");
+        }
+
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        ManaCost cost = new ManaCost("{1}");
+        if (pool == null || !cost.canPay(pool)) {
+            throw new IllegalStateException("Not enough mana to pay for Guardian Angel prevention");
+        }
+        cost.pay(pool);
+
+        if (target != null) {
+            target.setDamagePreventionShield(target.getDamagePreventionShield() + 1);
+        } else if (gameData.playerIds.contains(targetId)) {
+            gameData.playerDamagePreventionShields.merge(targetId, 1, Integer::sum);
+        }
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " pays {1} for Guardian Angel prevention."));
+        log.info("Game {} - {} pays {1} for Guardian Angel prevention to target {}",
+                gameData.id, player.getUsername(), targetId);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /**
      * Activates an ON_SACRIFICE ability by sacrificing the source permanent and placing the ability on the stack.
      *
      * @param gameData          the current game state
@@ -1139,7 +1175,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (discardCardTypeCost != null
-                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
+                && collectDiscardIndices(gameData, playerId, gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
                 < discardCardTypeCost.requiredCount(xValue)) {
             throw new IllegalStateException("No valid card to discard for the activation cost");
         }
@@ -1208,7 +1244,8 @@ public class AbilityActivationService {
         // Discard-card(s) cost: enter interactive discard-choice mode. The source card may already have
         // been exiled above, so the suspended activation is resumed via handleActivatedAbilityDiscardCostChosen.
         if (discardCardTypeCost != null) {
-            List<Integer> validDiscardIndices = collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue);
+            List<Integer> validDiscardIndices = collectDiscardIndices(gameData, playerId,
+                    gameData.playerHands.get(playerId), discardCardTypeCost, xValue);
             gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(
                     playerId, card, ability, xValue, targetId, discardCardTypeCost.requiredCount(xValue));
             String labelText = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
@@ -1877,7 +1914,8 @@ public class AbilityActivationService {
         int remaining = pending.remainingDiscards() - 1;
         if (remaining > 0) {
             List<Integer> validDiscardIndices = collectDiscardIndices(
-                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue(), requiredName);
+                    gameData, player.getId(), gameData.playerHands.get(player.getId()), discardCost,
+                    pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
                 clearPendingAbilityActivation(gameData);
                 throw new IllegalStateException("No valid card to discard for the activation cost");
@@ -1997,7 +2035,8 @@ public class AbilityActivationService {
         int remaining = pending.remainingDiscards() - 1;
         if (remaining > 0) {
             List<Integer> validDiscardIndices = collectDiscardIndices(
-                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue(), requiredName);
+                    gameData, player.getId(), gameData.playerHands.get(player.getId()), discardCost,
+                    pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
                 gameData.pendingGraveyardAbilityActivation = null;
                 throw new IllegalStateException("No valid card to discard for the activation cost");
@@ -2706,7 +2745,8 @@ public class AbilityActivationService {
                 .orElse(null);
         if (discardCardTypeCost != null) {
             List<Card> hand = gameData.playerHands.get(playerId);
-            List<Integer> validDiscardIndices = collectDiscardIndices(hand, discardCardTypeCost, effectiveXValue);
+            List<Integer> validDiscardIndices = collectDiscardIndices(gameData, playerId, hand,
+                    discardCardTypeCost, effectiveXValue);
             if (discardCardIndex == null) {
                 if (validDiscardIndices.size() < discardCardTypeCost.requiredCount(effectiveXValue)) {
                     String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
@@ -4025,7 +4065,8 @@ public class AbilityActivationService {
                     .findFirst()
                     .orElse(null);
             if (discardCardTypeCost != null
-                    && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
+                    && collectDiscardIndices(gameData, playerId, gameData.playerHands.get(playerId),
+                    discardCardTypeCost, xValue).size()
                     < discardCardTypeCost.requiredCount(xValue)) {
                 String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
                 throw new IllegalStateException("Must " + discardCardTypeCost.payVerb() + " a " + costLabel
@@ -4851,8 +4892,9 @@ public class AbilityActivationService {
                 gameData, playerId, GameEventFact.RevealZone.HAND, selectedCards);
     }
 
-    private List<Integer> collectDiscardIndices(List<Card> hand, HandCardCost cost, int xValue) {
-        return collectDiscardIndices(hand, cost, xValue, null);
+    private List<Integer> collectDiscardIndices(GameData gameData, UUID playerId, List<Card> hand,
+                                                HandCardCost cost, int xValue) {
+        return collectDiscardIndices(gameData, playerId, hand, cost, xValue, null);
     }
 
     /**
@@ -4863,7 +4905,8 @@ public class AbilityActivationService {
      * copy can never be chosen and strand the activation; once the first card is chosen,
      * {@code requiredName} pins every remaining pick to that name.
      */
-    private List<Integer> collectDiscardIndices(List<Card> hand, HandCardCost cost, int xValue, String requiredName) {
+    private List<Integer> collectDiscardIndices(GameData gameData, UUID playerId, List<Card> hand,
+                                                HandCardCost cost, int xValue, String requiredName) {
         List<Integer> validIndices = new ArrayList<>();
         if (hand == null) {
             return validIndices;
@@ -4874,6 +4917,9 @@ public class AbilityActivationService {
                 continue;
             }
             if (requiredName != null && !requiredName.equals(card.getName())) {
+                continue;
+            }
+            if (!cost.isEligible(gameData, playerId, card)) {
                 continue;
             }
             if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
@@ -4938,7 +4984,8 @@ public class AbilityActivationService {
         }
 
         List<Card> hand = gameData.playerHands.get(player.getId());
-        List<Integer> validDiscardIndices = collectDiscardIndices(hand, cost, xValue, requiredName);
+        List<Integer> validDiscardIndices = collectDiscardIndices(gameData, player.getId(), hand, cost,
+                xValue, requiredName);
         Set<Integer> validSet = new HashSet<>(validDiscardIndices);
         if (!validSet.contains(discardCardIndex)) {
             String costLabel = cost.label() != null ? cost.label() + " " : "";

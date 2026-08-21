@@ -85,6 +85,7 @@ public sealed interface Condition permits
         ControllerEnergyAtLeast,
         ControllerLostLifeLastTurn,
         ControllerOwnTurnCountAtMost,
+        ControllerPlayedAtLeastLandsThisTurn,
         ControllerSacrificedPermanentThisTurn,
         ControllerTurn,
         ControlsAnotherPermanent,

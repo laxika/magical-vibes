@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "247")
+@CardRegistration(set = "SUM", collectorNumber = "198")
 public class GaeasLiege extends Card {
 
     public GaeasLiege() {

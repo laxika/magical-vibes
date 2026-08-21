@@ -82,7 +82,6 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
@@ -1509,9 +1508,14 @@ public class SpellCastingService {
             List<Card> handCheck = gameData.playerHands.get(playerId);
             Card cardCheck = handCheck.get(cardIndex);
             Card selectedFaceCheck = selectingModalBackFace ? cardCheck.getBackFaceCard() : cardCheck;
+            boolean suppliedExiledCardTarget = targetId != null
+                    && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
             if (selectingModalBackFace && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0)) {
                 // The generic hand query admits either face; casting validates the selected face.
+            } else if (suppliedExiledCardTarget) {
+                // Exiled-card targets are validated after the prepared spell effects are resolved.
             } else if (usingAlternateCost && (cardCheck.getCastingOption(AlternateHandCast.class).isPresent()
                     || cardCheck.getCastingOption(BestowCast.class).isPresent()
                     || usingSharedColorDiscardAlternativeCost)) {
@@ -2013,11 +2017,11 @@ public class SpellCastingService {
         boolean targetsControllersGraveyardOnly =
                 graveyardScopes.contains(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
 
-        // Detect exile targeting effects (e.g. ReturnTargetCardFromExileToHandEffect)
-        ReturnTargetCardFromExileToHandEffect exileReturnEffect = (ReturnTargetCardFromExileToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
-                .filter(e -> e instanceof ReturnTargetCardFromExileToHandEffect)
+        // Detect effects that target cards in exile (e.g. Runic Repetition and Darkpact).
+        CardEffect exileTargetingEffect = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
                 .findFirst().orElse(null);
-        boolean needsExileTargeting = exileReturnEffect != null;
+        boolean needsExileTargeting = exileTargetingEffect != null;
 
         if (targetId == null && targetIds.isEmpty()
                 && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget
@@ -2033,15 +2037,7 @@ public class SpellCastingService {
         // Validate target if specified (can be a permanent or a player)
         if (targetId != null && !targetingSpellOnStack) {
             if (needsExileTargeting) {
-                if (exileReturnEffect.ownedOnly()) {
-                    boolean inControllersExile = gameData.getPlayerExiledCards(playerId)
-                            .stream()
-                            .anyMatch(c -> c.getId().equals(targetId));
-                    if (!inControllersExile) {
-                        throw new IllegalStateException("Target must be an exiled card you own");
-                    }
-                }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE);
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE, playerId);
             } else if (needsSingleGraveyardTargeting) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
@@ -2089,10 +2085,7 @@ public class SpellCastingService {
                         targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue, kicked);
             }
         } else if (unwrappedNeedsTarget && needsExileTargeting) {
-            String exileFilterLabel = CardPredicateUtils.describeFilter(exileReturnEffect.filter());
-            throw new IllegalStateException(exileReturnEffect.ownedOnly()
-                    ? "Must target an exiled " + exileFilterLabel + " you own"
-                    : "Must target an exiled " + exileFilterLabel);
+            throw new IllegalStateException("Must target a card in exile");
         } else if (unwrappedNeedsTarget && needsSingleGraveyardTargeting) {
             // "Up to one" graveyard targets (Yawgmoth) may be omitted; mandatory ones (Crawl) may not,
             // even when the spell also has optional permanent target groups.
@@ -5383,12 +5376,11 @@ public class SpellCastingService {
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
                 && effectsToResolve.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
 
-        ReturnTargetCardFromExileToHandEffect exileReturnEffect = effectsToResolve.stream()
-                .filter(e -> e instanceof ReturnTargetCardFromExileToHandEffect)
-                .map(e -> (ReturnTargetCardFromExileToHandEffect) e)
+        CardEffect exileTargetingEffect = effectsToResolve.stream()
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
                 .findFirst()
                 .orElse(null);
-        boolean needsExileTargeting = exileReturnEffect != null;
+        boolean needsExileTargeting = exileTargetingEffect != null;
 
         if (targetId == null && targetIds.isEmpty() && EffectResolution.needsTarget(card)
                 && !EffectResolution.needsSpellTarget(effectsToResolve)
@@ -5404,15 +5396,7 @@ public class SpellCastingService {
         } else if (targetId != null && EffectResolution.needsSpellTarget(effectsToResolve)) {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
         } else if (targetId != null && needsExileTargeting) {
-            if (exileReturnEffect.ownedOnly()) {
-                boolean inControllersExile = gameData.getPlayerExiledCards(playerId)
-                        .stream()
-                        .anyMatch(c -> c.getId().equals(targetId));
-                if (!inControllersExile) {
-                    throw new IllegalStateException("Target must be an exiled card you own");
-                }
-            }
-            targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE);
+            targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE, playerId);
         } else if (targetId != null && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting)) {
             if (needsSingleGraveyardTargeting
                     && graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {

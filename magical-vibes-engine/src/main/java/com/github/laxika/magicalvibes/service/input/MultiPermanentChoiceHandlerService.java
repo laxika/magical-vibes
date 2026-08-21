@@ -1801,7 +1801,8 @@ public class MultiPermanentChoiceHandlerService {
                         gameLogService.append(gameData, appendCardOrText(GameLog.builder(), sourceCard, sourceName)
                                 .text(" deals " + damage + " damage to " + defenderName + ".").build());
                     }
-                    gameData.recordDamageToPlayer(defendingPlayerId, damage);
+                    gameData.recordDamageToPlayer(defendingPlayerId, damage,
+                            gameQueryService.isArtifact(gameData, sourcePermanent) ? damage : 0);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defendingPlayerId, damage);
                 }
             }

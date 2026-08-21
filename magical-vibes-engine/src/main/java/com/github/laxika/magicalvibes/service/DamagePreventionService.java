@@ -267,10 +267,11 @@ public class DamagePreventionService {
             if (controllerId != null && gameData.playersWithAllCreatureDamagePrevented.contains(controllerId)) return 0;
             if (controllerId != null && gameData.playersWithAllDamagePrevented.contains(controllerId)) return 0;
         }
-        // Protean Hydra / Unbreathing Horde: "If damage would be dealt to this creature, prevent that
-        // damage and remove +1/+1 counters." Counters are removed regardless of whether damage is preventable.
-        // When removeOneOnly=true (Unbreathing Horde), exactly one counter is removed per damage event.
-        // When removeOneOnly=false (Protean Hydra), counters equal to the damage are removed.
+        // Protean Hydra / Unbreathing Horde / Rock Hydra: counter-based damage replacement.
+        // Counters are removed regardless of whether damage is preventable. When removeOneOnly=true
+        // (Unbreathing Horde), exactly one counter is removed per damage event. When
+        // preventOnlyIfCounterAvailable=true (Rock Hydra), only the damage represented by removed
+        // counters is prevented. Otherwise (Protean Hydra), all damage is prevented.
         var preventRemoveEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect)
                 .map(e -> (PreventDamageAndRemovePlusOnePlusOneCountersEffect) e)
@@ -283,17 +284,20 @@ public class DamagePreventionService {
                 permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - countersToRemove);
                 registerDelayedRegrowth(gameData, permanent, countersToRemove);
             }
+            int preventedDamage = preventRemoveEffect.preventOnlyIfCounterAvailable()
+                    ? countersToRemove
+                    : damage;
             // Prevention only applies if damage is preventable
             if (gameQueryService.isDamagePreventable(gameData)) {
                 CreateTokenEffect tokenTemplate = preventRemoveEffect.tokenTemplate();
                 if (tokenTemplate != null) {
                     UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
                     if (controllerId != null) {
-                        permanentControlSupportProvider.getObject().applyCreateToken(
-                                gameData, controllerId, tokenTemplate.withAmount(damage), permanent.getCard().getSetCode());
+                            permanentControlSupportProvider.getObject().applyCreateToken(
+                                gameData, controllerId, tokenTemplate.withAmount(preventedDamage), permanent.getCard().getSetCode());
                     }
                 }
-                return 0;
+                return damage - preventedDamage;
             }
             return damage;
         }
@@ -1505,6 +1509,29 @@ public class DamagePreventionService {
             }
         }
         return null;
+    }
+
+    public UUID findStaticUnblockedCreatureDamageRedirectTarget(GameData gameData, UUID protectedPlayerId) {
+        if (protectedPlayerId == null) return null;
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(protectedPlayerId, List.of())) {
+            if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)) continue;
+            boolean redirects = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
+                            && redirect.onlyFromUnblockedCreatures());
+            if (redirects) return permanent.getId();
+        }
+        return null;
+    }
+
+    public boolean isUnblockedCreatureSource(GameData gameData, UUID sourcePermanentId) {
+        if (sourcePermanentId == null || gameData.currentStep == null
+                || gameData.currentStep.isBeforeBlockersDeclared()) return false;
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return source != null
+                && gameQueryService.isCreature(gameData, source)
+                && source.isAttacking()
+                && !source.isBlockedWithoutBlockers()
+                && !gameQueryService.isBlockedByAnyCreature(gameData, source);
     }
 
     public UUID findCombatDamageRedirectTargetFromSource(GameData gameData, UUID protectedPlayerId,

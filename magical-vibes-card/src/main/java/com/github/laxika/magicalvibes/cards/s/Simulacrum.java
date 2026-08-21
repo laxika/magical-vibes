@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "161")
+@CardRegistration(set = "SUM", collectorNumber = "130")
 public class Simulacrum extends Card {
 
     public Simulacrum() {

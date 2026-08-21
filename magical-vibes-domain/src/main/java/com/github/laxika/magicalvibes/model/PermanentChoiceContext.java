@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
@@ -79,6 +81,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(choosingPlayerId, sourceCardName, false);
         }
     }
+
+    /** The controller chooses the opponent who will choose a matching permanent to sacrifice. */
+    record ChooseOpponentForPermanentSacrifice(UUID sacrificingPlayerId, String sourceCardName,
+                                                PermanentPredicate filter) implements PermanentChoiceContext {}
+
+    /** The chosen opponent chooses a matching permanent controlled by the sacrificing player. */
+    record OpponentChoosesPermanentToSacrifice(UUID choosingPlayerId, UUID sacrificingPlayerId,
+                                               String sourceCardName, PermanentPredicate filter)
+            implements PermanentChoiceContext {}
 
     /** Godsend: choose one creature blocking or blocked by the equipped creature to exile. */
     record ExileCombatOpponent(UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {}
@@ -686,7 +697,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record UpkeepSecondPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId, UUID firstTargetPlayerId) implements PermanentChoiceContext {}
 
-    record UpkeepCopyTriggerTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    record UpkeepCopyTriggerTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                   BecomeCopyOfTargetCreatureEffect effect) implements PermanentChoiceContext {
+        public UpkeepCopyTriggerTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, sourcePermanentId, new BecomeCopyOfTargetCreatureEffect());
+        }
+    }
 
     record CapriciousEfreetOwnTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
 

@@ -544,6 +544,7 @@ public class TurnProgressionService {
         gameData.creaturesBlockedThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();
+        gameData.artifactDamageDealtToPlayersThisTurn.clear();
         gameData.noncombatDamageDealtToPlayersThisTurn.clear();
         gameData.lastRedSpellDamagerThisTurn.clear();
         gameData.untappedLandsAtTurnStart.clear();

@@ -1003,6 +1003,8 @@ public class GameData {
     /** Player IDs that may pay 1 life to add {C} any time they could activate a mana ability until end
      *  of turn (Channel). Cleared at end of turn. */
     public final Set<UUID> mayPayLifeForColorlessManaUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+    /** Controller IDs to Guardian Angel target IDs that may receive another one-damage shield this turn. */
+    public final Map<UUID, Set<UUID>> guardianAngelTargetsUntilEndOfTurn = new ConcurrentHashMap<>();
 
     /** Player IDs that may cast the top card of their graveyard if it is an instant or sorcery until
      *  end of turn (Bösium Strip). Spells cast this way exile instead of going to a graveyard.
@@ -1352,6 +1354,9 @@ public class GameData {
      *  abilities; includes damage dealt as poison). Cleared at turn cleanup. Used by Final Punishment. */
     public final Map<UUID, Integer> damageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks how much damage each player has been dealt this turn by artifact sources. */
+    public final Map<UUID, Integer> artifactDamageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
+
     /** Tracks how much noncombat damage each player has been dealt this turn. */
     public final Map<UUID, Integer> noncombatDamageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
 
@@ -1364,6 +1369,17 @@ public class GameData {
         }
         playersDealtDamageThisTurn.add(playerId);
         damageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
+    }
+
+    /** Records damage dealt to a player, including the portion dealt by artifact sources. */
+    public void recordDamageToPlayer(UUID playerId, int amount, int artifactAmount) {
+        if (amount <= 0) {
+            return;
+        }
+        recordDamageToPlayer(playerId, amount);
+        if (artifactAmount > 0) {
+            artifactDamageDealtToPlayersThisTurn.merge(playerId, Math.min(amount, artifactAmount), Integer::sum);
+        }
     }
 
     /** Records that {@code amount} noncombat damage was dealt to {@code playerId} this turn. */
@@ -2629,21 +2645,23 @@ public class GameData {
      * themselves controls (The Gitrog Monster / Azusa, Lost but Seeking — controller-only).
      */
     public int getMaxLandsThisTurn(UUID playerId) {
-        int extraFromStatics = 0;
+        long extraFromStatics = 0;
         for (UUID pid : orderedPlayerIds) {
             List<Permanent> battlefield = playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
-                        extraFromStatics++;
+                        extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional && pid.equals(playerId)) {
-                        extraFromStatics += additional.amount();
+                        extraFromStatics = Math.min(Integer.MAX_VALUE,
+                                extraFromStatics + additional.amount());
                     }
                 }
             }
         }
-        return 1 + additionalLandsThisTurn.getOrDefault(playerId, 0) + extraFromStatics;
+        long total = 1L + additionalLandsThisTurn.getOrDefault(playerId, 0) + extraFromStatics;
+        return (int) Math.min(Integer.MAX_VALUE, total);
     }
 
     /**
@@ -3512,6 +3530,7 @@ public class GameData {
         });
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
+        copy.artifactDamageDealtToPlayersThisTurn.putAll(this.artifactDamageDealtToPlayersThisTurn);
         copy.noncombatDamageDealtToPlayersThisTurn.putAll(this.noncombatDamageDealtToPlayersThisTurn);
         copy.lastRedSpellDamagerThisTurn.putAll(this.lastRedSpellDamagerThisTurn);
         copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);
@@ -3761,6 +3780,7 @@ public class GameData {
         copy.cloneOperation.additionalActivatedAbilities = this.cloneOperation.additionalActivatedAbilities;
         copy.cloneOperation.nameOverride = this.cloneOperation.nameOverride;
         copy.cloneOperation.additionalSupertypesOverride = this.cloneOperation.additionalSupertypesOverride;
+        copy.cloneOperation.copyColor = this.cloneOperation.copyColor;
 
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);
@@ -3994,6 +4014,11 @@ public class GameData {
         copy.spellsGrantedHasteOnEntry.addAll(this.spellsGrantedHasteOnEntry);
         copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
         copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
+        this.guardianAngelTargetsUntilEndOfTurn.forEach((controllerId, targetIds) -> {
+            Set<UUID> copied = ConcurrentHashMap.newKeySet();
+            copied.addAll(targetIds);
+            copy.guardianAngelTargetsUntilEndOfTurn.put(controllerId, copied);
+        });
         copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn
                 .addAll(this.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn);
         copy.graveyardCardCastPermissionsUntilEndOfTurn.putAll(this.graveyardCardCastPermissionsUntilEndOfTurn);

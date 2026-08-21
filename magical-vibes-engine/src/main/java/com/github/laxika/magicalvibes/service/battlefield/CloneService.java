@@ -90,6 +90,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
+        gameData.cloneOperation.copyColor = copyEffect.copyColor();
         gameData.cloneOperation.xValue = xValue;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
@@ -140,6 +141,7 @@ public class CloneService {
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
+        boolean copyColor = gameData.cloneOperation.copyColor;
         int xValue = gameData.cloneOperation.xValue;
 
         gameData.cloneOperation.card = null;
@@ -161,6 +163,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.xValue = 0;
 
         Permanent perm = new Permanent(card);
@@ -171,7 +174,8 @@ public class CloneService {
                 Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
                 Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
                 permanentCopierService.applyCloneCopy(
-                        perm, targetPerm, effectivePowerOverride, effectiveToughnessOverride, additionalTypesOverride);
+                        perm, targetPerm.getCard(), effectivePowerOverride, effectiveToughnessOverride,
+                        additionalTypesOverride, List.of(), copyColor);
                 boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
                         || perm.getCard().hasType(CardType.CREATURE);
                 applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,

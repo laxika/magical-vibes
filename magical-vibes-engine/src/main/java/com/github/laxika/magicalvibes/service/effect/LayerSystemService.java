@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwn
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -2162,6 +2163,10 @@ public class LayerSystemService {
                                  Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         Map<UUID, CharacteristicState> states = board.states();
         if (instance.floating() != null) {
+            if (instance.effect() instanceof GrantStaticEffectToSourceEffect grant) {
+                applyFloatingStaticGrant(gameData, instance, grant, slotsById, board);
+                return;
+            }
             for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
                 CharacteristicState state = states.get(target.permanent().getId());
                 switch (instance.effect()) {
@@ -2293,6 +2298,63 @@ public class LayerSystemService {
                 board.l56Touched().add(target.permanent().getId());
             }
         });
+    }
+
+    private void applyFloatingStaticGrant(GameData gameData, EffectInstance instance,
+                                           GrantStaticEffectToSourceEffect grant,
+                                           Map<UUID, PermanentSlot> slotsById,
+                                           LayeredBoardState board) {
+        PermanentSlot source = instance.source();
+        if (source == null || !source.permanent().isAttached()) {
+            return;
+        }
+        PermanentSlot target = slotsById.get(source.permanent().getAttachedTo());
+        if (target == null) {
+            return;
+        }
+        StaticEffectHandler handler = staticEffectRegistry.getHandler(grant.staticEffect());
+        if (handler == null) {
+            return;
+        }
+        CardEffect transformed = TextChangeTransformer.transform(
+                grant.staticEffect(), source.permanent().getTextReplacements(),
+                TextChangeTransformer.globalColorWordReplacements(gameData));
+        StaticBonusAccumulator harvested = new StaticBonusAccumulator();
+        handler.apply(new StaticEffectContext(source.permanent(), target.permanent(), source.controllerId(),
+                source.controllerId().equals(target.controllerId()), gameData), transformed, harvested);
+
+        CharacteristicState state = board.states().get(target.permanent().getId());
+        if (harvested.isLosesAllAbilities()) {
+            state.loseAllAbilities(instance.timestamp());
+            board.clearGrantedEffects(target.permanent().getId());
+        }
+        if (harvested.isLosesAllNonManaAbilities()) {
+            state.loseAllNonManaAbilities(instance.timestamp());
+            board.clearGrantedEffects(target.permanent().getId());
+        }
+        for (Keyword removed : harvested.getRemovedKeywords()) {
+            state.removeKeyword(removed);
+        }
+        if (!harvested.getKeywords().isEmpty()) {
+            state.addKeywords(harvested.getKeywords());
+        }
+        board.recordProvenance(target.permanent().getId(),
+                ModifierLine.abilities(provenanceSourceName(instance), harvested.getKeywords(),
+                        harvested.getRemovedKeywords(), harvested.isLosesAllAbilities()
+                                || harvested.isLosesAllNonManaAbilities()));
+        if (!harvested.getProtectionColors().isEmpty()) {
+            state.addProtectionColors(harvested.getProtectionColors());
+            board.recordGrantedEffect(target.permanent().getId(), provenanceSourceName(instance),
+                    new ProtectionFromColorsEffect(Set.copyOf(harvested.getProtectionColors())));
+        }
+        for (var ability : harvested.getGrantedActivatedAbilities()) {
+            state.addActivatedAbility(ability);
+        }
+        for (CardEffect effect : harvested.getGrantedEffects()) {
+            state.addStaticEffect(effect);
+            board.recordGrantedEffect(target.permanent().getId(), provenanceSourceName(instance), effect);
+        }
+        board.l56Touched().add(target.permanent().getId());
     }
 
     // ===== sublayer 7b =====

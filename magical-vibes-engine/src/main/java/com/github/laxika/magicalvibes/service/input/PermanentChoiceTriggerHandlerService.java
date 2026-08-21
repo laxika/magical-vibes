@@ -1159,7 +1159,7 @@ public class PermanentChoiceTriggerHandlerService {
                     uct.sourceCard(),
                     uct.controllerId(),
                     uct.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new BecomeCopyOfTargetCreatureEffect())),
+                    new ArrayList<>(List.of(uct.effect())),
                     null,
                     uct.sourcePermanentId()
             );

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "278")
 @CardRegistration(set = "4ED", collectorNumber = "233")
+@CardRegistration(set = "SUM", collectorNumber = "186")
 public class AspectOfWolf extends Card {
 
     public AspectOfWolf() {

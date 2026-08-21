@@ -1201,6 +1201,17 @@ public class GameService {
         }
     }
 
+    public void payGuardianAngel(GameData gameData, Player player, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> payGuardianAngel(gameData, actionPlayer, targetId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.payGuardianAngel(gameData, player, targetId);
+        }
+    }
+
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null);
     }

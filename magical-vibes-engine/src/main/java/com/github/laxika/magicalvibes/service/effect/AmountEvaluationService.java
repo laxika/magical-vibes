@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerByArtifactsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPermanentThisTurn;
@@ -389,6 +390,9 @@ public class AmountEvaluationService {
             case DamageDealtToControllerThisTurn ignored ->
                     ctx.controllerId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.controllerId(), 0);
+            case DamageDealtToControllerByArtifactsThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.artifactDamageDealtToPlayersThisTurn.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToOpponentsThisTurn ignored ->
                     damageDealtToOpponentsThisTurn(gameData, ctx);
             case NoncombatDamageDealtToOpponentsThisTurn ignored ->

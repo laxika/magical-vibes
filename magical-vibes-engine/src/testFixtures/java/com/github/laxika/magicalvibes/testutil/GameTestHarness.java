@@ -1348,6 +1348,11 @@ public class GameTestHarness {
         gameService.payLifeForColorlessMana(gameData, player);
     }
 
+    public void payGuardianAngel(Player player, UUID targetId) {
+        ensurePriority(player);
+        gameService.payGuardianAngel(gameData, player, targetId);
+    }
+
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetId) {
         ensurePriority(player);
         gameService.sacrificePermanent(gameData, player, permanentIndex, targetId);

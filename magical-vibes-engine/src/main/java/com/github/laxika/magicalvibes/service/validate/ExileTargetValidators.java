@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ExchangeTargetAnteCardWithTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,9 +39,33 @@ public class ExileTargetValidators {
         if (exiledCard == null) {
             throw new IllegalStateException("Target card not found in exile");
         }
+        if (effect.ownedOnly() && ctx.sourceControllerId() != null) {
+            ExiledCardEntry exiledEntry = ctx.gameData().findExiledCard(ctx.targetId());
+            if (exiledEntry == null || !ctx.sourceControllerId().equals(exiledEntry.ownerId())) {
+                throw new IllegalStateException("Target must be an exiled card you own");
+            }
+        }
         if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(exiledCard, effect.filter(), null)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
+        }
+    }
+
+    @ValidatesTarget(ExchangeTargetAnteCardWithTopOfLibraryEffect.class)
+    public void validateExchangeTargetAnteCard(TargetValidationContext ctx,
+                                               ExchangeTargetAnteCardWithTopOfLibraryEffect effect) {
+        if (ctx.targetZone() != Zone.EXILE) {
+            throw new IllegalStateException("Effect requires an ante target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Effect requires a target card");
+        }
+        ExiledCardEntry anteEntry = ctx.gameData().findExiledCard(ctx.targetId());
+        if (anteEntry == null || !ctx.gameData().antedCardIds.contains(ctx.targetId())) {
+            throw new IllegalStateException("Target card must be in the ante");
+        }
+        if (ctx.sourceControllerId() != null && !ctx.sourceControllerId().equals(anteEntry.ownerId())) {
+            throw new IllegalStateException("Target card must be one you own in the ante");
         }
     }
 }

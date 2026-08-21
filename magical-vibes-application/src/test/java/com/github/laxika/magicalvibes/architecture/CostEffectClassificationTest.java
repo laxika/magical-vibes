@@ -89,6 +89,7 @@ class CostEffectClassificationTest {
             "TapEnchantedPermanentCost",
             "TapGrantingEquipmentCost",
             "TapTwoCreaturesSharingTypeCost",
+            "DiscardLastDrawnCardCost",
             "UnattachSourceEquipmentCost",
             "UntapMultiplePermanentsCost");
 

@@ -756,20 +756,52 @@ public class PermanentRemovalService {
      * @return {@code 0} if damage was redirected, or the original damage amount if no redirect applies
      */
     public int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName) {
-        return redirectPlayerDamageToEnchantedCreature(gameData, playerId, damage, sourceName, false);
+        return redirectPlayerDamageToEnchantedCreature(gameData, playerId, damage, sourceName, false, null);
     }
 
     public int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName, boolean isCombatDamage) {
+        return redirectPlayerDamageToEnchantedCreature(gameData, playerId, damage, sourceName, isCombatDamage, null);
+    }
+
+    public int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage,
+                                                       String sourceName, boolean isCombatDamage,
+                                                       UUID sourcePermanentId) {
         if (damage <= 0) return damage;
         Permanent target = gameQueryService.findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
+        boolean sourceRestrictedRedirect = false;
         if (target == null) {
-            target = gameQueryService.findControlledPermanentWithStaticEffect(gameData, playerId, RedirectPlayerDamageToSelfEffect.class);
+            target = findControlledPermanentWithDamageRedirect(gameData, playerId, sourcePermanentId);
+            sourceRestrictedRedirect = target != null && target.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
+                            && redirect.onlyFromUnblockedCreatures());
         }
         if (target == null) return damage;
 
         int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, isCombatDamage);
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " absorbs " + effectiveDamage + " redirected " + sourceName + " damage."));
+
+        if (sourceRestrictedRedirect) {
+            if (effectiveDamage > 0) {
+                target.addMarkedDamage(sourcePermanentId, effectiveDamage);
+                gameData.recordDamageToPermanent(target.getId(), effectiveDamage);
+                gameData.recordDamageDealtBySource(sourcePermanentId, effectiveDamage);
+                if (sourcePermanentId != null) {
+                    gameData.recordDamageRecipientBySource(sourcePermanentId, target.getId());
+                    Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                    if (source != null) {
+                        if (gameQueryService.hasKeyword(gameData, source, Keyword.DEATHTOUCH)) {
+                            target.setDamagedByDeathtouch(true);
+                        }
+                        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+                        graveyardService.recordCreatureDamagedByPermanent(gameData, sourcePermanentId, target, effectiveDamage);
+                        triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                                gameData, target, effectiveDamage, sourceControllerId);
+                    }
+                }
+            }
+            return 0;
+        }
 
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
             if (tryDestroyPermanent(gameData, target)) {
@@ -779,6 +811,23 @@ public class PermanentRemovalService {
         }
 
         return 0;
+    }
+
+    private Permanent findControlledPermanentWithDamageRedirect(GameData gameData, UUID playerId,
+                                                                  UUID sourcePermanentId) {
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof RedirectPlayerDamageToSelfEffect redirect)) continue;
+                if (redirect.onlyFromUnblockedCreatures()) {
+                    if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)
+                            || !damagePreventionService.isUnblockedCreatureSource(gameData, sourcePermanentId)) {
+                        continue;
+                    }
+                }
+                return permanent;
+            }
+        }
+        return null;
     }
 
     /**

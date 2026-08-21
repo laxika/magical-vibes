@@ -1054,7 +1054,8 @@ public class DamageSupport {
             processEyeForAnEyeReflections(gameData);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    gameData, playerId, effectiveDamage, cardName, false, entry.getSourcePermanentId());
 
             // Battletide Alchemist: the controller prevents up to (Clerics they control) of this source's damage.
             int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, playerId, effectiveDamage);
@@ -1192,7 +1193,9 @@ public class DamageSupport {
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(
                         gameData, sourceCreature, effectiveDamage);
-                gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                int artifactDamage = gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent)
+                        ? effectiveDamage : 0;
+                gameData.recordDamageToPlayer(playerId, effectiveDamage, artifactDamage);
                 gameData.recordNoncombatDamageToPlayer(playerId, effectiveDamage);
                 gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), effectiveDamage);
                 gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), playerId);
@@ -1334,7 +1337,13 @@ public class DamageSupport {
                     int currentLife = gameData.getLife(targetId);
                     gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                 }
-                gameData.recordDamageToPlayer(targetId, redirectEffective);
+                Permanent sourcePermanent = redirect.sourcePermanentId() == null
+                        ? null
+                        : gameQueryService.findPermanentById(gameData, redirect.sourcePermanentId());
+                boolean artifactSource = sourcePermanent != null
+                        ? gameQueryService.isArtifact(gameData, sourcePermanent)
+                        : redirect.sourceCard() != null && redirect.sourceCard().hasType(CardType.ARTIFACT);
+                gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
                 gameData.recordDamageRecipientBySource(redirect.sourcePermanentId(), targetId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
             }
@@ -1406,7 +1415,12 @@ public class DamageSupport {
                         int currentLife = gameData.getLife(targetId);
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
-                    gameData.recordDamageToPlayer(targetId, redirectEffective);
+                    Permanent sourcePermanent = redirect.damageSourceId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
+                    boolean artifactSource = sourcePermanent != null
+                            && gameQueryService.isArtifact(gameData, sourcePermanent);
+                    gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
                 }

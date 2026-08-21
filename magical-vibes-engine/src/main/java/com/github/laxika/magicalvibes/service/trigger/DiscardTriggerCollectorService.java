@@ -146,7 +146,8 @@ public class DiscardTriggerCollectorService {
                 gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
             }
             if (effectiveDamage > 0) {
-                gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage);
+                gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
+                        gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, discardingPlayerId, effectiveDamage);
             }
         }

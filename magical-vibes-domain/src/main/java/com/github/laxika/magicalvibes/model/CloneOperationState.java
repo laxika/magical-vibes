@@ -31,5 +31,6 @@ public class CloneOperationState {
     // Phantasmal Image: "except it's an Illusion in addition to its other types and it has ..." — only when copying.
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
     public Map<EffectSlot, List<CardEffect>> additionalSlotEffects = Map.of();
+    public boolean copyColor = true;
     public int xValue;
 }

@@ -1110,7 +1110,8 @@ public class ActivatedAbilityExecutionService {
                 }
                 if (damage > 0) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
-                    effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+                    effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                            gameData, playerId, effectiveDamage, cardName, false, permanent.getId());
                     effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                             gameData, playerId, effectiveDamage);
                     if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
@@ -1136,7 +1137,8 @@ public class ActivatedAbilityExecutionService {
                         }
                     }
                     if (effectiveDamage > 0) {
-                        gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                        gameData.recordDamageToPlayer(playerId, effectiveDamage,
+                                gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
                         gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                         triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
@@ -1269,7 +1271,8 @@ public class ActivatedAbilityExecutionService {
         }
         if (damage > 0) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    gameData, playerId, effectiveDamage, cardName, false, permanent.getId());
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                     gameData, playerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
@@ -1293,7 +1296,8 @@ public class ActivatedAbilityExecutionService {
                 }
             }
             if (effectiveDamage > 0) {
-                gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                gameData.recordDamageToPlayer(playerId, effectiveDamage,
+                        gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
                 gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);

@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,6 +131,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
+    private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
@@ -556,6 +558,20 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleChooseOpponentGainsControlOfSource(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentGainsControlOfSource context) {
         chooseOpponentGainsControlOfSourceEffectHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChooseOpponentForPermanentSacrifice(GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseOpponentForPermanentSacrifice context) {
+        opponentChoosesPermanentToSacrificeEffectHandler.completeOpponentChoice(gameData, playerId, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    public void handleOpponentChoosesPermanentToSacrifice(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OpponentChoosesPermanentToSacrifice context) {
+        opponentChoosesPermanentToSacrificeEffectHandler.completePermanentChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

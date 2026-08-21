@@ -867,7 +867,8 @@ public class StepTriggerService {
                     }
                     if (hasValidTargets) {
                         gameData.queueInteraction(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
-                                perm.getCard(), activePlayerId, perm.getId()));
+                                perm.getCard(), activePlayerId, perm.getId(),
+                                (BecomeCopyOfTargetCreatureEffect) effect));
                     }
                 } else if (effect instanceof DestroyOneOfTargetsAtRandomEffect) {
                     // Targeted upkeep trigger: targets chosen at trigger time (CR 603.3d).
