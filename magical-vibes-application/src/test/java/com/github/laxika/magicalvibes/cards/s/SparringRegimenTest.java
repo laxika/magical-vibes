@@ -96,6 +96,7 @@ class SparringRegimenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private Permanent addPermanent(Player player, Card card) {

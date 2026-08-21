@@ -20,6 +20,11 @@ public final class AiInteractionStrategies {
         register(new AlternateCastXValueChoiceAiStrategy());
         register(new ScryAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
+        register(new HandBottomExileChoiceAiStrategy());
+        register(new EcologicalAppreciationSearchChoiceAiStrategy());
+        register(new EcologicalAppreciationOpponentChoiceAiStrategy());
+        register(new VerdantMasterySearchChoiceAiStrategy());
+        register(new VerdantMasteryLandChoiceAiStrategy());
         register(new PutCardsFromHandOnLibraryCardChoiceAiStrategy());
         register(new PutCardsFromHandOnLibraryDestinationChoiceAiStrategy());
         register(new CounteredSpellLibraryDestinationChoiceAiStrategy());

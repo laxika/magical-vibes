@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -881,7 +883,7 @@ public class PermanentRemovalService {
      * Liesa, Forgotten Archangel: true when a player other than {@code controllerId} controls a
      * permanent with "if a creature an opponent controls would die, exile it instead".
      */
-    private ExileOpponentCreaturesInsteadOfDyingEffect opponentDyingCreatureExileReplacement(
+    private OpponentDyingCreatureExileReplacement opponentDyingCreatureExileReplacement(
             GameData gameData, UUID controllerId, Card dyingCard) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
@@ -899,12 +901,19 @@ public class PermanentRemovalService {
                         .filter(candidate -> !candidate.nontokenOnly() || !dyingCard.isToken())
                         .findFirst().orElse(null);
                 if (effect != null) {
-                    return effect;
+                    return new OpponentDyingCreatureExileReplacement(
+                            effect, permanent.getCard(), playerId, permanent.getId());
                 }
             }
         }
         return null;
     }
+
+    private record OpponentDyingCreatureExileReplacement(
+            ExileOpponentCreaturesInsteadOfDyingEffect effect,
+            Card sourceCard,
+            UUID controllerId,
+            UUID sourcePermanentId) {}
 
     /**
      * True when a player other than {@code ownerId} controls a permanent with an opponent-owned
@@ -990,7 +999,7 @@ public class PermanentRemovalService {
         int exiledFromBattlefield = 0;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
-        ExileOpponentCreaturesInsteadOfDyingEffect opponentExileReplacement = wasCreature
+        OpponentDyingCreatureExileReplacement opponentExileReplacement = wasCreature
                 ? opponentDyingCreatureExileReplacement(gameData, controllerId, target.getCard())
                 : null;
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
@@ -1000,7 +1009,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
                 exileService.exileCard(gameData, ownerId, leaving);
-                if (opponentExileReplacement != null && opponentExileReplacement.addIceCounter()) {
+                if (opponentExileReplacement != null && opponentExileReplacement.effect().addIceCounter()) {
                     gameData.exiledCardsWithIceCounters.add(leaving.getId());
                 }
                 exiledFromBattlefield++;
@@ -1015,6 +1024,18 @@ public class PermanentRemovalService {
                 } else if (gameData.findExiledCard(leaving.getId()) != null) {
                     exiledFromBattlefield++;
                 }
+            }
+        }
+        if (opponentExileReplacement != null && exiledFromBattlefield > 0) {
+            CardEffect whenExiledEffect = opponentExileReplacement.effect().whenExiledEffect();
+            if (whenExiledEffect instanceof MayPayManaEffect mayPay) {
+                gameData.queueMayAbility(
+                        opponentExileReplacement.sourceCard(), opponentExileReplacement.controllerId(),
+                        mayPay, null, opponentExileReplacement.sourcePermanentId());
+            } else if (whenExiledEffect instanceof MayEffect may) {
+                gameData.queueMayAbility(
+                        opponentExileReplacement.sourceCard(), opponentExileReplacement.controllerId(),
+                        may, null, opponentExileReplacement.sourcePermanentId());
             }
         }
         graveyardService.notifyCardsExiledFromBattlefield(gameData, exiledFromBattlefield);

@@ -143,7 +143,8 @@ public class PermanentCounterSupport {
         if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
             return;
         }
-        counters = gameQueryService.replaceCounters(gameData, target, CounterType.PLUS_ONE_PLUS_ONE, counters);
+        counters = gameQueryService.replaceCounters(gameData, target, CounterType.PLUS_ONE_PLUS_ONE,
+                counters, placingPlayerId(gameData, entry, target));
         if (counters <= 0) {
             return;
         }
@@ -164,7 +165,8 @@ public class PermanentCounterSupport {
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !gameQueryService.cantHaveCounters(gameData, perm)) {
-                int placed = gameQueryService.replaceCounters(gameData, perm, counterType, 1);
+                int placed = gameQueryService.replaceCounters(gameData, perm, counterType, 1,
+                        placingPlayerId(gameData, entry, perm));
                 if (placed <= 0) {
                     continue;
                 }
@@ -245,7 +247,8 @@ public class PermanentCounterSupport {
                                        CounterType counterType, int count) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
-        count = gameQueryService.replaceCounters(gameData, target, counterType, count);
+        count = gameQueryService.replaceCounters(gameData, target, counterType, count,
+                placingPlayerId(gameData, entry, target));
 
         String counterName = switch (counterType) {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
@@ -425,7 +428,10 @@ public class PermanentCounterSupport {
                 }
                 yield counterType.name().toLowerCase();
             }
-            default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
+            default -> {
+                target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
+                yield counterType.name().toLowerCase();
+            }
         };
         if (counterName == null || count <= 0) return 0;
 

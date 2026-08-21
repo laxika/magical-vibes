@@ -888,7 +888,9 @@ public class BattlefieldPlacementService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, false, false, permanent.getCastFromZone(), xValue, null, null, false);
+                        card, kicked, false, permanent.isProwl(), false, false, false,
+                        permanent.getCastFromZone(), xValue, null, null, false,
+                        false, false, null, null, null, repeatedAdditionalCosts);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
                 }

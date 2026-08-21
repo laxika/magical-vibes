@@ -975,12 +975,31 @@ public class ChoiceHandlerService {
 
     private void handleTriggeredModalChoice(GameData gameData, Player player, String chosenLabel,
             ChoiceContext.TriggeredModalChoice ctx) {
+        if (ChooseOneEffect.NO_MODE_LABEL.equals(chosenLabel)) {
+            if (!ctx.effect().optional() || !ctx.chosenModes().isEmpty()) {
+                throw new IllegalArgumentException("Invalid mode: " + chosenLabel);
+            }
+            gameData.interaction.clearAwaitingInput();
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
                 .filter(o -> o.label().equals(chosenLabel))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
 
+        if (ctx.chosenModes().contains(chosen)) {
+            throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
+        }
+
         gameData.interaction.clearAwaitingInput();
+        List<ChooseOneEffect.ChooseOneOption> chosenModes = new ArrayList<>(ctx.chosenModes());
+        chosenModes.add(chosen);
+        if (chosenModes.size() < ctx.effect().choicesRequired()) {
+            playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
+                    ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), chosenModes);
+            return;
+        }
         if (ctx.modesResetEachTurn()) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (source != null) {
@@ -990,7 +1009,7 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosen);
+                ctx.sourcePermanentId(), chosenModes);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);

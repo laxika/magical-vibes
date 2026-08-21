@@ -60,6 +60,7 @@ class IceCaveTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -82,6 +83,7 @@ class IceCaveTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

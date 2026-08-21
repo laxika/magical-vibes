@@ -514,6 +514,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChosenCardId =
+                    cardIds.isEmpty() ? null : cardIds.getFirst();
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimeDragonApproachResume) {
             StackEntry entry = gameData.pendingEffectResolutionEntry;
             if (entry == null) {

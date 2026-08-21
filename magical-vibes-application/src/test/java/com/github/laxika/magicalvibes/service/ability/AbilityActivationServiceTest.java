@@ -72,6 +72,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -542,7 +543,7 @@ class AbilityActivationServiceTest {
 
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(3);
             verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
-                    any(), any(), any(), any(), any(), anyInt(), any(), any(), any(), any(), any());
+                    any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any());
         }
 
         @Test

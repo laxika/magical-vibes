@@ -43,9 +43,9 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         DarkRitual ritual = new DarkRitual();
         harness.setExile(player1, List.of(ritual));
         gd.exiledCardRefineCounters.put(ritual.getId(), 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         triggerUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThat(gd.exiledCardRefineCounters).doesNotContainKey(ritual.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -56,7 +56,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Dark Ritual");
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -25,9 +26,11 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEf
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.TriggeredAbilityCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -635,6 +638,7 @@ public class EtbTriggerService {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
                 gameData.stack.add(etbEntry);
+                queueTriggeredAbilityCounters(gameData, etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
                 // Naban: extra triggers for Wizard ETB
@@ -661,6 +665,7 @@ public class EtbTriggerService {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
                     gameData.stack.add(extraEtbEntry);
+                    queueTriggeredAbilityCounters(gameData, extraEtbEntry);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                     log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                 }
@@ -819,6 +824,29 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof TriggeredAbilityCounterEffect counterEffect)) {
+                        continue;
+                    }
+                    StackEntry counterTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            permanent.getCard(),
+                            controllerId,
+                            permanent.getCard().getName() + "'s ability",
+                            List.of(new CounterUnlessPaysEffect(counterEffect.counterCost())),
+                            triggeredAbility.getCard().getId(),
+                            Zone.STACK,
+                            permanent.getId());
+                    gameData.stack.add(counterTrigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+                }
+            }
+        });
     }
 
     private List<UUID> targetsForActiveEtbGroups(Card card, List<CardEffect> effects, List<UUID> targetIds) {

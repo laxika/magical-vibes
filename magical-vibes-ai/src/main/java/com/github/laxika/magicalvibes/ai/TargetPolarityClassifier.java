@@ -332,6 +332,7 @@ public class TargetPolarityClassifier {
     private static final Map<String, TargetPolarity> FIXED_BY_CLASS_NAME = Map.ofEntries(
             // The target leaves the battlefield (or the board position it holds).
             entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Blood Frenzy: the pump rides along, but the target still dies at the next end
             // step, so removal outranks the boost's BENEFICIAL and aims at the opponent.
             entry("DestroyTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -379,6 +380,7 @@ public class TargetPolarityClassifier {
             entry("PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectCombatDamageFromTargetUnblockedCreatureToItsControllerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectCombatDamageToTargetAttackingCreatureEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("RedirectNextDamageFromTargetToAnotherTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardsBottomThenDamageIfCopyRevealedEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),

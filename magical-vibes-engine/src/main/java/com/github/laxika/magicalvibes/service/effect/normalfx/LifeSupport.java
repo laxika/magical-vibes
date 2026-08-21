@@ -174,7 +174,7 @@ public class LifeSupport {
         amount = gameQueryService.applyPoisonCounterReplacement(gameData, playerId, amount);
         if (amount <= 0) return;
 
-        amount = gameQueryService.replacePoisonCounters(gameData, playerId, amount);
+        amount = gameQueryService.replacePoisonCounters(gameData, playerId, amount, placingPlayerId);
         if (amount <= 0) return;
 
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);

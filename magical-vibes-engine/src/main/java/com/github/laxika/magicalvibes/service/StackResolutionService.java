@@ -301,6 +301,7 @@ public class StackResolutionService {
         if (entry.isEntersTapped()) {
             permanent.tap();
         }
+        permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
         if (entry.getRepeatedAdditionalCosts().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());

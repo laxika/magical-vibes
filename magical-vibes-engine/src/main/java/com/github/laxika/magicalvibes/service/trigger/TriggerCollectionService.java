@@ -1924,14 +1924,14 @@ public class TriggerCollectionService {
      */
     public void queueSourceDealsCombatDamageTriggers(GameData gameData, Card sourceCard,
                                                       UUID sourceControllerId, UUID sourcePermanentId,
-                                                      int totalDamage,
+                                                      int totalDamage, int damageToPlayers,
                                                       List<CardEffect> snapshottedSelfEffects) {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) {
             return;
         }
 
         var ctx = new TriggerContext.SourceDealsCombatDamage(
-                sourceCard, sourceControllerId, sourcePermanentId, totalDamage);
+                sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers);
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
                 totalDamage, snapshottedSelfEffects, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE);
 
@@ -5224,6 +5224,9 @@ public class TriggerCollectionService {
                 dyingPermanent);
 
         for (Permanent perm : sourcesById.values()) {
+            if (perm.getId().equals(dyingPermanent.getId())) {
+                continue;
+            }
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES);
             if (effects == null || effects.isEmpty()) continue;
 

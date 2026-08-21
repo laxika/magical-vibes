@@ -470,7 +470,13 @@ public sealed interface TriggerContext {
 
     /** Context for a source's combat-damage-only self trigger. */
     record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
-                                   UUID sourcePermanentId, int totalDamage) implements TriggerContext {}
+                                   UUID sourcePermanentId, int totalDamage,
+                                   int damageToPlayers) implements TriggerContext {
+        public SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
+                                       UUID sourcePermanentId, int totalDamage) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, totalDamage);
+        }
+    }
 
     record CreatureDealsDamageToPlaneswalker(Permanent damageSource, UUID damagedPlaneswalkerId,
                                               int damage, boolean combatDamage,

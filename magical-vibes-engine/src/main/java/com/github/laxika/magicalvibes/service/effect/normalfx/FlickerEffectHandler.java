@@ -111,7 +111,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             gameData.queueDelayedAction(new PendingExileReturn(
                     cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
                     e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
-                    e.returnAtOwnerNextEndStep(), false, false));
+                    e.returnAtOwnerNextEndStep(), false, false, false, null, null, false,
+                    e.plusOnePlusOneCountersOnlyOnCreatures(),
+                    e.loyaltyCountersOnPlaneswalkersOnReturn()));
         }
     }
 

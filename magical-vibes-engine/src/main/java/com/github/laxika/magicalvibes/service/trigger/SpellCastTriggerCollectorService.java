@@ -1935,9 +1935,11 @@ public class SpellCastTriggerCollectorService {
             } else {
                 entry = spellManaSpentX > 0
                         ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                            match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX)
+                            match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX,
+                            null, match.permanent().getId(), null, null, null, null)
                         : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                            match.permanent().getCard().getName() + "'s ability", resolved);
+                            match.permanent().getCard().getName() + "'s ability", resolved, null,
+                            match.permanent().getId());
                 // Contextual "that player" = the caster (Leshrac's Sigil may-pay look-at-hand).
                 // Non-targeting: oracle does not use the word "target".
                 entry.setTargetId(castingPlayerId);

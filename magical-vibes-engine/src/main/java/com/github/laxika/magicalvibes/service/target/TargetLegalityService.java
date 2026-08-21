@@ -1402,6 +1402,12 @@ public class TargetLegalityService {
         validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 1);
     }
 
+    public void validateSpellTargetGroupsAfterPrimary(GameData gameData, Card card,
+                                                       List<UUID> targetIds, UUID controllerId,
+                                                       int xValue, boolean kicked) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 1);
+    }
+
     private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                            UUID controllerId, int xValue, boolean kicked, int firstGroupIndex) {
         List<SpellTarget> targetGroups = card.getSpellTargets().stream()

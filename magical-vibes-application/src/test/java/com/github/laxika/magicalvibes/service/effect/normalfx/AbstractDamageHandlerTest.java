@@ -102,8 +102,9 @@ abstract class AbstractDamageHandlerTest {
                         eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through — dealDamageToPlayer calls it unconditionally.
-        lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(eq(gd), any(), anyInt()))
-                .thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         // Oracle's Attendants: consulted for every creature damage event, including spell damage with no
         // source permanent, so it must pass through when no redirect shield is set up.
         lenient().when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt()))

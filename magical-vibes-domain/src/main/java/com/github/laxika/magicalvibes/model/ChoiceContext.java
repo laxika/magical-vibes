@@ -999,11 +999,21 @@ public sealed interface ChoiceContext {
     }
 
     record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                UUID sourcePermanentId, boolean modesResetEachTurn) implements ChoiceContext {
+                                UUID sourcePermanentId, boolean modesResetEachTurn,
+                                List<ChooseOneEffect.ChooseOneOption> chosenModes) implements ChoiceContext {
+
+        public TriggeredModalChoice {
+            chosenModes = List.copyOf(chosenModes);
+        }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, List.of());
+        }
+
+        public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                    UUID sourcePermanentId, boolean modesResetEachTurn) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, List.of());
         }
     }
 

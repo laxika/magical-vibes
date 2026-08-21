@@ -2230,6 +2230,33 @@ public class GameQueryService {
         return replacePlayerCounters(gameData, playerId, count);
     }
 
+    public int replacePoisonCounters(GameData gameData, UUID playerId, int count,
+                                     UUID placingPlayerId) {
+        int result = replacePlayerCounters(gameData, playerId, count);
+        if (result <= 0 || placingPlayerId == null) {
+            return result;
+        }
+        final int[] replaced = {result};
+        gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
+            boolean sourceControlsAffected = Objects.equals(sourceControllerId, playerId);
+            boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof CounterReplacementEffect replacement)) continue;
+                    if (!(replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect)
+                            && !(replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect)) {
+                        continue;
+                    }
+                    if (replacement.appliesTo(null, false, sourceControlsAffected,
+                            sourceControllerIsPlacing, true)) {
+                        replaced[0] = replacement.replace(null, replaced[0]);
+                    }
+                }
+            }
+        });
+        return replaced[0];
+    }
+
     /** Applies all energy-counter replacements for a player. */
     public int replaceEnergyCounters(GameData gameData, UUID playerId, int count) {
         return replacePlayerCounters(gameData, playerId, count);

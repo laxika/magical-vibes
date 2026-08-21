@@ -630,12 +630,25 @@ public class PlayerInputService {
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
             boolean modesResetEachTurn) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, List.of());
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes) {
         ChoiceContext.TriggeredModalChoice ctx =
                 new ChoiceContext.TriggeredModalChoice(
-                        sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn);
-        List<String> optionLabels = effect.options().stream()
+                        sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
+                        chosenModes);
+        List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
+                .filter(option -> !chosenModes.contains(option))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
-                .toList();
+                .toList());
+        if (effect.optional() && chosenModes.isEmpty()) {
+            optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.NO_MODE_LABEL);
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 controllerId, null, null, ctx, optionLabels, sourceCard.getName() + " - Choose one."));
 

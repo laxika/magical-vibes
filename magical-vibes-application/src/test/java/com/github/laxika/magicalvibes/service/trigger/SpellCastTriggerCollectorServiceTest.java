@@ -1235,9 +1235,6 @@ class SpellCastTriggerCollectorServiceTest {
             copiedSpell.setCopy(true);
             var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
-                    .thenReturn(true);
-
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
@@ -1261,9 +1258,6 @@ class SpellCastTriggerCollectorServiceTest {
             StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
             copiedSpell.setCopy(true);
             var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
-                    .thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1307,9 +1301,6 @@ class SpellCastTriggerCollectorServiceTest {
             StackEntry copiedSpell = new StackEntry(spellCard, player2Id);
             copiedSpell.setCopy(true);
             var ctx = new TriggerContext.SpellCopy(copiedSpell, player2Id);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
-                    .thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),

@@ -27,7 +27,10 @@ public class FlamethrowerSonata extends Card {
                         null,
                         new DealDamageToTargetCreatureOrPlaneswalkerEffect(new LastDiscardedCardManaValue()),
                         "a card",
-                        instantOrSorcery()))
+                        instantOrSorcery(),
+                        true,
+                        null,
+                        null))
                 .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 

@@ -1094,6 +1094,7 @@ public class CombatDamageService {
             if (controllerId == null) continue;
             triggerCollectionService.queueSourceDealsCombatDamageTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
+                    state.combatDamageDealtToPlayer.getOrDefault(source, 0),
                     state.selfDealsCombatDamageEffects.get(source));
         }
     }

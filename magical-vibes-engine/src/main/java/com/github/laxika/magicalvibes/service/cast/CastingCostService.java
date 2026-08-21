@@ -1342,6 +1342,25 @@ public class CastingCostService {
             return perTargetReduction;
         }
 
+        int battlefieldReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
+                .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
+                .mapToInt(effect -> targetIds.stream()
+                        .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
+                        .filter(java.util.Objects::nonNull)
+                        .filter(target -> !effect.controlledByCaster()
+                                || playerId.equals(gameQueryService.findPermanentController(
+                                gameData, target.getId())))
+                        .anyMatch(target -> predicateEvaluationService.matchesPermanentPredicate(
+                                target, effect.predicate(), FilterContext.of(gameData)
+                                        .withSourceCardId(card.getId())
+                                        .withSourceControllerId(playerId))) ? effect.amount() : 0)
+                .sum();
+        if (battlefieldReduction != 0) {
+            return battlefieldReduction;
+        }
+
         UUID firstTargetId = targetIds.getFirst();
         Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
         if (firstTarget != null) {

@@ -3335,6 +3335,10 @@ public class GameData {
         copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
         copy.playersWithAllPlayerDamagePreventedUntilNextTurn
                 .addAll(this.playersWithAllPlayerDamagePreventedUntilNextTurn);
+        copy.playersWithColoredManaReplacementThisTurn
+                .addAll(this.playersWithColoredManaReplacementThisTurn);
+        copy.playersWithWhiteManaAsAnyColorThisTurn
+                .addAll(this.playersWithWhiteManaAsAnyColorThisTurn);
         copy.playersWithProtectionFromEverythingUntilNextTurn
                 .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
