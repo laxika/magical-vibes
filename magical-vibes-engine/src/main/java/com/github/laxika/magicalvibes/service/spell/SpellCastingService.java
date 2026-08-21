@@ -3378,9 +3378,16 @@ public class SpellCastingService {
                         }
                     }
                 }
-                List<UUID> kickedTargetIds = new ArrayList<>();
-                kickedTargetIds.add(targetId);
-                kickedTargetIds.addAll(targetIds);
+                List<UUID> kickedTargetIds = targetIds;
+                // The primary target belongs in the flat list only when the first declared group
+                // actually consumes it. A zero-sized first group is an indexing placeholder for a
+                // primary target stored on the entry itself (for example, Orim's Thunder).
+                if (card.getSpellTargets().size() > 1
+                        && card.getSpellTargets().getFirst().getKickedMaxTargets() > 0) {
+                    kickedTargetIds = new ArrayList<>();
+                    kickedTargetIds.add(targetId);
+                    kickedTargetIds.addAll(targetIds);
+                }
                 StackEntry kickedEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId,

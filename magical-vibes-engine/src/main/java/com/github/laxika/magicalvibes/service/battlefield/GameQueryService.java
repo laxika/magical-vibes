@@ -2144,6 +2144,8 @@ public class GameQueryService {
                                int count, UUID placingPlayerId) {
         UUID affectedControllerId = findPermanentController(gameData, permanent.getId());
         boolean creature = permanent.getCard().hasType(CardType.CREATURE) || isCreature(gameData, permanent);
+        boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
+                && effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.VEHICLE);
         boolean artifact = isArtifact(gameData, permanent);
         final int[] result = {count};
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
@@ -2153,7 +2155,10 @@ public class GameQueryService {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     boolean applies;
-                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
+                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
+                            && nonCreatureVehicle && plusOneReplacement.appliesToNonCreatureVehicles()) {
+                        applies = sourceControlsAffected;
+                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
                             || replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect) {
                         applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
                                 sourceControllerIsPlacing, false);
@@ -2202,6 +2207,9 @@ public class GameQueryService {
     public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
                                CounterType counterType, int count, UUID placingPlayerId) {
         boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
+        boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE
+                && permanent != null && !creature
+                && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE);
         boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
         final int[] result = {count};
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
@@ -2211,7 +2219,10 @@ public class GameQueryService {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     boolean applies;
-                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
+                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
+                            && nonCreatureVehicle && plusOneReplacement.appliesToNonCreatureVehicles()) {
+                        applies = sourceControlsAffected;
+                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
                             || replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect) {
                         applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
                                 sourceControllerIsPlacing, false);
