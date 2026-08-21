@@ -44,6 +44,10 @@ tasks.named("bootJar") {
     dependsOn(copyFrontend)
 }
 
+tasks.named("jar") {
+    dependsOn(copyFrontend)
+}
+
 tasks.named("resolveMainClassName") {
     mustRunAfter(copyFrontend)
 }
