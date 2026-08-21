@@ -11,12 +11,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ForgingTheTyriteSword.class, GrizzlyBears.class, HalvarGodOfBattle.class,
+        SwordOfTheRealms.class})
 class ForgingTheTyriteSwordTest extends BaseCardTest {
 
     @Test
@@ -46,6 +49,7 @@ class ForgingTheTyriteSwordTest extends BaseCardTest {
     @Test
     void chapterThreeSearchesForHalvarOrEquipment() {
         harness.addToBattlefield(player1, new ForgingTheTyriteSword());
+        harness.setHand(player1, List.of());
         Permanent saga = findPermanent(player1, "Forging the Tyrite Sword");
         saga.setCounterCount(CounterType.LORE, 2);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new HalvarGodOfBattle(), new SwordOfTheRealms()));
@@ -70,12 +74,13 @@ class ForgingTheTyriteSwordTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Sword of the Realms");
         assertThat(gd.playerDecks.get(player1.getId()).stream().map(Card::getName))
-                .containsExactly("Grizzly Bears", "Halvar, God of Battle");
+                .containsExactlyInAnyOrder("Grizzly Bears", "Halvar, God of Battle");
     }
 
     @Test
     void chapterThreeDoesNotSearchForUnmatchingCards() {
         harness.addToBattlefield(player1, new ForgingTheTyriteSword());
+        harness.setHand(player1, List.of());
         Permanent saga = findPermanent(player1, "Forging the Tyrite Sword");
         saga.setCounterCount(CounterType.LORE, 2);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));

@@ -6191,14 +6191,18 @@ public class TriggerCollectionService {
             UUID triggerControllerId = delayedReturn.returnUnderController()
                     ? delayedReturn.controllerId() : ownerId;
 
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     graveyardCard,
                     triggerControllerId,
                     "Return " + graveyardCard.getName() + " to the battlefield",
                     new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
                             delayedReturn.enterTapped(), delayedReturn.returnUnderController())))
-            ));
+            );
+            entry.setTriggeringCardId(graveyardCard.getId());
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    gameData.graveyardEntryVersion(graveyardCard.getId()));
+            gameData.stack.add(entry);
 
             gameLogService.append(gameData, GameLog.cardThen(graveyardCard, " will return to the battlefield (it died this turn)."));
             log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());

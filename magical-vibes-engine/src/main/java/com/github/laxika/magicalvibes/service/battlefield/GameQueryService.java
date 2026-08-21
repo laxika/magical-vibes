@@ -2420,8 +2420,19 @@ public class GameQueryService {
     }
 
     private boolean hasMountOrVehicleSubtype(GameData gameData, Permanent permanent) {
-        Set<CardSubtype> subtypes = effectiveCreatureSubtypes(gameData, permanent);
-        return subtypes.contains(CardSubtype.MOUNT) || subtypes.contains(CardSubtype.VEHICLE);
+        if (effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.MOUNT)) {
+            return true;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        Set<CardSubtype> subtypes = new HashSet<>();
+        if (!bonus.subtypeOverriding()) {
+            subtypes.addAll(permanent.getCard().getSubtypes());
+        }
+        subtypes.addAll(permanent.getTransientSubtypes());
+        subtypes.addAll(permanent.getGrantedSubtypes());
+        subtypes.addAll(permanent.getUntilNextTurnSubtypes());
+        subtypes.addAll(bonus.grantedSubtypes());
+        return subtypes.contains(CardSubtype.VEHICLE);
     }
 
     /**

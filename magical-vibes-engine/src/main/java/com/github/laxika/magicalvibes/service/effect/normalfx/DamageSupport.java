@@ -253,6 +253,9 @@ public class DamageSupport {
                 rawDamage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), rawDamage);
                 processSourceRedirectDamage(gameData);
             }
+            rawDamage = damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
+                    gameData, targetControllerId, target, sourcePermId, rawDamage);
+            processSourceRedirectDamage(gameData);
             rawDamage = damagePreventionService.applyAllCreatureDamageRedirectToController(
                     gameData, target, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);

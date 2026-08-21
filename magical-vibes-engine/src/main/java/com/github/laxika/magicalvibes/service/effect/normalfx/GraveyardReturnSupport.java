@@ -404,6 +404,7 @@ public class GraveyardReturnSupport {
                 && !effect.unearth()
                 && !plusOneCounters
                 && (effect.grantKeywords() == null || effect.grantKeywords().isEmpty())
+                && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
             return;
         }
@@ -430,6 +431,11 @@ public class GraveyardReturnSupport {
             }
             if (effect.grantKeywords() != null) {
                 p.getPersistentGrantedKeywords().addAll(effect.grantKeywords());
+            }
+            if (effect.grantSubtypes() != null) {
+                effect.grantSubtypes().stream()
+                        .filter(subtype -> !p.getGrantedSubtypes().contains(subtype))
+                        .forEach(p.getGrantedSubtypes()::add);
             }
             if (plusOneCounters) {
                 boolean cardTypeMatches = effect.plusOneCountersIfCardType() == null

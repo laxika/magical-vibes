@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.w.WallOfIce;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GiantOx.class, DuskLegionDreadnought.class, WallOfIce.class})
 class GiantOxTest extends BaseCardTest {
 
     @Test

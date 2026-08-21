@@ -1153,12 +1153,24 @@ public class StackResolutionService {
         };
 
         boolean needsPlayerTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean hasSagaTargetGroups = !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
         boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                || !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
+                || hasSagaTargetGroups;
         boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e ->
                 e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                         || e instanceof ReturnTargetCardsFromGraveyardToHandEffect);
-        if (needsPlayerTarget && needsPermanentTarget) {
+        if (hasSagaTargetGroups) {
+            gameData.queueInteraction(
+                    new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
+                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
+                            card.getSagaChapterTargetFilters(chapterSlot),
+                            card.getSagaChapterTargetGroups(chapterSlot), List.of(), 0));
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    "'s chapter " + chapterName + " ability triggers."));
+            log.info("Game {} - {} chapter {} triggers (awaiting grouped target selection)",
+                    gameData.id, card.getName(), chapterName);
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
+        } else if (needsPlayerTarget && needsPermanentTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     card, controllerId, new ArrayList<>(chapterEffects), false,
                     sagaChapterAnyTargetFilter(chapterEffects), 0, sagaPerm.getId()));

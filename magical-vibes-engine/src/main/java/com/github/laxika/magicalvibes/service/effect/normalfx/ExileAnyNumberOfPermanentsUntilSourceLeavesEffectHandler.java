@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -27,6 +29,8 @@ public class ExileAnyNumberOfPermanentsUntilSourceLeavesEffectHandler implements
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,5 +61,29 @@ public class ExileAnyNumberOfPermanentsUntilSourceLeavesEffectHandler implements
                     new MultiPermanentChoiceContext.ExileAnyNumberUntilSourceLeaves(entry.getSourcePermanentId()),
                     "Exile any number of matching permanents.");
         }
+    }
+
+    public void completeChoice(GameData gameData, List<UUID> permanentIds, UUID sourcePermanentId) {
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent == null) {
+                continue;
+            }
+
+            Card card = permanent.getOriginalCard();
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
+            UUID ownerId = gameData.stolenCreatures.getOrDefault(permanentId, controllerId);
+            boolean token = card.isToken();
+
+            if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+                continue;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
+            if (sourcePermanentId != null && !token) {
+                gameData.addExileReturnOnPermanentLeave(
+                        sourcePermanentId, new PendingExileReturn(card, ownerId));
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }
