@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "131")
 @CardRegistration(set = "MIR", collectorNumber = "122")
 @CardRegistration(set = "S99", collectorNumber = "77")
+@CardRegistration(set = "BTD", collectorNumber = "26")
 public class FeralShadow extends Card {
 }

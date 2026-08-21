@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatMan
 
 @CardRegistration(set = "7ED", collectorNumber = "105")
 @CardRegistration(set = "USG", collectorNumber = "104")
+@CardRegistration(set = "BTD", collectorNumber = "16")
 public class TolarianWinds extends Card {
 
     public TolarianWinds() {

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "51")
 @CardRegistration(set = "TPR", collectorNumber = "78")
+@CardRegistration(set = "BTD", collectorNumber = "18")
 public class WaywardSoul extends Card {
 
     public WaywardSoul() {

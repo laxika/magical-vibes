@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "10E", collectorNumber = "243")
 @CardRegistration(set = "M15", collectorNumber = "165")
 @CardRegistration(set = "USG", collectorNumber = "221")
+@CardRegistration(set = "BTD", collectorNumber = "49")
 public class ThunderingGiant extends Card {
 }

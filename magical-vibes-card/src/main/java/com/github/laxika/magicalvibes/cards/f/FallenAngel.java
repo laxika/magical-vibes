@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "7ED", collectorNumber = "134")
 @CardRegistration(set = "6ED", collectorNumber = "127")
 @CardRegistration(set = "CHR", collectorNumber = "32")
+@CardRegistration(set = "BTD", collectorNumber = "25")
 public class FallenAngel extends Card {
 
     public FallenAngel() {

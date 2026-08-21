@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MIR", collectorNumber = "108")
+@CardRegistration(set = "BTD", collectorNumber = "19")
 public class BoneHarvest extends Card {
 
     public BoneHarvest() {

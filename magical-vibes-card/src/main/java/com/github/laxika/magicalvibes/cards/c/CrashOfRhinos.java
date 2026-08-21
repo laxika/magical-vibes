@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
  * Keyword-only creature; trample is loaded from Scryfall metadata.
  */
 @CardRegistration(set = "MIR", collectorNumber = "210")
+@CardRegistration(set = "BTD", collectorNumber = "51")
 public class CrashOfRhinos extends Card {
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "158")
+@CardRegistration(set = "BTD", collectorNumber = "31")
 public class SkitteringSkirge extends Card {
 
     public SkitteringSkirge() {

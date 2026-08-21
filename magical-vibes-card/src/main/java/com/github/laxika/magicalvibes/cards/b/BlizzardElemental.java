@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "27")
+@CardRegistration(set = "BTD", collectorNumber = "2")
 public class BlizzardElemental extends Card {
 
     public BlizzardElemental() {
