@@ -539,11 +539,16 @@ public class CardChoiceHandlerService {
         }
 
         // Push "if you do" rider after a filtered discard (DiscardCardThenEffect / Pack Guardian)
+        CardEffect selectedThenEffect = followUp.thenEffect();
+        if (discardedCard != null && followUp.thenEffectAlternateCardType() != null
+                && discardedCard.hasType(followUp.thenEffectAlternateCardType())) {
+            selectedThenEffect = followUp.thenEffectAlternate();
+        }
         boolean thenEffectConditionMet = followUp.thenEffectCondition() == null
                 || discardedCard != null && predicateEvaluationService.matchesCardPredicate(
                         discardedCard, followUp.thenEffectCondition(), followUp.thenEffectSourceCard().getId());
-        if (thenEffectConditionMet && followUp.thenEffect() != null && followUp.thenEffectSourceCard() != null) {
-            CardEffect thenEffect = followUp.thenEffect();
+        if (thenEffectConditionMet && selectedThenEffect != null && followUp.thenEffectSourceCard() != null) {
+            CardEffect thenEffect = selectedThenEffect;
             Card sourceCard = followUp.thenEffectSourceCard();
             TargetSpec targetSpec = thenEffect.targetSpec();
             boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;

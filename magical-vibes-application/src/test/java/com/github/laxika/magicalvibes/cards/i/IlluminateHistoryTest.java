@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IlluminateHistory.class, Forest.class, GrizzlyBears.class})
 class IlluminateHistoryTest extends BaseCardTest {
 
     @Test
@@ -61,7 +63,6 @@ class IlluminateHistoryTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken()

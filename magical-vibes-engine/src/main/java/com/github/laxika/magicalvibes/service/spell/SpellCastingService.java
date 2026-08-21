@@ -658,10 +658,7 @@ public class SpellCastingService {
                             }
                         }
                     } else if (chosen.targetFilter() != null) {
-                        SpellTarget spellTarget = declareModeTarget(card, chosen);
-                        for (CardEffect modeEffect : chosen.effects()) {
-                            card.registerEffectTargetIndex(modeEffect, spellTarget.getIndex());
-                        }
+                        card.setCastTimeTargetFilter(chosen.targetFilter());
                     }
                 } else {
                     for (ChooseOneEffect.ChooseOneOption chosen : chosenModes) {
@@ -1193,8 +1190,13 @@ public class SpellCastingService {
 
         List<UUID> declaredTargetIds = targetIds != null ? targetIds : List.of();
         if (targetId != null) {
-            targetLegalityService.validateSpellTargeting(
-                    gameData, omenCard, targetId, null, playerId, true, effectiveXValue);
+            if (EffectResolution.needsSpellTarget(omenCard.getEffects(EffectSlot.SPELL))) {
+                targetLegalityService.validateSpellTargetOnStack(
+                        gameData, targetId, omenCard.getTargetFilter(), playerId, effectiveXValue);
+            } else {
+                targetLegalityService.validateSpellTargeting(
+                        gameData, omenCard, targetId, null, playerId, true, effectiveXValue);
+            }
         }
         if (!actionAvailabilityService.isCardPlayable(
                 gameData, playerId, omenCard, gameData.playerManaPools.get(playerId), 0)) {
@@ -1214,13 +1216,14 @@ public class SpellCastingService {
 
         StackEntryType entryType = omenCard.hasType(CardType.INSTANT)
                 ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+        Zone omenTargetZone = EffectResolution.needsSpellTarget(effects) ? Zone.STACK : null;
         StackEntry entry;
         if (!declaredTargetIds.isEmpty()) {
             entry = new StackEntry(entryType, physicalCard, playerId, omenCard.getName(), effects,
-                    effectiveXValue, declaredTargetIds);
+                    effectiveXValue, null, null, Map.of(), omenTargetZone, List.of(), declaredTargetIds);
         } else if (targetId != null) {
             entry = new StackEntry(entryType, physicalCard, playerId, omenCard.getName(), effects,
-                    effectiveXValue, targetId, Map.of());
+                    effectiveXValue, targetId, null, Map.of(), omenTargetZone, List.of(), List.of());
         } else {
             entry = new StackEntry(entryType, physicalCard, playerId, omenCard.getName(), effects, effectiveXValue);
         }
@@ -1652,7 +1655,9 @@ public class SpellCastingService {
         // ETB triggered abilities choose targets after a permanent enters; this helper only sees
         // the spell's effects and therefore does not make ETB targets cast-time requirements.
         boolean unwrappedNeedsTarget = EffectResolution.needsSpellCastTarget(
-                targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
+                targetingSpellEffects, card.isAura(), card.isEnchantPlayer())
+                || wasModal && (card.getCastTimeTargetFilter() != null
+                        || card.getEffectiveMinTargets(effectiveXValue, kicked) > 0);
         boolean allSpellTargetsAlsoAllowPermanents = targetingSpellEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack)
                 .allMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));

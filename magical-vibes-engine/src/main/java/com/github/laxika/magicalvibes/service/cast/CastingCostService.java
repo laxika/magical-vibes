@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.NextSpellCostReduction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -275,6 +276,15 @@ public class CastingCostService {
         for (CollectedCostModifier modifier : afterOtherModifiers) {
             delta += modifier.handler().modifyCostAfterOtherModifiers(
                     context, modifier.effect(), modifier.source(), delta);
+        }
+        List<NextSpellCostReduction> reductions = gameData.nextSpellCostReductionsThisTurn.get(playerId);
+        if (reductions != null) {
+            synchronized (reductions) {
+                delta -= reductions.stream()
+                        .filter(reduction -> reduction.cardTypes().stream().anyMatch(card::hasType))
+                        .mapToInt(NextSpellCostReduction::amount)
+                        .sum();
+            }
         }
         return delta;
     }

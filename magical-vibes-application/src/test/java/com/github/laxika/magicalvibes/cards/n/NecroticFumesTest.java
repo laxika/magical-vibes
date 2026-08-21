@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NecroticFumes.class, GarrukWildspeaker.class, GrizzlyBears.class, Plains.class})
 class NecroticFumesTest extends BaseCardTest {
 
     @Test
@@ -28,6 +30,7 @@ class NecroticFumesTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new NecroticFumes()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorceryWithSacrifice(player1, 0, target.getId(), costCreature.getId());
 
@@ -49,6 +52,7 @@ class NecroticFumesTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new NecroticFumes()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorceryWithSacrifice(player1, 0, planeswalker.getId(), costCreature.getId());
         harness.passBothPriorities();
@@ -68,6 +72,7 @@ class NecroticFumesTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new NecroticFumes()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), land.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -84,6 +89,7 @@ class NecroticFumesTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new NecroticFumes()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, land.getId(), costCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);

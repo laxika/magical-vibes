@@ -64,13 +64,14 @@ class RunescaleStormbroodTest extends BaseCardTest {
     void omenCountersSmallSpellAndShuffles() {
         Shock spell = new Shock();
         RunescaleStormbrood card = new RunescaleStormbrood();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(card));
         harness.setHand(player2, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castInstant(player2, 0, target.getId());
         harness.castWithAlternateCost(player1, 0, spell.getId());
         harness.passBothPriorities();
 
@@ -85,13 +86,14 @@ class RunescaleStormbroodTest extends BaseCardTest {
     void omenRejectsLargeSpell() {
         MightOfOaks spell = new MightOfOaks();
         RunescaleStormbrood card = new RunescaleStormbrood();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(card));
         harness.setHand(player2, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.GREEN, 4);
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castInstant(player2, 0, target.getId());
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, spell.getId()))
                 .isInstanceOf(IllegalStateException.class)

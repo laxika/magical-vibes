@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForInstantOrSorcerySharingSourceColorAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class KasminaEnigmaSage extends Card {
 
         var otherPlaneswalkers = new PermanentAllOfPredicate(List.of(
                 new PermanentIsPlaneswalkerPredicate(),
-                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 scryAbility, GrantScope.OWN_PERMANENTS, otherPlaneswalkers));

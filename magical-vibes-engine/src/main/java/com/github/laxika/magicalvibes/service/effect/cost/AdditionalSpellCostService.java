@@ -1206,8 +1206,12 @@ public class AdditionalSpellCostService {
         }
         List<Permanent> chosen = new ArrayList<>();
         for (UUID id : ids) {
-            chosen.add(validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())));
+            Permanent permanent = validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                validateCanSacrificeCreatureForCost(gameData, card);
+            }
+            chosen.add(permanent);
         }
         return chosen;
     }
@@ -1229,8 +1233,12 @@ public class AdditionalSpellCostService {
         }
         List<Permanent> chosen = new ArrayList<>();
         for (UUID id : ids) {
-            chosen.add(validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())));
+            Permanent permanent = validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                validateCanSacrificeCreatureForCost(gameData, card);
+            }
+            chosen.add(permanent);
         }
         return chosen;
     }
@@ -1269,8 +1277,12 @@ public class AdditionalSpellCostService {
         }
         List<Permanent> chosen = new ArrayList<>();
         for (UUID id : ids) {
-            chosen.add(validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())));
+            Permanent permanent = validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                validateCanSacrificeCreatureForCost(gameData, card);
+            }
+            chosen.add(permanent);
         }
         return chosen;
     }

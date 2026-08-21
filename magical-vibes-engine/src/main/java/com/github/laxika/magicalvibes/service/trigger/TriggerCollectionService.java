@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -74,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilit
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
@@ -118,6 +120,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEach
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
@@ -853,6 +856,27 @@ public class TriggerCollectionService {
                 ));
                 log.info("Game {} - {} self-cast copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
+            } else if (effect instanceof CopyThisSpellForXValueEffect) {
+                StackEntry spellEntry = null;
+                for (StackEntry se : gameData.stack) {
+                    if (se.getCard().getId().equals(spellCard.getId())) {
+                        spellEntry = se;
+                        break;
+                    }
+                }
+                if (spellEntry == null || spellEntry.getXValue() <= 0) continue;
+
+                int copies = spellEntry.getXValue();
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        spellCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(new StormCopyEffect(
+                                new StackEntry(spellEntry), castingPlayerId, copies, false)))
+                ));
+                log.info("Game {} - {} self-cast trigger queued ({} copies) for {}",
+                        gameData.id, spellCard.getName(), copies, castingPlayerId);
             } else if (effect instanceof StormEffect storm) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
@@ -6682,6 +6706,25 @@ public class TriggerCollectionService {
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary ally creature-enters trigger fires",
                     gameData.id, watcher.sourceCard().getName());
+        }
+
+        if (enteringPermanent != null) {
+            for (Emblem emblem : gameData.emblems) {
+                if (!emblem.controllerId().equals(controllerId)) continue;
+                for (CardEffect effect : emblem.staticEffects()) {
+                    if (!(effect instanceof DealDamageToAnyTargetOnAllyCreatureEntersEffect)) continue;
+                    Card sourceCard = emblem.sourceCard() != null ? emblem.sourceCard() : enteringCreature;
+                    gameData.queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
+                            sourceCard, controllerId,
+                            List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
+                            enteringPermanent.getId()));
+                    gameLogService.append(gameData, GameLog.text(
+                            sourceCard.getName() + "'s emblem triggers for " + enteringCreature.getName()
+                                    + " entering."));
+                    log.info("Game {} - {}'s emblem triggers for {} entering",
+                            gameData.id, sourceCard.getName(), enteringCreature.getName());
+                }
+            }
         }
     }
 

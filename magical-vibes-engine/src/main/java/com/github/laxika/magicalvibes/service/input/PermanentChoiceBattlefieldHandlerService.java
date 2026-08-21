@@ -717,6 +717,23 @@ public class PermanentChoiceBattlefieldHandlerService {
         mayAbilityTapCostService.completeTapCostChoice(gameData, player, mayTapCostChoice, permanentId);
     }
 
+    public void handleChoosePlayerThenReturnCreatureToHand(
+            GameData gameData, UUID chosenPlayerId,
+            PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand context) {
+        List<UUID> creatureIds = gameData.playerBattlefields.getOrDefault(chosenPlayerId, List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+        if (creatureIds.isEmpty()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(chosenPlayerId));
+        playerInputService.beginPermanentChoice(gameData, chosenPlayerId, creatureIds,
+                context.sourceCardName() + " — Choose a creature you control to return to its owner's hand.");
+    }
+
     public void handleBounceCreature(GameData gameData, UUID permanentId) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {

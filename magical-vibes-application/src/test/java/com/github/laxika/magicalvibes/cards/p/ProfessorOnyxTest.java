@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ProfessorOnyx.class, BarkshellBlessing.class, GiantGrowth.class, GrizzlyBears.class,
+        HillGiant.class, SerraAngel.class})
 class ProfessorOnyxTest extends BaseCardTest {
 
     @Test
@@ -53,6 +56,8 @@ class ProfessorOnyxTest extends BaseCardTest {
 
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(24);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
@@ -100,6 +105,7 @@ class ProfessorOnyxTest extends BaseCardTest {
     void minusEightRepeatsSevenTimes() {
         addReadyOnyx(player1, 8);
         harness.setLife(player2, 30);
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();

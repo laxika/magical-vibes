@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PlumbTheForbidden.class, AngelOfJubilation.class, Forest.class, GrizzlyBears.class,
+        Island.class})
 class PlumbTheForbiddenTest extends BaseCardTest {
 
     @Test
@@ -26,7 +29,7 @@ class PlumbTheForbiddenTest extends BaseCardTest {
         prepareSpell();
 
         cast(List.of());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -41,7 +44,7 @@ class PlumbTheForbiddenTest extends BaseCardTest {
         prepareSpell();
 
         cast(List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
