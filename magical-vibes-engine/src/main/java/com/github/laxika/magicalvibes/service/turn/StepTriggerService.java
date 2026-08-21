@@ -2869,7 +2869,9 @@ public class StepTriggerService {
             };
 
             boolean needsPlayerTarget = chapterEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                    || card.getSagaChapterTargetFilters(chapterSlot).stream()
+                    .anyMatch(com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter.class::isInstance);
             boolean hasSagaTargetGroups = !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
             boolean needsPermanentTarget = chapterEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
@@ -2898,7 +2900,8 @@ public class StepTriggerService {
             } else if (needsPlayerTarget) {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterPlayerTarget(card, activePlayerId,
-                                new ArrayList<>(chapterEffects), saga.getId(), chapterName));
+                                new ArrayList<>(chapterEffects), saga.getId(), chapterName,
+                                card.getSagaChapterTargetFilters(chapterSlot)));
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
                 log.info("Game {} - {} chapter {} triggers (awaiting player target selection)",

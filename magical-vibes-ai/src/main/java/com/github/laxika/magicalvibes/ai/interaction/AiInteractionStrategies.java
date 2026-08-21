@@ -55,6 +55,7 @@ public final class AiInteractionStrategies {
         register(new ExileNonlandCardFromTargetHandOrGraveyardChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());
         register(new ExilePermanentsOrHandCardsChoiceAiStrategy());
+        register(new BeholdChoiceAiStrategy());
         register(new AttachAurasChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());

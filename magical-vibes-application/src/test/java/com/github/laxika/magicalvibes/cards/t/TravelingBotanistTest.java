@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TravelingBotanist.class, Forest.class, GrizzlyBears.class})
 class TravelingBotanistTest extends BaseCardTest {
 
     @Test
@@ -87,8 +90,10 @@ class TravelingBotanistTest extends BaseCardTest {
     }
 
     private void tapBotanist() {
-        harness.addToBattlefield(player1, new TravelingBotanist());
-        harness.tapPermanent(player1, 0);
+        Permanent botanist = harness.addToBattlefieldAndReturn(player1, new TravelingBotanist());
+        botanist.tap();
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .checkEnchantedPermanentTapTriggers(gd, botanist));
         harness.passBothPriorities();
     }
 }

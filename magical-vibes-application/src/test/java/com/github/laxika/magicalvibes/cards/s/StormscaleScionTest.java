@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StormscaleScion.class, DragonWhelp.class, GrizzlyBears.class})
 class StormscaleScionTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,9 @@ class StormscaleScionTest extends BaseCardTest {
         int nonDragonToughness = gqs.getEffectiveToughness(gd, nonDragon);
         int opposingDragonPower = gqs.getEffectivePower(gd, opposingDragon);
         int opposingDragonToughness = gqs.getEffectiveToughness(gd, opposingDragon);
-        harness.addToBattlefield(player1, new StormscaleScion());
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new StormscaleScion());
+        int scionPower = gqs.getEffectivePower(gd, scion);
+        int scionToughness = gqs.getEffectiveToughness(gd, scion);
 
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(dragonPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(dragonToughness + 1);
@@ -35,6 +39,8 @@ class StormscaleScionTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, nonDragon)).isEqualTo(nonDragonToughness);
         assertThat(gqs.getEffectivePower(gd, opposingDragon)).isEqualTo(opposingDragonPower);
         assertThat(gqs.getEffectiveToughness(gd, opposingDragon)).isEqualTo(opposingDragonToughness);
+        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(scionPower);
+        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(scionToughness);
     }
 
     @Test

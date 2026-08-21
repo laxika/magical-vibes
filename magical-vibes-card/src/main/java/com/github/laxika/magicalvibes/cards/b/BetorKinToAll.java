@@ -20,11 +20,11 @@ public class BetorKinToAll extends Card {
                 new ConditionalEffect(new ControlledCreaturesTotalToughnessAtLeast(10),
                         SequenceEffect.of(
                                 new DrawCardEffect(1),
-                                ConditionalEffect.unless(
+                                new ConditionalEffect(
                                         new ControlledCreaturesTotalToughnessAtLeast(20),
                                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
                                                 new PermanentIsCreaturePredicate())),
-                                ConditionalEffect.unless(
+                                new ConditionalEffect(
                                         new ControlledCreaturesTotalToughnessAtLeast(40),
                                         EachPlayerLosesFractionOfLifeRoundedUpEffect.opponentsOnly(2)))));
     }

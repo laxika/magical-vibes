@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KaitoCunningInfiltrator.class, GrizzlyBears.class, Shock.class})
 class KaitoCunningInfiltratorTest extends BaseCardTest {
 
     @Test
@@ -115,6 +117,7 @@ class KaitoCunningInfiltratorTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
 
         assertThat(countPermanents(player1, "Ninja")).isZero();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Ninja")).isEqualTo(1);

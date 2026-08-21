@@ -956,7 +956,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record SagaChapterPlayerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                   UUID sourcePermanentId, String chapterName)
+                                   UUID sourcePermanentId, String chapterName, Set<TargetFilter> targetFilters)
             implements PermanentChoiceContext {}
 
     /** Saga chapter ability that targets a card in a graveyard (e.g. The Mirari Conjecture chapters I/II). */

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LasydProwler.class, GrizzlyBears.class, Island.class, Mountain.class})
 class LasydProwlerTest extends BaseCardTest {
 
     private void prepareLibrary() {
@@ -38,6 +40,8 @@ class LasydProwlerTest extends BaseCardTest {
         prepareLibrary();
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -58,6 +62,8 @@ class LasydProwlerTest extends BaseCardTest {
         prepareLibrary();
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);

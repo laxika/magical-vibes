@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +17,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HostOfTheHereafter.class, Assassinate.class, GrizzlyBears.class})
 class HostOfTheHereafterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with two +1/+1 counters")
     void entersWithTwoCounters() {
-        Permanent host = addCreatureReady(player1, new HostOfTheHereafter());
+        Permanent host = castHost();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -29,7 +31,7 @@ class HostOfTheHereafterTest extends BaseCardTest {
     @Test
     @DisplayName("Another creature's counters move to a creature you control when it dies")
     void anotherCreatureDeathMovesCountersToControlledCreature() {
-        Permanent host = addCreatureReady(player1, new HostOfTheHereafter());
+        Permanent host = castHost();
         Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
         dyingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         dyingCreature.tap();
@@ -42,14 +44,14 @@ class HostOfTheHereafterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+        assertThat(findPermanent(player2, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isZero();
     }
 
     @Test
     @DisplayName("The death trigger only offers creatures you control")
     void deathTriggerTargetsOnlyControlledCreatures() {
-        addCreatureReady(player1, new HostOfTheHereafter());
+        Permanent host = castHost();
         Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
         dyingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         dyingCreature.tap();
@@ -60,14 +62,14 @@ class HostOfTheHereafterTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validPermanentIds()).doesNotContain(opponentCreature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, host.getId());
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("A creature without counters does not trigger the counter transfer")
     void creatureWithoutCountersDoesNotTrigger() {
-        addCreatureReady(player1, new HostOfTheHereafter());
+        castHost();
         Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
         dyingCreature.tap();
 
@@ -79,7 +81,7 @@ class HostOfTheHereafterTest extends BaseCardTest {
     @Test
     @DisplayName("When Host of the Hereafter dies, its counters move to a creature you control")
     void ownDeathMovesCountersToControlledCreature() {
-        Permanent host = addCreatureReady(player1, new HostOfTheHereafter());
+        Permanent host = castHost();
         host.tap();
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
@@ -101,5 +103,18 @@ class HostOfTheHereafterTest extends BaseCardTest {
 
         gs.playCard(gd, player2, 0, 0, targetId, null);
         harness.passBothPriorities();
+    }
+
+    private Permanent castHost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new HostOfTheHereafter()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Host of the Hereafter");
     }
 }

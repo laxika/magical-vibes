@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VarragothBloodskySire.class, GrizzlyBears.class, Shock.class})
 class VarragothBloodskySireTest extends BaseCardTest {
 
     @Test
@@ -27,6 +29,7 @@ class VarragothBloodskySireTest extends BaseCardTest {
         addBoastMana();
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
@@ -62,6 +65,7 @@ class VarragothBloodskySireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 

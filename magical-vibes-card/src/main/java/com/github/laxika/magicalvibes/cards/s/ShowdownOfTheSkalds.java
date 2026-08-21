@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpel
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -22,11 +23,14 @@ public class ShowdownOfTheSkalds extends Card {
         var targetCreatureYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
+        var targetFilter = TargetFilters.creatureYouControl();
         var counterEffect = PutCounterOnTargetPermanentEffect.withTargetRestriction(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, targetCreatureYouControl);
         addEffect(EffectSlot.SAGA_CHAPTER_II,
-                new RegisterDelayedControllerSpellCastTriggerEffect(null, List.of(counterEffect), false));
+                new RegisterDelayedControllerSpellCastTriggerEffect(
+                        null, List.of(counterEffect), false, targetFilter));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
-                new RegisterDelayedControllerSpellCastTriggerEffect(null, List.of(counterEffect), false));
+                new RegisterDelayedControllerSpellCastTriggerEffect(
+                        null, List.of(counterEffect), false, targetFilter));
     }
 }

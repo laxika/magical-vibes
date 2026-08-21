@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HerdHeirloom.class, Forest.class})
 class HerdHeirloomTest extends BaseCardTest {
 
     @Test
@@ -54,16 +57,21 @@ class HerdHeirloomTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, qualifyingCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(heirloom.isTapped()).isTrue();
 
         declareAttackers(List.of(2));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        qualifyingCreature.resetModifiers();
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
         assertThat(gqs.hasKeyword(gd, qualifyingCreature, Keyword.TRAMPLE)).isFalse();
-        assertThat(heirloom.isTapped()).isTrue();
     }
 
     private static Card creature(String name, int power) {

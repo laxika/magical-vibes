@@ -43,7 +43,7 @@ public class JeskaiRevelation extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target")).addEffect(EffectSlot.SPELL,
-                DealDamageToAnyTargetEffect.forTargetGroup(4, 1));
+                new DealDamageToAnyTargetEffect(4));
 
         Map<EffectSlot, CardEffect> monkTokenEffects = Map.of(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL,

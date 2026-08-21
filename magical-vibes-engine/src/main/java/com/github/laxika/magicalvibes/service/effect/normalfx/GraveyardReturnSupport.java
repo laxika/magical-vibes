@@ -81,6 +81,7 @@ public class GraveyardReturnSupport {
     private final GraveyardService graveyardService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final CreateTokenEffectHandler createTokenEffectHandler;
     private final ConditionEvaluationService conditionEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
@@ -261,6 +262,13 @@ public class GraveyardReturnSupport {
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect, entry);
             trackAndLinkReanimatedPermanent(gameData, entry, effect, controllerId, targetCard, targetOwnerId);
+            if (returnedPermanent != null
+                    && effect.createTokensIfSubtype() != null
+                    && effect.createTokensEffect() != null
+                    && gameQueryService.cardHasSubtype(
+                    targetCard, effect.createTokensIfSubtype(), gameData, targetOwnerId)) {
+                createTokenEffectHandler.resolve(gameData, entry, effect.createTokensEffect());
+            }
         }
 
         if (effect.returnToHandAtEndStep() && returnedPermanent != null) {
@@ -412,6 +420,7 @@ public class GraveyardReturnSupport {
                 && !effect.unearth()
                 && !plusOneCounters
                 && (effect.grantKeywords() == null || effect.grantKeywords().isEmpty())
+                && !effect.grantHasteUntilNextTurn()
                 && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
             return;
@@ -445,6 +454,9 @@ public class GraveyardReturnSupport {
             }
             if (effect.grantKeywords() != null) {
                 p.getPersistentGrantedKeywords().addAll(effect.grantKeywords());
+            }
+            if (effect.grantHasteUntilNextTurn()) {
+                p.getUntilNextTurnKeywords().add(Keyword.HASTE);
             }
             if (effect.grantSubtypes() != null) {
                 effect.grantSubtypes().stream()

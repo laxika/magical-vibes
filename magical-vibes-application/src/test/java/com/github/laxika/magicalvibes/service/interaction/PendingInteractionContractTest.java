@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.PendingThranTomeChoice;
 import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
+import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
+import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
@@ -71,6 +73,8 @@ class PendingInteractionContractTest {
             PendingGuildFeud.class,
             PendingThranTomeChoice.class,
             PendingWhimsOfTheFates.class,
+            PendingValkiCopyChoice.class,
+            PendingValkiHandExileChoice.class,
             PendingInteraction.RevealedFreeCastGroup.class,
             PendingInteraction.RippleFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(

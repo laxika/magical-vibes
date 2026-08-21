@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OverwhelmingSurge.class, GrizzlyBears.class, Millstone.class, Ornithopter.class})
 class OverwhelmingSurgeTest extends BaseCardTest {
 
     @Test

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -42,6 +43,7 @@ public class ExileFreeCastQueueSupport {
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
     private final GraveyardService graveyardService;
+    private final CopySupport copySupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -49,13 +51,15 @@ public class ExileFreeCastQueueSupport {
                                             TriggerCollectionService triggerCollectionService,
                                             ExileCastTargetSupport exileCastTargetSupport,
                                             @Lazy InputCompletionService inputCompletionService,
-                                            GraveyardService graveyardService) {
+                                            GraveyardService graveyardService,
+                                            CopySupport copySupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
         this.graveyardService = graveyardService;
+        this.copySupport = copySupport;
     }
 
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
@@ -138,7 +142,12 @@ public class ExileFreeCastQueueSupport {
             return;
         }
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
-        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        Card cardToCast = asCopy
+                && !card.hasType(CardType.INSTANT)
+                && !card.hasType(CardType.SORCERY)
+                ? copySupport.createTokenCopyCard(card)
+                : card;
+        List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
         String playerName = gameData.playerIdToName.get(playerId);
 
         if (EffectResolution.needsTarget(card)) {
@@ -171,7 +180,7 @@ public class ExileFreeCastQueueSupport {
                 gameData.recordCardPlayedFromExile(playerId);
             }
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType, asCopy));
+                    new PermanentChoiceContext.ExileCastSpellTarget(cardToCast, playerId, spellEffects, spellType, asCopy));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost — choosing target."));
@@ -183,7 +192,7 @@ public class ExileFreeCastQueueSupport {
             gameData.recordCardPlayedFromExile(playerId);
         }
         StackEntry entry = new StackEntry(
-                spellType, card, playerId, card.getName(),
+                spellType, cardToCast, playerId, cardToCast.getName(),
                 spellEffects, 0, (UUID) null, null
         );
         entry.setCopy(asCopy);
@@ -191,10 +200,10 @@ public class ExileFreeCastQueueSupport {
             entry.setSourceZone(Zone.EXILE);
         }
         gameData.stack.add(entry);
-        gameData.recordSpellCast(playerId, card);
+        gameData.recordSpellCast(playerId, cardToCast);
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost."));
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, playerId, false);
         castNextFromQueue(gameData, playerId);
     }
 

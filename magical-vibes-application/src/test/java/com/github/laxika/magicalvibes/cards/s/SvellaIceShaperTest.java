@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SvellaIceShaper.class, CounselOfTheSoratami.class, Forest.class,
+        GrizzlyBears.class, LlanowarElves.class, Mountain.class})
 class SvellaIceShaperTest extends BaseCardTest {
 
     @Test
@@ -65,7 +68,7 @@ class SvellaIceShaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()).size() - handBefore).isEqualTo(2);
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
     @Test

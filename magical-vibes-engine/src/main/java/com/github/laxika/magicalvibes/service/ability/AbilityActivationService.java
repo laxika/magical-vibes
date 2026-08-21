@@ -1036,7 +1036,7 @@ public class AbilityActivationService {
                     graveyardTargetIds != null ? graveyardTargetIds : List.of(), card, xValue);
         } else if (graveyardTargetIds != null) {
             targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects,
-                    graveyardTargetIds);
+                    graveyardTargetIds, card.getId());
         } else {
             if (ability.targetsSpellOnStack(null)) {
                 targetLegalityService.validateSpellTargetOnStack(

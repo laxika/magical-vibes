@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NerivHeartOfTheStorm.class, ZuranSpellcaster.class})
 class NerivHeartOfTheStormTest extends BaseCardTest {
 
     @Test
@@ -28,7 +30,7 @@ class NerivHeartOfTheStormTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, java.util.List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
     @Test

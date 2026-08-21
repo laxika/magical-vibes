@@ -20,10 +20,10 @@ public class HostOfTheHereafter extends Card {
 
         var deathTrigger = target(TargetFilters.creatureYouControl(), 0, 1);
         deathTrigger.addEffect(EffectSlot.ON_DEATH,
-                new MoveDyingSourceCountersToTargetCreatureEffect());
+                new MoveDyingSourceCountersToTargetCreatureEffect(true));
         deathTrigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY),
-                        new MoveDyingSourceCountersToTargetCreatureEffect()));
+                        new MoveDyingSourceCountersToTargetCreatureEffect(true)));
     }
 }

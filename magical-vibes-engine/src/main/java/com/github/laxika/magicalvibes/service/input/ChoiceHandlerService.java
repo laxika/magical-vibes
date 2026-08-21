@@ -681,7 +681,7 @@ public class ChoiceHandlerService {
             // the fixed color list; add one and re-prompt until all picks have been made.
             manaPool.add(manaColor, 1);
             if (ctx.fromSnowSource()) {
-                manaPool.addSnowMana(manaColor, 1);
+                manaPool.addSnowManaTag(manaColor, 1);
             }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, 1);
@@ -754,7 +754,7 @@ public class ChoiceHandlerService {
         } else {
             manaPool.add(manaColor, amount);
             if (ctx.fromSnowSource()) {
-                manaPool.addSnowMana(manaColor, amount);
+                manaPool.addSnowManaTag(manaColor, amount);
             }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);

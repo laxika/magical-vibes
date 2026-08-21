@@ -211,6 +211,12 @@ class CombatDamageServiceTest {
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(
                 eq(gameData), any(UUID.class), any(), anyBoolean()))
                 .thenReturn(1);
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(
+                eq(gameData), any(UUID.class), org.mockito.ArgumentMatchers.nullable(UUID.class), any(UUID.class)))
+                .thenReturn(1);
+        lenient().when(damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
+                        eq(gameData), any(UUID.class), any(Permanent.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(4));
         // Lenient: only consulted for creatures that actually took damage this step.
         lenient().when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))

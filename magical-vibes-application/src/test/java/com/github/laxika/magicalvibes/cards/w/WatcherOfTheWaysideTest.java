@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WatcherOfTheWayside.class, Forest.class, Island.class})
 class WatcherOfTheWaysideTest extends BaseCardTest {
 
     @Test

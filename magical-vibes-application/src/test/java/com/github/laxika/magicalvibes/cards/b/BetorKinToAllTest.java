@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BetorKinToAll.class, AvatarOfMight.class})
 class BetorKinToAllTest extends BaseCardTest {
 
     @Test
@@ -32,6 +34,7 @@ class BetorKinToAllTest extends BaseCardTest {
     @DisplayName("Draws at 10 toughness and untaps creatures at 20 toughness")
     void drawsAndUntapsAtThresholds() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AvatarOfMight());
+        harness.addToBattlefield(player1, new AvatarOfMight());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         ownCreature.tap();
         opponentCreature.tap();

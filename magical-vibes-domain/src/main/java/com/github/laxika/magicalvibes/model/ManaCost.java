@@ -1469,6 +1469,32 @@ public class ManaCost {
                                                     Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                                     boolean powerstoneContext,
                                                     Set<CardSubtype> subtypeSpellOnlyContext) {
+        if (snowCost > 0) {
+            if (pool.getSnowManaTotal() < snowCost) {
+                return false;
+            }
+            ManaPool remaining = copyManaPool(pool);
+            remaining.removeSnowMana(snowCost);
+            return withoutSnowCost().canPayWithAdditionalGenericCost(
+                    remaining, xValue, additionalGenericCost, artifactContext, myrContext,
+                    restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                    subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    powerstoneContext, subtypeSpellOnlyContext);
+        }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applySnowManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost,
+                    artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                    instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                    subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext,
+                    manaValueAtLeastFourContext, subtypeOrPlaneswalkerSpellContext,
+                    subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                    subtypeSpellOnlyContext);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten);
@@ -2597,6 +2623,12 @@ public class ManaCost {
                                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                              boolean powerstoneContext,
                                              Set<CardSubtype> subtypeSpellOnlyContext) {
+        if (snowCost > 0) {
+            pool.removeSnowMana(snowCost);
+        }
+        if (pool.isSnowManaSpendableAsAnyColor()) {
+            applySnowManaAsAnyColor(pool);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }

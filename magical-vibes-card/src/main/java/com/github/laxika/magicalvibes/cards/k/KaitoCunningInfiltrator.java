@@ -56,7 +56,7 @@ public class KaitoCunningInfiltrator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(new CreateEmblemEffect(
-                        List.of(new SpellCastTriggerEffect(null, List.of(new CreateTokenEffect(
+                        List.of(SpellCastTriggerEffect.anyPlayer(null, List.of(new CreateTokenEffect(
                                 "Ninja", 2, 1, CardColor.BLUE,
                                 List.of(CardSubtype.NINJA), Set.of(), Set.of()
                         )))),

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ImmersturmPredator.class, GrizzlyBears.class, LightningBolt.class})
 class ImmersturmPredatorTest extends BaseCardTest {
 
     @Test
@@ -78,10 +80,13 @@ class ImmersturmPredatorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
         assertThat(gqs.hasKeyword(gd, predator, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, predator, Keyword.INDESTRUCTIBLE)).isFalse();

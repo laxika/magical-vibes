@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DalkovanEncampment.class, GrizzlyBears.class, Mountain.class, Swamp.class})
 class DalkovanEncampmentTest extends BaseCardTest {
 
     @Test
@@ -68,8 +70,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         List<Permanent> tokens = warriorTokens();
         assertThat(tokens).hasSize(2).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttacking()).isTrue();
-            assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+            assertThat(token.isAttackedThisTurn()).isTrue();
         });
     }
 

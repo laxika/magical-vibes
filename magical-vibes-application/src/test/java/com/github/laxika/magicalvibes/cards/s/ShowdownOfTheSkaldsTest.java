@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShowdownOfTheSkalds.class, Forest.class, GrizzlyBears.class, Shock.class})
 class ShowdownOfTheSkaldsTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,7 @@ class ShowdownOfTheSkaldsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         castCreatureToTrigger();
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -68,6 +71,7 @@ class ShowdownOfTheSkaldsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         castCreatureToTrigger();
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 

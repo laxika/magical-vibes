@@ -65,6 +65,12 @@ public class CopySupport {
         return createCopyCard(original, false);
     }
 
+    public Card createTokenCopyCard(Card original) {
+        Card copy = createCopyCard(original, false);
+        copy.setToken(true);
+        return copy;
+    }
+
     public Card createCopyCardWithoutEpic(Card original) {
         return createCopyCard(original, true);
     }

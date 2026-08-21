@@ -17,6 +17,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ManaCostTest {
 
     @Nested
+    @DisplayName("Snow mana color permission")
+    class SnowManaColorPermission {
+
+        @Test
+        void snowColorlessManaCanPayAColoredAndGenericCostWhenPermitted() {
+            ManaPool pool = new ManaPool();
+            pool.addSnowMana(ManaColor.COLORLESS, 2);
+            pool.setSnowManaSpendableAsAnyColor(true);
+            ManaCost cost = new ManaCost("{1}{G}");
+
+            assertThat(cost.canPayWithAdditionalGenericCost(pool, 0, 0)).isTrue();
+
+            cost.payWithAdditionalGenericCost(pool, 0, 0);
+
+            assertThat(pool.getTotalAllMana()).isZero();
+        }
+    }
+
+    @Nested
     @DisplayName("X-symbol counting")
     class XSymbolCounting {
 

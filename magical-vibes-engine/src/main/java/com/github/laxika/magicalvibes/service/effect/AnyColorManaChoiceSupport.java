@@ -82,6 +82,21 @@ public final class AnyColorManaChoiceSupport {
                                            Card sourceCard,
                                            UUID sourcePermanentId,
                                            UUID recipientPlayerId) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
+                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId, false);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData,
+                                           UUID playerId,
+                                           AwardAnyColorManaEffect effect,
+                                           int amount,
+                                           boolean fromCreature,
+                                           CardSubtype chosenSubtype,
+                                           Card sourceCard,
+                                           UUID sourcePermanentId,
+                                           UUID recipientPlayerId,
+                                           boolean fromSnowSource) {
         if (amount <= 0) {
             return false;
         }
@@ -99,6 +114,9 @@ public final class AnyColorManaChoiceSupport {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withRecipientPlayerId(recipientPlayerId);
             }
+        }
+        if (fromSnowSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withSnowSource(true);
         }
         List<ManaColor> allowedColors = effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 ? imprintedCardColors(gameData, sourceCard)

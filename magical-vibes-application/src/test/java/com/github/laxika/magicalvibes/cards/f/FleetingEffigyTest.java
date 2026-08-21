@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(FleetingEffigy.class)
 class FleetingEffigyTest extends BaseCardTest {
 
     @Test

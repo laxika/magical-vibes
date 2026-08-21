@@ -95,6 +95,9 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(damagePreventionService.applyStaticPermanentDamageRedirectToSelf(
                         eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
+                        eq(gd), any(), any(Permanent.class), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(4));
         lenient().when(damagePreventionService.applyAllCreatureDamageRedirectToController(
                         eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
@@ -167,6 +170,8 @@ abstract class AbstractDamageHandlerTest {
 
     protected void stubNoDamageMultiplier() {
         when(gameQueryService.applyDamageMultiplier(eq(gd), anyInt(), any(StackEntry.class))).thenAnswer(inv -> inv.getArgument(1));
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(
+                eq(gd), any(UUID.class), nullable(UUID.class), any(UUID.class))).thenReturn(1);
     }
 
     protected void stubCreatureDamageCore(Permanent target, int toughness) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,14 +21,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AdornedCrocodile.class, GrizzlyBears.class, Mountain.class, Shock.class})
 class AdornedCrocodileTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Adorned Crocodile dies, it creates a 2/2 black Zombie Druid")
     void createsZombieDruidWhenItDies() {
-        harness.addToBattlefield(player1, new AdornedCrocodile());
-
-        killWithShock(player2, player1, "Adorned Crocodile");
+        Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new AdornedCrocodile());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, crocodile));
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Zombie Druid");
@@ -81,14 +83,4 @@ class AdornedCrocodileTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
     }
 
-    private void killWithShock(Player caster, Player targetController, String targetName) {
-        harness.forceActivePlayer(caster);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(caster, List.of(new Shock()));
-        harness.addMana(caster, ManaColor.RED, 1);
-        UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
-    }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentUntilCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
@@ -62,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -217,6 +220,7 @@ public final class LayerClassifier {
 
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
         map.put(GrantSubtypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantAllCreatureTypesToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeToOwnNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCardTypesEffect.class, fixed(Layer.L4_TYPE));
@@ -324,6 +328,7 @@ public final class LayerClassifier {
                 (effect, fromOwnStaticSlot) -> ((GrantKeywordEffect) effect).keywords().contains(Keyword.CHANGELING)
                         ? new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES), false, false)
                         : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false)));
+        map.put(GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(LosesAllAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(LosesAllNonManaAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
@@ -381,6 +386,7 @@ public final class LayerClassifier {
         map.put(BoostByOtherCreaturesWithSameNameEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByBushidoEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostBySharedCreatureTypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOtherMulticoloredCreaturesByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));

@@ -10,12 +10,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TyriteSanctum.class, AegarTheFreezingFlame.class,
+        GrizzlyBears.class, KolvoriGodOfKinship.class})
 class TyriteSanctumTest extends BaseCardTest {
 
     @Test
@@ -38,7 +41,7 @@ class TyriteSanctumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.computeStaticBonus(gd, target).grantedSubtypes()).contains(CardSubtype.GOD);
+        assertThat(target.getGrantedSubtypes()).contains(CardSubtype.GOD);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

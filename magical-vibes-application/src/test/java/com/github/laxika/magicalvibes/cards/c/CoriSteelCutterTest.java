@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoriSteelCutter.class, LightningBolt.class})
 class CoriSteelCutterTest extends BaseCardTest {
 
     @Test
@@ -87,6 +89,7 @@ class CoriSteelCutterTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         List<UUID> attachedTokenIds = List.of(firstCutter.getAttachedTo(), secondCutter.getAttachedTo());

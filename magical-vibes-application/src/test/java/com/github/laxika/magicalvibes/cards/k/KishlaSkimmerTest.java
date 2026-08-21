@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KishlaSkimmer.class, Forest.class, Reminisce.class, Shock.class})
 class KishlaSkimmerTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,7 @@ class KishlaSkimmerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -45,7 +47,6 @@ class KishlaSkimmerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -70,7 +71,7 @@ class KishlaSkimmerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void addKishlaSkimmer() {

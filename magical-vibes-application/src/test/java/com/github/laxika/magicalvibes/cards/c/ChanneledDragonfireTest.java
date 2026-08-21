@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChanneledDragonfire.class, GrizzlyBears.class})
 class ChanneledDragonfireTest extends BaseCardTest {
 
     @Test
@@ -59,7 +61,7 @@ class ChanneledDragonfireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castFlashback(player1, 0, player2.getId(), List.of(creature.getId()));
+        harness.castFlashbackWithTapCost(player1, 0, player2.getId(), List.of(creature.getId()));
         assertThat(creature.isTapped()).isTrue();
         harness.passBothPriorities();
 

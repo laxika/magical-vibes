@@ -405,6 +405,7 @@ public class PermanentCounterSupport {
             case MINE -> { target.setCounterCount(CounterType.MINE, target.getCounterCount(CounterType.MINE) + count); yield "mine"; }
             case MUSIC -> { target.setCounterCount(CounterType.MUSIC, target.getCounterCount(CounterType.MUSIC) + count); yield "music"; }
             case MUSTER -> { target.setCounterCount(CounterType.MUSTER, target.getCounterCount(CounterType.MUSTER) + count); yield "muster"; }
+            case NIGHT -> { target.setCounterCount(CounterType.NIGHT, target.getCounterCount(CounterType.NIGHT) + count); yield "night"; }
             case WIND -> { target.setCounterCount(CounterType.WIND, target.getCounterCount(CounterType.WIND) + count); yield "wind"; }
             case WINCH -> { target.setCounterCount(CounterType.WINCH, target.getCounterCount(CounterType.WINCH) + count); yield "winch"; }
             case WAGE -> { target.setCounterCount(CounterType.WAGE, target.getCounterCount(CounterType.WAGE) + count); yield "wage"; }

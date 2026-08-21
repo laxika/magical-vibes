@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeritageReclamation.class, AirElemental.class, FountainOfYouth.class, GloriousAnthem.class, GrizzlyBears.class})
 class HeritageReclamationTest extends BaseCardTest {
 
     private void addMana() {

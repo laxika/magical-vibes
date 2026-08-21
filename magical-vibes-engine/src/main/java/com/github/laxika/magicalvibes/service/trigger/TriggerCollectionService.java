@@ -441,7 +441,8 @@ public class TriggerCollectionService {
                             gameData.id, desc, manaSpent);
                 } else if (effect instanceof SpellCastTriggerEffect trigger
                         && isNonTargetingEmblemSpellCastTrigger(trigger)) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
+                    if (!trigger.triggersOnAnyPlayer()
+                            && !emblem.controllerId().equals(castingPlayerId)) continue;
                     if (trigger.spellFilter() != null
                             && !predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
                         continue;

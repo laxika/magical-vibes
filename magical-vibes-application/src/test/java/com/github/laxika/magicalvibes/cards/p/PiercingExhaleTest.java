@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PiercingExhale.class, AirElemental.class, ChandraNalaar.class, DragonWhelp.class, GrizzlyBears.class})
 class PiercingExhaleTest extends BaseCardTest {
 
     @Test
@@ -38,7 +40,6 @@ class PiercingExhaleTest extends BaseCardTest {
         castWithBehold(List.of(source.getId(), target.getId()), List.of(dragon.getId()), List.of());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
         assertThat(surveil.cards()).containsExactly(topCard, secondCard);
@@ -46,6 +47,7 @@ class PiercingExhaleTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
 
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard, secondCard);
     }
 

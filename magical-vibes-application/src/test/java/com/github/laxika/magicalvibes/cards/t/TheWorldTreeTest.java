@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TheWorldTree.class, Forest.class, GrizzlyBears.class,
+        HeliodGodOfTheSun.class, NyleaGodOfTheHunt.class})
 class TheWorldTreeTest extends BaseCardTest {
 
     @Test
@@ -81,7 +84,6 @@ class TheWorldTreeTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())

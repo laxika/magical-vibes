@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DesperateMeasures.class, DoomBlade.class, GrizzlyBears.class})
 class DesperateMeasuresTest extends BaseCardTest {
 
     @Test
@@ -38,6 +40,7 @@ class DesperateMeasuresTest extends BaseCardTest {
 
     @Test
     void drawsForTargetedCreaturesController() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
 

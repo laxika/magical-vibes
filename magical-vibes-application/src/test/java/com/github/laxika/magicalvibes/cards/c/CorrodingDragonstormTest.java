@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CorrodingDragonstorm.class, Forest.class, GrizzlyBears.class, Island.class, ShivanDragon.class})
 class CorrodingDragonstormTest extends BaseCardTest {
 
     @Test
@@ -32,6 +34,7 @@ class CorrodingDragonstormTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore + 2);

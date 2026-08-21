@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -73,9 +74,9 @@ public class EtbEffectResolver {
                 return null;
             }
             if (ctx.etbMode() >= 0 && ctx.etbMode() < coe.options().size()) {
-                return coe.options().get(ctx.etbMode()).effect();
+                return selectedModeEffect(coe.options().get(ctx.etbMode()));
             }
-            return coe.options().getFirst().effect();
+            return selectedModeEffect(coe.options().getFirst());
         });
 
         // Evoke sacrifice (CR 702.75e) — intervening-if (CR 603.4): resolve to a plain sacrifice
@@ -150,5 +151,11 @@ public class EtbEffectResolver {
     public CardEffect resolve(EtbEffectContext ctx, CardEffect effect) {
         EtbEffectHandler handler = handlers.get(effect.getClass());
         return handler != null ? handler.resolve(ctx, effect) : effect;
+    }
+
+    private static CardEffect selectedModeEffect(ChooseOneEffect.ChooseOneOption option) {
+        return option.effects().size() == 1
+                ? option.effects().getFirst()
+                : SequenceEffect.of(option.effects().toArray(CardEffect[]::new));
     }
 }

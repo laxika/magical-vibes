@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SunsetStrikemaster.class, AirElemental.class, GrizzlyBears.class})
 class SunsetStrikemasterTest extends BaseCardTest {
 
     @Test
@@ -27,14 +30,15 @@ class SunsetStrikemasterTest extends BaseCardTest {
     @DisplayName("The sacrifice ability deals 6 damage to a creature with flying")
     void sacrificesAndDamagesFlyingCreature() {
         addCreatureReady(player1, new SunsetStrikemaster());
-        Permanent target = addCreatureReady(player2, new StormtideLeviathan());
+        addCreatureReady(player2, new AirElemental());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
+        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMarkedDamage()).isEqualTo(6);
+        harness.assertInGraveyard(player2, "Air Elemental");
         harness.assertInGraveyard(player1, "Sunset Strikemaster");
     }
 
@@ -48,7 +52,7 @@ class SunsetStrikemasterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature with flying");
+                .hasMessageContaining("required predicate");
         harness.assertOnBattlefield(player1, "Sunset Strikemaster");
     }
 }

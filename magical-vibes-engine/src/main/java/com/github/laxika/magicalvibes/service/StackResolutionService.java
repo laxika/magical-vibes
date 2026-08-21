@@ -1028,6 +1028,11 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
+        } else if (entry.isCastWithOmen()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.playerDecks.get(ownerId).add(physicalCard);
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
@@ -1152,7 +1157,9 @@ public class StackResolutionService {
             default -> String.valueOf(loreCount);
         };
 
-        boolean needsPlayerTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean needsPlayerTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                || card.getSagaChapterTargetFilters(chapterSlot).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter.class::isInstance);
         boolean hasSagaTargetGroups = !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
         boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 || hasSagaTargetGroups;
@@ -1181,7 +1188,8 @@ public class StackResolutionService {
         } else if (needsPlayerTarget) {
             gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterPlayerTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
+                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
+                            card.getSagaChapterTargetFilters(chapterSlot)));
             gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers (awaiting player target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);

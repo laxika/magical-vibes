@@ -539,8 +539,15 @@ public class ConditionEvaluationService {
                     c.sourceZone() == ctx.sourceZone();
             case CastNotFromHand ignored ->
                     ctx.sourceZone() != Zone.HAND;
-            case WasCast ignored ->
-                    ctx.sourcePermanent() != null ? ctx.sourcePermanent().isCast() : ctx.sourceZone() != null;
+            case WasCast ignored -> {
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                yield triggeringPermanent != null
+                        ? triggeringPermanent.isCast()
+                        : ctx.sourcePermanent() != null
+                        ? ctx.sourcePermanent().isCast()
+                        : ctx.sourceZone() != null;
+            }
             case DidntAttack ignored ->
                     sourceDidntAttackThisTurn(gameData, ctx);
             case EnchantedCreatureDidntAttack ignored ->

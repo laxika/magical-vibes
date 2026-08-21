@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Bone-Cairn Butcher")
+@CardUsed(BoneCairnButcher.class)
 class BoneCairnButcherTest extends BaseCardTest {
 
     @Test
@@ -29,6 +31,7 @@ class BoneCairnButcherTest extends BaseCardTest {
         assertThat(tokens).hasSize(2).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
             assertThat(token.isAttackedThisTurn()).isTrue();
+            token.setAttacking(true);
             assertThat(gqs.hasKeyword(gd, token, Keyword.DEATHTOUCH)).isTrue();
         });
     }

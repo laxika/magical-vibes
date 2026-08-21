@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoriMountainMonastery.class, Island.class, Plains.class, Shock.class})
 class CoriMountainMonasteryTest extends BaseCardTest {
 
     @Test
@@ -76,7 +78,7 @@ class CoriMountainMonasteryTest extends BaseCardTest {
         harness.castFromExile(player1, top.getId(), player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     private void playLand(Card land) {

@@ -2101,19 +2101,20 @@ public class TargetLegalityService {
         if (entry.getTargetFilter() != null) {
             return entry.getTargetFilter();
         }
-        if (entry.getCard() == null) {
+        Card targetingCard = entry.getTargetingCard();
+        if (targetingCard == null) {
             return null;
         }
         if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             for (CardEffect effect : entry.getEffectsToResolve()) {
-                int groupIndex = entry.getCard().getEffectTargetIndex(effect);
-                if (groupIndex >= 0 && groupIndex < entry.getCard().getSpellTargets().size()) {
-                    return entry.getCard().getSpellTargets().get(groupIndex).getFilter();
+                int groupIndex = targetingCard.getEffectTargetIndex(effect);
+                if (groupIndex >= 0 && groupIndex < targetingCard.getSpellTargets().size()) {
+                    return targetingCard.getSpellTargets().get(groupIndex).getFilter();
                 }
             }
             return null;
         }
-        return entry.getCard().getTargetFilter();
+        return targetingCard.getTargetFilter();
     }
 
     private List<TargetFilter> targetFiltersForDeclaredPositions(StackEntry entry, int targetCount) {
@@ -2136,7 +2137,7 @@ public class TargetLegalityService {
             return filters;
         }
 
-        Card card = entry.getCard();
+        Card card = entry.getTargetingCard();
         if (card != null) {
             int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;
             int remaining = targetCount;

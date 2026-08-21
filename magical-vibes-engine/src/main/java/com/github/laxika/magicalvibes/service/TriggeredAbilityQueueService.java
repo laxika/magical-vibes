@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -1089,6 +1090,14 @@ public class TriggeredAbilityQueueService {
             if (selfOnly && !playerId.equals(pending.controllerId())) {
                 continue;
             }
+            boolean matchesFilters = pending.targetFilters().stream()
+                    .filter(PlayerPredicateTargetFilter.class::isInstance)
+                    .map(PlayerPredicateTargetFilter.class::cast)
+                    .allMatch(filter -> targetLegalityService.matchesPlayerPredicate(
+                            gameData, pending.controllerId(), playerId, filter.predicate()));
+            if (!matchesFilters) {
+                continue;
+            }
             validTargets.add(playerId);
         }
         return validTargets;
@@ -1155,9 +1164,11 @@ public class TriggeredAbilityQueueService {
             CardPredicate filter = null;
             int maxTargets = 1;
             int minTargets = 1;
+            GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             for (CardEffect effect : pending.effects()) {
                 if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
+                    scope = returnEffect.source();
                     break;
                 } else if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
                     filter = returnEffect.filter();
@@ -1167,13 +1178,22 @@ public class TriggeredAbilityQueueService {
                 }
             }
 
-            // Collect valid graveyard targets from the controller's graveyard
             List<Card> matchingCards = new ArrayList<>();
-            List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
-            if (graveyard != null) {
-                for (Card graveyardCard : graveyard) {
-                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
-                        matchingCards.add(graveyardCard);
+            for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
+                if (scope == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                        && !graveyardOwnerId.equals(pending.controllerId())) {
+                    continue;
+                }
+                if (scope == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                        && graveyardOwnerId.equals(pending.controllerId())) {
+                    continue;
+                }
+                List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+                if (graveyard != null) {
+                    for (Card graveyardCard : graveyard) {
+                        if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
+                            matchingCards.add(graveyardCard);
+                        }
                     }
                 }
             }

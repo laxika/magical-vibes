@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KollTheForgemaster.class, Bonesplitter.class, GoblinAssailant.class,
+        GrizzlyBears.class, Pacifism.class})
 class KollTheForgemasterTest extends BaseCardTest {
 
     @Test
@@ -27,7 +30,7 @@ class KollTheForgemasterTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, enchantedToken)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantedToken)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, equippedToken)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, equippedToken)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, equippedToken)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, plainToken)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, plainToken)).isEqualTo(2);

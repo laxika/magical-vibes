@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+@CardUsed({DeltaBloodflies.class, GrizzlyBears.class})
 class DeltaBloodfliesTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class DeltaBloodfliesTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -35,6 +37,6 @@ class DeltaBloodfliesTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        harness.assertLife(player2, 20);
+        harness.assertLife(player2, 19);
     }
 }

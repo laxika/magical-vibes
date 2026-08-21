@@ -3416,6 +3416,7 @@ public class GameData {
         this.pendingNextInstantSorceryCopyThisTurnMaxManaValues.forEach((playerId, maxManaValues) ->
                 copy.pendingNextInstantSorceryCopyThisTurnMaxManaValues.put(
                         playerId, new ArrayList<>(maxManaValues)));
+        copy.pendingNextSpellCopyThisTurnCount.putAll(this.pendingNextSpellCopyThisTurnCount);
         this.notedMana.forEach((cardId, mana) -> copy.notedMana.put(cardId, new EnumMap<>(mana)));
         this.abilityActivationManaSpent.forEach((cardId, mana) ->
                 copy.abilityActivationManaSpent.put(cardId, new EnumMap<>(mana)));

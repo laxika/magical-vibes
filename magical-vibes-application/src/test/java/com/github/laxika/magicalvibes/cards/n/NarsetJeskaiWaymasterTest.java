@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NarsetJeskaiWaymaster.class, Forest.class, GrizzlyBears.class, Shock.class})
 class NarsetJeskaiWaymasterTest extends BaseCardTest {
 
     @Test
@@ -36,6 +38,7 @@ class NarsetJeskaiWaymasterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -56,6 +59,7 @@ class NarsetJeskaiWaymasterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 

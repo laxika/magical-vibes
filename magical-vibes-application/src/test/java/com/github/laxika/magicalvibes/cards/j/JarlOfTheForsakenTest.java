@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JarlOfTheForsaken.class, GarrukWildspeaker.class, GrizzlyBears.class})
 class JarlOfTheForsakenTest extends BaseCardTest {
 
     @Test
@@ -76,9 +78,11 @@ class JarlOfTheForsakenTest extends BaseCardTest {
         assertThat(entry.faceDown()).isTrue();
 
         gd.turnNumber++;
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castFromExile(player1, jarl.getId());
+        harness.castFromExile(player1, jarl.getId(), target.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Jarl of the Forsaken");

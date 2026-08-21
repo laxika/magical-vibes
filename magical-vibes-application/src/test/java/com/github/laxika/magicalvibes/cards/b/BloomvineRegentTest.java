@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloomvineRegent.class, DragonEgg.class, Forest.class, GrizzlyBears.class, Plains.class})
 class BloomvineRegentTest extends BaseCardTest {
 
     @Test
@@ -44,7 +46,11 @@ class BloomvineRegentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BloomvineRegent());
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.addToBattlefield(player1, new DragonEgg());
+        harness.setHand(player1, List.of(new DragonEgg()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);

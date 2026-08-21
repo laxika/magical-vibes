@@ -64,6 +64,7 @@ class CardImmutabilityArchTest {
             "LivingWeaponEffectHandler",
             "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
+            "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -265,6 +266,10 @@ public class EtbTriggerService {
             }
 
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
+            List<ChooseOneAtTriggerTimeEffect> triggerTimeChoices = triggeredEffects.stream()
+                    .filter(ChooseOneAtTriggerTimeEffect.class::isInstance)
+                    .map(ChooseOneAtTriggerTimeEffect.class::cast)
+                    .toList();
             // Evoke sacrifice gate (CR 603.4): read the just-entered permanent's evoked flag, which
             // was stamped from the spell's cast context at resolution time.
             List<Permanent> evokeBf = gameData.playerBattlefields.get(controllerId);
@@ -278,10 +283,19 @@ public class EtbTriggerService {
                     kicked, evoked, prowl, enteringPermanent, repeatedAdditionalCosts);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
+                    .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))
                     .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
                             ? e : etbEffectResolver.resolve(etbCtx, e))
                     .filter(Objects::nonNull)
                     .toList();
+
+            UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
+            for (ChooseOneAtTriggerTimeEffect triggerTimeChoice : triggerTimeChoices) {
+                for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                            card, controllerId, triggerTimeChoice.choice(), triggerSourcePermanentId));
+                }
+            }
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;

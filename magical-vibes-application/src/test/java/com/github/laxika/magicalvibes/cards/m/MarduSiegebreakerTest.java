@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MarduSiegebreaker.class, GrizzlyBears.class})
 class MarduSiegebreakerTest extends BaseCardTest {
 
     @Test
@@ -65,12 +67,11 @@ class MarduSiegebreakerTest extends BaseCardTest {
         Permanent token = tokens.get(0);
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(token.isAttackedThisTurn()).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

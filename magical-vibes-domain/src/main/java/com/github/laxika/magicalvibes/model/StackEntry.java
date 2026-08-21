@@ -827,7 +827,7 @@ public class StackEntry {
      * but targeting and SPELL effects come from {@link Card#graveyardCastHalf()} — without this,
      * a multi-target back half (e.g. Fight) would slice against the front half's groups.
      */
-    private Card targetingCard() {
+    public Card getTargetingCard() {
         if (card == null) {
             return null;
         }
@@ -866,7 +866,7 @@ public class StackEntry {
             // declared group targets the separately stored primary target.
             return targetId != null ? List.of(targetId) : List.of();
         }
-        Card targeting = targetingCard();
+        Card targeting = getTargetingCard();
         List<SpellTarget> groups = targeting == null ? List.of() : targeting.getSpellTargets();
         if (groups.isEmpty()) {
             return group >= 0 && group < targetIds.size() && !illegalTargetIndices.contains(group)
@@ -928,7 +928,7 @@ public class StackEntry {
      * spells and abilities (where every declared group is always populated).
      */
     public boolean isTargetGroupActive(int groupIndex) {
-        Card targeting = targetingCard();
+        Card targeting = getTargetingCard();
         // The group-active concept only applies to entries that carry their surviving effects in
         // effectsToResolve (triggered abilities whose intervening-if may have gated some out). Spell
         // entries resolve from card.getEffects(...) and leave effectsToResolve empty — there every
@@ -962,7 +962,7 @@ public class StackEntry {
      * resolves against that lone target.</p>
      */
     public List<UUID> targetsForEffect(CardEffect effect) {
-        Card targeting = targetingCard();
+        Card targeting = getTargetingCard();
         int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
         if (group < 0) {
             return getTargetIds();
@@ -987,7 +987,7 @@ public class StackEntry {
      * — the distinction a multi-target card needs when each target drives its own effect.</p>
      */
     public List<UUID> targetsForBoundEffectGroup(CardEffect effect) {
-        Card targeting = targetingCard();
+        Card targeting = getTargetingCard();
         int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
         return group < 0 ? null : targetsForGroup(group);
     }

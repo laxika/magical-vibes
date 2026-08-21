@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RediscoverTheWay.class, GrizzlyBears.class, LlanowarElves.class, Plains.class, Shock.class})
 class RediscoverTheWayTest extends BaseCardTest {
 
     @Test
@@ -32,6 +34,7 @@ class RediscoverTheWayTest extends BaseCardTest {
         addSagaMana();
 
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
 
@@ -55,6 +58,7 @@ class RediscoverTheWayTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
