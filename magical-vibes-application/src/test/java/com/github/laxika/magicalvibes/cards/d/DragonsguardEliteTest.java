@@ -42,6 +42,10 @@ class DragonsguardEliteTest extends BaseCardTest {
 
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        for (int i = 0; i < 6 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
 
         assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }

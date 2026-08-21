@@ -52,6 +52,7 @@ class CardImmutabilityArchTest {
             "BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler", // name/legendary/hexproof/"this ability" on the fresh clone-copy card (Lazav, Dimir Mastermind)
             "BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler", // name/legendary/activated ability on the fresh clone-copy card
             "BecomeCopyOfTargetLandEffectHandler", // re-grants "except it has this ability" on the fresh clone-copy card (Thespian's Stage)
+            "EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffectHandler", // removes legendary from fresh clone-copy cards
             "BecomeCreatureEffectHandler", // replaces an enchantment with the freshly created runtime creature copy
             "BecomeCreatureTypeWithBasePowerToughnessEffectHandler", // replaces subtypes on a fresh runtime copy
             "BecomeAuraReanimateFromGraveyardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Necrotic Plague)
@@ -63,6 +64,7 @@ class CardImmutabilityArchTest {
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",
             "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
+            "ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler", // decorates freshly assembled Spirit token-copy cards
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
             "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects

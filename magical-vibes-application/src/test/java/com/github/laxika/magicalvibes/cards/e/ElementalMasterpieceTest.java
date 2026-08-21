@@ -18,7 +18,9 @@ class ElementalMasterpieceTest extends BaseCardTest {
     @DisplayName("Creates two 4/4 blue and red Elemental tokens")
     void createsElementalTokens() {
         harness.setHand(player1, List.of(new ElementalMasterpiece()));
-        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();

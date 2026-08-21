@@ -72,6 +72,8 @@ class DeadlyBrewTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(new Forest()));
         harness.setGraveyard(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         castDeadlyBrew();
 
         GameData gameData = harness.getGameData();

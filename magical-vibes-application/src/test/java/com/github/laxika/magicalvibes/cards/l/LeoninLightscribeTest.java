@@ -27,13 +27,14 @@ class LeoninLightscribeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        assertThat(lightscribe.getEffectivePower()).isEqualTo(3);
-        assertThat(lightscribe.getEffectiveToughness()).isEqualTo(3);
-        assertThat(creature.getEffectivePower()).isEqualTo(6);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lightscribe)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lightscribe)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -49,11 +50,15 @@ class LeoninLightscribeTest extends BaseCardTest {
 
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        for (int i = 0; i < 6 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
 
-        assertThat(lightscribe.getEffectivePower()).isEqualTo(4);
-        assertThat(lightscribe.getEffectiveToughness()).isEqualTo(4);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, lightscribe)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lightscribe)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test

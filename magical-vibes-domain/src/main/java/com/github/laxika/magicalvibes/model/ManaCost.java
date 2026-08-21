@@ -2598,9 +2598,6 @@ public class ManaCost {
                                              Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
                                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                              boolean powerstoneContext) {
-        if (snowCost > 0) {
-            pool.removeSnowMana(snowCost);
-        }
         payWithAdditionalGenericCost(pool, xValue, additionalGenericCost, artifactContext, myrContext,
                 restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
                 subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,

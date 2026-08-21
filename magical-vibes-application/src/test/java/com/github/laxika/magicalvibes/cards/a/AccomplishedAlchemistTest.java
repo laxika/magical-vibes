@@ -47,8 +47,8 @@ class AccomplishedAlchemistTest extends BaseCardTest {
         gd.lifeGainedThisTurn.put(player2.getId(), 4);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, ManaColor.BLUE.name());
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 

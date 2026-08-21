@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * A single "resolve an effect when this permanent dies this turn" registration. Stored in
- * {@link GameData#permanentTriggeringEffectOnDeathThisTurn} keyed by the dying permanent's card ID.
+ * {@link GameData#creatureTriggeringEffectOnDeathThisTurn} keyed by the dying permanent's card ID.
  *
  * @param effect            the effect to resolve when the permanent dies
  * @param controllerId      the player who will control the pushed triggered ability

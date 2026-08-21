@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileDragonApproachAndSearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +78,7 @@ public class GraveyardChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileMatchingCardsFromGraveyardAndLibrarySupport
             exileMatchingCardsSupport;
     private final DestructionSupport destructionSupport;
+    private final ExileDragonApproachAndSearchSupport exileDragonApproachAndSearchSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -500,6 +502,29 @@ public class GraveyardChoiceHandlerService {
             if (!validIds.contains(cardId)) {
                 throw new IllegalStateException("Invalid card: " + cardId);
             }
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume = false;
+            gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsChosenCardId =
+                    cardIds.isEmpty() ? null : cardIds.getFirst();
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeDragonApproachResume) {
+            StackEntry entry = gameData.pendingEffectResolutionEntry;
+            if (entry == null) {
+                throw new IllegalStateException("Missing paused Dragon's Approach resolution");
+            }
+            gameData.interaction.clearAwaitingInput();
+            exileDragonApproachAndSearchSupport.complete(gameData, entry, cardIds);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
         }
 
         var exileFromEachContext = gameData.graveyardTargetOperation

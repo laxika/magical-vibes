@@ -31,9 +31,10 @@ public class Humiliate extends Card {
                 "Target must be an opponent"
         ))
                 .addEffect(EffectSlot.SPELL,
-                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD))
+                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
+        target(new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
+                creatureYouControl, "Target must be a creature you control"))
                 .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                creatureYouControl));
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

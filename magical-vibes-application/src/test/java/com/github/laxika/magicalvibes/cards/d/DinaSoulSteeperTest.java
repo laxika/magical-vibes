@@ -43,8 +43,8 @@ class DinaSoulSteeperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(dina.getEffectivePower()).isEqualTo(3);
-        assertThat(dina.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, dina)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dina)).isEqualTo(3);
     }
 
     @Test
@@ -56,13 +56,13 @@ class DinaSoulSteeperTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(dina.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, dina)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dina.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dina)).isEqualTo(1);
     }
 
     private Permanent addDinaReady(Player player) {

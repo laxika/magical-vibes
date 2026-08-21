@@ -658,7 +658,10 @@ public class SpellCastingService {
                             }
                         }
                     } else if (chosen.targetFilter() != null) {
-                        card.setCastTimeTargetFilter(chosen.targetFilter());
+                        SpellTarget spellTarget = declareModeTarget(card, chosen);
+                        for (CardEffect modeEffect : chosen.effects()) {
+                            card.registerEffectTargetIndex(modeEffect, spellTarget.getIndex());
+                        }
                     }
                 } else {
                     for (ChooseOneEffect.ChooseOneOption chosen : chosenModes) {
@@ -1466,7 +1469,13 @@ public class SpellCastingService {
             return;
         }
 
-        Card handCardForTiming = gameData.playerHands.get(playerId).get(cardIndex);
+        Card physicalHandCard = gameData.playerHands.get(playerId).get(cardIndex);
+        boolean selectingModalBackFace = physicalHandCard.isModalDoubleFaced()
+                && physicalHandCard.getBackFaceCard() != null
+                && effectiveXValue == 1;
+        Card handCardForTiming = selectingModalBackFace
+                ? physicalHandCard.getBackFaceCard()
+                : physicalHandCard;
         if (handCardForTiming.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from hand");
         }
@@ -1489,7 +1498,11 @@ public class SpellCastingService {
             // Re-check with convoke if card has convoke keyword
             List<Card> handCheck = gameData.playerHands.get(playerId);
             Card cardCheck = handCheck.get(cardIndex);
-            if (usingAlternateCost && (cardCheck.getCastingOption(AlternateHandCast.class).isPresent()
+            Card selectedFaceCheck = selectingModalBackFace ? cardCheck.getBackFaceCard() : cardCheck;
+            if (selectingModalBackFace && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
+                    gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0)) {
+                // The generic hand query admits either face; casting validates the selected face.
+            } else if (usingAlternateCost && (cardCheck.getCastingOption(AlternateHandCast.class).isPresent()
                     || cardCheck.getCastingOption(BestowCast.class).isPresent()
                     || usingSharedColorDiscardAlternativeCost)) {
                 // Allow — alternate cost bypasses mana check; validated below
@@ -1596,7 +1609,7 @@ public class SpellCastingService {
                 .forEach(modal -> validateOptionalCostModalSelection(
                         modal, additionalCosts, costSelection, modeEncoding));
         effectiveXValue = unwrapChooseOneEffect(card, filteredSpellEffects, effectiveXValue);
-        boolean castModalBackFace = card.isModalDoubleFaced() && modeEncoding == 1;
+        boolean castModalBackFace = selectingModalBackFace && modeEncoding == 1;
         // A mode that brought its own total cost (a split card's half, or its fuse mode) was never
         // the cost the playability pre-check cleared — that check only needs *some* mode to be
         // affordable — so the mode actually chosen has to be paid for here.
@@ -2281,6 +2294,7 @@ public class SpellCastingService {
         AdditionalSpellCostService.CostSelection paymentCostSelection = usingSharedColorDiscardAlternativeCost
                 ? adjustCostSelectionAfterSharedColorDiscard(costSelection, sharedColorDiscardHandCardIndex)
                 : costSelection;
+        Card castCharacteristics = castModalBackFace ? card.getBackFaceCard() : card;
 
         if (card.hasType(CardType.LAND)) {
             // Lands bypass the stack — go directly onto battlefield
@@ -2305,18 +2319,18 @@ public class SpellCastingService {
                     turnProgressionService.resolveAutoPass(gameData);
                 }
             }
-        } else if (card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT)
-                || gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, playerId)
-                || card.hasType(CardType.PLANESWALKER)
-                || card.hasType(CardType.BATTLE)) {
+        } else if (castCharacteristics.hasType(CardType.CREATURE)
+                || castCharacteristics.hasType(CardType.ENCHANTMENT)
+                || gameQueryService.cardHasType(castCharacteristics, CardType.ARTIFACT, gameData, playerId)
+                || castCharacteristics.hasType(CardType.PLANESWALKER)
+                || castCharacteristics.hasType(CardType.BATTLE)) {
             // Permanent spells: pay mana (or alternate cost), put on stack, finish.
             // {X} costs (hydras, Meathook Massacre, Chimeric Mass, Nissa, …): pay and snapshot X
             // onto the stack entry. Non-X permanents ignore manaCostX in the pay path; modal casts
             // reuse the same wire field as mode index (snapshotted for ETB ChooseOne unwrap).
             int manaCostX = effectiveXValue;
             int stackX = effectiveXValue;
-            UUID stackTarget = (card.hasType(CardType.PLANESWALKER)) ? null : targetId;
-            Card castCharacteristics = castModalBackFace ? card.getBackFaceCard() : card;
+            UUID stackTarget = castCharacteristics.hasType(CardType.PLANESWALKER) ? null : targetId;
             Card stackCard = castModalBackFace ? castCharacteristics : card;
             StackEntryType permanentEntryType = cardTypeToStackEntryType(castCharacteristics.getType());
 
@@ -2405,7 +2419,7 @@ public class SpellCastingService {
                 }
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
             } else {
-                phyrexianManaPaidWithLife = paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked,
+                phyrexianManaPaidWithLife = paySpellManaCost(gameData, playerId, castCharacteristics, manaCostX, convokeContributions, phyrexianLifeCount, kicked,
                         sacrificeCostReduction + delveReduction, targetingTax,
                         hasXCost ? 0 : perTargetCost, perTargetManaCost, escalateManaSuffix);
             }
@@ -2537,9 +2551,10 @@ public class SpellCastingService {
             entry.setConvokeCreatureIds(convokeCreatureIds);
             gameData.stack.add(entry);
             finishSpellCast(gameData, playerId, player, hand, card);
-        } else if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
+        } else if (castCharacteristics.hasType(CardType.SORCERY)
+                || castCharacteristics.hasType(CardType.INSTANT)) {
             // Sorcery/Instant spells: pay mana + sacrifice costs, handle targeting, put on stack
-            StackEntryType entryType = cardTypeToStackEntryType(card.getType());
+            StackEntryType entryType = cardTypeToStackEntryType(castCharacteristics.getType());
             int resolvedXValue = effectiveXValue;
             List<UUID> costReductionTargetIds = !targetIds.isEmpty() ? targetIds
                     : (targetId != null ? List.of(targetId) : List.of());
@@ -2644,7 +2659,7 @@ public class SpellCastingService {
                 }
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
             } else {
-                paySpellManaCost(gameData, playerId, card,
+                paySpellManaCost(gameData, playerId, castCharacteristics,
                         resolvedXValue + (hasXCost ? perTargetCost : 0), convokeContributions,
                         phyrexianLifeCount, kicked, targetSubtypeCostReduction + delveReduction, targetingTax,
                         hasXCost ? 0 : perTargetCost, perTargetManaCost, escalateManaSuffix);
@@ -2731,6 +2746,11 @@ public class SpellCastingService {
                     .findFirst().orElse(null);
 
             if (graveyardToHandEffect != null && shuffleGraveyardCardsEffect != null) {
+                gameData.graveyardTargetOperation.card = card;
+                gameData.graveyardTargetOperation.controllerId = playerId;
+                gameData.graveyardTargetOperation.effects = new ArrayList<>(filteredSpellEffects);
+                gameData.graveyardTargetOperation.entryType = entryType;
+                gameData.graveyardTargetOperation.xValue = resolvedXValue;
                 gameData.graveyardTargetOperation.targetPlayerId = targetId;
                 gameData.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects =
                         new ArrayList<>(List.of(graveyardToHandEffect, shuffleGraveyardCardsEffect));
@@ -3289,11 +3309,13 @@ public class SpellCastingService {
                         }
                     }
                 }
-                gameData.stack.add(new StackEntry(
+                StackEntry kickedEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId,
                         null, Map.of(), null, List.of(), targetIds
-                ));
+                );
+                kickedEntry.setPrimaryTargetStoredSeparately(false);
+                gameData.stack.add(kickedEntry);
             } else if (!targetIds.isEmpty()
                     && card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_COLOR
                     && needsGraveyardEffectTargeting && targetId == null) {

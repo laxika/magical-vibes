@@ -791,6 +791,7 @@ public class PermanentRemovalService {
         boolean permanentGraveyardReplacement = checkExileInsteadOfDie
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
         if (!target.isExileIfLeavesBattlefield()
+                && !target.isExileIfLeavesBattlefieldUntilEndOfTurn()
                 && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
                 && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
                 && !permanentGraveyardReplacement) {
@@ -1059,7 +1060,8 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                 triggerCollectionService.triggerDelayedEffectOnDeath(
-                        gameData, target.getCard().getId(), controllerId, target.getEffectivePower());
+                        gameData, target.getCard().getId(), controllerId, target.getEffectivePower(),
+                        target.getCard().getManaValue());
                 collectUndyingTrigger(gameData, target, ownerId, hadUndying);
                 collectPersistTrigger(gameData, target, ownerId, hadPersist);
             }

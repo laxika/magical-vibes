@@ -65,6 +65,7 @@ class RowanScholarOfSparksTest extends BaseCardTest {
         will.setCard(card.getBackFaceCard());
         will.setTransformed(true);
         will.setCounterCount(CounterType.LOYALTY, 7);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
@@ -75,6 +76,7 @@ class RowanScholarOfSparksTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         will.setCounterCount(CounterType.LOYALTY, 7);
+        will.setLoyaltyActivationsThisTurn(0);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(target.getId()));
         harness.passBothPriorities();

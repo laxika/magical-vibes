@@ -70,6 +70,7 @@ class EyetwitchTest extends BaseCardTest {
     void deathLearnSearchesWithEmptyHand() {
         Permanent eyetwitch = harness.addToBattlefieldAndReturn(player1, new Eyetwitch());
         Card lesson = new EnvironmentalSciences();
+        harness.setHand(player1, List.of());
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
 
         castShockAt(eyetwitch);

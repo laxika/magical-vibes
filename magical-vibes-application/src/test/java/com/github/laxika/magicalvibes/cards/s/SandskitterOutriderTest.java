@@ -21,6 +21,7 @@ class SandskitterOutriderTest extends BaseCardTest {
         castOutrider();
 
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "Put 2 +1/+1 counters on this permanent");
 
         Permanent outrider = findPermanent(player1, "Sandskitter Outrider");
@@ -33,6 +34,7 @@ class SandskitterOutriderTest extends BaseCardTest {
     void enduresWithSpiritToken() {
         castOutrider();
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Create a 2/2 white Spirit creature token");
 

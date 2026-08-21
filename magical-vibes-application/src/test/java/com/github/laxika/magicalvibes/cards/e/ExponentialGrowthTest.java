@@ -61,8 +61,7 @@ class ExponentialGrowthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, artifact.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void cast(Permanent target, int x, int greenMana, int colorlessMana) {

@@ -24,7 +24,7 @@ public class DinaSoulSteeper extends Card {
                 false,
                 "{1}",
                 List.of(
-                        new SacrificeCreatureCost(false, false, false, true),
+                        new SacrificeCreatureCost(false, true, false, true),
                         new BoostSelfEffect(new XValue(), new Fixed(0))
                 ),
                 "{1}, Sacrifice another creature: Dina, Soul Steeper gets +X/+0 until end of turn, "

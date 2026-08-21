@@ -25,6 +25,7 @@ class DreamStrixTest extends BaseCardTest {
         Permanent strix = harness.addToBattlefieldAndReturn(player1, new DreamStrix());
         Card lesson = new EnvironmentalSciences();
         Card nonLesson = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson, nonLesson)));
 
         castShockAt(strix);

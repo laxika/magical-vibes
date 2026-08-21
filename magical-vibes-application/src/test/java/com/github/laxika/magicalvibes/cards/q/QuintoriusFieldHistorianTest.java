@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.Test;
 
@@ -75,6 +76,9 @@ class QuintoriusFieldHistorianTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(shock));
         harness.setHand(player2, List.of(new Recollect()));
         harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castSorcery(player2, 0, shock.getId());
         harness.passBothPriorities();

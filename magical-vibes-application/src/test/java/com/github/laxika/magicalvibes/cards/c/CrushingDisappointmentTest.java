@@ -18,6 +18,7 @@ class CrushingDisappointmentTest extends BaseCardTest {
     void eachPlayerLosesLifeAndCasterDraws() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new CrushingDisappointment()));
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);

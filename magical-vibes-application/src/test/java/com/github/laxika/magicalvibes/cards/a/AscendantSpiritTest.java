@@ -26,7 +26,6 @@ class AscendantSpiritTest extends BaseCardTest {
 
     private void addSnowMana(int amount) {
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        pool.add(ManaColor.BLUE, amount);
         pool.addSnowMana(ManaColor.BLUE, amount);
     }
 

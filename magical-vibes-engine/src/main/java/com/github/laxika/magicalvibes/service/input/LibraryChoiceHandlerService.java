@@ -1896,7 +1896,8 @@ public class LibraryChoiceHandlerService {
                     libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
                     libraryRevealChoice.remainingToExile(), libraryRevealChoice.randomRemainingToBottom(),
                     libraryRevealChoice.gainLifeEqualToSelectedCardManaValue(),
-                    gameData.pendingEffectResolutionEntry, libraryRevealChoice.effectIfNoCardChosen());
+                    gameData.pendingEffectResolutionEntry, libraryRevealChoice.effectIfNoCardChosen(),
+                    libraryRevealChoice.lifeCostPerSelection());
             return;
         }
 
@@ -2116,7 +2117,7 @@ public class LibraryChoiceHandlerService {
                                               boolean remainingToExile, boolean randomRemainingToBottom) {
         resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                 reorderRemainingToBottom, remainingToGraveyard, remainingToExile,
-                randomRemainingToBottom, false, null, null);
+                randomRemainingToBottom, false, null, null, 0);
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
@@ -2124,7 +2125,8 @@ public class LibraryChoiceHandlerService {
                                               boolean reorderRemainingToBottom, boolean remainingToGraveyard,
                                               boolean remainingToExile, boolean randomRemainingToBottom,
                                               boolean gainLifeEqualToSelectedCardManaValue,
-                                              StackEntry sourceEntry, CardEffect effectIfNoCardChosen) {
+                                              StackEntry sourceEntry, CardEffect effectIfNoCardChosen,
+                                              int lifeLossPerSelectedCard) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
             gameData.addCardToHand(controllerId, card);
@@ -2189,6 +2191,8 @@ public class LibraryChoiceHandlerService {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
+            applySelectionLifeLoss(gameData, controllerId, selectedCards.size(),
+                    lifeLossPerSelectedCard, sourceEntry);
             log.info("Game {} - {} puts {} card(s) to hand, {} to graveyard", gameData.id, playerName, selectedCards.size(), remainingCards.size());
 
             // Resume resolving remaining effects on the same spell/ability
@@ -2228,6 +2232,18 @@ public class LibraryChoiceHandlerService {
 
         log.info("Game {} - {} reveals {} creature cards to hand", gameData.id, playerName, selectedCards.size());
         finishSearchAndResume(gameData);
+    }
+
+    private void applySelectionLifeLoss(GameData gameData, UUID controllerId, int selectedCount,
+                                        int lifeLossPerSelectedCard, StackEntry sourceEntry) {
+        int lifeLoss = selectedCount * lifeLossPerSelectedCard;
+        if (lifeLoss <= 0) {
+            return;
+        }
+        String sourceName = sourceEntry != null && sourceEntry.getCard() != null
+                ? sourceEntry.getCard().getName()
+                : "library choice";
+        lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, sourceName);
     }
 
     private void handleKarnScionRevealChoice(GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds) {

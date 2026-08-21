@@ -47,6 +47,10 @@ class ArchmageEmeritusTest extends BaseCardTest {
         harness.castWithConspire(player1, 0, target.getId(),
                 List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        for (int i = 0; i < 6 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(firstDrawnCard, secondDrawnCard);

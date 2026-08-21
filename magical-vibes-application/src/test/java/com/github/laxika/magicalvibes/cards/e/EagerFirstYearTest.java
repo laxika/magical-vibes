@@ -43,9 +43,13 @@ class EagerFirstYearTest extends BaseCardTest {
 
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        for (int i = 0; i < 6 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
 
-        assertThat(firstYear.getEffectivePower()).isEqualTo(4);
-        assertThat(firstYear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstYear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstYear)).isEqualTo(2);
     }
 
     @Test

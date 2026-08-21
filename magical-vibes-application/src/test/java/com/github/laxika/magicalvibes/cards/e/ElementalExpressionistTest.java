@@ -51,9 +51,11 @@ class ElementalExpressionistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        for (int i = 0; i < 6 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
 
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);

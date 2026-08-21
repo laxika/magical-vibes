@@ -259,6 +259,12 @@ public class GameActionAvailabilityService {
                 buildSpellPlayabilityContext(gameData, playerId));
     }
 
+    public boolean isCardPlayableWithDeclaredTargets(GameData gameData, UUID playerId, Card card,
+                                                     ManaPool pool, int additionalGenericCost) {
+        return isCardPlayableForFace(gameData, playerId, card, pool, 0, additionalGenericCost,
+                buildSpellPlayabilityContext(gameData, playerId), true);
+    }
+
     /** Per-player values shared by every card's playability check; computed once per hand scan. */
     private record SpellPlayabilityContext(boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
                                            int landsPlayed, boolean spellLimitReached, boolean cantCastDueToAttack,
@@ -287,17 +293,17 @@ public class GameActionAvailabilityService {
                                    int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
         if (card.isModalDoubleFaced() && card.getBackFaceCard() != null) {
             return isCardPlayableForFace(gameData, playerId, card, pool, extraConvokeMana,
-                    additionalGenericCost, ctx)
+                    additionalGenericCost, ctx, false)
                     || isCardPlayableForFace(gameData, playerId, card.getBackFaceCard(), pool,
-                    extraConvokeMana, additionalGenericCost, ctx);
+                    extraConvokeMana, additionalGenericCost, ctx, false);
         }
         return isCardPlayableForFace(gameData, playerId, card, pool, extraConvokeMana,
-                additionalGenericCost, ctx);
+                additionalGenericCost, ctx, false);
     }
 
     private boolean isCardPlayableForFace(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                           int extraConvokeMana, int additionalGenericCost,
-                                          SpellPlayabilityContext ctx) {
+                                          SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
         if (card.getCastingOption(ForetellCast.class).isPresent()
                 && pool.getForetellSpellOnlyManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
@@ -372,7 +378,7 @@ public class GameActionAvailabilityService {
         boolean allTargetsOptional = !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0
                 || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0);
-        if (!allTargetsOptional && needsSpellCastTarget) {
+        if (!targetsAlreadyDeclared && !allTargetsOptional && needsSpellCastTarget) {
             boolean hasValidTarget = validTargetService.hasValidTargetsForSpell(
                     gameData, card, playerId, maxXValue);
             if (!hasValidTarget && canAffordKickerCost(gameData, playerId, card, pool, additionalGenericCost)) {

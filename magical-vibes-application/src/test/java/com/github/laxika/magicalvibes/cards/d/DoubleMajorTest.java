@@ -72,6 +72,7 @@ class DoubleMajorTest extends BaseCardTest {
     private void addManaForDoubleMajor() {
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
     }
 }

@@ -111,6 +111,9 @@ public class MultiPermanentChoiceHandlerService {
             .EachOpponentSacrificesArtifactAndNonartifactCreatureEffectHandler
             eachOpponentSacrificesArtifactAndNonartifactCreatureHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPermanentEffectHandler
+            eachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler eachPlayerChoosesLandOfEachBasicTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandEffectHandler
@@ -488,6 +491,8 @@ public class MultiPermanentChoiceHandlerService {
 
             permanentRemovalService.removeOrphanedAuras(gameData);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice ctx) {
+            eachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnHandler.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
             handleEachPlayerChoosesLandOfEachBasicTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice ctx) {

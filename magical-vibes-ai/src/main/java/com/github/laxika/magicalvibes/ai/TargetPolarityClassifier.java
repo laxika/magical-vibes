@@ -428,6 +428,7 @@ public class TargetPolarityClassifier {
             entry("BuffTargetCreatureIndefinitelyEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
+            entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             // Predator's Rapport: targets a creature you control and only reads its stats.
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
@@ -474,6 +475,7 @@ public class TargetPolarityClassifier {
             entry("BecomeChosenColorsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsIndefinitelyEffect", TargetPolarity.NEUTRAL),
             entry("ChangeColorTextEffect", TargetPolarity.NEUTRAL),
+            entry("ChooseOneForTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetCreatureForTargetPlayerEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),

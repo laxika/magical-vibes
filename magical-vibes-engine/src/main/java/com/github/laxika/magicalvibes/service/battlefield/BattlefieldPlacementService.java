@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingMysticReflection;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -137,6 +138,7 @@ public class BattlefieldPlacementService {
         List<String> repeatedAdditionalCosts = request.repeatedAdditionalCosts();
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
+        applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
         Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
         int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
@@ -225,6 +227,30 @@ public class BattlefieldPlacementService {
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent, conditionalRevealEffect);
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
+        if (simultaneouslyEntered.isEmpty()) {
+            gameData.activeMysticReflectionsForEntryBatch.clear();
+        }
+    }
+
+    private void applyMysticReflectionReplacement(GameData gameData, Permanent permanent,
+                                                   List<Permanent> simultaneouslyEntered) {
+        if (simultaneouslyEntered.isEmpty()) {
+            gameData.activeMysticReflectionsForEntryBatch.clear();
+        }
+        if (!permanent.getCard().hasType(CardType.CREATURE)
+                && !permanent.getCard().hasType(CardType.PLANESWALKER)) {
+            return;
+        }
+        if (gameData.activeMysticReflectionsForEntryBatch.isEmpty()
+                && !gameData.pendingMysticReflections.isEmpty()) {
+            gameData.activeMysticReflectionsForEntryBatch.addAll(gameData.pendingMysticReflections);
+            gameData.pendingMysticReflections.clear();
+        }
+        for (PendingMysticReflection reflection
+                : List.copyOf(gameData.activeMysticReflectionsForEntryBatch)) {
+            permanent.setCard(permanent.getCard().createRuntimeCopyWithFace(
+                    reflection.lastKnownTargetCard()));
+        }
     }
 
     /**

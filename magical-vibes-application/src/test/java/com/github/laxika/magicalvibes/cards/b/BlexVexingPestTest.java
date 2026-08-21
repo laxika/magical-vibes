@@ -66,6 +66,9 @@ class BlexVexingPestTest extends BaseCardTest {
 
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
+        if (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);

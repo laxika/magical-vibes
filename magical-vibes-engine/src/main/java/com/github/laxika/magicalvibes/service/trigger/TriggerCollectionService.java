@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourc
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
+import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -71,6 +72,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
@@ -439,6 +441,33 @@ public class TriggerCollectionService {
                             GameLog.text(desc + " triggers — choose a target for " + manaSpent + " damage."));
                     log.info("Game {} - {} emblem mana-spent damage trigger queued ({} damage)",
                             gameData.id, desc, manaSpent);
+                } else if (effect instanceof CopyControllerCastSpellOnSpellCastEffect copyTrigger) {
+                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
+                    if (copyTrigger.spellFilter() != null
+                            && !predicateEvaluationService.matchesCardPredicate(
+                            spellCard, copyTrigger.spellFilter(), null)) {
+                        continue;
+                    }
+                    StackEntry spellEntry = gameData.stack.stream()
+                            .filter(entry -> entry.getCard().getId().equals(spellCard.getId()))
+                            .findFirst().orElse(null);
+                    if (spellEntry == null) continue;
+                    Card source = emblem.sourceCard();
+                    Card sourceCard = source != null ? source : spellCard;
+                    CardEffect copyEffect = new CopyControllerCastSpellEffect(
+                            new StackEntry(spellEntry), castingPlayerId,
+                            copyTrigger.grantedKeywords(), copyTrigger.additionalTypes(),
+                            copyTrigger.tokenCopy(), copyTrigger.mayChooseNewTargets());
+                    CardEffect resolutionEffect = copyTrigger.manaCost() == null
+                            ? copyEffect
+                            : new MayPayManaEffect(copyTrigger.manaCost(), copyEffect,
+                            "Pay " + copyTrigger.manaCost() + " to copy " + spellCard.getName() + "?");
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            sourceCard,
+                            emblem.controllerId(),
+                            sourceCard.getName() + "'s emblem",
+                            new ArrayList<>(List.of(resolutionEffect))));
                 } else if (effect instanceof SpellCastTriggerEffect trigger
                         && isNonTargetingEmblemSpellCastTrigger(trigger)) {
                     if (!trigger.triggersOnAnyPlayer()
@@ -6455,7 +6484,8 @@ public class TriggerCollectionService {
      * self-referential effects still find it. Fires at most once per registration.
      */
     public void triggerDelayedEffectOnDeath(GameData gameData, UUID dyingCreatureCardId,
-                                            UUID dyingCreatureControllerId, int dyingCreaturePower) {
+                                            UUID dyingCreatureControllerId, int dyingCreaturePower,
+                                            int dyingCreatureManaValue) {
         List<DelayedEffectOnDeath> registrations = gameData.creatureTriggeringEffectOnDeathThisTurn.remove(dyingCreatureCardId);
         if (registrations == null) {
             return;
@@ -6471,6 +6501,7 @@ public class TriggerCollectionService {
                     dyingCreatureControllerId,
                     registration.sourcePermanentId());
             delayedEntry.setEventValue(Math.max(0, dyingCreaturePower));
+            delayedEntry.setDyingPermanentManaValue(Math.max(0, dyingCreatureManaValue));
             gameData.stack.add(delayedEntry);
 
             log.info("Game {} - Delayed death trigger: {} triggers (a creature it damaged died this turn)",
@@ -6585,6 +6616,23 @@ public class TriggerCollectionService {
                 collectEvolveTrigger(gameData, controllerId, perm, enteringPermanent,
                         1 + extraWizardTriggers);
             }
+        }
+
+        for (CreatureEntersTriggerWatcher watcher
+                : List.copyOf(gameData.allyCreatureEntersTriggerWatchers)) {
+            if (!watcher.controllerId().equals(controllerId) || enteringPermanent == null) {
+                continue;
+            }
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(watcher.effect())));
+            entry.setTargetId(enteringPermanent.getId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
 
         // Graveyard-resident creature-enters triggers (GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

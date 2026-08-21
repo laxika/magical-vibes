@@ -55,6 +55,10 @@ class LoreholdApprenticeTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).get(1).getId(),
                 gd.playerBattlefields.get(player1.getId()).get(2).getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        for (int i = 0; i < 6 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
 
         assertThat(spirit.getTemporaryActivatedAbilities()).hasSize(2);
     }

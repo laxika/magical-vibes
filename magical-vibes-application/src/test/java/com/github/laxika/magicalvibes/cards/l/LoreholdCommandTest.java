@@ -41,8 +41,8 @@ class LoreholdCommandTest extends BaseCardTest {
     void damagesAnyTargetAndGivesTargetPlayerLife() {
         castCommand();
 
-        harness.castModalInstantWithModes(player1, 0, 2, new int[]{0, 2}, player2.getId(),
-                List.of(player1.getId()));
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{0, 2}, null,
+                List.of(player2.getId(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -56,7 +56,8 @@ class LoreholdCommandTest extends BaseCardTest {
         castCommand();
 
         assertThatThrownBy(() -> harness.castModalInstantWithModes(
-                player1, 0, 2, new int[]{0, 2}, player2.getId(), List.of(permanent.getId())))
+                player1, 0, 2, new int[]{0, 2}, null,
+                List.of(player2.getId(), permanent.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

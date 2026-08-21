@@ -370,7 +370,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                     controllerId, topCards, cardIds, toGraveyard, true,
-                    !toGraveyard && !randomBottom, randomBottom, false, 0, null,
+                    !toGraveyard && !randomBottom, randomBottom, false,
+                    e.loseLifePerSelectedCard(), null,
                     max, revealPrompt, false, 0, false, e.effectIfNoCardChosen()));
             return;
         }

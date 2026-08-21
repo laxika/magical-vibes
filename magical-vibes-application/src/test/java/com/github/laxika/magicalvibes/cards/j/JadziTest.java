@@ -108,9 +108,11 @@ class JadziTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
+        if (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, -1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();

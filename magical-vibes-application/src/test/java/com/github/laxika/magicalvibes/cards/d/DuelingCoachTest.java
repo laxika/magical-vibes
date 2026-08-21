@@ -45,6 +45,7 @@ class DuelingCoachTest extends BaseCardTest {
     @DisplayName("Activated ability puts counters only on controlled creatures that already have one")
     void activatedAbilityPutsCountersOnExistingCounterBearers() {
         Permanent coach = harness.addToBattlefieldAndReturn(player1, new DuelingCoach());
+        coach.setSummoningSick(false);
         Permanent withCounter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent withoutCounter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
