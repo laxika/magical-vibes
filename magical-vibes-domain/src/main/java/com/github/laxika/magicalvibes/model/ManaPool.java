@@ -144,6 +144,8 @@ public class ManaPool {
      * {@link ManaCost#canPay}/{@code pay}, which rewrite the pool accordingly before paying.
      */
     private boolean whiteSpendableAsAnyColor;
+    /** Permission flag: white mana in this pool may additionally pay any colored requirement. */
+    private boolean whiteSpendableAsAnyColorWithoutRestriction;
     /** Permission flag: all mana in this pool may be spent as though it were mana of any color. */
     private boolean allManaSpendableAsAnyColor;
     /** Permission flag (not mana): while set, blue mana in this pool may additionally pay any
@@ -241,6 +243,7 @@ public class ManaPool {
         }
         this.whiteSpendableAsRed = source.whiteSpendableAsRed;
         this.whiteSpendableAsAnyColor = source.whiteSpendableAsAnyColor;
+        this.whiteSpendableAsAnyColorWithoutRestriction = source.whiteSpendableAsAnyColorWithoutRestriction;
         this.allManaSpendableAsAnyColor = source.allManaSpendableAsAnyColor;
         this.snowManaSpendableAsAnyColor = source.snowManaSpendableAsAnyColor;
         this.blueSpendableAsAnyColorForActivatedAbilities = source.blueSpendableAsAnyColorForActivatedAbilities;
@@ -264,6 +267,14 @@ public class ManaPool {
     /** See {@link #whiteSpendableAsAnyColor}. */
     public void setWhiteSpendableAsAnyColor(boolean whiteSpendableAsAnyColor) {
         this.whiteSpendableAsAnyColor = whiteSpendableAsAnyColor;
+    }
+
+    public boolean isWhiteSpendableAsAnyColorWithoutRestriction() {
+        return whiteSpendableAsAnyColorWithoutRestriction;
+    }
+
+    public void setWhiteSpendableAsAnyColorWithoutRestriction(boolean enabled) {
+        this.whiteSpendableAsAnyColorWithoutRestriction = enabled;
     }
 
     public boolean isAllManaSpendableAsAnyColor() {

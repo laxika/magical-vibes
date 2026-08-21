@@ -567,11 +567,21 @@ public sealed interface ChoiceContext {
      * @param targetLandId the target land that gains/becomes the chosen basic land type
      * @param duration     how long the granted/overriding type lasts
      * @param replacing    {@code true} to replace the land's types, {@code false} to add
+     * @param allowedTypes the offered basic land types; an empty list offers all five
      */
-    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration, boolean replacing) implements ChoiceContext {
+    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration, boolean replacing,
+                                  List<CardSubtype> allowedTypes) implements ChoiceContext {
+
+        public AddBasicLandTypeChoice {
+            allowedTypes = allowedTypes == null ? List.of() : List.copyOf(allowedTypes);
+        }
+
+        public AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration, boolean replacing) {
+            this(targetLandId, duration, replacing, List.of());
+        }
 
         public AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration) {
-            this(targetLandId, duration, false);
+            this(targetLandId, duration, false, List.of());
         }
     }
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "235")
+@CardRegistration(set = "APC", collectorNumber = "69")
 public class Smash extends Card {
 
     public Smash() {

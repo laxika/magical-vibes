@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
@@ -734,13 +735,14 @@ public class ActivatedAbilityExecutionService {
                 if (totalMana > 0) {
                     twistReplacement = true;
                     ManaPool pool = gameData.playerManaPools.get(playerId);
+                    ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId, fixedLandColor);
                     if (snowSource) {
-                        pool.addSnowMana(fixedLandColor, totalMana);
+                        pool.addSnowMana(effectiveColor, totalMana);
                     } else {
-                        pool.add(fixedLandColor, totalMana);
+                        pool.add(effectiveColor, totalMana);
                     }
                     if (isCreatureSource) {
-                        pool.addCreatureMana(fixedLandColor, totalMana);
+                        pool.addCreatureMana(effectiveColor, totalMana);
                     }
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " adds " + totalMana + " " + fixedLandColor.getCode()
@@ -755,7 +757,8 @@ public class ActivatedAbilityExecutionService {
                     if (totalMana > 0) {
                         twistReplacement = true;
                         if (twistedColors.size() == 1) {
-                            ManaColor color = twistedColors.iterator().next();
+                            ManaColor color = ManaProductionSupport.effectiveColor(gameData, playerId,
+                                    twistedColors.iterator().next());
                             ManaPool pool = gameData.playerManaPools.get(playerId);
                             pool.add(color, totalMana);
                             if (isCreatureSource) {
@@ -824,13 +827,14 @@ public class ActivatedAbilityExecutionService {
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 if (amount > 0) {
                     ManaPool pool = gameData.playerManaPools.get(playerId);
+                    ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId, award.color());
                     if (snowSource) {
-                        pool.addSnowMana(award.color(), amount);
+                        pool.addSnowMana(effectiveColor, amount);
                     } else {
-                        pool.add(award.color(), amount);
+                        pool.add(effectiveColor, amount);
                     }
                     if (isCreatureSource) {
-                        pool.addCreatureMana(award.color(), amount);
+                        pool.addCreatureMana(effectiveColor, amount);
                     }
                     // Dynamic amounts (per-permanent counts, charge counters, source power) log the
                     // realized quantity for clarity; a flat "Add {G}" is covered by the activation log.
@@ -919,7 +923,8 @@ public class ActivatedAbilityExecutionService {
                 if (picks <= 0) {
                     // no-op
                 } else if (ofColors.colors().size() == 1) {
-                    ManaColor manaColor = ofColors.colors().get(0);
+                    ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            ofColors.colors().get(0));
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(manaColor, picks);
                     if (isCreatureSource) {
@@ -954,7 +959,8 @@ public class ActivatedAbilityExecutionService {
                 Set<CardColor> availableColors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (availableColors.size() == 1) {
                     CardColor onlyColor = availableColors.iterator().next();
-                    ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
+                    ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            ManaColor.valueOf(onlyColor.name()));
                     gameData.playerManaPools.get(playerId).add(manaColor);
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
@@ -982,7 +988,8 @@ public class ActivatedAbilityExecutionService {
                 Set<CardColor> availableColors = collectColorsAmongControlled(gameData, playerId, eachColor.predicate());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 for (CardColor color : availableColors) {
-                    ManaColor manaColor = ManaColor.valueOf(color.name());
+                    ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            ManaColor.valueOf(color.name()));
                     pool.add(manaColor, manaMultiplier);
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, manaMultiplier);
@@ -999,7 +1006,8 @@ public class ActivatedAbilityExecutionService {
                 Set<CardColor> availableColors = collectColorsLandsCouldProduce(gameData, playerId, landColors);
                 if (availableColors.size() == 1) {
                     CardColor onlyColor = availableColors.iterator().next();
-                    ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
+                    ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            ManaColor.valueOf(onlyColor.name()));
                     gameData.playerManaPools.get(playerId).add(manaColor);
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
@@ -1023,7 +1031,8 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardManaOfTypeUntappedLandCouldProduceEffect) {
                 Set<ManaColor> availableTypes = collectManaTypesUntappedLandCouldProduce(gameData, permanent);
                 if (availableTypes.size() == 1) {
-                    ManaColor onlyType = availableTypes.iterator().next();
+                    ManaColor onlyType = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            availableTypes.iterator().next());
                     gameData.playerManaPools.get(playerId).add(onlyType);
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
@@ -1043,7 +1052,8 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect) {
                 Set<ManaColor> availableTypes = collectManaTypesSacrificedLandCouldProduce(permanent);
                 if (availableTypes.size() == 1) {
-                    ManaColor onlyType = availableTypes.iterator().next();
+                    ManaColor onlyType = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            availableTypes.iterator().next());
                     gameData.playerManaPools.get(playerId).add(onlyType);
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
@@ -1423,7 +1433,8 @@ public class ActivatedAbilityExecutionService {
             return;
         }
 
-        gameData.playerManaPools.get(player.getId()).add(notedColor, manaMultiplier);
+        ManaProductionSupport.add(gameData, player.getId(), gameData.playerManaPools.get(player.getId()),
+                notedColor, manaMultiplier);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " adds " + ("{" + notedColor.getCode() + "}").repeat(manaMultiplier) + " from ",
                 permanent.getCard(), "."));

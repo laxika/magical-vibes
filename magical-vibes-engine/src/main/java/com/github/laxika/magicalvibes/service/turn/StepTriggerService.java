@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -184,6 +185,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndR
 import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardsToTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -3305,6 +3307,28 @@ public class StepTriggerService {
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed trigger returns the exiled hands at the next end step."));
+            }
+        }
+
+        if (gameData.hasDelayedAction(TargetPlayerHandExileReturnAtNextTurnEndStep.class,
+                action -> gameData.turnNumber > action.registeredTurnNumber()
+                        && action.playerId().equals(gameData.activePlayerId))) {
+            List<TargetPlayerHandExileReturnAtNextTurnEndStep> pending = gameData.drainDelayedActions(
+                    TargetPlayerHandExileReturnAtNextTurnEndStep.class,
+                    action -> gameData.turnNumber > action.registeredTurnNumber()
+                            && action.playerId().equals(gameData.activePlayerId));
+            for (TargetPlayerHandExileReturnAtNextTurnEndStep action : pending) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(List.of(new ReturnExiledCardsToTargetPlayerHandEffect(
+                                action.playerId(), action.cardIds()))));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed trigger returns the exiled hand at the target player's next end step."));
             }
         }
 

@@ -597,6 +597,7 @@ public class GameData {
     public final Deque<PendingInteraction> pendingInteractions = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
+    public PendingGainLifeOnDiscardType pendingGainLifeOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
     public PendingBoostSourceByDiscardedManaValue pendingBoostSourceByDiscardedManaValue;
     public PendingUntapOnDiscardType pendingUntapOnDiscardType;
@@ -668,6 +669,8 @@ public class GameData {
     public final Map<UUID, UUID> permanentsProtectedFromDamageUntilNextTurn = new ConcurrentHashMap<>();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Players whose creatures' damage is fully prevented this turn (Divine Light). */
+    public final Set<UUID> playersWithAllCreatureDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players whose own damage (but not their creatures') is fully prevented this turn (Riot Control). */
     public final Set<UUID> playersWithAllPlayerDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players whose own damage is fully prevented until the beginning of their next turn (Morningtide's Light). */
@@ -897,6 +900,12 @@ public class GameData {
      *  chosen by the player whose upkeep it is). Amount is unchanged. Null when inactive; cleared at
      *  end of turn. */
     public volatile ManaColor allLandsFixedManaColorThisTurn;
+
+    /** Players whose spells and abilities replace colored mana they would add with white mana this turn. */
+    public final Set<UUID> playersWithColoredManaReplacementThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players who may spend white mana as though it were mana of any color this turn. */
+    public final Set<UUID> playersWithWhiteManaAsAnyColorThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Players whose land taps for mana produce one mana of a color chosen separately per tap. */
     public final Set<UUID> playersWithLandManaChoiceReplacementThisTurn = ConcurrentHashMap.newKeySet();
@@ -3321,6 +3330,7 @@ public class GameData {
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
+        copy.playersWithAllCreatureDamagePrevented.addAll(this.playersWithAllCreatureDamagePrevented);
         copy.playersRedirectingAllCreatureDamage.addAll(this.playersRedirectingAllCreatureDamage);
         copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
         copy.playersWithAllPlayerDamagePreventedUntilNextTurn
@@ -3993,6 +4003,7 @@ public class GameData {
 
         // --- Pending discard / search follow-ups (immutable, so the reference is safe to share) ---
         copy.pendingReturnToHandOnDiscardType = this.pendingReturnToHandOnDiscardType;
+        copy.pendingGainLifeOnDiscardType = this.pendingGainLifeOnDiscardType;
         copy.pendingTransformOnCreatureDiscard = this.pendingTransformOnCreatureDiscard;
         copy.pendingBoostSourceByDiscardedManaValue = this.pendingBoostSourceByDiscardedManaValue;
         copy.pendingUntapOnDiscardType = this.pendingUntapOnDiscardType;

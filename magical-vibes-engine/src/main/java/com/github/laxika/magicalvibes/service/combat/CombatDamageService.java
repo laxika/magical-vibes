@@ -1358,7 +1358,7 @@ public class CombatDamageService {
                 if ((effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
                         && !(effect instanceof CombatDamageTriggerContextEffect)
-                        && !(effect instanceof CombatOpponentReferencingEffect)) {
+                        && !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent())) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId));
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
@@ -2650,12 +2650,24 @@ public class CombatDamageService {
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(
                         gameData, targetPerm, damage, true, damageSource);
                 if (effectiveDamage > 0) {
-                    // Record only — the state-based action check (CR 704.5g) performs any
-                    // destruction once the current damage event finishes.
-                    targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
+                    if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
+                        targetPerm.setCounterCount(CounterType.LOYALTY,
+                                targetPerm.getCounterCount(CounterType.LOYALTY) - effectiveDamage);
+                    }
+                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
+                        targetPerm.setCounterCount(CounterType.DEFENSE,
+                                targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
+                        battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
+                    }
+                    boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
+                    if (isCreature || (!targetPerm.getCard().hasType(CardType.PLANESWALKER)
+                            && !targetPerm.getCard().hasType(CardType.BATTLE))) {
+                        targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
+                    }
                     gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage);
                     recordQualifyingCombatDamageBySourceId(gameData, redirect.damageSourceId(), targetPerm);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());
+                    gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
                 }
             }
         }
@@ -2739,6 +2751,8 @@ public class CombatDamageService {
             processEyeForAnEyeReflections(gameData);
             // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
             damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, atk.getId(), pw.getId(), damage);
+            processSourceRedirectDamage(gameData);
+            damage = damagePreventionService.applyCreatureRedirectShields(gameData, pw.getId(), atk.getId(), damage);
             processSourceRedirectDamage(gameData);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
@@ -2897,7 +2911,8 @@ public class CombatDamageService {
             processSourceRedirectDamage(gameData);
             // Martyrdom: redirect the next N combat damage to the defending player onto the creature
             // carrying the ability.
-            damage = damagePreventionService.applyPlayerNextDamageRedirectShields(gameData, defenderId, damage);
+            damage = damagePreventionService.applyPlayerNextDamageRedirectShields(
+                    gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
             // Ghostly Flame can make the attacker a colourless source of damage.
             CardColor attackerColor = gameQueryService.getDamageSourceColor(gameData, atkStats.color());

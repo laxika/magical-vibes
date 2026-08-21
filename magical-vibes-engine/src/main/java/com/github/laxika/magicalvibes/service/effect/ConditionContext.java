@@ -133,14 +133,16 @@ public record ConditionContext(
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
-                permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(),
-                false, null, 0, null, null, false);
+                permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), false, false, false,
+                null, 0, null, null, false, false, false, null, null, null,
+                permanent.getRepeatedAdditionalCosts());
     }
 
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
         return new ConditionContext(controllerId, source.getId(), source,
-                source.getCard(), source.isKicked(), false, source.isProwl(),
-                false, null, 0, null, null, true);
+                source.getCard(), source.isKicked(), false, source.isProwl(), false, false, false,
+                null, 0, null, null, true, false, false, null, null, null,
+                source.getRepeatedAdditionalCosts());
     }
 
     public static ConditionContext forCasting(UUID castingPlayerId) {

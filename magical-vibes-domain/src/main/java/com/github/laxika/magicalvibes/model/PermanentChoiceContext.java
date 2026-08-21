@@ -115,6 +115,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Guided Passage: the controller chooses which opponent makes the library choice. */
+    record GuidedPassageOpponentChoice(UUID controllerId, List<Card> library)
+            implements PermanentChoiceContext {
+        public GuidedPassageOpponentChoice {
+            library = List.copyOf(library);
+        }
+    }
+
     /**
      * Echo Chamber: {@code choosingPlayerId} picks one creature they control; a token copy of it is
      * then created under {@code copyControllerId}'s control from {@code sourceCard}.

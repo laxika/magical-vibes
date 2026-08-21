@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -136,6 +137,7 @@ public class BattlefieldPlacementService {
         int xValue = request.xValue();
         boolean kicked = request.kicked();
         List<String> repeatedAdditionalCosts = request.repeatedAdditionalCosts();
+        EnterBattlefieldOnDiscardEffect discardReplacement = request.discardReplacement();
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
@@ -169,6 +171,7 @@ public class BattlefieldPlacementService {
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
+            applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
             applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
@@ -932,18 +935,35 @@ public class BattlefieldPlacementService {
         int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
                 new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
                         repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, sourceCard));
-        if (enterWith.type() == CounterType.MINUS_ONE_MINUS_ONE
+        applyEntryCounters(gameData, controllerId, permanent, enterWith.type(), count);
+    }
+
+    private void applyDiscardEntryCounters(GameData gameData, UUID controllerId, Permanent permanent,
+                                           EnterBattlefieldOnDiscardEffect discardReplacement) {
+        if (discardReplacement == null) {
+            return;
+        }
+        applyEntryCounters(gameData, controllerId, permanent,
+                discardReplacement.counterType(), discardReplacement.counterCount());
+    }
+
+    private void applyEntryCounters(GameData gameData, UUID controllerId, Permanent permanent,
+                                    CounterType counterType, int count) {
+        if (counterType == null || count <= 0) {
+            return;
+        }
+        if (counterType == CounterType.MINUS_ONE_MINUS_ONE
                 && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
             count = 0;
-        } else if (enterWith.type() == CounterType.PLUS_ONE_PLUS_ONE
+        } else if (counterType == CounterType.PLUS_ONE_PLUS_ONE
                 && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent, controllerId)) {
             count = 0;
         }
-        count = gameQueryService.replaceCounters(gameData, permanent, controllerId, enterWith.type(), count);
+        count = gameQueryService.replaceCounters(gameData, permanent, controllerId, counterType, count);
         if (count > 0) {
-            permanent.setCounterCount(enterWith.type(), permanent.getCounterCount(enterWith.type()) + count);
+            permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
             log.info("Game {} - {} enters with {} {} counter(s)",
-                    gameData.id, permanent.getCard().getName(), count, enterWith.type());
+                    gameData.id, permanent.getCard().getName(), count, counterType);
         }
     }
 

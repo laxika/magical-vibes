@@ -1,4 +1,5 @@
 # Card Patterns: Triggered Creatures
+- Spell cast trigger — another player may pay the spell's mana cost to counter it: `i/IceCave.java` uses `ON_ANY_PLAYER_CASTS_SPELL CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect()`; the collector snapshots the printed mana cost and chosen X, then queues `MayPayManaEffect` with `MayPayPayer.ANY_OTHER_PLAYER` targeting the cast spell.
 
 | Nontoken creature enters → controller creates copy; nontoken creature leaves → exile same-name tokens; source leaves → exile its created tokens | `d/DualNature.java` | ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD `TriggeringCardConditionalEffect(CardNotPredicate(CardIsTokenPredicate), CreateTokenCopyOfTargetPermanentEffect.trackedForTargetController())` + ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD `ExileTokensWithSameNameAsLeavingCreatureEffect()` + ON_SELF_LEAVES_BATTLEFIELD `ExileTokensCreatedWithSourceEffect()` |
 

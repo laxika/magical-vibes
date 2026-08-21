@@ -261,6 +261,9 @@ public class ValidTargetService {
             }
         }
 
+        enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
+                validPermanentIds, validPlayerIds);
+
         String prompt = "Select a target for " + card.getName();
         if (isMultiTarget) {
             prompt = "Select targets for " + card.getName();
@@ -596,6 +599,30 @@ public class ValidTargetService {
 
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                 validExiledCardIds, minTargets, maxTargets, prompt);
+    }
+
+    private void enforceFlagbearerTargetChoice(GameData gameData, UUID controllerId,
+                                                List<UUID> alreadySelectedIds,
+                                                List<UUID> validPermanentIds, List<UUID> validPlayerIds) {
+        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)) {
+            return;
+        }
+        if (alreadySelectedIds != null && alreadySelectedIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
+            return;
+        }
+        List<UUID> flagbearerIds = validPermanentIds.stream()
+                .filter(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent != null && gameQueryService.isFlagbearer(gameData, permanent);
+                })
+                .toList();
+        if (flagbearerIds.isEmpty()) {
+            return;
+        }
+        validPermanentIds.retainAll(flagbearerIds);
+        validPlayerIds.clear();
     }
 
     private List<UUID> computeValidExiledTargetsForAbility(GameData gameData, ActivatedAbility ability,

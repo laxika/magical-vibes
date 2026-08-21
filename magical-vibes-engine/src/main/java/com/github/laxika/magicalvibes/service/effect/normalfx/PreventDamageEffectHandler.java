@@ -66,6 +66,14 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameData.preventAllDamageToAllCreatures = true;
                 gameLogService.append(gameData, GameLog.text("All damage that would be dealt to creatures this turn is prevented."));
             }
+            case ALL_TO_CONTROLLED_CREATURES -> {
+                UUID controllerId = entry.getControllerId();
+                if (controllerId != null) {
+                    gameData.playersWithAllCreatureDamagePrevented.add(controllerId);
+                }
+                gameLogService.append(gameData, GameLog.text(
+                        "All damage that would be dealt this turn to creatures controlled by the spell's controller is prevented."));
+            }
             case ALL_BY_CREATURES -> {
                 gameData.preventAllDamageByCreatures = true;
                 gameLogService.append(gameData, GameLog.text("All damage that would be dealt by creatures this turn is prevented."));

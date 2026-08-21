@@ -235,6 +235,7 @@ public sealed interface Condition permits
         TargetSpellCanBeCountered,
         ControllerControlsMoreCreaturesThanTargetSpellController,
         TargetSpellMatches,
+        TargetSpellSharesColorWithControlledCreature,
         TopCardOfLibraryColor,
         TopCardOfLibraryType,
         TotalPermanentCountEven,

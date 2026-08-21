@@ -894,7 +894,8 @@ public class StackEntry {
             }
             int declared = g.getIndex() < targetGroupSizes.size()
                     ? targetGroupSizes.get(g.getIndex())
-                    : groups.size() == 1 ? targetIds.size() : g.getMaxTargets();
+                    : groups.size() == 1 ? targetIds.size()
+                    : isKicked() ? g.getKickedMaxTargets() : g.getMaxTargets();
             int size = Math.min(Math.max(declared, 0), targetIds.size() - consumed);
             if (g.getIndex() == group) {
                 List<UUID> legalTargets = new ArrayList<>(size);

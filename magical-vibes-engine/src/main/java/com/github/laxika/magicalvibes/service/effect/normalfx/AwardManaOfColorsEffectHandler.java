@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +64,7 @@ public class AwardManaOfColorsEffectHandler implements NormalEffectHandlerBean {
 
         if (e.colors().size() == 1) {
             ManaColor manaColor = e.colors().get(0);
+            manaColor = ManaProductionSupport.effectiveColor(gameData, controllerId, manaColor);
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             pool.add(manaColor, picks);
             if (fromCreature) {

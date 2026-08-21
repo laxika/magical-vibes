@@ -37,6 +37,24 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
             }
 
     @Test
+    @DisplayName("ANY_OTHER_PLAYER skips the player whose spell caused the trigger")
+    void anyOtherPlayerSkipsTriggeringPlayer() {
+        Card card = createCard("Ice Cave");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = new MayPayManaEffect("{1}", wrapped, "Pay {1}?",
+                MayPayPayer.ANY_OTHER_PLAYER);
+        StackEntry entry = createEntry(card, player1Id, List.of(mayPayEffect));
+        entry.setActivePlayerId(player2Id);
+        gd.activePlayerId = player2Id;
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player1Id);
+        assertThat(gd.anyPlayerMayPayManaRemainingPlayers).isEmpty();
+    }
+
+    @Test
     @DisplayName("ENCHANTED_CONTROLLER payer prompts the stack entry's targetId, not the controller")
     void enchantedControllerPayerPromptsTargetPlayer() {
         Card card = createCard("Paralyze");

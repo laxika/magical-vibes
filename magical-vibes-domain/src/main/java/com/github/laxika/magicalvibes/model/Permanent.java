@@ -483,6 +483,8 @@ public class Permanent {
     @Setter private boolean evoked;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Repeatable additional mana payments made to cast this permanent's spell. */
+    private List<String> repeatedAdditionalCosts = List.of();
     /** Whether the required tribute counters were placed on this permanent as it entered. */
     @Setter private boolean tributePaid;
     /** Whether this permanent is renowned (CR 702.111): set the first time a renown trigger resolves,
@@ -762,6 +764,7 @@ public class Permanent {
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
+        this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
         this.cast = source.cast;
@@ -1239,6 +1242,11 @@ public class Permanent {
                 || persistentGrantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword)
                 || (keywordCounter != null && getCounterCount(keywordCounter) > 0);
+    }
+
+    public void setRepeatedAdditionalCosts(List<String> repeatedAdditionalCosts) {
+        this.repeatedAdditionalCosts = repeatedAdditionalCosts == null || repeatedAdditionalCosts.isEmpty()
+                ? List.of() : List.copyOf(repeatedAdditionalCosts);
     }
 
     public void addTemporaryTriggeredEffect(EffectSlot slot, CardEffect effect) {

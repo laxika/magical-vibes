@@ -331,6 +331,13 @@ public class GameActionAvailabilityService {
             flagged.setWhiteSpendableAsAnyColor(true);
             pool = flagged;
         }
+        if (gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, playerId)
+                && !pool.isWhiteSpendableAsAnyColorWithoutRestriction()) {
+            ManaPool flagged = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            flagged.setWhiteSpendableAsAnyColorWithoutRestriction(true);
+            pool = flagged;
+        }
         if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId) && !pool.isAllManaSpendableAsAnyColor()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
@@ -489,6 +496,13 @@ public class GameActionAvailabilityService {
         }
         ManaCost totalCost = new ManaCost(combinedManaCost);
         int kickerXValue = totalCost.hasX() ? totalCost.calculateMaxX(pool) : 0;
+        if (kicker.xUsesEachColorAtMostOnce() && kicker.hasXColorRestriction() && totalCost.hasX()) {
+            int maxByColor = totalCost.calculateMaxX(pool, kicker.xColorRestrictions(), 0);
+            int maxDistinct = (int) kicker.xColorRestrictions().stream()
+                    .filter(color -> pool.get(color) > 0)
+                    .count();
+            kickerXValue = Math.min(maxByColor, maxDistinct);
+        }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
         boolean powerstoneContext = isArtifact && pool.getPowerstoneOnlyColorless() > 0;
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);

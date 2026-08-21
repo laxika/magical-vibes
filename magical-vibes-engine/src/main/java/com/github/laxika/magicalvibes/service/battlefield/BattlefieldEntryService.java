@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -73,6 +75,18 @@ public class BattlefieldEntryService {
                                             int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         place(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
                 xValue, kicked, repeatedAdditionalCosts);
+    }
+
+    public void putPermanentOntoBattlefieldFromOpponentDiscard(GameData gameData, UUID controllerId,
+                                                               Permanent permanent) {
+        EnterBattlefieldOnDiscardEffect replacement = permanent.getCard()
+                .getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                .filter(EnterBattlefieldOnDiscardEffect.class::isInstance)
+                .map(EnterBattlefieldOnDiscardEffect.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Missing discard replacement effect"));
+        placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
+                placementService.snapshotEnterTappedTypes(gameData), List.of(), 0, false, List.of(), replacement));
     }
 
     private void place(GameData gameData, UUID controllerId, Permanent permanent,

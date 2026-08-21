@@ -244,6 +244,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellSharesColorWithControlledCreature;
 import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
 import com.github.laxika.magicalvibes.model.condition.TotalCreatureCardsInGraveyardsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
@@ -801,6 +802,8 @@ public class ConditionEvaluationService {
                 yield targetSpell != null
                         && predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
             }
+            case TargetSpellSharesColorWithControlledCreature ignored ->
+                    targetSpellSharesColorWithControlledCreature(gameData, ctx);
             case SourceHasSubtype c ->
                     sourceHasSubtype(gameData, ctx, c.subtype());
             case SourceHasColor c -> {
@@ -1198,6 +1201,24 @@ public class ConditionEvaluationService {
         if (targetSpell == null) return false;
         return countCreaturesControlled(gameData, ctx.controllerId())
                 > countCreaturesControlled(gameData, targetSpell.getControllerId());
+    }
+
+    private boolean targetSpellSharesColorWithControlledCreature(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.targetId() == null) return false;
+        com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .findFirst()
+                .orElse(null);
+        if (targetSpell == null) return false;
+
+        Set<CardColor> spellColors = gameQueryService.getEffectiveCardColors(gameData, targetSpell.getCard());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (spellColors.isEmpty() || battlefield == null) return false;
+
+        return battlefield.stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .map(permanent -> gameQueryService.getEffectiveColors(gameData, permanent))
+                .anyMatch(creatureColors -> creatureColors.stream().anyMatch(spellColors::contains));
     }
 
     private boolean aPlayerControlsMoreCreaturesThanEachOtherPlayer(GameData gameData) {

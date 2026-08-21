@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +17,15 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       List<Permanent> simultaneouslyEntered,
                                       int xValue,
                                       boolean kicked,
-                                      List<String> repeatedAdditionalCosts) {
+                                      List<String> repeatedAdditionalCosts,
+                                      EnterBattlefieldOnDiscardEffect discardReplacement) {
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, null);
+    }
 
     public BattlefieldEntryRequest {
         enterTappedTypes = Set.copyOf(enterTappedTypes);

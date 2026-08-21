@@ -61,6 +61,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.EcologicalAppreciationOpponentChoice,
         PendingInteraction.VerdantMasterySearchChoice,
         PendingInteraction.VerdantMasteryLandChoice,
+        PendingInteraction.GuidedPassageChoice,
         PendingInteraction.PermanentAuctionChoice,
         PendingInteraction.IllicitAuctionBidChoice,
         PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
@@ -1018,6 +1019,32 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), count, count);
+        }
+    }
+
+    /**
+     * Guided Passage: the opponent chooses one creature, one land, and one noncreature, nonland
+     * card from the controller's revealed library. Categories without a matching card are ignored.
+     */
+    record GuidedPassageChoice(UUID playerId, UUID controllerId, java.util.List<Card> pool)
+            implements PendingInteraction {
+
+        public GuidedPassageChoice {
+            pool = java.util.List.copyOf(pool);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, 3);
         }
     }
 

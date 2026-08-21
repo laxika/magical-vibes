@@ -592,7 +592,9 @@ public class MayAbilityHandlerService {
     private void handleResolutionTimeMayChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         gameData.resolvingMayEffectFromStack = false;
         MayPayManaEffect anyPlayerMayPay = ability.effects().stream()
-                .filter(e -> e instanceof MayPayManaEffect mayPay && mayPay.payer() == MayPayPayer.ANY_PLAYER)
+                .filter(e -> e instanceof MayPayManaEffect mayPay
+                        && (mayPay.payer() == MayPayPayer.ANY_PLAYER
+                        || mayPay.payer() == MayPayPayer.ANY_OTHER_PLAYER))
                 .map(MayPayManaEffect.class::cast)
                 .findFirst().orElse(null);
         if (anyPlayerMayPay != null) {

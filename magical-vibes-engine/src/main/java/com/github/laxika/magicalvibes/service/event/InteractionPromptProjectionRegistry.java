@@ -101,6 +101,7 @@ public class InteractionPromptProjectionRegistry {
                 this::projectVerdantMasterySearchChoice);
         register(PendingInteraction.VerdantMasteryLandChoice.class,
                 this::projectVerdantMasteryLandChoice);
+        register(PendingInteraction.GuidedPassageChoice.class, this::projectGuidedPassageChoice);
         register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
         register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
         register(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
@@ -567,6 +568,15 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()),
                 2,
                 "Choose two basic land cards to put onto the battlefield tapped under your control.");
+    }
+
+    private InteractionPromptMessage projectGuidedPassageChoice(
+            GameData gameData, PendingInteraction.GuidedPassageChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                3,
+                "Choose a creature card, a land card, and a noncreature, nonland card for Guided Passage.");
     }
 
     private InteractionPromptMessage projectPermanentAuctionChoice(

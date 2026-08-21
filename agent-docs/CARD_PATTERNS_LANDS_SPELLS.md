@@ -1,5 +1,7 @@
 # Card Patterns: Lands & Spells
 
+Guided Passage's full-library reveal with category-constrained opponent choice is implemented by `g/GuidedPassage.java` and `GuidedPassageEffect()`.
+
 | Graveyard creature to top plus power damage | `d/DeadReckoning.java` | `PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffect()` with `GraveyardCardPredicateTargetFilter(CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD)` and `TargetFilters.creature()` — both target groups are required; capture the card's power before moving it and resolve the two targets independently |
 All paths relative to `cards/`.
 
@@ -179,6 +181,7 @@ on what the mana may pay for.
 | Counter if mana value matches discarded card | `h/HisokaMinamoSensei.java` | Activated: {2}{U}+DiscardCardTypeCost(null, null, false, 1, false, true)+CounterSpellIfManaValueEqualsXEffect — the trackManaValue discard cost snapshots the discarded card's mana value into the ability's X |
 | Counter + may cast from hand | `c/Counterlash.java` | CounterlashEffect — counters target spell, then queues per-eligible-card MayCastFromHandWithoutPayingManaCostEffect may abilities for cards sharing a type |
 | Bounce target | `u/Unsummon.java` | ReturnToHandEffect.target() |
+| Bounce creature + mana-value tokens | `a/AetherMutation.java` | `target(TargetFilters.creature()).addEffect(SPELL, new ReturnTargetCreatureToHandThenCreateTokensEqualToManaValueEffect(saprolingToken))` - return the target creature first, snapshot its mana value, then create that many tokens under the spell controller's control |
 | Bounce target spell or creature | `u/Unsubstantiate.java` | `ReturnTargetSpellOrCreatureToHandEffect()` — declarative `spellOnStack` + `creature` target; the handler routes the chosen ID to the stack or battlefield |
 | Bounce X target creatures of a chosen type | `s/SelectiveSnare.java` | `targetX(TargetFilters.creature(), 100)` + `ReturnToHandEffect.targetCreaturesOfChosenType()`; the type is supplied with the cast-time choice and targets must match it while casting |
 | Bounce target + all same name | `e/EchoingTruth.java` | `target(nonland)` + `ReturnTargetPermanentAndAllWithSameNameToHandEffect(nonland, PermanentTruePredicate())` — only the chosen nonland permanent is targeted; every other permanent with that name is returned without being targeted |
@@ -257,6 +260,7 @@ on what the mana may pay for.
 | Graveyard shuffle + draw + self-mill trigger | `g/GaeasBlessing.java` | ShuffleTargetCardsFromGraveyardIntoLibraryEffect(null, 3) + DrawCardEffect(1) + ON_SELF_MILLED ShuffleGraveyardIntoLibraryEffect(false) — shuffle up to 3 cards from target player's graveyard into library, draw, and when milled shuffle owner's graveyard into library |
 | Life gain per graveyard card + self-shuffle | `a/ArchangelsLight.java` | GainLifeEffect(Scaled(CardsInGraveyard(null, CONTROLLER), 2)) + ShuffleGraveyardIntoLibraryEffect(false) — gain 2 life per card in your graveyard, then shuffle your graveyard into your library (non-targeting) |
 | Exile return to hand (filtered, owned) | `r/RunicRepetition.java` | ReturnTargetCardFromExileToHandEffect(CardHasFlashbackPredicate(), true) — return target exiled card with flashback you own to hand. `ownedOnly=true` restricts to controller's exile zone. Targets exile (spec `EXILE_CARD`) |
+| Target hand exile face down + return at target player's next turn end step | `s/Suppress.java` | `ExileTargetPlayerHandFaceDownAndReturnAtNextTurnEndStepEffect()` — target player loses their current hand until the beginning of their next turn's end step; the delayed return leaves any replacement hand untouched |
 | Prevent combat damage | `h/HolyDay.java` | PreventAllCombatDamageEffect |
 | Prevent combat damage except target | `t/TerrifyingPresence.java` | target(TargetFilters.creature()) + PreventDamageEffect.allCombatExceptTargetCreature() — "prevent all combat damage that would be dealt by creatures other than target creature this turn" |
 | Prevent combat damage (selective) | `m/Moonmist.java` | TransformAllEffect(PermanentHasSubtypePredicate(HUMAN)) + PreventDamageEffect.allCombatExcept(PermanentHasAnySubtypePredicate(WEREWOLF, WOLF)) — transform all Humans, prevent combat damage by non-Werewolves/Wolves |
@@ -285,6 +289,7 @@ on what the mana may pay for.
 | Damage creature + destroy equipment | `t/TurnToSlag.java` | DestroyAttachmentsOnTargetCreatureEffect(false, true) + DealDamageToTargetCreatureEffect — effect order doesn't matter; lethal damage destruction is deferred until all effects on the stack entry resolve |
 | Sacrifice artifact spell cost + tokens | `k/KuldothaRebirth.java` | SacrificePermanentCost(PermanentIsArtifactPredicate, "an artifact", false) + CreateTokenEffect — sacrifice artifact as additional spell cost |
 | Sacrifice permanent spell cost + burn | `a/Artillerize.java` | SacrificePermanentCost(PermanentAnyOfPredicate) + DealDamageToAnyTargetEffect — sacrifice artifact or creature as additional spell cost |
+| Sacrifice creature spell cost + colors-based hand discard | `m/MindExtraction.java` | `SacrificeCreatureCost()` + `DiscardAllCardsOfSacrificedCreatureColorsEffect()` + `target(PlayerPredicateTargetFilter(ANY))` — the effect reads the payment-time sacrificed creature snapshot, builds an OR filter for all its colors, and reuses the normal reveal-and-discard path |
 | Sacrifice two creatures spell cost + artifact removal | `p/PhyrexianTribute.java` | `target(TargetFilters.artifact())` + SacrificeMultiplePermanentsCost(2, PermanentIsCreaturePredicate) in the SPELL slot + DestroyTargetPermanentEffect — multi-permanent additional cast cost paid from `PlayCardRequest.additionalCostSacrificePermanentIds` |
 | Sacrifice creature spell cost + power-based mass debuff | `i/IchorExplosion.java` | SacrificeCreatureCost(false, true) + BoostAllCreaturesEffect(new Scaled(new XValue(), -1), new Scaled(new XValue(), -1)) — sacrifice creature, all creatures get -X/-X where X = sacrificed creature's power |
 | Exile creature spell cost + conditional reanimation counters | `s/SoulExchange.java` | ExileCreatureCost + targeted `ReturnCardFromGraveyardEffect`; the exiled cost card snapshot supplies the Thrull subtype condition |

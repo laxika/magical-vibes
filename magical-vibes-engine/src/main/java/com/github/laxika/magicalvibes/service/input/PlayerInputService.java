@@ -749,10 +749,15 @@ public class PlayerInputService {
     }
 
     public void beginSpellCreatureTypeChoice(GameData gameData, UUID playerId) {
+        beginSpellCreatureTypeChoice(gameData, playerId, Set.of());
+    }
+
+    public void beginSpellCreatureTypeChoice(GameData gameData, UUID playerId,
+                                             Set<CardSubtype> excludedSubtypes) {
         ChoiceContext.SpellCreatureTypeChoice choiceContext = new ChoiceContext.SpellCreatureTypeChoice(playerId);
 
         List<String> creatureTypes = Arrays.stream(CardSubtype.values())
-                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
+                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s) && !excludedSubtypes.contains(s))
                 .map(CardSubtype::name)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1029,9 +1034,21 @@ public class PlayerInputService {
     }
 
     public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration, boolean replacing) {
-        ChoiceContext.AddBasicLandTypeChoice choiceContext = new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration, replacing);
+        beginAddBasicLandTypeChoice(gameData, playerId, targetLandId, duration, replacing, List.of());
+    }
 
-        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+    /**
+     * Begins a target-land basic type choice, optionally restricting the offered types.
+     */
+    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId,
+                                            EffectDuration duration, boolean replacing,
+                                            List<CardSubtype> allowedTypes) {
+        ChoiceContext.AddBasicLandTypeChoice choiceContext =
+                new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration, replacing, allowedTypes);
+
+        List<String> basicLandTypes = allowedTypes == null || allowedTypes.isEmpty()
+                ? List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST")
+                : allowedTypes.stream().map(Enum::name).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, basicLandTypes, "Choose a basic land type."));
 

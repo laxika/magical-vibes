@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
+import com.github.laxika.magicalvibes.model.PendingGainLifeOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlaguecrafterState;
@@ -287,7 +288,7 @@ public class CardChoiceHandlerService {
         if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
             // Replacement effect: put onto battlefield instead of graveyard (e.g. Obstinate Baloth)
             Permanent permanent = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+            battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(gameData, playerId, permanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " discards ", card, " — it enters the battlefield instead."));
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
@@ -306,6 +307,7 @@ public class CardChoiceHandlerService {
 
         // Check if a spell should return to hand based on the discarded card type (e.g. Psychic Miasma)
         checkPendingReturnToHandOnDiscard(gameData, card);
+        checkPendingGainLifeOnDiscardType(gameData, card);
 
         // Check if a creature discard should untap + transform the source (e.g. Civilized Scholar)
         checkPendingTransformOnCreatureDiscard(gameData, card);
@@ -411,7 +413,8 @@ public class CardChoiceHandlerService {
             boolean replacedByBattlefield = false;
             if (hasEnterBattlefieldOnDiscardEffect(card) && causedByOpponent) {
                 Permanent permanent = new Permanent(card);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, selection.playerId(), permanent);
+                battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                        gameData, selection.playerId(), permanent);
                 gameLogService.append(gameData, GameLog.textCardText(
                         gameData.playerIdToName.get(selection.playerId()) + " discards ", card,
                         " — it enters the battlefield instead."));
@@ -439,6 +442,7 @@ public class CardChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         triggerCollectionService.finishDiscardEvent(gameData);
         finalizePendingReturnToHandOnDiscard(gameData);
+        applyPendingGainLifeOnDiscardType(gameData);
 
         // After cleanup discard, apply end-of-turn resets (CR 514.2)
         if (gameData.cleanupDiscardPending) {
@@ -914,7 +918,8 @@ public class CardChoiceHandlerService {
             for (Card discarded : chosenCards) {
                 if (hasEnterBattlefieldOnDiscardEffect(discarded) && gameData.discardCausedByOpponent) {
                     Permanent permanent = new Permanent(discarded);
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+                    battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                            gameData, targetPlayerId, permanent);
                     replacedCards.add(discarded);
                     gameLogService.append(gameData, GameLog.textCardText(
                             targetName + " discards ", discarded, " — it enters the battlefield instead."));
@@ -1216,7 +1221,8 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, controllerName, card.getName(), targetName);
             } else if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
                 Permanent permanent = new Permanent(card);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+                battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                        gameData, targetPlayerId, permanent);
                 gameLogService.append(gameData, GameLog.textCardText(
                         targetName + " discards ", card, " — it enters the battlefield instead."));
                 log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
@@ -1596,6 +1602,26 @@ public class CardChoiceHandlerService {
         gameLogService.append(gameData,
                 GameLog.cardThen(pending.card(), " is returned to its owner's hand."));
         log.info("Game {} - {} returned to hand (matching card discarded)", gameData.id, pending.card().getName());
+    }
+
+    private void checkPendingGainLifeOnDiscardType(GameData gameData, Card discardedCard) {
+        PendingGainLifeOnDiscardType pending = gameData.pendingGainLifeOnDiscardType;
+        if (pending != null && discardedCard.hasType(pending.requiredType())) {
+            gameData.pendingGainLifeOnDiscardType = pending.withMatchingCard();
+        }
+    }
+
+    private void applyPendingGainLifeOnDiscardType(GameData gameData) {
+        PendingGainLifeOnDiscardType pending = gameData.pendingGainLifeOnDiscardType;
+        if (pending == null) {
+            return;
+        }
+        gameData.pendingGainLifeOnDiscardType = null;
+        int lifeGain = pending.matchingCardCount() * pending.lifePerCard();
+        if (lifeGain > 0) {
+            lifeSupport.applyGainLife(gameData, pending.controllerId(), lifeGain, null,
+                    pending.sourceCard(), pending.sourceEntryType());
+        }
     }
 
     private void checkPendingTransformOnCreatureDiscard(GameData gameData, Card discardedCard) {

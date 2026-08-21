@@ -193,6 +193,12 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt to creatures you control this turn" (Divine Light). */
+    public static PreventDamageEffect allToControlledCreatures() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLED_CREATURES, null, false, null, null, null);
+    }
+
     /** "Prevent all damage that would be dealt to [permanents matching {@code victimPredicate}] this turn" (Ethersworn Shieldmage). */
     public static PreventDamageEffect allToMatchingPermanents(PermanentPredicate victimPredicate) {
         return new PreventDamageEffect(PreventionScope.ALL_TO_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);

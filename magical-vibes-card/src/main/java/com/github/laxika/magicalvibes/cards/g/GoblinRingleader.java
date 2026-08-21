@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "143")
+@CardRegistration(set = "APC", collectorNumber = "62")
 public class GoblinRingleader extends Card {
 
     public GoblinRingleader() {

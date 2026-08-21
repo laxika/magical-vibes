@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class AwardManaOfColorsInGraveyardEffectHandler implements ManaAbilityEff
         }
 
         if (availableColors.size() == 1) {
-            addMana(gameData.playerManaPools.get(playerId), availableColors.getFirst(), manaMultiplier,
+            addMana(gameData, playerId, gameData.playerManaPools.get(playerId), availableColors.getFirst(), manaMultiplier,
                     creatureSource);
             return;
         }
@@ -65,10 +66,12 @@ public class AwardManaOfColorsInGraveyardEffectHandler implements ManaAbilityEff
                 .anyMatch(card -> card.getColors().contains(cardColor));
     }
 
-    private static void addMana(ManaPool manaPool, ManaColor color, int amount, boolean creatureSource) {
-        manaPool.add(color, amount);
+    private static void addMana(GameData gameData, UUID sourceControllerId, ManaPool manaPool,
+                                ManaColor color, int amount, boolean creatureSource) {
+        ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, sourceControllerId, color);
+        manaPool.add(effectiveColor, amount);
         if (creatureSource) {
-            manaPool.addCreatureMana(color, amount);
+            manaPool.addCreatureMana(effectiveColor, amount);
         }
     }
 }

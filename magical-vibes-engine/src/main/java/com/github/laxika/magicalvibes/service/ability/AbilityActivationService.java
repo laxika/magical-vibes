@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -406,13 +407,15 @@ public class AbilityActivationService {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect awardMana) {
                         int amount = onTapManaAmount(awardMana) * manaMultiplier;
+                        ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                                awardMana.color());
                         if (snowSource) {
-                            manaPool.addSnowMana(awardMana.color(), amount);
+                            manaPool.addSnowMana(effectiveColor, amount);
                         } else {
-                            manaPool.add(awardMana.color(), amount);
+                            manaPool.add(effectiveColor, amount);
                         }
                         if (isCreatureSource) {
-                            manaPool.addCreatureMana(awardMana.color(), amount);
+                            manaPool.addCreatureMana(effectiveColor, amount);
                         }
                     }
                 }
@@ -726,8 +729,10 @@ public class AbilityActivationService {
             }
         } else if (!overriddenManaColors.isEmpty()) {
             if (overriddenManaColors.size() == 1) {
-                manaPool.add(overriddenManaColor, 1);
-                manaPool.addSpellOnlyMana(overriddenManaColor, 1);
+                ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                        overriddenManaColor);
+                manaPool.add(effectiveColor, 1);
+                manaPool.addSpellOnlyMana(effectiveColor, 1);
             } else {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, false, 1);
@@ -740,8 +745,10 @@ public class AbilityActivationService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                 if (effect instanceof AwardManaEffect awardMana) {
                     int amount = onTapManaAmount(awardMana);
-                    manaPool.add(awardMana.color(), amount);
-                    manaPool.addSpellOnlyMana(awardMana.color(), amount);
+                    ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            awardMana.color());
+                    manaPool.add(effectiveColor, amount);
+                    manaPool.addSpellOnlyMana(effectiveColor, amount);
                 }
             }
         }
@@ -982,6 +989,8 @@ public class AbilityActivationService {
         if (pool != null) {
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
+            pool.setWhiteSpendableAsAnyColorWithoutRestriction(
+                    gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, player.getId()));
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
@@ -1033,7 +1042,7 @@ public class AbilityActivationService {
             // The ability announces a target group on the battlefield/players (Soul of Shandalar),
             // so the id list carries those targets rather than graveyard cards.
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
-                    graveyardTargetIds != null ? graveyardTargetIds : List.of(), card, xValue);
+                    graveyardTargetIds != null ? graveyardTargetIds : List.of(), card, xValue, abilityEffects);
         } else if (graveyardTargetIds != null) {
             targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects,
                     graveyardTargetIds, card.getId());
@@ -1665,7 +1674,7 @@ public class AbilityActivationService {
             if (effect instanceof AwardManaEffect awardMana) {
                 int amount = awardMana.amount() instanceof Fixed fixed ? fixed.value() : xValue;
                 if (amount > 0) {
-                    pool.add(awardMana.color(), amount);
+                    ManaProductionSupport.add(gameData, player.getId(), pool, awardMana.color(), amount);
                 }
             }
         }
@@ -2359,6 +2368,8 @@ public class AbilityActivationService {
             // affordability check and payment honor it.
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
+            pool.setWhiteSpendableAsAnyColorWithoutRestriction(
+                    gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, player.getId()));
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
@@ -2566,8 +2577,8 @@ public class AbilityActivationService {
                     targetIds != null ? targetIds : List.of(), permanent.getCard().getId(), effectiveXValue,
                     ability.getMultiTargetConstraint());
         } else if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
-            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
-                    targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue);
+                targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
+                    targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue, activationEffects);
         } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
             targetLegalityService.validateMultiTargetGraveyardAbility(
                     gameData, playerId, activationEffects, targetIds, permanent.getCard().getId(), effectiveXValue);

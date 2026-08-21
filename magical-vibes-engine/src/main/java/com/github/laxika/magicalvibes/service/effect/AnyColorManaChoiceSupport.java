@@ -124,9 +124,10 @@ public final class AnyColorManaChoiceSupport {
         if (allowedColors.size() == 1 && effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS) {
             UUID manaRecipientId = recipientPlayerId != null ? recipientPlayerId : playerId;
             ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
-            manaPool.add(allowedColors.get(0), amount);
+            ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId, allowedColors.get(0));
+            manaPool.add(effectiveColor, amount);
             if (fromCreature) {
-                manaPool.addCreatureMana(allowedColors.get(0), amount);
+                manaPool.addCreatureMana(effectiveColor, amount);
             }
             return false;
         }

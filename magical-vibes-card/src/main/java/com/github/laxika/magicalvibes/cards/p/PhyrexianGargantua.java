@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "153")
+@CardRegistration(set = "APC", collectorNumber = "48")
 public class PhyrexianGargantua extends Card {
 
     public PhyrexianGargantua() {

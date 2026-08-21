@@ -98,5 +98,6 @@ public sealed interface DelayedAction permits
         GrantChosenLandwalkAtNextUpkeep,
         ReboundAtNextUpkeep,
         PendingExileReturn,
-        EachPlayerHandExileReturnAtNextEndStep {
+        EachPlayerHandExileReturnAtNextEndStep,
+        TargetPlayerHandExileReturnAtNextTurnEndStep {
 }

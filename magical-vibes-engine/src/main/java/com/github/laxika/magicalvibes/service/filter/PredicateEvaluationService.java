@@ -609,7 +609,10 @@ public class PredicateEvaluationService {
             }
             case PermanentIsHostOfSourceAuraPredicate ignored -> {
                 Permanent sourceAura = null;
-                if (gameData != null && sourceCardId != null) {
+                if (gameData != null && filterContext != null && filterContext.sourcePermanentId() != null) {
+                    sourceAura = gameQueryService.findPermanentById(gameData, filterContext.sourcePermanentId());
+                }
+                if (sourceAura == null && gameData != null && sourceCardId != null) {
                     sourceAura = findPermanentByOriginalCardId(gameData, sourceCardId);
                 }
                 if (sourceAura == null && filterContext != null) {

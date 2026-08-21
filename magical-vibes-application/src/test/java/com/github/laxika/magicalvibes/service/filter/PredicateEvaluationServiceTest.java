@@ -1836,6 +1836,10 @@ class PredicateEvaluationServiceTest {
                     new PermanentNotPredicate(isHost), withAura)).isFalse();
             assertThat(evaluator.matchesStaticFilter(other,
                     new PermanentNotPredicate(isHost), withAura)).isTrue();
+
+            FilterContext withLiveAura = ctx().withSourcePermanentId(aura.getId());
+            assertThat(evaluator.matchesPermanentPredicate(host, isHost, withLiveAura)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(other, isHost, withLiveAura)).isFalse();
         }
 
         @Test

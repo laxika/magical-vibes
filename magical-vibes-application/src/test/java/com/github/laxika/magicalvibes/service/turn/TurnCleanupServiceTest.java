@@ -583,6 +583,16 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears playersWithAllCreatureDamagePrevented")
+        void clearsPlayersWithAllCreatureDamagePrevented() {
+            gd.playersWithAllCreatureDamagePrevented.add(player1Id);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.playersWithAllCreatureDamagePrevented).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears drawReplacementTargetToController")
         void clearsDrawReplacementTargetToController() {
             gd.drawReplacementTargetToController.put(player1Id, player2Id);

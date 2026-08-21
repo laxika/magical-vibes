@@ -1160,6 +1160,11 @@ public class GameQueryService {
         return playerBattlefieldHasStaticEffect(gameData, playerId, SpendWhiteManaAsAnyColorEffect.class);
     }
 
+    /** Returns true when the player has False Dawn's temporary white-mana permission. */
+    public boolean canSpendWhiteManaAsAnyColorUntilEndOfTurn(GameData gameData, UUID playerId) {
+        return gameData.playersWithWhiteManaAsAnyColorThisTurn.contains(playerId);
+    }
+
     /** Returns true when a global static effect lets the player spend mana as any color. */
     public boolean canSpendManaAsAnyColor(GameData gameData, UUID playerId) {
         return anyBattlefieldHasStaticEffect(gameData, SpendManaAsAnyColorEffect.class);
@@ -5624,6 +5629,22 @@ public class GameQueryService {
         addCreatureSubtypes(result, permanent.getUntilNextTurnSubtypes());
         addCreatureSubtypes(result, bonus.grantedSubtypes());
         return result;
+    }
+
+    /** Returns whether the permanent currently has the Flagbearer creature subtype. */
+    public boolean isFlagbearer(GameData gameData, Permanent permanent) {
+        return effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.FLAGBEARER);
+    }
+
+    /** Returns whether an opponent of {@code playerId} controls a Flagbearer. */
+    public boolean hasFlagbearerControlledByOpponent(GameData gameData, UUID playerId) {
+        for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+            if (!entry.getKey().equals(playerId)
+                    && entry.getValue().stream().anyMatch(permanent -> isFlagbearer(gameData, permanent))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void addCreatureSubtypes(Set<CardSubtype> target, List<CardSubtype> subtypes) {

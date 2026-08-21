@@ -28,8 +28,11 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MayPayManaEffect) effect;
 
-        if (e.payer() == MayPayPayer.ANY_PLAYER) {
+        if (e.payer() == MayPayPayer.ANY_PLAYER || e.payer() == MayPayPayer.ANY_OTHER_PLAYER) {
             List<UUID> order = apnapOrder(gameData);
+            if (e.payer() == MayPayPayer.ANY_OTHER_PLAYER && entry.getActivePlayerId() != null) {
+                order.removeIf(entry.getActivePlayerId()::equals);
+            }
             if (order.isEmpty()) {
                 return;
             }
@@ -60,7 +63,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                     entry.getTargetId());
             case TRIGGERING_PLAYER -> entry.getTargetId();
             case TRIGGERING_SPELL_CONTROLLER -> entry.getTargetId();
-            case ANY_PLAYER -> null;
+            case ANY_PLAYER, ANY_OTHER_PLAYER -> null;
         };
         if (payer == null) {
             return;

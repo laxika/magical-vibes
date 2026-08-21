@@ -249,7 +249,8 @@ public enum CardSubtype {
     ZUBERA("Zubera"),
     YANLING("Yanling"),
     MITE("Mite"),
-    OMEN("Omen");
+    OMEN("Omen"),
+    FLAGBEARER("Flagbearer");
 
     @Getter
     private final String displayName;

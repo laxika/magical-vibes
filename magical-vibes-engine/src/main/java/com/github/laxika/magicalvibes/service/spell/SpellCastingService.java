@@ -1381,6 +1381,8 @@ public class SpellCastingService {
         if (casterPool != null) {
             casterPool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, playerId));
             casterPool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, playerId));
+            casterPool.setWhiteSpendableAsAnyColorWithoutRestriction(
+                    gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, playerId));
             casterPool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, playerId));
         }
 
@@ -1996,7 +1998,7 @@ public class SpellCastingService {
                 && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget
                 && (card.getMaxTargets() == 0
                 || card.getEffectiveMinTargets(effectiveXValue, kicked) > 0)
-                && !EffectResolution.needsDamageDistribution(card)
+                && !EffectResolution.needsDamageDistribution(targetingSpellEffects)
                 && !(kicked && findKickedDividedDamageEffect(filteredSpellEffects) != null)
                 && !needsExileTargeting && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting
                 && !isOptionalModalEtbSkip(card, effectiveXValue)) {
@@ -2108,6 +2110,9 @@ public class SpellCastingService {
                 targetLegalityService.validateSpellTargeting(gameData, card, permTargetId, null, playerId, true);
             }
         }
+
+        targetLegalityService.validateFlagbearerTargetChoiceForSpellCast(
+                gameData, card, targetingSpellEffects, targetId, targetIds, playerId, effectiveXValue, kicked);
 
         // Validate and apply convoke or improvise
         List<ManaColor> convokeContributions = List.of();
@@ -3112,7 +3117,7 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null, counterAssignments
                 ));
-            } else if (EffectResolution.needsDamageDistribution(card)) {
+            } else if (EffectResolution.needsDamageDistribution(targetingSpellEffects)) {
                 // Validate damage assignments for damage distribution spells. Empty assignments are
                 // legal only when the total damage/prevention is 0 (X=0) — sum checks below reject
                 // empty when the total is positive.
@@ -5304,7 +5309,7 @@ public class SpellCastingService {
 
         if (targetId == null && targetIds.isEmpty() && EffectResolution.needsTarget(card)
                 && !EffectResolution.needsSpellTarget(effectsToResolve)
-                && !EffectResolution.needsDamageDistribution(card)
+                && !EffectResolution.needsDamageDistribution(effectsToResolve)
                 && !(needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || needsExileTargeting)) {
             throw new IllegalStateException("Spell requires a target");
         }
@@ -6729,7 +6734,16 @@ public class SpellCastingService {
             }
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            if (pool.getKickedOnlyGreen() > 0) {
+            if (kickerCost.hasX() && kickerEffect.hasXColorRestriction()) {
+                if (kickerEffect.xUsesEachColorAtMostOnce()
+                        && xValue > countAvailableColors(pool, kickerEffect.xColorRestrictions())) {
+                    throw new IllegalStateException("No more than one mana of each color may be spent on kicker X");
+                }
+                if (!kickerCost.canPay(pool, xValue, kickerEffect.xColorRestrictions(), 0)) {
+                    throw new IllegalStateException("Not enough colored mana to pay kicker X");
+                }
+                kickerCost.pay(pool, xValue, kickerEffect.xColorRestrictions(), 0);
+            } else if (pool.getKickedOnlyGreen() > 0) {
                 if (!kickerCost.canPay(pool, xValue, false, false, false, true)) {
                     throw new IllegalStateException("Not enough mana to pay kicker cost");
                 }
@@ -6782,6 +6796,16 @@ public class SpellCastingService {
                     discardHandCardIndex, spellCardIndex);
         }
         return manaSpent;
+    }
+
+    private int countAvailableColors(ManaPool pool, Set<ManaColor> colors) {
+        int count = 0;
+        for (ManaColor color : colors) {
+            if (pool.get(color) > 0) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**

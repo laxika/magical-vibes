@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -562,6 +563,7 @@ public class ChoiceHandlerService {
                         AmountContext.forManaAbility(source, ctx.playerId())) * ctx.manaMultiplier();
         if (amount > 0) {
             ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+            manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), manaColor);
             manaPool.add(manaColor, amount);
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
@@ -585,7 +587,8 @@ public class ChoiceHandlerService {
     }
 
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ChoiceContext.ManaColorChoice ctx) {
-        ManaColor manaColor = ManaColor.valueOf(colorName);
+        ManaColor chosenColor = ManaColor.valueOf(colorName);
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
 
         gameData.interaction.clearAwaitingInput();
 
@@ -769,13 +772,13 @@ public class ChoiceHandlerService {
         if (ctx.sourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (source != null) {
-                CardColor chosenColor = CardColor.valueOf(manaColor.name());
+                CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
                 source.getTransientColors().clear();
-                source.getTransientColors().add(chosenColor);
+                source.getTransientColors().add(sourceChosenColor);
                 source.setColorOverridden(true);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         source.getCard().getName(), null, ctx.playerId(),
-                        new GrantColorUntilEndOfTurnEffect(chosenColor), source.getId(), null, null,
+                        new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
                         EffectDuration.UNTIL_END_OF_TURN, 0));
             }
         }
@@ -2385,6 +2388,11 @@ public class ChoiceHandlerService {
     }
 
     private void handleSpellCreatureTypeChoice(GameData gameData, Player player, String subtypeName) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(subtypeName)) {
+            throw new IllegalArgumentException("Invalid creature type choice: " + subtypeName);
+        }
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.chosenSpellSubtype = subtype;
@@ -2626,9 +2634,10 @@ public class ChoiceHandlerService {
 
             int mana = removed * ctx.manaMultiplier();
             ManaPool pool = gameData.playerManaPools.get(ctx.playerId());
-            pool.add(ctx.color(), mana);
+            ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), ctx.color());
+            pool.add(effectiveColor, mana);
             if (ctx.fromCreature()) {
-                pool.addCreatureMana(ctx.color(), mana);
+                pool.addCreatureMana(effectiveColor, mana);
             }
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " "
@@ -2835,6 +2844,10 @@ public class ChoiceHandlerService {
 
     private void handleAddBasicLandTypeChoice(GameData gameData, String subtypeName, ChoiceContext.AddBasicLandTypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        if (!ctx.allowedTypes().isEmpty() && !ctx.allowedTypes().contains(subtype)) {
+            throw new IllegalArgumentException("Chosen basic land type is not allowed: " + subtypeName);
+        }
 
         gameData.interaction.clearAwaitingInput();
 

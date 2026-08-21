@@ -263,6 +263,8 @@ public class DamagePreventionService {
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention
         if (gameQueryService.isDamagePreventable(gameData)) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            // Divine Light: prevent all damage to creatures controlled by the protected player.
+            if (controllerId != null && gameData.playersWithAllCreatureDamagePrevented.contains(controllerId)) return 0;
             if (controllerId != null && gameData.playersWithAllDamagePrevented.contains(controllerId)) return 0;
         }
         // Protean Hydra / Unbreathing Horde: "If damage would be dealt to this creature, prevent that
@@ -1349,6 +1351,11 @@ public class DamagePreventionService {
      * @return the remaining damage after redirection
      */
     public int applyPlayerNextDamageRedirectShields(GameData gameData, UUID protectedPlayerId, int damage) {
+        return applyPlayerNextDamageRedirectShields(gameData, protectedPlayerId, null, damage);
+    }
+
+    public int applyPlayerNextDamageRedirectShields(GameData gameData, UUID protectedPlayerId,
+                                                    UUID sourcePermanentId, int damage) {
         // No isDamagePreventable check — this is redirection (replacement), not prevention.
         if (damage <= 0 || protectedPlayerId == null || gameData.playerNextDamageRedirectShields.isEmpty()) return damage;
 
@@ -1360,7 +1367,8 @@ public class DamagePreventionService {
             PlayerNextDamageRedirectShield shield = it.next();
             if (!shield.protectedPlayerId().equals(protectedPlayerId)) continue;
             UUID destinationId = shield.redirectTargetPermanentId();
-            if (gameQueryService.findPermanentById(gameData, destinationId) == null) continue;
+            if (!gameData.playerIds.contains(destinationId)
+                    && gameQueryService.findPermanentById(gameData, destinationId) == null) continue;
 
             int redirected = Math.min(shield.remainingAmount(), remaining);
             remaining -= redirected;
@@ -1370,7 +1378,7 @@ public class DamagePreventionService {
             }
             if (redirected > 0) {
                 gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
-                        protectedPlayerId, null, redirected, destinationId));
+                        protectedPlayerId, sourcePermanentId, redirected, destinationId));
             }
         }
 

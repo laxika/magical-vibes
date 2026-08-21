@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlaye
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -315,6 +317,39 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(counterUnlessPays)),
                 sc.spellCard().getId(),
                 Zone.STACK));
+        return true;
+    }
+
+    @CollectsTrigger(value = CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCounterUnlessOtherPlayerPaysManaCostOnSpellCast(
+            TriggerMatchContext match,
+            CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        String manaCost = sc.spellCard().getManaCost();
+        if (spellEntry == null || manaCost == null) {
+            return false;
+        }
+
+        manaCost = manaCost.replace("{X}", "{" + spellEntry.getXValue() + "}");
+        MayPayManaEffect payAndCounter = new MayPayManaEffect(
+                manaCost,
+                new CounterSpellEffect(),
+                "Pay " + manaCost + " to counter " + sc.spellCard().getName() + "?",
+                MayPayPayer.ANY_OTHER_PLAYER);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(payAndCounter)),
+                sc.spellCard().getId(),
+                Zone.STACK,
+                match.permanent().getId());
+        entry.setActivePlayerId(sc.castingPlayerId());
+        match.gameData().stack.add(entry);
         return true;
     }
 

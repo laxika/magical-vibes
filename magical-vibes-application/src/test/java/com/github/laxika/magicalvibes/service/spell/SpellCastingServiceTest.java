@@ -22,7 +22,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -70,6 +72,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -1042,6 +1045,33 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
             DrawCardEffect effect = (DrawCardEffect) gd.stack.getLast().getEffectsToResolve().get(0);
             assertThat(effect.amount()).isEqualTo(new Fixed(2));
+        }
+
+        @Test
+        @DisplayName("Dispatches divided damage from the selected modal mode")
+        void dispatchesDividedDamageFromSelectedMode() {
+            DealDividedDamageEffect damage = DealDividedDamageEffect.chosenAmongAnyTargets(2);
+            Card modal = createInstant("Test Split", "{1}{R}");
+            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption(
+                            "Fire",
+                            List.<CardEffect>of(damage),
+                            null, null, 1, 2, false, null
+                    ).withManaCost("{1}{R}"),
+                    new ChooseOneEffect.ChooseOneOption("Ice", new DrawCardEffect(1))
+            )));
+            setHand(player1Id, List.of(modal));
+            addMana(player1Id, ManaColor.RED, 1);
+            addMana(player1Id, ManaColor.COLORLESS, 1);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, 0, null, Map.of(player2Id, 2),
+                    List.of(player2Id), List.of(), false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getDamageAssignments())
+                    .containsExactlyEntriesOf(Map.of(player2Id, 2));
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(damage);
         }
     }
 
