@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
+import com.github.laxika.magicalvibes.cards.i.ImplementsOfSacrifice;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZelyonSword.class, IcatianPhalanx.class, ImplementsOfSacrifice.class})
 class ZelyonSwordTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class ZelyonSwordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -46,7 +46,7 @@ class ZelyonSwordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -64,6 +64,7 @@ class ZelyonSwordTest extends BaseCardTest {
 
         assertThat(sword.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -80,13 +81,60 @@ class ZelyonSwordTest extends BaseCardTest {
 
         assertThat(sword.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost ends when the artifact leaves the battlefield")
+    void boostEndsWhenSwordLeavesBattlefield() {
+        Permanent sword = addReadySword(player1);
+        Permanent bear = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, sword));
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost is not created if the artifact leaves before the ability resolves")
+    void boostDoesNotApplyIfSwordLeavesBeforeResolution() {
+        Permanent sword = addReadySword(player1);
+        Permanent bear = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, sword));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The ability can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        addReadySword(player1);
+        Permanent bear = addReadyBear(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("The ability cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addReadySword(player1);
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AngelsFeather());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ImplementsOfSacrifice());
         artifact.setSummoningSick(false);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -102,20 +150,15 @@ class ZelyonSwordTest extends BaseCardTest {
     }
 
     private Permanent addReadyBear(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new IcatianPhalanx());
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

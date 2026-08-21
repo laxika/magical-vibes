@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(IcatianStore.class)
 class IcatianStoreTest extends BaseCardTest {
-
-    // ===== Enters tapped =====
 
     @Test
     @DisplayName("Icatian Store enters the battlefield tapped")
@@ -23,12 +23,10 @@ class IcatianStoreTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findPermanent(player1, "Icatian Store").isTapped()).isTrue();
     }
-
-    // ===== Upkeep storage-counter accrual =====
 
     @Test
     @DisplayName("Upkeep adds a storage counter while the land is tapped")
@@ -38,18 +36,24 @@ class IcatianStoreTest extends BaseCardTest {
 
         // player2 ends their turn; on player1's untap step decline to untap (keep it tapped),
         // then the upkeep trigger sees a tapped land and puts a storage counter on it.
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // cascade into player1's untap → "Untap Icatian Store?" prompt
-        harness.handleMayAbilityChosen(player1, false); // choose NOT to untap
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // untap → upkeep, trigger onto the stack
-        harness.passBothPriorities(); // resolve the trigger
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        resolveAllTriggers();
 
         assertThat(store.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Controller may choose to untap Icatian Store")
+    void controllerMayChooseToUntap() {
+        Permanent store = harness.addToBattlefieldAndReturn(player1, new IcatianStore());
+        store.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(store.isTapped()).isFalse();
     }
 
     @Test
@@ -57,16 +61,50 @@ class IcatianStoreTest extends BaseCardTest {
     void upkeepAddsNoCounterWhileUntapped() {
         Permanent store = harness.addToBattlefieldAndReturn(player1, new IcatianStore());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep
-        harness.passBothPriorities(); // resolve any trigger (intervening-if is false)
+        advanceToUpkeep(player1);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(store.getCounterCount(CounterType.STORAGE)).isZero();
     }
 
-    // ===== Mana ability =====
+    @Test
+    @DisplayName("Untapped Icatian Store does not put an upkeep ability on the stack")
+    void untappedStoreDoesNotTrigger() {
+        harness.addToBattlefieldAndReturn(player1, new IcatianStore());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gameLogContains("Icatian Store's upkeep ability triggers.")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Upkeep does not add a storage counter during an opponent's upkeep")
+    void upkeepDoesNotAddCounterDuringOpponentsUpkeep() {
+        Permanent store = harness.addToBattlefieldAndReturn(player1, new IcatianStore());
+        store.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(store.getCounterCount(CounterType.STORAGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does nothing if Icatian Store becomes untapped before resolution")
+    void upkeepTriggerDoesNothingIfStoreBecomesUntappedBeforeResolution() {
+        Permanent store = harness.addToBattlefieldAndReturn(player1, new IcatianStore());
+        store.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.stack).hasSize(1);
+        store.untap();
+        harness.passBothPriorities();
+
+        assertThat(store.getCounterCount(CounterType.STORAGE)).isZero();
+    }
 
     @Test
     @DisplayName("Removing all storage counters adds that much white mana")
@@ -118,11 +156,17 @@ class IcatianStoreTest extends BaseCardTest {
         assertThat(store.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    private void beginPlayer1UntapChoice() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UNTAP);
+    }
 
     private Permanent addStoreWithCounters(int counters) {
         Permanent store = harness.addToBattlefieldAndReturn(player1, new IcatianStore());
-        store.setSummoningSick(false);
         if (counters > 0) {
             store.setCounterCount(CounterType.STORAGE, counters);
         }

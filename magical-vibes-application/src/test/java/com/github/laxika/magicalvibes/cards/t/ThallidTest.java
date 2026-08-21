@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Thallid.class)
 class ThallidTest extends BaseCardTest {
 
     @Test
@@ -17,10 +18,7 @@ class ThallidTest extends BaseCardTest {
     void upkeepTriggerAddsSporeCounter() {
         Permanent thallid = addThallid();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
@@ -40,6 +38,19 @@ class ThallidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing three spore counters leaves any additional spore counters")
+    void removesExactlyThreeSporeCounters() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
         addThallid().setCounterCount(CounterType.FUNGUS, 2);
@@ -48,9 +59,35 @@ class ThallidTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Spore counters do not stop Thallid from untapping")
+    void sporeCountersDoNotPreventUntap() {
+        Permanent thallid = addThallid();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        thallid.tap();
+        advanceToUpkeep(player1);
+
+        assertThat(thallid.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Spore counters are not removed automatically at upkeep")
+    void sporeCountersAreNotRemovedAtUpkeep() {
+        Permanent thallid = addThallid();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+    }
+
     private Permanent addThallid() {
-        Permanent thallid = harness.addToBattlefieldAndReturn(player1, new Thallid());
-        thallid.setSummoningSick(false);
-        return thallid;
+        return addCreatureReady(player1, new Thallid());
     }
 }

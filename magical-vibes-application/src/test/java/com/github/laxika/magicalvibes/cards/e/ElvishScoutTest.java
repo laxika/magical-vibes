@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.Aeolipile;
+import com.github.laxika.magicalvibes.cards.t.Thallid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElvishScout.class, Thallid.class, Aeolipile.class})
 class ElvishScoutTest extends BaseCardTest {
 
     @Test
@@ -66,6 +65,7 @@ class ElvishScoutTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(attacker.getId()));
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -76,9 +76,10 @@ class ElvishScoutTest extends BaseCardTest {
 
         activateElvishScout(scout, attacker);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, attacker.getId());
+        Permanent aeolipile = harness.addToBattlefieldAndReturn(player2, new Aeolipile());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int aeolipileIndex = gd.playerBattlefields.get(player2.getId()).indexOf(aeolipile);
+        harness.activateAbility(player2, aeolipileIndex, null, attacker.getId());
         harness.passBothPriorities();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
@@ -103,7 +104,7 @@ class ElvishScoutTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttacker() {
         Permanent scout = addElvishScout(player1);
-        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new Thallid());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -115,10 +116,7 @@ class ElvishScoutTest extends BaseCardTest {
     }
 
     private Permanent addElvishScout(Player owner) {
-        Permanent perm = new Permanent(new ElvishScout());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return addCreatureReady(owner, new ElvishScout());
     }
 
     private void activateElvishScout(Permanent scout, Permanent target) {
@@ -132,26 +130,20 @@ class ElvishScoutTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(owner, new Thallid());
+        perm.setPowerModifier(power - 1);
+        perm.setToughnessModifier(toughness - 1);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 
     private Permanent addBlocker(Player owner, int power, int toughness, int blockedAttackerIndex) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(owner, new Thallid());
+        perm.setPowerModifier(power - 1);
+        perm.setToughnessModifier(toughness - 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(blockedAttackerIndex);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 }

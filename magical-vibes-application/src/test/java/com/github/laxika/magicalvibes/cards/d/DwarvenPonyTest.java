@@ -17,8 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DwarvenPonyTest extends BaseCardTest {
 
     private void addPony() {
-        Permanent pony = harness.addToBattlefieldAndReturn(player1, new DwarvenPony());
-        pony.setSummoningSick(false);
+        addCreatureReady(player1, new DwarvenPony());
     }
 
     private void addManaForAbility() {
