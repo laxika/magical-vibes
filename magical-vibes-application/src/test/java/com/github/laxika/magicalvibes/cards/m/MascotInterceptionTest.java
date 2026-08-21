@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MascotInterception.class, GrizzlyBears.class})
 class MascotInterceptionTest extends BaseCardTest {
 
     @Test
@@ -90,11 +92,12 @@ class MascotInterceptionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void rejectsNoncreatureTarget() {
-        Permanent enchantment = new Permanent(new Card());
-        enchantment.getCard().setName("Test Enchantment");
-        enchantment.getCard().setType(CardType.ENCHANTMENT);
-        enchantment.getCard().setManaCost("{1}");
-        enchantment.getCard().setColor(CardColor.BLUE);
+        Card enchantmentCard = new Card();
+        enchantmentCard.setName("Test Enchantment");
+        enchantmentCard.setType(CardType.ENCHANTMENT);
+        enchantmentCard.setManaCost("{1}");
+        enchantmentCard.setColor(CardColor.BLUE);
+        Permanent enchantment = new Permanent(enchantmentCard);
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
 
         harness.setHand(player1, List.of(new MascotInterception()));

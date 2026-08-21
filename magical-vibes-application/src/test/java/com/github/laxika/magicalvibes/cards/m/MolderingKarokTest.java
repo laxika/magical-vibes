@@ -3,11 +3,15 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MolderingKarok.class, GrizzlyBears.class})
 class MolderingKarokTest extends BaseCardTest {
 
     @Test
@@ -38,6 +42,9 @@ class MolderingKarokTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 1));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);

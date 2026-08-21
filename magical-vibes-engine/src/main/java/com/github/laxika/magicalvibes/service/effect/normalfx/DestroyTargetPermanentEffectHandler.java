@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,9 +26,10 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroy = (DestroyTargetPermanentEffect) effect;
+        List<UUID> effectTargets = entry.targetsForEffect(effect);
         UUID targetId = destroy.targetGroup() >= 0
                 ? entry.targetsForGroup(destroy.targetGroup()).stream().findFirst().orElse(null)
-                : entry.getTargetId();
+                : effectTargets.isEmpty() ? entry.getTargetId() : effectTargets.getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     return;

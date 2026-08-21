@@ -457,7 +457,8 @@ public class DeathTriggerCollectorService {
 
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(),
-                new ArrayList<>(List.of(new MoveDyingSourceCountersToTargetCreatureEffect(snapshot)))
+                new ArrayList<>(List.of(new MoveDyingSourceCountersToTargetCreatureEffect(
+                        snapshot, effect.controllerOnly())))
         ));
         return true;
     }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EcologicalAppreciation.class, GrizzlyBears.class, LlanowarElves.class,
+        Ornithopter.class, RagingGoblin.class, Shock.class})
 class EcologicalAppreciationTest extends BaseCardTest {
 
     @Test
@@ -53,7 +56,8 @@ class EcologicalAppreciationTest extends BaseCardTest {
     void oneOrTwoFoundCardsDoNotEnterBattlefield() {
         Card goblin = new RagingGoblin();
         Card elves = new LlanowarElves();
-        setUpAndCast(new EcologicalAppreciation(), 1, List.of(goblin, new Shock()), List.of(elves));
+        Card shock = new Shock();
+        setUpAndCast(new EcologicalAppreciation(), 1, List.of(goblin, shock), List.of(elves));
 
         assertThat(gd.interaction.activeInteraction(
                 PendingInteraction.EcologicalAppreciationSearchChoice.class).pool())
@@ -63,7 +67,7 @@ class EcologicalAppreciationTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
-                .containsExactlyInAnyOrder(goblin.getId(), elves.getId());
+                .containsExactlyInAnyOrder(goblin.getId(), elves.getId(), shock.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 

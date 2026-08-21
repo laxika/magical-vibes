@@ -84,7 +84,20 @@ public class DiscardTriggerCollectorService {
     private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.Discard discard = (TriggerContext.Discard) ctx;
         UUID triggeringCardId = discard.discardedCard() == null ? null : discard.discardedCard().getId();
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may, triggeringCardId);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(may)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(triggeringCardId);
+        if (triggeringCardId != null) {
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    match.gameData().graveyardEntryVersion(triggeringCardId));
+        }
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on discard (may ability)", match.gameData().id, match.permanent().getCard().getName());
         return true;

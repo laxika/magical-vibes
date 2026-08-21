@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MavindaStudentsAdvocate.class, GiantGrowth.class, GrizzlyBears.class, Shock.class})
 class MavindaStudentsAdvocateTest extends BaseCardTest {
 
     @Test
@@ -50,7 +52,7 @@ class MavindaStudentsAdvocateTest extends BaseCardTest {
         harness.castFromGraveyardTargeting(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(shock.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -66,7 +68,7 @@ class MavindaStudentsAdvocateTest extends BaseCardTest {
 
         grantPermission(shock);
 
-        assertThatThrownBy(() -> harness.activateGraveyardAbilityWithGraveyardTargets(
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, 0, 0, List.of(giantGrowth.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -75,7 +77,7 @@ class MavindaStudentsAdvocateTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.activateGraveyardAbilityWithGraveyardTargets(player1, 0, 0, List.of(card.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(card.getId()));
         harness.passBothPriorities();
     }
 }

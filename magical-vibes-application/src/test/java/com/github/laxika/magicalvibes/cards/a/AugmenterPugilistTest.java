@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AugmenterPugilist.class, Forest.class, GrizzlyBears.class, HillGiant.class})
 class AugmenterPugilistTest extends BaseCardTest {
 
     @Test

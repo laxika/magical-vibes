@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToContr
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -74,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntap
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
@@ -1157,6 +1159,16 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
                 gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard()));
+            } else if (effect instanceof RegisterDelayedControllerSpellCastTriggerEffect delayed) {
+                gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
+                        playerId,
+                        permanent.getId(),
+                        permanent.getCard(),
+                        delayed.spellFilter(),
+                        delayed.resolvedEffects(),
+                        delayed.oneShot(),
+                        delayed.sourceMustRemainOnBattlefield(),
+                        delayed.targetFilter()));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));

@@ -5,23 +5,27 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+@CardUsed({ExtusOriqOverlord.class, GrizzlyBears.class, Shock.class})
 class ExtusOriqOverlordTest extends BaseCardTest {
 
     @Test
     @DisplayName("Magecraft returns a nonlegendary creature card from the graveyard to hand")
     void magecraftReturnsNonlegendaryCreatureToHand() {
         harness.addToBattlefield(player1, new ExtusOriqOverlord());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
@@ -51,6 +55,6 @@ class ExtusOriqOverlordTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        harness.assertLife(player2, lifeBefore - 3);
+        harness.assertLife(player2, lifeBefore - 6);
     }
 }

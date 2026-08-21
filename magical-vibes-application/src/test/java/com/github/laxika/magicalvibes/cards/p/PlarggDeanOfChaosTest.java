@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PlarggDeanOfChaos.class, Forest.class, GrizzlyBears.class, HillGiant.class})
 class PlarggDeanOfChaosTest extends BaseCardTest {
 
     @Test
@@ -85,7 +87,8 @@ class PlarggDeanOfChaosTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
                 augusta.getId(), selected.getId(), notSelected.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(selected.getId()));
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.PermanentsChosen(List.of(selected.getId())));
 
         assertThat(augusta.isTapped()).isFalse();
         assertThat(selected.isTapped()).isTrue();
@@ -98,7 +101,9 @@ class PlarggDeanOfChaosTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        return findPermanent(player1, "Augusta, Dean of Order");
+        Permanent augusta = findPermanent(player1, "Augusta, Dean of Order");
+        augusta.setSummoningSick(false);
+        return augusta;
     }
 
     private int indexOf(Permanent permanent) {

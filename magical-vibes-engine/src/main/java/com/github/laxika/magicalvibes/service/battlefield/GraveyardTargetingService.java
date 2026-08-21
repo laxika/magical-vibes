@@ -1038,18 +1038,21 @@ public class GraveyardTargetingService {
 
     /**
      * "Exile up to N target cards from a single graveyard" (Scarab Feast). Pools every card in
-     * every graveyard as a legal target, but flags the choice {@code singleGraveyard} so
+     * every graveyard that matches the effect's filter, and flags the choice {@code singleGraveyard} so
      * {@code GraveyardChoiceHandlerService} rejects a selection spanning more than one graveyard.
-     * Any card type is a legal target (no filter).
      */
     public void handleUpToNSingleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                          StackEntryType entryType, int maxTargetsCap,
+                                                         com.github.laxika.magicalvibes.model.filter.CardPredicate filter,
                                                          List<CardEffect> spellEffects) {
         List<Card> matchingCards = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId);
             if (graveyard == null) continue;
-            matchingCards.addAll(graveyard);
+            matchingCards.addAll(graveyard.stream()
+                    .filter(candidate -> filter == null
+                            || predicateEvaluationService.matchesCardPredicate(candidate, filter, card.getId()))
+                    .toList());
         }
 
         int maxTargets = Math.min(maxTargetsCap, matchingCards.size());

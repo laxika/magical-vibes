@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -100,6 +99,7 @@ public class ChoiceHandlerService {
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final com.github.laxika.magicalvibes.service.DrawService drawService;
     private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
@@ -4100,10 +4100,10 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
 
-        if (ctx.drawForHandExiled() && handExiledCount > 0 && gameData.pendingEffectResolutionEntry != null) {
-            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
-                    gameData.pendingEffectResolutionIndex,
-                    List.of(new DrawCardForTargetPlayerEffect(handExiledCount)));
+        if (ctx.drawForHandExiled()) {
+            for (int i = 0; i < handExiledCount; i++) {
+                drawService.resolveDrawCard(gameData, targetPlayerId);
+            }
         }
 
         if (ctx.tokenTemplate() != null && handExiledCount > 0) {

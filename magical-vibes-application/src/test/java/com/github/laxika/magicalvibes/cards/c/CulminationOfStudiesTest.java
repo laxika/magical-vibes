@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CulminationOfStudies.class, Forest.class, GrizzlyBears.class, LightningBolt.class, Opt.class})
 class CulminationOfStudiesTest extends BaseCardTest {
 
     @Test
@@ -37,7 +39,7 @@ class CulminationOfStudiesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getId())
                 .containsExactly(land.getId(), blue.getId(), red.getId(), blueAndRed.getId());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);

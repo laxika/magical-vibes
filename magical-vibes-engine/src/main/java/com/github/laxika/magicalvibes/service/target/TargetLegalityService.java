@@ -2336,6 +2336,9 @@ public class TargetLegalityService {
         if (targetingCard == null) {
             return null;
         }
+        if (entry.isPrimaryTargetStoredSeparately() && !targetingCard.getSpellTargets().isEmpty()) {
+            return targetingCard.getSpellTargets().getFirst().getFilter();
+        }
         if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 int groupIndex = targetingCard.getEffectTargetIndex(effect);

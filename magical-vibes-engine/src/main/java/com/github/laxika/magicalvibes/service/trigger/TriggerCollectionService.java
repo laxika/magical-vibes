@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -153,6 +154,7 @@ import java.util.HashSet;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -3261,6 +3263,20 @@ public class TriggerCollectionService {
             effects.addAll(perm.getPersistentTriggeredEffects(
                     EffectSlot.ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE));
             for (CardEffect effect : effects) {
+                if (effect instanceof DealDamageToAnyTargetEffect) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            perm.getCard(), playerId, new ArrayList<>(List.of(effect)), false,
+                            new AnyTargetPredicateTargetFilter(
+                                    new PermanentNotPredicate(
+                                            new PermanentIsSpecificPermanentPredicate(damagedPermanent.getId())),
+                                    new PlayerRelationPredicate(PlayerRelation.ANY),
+                                    "Target must be other than the permanent dealt excess damage."),
+                            excessDamage, perm.getId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} triggers (opponent permanent dealt excess damage)",
+                            gameData.id, perm.getCard().getName());
+                    continue;
+                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -5191,6 +5207,15 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
+        Map<UUID, Permanent> sourcesById = new LinkedHashMap<>();
+        battlefield.forEach(source -> sourcesById.put(source.getId(), source));
+        gameData.simultaneousDyingCreatures.forEach((permanentId, source) -> {
+            if (dyingCreatureControllerId.equals(
+                    gameData.simultaneousDyingControllers.get(permanentId))) {
+                sourcesById.putIfAbsent(permanentId, source);
+            }
+        });
+
         Card dyingCard = dyingPermanent.getCard();
         int dyingPower = Math.max(0, dyingPowerAtDeath);
         Map<CounterType, Integer> dyingCounters = snapshotCountersOnPermanent(dyingPermanent);
@@ -5198,7 +5223,7 @@ public class TriggerCollectionService {
                 dyingPower, dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(),
                 dyingPermanent);
 
-        for (Permanent perm : battlefield) {
+        for (Permanent perm : sourcesById.values()) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES);
             if (effects == null || effects.isEmpty()) continue;
 
@@ -6502,16 +6527,25 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Delayed "when that creature dies this turn, ..." (Skeletonize, Initiate of Blood): if the dying
-     * creature's card was registered, push one triggered ability per registration that resolves the
-     * recorded effect under the recorded controller's control, carrying the registering permanent so
-     * self-referential effects still find it. Fires at most once per registration.
+     * Resolves delayed effects registered for a permanent dying this turn. Creature-only registrations
+     * and registrations that can also apply to other permanent types are kept separately, then combined
+     * when the permanent dies.
      */
-    public void triggerDelayedEffectOnDeath(GameData gameData, UUID dyingCreatureCardId,
-                                            UUID dyingCreatureControllerId, int dyingCreaturePower,
-                                            int dyingCreatureManaValue) {
-        List<DelayedEffectOnDeath> registrations = gameData.creatureTriggeringEffectOnDeathThisTurn.remove(dyingCreatureCardId);
-        if (registrations == null) {
+    public void triggerDelayedEffectOnDeath(GameData gameData, UUID dyingPermanentCardId,
+                                            UUID dyingPermanentControllerId, int dyingPermanentPower,
+                                            int dyingPermanentManaValue) {
+        List<DelayedEffectOnDeath> registrations = new ArrayList<>();
+        List<DelayedEffectOnDeath> creatureRegistrations =
+                gameData.creatureTriggeringEffectOnDeathThisTurn.remove(dyingPermanentCardId);
+        if (creatureRegistrations != null) {
+            registrations.addAll(creatureRegistrations);
+        }
+        List<DelayedEffectOnDeath> permanentRegistrations =
+                gameData.permanentTriggeringEffectOnDeathThisTurn.remove(dyingPermanentCardId);
+        if (permanentRegistrations != null) {
+            registrations.addAll(permanentRegistrations);
+        }
+        if (registrations.isEmpty()) {
             return;
         }
 
@@ -6522,10 +6556,10 @@ public class TriggerCollectionService {
                     registration.controllerId(),
                     registration.sourceCard().getName() + " triggers (a creature dealt damage this way died)",
                     new ArrayList<>(List.of(registration.effect())),
-                    dyingCreatureControllerId,
+                    dyingPermanentControllerId,
                     registration.sourcePermanentId());
-            delayedEntry.setEventValue(Math.max(0, dyingCreaturePower));
-            delayedEntry.setDyingPermanentManaValue(Math.max(0, dyingCreatureManaValue));
+            delayedEntry.setEventValue(Math.max(0, dyingPermanentPower));
+            delayedEntry.setDyingPermanentManaValue(Math.max(0, dyingPermanentManaValue));
             gameData.stack.add(delayedEntry);
 
             log.info("Game {} - Delayed death trigger: {} triggers (a creature it damaged died this turn)",

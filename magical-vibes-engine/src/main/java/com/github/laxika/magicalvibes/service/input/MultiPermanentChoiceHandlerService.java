@@ -190,6 +190,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice choice
+                && choice.requiresChoice() && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one permanent must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice choice
                 && permanentIds.size() != choice.requiredCount()) {
             throw new IllegalStateException("Exactly " + choice.requiredCount()
@@ -355,6 +359,8 @@ public class MultiPermanentChoiceHandlerService {
             handleUntapChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanent ctx) {
             handleTapChosenPermanent(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberPermanents) {
+            handleTapAnyNumberPermanents(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls ctx) {
             handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
@@ -536,6 +542,16 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("No pending effect resolution entry");
         }
         chooseTwoCreaturesByPowerDifferenceEffectHandler.completeChoice(gameData, permanentIds, entry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTapAnyNumberPermanents(GameData gameData, List<UUID> permanentIds) {
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null) {
+                tapUntapSupport.tapPermanent(gameData, permanent);
+            }
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
