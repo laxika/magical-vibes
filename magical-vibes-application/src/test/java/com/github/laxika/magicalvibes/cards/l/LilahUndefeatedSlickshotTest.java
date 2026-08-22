@@ -45,15 +45,14 @@ class LilahUndefeatedSlickshotTest extends BaseCardTest {
     @DisplayName("A multicolored instant cast from hand becomes plotted as it resolves")
     void plotsMulticoloredInstantFromHand() {
         addLilah();
-        GrizzlyBears bears = new GrizzlyBears();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Terminate terminate = new Terminate();
-        harness.addToBattlefield(player2, bears);
         harness.setHand(player1, List.of(terminate));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(terminate);
         assertThat(gd.plottedCardIds).contains(terminate.getId());
@@ -72,7 +71,7 @@ class LilahUndefeatedSlickshotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
         assertThat(gd.plottedCardIds).doesNotContain(shock.getId());
@@ -83,16 +82,17 @@ class LilahUndefeatedSlickshotTest extends BaseCardTest {
     void doesNotPlotCounteredSpell() {
         addLilah();
         Terminate terminate = new Terminate();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(terminate));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player2, List.of(new Counterspell()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, bears.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, terminate.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(terminate);
         assertThat(gd.plottedCardIds).doesNotContain(terminate.getId());

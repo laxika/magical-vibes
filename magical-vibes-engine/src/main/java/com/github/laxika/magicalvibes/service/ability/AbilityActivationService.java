@@ -5556,9 +5556,6 @@ public class AbilityActivationService {
         }
 
         if (maxActivationsPerTurn != null && currentCount >= maxActivationsPerTurn) {
-            if (maxActivationsPerTurn == 1) {
-                throw new IllegalStateException("This ability can be activated only once each turn");
-            }
             throw new IllegalStateException("This ability can be activated no more than " + maxActivationsPerTurn + " times each turn");
         }
     }

@@ -57,8 +57,8 @@ class SarkhanTheMasterlessTest extends BaseCardTest {
     @DisplayName("The attack trigger deals one damage for each Dragon to the attacking creature")
     void dragonsDamageAttacker() {
         addReadySarkhan(player1, 7);
-        createDragonToken();
-        createDragonToken();
+        addDragon(player1);
+        addDragon(player1);
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0), null);
@@ -112,5 +112,11 @@ class SarkhanTheMasterlessTest extends BaseCardTest {
     private void createDragonToken() {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
+    }
+
+    private void addDragon(Player player) {
+        GrizzlyBears dragon = new GrizzlyBears();
+        dragon.setSubtypes(List.of(CardSubtype.DRAGON));
+        addCreatureReady(player, dragon);
     }
 }

@@ -27,7 +27,7 @@ class MetamorphicBlastTest extends BaseCardTest {
         cast(new int[]{0}, List.of(target.getId()), 2);
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
-        assertThat(target.getTransientSubtypes()).containsExactly(CardSubtype.RABBIT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.RABBIT);
         assertThat(gqs.getEffectivePower(gd, target)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
@@ -45,6 +45,7 @@ class MetamorphicBlastTest extends BaseCardTest {
     @DisplayName("The second mode makes the target player draw two cards")
     void targetPlayerDrawsTwoCards() {
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
 
         cast(new int[]{1}, List.of(player2.getId()), 4);
 
@@ -56,10 +57,11 @@ class MetamorphicBlastTest extends BaseCardTest {
     void bothModesResolve() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
 
         cast(new int[]{0, 1}, List.of(target.getId(), player2.getId()), 5);
 
-        assertThat(target.getTransientSubtypes()).containsExactly(CardSubtype.RABBIT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.RABBIT);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }

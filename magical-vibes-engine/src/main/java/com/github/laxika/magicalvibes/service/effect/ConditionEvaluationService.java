@@ -724,7 +724,7 @@ public class ConditionEvaluationService {
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
             case ControllerCastSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
-                            gameData, ctx.controllerId(), null, c.filter());
+                            gameData, ctx.controllerId(), null, c.filter(), c.fromHandOnly());
             case SourceWasSecondSpellCastThisTurn ignored ->
                     ctx.controllerId() != null
                             && ctx.sourceCard() != null

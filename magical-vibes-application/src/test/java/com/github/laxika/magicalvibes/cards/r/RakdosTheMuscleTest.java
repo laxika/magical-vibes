@@ -50,7 +50,8 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.findExiledCard(exiledSpell.getId())).isNotNull();
+        assertThat(gd.findExiledCard(exiledSpell.getId())).isNull();
+        harness.assertInGraveyard(player2, "Divination");
     }
 
     @Test
@@ -61,7 +62,6 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
 
         sacrifice(sacrificed);
-        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -76,6 +76,7 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();

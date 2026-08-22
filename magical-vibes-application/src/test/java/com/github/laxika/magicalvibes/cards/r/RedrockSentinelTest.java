@@ -19,7 +19,7 @@ class RedrockSentinelTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices a land, draws a card, and creates a Treasure token")
     void sacrificesLandDrawsAndCreatesTreasure() {
-        harness.addToBattlefield(player1, new RedrockSentinel());
+        addCreatureReady(player1, new RedrockSentinel());
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setHand(player1, List.of());
@@ -36,7 +36,7 @@ class RedrockSentinelTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without a land to sacrifice")
     void cannotActivateWithoutLand() {
-        harness.addToBattlefield(player1, new RedrockSentinel());
+        addCreatureReady(player1, new RedrockSentinel());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -46,7 +46,7 @@ class RedrockSentinelTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        harness.addToBattlefield(player1, new RedrockSentinel());
+        addCreatureReady(player1, new RedrockSentinel());
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

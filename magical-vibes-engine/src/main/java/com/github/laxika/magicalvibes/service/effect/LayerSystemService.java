@@ -1297,7 +1297,7 @@ public class LayerSystemService {
         if (!(instance.effect() instanceof SetNameEffect setName)) {
             return;
         }
-        for (PermanentSlot target : scopeTargets(instance, setName.scope(), null,
+        for (PermanentSlot target : scopeTargets(gameData, instance, setName.scope(), null,
                 slots, slotsById, board)) {
             board.states().get(target.permanent().getId()).setName(setName.name());
         }
@@ -1336,7 +1336,7 @@ public class LayerSystemService {
         switch (effect) {
             case GrantSubtypeEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (!grant.overriding()) {
                         state.addSubtype(grant.subtype());
@@ -1376,7 +1376,7 @@ public class LayerSystemService {
             }
             case GrantCardTypeEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(instance, grant.scope(), null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), null, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addCardType(grant.cardType());
                     record(board, instance, target, new L4Contribution(
                             null, false, false, grant.cardType(), null));
@@ -1399,7 +1399,7 @@ public class LayerSystemService {
             }
             case SetCardTypesEffect set -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(instance, set.scope(), null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(set.cardTypes());
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
@@ -1408,7 +1408,7 @@ public class LayerSystemService {
             }
             case GrantSupertypeToEnchantedPermanentEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addSupertype(grant.supertype());
                     record(board, instance, target, new L4Contribution(
                             null, false, false, null, grant.supertype()));
@@ -1453,7 +1453,7 @@ public class LayerSystemService {
                 if (instance.source() == null) return;
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
-                for (PermanentSlot target : scopeTargets(instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addSubtype(chosen);
                     record(board, instance, target, new L4Contribution(
                             chosen, false, false, null, null));
@@ -1464,7 +1464,7 @@ public class LayerSystemService {
                 if (instance.source() == null) return;
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
-                for (PermanentSlot target : scopeTargets(instance, GrantScope.OWN_LANDS, null,
+                for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.OWN_LANDS, null,
                         slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addSubtype(chosen);
                     record(board, instance, target, new L4Contribution(
@@ -1473,7 +1473,7 @@ public class LayerSystemService {
             }
             case EnchantedPermanentBecomesTypeEffect becomes -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (becomes.isBasicLandSubtype()) {
                         setLandTypes(state, target.permanent().getId(), becomes.subtypes(), landTypeOverrides);
@@ -1489,7 +1489,7 @@ public class LayerSystemService {
                 if (instance.source() == null) return;
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
-                for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (BASIC_LAND_SUBTYPES.contains(chosen)) {
                         setLandType(state, target.permanent().getId(), chosen, landTypeOverrides);
@@ -1501,7 +1501,7 @@ public class LayerSystemService {
             }
             case EnchantedPermanentBecomesOnlyLandEffect ignored -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.overrideCardTypes(Set.of(CardType.LAND));
                     record(board, instance, target, new L4Contribution(
@@ -1513,7 +1513,7 @@ public class LayerSystemService {
                 // handler in the accumulator pass, so its handler must keep running during
                 // assembly. Here we only add the creature type + subtypes to the state so the
                 // enchanted permanent reads as a creature for other layer-4+ effects (lords).
-                for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.addCardType(CardType.CREATURE);
                     for (CardSubtype subtype : becomes.subtypes()) {
@@ -1536,7 +1536,7 @@ public class LayerSystemService {
             }
             case LoseAllLandTypesEffect lose -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(instance, lose.scope(), lose.filter(),
+                for (PermanentSlot target : scopeTargets(gameData, instance, lose.scope(), lose.filter(),
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (!state.hasCardType(CardType.LAND)) continue;
@@ -1798,7 +1798,7 @@ public class LayerSystemService {
         return instance.source() != null && instance.source().permanent() == target.permanent();
     }
 
-    private List<PermanentSlot> scopeTargets(EffectInstance instance, GrantScope scope,
+    private List<PermanentSlot> scopeTargets(GameData gameData, EffectInstance instance, GrantScope scope,
                                              PermanentPredicate filter, List<PermanentSlot> slots,
                                              Map<UUID, PermanentSlot> slotsById,
                                              LayeredBoardState board) {
@@ -1809,7 +1809,7 @@ public class LayerSystemService {
         List<PermanentSlot> targets = new ArrayList<>();
         switch (scope) {
             case SELF -> {
-                if (matchesL4Filter(source, filter, board, source.permanent())) {
+                if (matchesL4Filter(source, filter, board, gameData, source.permanent(), source.controllerId())) {
                     targets.add(source);
                 }
             }
@@ -1817,7 +1817,8 @@ public class LayerSystemService {
                 Permanent sourcePermanent = source.permanent();
                 if (sourcePermanent.isAttached()) {
                     PermanentSlot attached = slotsById.get(sourcePermanent.getAttachedTo());
-                    if (attached != null && matchesL4Filter(attached, filter, board, source.permanent())) {
+                    if (attached != null && matchesL4Filter(attached, filter, board, gameData,
+                            source.permanent(), source.controllerId())) {
                         targets.add(attached);
                     }
                 }
@@ -1825,7 +1826,8 @@ public class LayerSystemService {
             case ALL_PERMANENTS -> {
                 for (PermanentSlot slot : slots) {
                     if (slot.permanent() != source.permanent()
-                            && matchesL4Filter(slot, filter, board, source.permanent())) {
+                            && matchesL4Filter(slot, filter, board, gameData,
+                            source.permanent(), source.controllerId())) {
                         targets.add(slot);
                     }
                 }
@@ -1838,7 +1840,8 @@ public class LayerSystemService {
                             || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                             || (scope == GrantScope.OPPONENT_CREATURES ? !own : own);
                     if (inScope && isCreatureForL4(slot.permanent(), board.states().get(slot.permanent().getId()))
-                            && matchesL4Filter(slot, filter, board, source.permanent())) {
+                            && matchesL4Filter(slot, filter, board, gameData,
+                            source.permanent(), source.controllerId())) {
                         targets.add(slot);
                     }
                 }
@@ -1861,7 +1864,8 @@ public class LayerSystemService {
                             || (scope == GrantScope.OPPONENT_LANDS ? !own : own);
                     CharacteristicState state = board.states().get(slot.permanent().getId());
                     if (inScope && state != null && state.hasCardType(CardType.LAND)
-                            && matchesL4Filter(slot, filter, board, source.permanent())) {
+                            && matchesL4Filter(slot, filter, board, gameData,
+                            source.permanent(), source.controllerId())) {
                         targets.add(slot);
                     }
                 }
@@ -1873,7 +1877,8 @@ public class LayerSystemService {
                         if (slot.permanent() == sourcePermanent) continue;
                         if (slot.controllerId().equals(sourcePermanent.getAttachedTo())
                                 && isCreatureForL4(slot.permanent(), board.states().get(slot.permanent().getId()))
-                                && matchesL4Filter(slot, filter, board, source.permanent())) {
+                                && matchesL4Filter(slot, filter, board, gameData,
+                                source.permanent(), source.controllerId())) {
                             targets.add(slot);
                         }
                     }
@@ -1919,16 +1924,18 @@ public class LayerSystemService {
      */
     private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
                                     LayeredBoardState board) {
-        return matchesL4Filter(slot, filter, board, null);
+        return matchesL4Filter(slot, filter, board, null, null, null);
     }
 
     private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
-                                    LayeredBoardState board, Permanent sourcePermanent) {
+                                    LayeredBoardState board, GameData gameData,
+                                    Permanent sourcePermanent, UUID sourceControllerId) {
         if (filter == null) return true;
         boolean matches = predicateEvaluationService.matchesPermanentPredicate(
                 board.states().get(slot.permanent().getId()), slot.permanent(), filter,
-                sourcePermanent == null ? null : FilterContext.empty()
-                        .withSourcePermanentSnapshot(sourcePermanent));
+                sourcePermanent == null ? null : FilterContext.of(gameData)
+                        .withSourcePermanentSnapshot(sourcePermanent)
+                        .withSourceControllerId(sourceControllerId));
         board.l4FilterVerdicts()
                 .computeIfAbsent(filter, key -> new HashMap<>())
                 .put(slot.permanent().getId(), matches);

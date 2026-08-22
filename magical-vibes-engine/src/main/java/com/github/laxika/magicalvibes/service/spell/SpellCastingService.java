@@ -2185,16 +2185,16 @@ public class SpellCastingService {
                 targetLegalityService.validateSpellTargeting(gameData, card, primaryTargetEffects,
                         targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue, kicked);
             }
-        } else if (unwrappedNeedsTarget && needsExileTargeting) {
+        } else if (targetIds.isEmpty() && unwrappedNeedsTarget && needsExileTargeting) {
             throw new IllegalStateException("Must target a card in exile");
-        } else if (unwrappedNeedsTarget && needsSingleGraveyardTargeting) {
+        } else if (targetIds.isEmpty() && unwrappedNeedsTarget && needsSingleGraveyardTargeting) {
             // "Up to one" graveyard targets (Yawgmoth) may be omitted; mandatory ones (Crawl) may not,
             // even when the spell also has optional permanent target groups.
             if (!graveyardReturnEffect.upTo()) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
             }
-        } else if (unwrappedNeedsTarget && needsImmediateGraveyardEffectTargeting) {
+        } else if (targetIds.isEmpty() && unwrappedNeedsTarget && needsImmediateGraveyardEffectTargeting) {
             // Non-ReturnCard graveyard targets with no permanent groups still require a target.
             if (card.getMaxTargets() == 0) {
                 throw new IllegalStateException("Must target a card in a graveyard");

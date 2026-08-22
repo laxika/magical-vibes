@@ -25,6 +25,7 @@ class SterlingSupplierTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -39,6 +40,7 @@ class SterlingSupplierTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, firstSupplier.getId());
         harness.passBothPriorities();
 
         assertThat(firstSupplier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

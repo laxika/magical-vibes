@@ -47,7 +47,7 @@ class OverzealousMuscleTest extends BaseCardTest {
         castShockAt(player2.getId());
         assertThat(gqs.hasKeyword(gd, muscle, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -58,6 +58,6 @@ class OverzealousMuscleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

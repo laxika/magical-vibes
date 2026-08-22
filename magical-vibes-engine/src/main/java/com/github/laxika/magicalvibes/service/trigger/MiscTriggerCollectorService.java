@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateT
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentManaValueAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -317,12 +318,17 @@ public class MiscTriggerCollectorService {
             return false;
         }
         String cardName = match.permanent().getCard().getName();
-        if (conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof SacrificedPermanentManaValueAwareEffect manaValueAware) {
+            wrapped = manaValueAware.boundToSacrificedPermanentManaValue(
+                    as.sacrificedCard().getManaValue());
+        }
+        if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                     match.permanent().getCard(),
                     match.controllerId(),
-                    new ArrayList<>(List.of(conditional.wrapped())),
+                    new ArrayList<>(List.of(wrapped)),
                     match.permanent().getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             log.info("Game {} - {} triggers on matching permanent sacrifice (awaiting target)",
@@ -334,7 +340,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getCard(),
                 as.sacrificingPlayerId(),
                 cardName + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
+                new ArrayList<>(List.of(wrapped)),
                 null,
                 match.permanent().getId()
         ));
@@ -1553,14 +1559,24 @@ public class MiscTriggerCollectorService {
     private boolean handleCrimeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         Permanent source = match.permanent();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(),
-                match.controllerId(),
-                source.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                source.getId()));
+        List<CardEffect> effects = new ArrayList<>(List.of(effect));
+        boolean needsTarget = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    source.getCard(), match.controllerId(), effects,
+                    "crime", source.getId()));
+        } else {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    match.controllerId(),
+                    source.getCard().getName() + "'s ability",
+                    effects,
+                    null,
+                    source.getId()));
+        }
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         log.info("Game {} - {} triggers on a crime", gameData.id, source.getCard().getName());
         return true;

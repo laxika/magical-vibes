@@ -53,7 +53,7 @@ class JemLightfooteSkyExplorerTest extends BaseCardTest {
         addJem();
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addToBattlefield(player1, new PrecognitionField());
-        harness.setLibrary(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new Shock(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castFromLibraryTop(player1, player2.getId());

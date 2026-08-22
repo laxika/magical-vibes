@@ -17,7 +17,7 @@ public class StagecoachSecurity extends Card {
 
     public StagecoachSecurity() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostAllOwnCreaturesEffect(1, 1));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{W}"))));
     }
 }

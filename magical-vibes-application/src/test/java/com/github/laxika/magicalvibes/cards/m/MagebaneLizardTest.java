@@ -37,7 +37,7 @@ class MagebaneLizardTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MagebaneLizard());
         prepareMainPhase(player2);
         harness.setHand(player2, List.of(new GrizzlyBears(), new HolyDay()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -45,6 +45,7 @@ class MagebaneLizardTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         assertThat(gd.stack).hasSize(1);
         resolveAllStack();
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castInstant(player2, 0);
         resolveAllStack();
 

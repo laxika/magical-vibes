@@ -24,6 +24,8 @@ class RattlebackApothecaryTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         commitCrime();
+        harness.handlePermanentChosen(player1, apothecary.getId());
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "MENACE");
 
         assertThat(gqs.hasKeyword(gd, apothecary, Keyword.MENACE)).isTrue();
@@ -36,6 +38,8 @@ class RattlebackApothecaryTest extends BaseCardTest {
         Permanent apothecary = addCreatureReady(player1, new RattlebackApothecary());
 
         commitCrime();
+        harness.handlePermanentChosen(player1, apothecary.getId());
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "LIFELINK");
 
         assertThat(gqs.hasKeyword(gd, apothecary, Keyword.LIFELINK)).isTrue();
@@ -48,6 +52,8 @@ class RattlebackApothecaryTest extends BaseCardTest {
         Permanent apothecary = addCreatureReady(player1, new RattlebackApothecary());
 
         commitCrime();
+        harness.handlePermanentChosen(player1, apothecary.getId());
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "MENACE");
         assertThat(gqs.hasKeyword(gd, apothecary, Keyword.MENACE)).isTrue();
 
@@ -78,7 +84,7 @@ class RattlebackApothecaryTest extends BaseCardTest {
     }
 
     private void endTurn() {
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.CLEANUP);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }

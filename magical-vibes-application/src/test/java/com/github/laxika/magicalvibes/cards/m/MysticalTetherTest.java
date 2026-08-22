@@ -30,7 +30,8 @@ class MysticalTetherTest extends BaseCardTest {
 
         destroyTether(tether.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == target.getCard());
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
     }
 

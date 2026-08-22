@@ -826,6 +826,11 @@ public class TargetLegalityService {
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
         }
+        boolean hasLegacyTargetFilter = ability.getTargetFilter() != null
+                || !ability.getMultiTargetFilters().isEmpty();
+        if (targetId == null && hasLegacyTargetFilter) {
+            throw new IllegalStateException("A target is required");
+        }
         boolean targetsSomething = abilityEffects.stream()
                 .anyMatch(effect -> effect.targetSpec().declaredTarget() != null
                         && !(effect instanceof ReturnCardFromGraveyardEffect returnEffect

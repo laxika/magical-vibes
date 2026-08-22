@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +29,7 @@ class SpellkeeperWeirdTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(instant, creature));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, battlefieldIndex(spellkeeper), null, instant.getId());
+        harness.activateAbility(player1, battlefieldIndex(spellkeeper), null, instant.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spellkeeper Weird");
@@ -45,7 +46,7 @@ class SpellkeeperWeirdTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(sorcery));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, battlefieldIndex(spellkeeper), null, sorcery.getId());
+        harness.activateAbility(player1, battlefieldIndex(spellkeeper), null, sorcery.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(sorcery);
@@ -60,7 +61,7 @@ class SpellkeeperWeirdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(
-                player1, battlefieldIndex(spellkeeper), null, creature.getId()))
+                player1, battlefieldIndex(spellkeeper), null, creature.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
 

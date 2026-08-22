@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.Threaten;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LaughingJasperFlint.class, GrizzlyBears.class, Threaten.class})
+@CardUsed({LaughingJasperFlint.class, ControlMagic.class, GrizzlyBears.class})
 class LaughingJasperFlintTest extends BaseCardTest {
 
     @Test
@@ -25,7 +25,11 @@ class LaughingJasperFlintTest extends BaseCardTest {
         Permanent jasper = addCreatureReady(player1, new LaughingJasperFlint());
         addCreatureReady(player1, new GrizzlyBears());
         Permanent stolenCreature = addCreatureReady(player2, new GrizzlyBears());
-        takeControlUntilEndOfTurn(stolenCreature);
+        takeControl(stolenCreature);
+        assertThat(gd.findControllerOf(stolenCreature)).isEqualTo(player1.getId());
+        assertThat(gd.stolenCreatures.get(stolenCreature.getId())).isEqualTo(player2.getId());
+        assertThat(gqs.effectiveCreatureSubtypes(gd, stolenCreature)).contains(
+                com.github.laxika.magicalvibes.model.CardSubtype.MERCENARY);
 
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
@@ -63,10 +67,11 @@ class LaughingJasperFlintTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(jasper.getId())).isEmpty();
     }
 
-    private void takeControlUntilEndOfTurn(Permanent target) {
-        harness.setHand(player1, List.of(new Threaten()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castInstant(player1, 0, target.getId());
+    private void takeControl(Permanent target) {
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, target.getId());
         harness.passBothPriorities();
     }
 }

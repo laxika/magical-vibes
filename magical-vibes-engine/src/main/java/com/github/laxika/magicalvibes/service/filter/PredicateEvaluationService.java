@@ -578,6 +578,10 @@ public class PredicateEvaluationService {
                 boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains)
                         || permanent.getTransientSubtypes().stream().anyMatch(wanted::contains)
                         || permanent.getGrantedSubtypes().stream().anyMatch(wanted::contains);
+                if (!hasSubtype && gameData != null && !GameQueryService.isStaticEvaluationActive()) {
+                    hasSubtype = gameQueryService.effectiveCreatureSubtypes(gameData, permanent).stream()
+                            .anyMatch(wanted::contains);
+                }
                 boolean canUseChangeling = wanted.stream().anyMatch(gameQueryService::isCreatureSubtype);
                 yield hasSubtype || (canUseChangeling && (gameData == null
                         ? permanent.hasKeyword(Keyword.CHANGELING)

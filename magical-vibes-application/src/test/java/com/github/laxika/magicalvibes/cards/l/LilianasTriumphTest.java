@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +34,8 @@ class LilianasTriumphTest extends BaseCardTest {
     @Test
     @DisplayName("A Liliana planeswalker also makes each opponent discard a card")
     void lilianaAlsoMakesEachOpponentDiscard() {
-        harness.addToBattlefield(player1, new LilianaWakerOfTheDead());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaWakerOfTheDead());
+        liliana.setCounterCount(CounterType.LOYALTY, 4);
         harness.addToBattlefield(player2, new GiantSpider());
         GrizzlyBears discarded = new GrizzlyBears();
         harness.setHand(player2, new ArrayList<>(List.of(discarded)));
@@ -51,7 +54,8 @@ class LilianasTriumphTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's Liliana does not enable the discard")
     void opponentsLilianaDoesNotEnableDiscard() {
-        harness.addToBattlefield(player2, new LilianaWakerOfTheDead());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaWakerOfTheDead());
+        liliana.setCounterCount(CounterType.LOYALTY, 4);
         harness.addToBattlefield(player2, new GiantSpider());
         GrizzlyBears kept = new GrizzlyBears();
         harness.setHand(player2, new ArrayList<>(List.of(kept)));

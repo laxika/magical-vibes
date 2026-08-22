@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +40,8 @@ class NissasTriumphTest extends BaseCardTest {
     @Test
     @DisplayName("With a Nissa, offers up to three land cards")
     void withNissaOffersThreeLands() {
-        harness.addToBattlefield(player1, new NissaGenesisMage());
+        Permanent nissa = harness.addToBattlefieldAndReturn(player1, new NissaGenesisMage());
+        nissa.setCounterCount(CounterType.LOYALTY, 5);
         setLibrary(new Forest(), new Island(), new GhostQuarter(), new GrizzlyBears(), new Plains());
 
         castTriumph();

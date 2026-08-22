@@ -55,6 +55,7 @@ class MobileHomesteadTest extends BaseCardTest {
     @DisplayName("Attacking lets its controller put a top land onto the battlefield tapped")
     void attackPutsTopLandOntoBattlefieldTapped() {
         Permanent homestead = harness.addToBattlefieldAndReturn(player1, new MobileHomestead());
+        homestead.setSummoningSick(false);
         addCreatureReady(player1, new GrizzlyBears());
         crew(homestead);
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
@@ -74,6 +75,7 @@ class MobileHomesteadTest extends BaseCardTest {
     @DisplayName("Declining the attack trigger leaves the top land on the library")
     void decliningAttackTriggerLeavesLandOnTop() {
         Permanent homestead = harness.addToBattlefieldAndReturn(player1, new MobileHomestead());
+        homestead.setSummoningSick(false);
         addCreatureReady(player1, new GrizzlyBears());
         crew(homestead);
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));

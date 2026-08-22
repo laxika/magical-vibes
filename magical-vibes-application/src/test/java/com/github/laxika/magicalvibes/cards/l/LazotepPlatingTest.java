@@ -35,7 +35,7 @@ class LazotepPlatingTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(army.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, island, Keyword.HEXPROOF)).isTrue();
