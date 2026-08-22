@@ -33,14 +33,13 @@ public class HeraldOfTheDreadhorde extends Card {
         ControlsPermanent controlsArmy = new ControlsPermanent(army);
 
         addEffect(EffectSlot.ON_DEATH,
-                ConditionalEffect.unless(controlsArmy,
-                        SequenceEffect.of(
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 2, army),
-                                new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addEffect(EffectSlot.ON_DEATH,
-                ConditionalEffect.unless(new NotCondition(controlsArmy),
-                        SequenceEffect.of(
+                SequenceEffect.of(
+                        ConditionalEffect.unless(controlsArmy,
+                                SequenceEffect.of(
+                                        new PutCounterOnChosenOwnPermanentEffect(
+                                                CounterType.PLUS_ONE_PLUS_ONE, 2, army),
+                                        new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))),
+                        ConditionalEffect.unless(new NotCondition(controlsArmy),
                                 new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,
                                         List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of(),
