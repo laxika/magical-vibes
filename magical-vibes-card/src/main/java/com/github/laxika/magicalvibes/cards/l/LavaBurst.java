@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "198")
+@CardRegistration(set = "DKM", collectorNumber = "16")
 public class LavaBurst extends Card {
 
     public LavaBurst() {
