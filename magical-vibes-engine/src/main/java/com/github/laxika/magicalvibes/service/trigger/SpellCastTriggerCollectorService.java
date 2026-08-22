@@ -1745,7 +1745,7 @@ public class SpellCastTriggerCollectorService {
                 .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PLAYER));
         boolean needsPermanentTarget = resolved.stream()
                 .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PERMANENT));
-        if (trigger.targetFilter() != null && (needsPlayerTarget || needsPermanentTarget)) {
+        if (needsPlayerTarget || needsPermanentTarget) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), resolved,
                     needsPlayerTarget && !needsPermanentTarget, trigger.targetFilter(), 0,

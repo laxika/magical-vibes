@@ -265,6 +265,7 @@ public class TurnProgressionService {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
                 gameData.combatPhasesThisTurn++;
+                gameData.cardsPutIntoGraveyardThisCombat.clear();
                 gameData.forEachPermanent((playerId, p) -> {
                     p.setAttackedThisCombat(false);
                     p.setBlockedThisCombat(false);
@@ -650,6 +651,7 @@ public class TurnProgressionService {
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);
         gameData.playersWithProtectionFromEverythingUntilNextTurn.remove(nextActive);

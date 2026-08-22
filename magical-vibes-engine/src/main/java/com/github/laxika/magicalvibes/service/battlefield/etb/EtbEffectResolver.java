@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
@@ -121,6 +122,9 @@ public class EtbEffectResolver {
                 // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.
                 case CastFromZone castFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)
+                                ? conditional.wrapped() : null;
+                case EnteredFromZone enteredFromZone ->
+                        conditionEvaluationService.isMet(ctx.gameData(), enteredFromZone, conditionContext)
                                 ? conditional.wrapped() : null;
                 case ColorSpentToCast colorSpent ->
                         conditionEvaluationService.isMet(ctx.gameData(), colorSpent, conditionContext)

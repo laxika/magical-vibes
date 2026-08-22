@@ -132,6 +132,7 @@ public enum CardSubtype {
     GORGON("Gorgon"),
     MERCENARY("Mercenary"),
     ZOMBIE("Zombie"),
+    ARMY("Army"),
     CROCODILE("Crocodile"),
     CONSTRUCT("Construct"),
     GOLEM("Golem"),

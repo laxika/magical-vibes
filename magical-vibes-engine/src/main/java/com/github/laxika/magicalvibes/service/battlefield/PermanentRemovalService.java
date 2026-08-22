@@ -157,7 +157,7 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
 
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -212,7 +212,7 @@ public class PermanentRemovalService {
         boolean selfGraveyardTriggerSuppressed = selfGraveyardTriggerSuppressed(gameData, target);
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
 
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, info.controllerId());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -251,7 +251,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.HAND);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -297,7 +297,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.EXILE);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.EXILE);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -379,7 +379,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -420,7 +420,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -481,7 +481,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -521,7 +521,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);

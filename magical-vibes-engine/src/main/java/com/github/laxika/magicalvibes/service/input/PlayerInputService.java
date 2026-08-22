@@ -962,6 +962,21 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerName, current);
     }
 
+    public void beginRemoveCountersOfKindChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                String sourceCardName, List<String> counterKinds,
+                                                int index, int remaining, int maxForCurrentKind) {
+        ChoiceContext.RemoveCountersOfKindChoice context = new ChoiceContext.RemoveCountersOfKindChoice(
+                targetId, playerId, sourceCardName, counterKinds, index, remaining);
+        String counterKind = counterKinds.get(index);
+        int max = Math.max(0, Math.min(remaining, maxForCurrentKind));
+        List<String> options = IntStream.rangeClosed(0, max).mapToObj(Integer::toString).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, options,
+                sourceCardName + " — choose how many "
+                        + ChoiceContext.RemoveCountersOfKindChoice.counterLabel(counterKind)
+                        + " counters to remove (0-" + max + ")."));
+    }
+
     /** Animation Module: choose a counter kind already present on the target, then add one more. */
     public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
                                                   String sourceCardName, List<CounterType> counterTypes,

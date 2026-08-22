@@ -42,6 +42,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB mill and return-or-token | `p/PatientNaturalist.java` | ON_ENTER_BATTLEFIELD `MillControllerAndReturnMilledCardToHandOrCreateTokenEffect(3, CardTypePredicate(LAND), CreateTokenEffect.ofTreasureToken(1))` — choose a milled land for hand; if none was milled, create a Treasure |
 | ETB pump target creature | `b/BriarpackAlpha.java` | `target(CreaturePredicate).addEffect(ON_ENTER_BATTLEFIELD, BoostTargetCreatureEffect(P, T))` — any creature. See also `v/VulshokHeartstoker.java` (+2/+0). Flash is auto-loaded from Scryfall, no constructor code needed |
 | ETB pump target creature (own only, +keyword) | `i/ImperialAerosaur.java` | PermanentAllOfPredicate(IsCreature, ControlledBySourceController, NotSource) + BoostTargetCreatureEffect + GrantKeywordEffect(FLYING, TARGET) |
+| ETB doubles the power of other creatures you control + vigilance | `g/GodEternalRhonas.java` | ON_ENTER_BATTLEFIELD `DoubleOtherOwnCreaturesPowerEffect()` followed by `GrantKeywordEffect(VIGILANCE, OWN_CREATURES)`; the first effect snapshots each other creature's current power independently and both effects exclude the source |
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
 | ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillEffect(4, CONTROLLER) — controller mills N cards, no target |

@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCa
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -127,6 +128,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final MayReturnPermanentToHandAndEnterWithCountersEffectHandler mayReturnPermanentToHandAndEnterWithCountersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
@@ -842,6 +844,28 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleMayReturnPermanentToHandAndEnterWithCounters(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.MayReturnPermanentToHandAndEnterWithCounters context) {
+        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (source == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s ability",
+                List.of(context.effect()),
+                permanentId,
+                context.sourcePermanentId());
+        mayReturnPermanentToHandAndEnterWithCountersEffectHandler.resolve(
+                gameData, entry, context.effect());
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleBounceOwnPermanentOrSacrificeSelf(GameData gameData, UUID permanentId) {

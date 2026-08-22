@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -69,6 +71,7 @@ public class MayCastHandlerService {
     private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     private final SpellCastingService spellCastingService;
     private final TargetLegalityService targetLegalityService;
+    private final CopySupport copySupport;
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -493,7 +496,14 @@ public class MayCastHandlerService {
                 };
                 boolean matchesFilter = castEffect.filter() == null
                         || predicateEvaluationService.matchesCardPredicate(
-                        graveyardCard, castEffect.filter(), cardToCast.getId());
+                        graveyardCard,
+                        castEffect.filter(),
+                        cardToCast.getId(),
+                        gameData,
+                        graveyardOwnerId,
+                        ability.sourcePermanentId(),
+                        ability.sourcePowerAtTrigger(),
+                        ability.xValue());
                 if (!validScope || !matchesFilter) {
                     
                     gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer in a valid graveyard."));
@@ -514,9 +524,10 @@ public class MayCastHandlerService {
                         } else {
                             permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
                             gameData.interaction.setPermanentChoiceContext(
-                                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
+                            new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
                                             spellEffects, spellType, castEffect.exileInsteadOfGraveyard(),
-                                            castEffect.withoutPayingManaCost(), graveyardOwnerId));
+                                            castEffect.withoutPayingManaCost(), graveyardOwnerId,
+                                            castEffect.copyCount()));
                             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                                     "Choose a target for " + cardToCast.getName() + ".");
 
@@ -548,6 +559,20 @@ public class MayCastHandlerService {
                         freeCast.setOwnerIdOverride(graveyardOwnerId);
                         freeCast.setSourceZone(Zone.GRAVEYARD);
                         gameData.stack.add(freeCast);
+
+                        for (int i = 0; i < castEffect.copyCount(); i++) {
+                            Card copyCard = copySupport.createCopyCard(cardToCast);
+                            StackEntry copyEntry = copySupport.createCopyStackEntry(
+                                    freeCast, copyCard, player.getId(), freeCast.getTargetId());
+                            gameData.stack.add(copyEntry);
+                            copySupport.checkSpellCopyTriggers(gameData, copyEntry);
+                            if (copyEntry.getTargetId() != null) {
+                                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                                        cardToCast, player.getId(), List.of(new CopySpellEffect()),
+                                        "Choose new targets for the copy of " + cardToCast.getName() + "?",
+                                        copyCard.getId()));
+                            }
+                        }
 
                         gameData.recordSpellCast(player.getId(), cardToCast);
                         gameData.priorityPassedBy.clear();

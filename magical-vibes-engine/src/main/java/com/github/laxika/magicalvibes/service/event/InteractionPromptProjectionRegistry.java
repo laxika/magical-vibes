@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -162,6 +163,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
+        register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
@@ -503,12 +505,13 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectSearchLibraryAndOrGraveyardChoice(
             GameData gameData, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
+        boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
                 1,
-                "Choose a " + interaction.cardLabel()
-                        + " from your library or graveyard to reveal and put into your hand.");
+                "Choose a " + interaction.cardLabel() + " from your library or graveyard to reveal and put it "
+                        + (toBattlefield ? "onto the battlefield." : "into your hand."));
     }
 
     private InteractionPromptMessage projectSearchLibraryToTopChoice(
@@ -961,6 +964,19 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectNivMizzetColorPairChoice(
+            GameData gameData, PendingInteraction.NivMizzetColorPairChoice interaction) {
+        Map<UUID, Card> cardsById = interaction.revealedCards().stream()
+                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+        List<CardView> cardViews = interaction.validCardIds().stream()
+                .map(cardsById::get)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews,
+                interaction.requiredPairCount(), interaction.prompt());
     }
 
     private InteractionPromptMessage projectLibrarySearch(

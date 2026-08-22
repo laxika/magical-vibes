@@ -16,7 +16,11 @@ import java.util.List;
  */
 public sealed interface TriggerContext {
 
-    record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {}
+    record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {
+        public Card spellCard() {
+            return copiedSpell.getCard();
+        }
+    }
 
     default boolean causedByCreatureDying() {
         return false;
@@ -119,6 +123,9 @@ public sealed interface TriggerContext {
     /** Context for opponent-nontoken-permanent-sacrificed triggers. */
     record OpponentPermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
+    /** Context for global permanent-sacrificed triggers. */
+    record PermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
      */
@@ -177,6 +184,9 @@ public sealed interface TriggerContext {
 
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
+
+    /** Context for loyalty-counter-removal triggers. */
+    record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
 
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
@@ -331,8 +341,15 @@ public sealed interface TriggerContext {
      *
      * @param leavingPermanent   the permanent that left the battlefield
      * @param leavingControllerId the player who controlled it as it left (last-known information)
+     * @param destination         the zone it entered, or {@code null} for legacy callers
      */
-    record EnchantedPermanentLeaves(Permanent leavingPermanent, UUID leavingControllerId) implements TriggerContext {}
+    record EnchantedPermanentLeaves(Permanent leavingPermanent, UUID leavingControllerId,
+                                    Zone destination) implements TriggerContext {
+
+        public EnchantedPermanentLeaves(Permanent leavingPermanent, UUID leavingControllerId) {
+            this(leavingPermanent, leavingControllerId, null);
+        }
+    }
 
     /**
      * Context for ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD and

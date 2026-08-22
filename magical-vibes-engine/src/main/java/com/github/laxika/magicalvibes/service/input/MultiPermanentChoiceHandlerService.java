@@ -46,8 +46,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -235,6 +237,18 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.RedirectDamageToChosenPermanent ctx) {
+            if (permanentIds.size() != 1) {
+                throw new IllegalStateException("Exactly one creature or planeswalker must be selected");
+            }
+            Permanent selected = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (selected == null
+                    || !ctx.protectedPlayerId().equals(gameQueryService.findPermanentController(gameData, selected.getId()))
+                    || (!gameQueryService.isCreature(gameData, selected)
+                    && !gameQueryService.isPlaneswalker(gameData, selected))) {
+                throw new IllegalStateException("Selected permanent is no longer a creature or planeswalker you control");
+            }
+        }
         if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two creatures must be selected");
@@ -371,6 +385,8 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {
             handleUntapChosenPermanent(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.RedirectDamageToChosenPermanent ctx) {
+            handleRedirectDamageToChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanent ctx) {
             handleTapChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberPermanents) {
@@ -771,6 +787,20 @@ public class MultiPermanentChoiceHandlerService {
                         GameLog.builder().text(context.sourceName() + " untaps ").card(target.getCard()).text(".").build());
                 log.info("Game {} - {} untaps {}", gameData.id, context.sourceName(), target.getCard().getName());
             }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleRedirectDamageToChosenPermanent(
+            GameData gameData,
+            List<UUID> permanentIds,
+            MultiPermanentChoiceContext.RedirectDamageToChosenPermanent context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+        if (target != null) {
+            gameData.turnDamageRedirectToCreatureShields.add(
+                    com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield
+                            .forCreatureOrPlaneswalker(context.protectedPlayerId(), target.getId()));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
@@ -1615,11 +1645,12 @@ public class MultiPermanentChoiceHandlerService {
         } else {
             List<Card> proliferatedCards = new ArrayList<>();
             List<String> proliferatedPlayers = new ArrayList<>();
+            Map<UUID, Integer> loyaltyCountersPlacedByController = new HashMap<>();
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     if (!gameQueryService.cantHaveCounters(gameData, perm)) {
-                        proliferatePermanent(gameData, playerId, perm);
+                        proliferatePermanent(gameData, playerId, perm, loyaltyCountersPlacedByController);
                     }
                     proliferatedCards.add(perm.getCard());
                 } else if (gameData.playerIds.contains(permId)
@@ -1646,6 +1677,9 @@ public class MultiPermanentChoiceHandlerService {
                         + String.join(", ", proliferatedPlayers) + "."));
                 log.info("Game {} - Proliferated {} players", gameData.id, proliferatedPlayers.size());
             }
+            loyaltyCountersPlacedByController.forEach((controllerId, count) ->
+                    permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+                            gameData, controllerId, count));
         }
 
         // More proliferates remaining (e.g. "proliferate, then proliferate again")
@@ -1687,7 +1721,8 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void proliferatePermanent(GameData gameData, UUID playerId, Permanent permanent) {
+    private void proliferatePermanent(GameData gameData, UUID playerId, Permanent permanent,
+                                      Map<UUID, Integer> loyaltyCountersPlacedByController) {
         int totalPlaced = 0;
         for (var counter : new ArrayList<>(permanent.getCounters().entrySet())) {
             CounterType counterType = counter.getKey();
@@ -1710,6 +1745,12 @@ public class MultiPermanentChoiceHandlerService {
             } else if (counterType == CounterType.MINUS_ONE_MINUS_ONE) {
                 permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
                         gameData, permanent, placed, playerId);
+            } else if (counterType == CounterType.LOYALTY
+                    && gameQueryService.isPlaneswalker(gameData, permanent)) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (controllerId != null) {
+                    loyaltyCountersPlacedByController.merge(controllerId, placed, Integer::sum);
+                }
             }
         }
         if (totalPlaced > 0) {

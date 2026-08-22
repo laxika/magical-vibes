@@ -45,6 +45,7 @@ import java.util.UUID;
  *                          leaves before resolution
  * @param sacrificedPower   effective power snapshotted from a permanent sacrificed as a cost
  * @param sacrificedToughness effective toughness snapshotted from a permanent sacrificed as a cost
+ * @param targetCardIds      graveyard card ids chosen by the resolving stack entry
  */
 public record AmountContext(
         UUID controllerId,
@@ -60,7 +61,8 @@ public record AmountContext(
         Integer chosenPermanentPowerAtTrigger,
         Integer triggeringPermanentPowerAtTrigger,
         int sacrificedPower,
-        int sacrificedToughness
+        int sacrificedToughness,
+        List<UUID> targetCardIds
 ) {
 
     /** Backward-compatible context constructor without last-known or sacrificed-permanent snapshots. */
@@ -68,7 +70,8 @@ public record AmountContext(
                          int xValue, int eventValue, boolean staticEvaluation,
                          UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard) {
         this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
-                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null, null, null, 0, 0);
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null, null, null,
+                0, 0, List.of());
     }
 
     /** Convenience for the common case with no repeatable additional cost payments. */
@@ -101,7 +104,7 @@ public record AmountContext(
                 eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
                 stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
-                sacrificedPower, sacrificedToughness);
+                sacrificedPower, sacrificedToughness, targetCardIds);
     }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
@@ -111,7 +114,8 @@ public record AmountContext(
                 entry.getRepeatedAdditionalCosts(), entry.getCard(), entry, entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getSacrificedPower(),
-                entry.getSacrificedToughness());
+                entry.getSacrificedToughness(),
+                entry.getTargetCardIds() == null ? List.of() : List.copyOf(entry.getTargetCardIds()));
     }
 
     /**

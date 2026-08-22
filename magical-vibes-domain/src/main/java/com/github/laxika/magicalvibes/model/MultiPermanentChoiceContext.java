@@ -53,6 +53,11 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanent(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /** Choose a creature or planeswalker to receive redirected damage for the rest of the turn. */
+    record RedirectDamageToChosenPermanent(UUID protectedPlayerId, String sourceName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Tap the single chosen permanent (any battlefield), for a triggered ability with no cast-time
      * target — e.g. Thalakos Dreamsower's "tap target creature". When

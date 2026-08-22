@@ -20,6 +20,8 @@ public class CloneOperationState {
     public List<ActivatedAbility> additionalActivatedAbilities = List.of();
     public String nameOverride;
     public Set<CardSupertype> additionalSupertypesOverride = Set.of();
+    public Set<CardSupertype> removedSupertypesOverride = Set.of();
+    public boolean addTypeAppropriateCounters;
     // Vizier-of-Many-Faces embalm exception: applied to the final copy only when the entering permanent is a token.
     public CardColor embalmColorOverride;
     public CardSubtype embalmAddedSubtype;

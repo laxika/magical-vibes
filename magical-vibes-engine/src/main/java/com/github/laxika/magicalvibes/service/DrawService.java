@@ -414,7 +414,8 @@ public class DrawService {
                 boolean prevents = perm.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(DrawRestrictionEffect.class::isInstance)
                         .map(DrawRestrictionEffect.class::cast)
-                        .anyMatch(effect -> effect.preventsDraw(cardsDrawnThisTurn));
+                        .anyMatch(effect -> effect.appliesTo(pid, playerId)
+                                && effect.preventsDraw(cardsDrawnThisTurn));
                 if (prevents) return true;
             }
         }
@@ -1228,14 +1229,16 @@ public class DrawService {
                         continue;
                     }
 
-                    String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(drawerName + " reveals ")
-                            .card(drawn)
-                            .text(" with ")
-                            .card(perm.getCard())
-                            .text(".")
-                            .build());
+                    if (firstDraw.revealBeforeChoice()) {
+                        String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+                        gameLogService.append(gameData, GameLog.builder()
+                                .text(drawerName + " reveals ")
+                                .card(drawn)
+                                .text(" with ")
+                                .card(perm.getCard())
+                                .text(".")
+                                .build());
+                    }
                     effect = firstDraw.effectFor(drawn);
                     if (effect == null) {
                         continue;

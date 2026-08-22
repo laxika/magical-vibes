@@ -1759,6 +1759,21 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("turn-scoped controller protection applies only to that player's creature spells")
+        void controllerCreatureSpellProtectionThisTurn() {
+            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
+            Card creature = creatureOnStack("Grizzly Bears", 2, player1Id);
+            Card instant = new Card();
+            instant.setName("Shock");
+            instant.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, instant, player1Id,
+                    "Shock", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+            assertThat(gqs.isUncounterable(gd, instant)).isFalse();
+        }
+
+        @Test
         @DisplayName("works even if effect is on opponent's battlefield")
         void worksWithOpponentEffect() {
             addPermanent(player2Id, createCreatureWithStaticEffect("Gaea's Herald", 1, 1, CardColor.GREEN, new CreatureSpellsCantBeCounteredEffect()));

@@ -544,7 +544,7 @@ public class MayMiscHandlerService {
 
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            Permanent perm = new Permanent(topCard);
+            Permanent perm = new Permanent(topCard, Zone.LIBRARY);
             if (enterTapped) {
                 perm.tap();
             }
@@ -579,7 +579,7 @@ public class MayMiscHandlerService {
 
         Card topCard = deck.removeFirst();
         if (accepted) {
-            Permanent perm = new Permanent(topCard);
+            Permanent perm = new Permanent(topCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
             if (topCard.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
@@ -615,7 +615,7 @@ public class MayMiscHandlerService {
 
         Card topCard = deck.removeFirst();
         if (accepted) {
-            Permanent perm = new Permanent(topCard);
+            Permanent perm = new Permanent(topCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
             if (tapped) {
                 perm.tap();
@@ -665,7 +665,8 @@ public class MayMiscHandlerService {
         }
 
         deck.removeFirst();
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(land));
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId,
+                new Permanent(land, Zone.LIBRARY));
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", land, " onto the battlefield."));
         log.info("Game {} - {} puts {} onto the battlefield (Unexpected Results)",
@@ -722,7 +723,7 @@ public class MayMiscHandlerService {
 
         if (accepted) {
             // Put creature onto battlefield under controller's control
-            Permanent perm = new Permanent(selectedCard);
+            Permanent perm = new Permanent(selectedCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, selectedCard, null, false);
 

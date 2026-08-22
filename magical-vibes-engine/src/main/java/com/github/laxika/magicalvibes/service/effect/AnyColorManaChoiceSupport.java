@@ -148,9 +148,20 @@ public final class AnyColorManaChoiceSupport {
                                                boolean fromCreature,
                                                CardSubtype chosenSubtype,
                                                Card sourceCard) {
+        if (effect.differentColors()) {
+            ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.differentColors(
+                    playerId, fromCreature, amount, ManaColor.COLORS);
+            if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {
+                choice = choice.withPlaneswalkerSpellOnly();
+            }
+            return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
+        }
         if (effect.anyColorCombination()) {
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount, ManaColor.COLORS);
+            if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {
+                choice = choice.withPlaneswalkerSpellOnly();
+            }
             return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
         }
 
@@ -181,6 +192,8 @@ public final class AnyColorManaChoiceSupport {
                     ChoiceContext.ManaColorChoice.subtypeSpellOnly(playerId, amount,
                             new com.github.laxika.magicalvibes.model.effect.ManaRestriction.SubtypeOrPlaneswalkerSpells(
                                     CardSubtype.MOUNT, CardSubtype.VEHICLE));
+            case PLANESWALKER_SPELLS ->
+                    ChoiceContext.ManaColorChoice.planeswalkerSpellOnly(playerId, amount);
             case SUBTYPE_SPELL -> effect.spellOnlySubtypes().isEmpty()
                     ? new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype())
                     : new ChoiceContext.ManaColorSpellChoice(playerId, amount, effect.spellOnlySubtypes());
@@ -230,6 +243,7 @@ public final class AnyColorManaChoiceSupport {
             case CREATURE_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (creature spells or creature abilities only).";
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
+            case PLANESWALKER_SPELLS -> "Choose a color of mana to add (planeswalker spells only).";
             default -> "Choose a color of mana to add.";
         };
     }

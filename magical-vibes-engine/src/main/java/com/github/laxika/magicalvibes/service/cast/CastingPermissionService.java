@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifactSpellsEffect;
@@ -44,12 +45,14 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChos
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingTimingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -196,6 +199,8 @@ public class CastingPermissionService {
         Set<CardType> restricted = EnumSet.noneOf(CardType.class);
         // Moonhold / Abeyance etc.: per-turn "can't cast spells of these types" restriction on a player.
         restricted.addAll(gameData.playersCantCastSpellTypesThisTurn.getOrDefault(playerId, Set.of()));
+        gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.values()
+                .forEach(types -> restricted.addAll(types.keySet()));
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
             restricted.add(CardType.INSTANT);
@@ -657,6 +662,9 @@ public class CastingPermissionService {
 
     public boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
+        if (isSorcerySpeedOnlyForPlayer(gameData, playerId)) {
+            return sorceryTimingAvailable(gameData, playerId);
+        }
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || card.getKeywords().contains(Keyword.FLASH)
                 || hasFlashGrantForCard(gameData, playerId, card)
@@ -664,6 +672,29 @@ public class CastingPermissionService {
                 || hasMetFlashCastCondition(gameData, playerId, card)
                 || hasAvailableFlashAlternateCast(gameData, playerId, card);
         return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+    }
+
+    private boolean isSorcerySpeedOnlyForPlayer(GameData gameData, UUID playerId) {
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isFaceDown()) continue;
+                GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        || staticBonus.losesAllAbilities()
+                        || staticBonus.losesAllNonManaAbilities()) {
+                    continue;
+                }
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SpellCastingTimingRestrictionEffect restriction
+                            && restriction.appliesTo(sourceControllerId, playerId)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -816,6 +847,11 @@ public class CastingPermissionService {
                         card, filter, null, gameData, playerId))) {
             return true;
         }
+        if (gameData.cardTypeFlashGrantsUntilNextTurn.getOrDefault(playerId, Set.of()).stream()
+                .anyMatch(filter -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, null, gameData, playerId))) {
+            return true;
+        }
         // Quicken: an unconsumed grant for the next spell of a given type this turn.
         if (gameData.hasNextSpellFlashGrant(playerId, card)) return true;
         for (UUID ownerId : gameData.orderedPlayerIds) {
@@ -841,6 +877,29 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof PlayLandsFromGraveyardEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isLandPlayFromGraveyardRestricted(GameData gameData, UUID playerId) {
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
+                    continue;
+                }
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OpponentsCantPlayLandsFromGraveyardEffect.class::isInstance)) {
                     return true;
                 }
             }
@@ -1120,6 +1179,29 @@ public class CastingPermissionService {
         if (!card.hasType(CardType.LAND) && hasLibraryTopCardFreePlayPermission(gameData, playerId, card)) {
             return true;
         }
+        return canCastFromTopOfLibraryNormally(gameData, playerId, card)
+                || canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, card);
+    }
+
+    /** Returns whether a specific card may use the mana-value life alternative from the library top. */
+    public boolean canCastFromTopOfLibraryByPayingLifeEqualToManaValue(
+            GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Returns whether a specific card may be cast from the top by paying its normal cost. */
+    public boolean canCastFromTopOfLibraryNormally(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {

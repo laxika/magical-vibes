@@ -200,6 +200,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();
+        gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playerHexproofFromColorsThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
@@ -208,6 +209,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearDelayedActions(EpicDelayedTrigger.class);
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.clear();
+        gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.clear();
+        gameData.cardTypeFlashGrantsUntilNextTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.crimeCandidatesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();

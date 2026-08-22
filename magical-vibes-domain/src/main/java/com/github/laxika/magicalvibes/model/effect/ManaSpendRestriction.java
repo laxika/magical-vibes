@@ -44,6 +44,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast creature spells of the effect's printed subtype (The Seedcore). */
     SUBTYPE_CREATURE_SPELL,
 
+    /** Spendable only to cast planeswalker spells (Interplanar Beacon). */
+    PLANESWALKER_SPELLS,
+
     /** Spendable only to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
     CREATURE_SPELLS_OR_ABILITIES,
 

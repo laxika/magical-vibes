@@ -43,7 +43,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         // Check search restriction — if unpaid Arbiters exist, search is prevented.
-        if (!librarySearchSupport.checkSearchRestriction(gameData, casterId)) {
+        if (!librarySearchSupport.checkSearchRestriction(gameData, casterId, targetPlayerId, casterId)) {
             // Search prevented — still execute remaining spell steps per rules:
             // target puts hand on top of library, then library is shuffled.
             librarySearchSupport.putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);

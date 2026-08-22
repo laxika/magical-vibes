@@ -86,6 +86,9 @@ import java.util.Set;
  *                             {@code cardsPutIntoGraveyardFromBattlefieldThisTurn} tracking of the
  *                             graveyard's owner and is only meaningful when {@link #targetGraveyard} is
  *                             {@code true}
+ * @param targetNotPutIntoGraveyardThisCombat {@code true} to exclude targeted graveyard cards put into
+ *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
+ *                             only meaningful when {@link #targetGraveyard} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
  *                             permanent matching this predicate after entering the battlefield; the
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
@@ -247,6 +250,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean discardedOrCycledThisTurn,
         boolean discardedByOpponentThisTurn,
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
+        boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,
         boolean loseLifeEqualToManaValue,

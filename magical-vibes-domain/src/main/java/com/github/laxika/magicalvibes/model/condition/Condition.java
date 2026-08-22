@@ -125,6 +125,7 @@ public sealed interface Condition permits
         DidntGainLifeThisTurn,
         DidntPlayLandThisTurn,
         DuringCombat,
+        EnteredFromZone,
         Enchanted,
         EnchantedByAtLeastAuras,
         EnchantedCreatureDidntAttack,

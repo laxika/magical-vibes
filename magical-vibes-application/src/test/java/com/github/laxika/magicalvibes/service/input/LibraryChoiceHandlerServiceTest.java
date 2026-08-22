@@ -339,6 +339,32 @@ class LibraryChoiceHandlerServiceTest {
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
+    @Test
+    @DisplayName("Face-down exile search can leave casting permission to a source static effect")
+    void faceDownExileSearchCanSkipSeparateCastPermission() {
+        Card first = createCard("First");
+        Card chosen = createCard("Chosen");
+        Card third = createCard("Third");
+        UUID sourcePermanentId = UUID.randomUUID();
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(first, chosen, third))
+                .canFailToFind(false)
+                .sourceCards(new ArrayList<>(List.of(first, chosen, third)))
+                .reorderRemainingToBottom(true)
+                .destination(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                .sourcePermanentId(sourcePermanentId)
+                .grantExilePlayPermission(false)
+                .allowAnyManaType(false)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose one", false));
+
+        service.handleLibraryCardChosen(gd, player1, 1);
+
+        verify(exileService).exileCardFaceDown(gd, player1Id, chosen, sourcePermanentId);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(chosen.getId());
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
     private static Card createBasicLand(String name) {
         Card card = createCard(name, CardType.LAND);
         card.setSupertypes(Set.of(CardSupertype.BASIC));

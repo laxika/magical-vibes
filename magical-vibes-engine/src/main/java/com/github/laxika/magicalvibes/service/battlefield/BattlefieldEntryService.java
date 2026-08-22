@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -49,6 +50,13 @@ public class BattlefieldEntryService {
                                             Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered) {
         place(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
                 0, false, List.of());
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                            Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
+                                            EnterWithCountersEffect enterWithCounters) {
+        placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
+                enterTappedTypes, simultaneouslyEntered, 0, false, List.of(), null, enterWithCounters));
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,

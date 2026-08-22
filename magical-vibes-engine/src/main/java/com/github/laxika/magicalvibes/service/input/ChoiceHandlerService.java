@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -424,6 +425,10 @@ public class ChoiceHandlerService {
             handleChooseCreatureNameRevealTopCardsChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice ctx) {
+            handleChooseNonlandCardNameRevealTopCardsChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice ctx) {
             handleChooseNameRevealTopCardsToHandRestToExileChoice(gameData, player, colorName, ctx);
             return;
@@ -458,6 +463,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
             handleAdjustCounterKindChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RemoveCountersOfKindChoice ctx) {
+            handleRemoveCountersOfKindChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AddAnotherCounterTypeChoice ctx) {
@@ -590,6 +599,10 @@ public class ChoiceHandlerService {
         ManaColor chosenColor = ManaColor.valueOf(colorName);
         ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
 
+        if (ctx.differentColors() && !ctx.fixedColorOptions().contains(manaColor)) {
+            throw new IllegalArgumentException("The chosen mana color must differ from previous choices");
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         // Consumed unconditionally so a park can never outlive the prompt it was made for; only the
@@ -706,12 +719,17 @@ public class ChoiceHandlerService {
         } else if (ctx.fixedColorOptions() != null) {
             // Filter lands ("Add {R}{R}, {R}{G}, or {G}{G}") — each mana is chosen individually from
             // the fixed color list; add one and re-prompt until all picks have been made.
-            manaPool.add(manaColor, 1);
-            if (ctx.fromSnowSource()) {
-                manaPool.addSnowManaTag(manaColor, 1);
-            }
-            if (ctx.fromCreature()) {
-                manaPool.addCreatureMana(manaColor, 1);
+            if (ctx.planeswalkerSpellOnly()) {
+                manaPool.addSubtypeOrPlaneswalkerSpellMana(
+                        new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, 1);
+            } else {
+                manaPool.add(manaColor, 1);
+                if (ctx.fromSnowSource()) {
+                    manaPool.addSnowManaTag(manaColor, 1);
+                }
+                if (ctx.fromCreature()) {
+                    manaPool.addCreatureMana(manaColor, 1);
+                }
             }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
@@ -720,10 +738,20 @@ public class ChoiceHandlerService {
 
             int remaining = amount - 1;
             if (remaining > 0) {
+                List<ManaColor> nextColors = ctx.differentColors()
+                        ? ctx.fixedColorOptions().stream().filter(color -> color != manaColor).toList()
+                        : ctx.fixedColorOptions();
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.fixedColorCombination(
-                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
+                        ctx.playerId(), ctx.fromCreature(), remaining, nextColors)
                         .withSnowSource(ctx.fromSnowSource());
-                List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
+                if (ctx.differentColors()) {
+                    nextCtx = ChoiceContext.ManaColorChoice.differentColors(
+                            ctx.playerId(), ctx.fromCreature(), remaining, nextColors);
+                }
+                if (ctx.planeswalkerSpellOnly()) {
+                    nextCtx = nextCtx.withPlaneswalkerSpellOnly();
+                }
+                List<String> colors = nextColors.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -742,6 +770,15 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
                     + (amount == 1 ? "one" : String.valueOf(amount)) + " "
                     + colorName.toLowerCase() + " mana (Mount or Vehicle spells only)."));
+        } else if (ctx.planeswalkerSpellOnly()) {
+            manaPool.addSubtypeOrPlaneswalkerSpellMana(
+                    new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, amount);
+
+            String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
+                    + " " + colorName.toLowerCase() + " mana (planeswalker spells only).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} adds {} {} planeswalker-spell-only mana", gameData.id,
+                    player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount, ctx.grantsUncounterable());
         } else if (ctx.creatureSpellOnly()) {
@@ -816,7 +853,8 @@ public class ChoiceHandlerService {
                 && !ctx.creatureSpellOnly() && !ctx.creatureSpellOrAbilityOnly()
                 && !ctx.grantsAdditionalPlusOneCounter()
                 && !ctx.grantsRiot()
-                && !ctx.abilityOnly() && !ctx.artifactSpellOrAbilityOnly()) {
+                && !ctx.abilityOnly() && !ctx.artifactSpellOrAbilityOnly()
+                && !ctx.planeswalkerSpellOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -1327,6 +1365,85 @@ public class ChoiceHandlerService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRemoveCountersOfKindChoice(GameData gameData, String choice,
+            ChoiceContext.RemoveCountersOfKindChoice ctx) {
+        int requested;
+        try {
+            requested = Integer.parseInt(choice);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid counter removal amount: " + choice, e);
+        }
+
+        if (ctx.index() < 0 || ctx.index() >= ctx.counterKinds().size()) {
+            throw new IllegalStateException("Invalid counter kind choice index");
+        }
+
+        String counterKind = ctx.counterKinds().get(ctx.index());
+        int available = counterCount(gameData, ctx.targetId(), counterKind);
+        int maxAllowed = Math.min(available, ctx.remaining());
+        if (requested < 0 || requested > maxAllowed) {
+            throw new IllegalArgumentException("Cannot remove " + requested + " " + counterKind
+                    + " counters; maximum is " + maxAllowed);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        removeCounters(gameData, ctx.targetId(), counterKind, requested);
+
+        int remaining = ctx.remaining() - requested;
+        int nextIndex = ctx.index() + 1;
+        if (remaining > 0 && nextIndex < ctx.counterKinds().size()) {
+            int nextMax = Math.min(remaining,
+                    counterCount(gameData, ctx.targetId(), ctx.counterKinds().get(nextIndex)));
+            playerInputService.beginRemoveCountersOfKindChoice(gameData, ctx.controllerId(), ctx.targetId(),
+                    ctx.sourceCardName(), ctx.counterKinds(), nextIndex, remaining, nextMax);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private int counterCount(GameData gameData, UUID targetId, String counterKind) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target != null) {
+            try {
+                return target.getCounterCount(CounterType.valueOf(counterKind));
+            } catch (IllegalArgumentException e) {
+                return 0;
+            }
+        }
+        return switch (counterKind) {
+            case "POISON" -> gameData.playerPoisonCounters.getOrDefault(targetId, 0);
+            case "ENERGY" -> gameData.playerEnergyCounters.getOrDefault(targetId, 0);
+            default -> 0;
+        };
+    }
+
+    private void removeCounters(GameData gameData, UUID targetId, String counterKind, int amount) {
+        if (amount == 0) {
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target != null) {
+            CounterType type = CounterType.valueOf(counterKind);
+            target.setCounterCount(type, target.getCounterCount(type) - amount);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    amount + " " + ChoiceContext.RemoveCountersOfKindChoice.counterLabel(counterKind)
+                            + " counter(s) removed from ", target.getCard(), "."));
+            return;
+        }
+
+        switch (counterKind) {
+            case "POISON" -> gameData.playerPoisonCounters.computeIfPresent(
+                    targetId, (id, count) -> Math.max(0, count - amount));
+            case "ENERGY" -> gameData.playerEnergyCounters.computeIfPresent(
+                    targetId, (id, count) -> Math.max(0, count - amount));
+            default -> throw new IllegalArgumentException("Unknown player counter kind: " + counterKind);
+        }
     }
 
     /** Animation Module: add one counter of the selected kind to the target. */
@@ -3381,6 +3498,48 @@ public class ChoiceHandlerService {
     private void handleChooseCreatureNameRevealTopCardsChoice(GameData gameData, Player player,
                                                               String cardName,
                                                               ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + cardName + "\"."));
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(controllerName + "'s library is empty."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> revealed = new ArrayList<>();
+        int toReveal = Math.min(ctx.count(), deck.size());
+        for (int i = 0; i < toReveal; i++) {
+            revealed.add(deck.removeFirst());
+        }
+
+        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        gameLogService.append(gameData, GameLog.text(controllerName + " reveals " + revealedNames + "."));
+
+        for (Card card : revealed) {
+            if (card.getName().equals(cardName)) {
+                gameData.addCardToHand(controllerId, card);
+            } else {
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
+            }
+        }
+
+        log.info("Game {} - {} names \"{}\" with {} — revealed {} card(s)",
+                gameData.id, player.getUsername(), cardName,
+                ctx.sourceCard() != null ? ctx.sourceCard().getName() : "?", revealed.size());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseNonlandCardNameRevealTopCardsChoice(GameData gameData, Player player,
+                                                                  String cardName,
+                                                                  ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice ctx) {
         gameData.interaction.clearAwaitingInput();
 
         UUID controllerId = ctx.controllerId();

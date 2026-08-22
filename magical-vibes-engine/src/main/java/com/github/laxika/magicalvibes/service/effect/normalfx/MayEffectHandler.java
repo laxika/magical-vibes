@@ -82,7 +82,9 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 null,
                 entry.getTriggeringCardId(),
                 entry.getEventValue(),
-                entry.getTriggeringPermanentId()
+                entry.getTriggeringPermanentId(),
+                null,
+                null
         ));
     }
 

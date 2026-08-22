@@ -800,6 +800,8 @@ public class DamageSupport {
                 }
                 loyaltyDamage = damagePreventionService.applyPermanentDamagePreventionShield(
                         gameData, targetPermanent, loyaltyDamage);
+                loyaltyDamage = damagePreventionService.applyControllerAndPermanentsNoncombatDamagePrevention(
+                        gameData, targetPermanent, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 if (loyaltyDamage > 0) {

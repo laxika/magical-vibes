@@ -1431,6 +1431,48 @@ public class CombatAttackService {
             }
         }
 
+        // Check for "whenever an opponent attacks a planeswalker you control with one or more
+        // creatures" triggers. These fire once per combat for each defending player's permanents
+        // when at least one attacker is aimed at one of that player's planeswalkers.
+        Set<UUID> planeswalkerAttackedPlayerIds = new LinkedHashSet<>();
+        for (int idx : attackerIndices) {
+            UUID attackedTargetId = resolvedTargets.get(idx);
+            if (gameData.playerIds.contains(attackedTargetId)) continue;
+            UUID attackedPlayerId = gameQueryService.findPermanentController(gameData, attackedTargetId);
+            if (attackedPlayerId == null || attackedPlayerId.equals(playerId)) continue;
+            List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
+            if (defenderBattlefield != null && defenderBattlefield.stream()
+                    .anyMatch(permanent -> permanent.getId().equals(attackedTargetId)
+                            && gameQueryService.isPlaneswalker(gameData, permanent))) {
+                planeswalkerAttackedPlayerIds.add(attackedPlayerId);
+            }
+        }
+        for (UUID attackedPlayerId : planeswalkerAttackedPlayerIds) {
+            List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
+            if (defenderBattlefield == null) continue;
+            for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
+                List<CardEffect> effects = perm.getCard().getEffects(
+                        EffectSlot.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL);
+                if (effects.isEmpty()) continue;
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        attackedPlayerId,
+                        perm.getCard().getName() + "'s trigger",
+                        new ArrayList<>(effects),
+                        playerId,
+                        perm.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                log.info("Game {} - {} ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL trigger for attacking player {}",
+                        gameData.id, perm.getCard().getName(), playerId);
+            }
+        }
+
         // Emblem version of "whenever a creature attacks you" (Garruk, Apex Predator's emblem). The
         // emblem wording lacks the "or a planeswalker you control" clause, so it only fires when the
         // attacked target is the emblem's controller themselves.

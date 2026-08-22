@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
@@ -122,6 +123,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetPermanentColorCount;
+import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
@@ -225,6 +227,8 @@ public class AmountEvaluationService {
                             ? evaluate(gameData, d.amount(), ctx) : 0;
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case PermanentCounterSum s ->
+                    sumPermanentCounters(gameData, s, ctx);
             case DistinctPermanentNamesCount c ->
                     countDistinctPermanentNames(gameData, c, ctx);
             case PermanentManaValueSum s ->
@@ -449,6 +453,8 @@ public class AmountEvaluationService {
                     targetEffectivePower(gameData, ctx);
             case TargetManaValue ignored ->
                     targetManaValue(gameData, ctx);
+            case TargetCardsManaValueSum ignored ->
+                    targetCardsManaValueSum(gameData, ctx);
             case TopCardOfLibraryManaValue ignored ->
                     topCardOfLibraryManaValue(gameData, ctx);
             case EnchantedPermanentManaValue ignored ->
@@ -652,6 +658,17 @@ public class AmountEvaluationService {
         return countPermanents(gameData, count, ctx, false);
     }
 
+    private int targetCardsManaValueSum(GameData gameData, AmountContext ctx) {
+        if (ctx.targetCardIds() == null) {
+            return 0;
+        }
+        return ctx.targetCardIds().stream()
+                .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(Card::getManaValue)
+                .sum();
+    }
+
     private int countDistinctPermanentNames(GameData gameData, DistinctPermanentNamesCount count,
                                             AmountContext ctx) {
         FilterContext filterContext = GameQueryService.isStaticEvaluationActive()
@@ -696,6 +713,31 @@ public class AmountEvaluationService {
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
                     total += permanent.getCard().getManaValue();
+                }
+            }
+        }
+        return total;
+    }
+
+    private int sumPermanentCounters(GameData gameData, PermanentCounterSum amount, AmountContext ctx) {
+        FilterContext filterContext = GameQueryService.isStaticEvaluationActive()
+                ? FilterContext.empty()
+                : FilterContext.of(gameData);
+        filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext
+                    .withSourceCardId(ctx.sourcePermanent().getCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent());
+        }
+
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
+                    total += permanent.getCounterCount(amount.counterType());
                 }
             }
         }

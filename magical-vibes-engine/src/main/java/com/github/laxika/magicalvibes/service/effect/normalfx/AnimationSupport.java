@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -87,6 +89,14 @@ public class AnimationSupport {
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new GrantColorEffect(color, GrantScope.SELF, true), target.getId(), null, null,
                 duration, 0));
+    }
+
+    private void addAnimationCardTypeOverrideFloatingEffect(GameData gameData, StackEntry entry,
+                                                            Permanent target, Set<CardType> cardTypes) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new SetCardTypesEffect(cardTypes, GrantScope.TARGET), target.getId(), null, null,
+                EffectDuration.UNTIL_END_OF_TURN, 0));
     }
 
     /**
@@ -381,7 +391,18 @@ public class AnimationSupport {
                 permanent.setAnimatedUntilEndOfTurn(true);
                 permanent.setAnimatedPower(power);
                 permanent.setAnimatedToughness(toughness);
-                permanent.getGrantedCardTypes().add(CardType.CREATURE);
+                permanent.setAnimatedColor(effect.animatedColor());
+                applyAnimatedColors(permanent, effect);
+                permanent.getTransientSubtypes().clear();
+                permanent.getTransientSubtypes().addAll(effect.grantedSubtypes());
+                permanent.getGrantedKeywords().addAll(effect.grantedKeywords());
+                if (effect.cardTypeOverriding()) {
+                    addAnimationCardTypeOverrideFloatingEffect(gameData, entry, permanent,
+                            effect.grantedCardTypes());
+                } else {
+                    permanent.getGrantedCardTypes().add(CardType.CREATURE);
+                    permanent.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+                }
                 addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
 
                 // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
@@ -395,10 +416,10 @@ public class AnimationSupport {
             }
         }
 
-        String logEntry = count + " artifact(s) become " + power + "/" + toughness + " creature(s) until end of turn.";
+        String logEntry = count + " permanent(s) become " + power + "/" + toughness + " creature(s) until end of turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));
 
-        log.info("Game {} - {} artifacts animated as {}/{} creatures until end of turn",
+        log.info("Game {} - {} permanents animated as {}/{} creatures until end of turn",
                 gameData.id, count, power, toughness);
     }
 

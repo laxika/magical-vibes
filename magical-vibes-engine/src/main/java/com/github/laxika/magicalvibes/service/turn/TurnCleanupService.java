@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -75,6 +77,7 @@ public class TurnCleanupService {
         sacrificePermanentsFlaggedForCleanup(gameData);
         returnPermanentsFlaggedForCleanup(gameData);
         removeCountersScheduledForCleanup(gameData);
+        clearSpellTypeRestrictionsEndingThisTurn(gameData);
         resetEndOfTurnModifiers(gameData);
         tapPermanentsReturningToOwner(gameData);
         creatureControlService.reconcileControl(gameData);
@@ -142,6 +145,20 @@ public class TurnCleanupService {
             });
             p.getCountersToRemoveAtNextCleanup().clear();
         });
+    }
+
+    private void clearSpellTypeRestrictionsEndingThisTurn(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        Map<CardType, Integer> restrictions =
+                gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.get(activePlayerId);
+        if (restrictions == null) {
+            return;
+        }
+        int turnsTaken = gameData.turnsTakenByPlayer.getOrDefault(activePlayerId, 0);
+        restrictions.entrySet().removeIf(entry -> entry.getValue() <= turnsTaken);
+        if (restrictions.isEmpty()) {
+            gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.remove(activePlayerId);
+        }
     }
 
     /**
@@ -287,10 +304,12 @@ public class TurnCleanupService {
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();
+        gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playerHexproofFromColorsThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
+        gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.extraManaOnLandSubtypeTapThisTurn.clear();

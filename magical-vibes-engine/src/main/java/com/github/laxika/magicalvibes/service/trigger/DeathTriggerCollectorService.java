@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureAs
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
@@ -1051,6 +1052,27 @@ public class DeathTriggerCollectorService {
     }
 
     // ── ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD ──────────────────────
+
+    @CollectsTrigger(value = ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
+    boolean handleReturnEnchantedPermanentOnDeathOrExile(TriggerMatchContext match,
+            ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect effect, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
+        if (epl.destination() != com.github.laxika.magicalvibes.model.Zone.GRAVEYARD
+                && epl.destination() != com.github.laxika.magicalvibes.model.Zone.EXILE) {
+            return false;
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect(
+                        epl.leavingPermanent().getCard().getId(), epl.destination())))
+        ));
+        logEnchantedPermanentLTB(match);
+        return true;
+    }
 
     @CollectsTrigger(value = EnchantedPermanentLeavesConditionalEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
     boolean handleEnchantedPermanentLeavesConditional(TriggerMatchContext match,

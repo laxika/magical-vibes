@@ -18,8 +18,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
@@ -817,6 +818,31 @@ class CastingCostServiceTest {
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
                     .isEqualTo(1);
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, otherAbility))
+                    .isZero();
+        }
+
+        @Test
+        @DisplayName("Conditional equip cost reduction applies only when its condition is met")
+        void conditionalEquipCostReductionChecksItsCondition() {
+            Card nahiri = new Card();
+            nahiri.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                    new ControllerTurn(), new ReduceEquipCostEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(nahiri));
+
+            Permanent equipment = new Permanent(new Card());
+            ActivatedAbility equipAbility = new EquipActivatedAbility("{2}");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerTurn.class), any()))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
+                    .isEqualTo(1);
+
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerTurn.class), any()))
+                    .thenReturn(false);
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
                     .isZero();
         }
 

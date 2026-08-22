@@ -157,6 +157,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
+    /** Triggers whenever any player sacrifices a permanent. */
+    ON_ANY_PERMANENT_SACRIFICED,
     /** Triggers whenever an opponent sacrifices a nontoken permanent. */
     ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED,
     /** Global watcher: triggers whenever any player sacrifices a creature ("Whenever a player
@@ -694,6 +696,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
      *  lands (no counter, no trigger). Used by Renegade Krasis. */
     ON_SELF_EVOLVES,
+    /** Triggers whenever one or more loyalty counters are removed from this permanent. */
+    ON_SELF_LOYALTY_COUNTERS_REMOVED,
+    /** Triggers whenever one or more loyalty counters are put on planeswalkers the controller controls. */
+    ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS,
     /** Triggers whenever the controller puts one or more -1/-1 counters on this permanent — the -1/-1
      *  mirror of {@link #ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT}, restricted to the controller's own
      *  placements ("Whenever you put one or more -1/-1 counters on this creature"). Fired once per
@@ -846,6 +852,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  effects scale via {@code PermanentCount(PermanentIsAttackingSourceControllerPredicate(), ...)}.
      *  Checked in {@code CombatAttackService.declareAttackers}. Used by Orim's Prayer. */
     ON_CREATURES_ATTACK_YOU,
+    /** Triggers once per combat when an opponent attacks a planeswalker controlled by this
+     *  permanent's controller with one or more creatures. The attacking player's ID is stored as
+     *  the non-targeting {@code targetId} on the stack entry. */
+    ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL,
     /** Triggers once per attacking creature whenever a creature attacks, regardless of who controls
      *  the attacker or whom it attacks. Fires on every permanent with this slot across all
      *  battlefields (e.g. Caltrops pings every attacker). The attacking creature's permanent ID is

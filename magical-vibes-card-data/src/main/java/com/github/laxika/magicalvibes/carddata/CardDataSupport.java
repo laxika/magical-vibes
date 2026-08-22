@@ -122,6 +122,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Toxic", Keyword.TOXIC);
         KEYWORD_MAP.put("Compleated", Keyword.COMPLEATED);
         KEYWORD_MAP.put("Mobilize", Keyword.MOBILIZE);
+        KEYWORD_MAP.put("Amass", Keyword.AMASS);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

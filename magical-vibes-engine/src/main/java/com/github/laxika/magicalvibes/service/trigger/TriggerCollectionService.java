@@ -205,6 +205,17 @@ public class TriggerCollectionService {
         }
     }
 
+    public void checkLoyaltyCounterRemovalTriggers(GameData gameData) {
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            int amount = permanent.drainLoyaltyCountersRemovedSinceTriggerCheck();
+            if (amount <= 0) return;
+
+            dispatchSlot(gameData, permanent, controllerId,
+                    EffectSlot.ON_SELF_LOYALTY_COUNTERS_REMOVED,
+                    new TriggerContext.LoyaltyCountersRemoved(permanent, amount));
+        });
+    }
+
     // ── Spell-cast triggers ────────────────────────────────────────────
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
@@ -2162,6 +2173,7 @@ public class TriggerCollectionService {
         // sacrifice-self / sacrifice-as-cost paths that funnel through this method.
         checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
 
+        checkAnyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
         // "When you sacrifice this" — the sacrificed card's own sacrifice-only death triggers
         collectSelfSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, castingSpell);
 
@@ -2224,6 +2236,32 @@ public class TriggerCollectionService {
                 for (CardEffect effect : effects) {
                     var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
                     dispatch(match, EffectSlot.ON_ANY_CREATURE_SACRIFICED, effect, ctx);
+                }
+            }
+        }
+    }
+
+    /**
+     * Fires global watchers for every permanent sacrificed by any player. The trigger belongs to
+     * the permanent's controller, so target selection and the resulting stack entry use that
+     * controller rather than the player who sacrificed the permanent.
+     */
+    public void checkAnyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId,
+                                                    Card sacrificedCard) {
+        if (sacrificedCard == null) return;
+
+        var ctx = new TriggerContext.PermanentSacrificed(sacrificingPlayerId, sacrificedCard);
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_SACRIFICED);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
+                    dispatch(match, EffectSlot.ON_ANY_PERMANENT_SACRIFICED, effect, ctx);
                 }
             }
         }
@@ -5635,8 +5673,14 @@ public class TriggerCollectionService {
         });
     }
 
-    public void checkEnchantedPermanentLTBTriggers(GameData gameData, Permanent leavingPermanent, UUID leavingControllerId) {
-        var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPermanent, leavingControllerId);
+    public void checkEnchantedPermanentLTBTriggers(GameData gameData, Permanent leavingPermanent,
+                                                   UUID leavingControllerId) {
+        checkEnchantedPermanentLTBTriggers(gameData, leavingPermanent, leavingControllerId, null);
+    }
+
+    public void checkEnchantedPermanentLTBTriggers(GameData gameData, Permanent leavingPermanent,
+                                                   UUID leavingControllerId, Zone destination) {
+        var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPermanent, leavingControllerId, destination);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!leavingPermanent.getId().equals(perm.getAttachedTo())) return;

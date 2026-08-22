@@ -286,6 +286,7 @@ public class Permanent {
      *  New counter kinds require only a new {@link CounterType} value — never a new field here.
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    private int loyaltyCountersRemovedSinceTriggerCheck;
     /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
      *  in layer ordering; removing counters does not remove their timestamp. */
     private final Map<CounterType, Long> counterTimestamps = new EnumMap<>(CounterType.class);
@@ -363,6 +364,8 @@ public class Permanent {
      *  {@link #persistentGrantedSupertypes} — the later activation wins. NOT cleared by
      *  {@link #resetModifiers()}. */
     private final Set<CardSupertype> persistentRemovedSupertypes = EnumSet.noneOf(CardSupertype.class);
+    /** Name assigned by a one-shot effect for as long as this permanent stays on the battlefield. */
+    @Setter private String persistentName;
     /** Word substitutions applied by text-changing effects (CR 612). Entries flagged
      *  {@link TextReplacement#untilEndOfTurn()} (Whim of Volrath) are dropped by
      *  {@link #resetModifiers()}; the rest survive turn resets (Mind Bend, Magical Hack). */
@@ -500,6 +503,8 @@ public class Permanent {
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
      *  graveyard, it enters with … counters" as-enters replacements — e.g. Worldheart Phoenix). */
     @Setter private Zone castFromZone;
+    /** Zone this permanent entered the battlefield from, when known. */
+    @Setter private Zone enteredFromZone;
     /** Whether this permanent entered the battlefield by resolving as a spell its controller cast
      *  (as opposed to being put onto the battlefield), gating "if you cast it" abilities.
      *  NOT cleared by {@link #resetModifiers()}. */
@@ -599,6 +604,11 @@ public class Permanent {
         this.attackedThisTurn = false;
         this.attackedThisCombat = false;
         this.summoningSick = true;
+    }
+
+    public Permanent(Card card, Zone enteredFromZone) {
+        this(card);
+        this.enteredFromZone = enteredFromZone;
     }
 
     /**
@@ -714,6 +724,7 @@ public class Permanent {
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.counters.putAll(source.counters);
+        this.loyaltyCountersRemovedSinceTriggerCheck = source.loyaltyCountersRemovedSinceTriggerCheck;
         this.counterTimestamps.putAll(source.counterTimestamps);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
@@ -733,6 +744,7 @@ public class Permanent {
         this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
         this.persistentGrantedSupertypes.addAll(source.persistentGrantedSupertypes);
         this.persistentRemovedSupertypes.addAll(source.persistentRemovedSupertypes);
+        this.persistentName = source.persistentName;
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
@@ -776,6 +788,7 @@ public class Permanent {
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
+        this.enteredFromZone = source.enteredFromZone;
         this.cast = source.cast;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
@@ -1044,11 +1057,22 @@ public class Permanent {
             throw new IllegalArgumentException(
                     "Counter type " + counterType + " is not a concrete permanent counter");
         }
+        int previousCount = counters.getOrDefault(counterType, 0);
+        int newCount = Math.max(0, count);
+        if (counterType == CounterType.LOYALTY && newCount < previousCount) {
+            loyaltyCountersRemovedSinceTriggerCheck += previousCount - newCount;
+        }
         if (count <= 0) {
             counters.remove(counterType);
         } else {
             counters.put(counterType, count);
         }
+    }
+
+    public int drainLoyaltyCountersRemovedSinceTriggerCheck() {
+        int removed = loyaltyCountersRemovedSinceTriggerCheck;
+        loyaltyCountersRemovedSinceTriggerCheck = 0;
+        return removed;
     }
 
     public long getCounterTimestamp(CounterType counterType) {

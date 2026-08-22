@@ -523,6 +523,17 @@ public class GameActionAvailabilityService {
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
         }
+        Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
+                new HashSet<>();
+        if (card.hasType(CardType.PLANESWALKER)) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells());
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
+                || (card.hasType(CardType.PLANESWALKER)
+                && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                    CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
@@ -541,6 +552,7 @@ public class GameActionAvailabilityService {
                 || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
                 || !subtypeSpellOnlyContext.isEmpty()
+                || !subtypeOrPlaneswalkerSpellContext.isEmpty()
                 || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
                 || !subtypeOrLegendaryCreatureContext.isEmpty()
                 || powerstoneContext;
@@ -548,7 +560,7 @@ public class GameActionAvailabilityService {
                 ? totalCost.canPay(paymentPool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
-                Set.of(), subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
                 subtypeSpellOnlyContext)
                 : totalCost.canPay(pool, kickerXValue);
     }
@@ -682,12 +694,16 @@ public class GameActionAvailabilityService {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
         }
         Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
-                subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
-                        || (card.hasType(CardType.PLANESWALKER)
-                        && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))
-                        ? Set.of(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
-                        CardSubtype.ELEMENTAL, CardSubtype.CHANDRA))
-                        : Set.of();
+                new HashSet<>();
+        if (card.hasType(CardType.PLANESWALKER)) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells());
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
+                || (card.hasType(CardType.PLANESWALKER)
+                && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                    CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
@@ -917,7 +933,8 @@ public class GameActionAvailabilityService {
 
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty
                 || gameData.playersCantPlayLandsThisTurn.contains(playerId)
-                || castingPermissionService.isLandPlayRestricted(gameData, playerId)) {
+                || castingPermissionService.isLandPlayRestricted(gameData, playerId)
+                || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)) {
             return playable;
         }
 

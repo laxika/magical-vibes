@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,15 @@ public class CopySupport {
 
     public Card createCopyCardWithoutEpic(Card original) {
         return createCopyCard(original, true);
+    }
+
+    public void checkSpellCopyTriggers(GameData gameData, StackEntry copyEntry) {
+        if (triggerCollectionService == null || copyEntry == null || !copyEntry.isCopy()) return;
+        if (copyEntry.getEntryType() != StackEntryType.INSTANT_SPELL
+                && copyEntry.getEntryType() != StackEntryType.SORCERY_SPELL) {
+            return;
+        }
+        triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
     }
 
     private Card createCopyCard(Card original, boolean withoutEpic) {

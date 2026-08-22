@@ -168,6 +168,7 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntPlayLandThisTurn;
+import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -548,6 +549,8 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null && gameData.getLife(ctx.targetId()) == c.lifeTotal();
             case CastFromZone c ->
                     c.sourceZone() == ctx.sourceZone();
+            case EnteredFromZone c ->
+                    ctx.sourcePermanent() != null && c.sourceZone() == ctx.sourcePermanent().getEnteredFromZone();
             case CastNotFromHand ignored ->
                     ctx.sourceZone() != Zone.HAND;
             case NoManaSpentToCast ignored -> {

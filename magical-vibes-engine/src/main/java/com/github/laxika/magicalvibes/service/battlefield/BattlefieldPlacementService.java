@@ -172,7 +172,8 @@ public class BattlefieldPlacementService {
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
-            applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
+            applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
+                    repeatedAdditionalCosts, request.enterWithCounters());
             applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
@@ -912,7 +913,8 @@ public class BattlefieldPlacementService {
      * exclude it ("for each <em>other</em> [subtype] you control", e.g. Unbreathing Horde).</p>
      */
     private void applyEnterWithCounters(GameData gameData, UUID controllerId, Permanent permanent,
-                                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
+                                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                                        EnterWithCountersEffect additionalEnterWithCounters) {
         Card card = permanent.getCard();
         // Solemnity and Tatterkite/Melira's Keepers-style locks also replace "enters with N counters".
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
@@ -938,6 +940,11 @@ public class BattlefieldPlacementService {
             if (permanent.getChosenSubtype() == null && isChosenSubtypeDependent(enterWith)) continue;
             applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, xValue,
                     repeatedAdditionalCosts, card);
+        }
+
+        if (additionalEnterWithCounters != null) {
+            applyEnterWithCountersEffect(gameData, controllerId, permanent, additionalEnterWithCounters,
+                    xValue, repeatedAdditionalCosts, card);
         }
 
         applyGrantedBloodthirst(gameData, controllerId, permanent);

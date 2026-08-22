@@ -1352,6 +1352,11 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
+                    if (returnEffect != null && returnEffect.targetNotPutIntoGraveyardThisCombat()
+                            && gameData.cardsPutIntoGraveyardThisCombat
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (manaValueEqualsX
                             && graveyardCard.getManaValue() != pending.xValue() + manaValueXOffset) {
                         continue;

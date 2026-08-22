@@ -316,8 +316,6 @@ public class CombatBlockService {
         int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
         blockTaxTotal += globalBlockManaTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
 
-        int teamMaxBlockers = maximumBlockersForTeam(attackerBattlefield);
-
         for (var entry : blockersPerAttacker.entrySet()) {
             int attackerIdx = entry.getKey();
             int blockerCount = entry.getValue();
@@ -325,6 +323,7 @@ public class CombatBlockService {
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
             }
+            int teamMaxBlockers = maximumBlockersForTeam(gameData, attacker, attackerBattlefield);
             if (blockerCount > teamMaxBlockers) {
                 throw new IllegalStateException(attacker.getCard().getName()
                         + " can't be blocked by more than " + teamMaxBlockers
@@ -2104,7 +2103,6 @@ public class CombatBlockService {
         }
 
         Map<Integer, Integer> attackerNodes = new HashMap<>();
-        int teamMaxBlockers = maximumBlockersForTeam(attackerBattlefield);
         int globalMaxBlockers = CombatHelper.getMaximumBlockers(gameData);
         for (int i = 0; i < attackerIndices.size(); i++) {
             int attackerIdx = attackerIndices.get(i);
@@ -2112,7 +2110,8 @@ public class CombatBlockService {
             attackerNodes.put(attackerIdx, attackerNode);
             int capacity = Math.min(
                     Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attackerBattlefield.get(attackerIdx)),
-                            teamMaxBlockers),
+                            maximumBlockersForTeam(
+                                    gameData, attackerBattlefield.get(attackerIdx), attackerBattlefield)),
                     globalMaxBlockers);
             capacity = Math.min(capacity, blockerIndices.size());
             residual[attackerNode][sink] = capacity;
@@ -2390,7 +2389,7 @@ public class CombatBlockService {
 
         int maximumBlockers = Math.min(
                 Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
-                        maximumBlockersForTeam(attackerBattlefield)),
+                        maximumBlockersForTeam(gameData, attacker, attackerBattlefield)),
                 CombatHelper.getMaximumBlockers(gameData));
         if (minimumBlockers > maximumBlockers) {
             return false;
@@ -2556,15 +2555,19 @@ public class CombatBlockService {
             GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         return Math.min(
                 Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
-                        maximumBlockersForTeam(attackerBattlefield)),
+                        maximumBlockersForTeam(gameData, attacker, attackerBattlefield)),
                 CombatHelper.getMaximumBlockers(gameData));
     }
 
-    private int maximumBlockersForTeam(List<Permanent> attackerBattlefield) {
+    private int maximumBlockersForTeam(
+            GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         int maximumBlockers = Integer.MAX_VALUE;
         for (Permanent permanent : attackerBattlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
+                        && (restriction.affectedCreatureFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, restriction.affectedCreatureFilter()))) {
                     maximumBlockers = Math.min(maximumBlockers, restriction.maxBlockers());
                 }
             }

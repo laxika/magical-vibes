@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
+import com.github.laxika.magicalvibes.model.effect.DeliverUntoEvilEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
@@ -136,6 +137,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilities
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -850,12 +852,16 @@ public class SpellCastingService {
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
         Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
-                subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
-                        || (card.hasType(CardType.PLANESWALKER)
-                        && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))
-                        ? Set.of(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
-                        CardSubtype.ELEMENTAL, CardSubtype.CHANDRA))
-                        : Set.of();
+                new HashSet<>();
+        if (card.hasType(CardType.PLANESWALKER)) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells());
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
+                || (card.hasType(CardType.PLANESWALKER)
+                && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                    CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
         return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless,
                 subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, legendarySpellOnly,
                 manaValueAtLeastFour, subtypeOrPlaneswalkerSpellContext, subtypeCreatureContext,
@@ -2828,6 +2834,7 @@ public class SpellCastingService {
                 long matchingCount = 0;
                 for (UUID pid : gameData.orderedPlayerIds) {
                     matchingCount += gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
+                            .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
                             .filter(c -> predicateEvaluationService.matchesCardPredicate(c, pileSeparationEffect.filter(), card.getId()))
                             .count();
                 }
@@ -2838,6 +2845,20 @@ public class SpellCastingService {
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards in any graveyard — put spell on stack with 0 targets
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
+            } else if (filteredSpellEffects.stream().anyMatch(DeliverUntoEvilEffect.class::isInstance)) {
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
+                        .count();
+                if (matchingCount > 0) {
+                    graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
+                            entryType, (CardPredicate) null, 4, filteredSpellEffects);
+                    return; // finishSpellCast handled in handleMultipleCardsChosen
+                }
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, 0, null,
@@ -2883,6 +2904,7 @@ public class SpellCastingService {
                     throw new IllegalStateException("Must target a player");
                 }
                 long matchingCount = gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
+                        .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
@@ -2910,6 +2932,7 @@ public class SpellCastingService {
                 if (resolvedXValue > 0) {
                     long matchingCount = gameQueryService.canGraveyardCardsBeTargeted(gameData)
                             ? gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
+                            .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
                             .filter(c -> predicateEvaluationService.matchesCardPredicate(
                                     c, targetPlayerGraveyardExileEffect.filter(), card.getId()))
                             .count()
@@ -3001,6 +3024,7 @@ public class SpellCastingService {
                             continue;
                         }
                         matchingCount += gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
+                                .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
                                 .filter(c -> predicateEvaluationService.matchesCardPredicate(c, graveyardToTopEffect.filter(), card.getId()))
                                 .count();
                     }
@@ -3037,6 +3061,8 @@ public class SpellCastingService {
                             .filter(candidate -> exileFromGraveyardEffect.filter() == null
                                     || predicateEvaluationService.matchesCardPredicate(
                                     candidate, exileFromGraveyardEffect.filter(), card.getId()))
+                            .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(
+                                    gameData, candidate, playerId))
                             .count();
                 }
                 if (matchingCount > 0) {
@@ -3065,19 +3091,25 @@ public class SpellCastingService {
                         null, null, null, List.of(), List.of()
                 ));
             } else if (returnToBattlefieldEffect != null && !returnToBattlefieldEffect.xScaled()) {
-                Set<UUID> trackedIds = returnToBattlefieldEffect.fromBattlefieldThisTurn()
-                        ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(playerId, Set.of())
-                        : null;
-                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                        .filter(c -> trackedIds == null || trackedIds.contains(c.getId()))
+                List<UUID> graveyardOwners = switch (returnToBattlefieldEffect.source()) {
+                    case CONTROLLERS_GRAVEYARD -> List.of(playerId);
+                    case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()
+                            .filter(ownerId -> !ownerId.equals(playerId))
+                            .toList();
+                    case ALL_GRAVEYARDS -> gameData.orderedPlayerIds;
+                };
+                long matchingCount = graveyardOwners.stream()
+                        .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                                .filter(c -> !returnToBattlefieldEffect.fromBattlefieldThisTurn()
+                                        || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                                        .getOrDefault(ownerId, Set.of()).contains(c.getId())))
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(
                                 c, returnToBattlefieldEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
                     graveyardTargetingService.handleUpToNGraveyardSpellTargeting(
-                            gameData, playerId, card, entryType, returnToBattlefieldEffect.filter(),
-                            returnToBattlefieldEffect.maxTargets(), filteredSpellEffects,
-                            returnToBattlefieldEffect.fromBattlefieldThisTurn());
+                            gameData, playerId, card, entryType, returnToBattlefieldEffect,
+                            filteredSpellEffects);
                     return;
                 }
                 gameData.stack.add(new StackEntry(
@@ -5002,6 +5034,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Must target a player");
             }
             long matchingCount = gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
+                    .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
                     .filter(c -> predicateEvaluationService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
                     .count();
             if (matchingCount > 0) {
@@ -5686,7 +5719,25 @@ public class SpellCastingService {
             throw new IllegalStateException("Top card is not castable from library");
         }
 
-        effectiveXValue = freeTopPlay ? 0 : resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
+        boolean canUseManaValueLifeAlternative = castingPermissionService
+                .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, card);
+        boolean canCastNormallyFromLibraryTop = castingPermissionService
+                .canCastFromTopOfLibraryNormally(gameData, playerId, card);
+        if (canUseManaValueLifeAlternative && !canCastNormallyFromLibraryTop
+                && gameData.getLife(playerId) < card.getManaValue()) {
+            throw new IllegalStateException("Not enough life to cast the top card from the library");
+        }
+        boolean useManaValueLifeAlternative = canUseManaValueLifeAlternative
+                && (!canCastNormallyFromLibraryTop || gameData.getLife(playerId) >= card.getManaValue());
+        if (useManaValueLifeAlternative
+                && (gameData.getLife(playerId) < card.getManaValue()
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))) {
+            throw new IllegalStateException("Not enough life to cast the top card from the library");
+        }
+
+        effectiveXValue = freeTopPlay || useManaValueLifeAlternative
+                ? 0 : resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
@@ -5719,7 +5770,9 @@ public class SpellCastingService {
         }
 
         int phyrexianManaPaidWithLife = 0;
-        if (!freeTopPlay) {
+        if (useManaValueLifeAlternative) {
+            payLifeForLibraryTopAlternative(gameData, player, card);
+        } else if (!freeTopPlay) {
             phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
                     gameData, playerId, card, effectiveXValue, Zone.LIBRARY);
         }
@@ -5822,6 +5875,16 @@ public class SpellCastingService {
     }
 
     // --- Mana payment ---
+
+    private void payLifeForLibraryTopAlternative(GameData gameData, Player player, Card card) {
+        int amount = card.getManaValue();
+        if (amount <= 0) return;
+        UUID playerId = player.getId();
+        gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - amount);
+        gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " pays " + amount + " life to cast " + card.getName() + " from the top of their library."));
+    }
 
     /**
      * Pays escalate's mana-per-extra-mode cost when the spell's mana cost itself was waived

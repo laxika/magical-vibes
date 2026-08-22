@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
@@ -162,6 +163,24 @@ class CastingPermissionServiceTest {
                     .thenReturn(true);
 
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isTrue();
+        }
+
+        @Test
+        @DisplayName("allows nonland spells through the mana-value life alternative")
+        void allowsManaValueLifeAlternative() {
+            Card citadel = new Card();
+            citadel.addEffect(EffectSlot.STATIC,
+                    new AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(citadel));
+
+            Card spell = new Card();
+            spell.setType(CardType.CREATURE);
+            Card land = new Card();
+            land.setType(CardType.LAND);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, spell)).isTrue();
+            assertThat(svc.canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gd, player1Id, spell)).isTrue();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, land)).isFalse();
         }
     }
 

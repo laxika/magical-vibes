@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KTK", collectorNumber = "7")
 @CardRegistration(set = "M21", collectorNumber = "15")
+@CardRegistration(set = "WAR", collectorNumber = "9")
 public class DefiantStrike extends Card {
 
     public DefiantStrike() {

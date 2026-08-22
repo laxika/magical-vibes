@@ -441,6 +441,10 @@ public class PermanentCounterSupport {
         log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
                 sourceCard.getName(), count, counterName, card.getName());
 
+        if (counterType == CounterType.LOYALTY) {
+            fireLoyaltyCountersPutOnPlaneswalkerTriggers(gameData, target, count);
+        }
+
         // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
         if (entry != null && counterType == CounterType.LORE && card.isSaga()) {
             triggerSagaChapter(gameData, entry, target);
@@ -798,6 +802,69 @@ public class PermanentCounterSupport {
                 log.info("Game {} - {} generic counter watcher fires", gameData.id, card.getName());
             }
         }
+    }
+
+    /**
+     * Fires controller-scoped triggers for loyalty counters placed on planeswalkers. The amount is
+     * snapshotted on the triggered ability so "that many" remains the amount from the placement
+     * event when the trigger resolves.
+     */
+    public void fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+            GameData gameData, UUID controllerId, int count) {
+        if (controllerId == null || count <= 0) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            queueLoyaltyCounterTrigger(gameData, source, controllerId, count);
+        }
+    }
+
+    public void fireLoyaltyCountersPutOnSourceTrigger(GameData gameData, Permanent source, int count) {
+        if (source == null || count <= 0) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        queueLoyaltyCounterTrigger(gameData, source, controllerId, count);
+    }
+
+    public void fireLoyaltyCountersPutOnPlaneswalkerTriggers(
+            GameData gameData, Permanent planeswalker, int count) {
+        if (planeswalker == null || count <= 0 || !gameQueryService.isPlaneswalker(gameData, planeswalker)) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, planeswalker.getId());
+        fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(gameData, controllerId, count);
+    }
+
+    private void queueLoyaltyCounterTrigger(GameData gameData, Permanent source,
+                                            UUID controllerId, int count) {
+        if (controllerId == null) {
+            return;
+        }
+        Card card = source.getCard();
+        List<CardEffect> effects = card.getEffects(
+                EffectSlot.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS);
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                source.getId());
+        trigger.setEventValue(count);
+        gameData.stack.add(trigger);
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        log.info("Game {} - {} loyalty-counter trigger fires for {} counter(s)",
+                gameData.id, card.getName(), count);
     }
 
     void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {

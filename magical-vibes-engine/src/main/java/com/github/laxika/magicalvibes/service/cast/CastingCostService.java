@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingE
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
@@ -722,7 +723,9 @@ public class CastingCostService {
         int reduction = 0;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ActivatedAbilityCostReducingEffect reducer
+                ActivatedAbilityCostReducingEffect reducer = activeActivatedAbilityCostReducer(
+                        gameData, effect, permanent, activatingPlayerId);
+                if (reducer != null
                         && !reducer.appliesSymmetrically()
                         && reducer.appliesTo(ability, permanent.getId(), targetId, targetIds)
                         && predicateEvaluationService.matchesPermanentPredicate(
@@ -775,7 +778,9 @@ public class CastingCostService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilityCostReducingEffect reducingEffect
+                    ActivatedAbilityCostReducingEffect reducingEffect = activeActivatedAbilityCostReducer(
+                            gameData, effect, perm, pid);
+                    if (reducingEffect != null
                             && reducingEffect.appliesSymmetrically()
                             && (ability == null || reducingEffect.appliesTo(ability))
                             && predicateEvaluationService.matchesPermanentPredicate(
@@ -802,6 +807,19 @@ public class CastingCostService {
                     AmountContext.forStaticEffect(reducingPermanent, reducingControllerId));
         }
         return reducer.genericCostReduction();
+    }
+
+    private ActivatedAbilityCostReducingEffect activeActivatedAbilityCostReducer(
+            GameData gameData, CardEffect effect, Permanent sourcePermanent, UUID controllerId) {
+        CardEffect current = effect;
+        while (current instanceof ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(sourcePermanent, controllerId))) {
+                return null;
+            }
+            current = conditional.wrapped();
+        }
+        return current instanceof ActivatedAbilityCostReducingEffect reducer ? reducer : null;
     }
 
     /**

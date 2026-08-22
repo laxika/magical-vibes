@@ -119,6 +119,15 @@ public class GraveyardTargetValidators {
                         "Target must be a card put into a graveyard from the battlefield this turn");
             }
         }
+        if (effect.targetNotPutIntoGraveyardThisCombat()) {
+            boolean tracked = graveyardOwnerId != null
+                    && ctx.gameData().cardsPutIntoGraveyardThisCombat
+                            .getOrDefault(graveyardOwnerId, Set.of())
+                            .contains(ctx.targetId());
+            if (tracked) {
+                throw new IllegalStateException("Target can't have been put into a graveyard during this combat");
+            }
+        }
         int requiredManaValue = ctx.xValue()
                 + (effect.requiresManaValueEqualsX() ? effect.manaValueXOffset() : 0);
         if (effect.requiresManaValueEqualsX()
@@ -216,7 +225,8 @@ public class GraveyardTargetValidators {
                         effect.filter(),
                         ctx.sourceCard() == null ? null : ctx.sourceCard().getId(),
                         ctx.gameData(),
-                        gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId()))) {
+                        gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId()),
+                        ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
             throw new IllegalStateException("Target card does not match the required filter");
         }
         // Opponent-graveyard scope check is enforced in SpellCastingService (which has playerId context)

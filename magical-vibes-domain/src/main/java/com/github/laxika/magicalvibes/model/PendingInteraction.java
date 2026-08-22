@@ -94,6 +94,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.DiscardCostChoice,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.VividCardChoice,
+        PendingInteraction.NivMizzetColorPairChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.SearchOutsideGameOrExileCardChoice,
         PendingInteraction.AssimilationAegisCopyChoice,
@@ -935,15 +936,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** One matching card from the controller's library or graveyard is chosen for the hand. */
+    /** One matching card from the controller's library or graveyard is chosen for its destination. */
     record SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
                                              java.util.Set<UUID> libraryCardIds,
+                                             java.util.Set<UUID> handCardIds,
                                              boolean librarySearchAllowed,
-                                             String cardLabel) implements PendingInteraction {
+                                             String cardLabel,
+                                             LibrarySearchDestination destination,
+                                             UUID attachToPermanentId) implements PendingInteraction {
+
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 boolean librarySearchAllowed,
+                                                 String cardLabel) {
+            this(playerId, pool, libraryCardIds, java.util.Set.of(), librarySearchAllowed, cardLabel,
+                    LibrarySearchDestination.HAND, null);
+        }
 
         public SearchLibraryAndOrGraveyardChoice {
             pool = java.util.List.copyOf(pool);
             libraryCardIds = java.util.Set.copyOf(libraryCardIds);
+            handCardIds = java.util.Set.copyOf(handCardIds);
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -2633,6 +2646,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    /** Selects one card for each two-color pair represented among Niv-Mizzet's revealed cards. */
+    record NivMizzetColorPairChoice(UUID playerId, java.util.List<Card> revealedCards,
+                                    java.util.List<UUID> validCardIds, int requiredPairCount,
+                                    String prompt) implements PendingInteraction {
+
+        public NivMizzetColorPairChoice {
+            revealedCards = java.util.List.copyOf(revealedCards);
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, requiredPairCount, requiredPairCount);
         }
     }
 

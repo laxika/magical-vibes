@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
@@ -64,6 +65,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record BouncePermanentThen(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                CardEffect thenEffect) implements PermanentChoiceContext {}
     record ChoosePlayerThenReturnCreatureToHand(String sourceCardName) implements PermanentChoiceContext {}
+    record MayReturnPermanentToHandAndEnterWithCounters(
+            Card sourceCard,
+            UUID controllerId,
+            MayReturnPermanentToHandAndEnterWithCountersEffect effect,
+            UUID sourcePermanentId,
+            UUID targetCardId
+    ) implements PermanentChoiceContext {}
 
     record SpellRetarget(UUID spellCardId) implements PermanentChoiceContext {}
 
@@ -801,24 +809,40 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                     boolean withoutPayingManaCost, UUID ownerId,
-                                    boolean restrictAdditionalSpellsThisTurn) implements PermanentChoiceContext {
+                                    boolean restrictAdditionalSpellsThisTurn,
+                                    int copyCount) implements PermanentChoiceContext {
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                         boolean withoutPayingManaCost) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, null, false);
+                    withoutPayingManaCost, null, false, 0);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                         boolean withoutPayingManaCost, UUID ownerId) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, ownerId, false);
+                    withoutPayingManaCost, ownerId, false, 0);
+        }
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                        boolean withoutPayingManaCost, UUID ownerId, int copyCount) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, ownerId, false, copyCount);
+        }
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                        boolean withoutPayingManaCost, UUID ownerId,
+                                        boolean restrictAdditionalSpellsThisTurn) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, 0);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, true, null, false);
+            this(cardToCast, controllerId, spellEffects, spellType, false, true, null, false, 0);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,

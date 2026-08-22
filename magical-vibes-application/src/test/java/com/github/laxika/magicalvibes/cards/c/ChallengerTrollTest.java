@@ -1,0 +1,60 @@
+package com.github.laxika.magicalvibes.cards.c;
+
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({ChallengerTroll.class, AirElemental.class, GrizzlyBears.class})
+class ChallengerTrollTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Creatures with power 4 or greater can't be blocked by more than one creature")
+    void highPowerCreatureCannotBeBlockedByTwoCreatures() {
+        addCreatureReady(player1, new ChallengerTroll());
+        Permanent attacker = addCreatureReady(player1, new AirElemental());
+        attacker.setAttacking(true);
+        Permanent blockerOne = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        List<Permanent> attackers = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> blockers = gd.playerBattlefields.get(player2.getId());
+        int attackerIndex = attackers.indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockers.indexOf(blockerOne), attackerIndex),
+                new BlockerAssignment(blockers.indexOf(blockerTwo), attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked by more than 1 creature");
+    }
+
+    @Test
+    @DisplayName("Creatures with power less than 4 can still be blocked by two creatures")
+    void lowerPowerCreatureCanBeBlockedByTwoCreatures() {
+        addCreatureReady(player1, new ChallengerTroll());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blockerOne = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blockerOne), attackerIndex),
+                new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blockerTwo), attackerIndex)));
+
+        assertThat(blockerOne.isBlocking()).isTrue();
+        assertThat(blockerTwo.isBlocking()).isTrue();
+    }
+}

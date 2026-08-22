@@ -60,6 +60,7 @@ public class StateBasedActionService {
     private static final int MAX_SBA_PASSES = 100;
 
     public void performStateBasedActions(GameData gameData) {
+        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         initializeSpeedForPlayers(gameData);
 
         // CR 704.3-704.4 — all applicable state-based actions are performed as a batch, then the

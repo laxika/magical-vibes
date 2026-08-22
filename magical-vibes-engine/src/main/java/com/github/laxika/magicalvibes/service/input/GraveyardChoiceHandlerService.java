@@ -904,6 +904,16 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            } else if (pileSeparation.disposition() == CardPileDisposition.DELIVER_UNTO_EVIL) {
+                graveyardReturnSupport.completeDeliverUntoEvilChoice(gameData, cardIds);
+                if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
+                    effectResolutionService.resolveEffectsFrom(gameData,
+                            gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        return;
+                    }
+                }
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             } else {
                 // BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both share step 1; step 2 branches.
                 graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
@@ -919,6 +929,8 @@ public class GraveyardChoiceHandlerService {
         UUID pendingTargetPlayerId = gameData.graveyardTargetOperation.targetPlayerId;
         boolean pendingFlashback = gameData.graveyardTargetOperation.flashback;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
+        Integer pendingTriggeringPermanentPowerAtTrigger =
+                gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
         UUID pendingSpellCounterTargetId = gameData.graveyardTargetOperation.spellCounterTargetId;
         List<UUID> pendingPermanentTargetIds = gameData.graveyardTargetOperation.permanentTargetIds;
@@ -937,6 +949,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.targetPlayerId = null;
         gameData.graveyardTargetOperation.flashback = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;
+        gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = null;
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
         gameData.graveyardTargetOperation.permanentTargetIds = null;
@@ -1032,6 +1045,9 @@ public class GraveyardChoiceHandlerService {
             }
             if (pendingTargetPlayerId != null) {
                 triggeredEntry.setTargetId(pendingTargetPlayerId);
+            }
+            if (pendingTriggeringPermanentPowerAtTrigger != null) {
+                triggeredEntry.setTriggeringPermanentPowerAtTrigger(pendingTriggeringPermanentPowerAtTrigger);
             }
             gameData.stack.add(triggeredEntry);
             triggerCollectionService.checkTargetChoiceTriggers(gameData, triggeredEntry);

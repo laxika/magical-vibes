@@ -89,7 +89,8 @@ public class CharacteristicState {
      * pass.
      */
     public CharacteristicState(Card card, Permanent permanent) {
-        this.name = permanent.isFaceDown() ? null : card.getName();
+        this.name = permanent.isFaceDown() ? null
+                : permanent.getPersistentName() != null ? permanent.getPersistentName() : card.getName();
         if (permanent.isFaceDown()) {
             this.cardTypes.addAll(permanent.getFaceDownCardTypes());
         } else {

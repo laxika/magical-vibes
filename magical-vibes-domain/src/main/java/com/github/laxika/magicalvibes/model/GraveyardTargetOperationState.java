@@ -49,6 +49,8 @@ public class GraveyardTargetOperationState {
     public boolean flashback;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
+    /** Effective power of an attack-trigger source, captured before graveyard target selection. */
+    public Integer triggeringPermanentPowerAtTrigger;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
     public String chapterName;
     /**

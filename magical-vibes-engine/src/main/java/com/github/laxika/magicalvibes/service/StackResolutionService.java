@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -282,6 +283,7 @@ public class StackResolutionService {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         }
         perm.setCastFromZone(entry.getSourceZone());
+        perm.setEnteredFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
         perm.setCast(!entry.isCopy());
@@ -962,6 +964,9 @@ public class StackResolutionService {
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
             countAbilityResolution(gameData, entry);
+            if (entry.isExileAndReturnToHandAtNextEndStep()) {
+                entry.setExileInsteadOfGraveyard(true);
+            }
             effectResolutionService.resolveEffects(gameData, entry);
 
             // A spell that pauses for input must remain undisposed until its effects finish.
@@ -1044,10 +1049,18 @@ public class StackResolutionService {
         Card physicalCard = entry.getPhysicalCard();
         boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
 
-        // CR 702.33a: "If the flashback cost was paid, exile this card instead of
-        // putting it anywhere else any time it would leave the stack." This overrides
-        // return-to-hand, shuffle-into-library, and all other disposition effects.
-        if (entry.isCastWithFlashback()) {
+        // Feather's replacement is chosen first when it is available; otherwise flashback's
+        // replacement exiles the spell instead of letting it go anywhere else.
+        if (entry.isExileAndReturnToHandAtNextEndStep()
+                && !entry.isReturnToHandAfterResolving()
+                && entry.getPutIntoLibraryPositionAfterResolving() == null
+                && gameData.pendingReturnToHandOnDiscardType == null) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addToExile(ownerId, physicalCard);
+            gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
+                    physicalCard.getId(), ownerId));
+            gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
+        } else if (entry.isCastWithFlashback()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));

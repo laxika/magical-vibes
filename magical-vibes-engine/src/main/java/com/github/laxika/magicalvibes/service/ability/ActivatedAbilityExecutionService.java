@@ -109,6 +109,7 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -140,6 +141,7 @@ public class ActivatedAbilityExecutionService {
     private final TriggerCollectionService triggerCollectionService;
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
@@ -461,6 +463,12 @@ public class ActivatedAbilityExecutionService {
             equipSupport.expireAttachedCopyEffects(gameData, equipment);
         }
 
+        int loyaltyCountersAdded = ability.getLoyaltyCost() != null && ability.getLoyaltyCost() > 0
+                ? ability.getLoyaltyCost()
+                : 0;
+        permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+                gameData, playerId, loyaltyCountersAdded);
+        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         List<StackEntry> deferredCostTriggers = new ArrayList<>();
         if (!gameData.pendingActivatedAbilityCostTriggers.isEmpty()) {
             deferredCostTriggers.addAll(gameData.pendingActivatedAbilityCostTriggers);

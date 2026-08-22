@@ -270,6 +270,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
+    /** Tracks non-token card IDs put into each player's graveyard during the current combat phase. */
+    public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardThisCombat = new ConcurrentHashMap<>();
     /** Players whose noncreature permanents were destroyed by an opponent's spell or ability this turn. */
     public final Set<UUID> playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks card IDs each player cycled or discarded this turn (populated in the central discard hook
@@ -844,6 +846,9 @@ public class GameData {
     /** Players whose spells can't be countered this turn. Cleared at end of turn. */
     public final Set<UUID> playersSpellsCantBeCounteredThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Players whose creature spells can't be countered this turn. Cleared at end of turn. */
+    public final Set<UUID> playersCreatureSpellsCantBeCounteredThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Per-player: creatures controlled by this player can't be the targets of spells of these colors this turn. Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerCreaturesCantBeTargetedByColorsThisTurn = new ConcurrentHashMap<>();
 
@@ -873,6 +878,9 @@ public class GameData {
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
 
+    /** Per-player: this player has a temporary targeting keyword until end of turn. */
+    public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
+
     /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
     public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -889,6 +897,14 @@ public class GameData {
 
     /** Players who can't cast noncreature spells until the key player's next turn. */
     public final Map<UUID, Set<UUID>> playersCantCastNoncreatureSpellsUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
+    /** Card types all players can't cast until the end of the key player's next turn. */
+    public final Map<UUID, Map<CardType, Integer>> playersCantCastSpellTypesUntilEndOfControllerNextTurn =
+            new ConcurrentHashMap<>();
+
+    /** Card predicates the key player may cast as though they had flash until their next turn. */
+    public final Map<UUID, Set<CardPredicate>> cardTypeFlashGrantsUntilNextTurn =
             new ConcurrentHashMap<>();
 
     /** Land subtype -&gt; extra mana color added whenever a player taps a land of that subtype for mana
@@ -3776,6 +3792,8 @@ public class GameData {
                 .addAll(this.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn);
         this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
+        this.cardsPutIntoGraveyardThisCombat.forEach((k, v) ->
+                copy.cardsPutIntoGraveyardThisCombat.put(k, new HashSet<>(v)));
         this.cardsDiscardedOrCycledThisTurn.forEach((k, v) ->
                 copy.cardsDiscardedOrCycledThisTurn.put(k, new HashSet<>(v)));
         copy.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn
@@ -3855,6 +3873,9 @@ public class GameData {
                 this.graveyardTargetOperation.activeSpellGraveyardChoiceEffect;
         copy.graveyardTargetOperation.spellGraveyardCardIdsByEffect.putAll(
                 this.graveyardTargetOperation.spellGraveyardCardIdsByEffect);
+        copy.graveyardTargetOperation.sourcePermanentId = this.graveyardTargetOperation.sourcePermanentId;
+        copy.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
+                this.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);
@@ -3928,6 +3949,8 @@ public class GameData {
         copy.cloneOperation.nameOverride = this.cloneOperation.nameOverride;
         copy.cloneOperation.additionalSupertypesOverride = this.cloneOperation.additionalSupertypesOverride;
         copy.cloneOperation.copyColor = this.cloneOperation.copyColor;
+        copy.cloneOperation.removedSupertypesOverride = this.cloneOperation.removedSupertypesOverride;
+        copy.cloneOperation.addTypeAppropriateCounters = this.cloneOperation.addTypeAppropriateCounters;
 
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);
@@ -3982,6 +4005,7 @@ public class GameData {
         this.playerSpellsCantBeCounteredByColorsThisTurn.forEach((k, v) ->
                 copy.playerSpellsCantBeCounteredByColorsThisTurn.put(k, new HashSet<>(v)));
         copy.playersSpellsCantBeCounteredThisTurn.addAll(this.playersSpellsCantBeCounteredThisTurn);
+        copy.playersCreatureSpellsCantBeCounteredThisTurn.addAll(this.playersCreatureSpellsCantBeCounteredThisTurn);
         this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) ->
                 copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
         this.playerHexproofFromColorsThisTurn.forEach((k, v) ->
@@ -3995,6 +4019,8 @@ public class GameData {
                 copy.spellColorOverridesUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
+        this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
+                copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
@@ -4003,6 +4029,12 @@ public class GameData {
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->
+                copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
+        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
+                copy.cardTypeFlashGrantsUntilNextTurn.put(k, ConcurrentHashMap.newKeySet()));
+        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
+                copy.cardTypeFlashGrantsUntilNextTurn.get(k).addAll(v));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;

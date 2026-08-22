@@ -27,6 +27,8 @@ public enum CardPileDisposition {
      * hand, so the flow completes in step 1 and never asks the controller to pick a pile.
      */
     GIFTS_UNGIVEN,
+    /** Deliver Unto Evil: the opponent chooses cards to leave in the controller's graveyard. */
+    DELIVER_UNTO_EVIL,
     /** Death or Glory: the opponent chooses which pile is exiled; the other returns to the battlefield. */
     OPPONENT_CHOOSES_EXILE,
     /** Fight or Flight: the chosen pile contains the only creatures that can attack this turn. */

@@ -466,6 +466,7 @@ public class GraveyardService {
 
         gameData.playerGraveyards.get(ownerId).add(card);
         gameData.markGraveyardEntry(card);
+        updateThisCombatGraveyardTracking(gameData, ownerId, card);
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -1079,6 +1080,14 @@ public class GraveyardService {
     private void updateFromAnywhereThisTurnTracking(GameData gameData, UUID ownerId, Card card) {
         if (!card.isToken()) {
             gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                    .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(card.getId());
+        }
+    }
+
+    private void updateThisCombatGraveyardTracking(GameData gameData, UUID ownerId, Card card) {
+        if (gameData.currentStep != null && gameData.currentStep.isCombatPhase() && !card.isToken()) {
+            gameData.cardsPutIntoGraveyardThisCombat
                     .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
                     .add(card.getId());
         }

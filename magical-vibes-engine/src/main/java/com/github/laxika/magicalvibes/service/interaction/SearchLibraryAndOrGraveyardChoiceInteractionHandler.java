@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
@@ -25,6 +28,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -60,22 +64,35 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Chosen card is no longer available"));
         boolean fromLibrary = chosen != null && interaction.libraryCardIds().contains(chosen.getId());
+        boolean fromHand = chosen != null && interaction.handCardIds().contains(chosen.getId());
+        boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
         if (chosen != null) {
             List<Card> zone = fromLibrary
                     ? gameData.playerDecks.getOrDefault(playerId, List.of())
+                    : fromHand
+                    ? gameData.playerHands.getOrDefault(playerId, List.of())
                     : gameData.playerGraveyards.getOrDefault(playerId, List.of());
             boolean removed = zone.removeIf(card -> card.getId().equals(chosen.getId()));
             if (!removed) {
                 throw new IllegalStateException("Chosen card is no longer in its search zone");
             }
-            if (!fromLibrary) {
+            if (!fromLibrary && !fromHand) {
                 graveyardService.notifyCardsLeftGraveyard(gameData, playerId, chosen);
             }
-            gameData.playerHands.get(playerId).add(chosen);
-            String zoneName = fromLibrary ? "library" : "graveyard";
+            if (toBattlefield) {
+                Permanent entered = graveyardReturnSupport.putCardOntoBattlefield(
+                        gameData, playerId, chosen, null, null, false, false, null);
+                if (entered != null && interaction.attachToPermanentId() != null) {
+                    entered.setAttachedTo(interaction.attachToPermanentId());
+                }
+            } else {
+                gameData.playerHands.get(playerId).add(chosen);
+            }
+            String zoneName = fromLibrary ? "library" : fromHand ? "hand" : "graveyard";
+            String destination = toBattlefield ? "onto the battlefield" : "into their hand";
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(playerId) + " searches their " + zoneName + ", reveals ",
-                    chosen, ", and puts it into their hand."));
+                    chosen, ", and puts it " + destination + "."));
             if (fromLibrary) {
                 LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
                 LibraryShuffleHelper.shuffleLibrary(gameData, playerId);

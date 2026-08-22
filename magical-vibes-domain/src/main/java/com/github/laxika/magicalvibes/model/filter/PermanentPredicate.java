@@ -123,6 +123,7 @@ public sealed interface PermanentPredicate permits
         PermanentToughnessAtLeastPredicate,
         PermanentToughnessAtMostPredicate,
         PermanentToughnessAtMostControlledSubtypeCountPredicate,
+        PermanentToughnessAtMostXPredicate,
         PermanentToughnessAtMostXWhenMadnessOtherwisePredicate,
         PermanentToughnessLessThanSourcePowerPredicate,
         PermanentThatSaddledSourceThisTurnPredicate,

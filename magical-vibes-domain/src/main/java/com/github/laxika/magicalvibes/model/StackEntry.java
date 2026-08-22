@@ -60,6 +60,8 @@ public class StackEntry {
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
+    /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
+    @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
      * Whether a replacement effect applies to this spell: "if that spell would be put into a graveyard,
      * exile it instead" (The Dawning Archaic, Chancellor of the Spires). Unlike
@@ -545,6 +547,7 @@ public class StackEntry {
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;

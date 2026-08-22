@@ -14,9 +14,11 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -295,7 +297,7 @@ public class LibrarySearchSupport {
             UUID targetPlayerId = remaining.removeFirst();
             String targetName = gameData.playerIdToName.get(targetPlayerId);
 
-            if (isSearchPrevented(gameData, searcherId)) {
+            if (isSearchPrevented(gameData, searcherId, targetPlayerId, true, searcherId)) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
                 gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
                 continue;
@@ -550,16 +552,41 @@ public class LibrarySearchSupport {
     }
 
     /**
-     * Checks if a library search is prevented by Leonin Arbiter (CantSearchLibrariesEffect).
-     * Returns true if the search may proceed (no unpaid Arbiters), false if prevented.
-     * Payment is handled as a special action during priority (before the spell resolves).
+     * Checks whether a library search is prevented by a static restriction. Payment for a
+     * pay-to-ignore restriction is made by {@code searchingPlayerId}; the library owner is
+     * separate because some effects make one player search another player's library.
      */
     public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId) {
+        UUID causingControllerId = resolvingControllerId(gameData);
+        return checkSearchRestriction(gameData, searchingPlayerId, searchingPlayerId, causingControllerId);
+    }
+
+    public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
+                                          UUID causingControllerId) {
+        return checkSearchRestriction(gameData, searchingPlayerId, searchingPlayerId, causingControllerId);
+    }
+
+    public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
+                                          UUID libraryOwnerId, UUID causingControllerId) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantSearchLibrariesEffect) {
+                        if (causingControllerId == null
+                                || !libraryOwnerId.equals(causingControllerId)
+                                || pid.equals(causingControllerId)) {
+                            continue;
+                        }
+                        String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                        String sourceName = perm.getCard().getName();
+                        gameLogService.append(gameData, GameLog.text(
+                                playerName + "'s library search is prevented by " + sourceName + "."));
+                        log.info("Game {} - {} search prevented by {}",
+                                gameData.id, playerName, sourceName);
+                        return false;
+                    }
                     if (effect instanceof CantSearchLibrariesEffect restriction) {
                         boolean paid = false;
                         if (restriction.payableToIgnore()) {
@@ -581,6 +608,14 @@ public class LibrarySearchSupport {
         }
 
         return true;
+    }
+
+    private UUID resolvingControllerId(GameData gameData) {
+        if (gameData.currentlyResolvingControllerId != null) {
+            return gameData.currentlyResolvingControllerId;
+        }
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        return pendingEntry == null ? null : pendingEntry.getControllerId();
     }
 
     public String formatCardTypeSetForPrompt(Set<CardType> cardTypes) {
@@ -714,14 +749,27 @@ public class LibrarySearchSupport {
     }
 
     public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {
-        return isSearchPrevented(gameData, searchingPlayerId, true);
+        UUID causingControllerId = resolvingControllerId(gameData);
+        return isSearchPrevented(gameData, searchingPlayerId, searchingPlayerId, true, causingControllerId);
     }
 
     public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId, boolean shuffleWhenPrevented) {
-        if (checkSearchRestriction(gameData, searchingPlayerId)) return false;
-        List<Card> deck = gameData.playerDecks.get(searchingPlayerId);
+        UUID causingControllerId = resolvingControllerId(gameData);
+        return isSearchPrevented(gameData, searchingPlayerId, searchingPlayerId, shuffleWhenPrevented,
+                causingControllerId);
+    }
+
+    public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId,
+                                     UUID causingControllerId) {
+        return isSearchPrevented(gameData, searchingPlayerId, searchingPlayerId, true, causingControllerId);
+    }
+
+    public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId, UUID libraryOwnerId,
+                                     boolean shuffleWhenPrevented, UUID causingControllerId) {
+        if (checkSearchRestriction(gameData, searchingPlayerId, libraryOwnerId, causingControllerId)) return false;
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         if (shuffleWhenPrevented && deck != null) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, searchingPlayerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, libraryOwnerId);
         }
         return true;
     }

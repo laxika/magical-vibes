@@ -142,7 +142,8 @@ public class ValidTargetService {
         List<UUID> validPlayerIds = new ArrayList<>();
         List<UUID> validGraveyardCardIds = new ArrayList<>();
         List<UUID> validExiledCardIds = new ArrayList<>();
-        Set<UUID> excludeIds = alreadySelectedIds != null ? Set.copyOf(alreadySelectedIds) : Set.of();
+        Set<UUID> excludeIds = alreadySelectedIds != null && !card.isAllowSharedTargets()
+                ? Set.copyOf(alreadySelectedIds) : Set.of();
 
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
 
@@ -256,7 +257,8 @@ public class ValidTargetService {
                     : null;
             if (graveyardPositionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                 validGraveyardCardIds.addAll(
-                        computeValidGraveyardTargetsForFilter(gameData, card, graveyardFilter, controllerId, excludeIds));
+                computeValidGraveyardTargetsForFilter(gameData, card, graveyardFilter, controllerId,
+                                excludeIds, card.getMultiTargetConstraint(), xValue));
             } else {
                 validGraveyardCardIds.addAll(computeValidGraveyardTargets(gameData, card, spellEffects, controllerId, xValue));
             }
@@ -414,7 +416,7 @@ public class ValidTargetService {
             if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                 validGraveyardCardIds.addAll(computeValidGraveyardTargetsForFilter(
                         gameData, sourceCard, graveyardFilter, controllerId, excludeIds,
-                        ability.getMultiTargetConstraint()));
+                        ability.getMultiTargetConstraint(), xValue));
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
                         ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
@@ -944,6 +946,10 @@ public class ValidTargetService {
             return false;
         }
 
+        if (gameQueryService.isLandTargetRestricted(gameData, perm, controllerId)) {
+            return false;
+        }
+
         // Can't be the target of opponents' abilities (e.g. Shanna, Sisay's Legacy)
         if (gameQueryService.cantBeTargetOfOpponentAbilities(gameData, perm)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
@@ -1139,13 +1145,13 @@ public class ValidTargetService {
                                                             GraveyardCardPredicateTargetFilter filter,
                                                             UUID controllerId, Set<UUID> excludeIds) {
         return computeValidGraveyardTargetsForFilter(gameData, card, filter, controllerId, excludeIds,
-                card.getMultiTargetConstraint());
+                card.getMultiTargetConstraint(), null);
     }
 
     private List<UUID> computeValidGraveyardTargetsForFilter(GameData gameData, Card card,
                                                              GraveyardCardPredicateTargetFilter filter,
                                                              UUID controllerId, Set<UUID> excludeIds,
-                                                             MultiTargetConstraint constraint) {
+                                                             MultiTargetConstraint constraint, Integer xValue) {
         if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             return List.of();
         }
@@ -1170,9 +1176,11 @@ public class ValidTargetService {
             }
             for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
                 if (excludeIds.contains(c.getId())) continue;
+                if (gameQueryService.isLandCardTargetRestricted(gameData, c, controllerId)) continue;
                 if (filter.predicate() != null
                         && !predicateEvaluationService.matchesCardPredicate(c, filter.predicate(), card.getId(),
-                        gameData, gameQueryService.findGraveyardOwnerById(gameData, c.getId()))) {
+                        gameData, gameQueryService.findGraveyardOwnerById(gameData, c.getId()),
+                        null, null, xValue)) {
                     continue;
                 }
                 if (constraint == MultiTargetConstraint.AT_MOST_ONE_INSTANT_AND_ONE_SORCERY
@@ -1235,6 +1243,9 @@ public class ValidTargetService {
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (gameQueryService.isLandCardTargetRestricted(gameData, c, controllerId)) {
+                            continue;
+                        }
                         if (!matchesReturnCardFilter(gameData, rge, c, card.getId())) {
                             continue;
                         }
@@ -1251,6 +1262,11 @@ public class ValidTargetService {
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
+                        if (rge.targetNotPutIntoGraveyardThisCombat()
+                                && gameData.cardsPutIntoGraveyardThisCombat
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
                         validIds.add(c.getId());
                     }
                 }
@@ -1260,8 +1276,11 @@ public class ValidTargetService {
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (gameQueryService.isLandCardTargetRestricted(gameData, c, controllerId)) {
+                            continue;
+                        }
                         if (!matchesGraveyardEffectTypeFilter(
-                                gameData, effect, c, card.getId(), controllerId, effectiveXValue)) continue;
+                                gameData, effect, c, card.getId(), controllerId, effectiveXValue, xValue)) continue;
                         validIds.add(c.getId());
                     }
                 }
@@ -1290,7 +1309,8 @@ public class ValidTargetService {
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     if (playerId.equals(controllerId)) continue;
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-                        if (!excludeIds.contains(c.getId())) {
+                        if (!excludeIds.contains(c.getId())
+                                && !gameQueryService.isLandCardTargetRestricted(gameData, c, controllerId)) {
                             validIds.add(c.getId());
                         }
                     }
@@ -1303,8 +1323,9 @@ public class ValidTargetService {
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
                         if (!excludeIds.contains(c.getId())
+                                && !gameQueryService.isLandCardTargetRestricted(gameData, c, controllerId)
                                 && matchesGraveyardEffectTypeFilter(
-                                gameData, effect, c, sourceCardId, controllerId, effectiveXValue)) {
+                                gameData, effect, c, sourceCardId, controllerId, effectiveXValue, xValue)) {
                             if (effect instanceof ReturnCardFromGraveyardEffect returnEffect
                                     && returnEffect.requiresManaValueEqualsX()
                                     && !costDerivedManaValueTarget
@@ -1341,11 +1362,12 @@ public class ValidTargetService {
      * Mirrors the validation in {@link com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators}.
      */
     private boolean matchesGraveyardEffectTypeFilter(GameData gameData, CardEffect effect, Card c,
-                                                     UUID sourceCardId, UUID controllerId, int effectiveXValue) {
+                                                     UUID sourceCardId, UUID controllerId, int effectiveXValue,
+                                                     Integer xValue) {
         var declaredFilter = effect.targetSpec().graveyardCardPredicate().orElse(null);
         if (declaredFilter != null
                 && !predicateEvaluationService.matchesCardPredicate(
-                        c, declaredFilter, sourceCardId, gameData, controllerId)) {
+                        c, declaredFilter, sourceCardId, gameData, controllerId, null, null, xValue)) {
             return false;
         }
         if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
@@ -1353,7 +1375,8 @@ public class ValidTargetService {
         } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect e) {
             return (c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY))
                     && (e.filter() == null
-                    || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId));
+                    || predicateEvaluationService.matchesCardPredicate(
+                    c, e.filter(), sourceCardId, gameData, controllerId, null, null, xValue));
         } else if (effect instanceof GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect) {
             return c.hasType(CardType.CREATURE);
         } else if (effect instanceof GrantTargetGraveyardCardCastEffect e) {
@@ -1446,8 +1469,9 @@ public class ValidTargetService {
         }
 
         // Glaring Spotlight: opponents' hexproof creatures are targetable as though they had none.
-        boolean hexproofLifted = gameQueryService.isCreature(gameData, perm)
-                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, controllerId);
+        boolean hexproofLifted = gameQueryService.ignoresOpponentPermanentHexproof(gameData, controllerId)
+                || (gameQueryService.isCreature(gameData, perm)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, controllerId));
 
         // Hexproof (only blocks if target is opponent's)
         if (!hexproofLifted && gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {

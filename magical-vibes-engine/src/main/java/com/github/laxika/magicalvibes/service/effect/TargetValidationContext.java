@@ -15,20 +15,36 @@ public record TargetValidationContext(
         int xValue,
         UUID sourceControllerId,
         Permanent sourcePermanentSnapshot,
-        boolean deferCostDerivedXValueChecks
+        boolean deferCostDerivedXValueChecks,
+        UUID sourcePermanentId,
+        Integer sourcePowerAtTrigger
 ) {
     public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard) {
-        this(gameData, targetId, targetZone, sourceCard, 0, null, null, false);
+        this(gameData, targetId, targetZone, sourceCard, 0, null, null, false, null, null);
     }
 
     public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard, int xValue) {
-        this(gameData, targetId, targetZone, sourceCard, xValue, null, null, false);
+        this(gameData, targetId, targetZone, sourceCard, xValue, null, null, false, null, null);
     }
 
     public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard,
                                    int xValue, UUID sourceControllerId, Permanent sourcePermanentSnapshot) {
         this(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId,
-                sourcePermanentSnapshot, false);
+                sourcePermanentSnapshot, false, null, null);
+    }
+
+    public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard,
+                                   int xValue, UUID sourceControllerId, Permanent sourcePermanentSnapshot,
+                                   boolean deferCostDerivedXValueChecks) {
+        this(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId,
+                sourcePermanentSnapshot, deferCostDerivedXValueChecks, null, null);
+    }
+
+    public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard,
+                                   int xValue, UUID sourceControllerId, Permanent sourcePermanentSnapshot,
+                                   UUID sourcePermanentId, Integer sourcePowerAtTrigger) {
+        this(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId,
+                sourcePermanentSnapshot, false, sourcePermanentId, sourcePowerAtTrigger);
     }
 }
 

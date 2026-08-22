@@ -613,6 +613,16 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears playersCreatureSpellsCantBeCounteredThisTurn")
+        void clearsCreatureSpellCounterProtection() {
+            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.playersCreatureSpellsCantBeCounteredThisTurn).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears playerCreaturesCantBeTargetedByColorsThisTurn")
         void clearsCreaturesCantBeTargeted() {
             gd.playerCreaturesCantBeTargetedByColorsThisTurn.put(player1Id, Set.of(CardColor.BLACK));

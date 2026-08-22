@@ -166,6 +166,8 @@ public class LibraryChoiceHandlerService {
         boolean returnToHandAtEndStep = librarySearch.returnToHandAtEndStep();
         AnimatePermanentsEffect animateFound = librarySearch.animateFound();
         CounterType battlefieldCounter = librarySearch.battlefieldCounter();
+        com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters =
+                librarySearch.enterWithCounters();
         CreateTokenEffect tokenTemplate = librarySearch.tokenTemplate();
         String sourceSetCode = librarySearch.sourceSetCode();
         CardSubtype battlefieldIfChosenBeholdType = librarySearch.battlefieldIfChosenBeholdType();
@@ -238,11 +240,16 @@ public class LibraryChoiceHandlerService {
                 }
                 chosenCard = searchCards.get(cardIndex);
                 if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                        || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
                             librarySearch.sourcePermanentId());
-                    gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
-                    gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+                    if (librarySearch.grantExilePlayPermission()) {
+                        gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+                        if (librarySearch.allowAnyManaType()) {
+                            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+                        }
+                    }
                 } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                     exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
                     UUID sourcePermanentId = followUp.imprintSourcePermanentId();
@@ -254,11 +261,12 @@ public class LibraryChoiceHandlerService {
                 } else if (toGraveyard) {
                     graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
                 } else if (toBattlefield && !placeBattlefieldCardsSimultaneously) {
-                    Permanent perm = new Permanent(chosenCard);
+                    Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
                     if (grantHaste) {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
                     }
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
+                            battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
                     if (gameData.pendingEffectResolutionEntry != null) {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
@@ -324,6 +332,9 @@ public class LibraryChoiceHandlerService {
                 if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest on the bottom of the library in a random order.");
+                } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM) {
+                    logEntry = GameLog.text(player.getUsername()
+                            + " exiles a card face down and puts the rest on the bottom of the library in any order.");
                 } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest into the graveyard.");
@@ -393,7 +404,7 @@ public class LibraryChoiceHandlerService {
             if (toBattlefield && placeBattlefieldCardsSimultaneously && !accumulatedCards.isEmpty()) {
                 placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId,
                         toBattlefieldTapped, grantHaste, exileAtEndStep,
-                        returnToHandAtEndStep, animateFound, battlefieldCounter);
+                        returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters);
                 accumulatedCards.clear();
             }
 
@@ -519,7 +530,8 @@ public class LibraryChoiceHandlerService {
             // CR 608.2f: Place any accumulated battlefield cards before finishing
             if (!accumulatedCards.isEmpty() && toBattlefield) {
                 placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
-                        grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, battlefieldCounter);
+                        grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
+                        battlefieldCounter, enterWithCounters);
                 accumulatedCards.clear();
             }
             if (shuffleAfterSelection) {
@@ -729,8 +741,9 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                         " can't enter the battlefield from a library; it stays in the library."));
             } else {
-                Permanent perm = new Permanent(chosenCard);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+                Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
+                            battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
                 if (chosenCard.hasType(CardType.CREATURE)) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                 }
@@ -1036,8 +1049,9 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_CREATURE) {
             // Stonehewer Giant: put the Equipment onto the battlefield, shuffle, then let the
             // controller attach it to a creature they control.
-            Permanent equipment = new Permanent(chosenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, equipment);
+            Permanent equipment = new Permanent(chosenCard, Zone.LIBRARY);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, equipment,
+                    battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
             performStateBasedActionsIfResolutionComplete(gameData);
 
             if (shuffleAfterSelection) {
@@ -1091,7 +1105,7 @@ public class LibraryChoiceHandlerService {
         } else if (destination == LibrarySearchDestination.HAND) {
             if (putChosenCardOnBattlefield) {
                 placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), handOwnerId,
-                        false, false, false, false, null, battlefieldCounter);
+                        false, false, false, false, null, battlefieldCounter, enterWithCounters);
             } else {
                 gameData.playerHands.get(handOwnerId).add(chosenCard);
             }
@@ -1102,8 +1116,9 @@ public class LibraryChoiceHandlerService {
                 exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER) {
-            Permanent perm = new Permanent(chosenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+            Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
+                    battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPlayerId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPlayerId());
@@ -1112,8 +1127,9 @@ public class LibraryChoiceHandlerService {
                 triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT) {
-            Permanent perm = new Permanent(chosenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+            Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
+                    battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
@@ -1132,7 +1148,8 @@ public class LibraryChoiceHandlerService {
                 List<Card> allCards = new ArrayList<>(accumulatedCards);
                 allCards.add(chosenCard);
                 placeCardsOnBattlefieldSimultaneously(gameData, allCards, handOwnerId, toBattlefieldTapped,
-                        grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, battlefieldCounter);
+                        grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
+                        battlefieldCounter, enterWithCounters);
             }
         }
 
@@ -1168,7 +1185,8 @@ public class LibraryChoiceHandlerService {
                 // CR 608.2f: Place any accumulated battlefield cards before finishing
                 if (!accumulatedCards.isEmpty() && toBattlefield) {
                     placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
-                        grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, battlefieldCounter);
+                        grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
+                        battlefieldCounter, enterWithCounters);
                 }
                 // No more matching cards — shuffle and finish
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -1220,6 +1238,7 @@ public class LibraryChoiceHandlerService {
                     .returnToHandAtEndStep(returnToHandAtEndStep)
                     .animateFound(animateFound)
                     .battlefieldCounter(battlefieldCounter)
+                    .enterWithCounters(enterWithCounters)
                     .battlefieldIfChosenBeholdType(battlefieldIfChosenBeholdType)
                     .build(),
                     prompt, toGraveyard || canFailToFind));
@@ -1251,6 +1270,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, EXILE_FOR_MAY_CAST -> "into exile";
+                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM -> "into exile face down";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
                 case EXILE_PLAYABLE_ANY_NUMBER -> throw new IllegalStateException(
@@ -1479,7 +1499,8 @@ public class LibraryChoiceHandlerService {
                                                         boolean grantHaste, boolean exileAtEndStep,
                                                         boolean returnToHandAtEndStep,
                                                         AnimatePermanentsEffect animateFound,
-                                                        CounterType battlefieldCounter) {
+                                                        CounterType battlefieldCounter,
+                                                        com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters) {
         List<Permanent> permanents = new ArrayList<>();
         List<Card> placedCards = new ArrayList<>();
         String ownerName = gameData.playerIdToName.get(ownerId);
@@ -1503,11 +1524,12 @@ public class LibraryChoiceHandlerService {
                         " can't enter the battlefield from a library; it stays in the library."));
                 continue;
             }
-            Permanent perm = new Permanent(card);
+            Permanent perm = new Permanent(card, Zone.LIBRARY);
             if (grantHaste) {
                 perm.getGrantedKeywords().add(Keyword.HASTE);
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch,
+                    enterWithCounters);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
             if (tapped) {
@@ -1922,7 +1944,7 @@ public class LibraryChoiceHandlerService {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (Card card : selectedCards) {
-            Permanent perm = new Permanent(card);
+            Permanent perm = new Permanent(card, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, enterTappedTypesSnapshot);
             if (selectedCards.size() == 1 && gameData.pendingEffectResolutionEntry != null) {
                 gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());

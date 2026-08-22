@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
@@ -358,6 +359,7 @@ public final class LayerClassifier {
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfTopLibraryCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
 
         // Sublayers 7a/7b — P/T setting. A "P/T equal to [amount]" static in the creature's
         // own STATIC slot is the characteristic-defining */* ability (7a, CR 613.4a); the same

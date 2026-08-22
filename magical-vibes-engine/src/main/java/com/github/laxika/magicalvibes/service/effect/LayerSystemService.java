@@ -736,6 +736,9 @@ public class LayerSystemService {
         h = hashEnums(h, p.getTransientRemovedSubtypes());
         h = hashEnums(h, p.getGrantedCardTypes());
         h = hashEnums(h, p.getPersistentGrantedCardTypes());
+        h = hashEnums(h, p.getPersistentGrantedSupertypes());
+        h = hashEnums(h, p.getPersistentRemovedSupertypes());
+        h = mix(h, p.getPersistentName() == null ? 0 : p.getPersistentName().hashCode());
         h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getUntilNextTurnLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getPersistentLandTypeOverride()));

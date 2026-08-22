@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
@@ -81,6 +82,8 @@ public class CloneService {
         gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
         gameData.cloneOperation.nameOverride = copyEffect.nameOverride();
         gameData.cloneOperation.additionalSupertypesOverride = copyEffect.additionalSupertypesOverride();
+        gameData.cloneOperation.removedSupertypesOverride = copyEffect.removedSupertypesOverride();
+        gameData.cloneOperation.addTypeAppropriateCounters = copyEffect.addTypeAppropriateCounters();
         gameData.cloneOperation.embalmColorOverride = copyEffect.embalmColorOverride();
         gameData.cloneOperation.embalmAddedSubtype = copyEffect.embalmAddedSubtype();
         gameData.cloneOperation.embalmRemoveManaCost = copyEffect.embalmRemoveManaCost();
@@ -133,6 +136,8 @@ public class CloneService {
         List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
         String nameOverride = gameData.cloneOperation.nameOverride;
         Set<CardSupertype> additionalSupertypesOverride = gameData.cloneOperation.additionalSupertypesOverride;
+        Set<CardSupertype> removedSupertypesOverride = gameData.cloneOperation.removedSupertypesOverride;
+        boolean addTypeAppropriateCounters = gameData.cloneOperation.addTypeAppropriateCounters;
         CardColor embalmColorOverride = gameData.cloneOperation.embalmColorOverride;
         CardSubtype embalmAddedSubtype = gameData.cloneOperation.embalmAddedSubtype;
         boolean embalmRemoveManaCost = gameData.cloneOperation.embalmRemoveManaCost;
@@ -154,6 +159,8 @@ public class CloneService {
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
+        gameData.cloneOperation.removedSupertypesOverride = Set.of();
+        gameData.cloneOperation.addTypeAppropriateCounters = false;
         gameData.cloneOperation.embalmColorOverride = null;
         gameData.cloneOperation.embalmAddedSubtype = null;
         gameData.cloneOperation.embalmRemoveManaCost = false;
@@ -188,6 +195,7 @@ public class CloneService {
                     perm.getCard().setName(nameOverride);
                 }
                 applyAdditionalSupertypes(perm.getCard(), additionalSupertypesOverride);
+                applyRemovedSupertypes(perm.getCard(), removedSupertypesOverride);
                 // "except it's an [subtype] in addition to its other types and it has ..." (Phantasmal Image)
                 applyAdditionalSubtypes(perm.getCard(), additionalSubtypesOverride);
                 additionalSlotEffects.forEach((slot, effects) ->
@@ -207,6 +215,9 @@ public class CloneService {
                 if (creatureOnlyCharacteristicsApply) {
                     applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
                             additionalPlusOnePlusOneCounters, xValue);
+                }
+                if (addTypeAppropriateCounters) {
+                    applyTypeAppropriateCounters(gameData, controllerId, perm);
                 }
             }
         }
@@ -284,6 +295,32 @@ public class CloneService {
             }
         }
         copy.setSubtypes(subtypes);
+    }
+
+    private void applyRemovedSupertypes(Card copy, Set<CardSupertype> removedSupertypes) {
+        if (removedSupertypes == null || removedSupertypes.isEmpty()) return;
+        Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+        supertypes.addAll(copy.getSupertypes());
+        supertypes.removeAll(removedSupertypes);
+        copy.setSupertypes(supertypes);
+    }
+
+    private void applyTypeAppropriateCounters(GameData gameData, UUID controllerId, Permanent perm) {
+        if (perm.getCard().hasType(CardType.CREATURE)) {
+            applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
+                    new Fixed(1), 0);
+        }
+        if (perm.getCard().hasType(CardType.PLANESWALKER)) {
+            applyAdditionalLoyaltyCounter(gameData, controllerId, perm);
+        }
+    }
+
+    private void applyAdditionalLoyaltyCounter(GameData gameData, UUID controllerId, Permanent perm) {
+        if (gameQueryService.cantHaveCountersForController(gameData, perm, controllerId)) return;
+        int printedLoyalty = perm.getCard().getLoyalty() != null ? perm.getCard().getLoyalty() : 0;
+        int count = gameQueryService.replaceCounters(gameData, perm, controllerId,
+                CounterType.LOYALTY, printedLoyalty + 1);
+        perm.setCounterCount(CounterType.LOYALTY, count);
     }
 
     private void applyAdditionalSupertypes(Card copy, Set<CardSupertype> additionalSupertypes) {

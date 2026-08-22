@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -12,10 +13,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChandraTorchExileCastSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -59,6 +62,7 @@ public class PermanentChoiceSpellHandlerService {
     private final ChandraTorchExileCastSupport chandraTorchExileCastSupport;
     private final TargetLegalityService targetLegalityService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final CopySupport copySupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -72,7 +76,8 @@ public class PermanentChoiceSpellHandlerService {
                                               @Lazy SpellCastingService spellCastingService,
                                               @Lazy ChandraTorchExileCastSupport chandraTorchExileCastSupport,
                                               TargetLegalityService targetLegalityService,
-                                              InteractionHandlerRegistry interactionHandlerRegistry) {
+                                              InteractionHandlerRegistry interactionHandlerRegistry,
+                                              CopySupport copySupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -86,6 +91,7 @@ public class PermanentChoiceSpellHandlerService {
         this.chandraTorchExileCastSupport = chandraTorchExileCastSupport;
         this.targetLegalityService = targetLegalityService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.copySupport = copySupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -440,6 +446,20 @@ public class PermanentChoiceSpellHandlerService {
             entry.setOwnerIdOverride(gct.ownerId());
             entry.setSourceZone(Zone.GRAVEYARD);
             gameData.stack.add(entry);
+
+            for (int i = 0; i < gct.copyCount(); i++) {
+                Card copyCard = copySupport.createCopyCard(gct.cardToCast());
+                StackEntry copyEntry = copySupport.createCopyStackEntry(
+                        entry, copyCard, gct.controllerId(), entry.getTargetId());
+                gameData.stack.add(copyEntry);
+                copySupport.checkSpellCopyTriggers(gameData, copyEntry);
+                if (copyEntry.getTargetId() != null) {
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            gct.cardToCast(), gct.controllerId(), List.of(new CopySpellEffect()),
+                            "Choose new targets for the copy of " + gct.cardToCast().getName() + "?",
+                            copyCard.getId()));
+                }
+            }
 
             gameData.recordSpellCast(gct.controllerId(), gct.cardToCast());
             if (gct.restrictAdditionalSpellsThisTurn()) {

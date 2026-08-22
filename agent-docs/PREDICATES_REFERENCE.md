@@ -128,6 +128,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | Predicate | Constructor | Matches | FilterContext needs |
 |-----------|-------------|---------|---------------------|
 | `PermanentPowerAtMostXPredicate` | `()` | creatures with power <= X (from FilterContext.xValue) | `xValue` |
+| `PermanentToughnessAtMostXPredicate` | `()` | creatures with effective toughness <= X (from FilterContext.xValue) | `xValue` |
 | `PermanentToughnessAtMostXWhenMadnessOtherwisePredicate` | `(int normalMaxToughness)` | creatures with toughness <= X when the spell was cast for madness; otherwise toughness <= the supplied fixed maximum | `xValue`, `madness` |
 | `PermanentPowerLessThanXPredicate` | `()` | creatures with power strictly < X (from FilterContext.xValue). Pair with `SacrificeSelfCost(true)`, which snapshots the source's effective power into the ability's X at payment, for "creatures you control with power less than this creature's power" (Lena, Selfless Champion) — works after the source has left the battlefield, unlike `PermanentPowerLessThanSourcePowerPredicate` | `xValue` |
 | `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures source's controller controls | `gameData` + `sourceControllerId` |
@@ -332,6 +333,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |
+| `CardMaxManaValueXPredicate` | `()` | a card with mana value ≤ the resolving spell's X; before X is chosen, it matches permissively |
 | `CardSharesCardTypeWithImprintedCardPredicate` | `()` | a card sharing at least one card type with the card imprinted on the source; without game state it matches broadly so target selection can occur before an activation cost imprints the exiled card, while resolution with game state performs the comparison (Holistic Wisdom) |
 | `CardSharesNameWithAPermanentPredicate` | `()` | a card with the same name as any permanent on any battlefield (Mitotic Manipulation via `LookAtTopCardsEffect.mayPutMatchingOntoBattlefield`). Needs the `GameData` overload of `matchesCardPredicate`; matches nothing without game state |
 | `CardNameInControllerGraveyardPredicate` | `()` | a card with the same name as a card in the perspective player's graveyard; the perspective player is `cardOwnerId` during predicate evaluation (Pyromancer Ascension) |

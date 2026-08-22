@@ -171,6 +171,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .animateFound(effect.animateFound())
                         .battlefieldCounter(effect.battlefieldCounter())
                         .followUp(followUp)
+                        .enterWithCounters(effect.enterWithCounters())
                         .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
                                 ? entry.getBeholdChosenSubtype() : null)
