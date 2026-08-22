@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
@@ -1529,6 +1530,7 @@ public class GameTestHarness {
 
         TurnStep stepBefore = gameData.currentStep;
         int stackSizeBefore = gameData.stack.size();
+        StackEntry topBefore = gameData.stack.isEmpty() ? null : gameData.stack.getLast();
 
         gameService.passPriority(gameData, first);
 
@@ -1537,6 +1539,7 @@ public class GameTestHarness {
         // Also stop if the game entered an awaiting-input state (e.g. may ability prompt).
         if (gameData.status != GameStatus.RUNNING
                 || gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
+                || (!gameData.stack.isEmpty() && gameData.stack.getLast() != topBefore)
                 || gameData.interaction.isAwaitingInput()) {
             return;
         }

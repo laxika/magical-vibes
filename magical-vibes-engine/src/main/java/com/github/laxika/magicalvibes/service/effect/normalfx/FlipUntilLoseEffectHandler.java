@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -56,6 +57,13 @@ public class FlipUntilLoseEffectHandler implements NormalEffectHandlerBean {
                 dispatch(gameData, entry, step);
             }
             return;
+        }
+
+        if (effect instanceof CreateTokenCopyOfTargetPermanentEffect
+                && entry.getTargetId() == null
+                && entry.getTriggeringPermanentId() != null) {
+            entry.setTargetId(entry.getTriggeringPermanentId());
+            entry.setNonTargeting(true);
         }
 
         EffectHandler handler = effectHandlerRegistry.getHandler(effect);

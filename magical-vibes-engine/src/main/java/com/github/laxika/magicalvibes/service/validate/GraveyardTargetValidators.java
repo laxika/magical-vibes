@@ -99,14 +99,15 @@ public class GraveyardTargetValidators {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
-        // "from your graveyard" enforcement for the activated-ability path. Spells are validated in
-        // SpellCastingService (which has the caster's playerId); there the source card is on the stack,
-        // so findSourcePermanentController returns null and this check is safely skipped.
+        UUID controllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
         if (effect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
-            UUID controllerId = tvs.findSourcePermanentController(ctx);
             if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
                 throw new IllegalStateException("Target must be in your graveyard");
             }
+        } else if (effect.source() == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                && controllerId != null && controllerId.equals(graveyardOwnerId)) {
+            throw new IllegalStateException("Target must be in an opponent's graveyard");
         }
         if (effect.targetPutIntoGraveyardFromBattlefieldThisTurn()) {
             boolean tracked = graveyardOwnerId != null
@@ -139,8 +140,9 @@ public class GraveyardTargetValidators {
                     + effect.manaValueXOffset() + " or less (" + requiredManaValue + ")");
         }
         if (effect.maxManaValueEqualsLifeGainedThisTurn()) {
-            UUID controllerId = tvs.findSourcePermanentController(ctx);
-            int lifeGained = controllerId == null ? 0 : ctx.gameData().getLifeGainedThisTurn(controllerId);
+            UUID sourceControllerId = tvs.findSourcePermanentController(ctx);
+            int lifeGained = sourceControllerId == null
+                    ? 0 : ctx.gameData().getLifeGainedThisTurn(sourceControllerId);
             if (graveyardCard.getManaValue() > lifeGained) {
                 throw new IllegalStateException(
                         "Target card's mana value must be " + lifeGained + " or less");

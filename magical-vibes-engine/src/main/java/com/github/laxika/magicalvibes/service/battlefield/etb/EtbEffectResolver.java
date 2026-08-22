@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -127,6 +128,9 @@ public class EtbEffectResolver {
                 case SnowManaSpentToCast snowManaSpent ->
                         conditionEvaluationService.isMet(ctx.gameData(), snowManaSpent, conditionContext)
                                 ? effect : null;
+                case ControllerMainPhase controllerMainPhase ->
+                        conditionEvaluationService.isMet(ctx.gameData(), controllerMainPhase, conditionContext)
+                                ? conditional.wrapped() : null;
                 // "if you cast it" is true for a spell cast from any zone, but not for a copy or
                 // a permanent put onto the battlefield by an effect.
                 case WasCast ignored ->

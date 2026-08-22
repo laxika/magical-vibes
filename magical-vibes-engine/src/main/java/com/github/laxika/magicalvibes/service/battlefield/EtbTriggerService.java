@@ -321,6 +321,7 @@ public class EtbTriggerService {
                 TargetSpec mayTargetSpec = may.targetSpec();
                 if (mayTargetSpec.admits(TargetPredicate.Kind.PERMANENT)
                         || mayTargetSpec.admits(TargetPredicate.Kind.PLAYER)
+                        || mayTargetSpec.admits(TargetPredicate.Kind.SPELL)
                         || mayTargetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                             List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,

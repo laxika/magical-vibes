@@ -5343,7 +5343,14 @@ public class TriggerCollectionService {
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
                 entry.setTriggeringPermanentId(dyingPermanent.getId());
                 entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
-                gameData.stack.add(entry);
+                int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                        + gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
+                                gameData, dyingCreatureControllerId, perm));
+                try {
+                    gameData.stack.add(entry);
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
                 anyEffectFired = true;
             }
             if (oncePerTurnFired) {

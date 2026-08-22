@@ -146,6 +146,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEf
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDeathtouchToControllerSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
@@ -405,10 +406,19 @@ public class GameQueryService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         for (Permanent perm : bf) {
-            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(effect -> effect instanceof GrantControllerKeywordEffect grant
-                            && grant.keyword() == keyword)) {
-                return true;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                GrantControllerKeywordEffect grant = null;
+                if (effect instanceof GrantControllerKeywordEffect directGrant) {
+                    grant = directGrant;
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.wrapped() instanceof GrantControllerKeywordEffect conditionalGrant
+                        && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStaticEffect(perm, playerId))) {
+                    grant = conditionalGrant;
+                }
+                if (grant != null && grant.keyword() == keyword) {
+                    return true;
+                }
             }
         }
         return false;
@@ -4156,10 +4166,19 @@ public class GameQueryService {
         }
         // No permanent source: the stack entry itself is the source (e.g. an instant/sorcery
         // spell like Puncture Blast). Its printed keywords (wither, etc.) apply. CR 702.80.
-        return entry.getSourcePermanentId() == null
+        boolean entryHasKeyword = entry.getSourcePermanentId() == null
                 && entry.getCard() != null
                 && (entry.getCard().getKeywords().contains(keyword)
                 || entry.getGrantedKeywordsOnEntry().contains(keyword));
+        if (entryHasKeyword) {
+            return true;
+        }
+        return keyword == Keyword.DEATHTOUCH
+                && entry.getSourcePermanentId() == null
+                && entry.getCard() != null
+                && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
+                && playerControlsStaticEffect(gameData, entry.getControllerId(),
+                GrantDeathtouchToControllerSpellsEffect.class);
     }
 
     /**
@@ -4332,7 +4351,6 @@ public class GameQueryService {
         return effect instanceof TargetingRestrictionEffect r
                 && (r.kind() == TargetingSourceKind.SPELLS
                 || r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES)
-                && !r.opponentOnly()
                 && r.sourceCardTypes().isEmpty()
                 && r.mode() == TargetColorMode.ANY;
     }
@@ -4943,7 +4961,7 @@ public class GameQueryService {
                 .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
                 .filter(ControllerCreatureSpellsCantBeCounteredEffect.class::isInstance)
                 .map(ControllerCreatureSpellsCantBeCounteredEffect.class::cast)
-                .anyMatch(effect -> power >= effect.minimumPower());
+                .anyMatch(effect -> effect.minimumPower() == null || power >= effect.minimumPower());
     }
 
     /**

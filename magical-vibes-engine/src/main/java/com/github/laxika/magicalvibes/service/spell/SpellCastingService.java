@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
@@ -2048,14 +2049,23 @@ public class SpellCastingService {
                     if (!inControllersGraveyard) {
                         throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
                     }
+                } else if (graveyardReturnEffect.source() == GraveyardSearchScope.OPPONENT_GRAVEYARD) {
+                    boolean inControllersGraveyard = gameData.playerGraveyards
+                            .getOrDefault(playerId, List.of())
+                            .stream()
+                            .anyMatch(c -> c.getId().equals(targetId));
+                    if (inControllersGraveyard) {
+                        throw new IllegalStateException("Target must be in an opponent's graveyard");
+                    }
                 }
                 if (card.getMaxTargets() > 0) {
                     // Mixed graveyard + permanent targeting: validate only graveyard effects
                     // (use the modal-unwrapped effect list + paid X so MV≤X / MV=X gates fire)
                     targetLegalityService.validateGraveyardEffectTargetOnly(
-                            gameData, card, graveyardTargetingSource, targetId, effectiveXValue);
+                            gameData, card, graveyardTargetingSource, targetId, effectiveXValue, playerId);
                 } else {
-                    targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD, effectiveXValue);
+                    targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource,
+                            targetId, Zone.GRAVEYARD, effectiveXValue, playerId);
                 }
             } else if (needsGraveyardEffectTargeting) {
                 boolean inControllersGraveyard = gameData.playerGraveyards
@@ -2072,9 +2082,10 @@ public class SpellCastingService {
                 if (card.getMaxTargets() > 0) {
                     // Mixed graveyard + permanent targeting: validate only graveyard effects
                     targetLegalityService.validateGraveyardEffectTargetOnly(
-                            gameData, card, graveyardTargetingSource, targetId, effectiveXValue);
+                            gameData, card, graveyardTargetingSource, targetId, effectiveXValue, playerId);
                 } else {
-                    targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD);
+                    targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource,
+                            targetId, Zone.GRAVEYARD, effectiveXValue, playerId);
                 }
             } else {
                 validateModalTargetKind(gameData, wasModal, card, filteredSpellEffects, targetId);
@@ -3656,6 +3667,16 @@ public class SpellCastingService {
         }
         if (costs.payLifeCost() != null) {
             payLifeCost(gameData, player, card, costs.payLifeCost());
+        }
+        if (costs.payLifeOrSacrificePermanentCost() != null) {
+            PayLifeOrSacrificePermanentCost cost = costs.payLifeOrSacrificePermanentCost();
+            if (selection.sacrificePermanentId() == null) {
+                payLifeCost(gameData, player, card, new PayLifeCost(cost.lifeAmount()));
+            } else {
+                paySingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
+                        "a creature or enchantment",
+                        p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+            }
         }
         SacrificeCostPayment sacrificeCostPayment = payAllSacrificeCosts(
                 gameData, player, card, selection.sacrificePermanentId(), costs, resolvedXValue);
@@ -5422,7 +5443,8 @@ public class SpellCastingService {
                     throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
                 }
             }
-            targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue);
+            targetLegalityService.validateEffectTargetInZone(
+                    gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue, playerId);
         } else if (targetId != null && EffectResolution.needsTarget(card)) {
             targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, true);
         } else if (EffectResolution.needsTarget(card) && targetId == null

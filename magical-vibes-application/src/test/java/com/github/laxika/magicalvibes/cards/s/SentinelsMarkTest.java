@@ -20,12 +20,14 @@ class SentinelsMarkTest extends BaseCardTest {
     @Test
     @DisplayName("During your main phase, Sentinel's Mark boosts the enchanted creature and grants its abilities")
     void grantsBoostAndAbilitiesDuringMainPhase() {
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new SentinelsMark()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
@@ -54,12 +56,14 @@ class SentinelsMarkTest extends BaseCardTest {
     @Test
     @DisplayName("Addendum lifelink wears off at end of turn while the Aura's static abilities remain")
     void addendumLifelinkWearsOffAtEndOfTurn() {
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new SentinelsMark()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);

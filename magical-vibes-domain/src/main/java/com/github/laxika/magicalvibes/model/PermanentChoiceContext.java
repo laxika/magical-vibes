@@ -224,26 +224,31 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       Integer xValue,
                                       UUID targetId,
                                       Zone targetZone,
+                                      List<UUID> targetIds,
                                       CardEffect costEffect,
                                       int remaining,
                                       List<UUID> chosenSoFar,
                                       ActivatedAbility ability,
                                       Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
 
+        public ActivatedAbilityCostChoice {
+            targetIds = targetIds != null ? List.copyOf(targetIds) : List.of();
+        }
+
         /** Permanents already paid toward this cost, for costs whose valid choices depend on prior
          *  picks (e.g. "tap two creatures that share a creature type"). Empty for count-only costs. */
         public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
                                           Integer xValue, UUID targetId, Zone targetZone, CardEffect costEffect,
                                           int remaining) {
-            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, costEffect,
-                    remaining, List.of(), null, null);
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, List.of(),
+                    costEffect, remaining, List.of(), null, null);
         }
 
         public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
                                           Integer xValue, UUID targetId, Zone targetZone, CardEffect costEffect,
                                           int remaining, List<UUID> chosenSoFar) {
-            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, costEffect,
-                    remaining, chosenSoFar, null, null);
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, List.of(),
+                    costEffect, remaining, chosenSoFar, null, null);
         }
     }
 

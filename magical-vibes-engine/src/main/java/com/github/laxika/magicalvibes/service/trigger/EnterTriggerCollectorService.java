@@ -1351,6 +1351,7 @@ public class EnterTriggerCollectorService {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);
+                entry.setTriggeringCardId(enteringPermanent.getCard().getId());
                 entry.setTriggeringPermanentPowerAtTrigger(
                         gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
             }

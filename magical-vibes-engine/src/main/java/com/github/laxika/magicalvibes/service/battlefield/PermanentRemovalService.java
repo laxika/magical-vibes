@@ -308,7 +308,11 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
                 gameData, target, controllerId, Zone.EXILE);
         for (Card leaving : target.cardsLeavingBattlefield()) {
-            exileService.exileCard(gameData, ownerId, leaving, sourcePermanentId);
+            if (sourcePermanentId == null) {
+                exileService.exileCard(gameData, ownerId, leaving);
+            } else {
+                exileService.exileCard(gameData, ownerId, leaving, sourcePermanentId);
+            }
         }
         graveyardService.notifyCardsExiledFromBattlefield(gameData, target.cardsLeavingBattlefield().size());
         forgetDamageDealtToDepartedPermanent(gameData, target);

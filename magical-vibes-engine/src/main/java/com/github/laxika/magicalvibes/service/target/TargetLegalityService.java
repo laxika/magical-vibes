@@ -818,10 +818,10 @@ public class TargetLegalityService {
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
         }
-        boolean targetsSomething = EffectResolution.needsTarget(abilityEffects, List.of(), false, false)
-                && !EffectResolution.needsDamageDistribution(abilityEffects);
-        if (targetId == null && targetsSomething) {
-            throw new IllegalStateException("Ability requires a target");
+        boolean hasLegacyTargetFilter = ability.getTargetFilter() != null
+                || !ability.getMultiTargetFilters().isEmpty();
+        if (targetId == null && hasLegacyTargetFilter) {
+            throw new IllegalStateException("A target is required");
         }
 
         targetValidationService.validateEffectTargets(abilityEffects,
@@ -1040,7 +1040,10 @@ public class TargetLegalityService {
             }
         }
 
-        if (target != null && needsTarget) {
+        boolean declaresPermanentTarget = needsTarget
+                || effectiveTargetFilter != null
+                || !card.getSpellTargets().isEmpty();
+        if (target != null && declaresPermanentTarget) {
             Optional<String> structuralReason = checkSpellPermanentTargetableReason(
                     gameData, target, card, controllerId, spellEffects, effectiveTargetFilter);
             if (structuralReason.isPresent()) return structuralReason;
@@ -1334,6 +1337,13 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
     }
 
+    public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone,
+                                           int xValue, UUID sourceControllerId) {
+        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+                new TargetValidationContext(gameData, targetId, targetZone, card, xValue,
+                        sourceControllerId, null));
+    }
+
     /**
      * Validates a graveyard/exile target against an explicit effect list rather than the card's raw
      * SPELL slot. Used by modal spells, whose raw SPELL slot holds only the {@code ChooseOneEffect};
@@ -1351,6 +1361,14 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
     }
 
+    public void validateEffectTargetInZone(GameData gameData, Card card, List<CardEffect> effects,
+                                           UUID targetId, Zone targetZone, int xValue,
+                                           UUID sourceControllerId) {
+        targetValidationService.validateEffectTargets(effects,
+                new TargetValidationContext(gameData, targetId, targetZone, card, xValue,
+                        sourceControllerId, null));
+    }
+
     /**
      * Validates only the graveyard-targeting effects of a spell, ignoring permanent-targeting effects.
      * Used for spells with mixed graveyard + permanent targets (e.g. Yawgmoth's Vile Offering)
@@ -1366,6 +1384,11 @@ public class TargetLegalityService {
      */
     public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, List<CardEffect> effects,
                                                   UUID targetId, int xValue) {
+        validateGraveyardEffectTargetOnly(gameData, card, effects, targetId, xValue, null);
+    }
+
+    public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, List<CardEffect> effects,
+                                                  UUID targetId, int xValue, UUID sourceControllerId) {
         List<CardEffect> graveyardEffects = effects.stream()
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 // Unwrap conditional reanimation (e.g. Torrent of Souls' "if {B} was spent") so the
@@ -1373,7 +1396,8 @@ public class TargetLegalityService {
                 .map(e -> e instanceof ConditionalEffect conditional ? conditional.wrapped() : e)
                 .toList();
         targetValidationService.validateEffectTargets(graveyardEffects,
-                new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD, card, xValue));
+                new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD, card, xValue,
+                        sourceControllerId, null));
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
@@ -2860,6 +2884,10 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
         }
+        if (sourcePlayerId != null) {
+            String hexReason = hexproofFromColorReason(gameData, target, card, sourcePlayerId);
+            if (hexReason != null) return hexReason;
+        }
         for (CardColor color : effectiveColors) {
             if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, color, sourcePlayerId)) {
                 return target.getCard().getName() + " can't be the target of "
@@ -2874,10 +2902,6 @@ public class TargetLegalityService {
         }
         if (card.isAura() && gameQueryService.cantBeEnchantedByOtherAuras(gameData, target)) {
             return target.getCard().getName() + " can't be enchanted by other Auras";
-        }
-        if (sourcePlayerId != null) {
-            String hexReason = hexproofFromColorReason(gameData, target, card, sourcePlayerId);
-            if (hexReason != null) return hexReason;
         }
         return null;
     }
