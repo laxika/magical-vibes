@@ -1591,8 +1591,11 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setTriggeringPermanentId(etbTtt.triggeringPermanentId());
         if (etbTtt.sourcePermanentId() != null) {
-            entry.setSourcePermanentSnapshot(gameQueryService.findPermanentById(
-                    gameData, etbTtt.sourcePermanentId()));
+            Permanent sourcePermanent = gameQueryService.findPermanentById(
+                    gameData, etbTtt.sourcePermanentId());
+            if (sourcePermanent != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+            }
         }
         pushTriggeredEntry(gameData, entry);
 

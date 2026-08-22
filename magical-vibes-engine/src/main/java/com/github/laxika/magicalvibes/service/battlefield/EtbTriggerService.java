@@ -642,6 +642,10 @@ public class EtbTriggerService {
                 if (modeTargetFilter != null) {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
+                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (sourcePermanent != null) {
+                    etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                }
                 etbEntry.setSpectacle(sourceWasCastForSpectacle);
                 gameData.stack.add(etbEntry);
                 queueTriggeredAbilityCounters(gameData, etbEntry);
@@ -669,6 +673,9 @@ public class EtbTriggerService {
                     extraEtbEntry.setConvokeCreatureIds(convokeCreatureIds);
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
+                    }
+                    if (sourcePermanent != null) {
+                        extraEtbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                     }
                     extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);
                     gameData.stack.add(extraEtbEntry);

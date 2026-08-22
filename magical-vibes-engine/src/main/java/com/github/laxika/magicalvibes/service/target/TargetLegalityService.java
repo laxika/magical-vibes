@@ -818,11 +818,10 @@ public class TargetLegalityService {
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
         }
-        boolean targetsSomething = ability.getTargetFilter() != null
-                || !ability.getMultiTargetFilters().isEmpty()
-                || EffectResolution.needsTarget(abilityEffects, List.of(), false, false);
+        boolean targetsSomething = EffectResolution.needsTarget(abilityEffects, List.of(), false, false)
+                && !EffectResolution.needsDamageDistribution(abilityEffects);
         if (targetId == null && targetsSomething) {
-            throw new IllegalStateException("A target is required");
+            throw new IllegalStateException("Ability requires a target");
         }
 
         targetValidationService.validateEffectTargets(abilityEffects,
@@ -1041,10 +1040,7 @@ public class TargetLegalityService {
             }
         }
 
-        boolean declaresPermanentTarget = needsTarget
-                || effectiveTargetFilter != null
-                || !card.getSpellTargets().isEmpty();
-        if (target != null && declaresPermanentTarget) {
+        if (target != null && needsTarget) {
             Optional<String> structuralReason = checkSpellPermanentTargetableReason(
                     gameData, target, card, controllerId, spellEffects, effectiveTargetFilter);
             if (structuralReason.isPresent()) return structuralReason;

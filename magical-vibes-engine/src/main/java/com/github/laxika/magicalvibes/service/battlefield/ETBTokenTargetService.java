@@ -411,6 +411,11 @@ public class ETBTokenTargetService {
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
         if (pending.sourcePermanentId() != null) {
             etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
+            Permanent sourcePermanent = gameQueryService.findPermanentById(
+                    gameData, pending.sourcePermanentId());
+            if (sourcePermanent != null) {
+                etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+            }
         }
         if (!pending.repeatedAdditionalCosts().isEmpty()) {
             etbEntry.setRepeatedAdditionalCosts(List.copyOf(pending.repeatedAdditionalCosts()));

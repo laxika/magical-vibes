@@ -42,7 +42,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             gameData.resolvingMayEffectFromStack = true;
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), first, List.of(e), entry.getCard().getName() + " - " + e.prompt(),
-                    entry.getTargetId(), e.manaCost(), entry.getSourcePermanentId(), null, e.lifeCost(), 0,
+                    entry.getTargetId(), e.manaCost(), entry.getSourcePermanentId(), null, 0, e.lifeCost(),
                     entry.getAttackedTargetId(), entry.getActivePlayerId(), null,
                     entry.getSourcePermanentSnapshot(), entry.getControllerId(), null, 0));
             return;
@@ -79,8 +79,8 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 e.manaCost(),
                 entry.getSourcePermanentId(),
                 null,
-                e.lifeCost(),
                 0,
+                e.lifeCost(),
                 entry.getAttackedTargetId(),
                 entry.getActivePlayerId(),
                 null,

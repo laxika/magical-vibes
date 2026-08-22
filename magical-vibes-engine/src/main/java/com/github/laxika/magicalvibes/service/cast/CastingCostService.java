@@ -1499,7 +1499,9 @@ public class CastingCostService {
         }
         synchronized (gameData.floatingEffects) {
             for (var floatingEffect : gameData.floatingEffects) {
-                if (floatingEffect.effect() instanceof GlobalAttackCostEffect tax) {
+                if (floatingEffect.effect() instanceof GlobalAttackCostEffect tax
+                        && (floatingEffect.affectedPlayerId() == null
+                        || defenderId.equals(floatingEffect.affectedPlayerId()))) {
                     totalTax += tax.attackCostPerCreature();
                 }
             }

@@ -1287,16 +1287,16 @@ public class GameQueryService {
 
     /**
      * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
-     * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield currently applies.
+     * or {@code 0} when no battlefield or turn-scoped life-floor effect currently applies.
      * Callers must treat {@code 0} as "no floor" (do not clamp life to 0). Each such effect only
      * contributes its floor while its {@link LifeFloorCondition} holds, evaluated against the
      * player's state before the damage is applied ({@code currentLife}).
      */
     public int damageLifeFloor(GameData gameData, UUID playerId, int currentLife) {
+        int floor = gameData.damageLifeFloorsUntilEndOfTurn.getOrDefault(playerId, 0);
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return 0;
+        if (bf == null) return floor;
         boolean controlsCreature = bf.stream().anyMatch(p -> isCreature(gameData, p));
-        int floor = 0;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (!(effect instanceof DamageLifeFloorEffect lifeFloor)) continue;
@@ -4332,6 +4332,7 @@ public class GameQueryService {
         return effect instanceof TargetingRestrictionEffect r
                 && (r.kind() == TargetingSourceKind.SPELLS
                 || r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES)
+                && !r.opponentOnly()
                 && r.sourceCardTypes().isEmpty()
                 && r.mode() == TargetColorMode.ANY;
     }
