@@ -49,6 +49,8 @@ class AtKnifepointTest extends BaseCardTest {
     void createsMercenaryTokenWithBoostAbility() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new AtKnifepoint());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
         commitCrime();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()

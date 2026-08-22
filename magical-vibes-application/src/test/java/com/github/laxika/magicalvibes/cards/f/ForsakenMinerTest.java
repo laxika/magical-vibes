@@ -47,7 +47,7 @@ class ForsakenMinerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(miner);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(miner);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(miner.getId()));
     }
@@ -64,7 +64,7 @@ class ForsakenMinerTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(miner);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(miner);
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 }

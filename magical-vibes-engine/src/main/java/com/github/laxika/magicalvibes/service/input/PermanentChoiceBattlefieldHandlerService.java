@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -104,6 +105,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final CreatureControlService creatureControlService;
     private final PopulateSupport populateSupport;
     private final DamageSupport damageSupport;
@@ -326,7 +328,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), permanentId);
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanentId);
 
         // Begun mid-resolution (Aura Graft's own spell entry is parked) — canonical epilogue resumes it.
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -349,7 +351,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
             aura.setTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
-            triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), permanentId);
+            triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanentId);
         }
 
         // A moved control Aura (e.g. Control Magic) grants control of its new host to the Aura's controller.
@@ -387,7 +389,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,
                 aura.getCard().getName(), newTarget.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), permanentId);
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanentId);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -406,7 +408,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         aura.setAttachedTo(target.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), target.getId());
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -761,17 +763,33 @@ public class PermanentChoiceBattlefieldHandlerService {
                 context.sourceCardName() + " — Choose a creature you control to return to its owner's hand.");
     }
 
-    public void handleBounceCreature(GameData gameData, UUID permanentId) {
+    public void handleBounceCreature(GameData gameData, UUID permanentId,
+                                     PermanentChoiceContext.BounceCreature context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {
             throw new IllegalStateException("Target creature no longer exists");
         }
+
+        StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
+        boolean resolveFollowUp = context.thenEffect() != null
+                && (context.thenCondition() == null || resolvingEntry != null
+                && predicateEvaluationService.matchesPermanentPredicate(
+                target,
+                context.thenCondition(),
+                FilterContext.of(gameData)
+                        .withSourceCardId(resolvingEntry.getCard().getId())
+                        .withSourceControllerId(resolvingEntry.getControllerId())));
 
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
             permanentRemovalService.removeOrphanedAuras(gameData);
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
+        }
+
+        if (resolveFollowUp && resolvingEntry != null) {
+            resolvingEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(context.thenEffect()));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

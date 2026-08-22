@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CactusfolkSureshot.class, LeatherbackBaloth.class, GrizzlyBears.class})
@@ -43,6 +45,7 @@ class CactusfolkSureshotTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, qualifyingCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, qualifyingCreature, Keyword.HASTE)).isTrue();
 
+        declareAttackers(List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

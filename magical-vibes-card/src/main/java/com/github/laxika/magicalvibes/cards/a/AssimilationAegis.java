@@ -15,7 +15,7 @@ public class AssimilationAegis extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentUntilSourceLeavesEffect());
-        addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED_TO_CREATURE,
+        addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
                 new AttachedCreatureBecomesCopyOfExiledCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

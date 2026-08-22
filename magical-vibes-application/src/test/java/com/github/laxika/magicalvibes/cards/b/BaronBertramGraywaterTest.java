@@ -50,13 +50,12 @@ class BaronBertramGraywaterTest extends BaseCardTest {
     @Test
     void sacrificesAnotherCreatureAndDrawsACard() {
         addCreatureReady(player1, new BaronBertramGraywater());
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, creature.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -66,13 +65,12 @@ class BaronBertramGraywaterTest extends BaseCardTest {
     @Test
     void sacrificesAnArtifactAndDrawsACard() {
         addCreatureReady(player1, new BaronBertramGraywater());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PristineTalisman());
+        harness.addToBattlefield(player1, new PristineTalisman());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

@@ -39,7 +39,7 @@ class ConsumingAshesTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
     }
 

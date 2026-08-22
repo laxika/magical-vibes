@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTarget
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardTargetCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingEnchantedPlayerEffect;
@@ -221,6 +223,11 @@ public class CastingCostService {
                 xValue);
     }
 
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue, Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone);
+    }
+
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
         return getCastCostModifier(gameData, playerId, card, snapshot, false);
     }
@@ -247,8 +254,27 @@ public class CastingCostService {
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue, false);
+    }
+
+    /** Returns the generic adjustment that explicitly applies to plotting a card from hand. */
+    public int getPlotCostModifier(GameData gameData, UUID playerId, Card card) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, 0, true, Zone.HAND);
+    }
+
+    private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                    boolean plottingFromHand) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
+                plottingFromHand, null);
+    }
+
+    private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                    boolean plottingFromHand, Zone sourceZone) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
-                flashbackCost, xValue);
+                flashbackCost, xValue, plottingFromHand, sourceZone);
         int delta = 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
@@ -258,6 +284,10 @@ public class CastingCostService {
             delta += exilePlayCostModifier.amount();
         }
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (plottingFromHand && !(effect instanceof ReduceCastCostForMatchingSpellsEffect reduce
+                    && reduce.plotFromHandOnly())) {
+                continue;
+            }
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
                 if (handler.appliesAfterOtherCostModifiers()) {
@@ -269,6 +299,11 @@ public class CastingCostService {
             }
         }
         for (CollectedCostModifier modifier : snapshot.modifiers()) {
+            if (plottingFromHand
+                    && !(modifier.effect() instanceof ReduceCastCostForMatchingSpellsEffect reduce
+                    && reduce.plotFromHandOnly())) {
+                continue;
+            }
             if (modifier.handler().appliesAfterOtherCostModifiers()) {
                 afterOtherModifiers.add(modifier);
             } else {
@@ -1265,8 +1300,10 @@ public class CastingCostService {
         var manaCost = altCast.getCost(ManaCastingCost.class);
         if (manaCost.isPresent()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            ManaCost cost = applyColoredManaCostReductions(gameData, playerId, card,
-                    new ManaCost(manaCost.get().manaCost()));
+            ManaCost printedAlternativeCost = new ManaCost(manaCost.get().manaCost());
+            ManaCost cost = card.getKeywords().contains(Keyword.PLOT)
+                    ? printedAlternativeCost
+                    : applyColoredManaCostReductions(gameData, playerId, card, printedAlternativeCost);
             if (altCast.reduceManaBySacrificedManaCost() && sacCost.isPresent() && battlefield != null
                     && sacCost.get().count() == 1) {
                 return battlefield.stream()
@@ -1283,7 +1320,9 @@ public class CastingCostService {
                         .max()
                         .orElse(0);
             }
-            if (!cost.canPay(pool, -emergeReduction)) return false;
+            int additionalCost = card.getKeywords().contains(Keyword.PLOT)
+                    ? getPlotCostModifier(gameData, playerId, card) : -emergeReduction;
+            if (!cost.canPay(pool, additionalCost)) return false;
         }
 
         return true;

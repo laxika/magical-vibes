@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouCont
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -134,7 +135,8 @@ public class AdditionalSpellCostService {
             BeholdAndExileCost.class,
             BeholdCost.class,
             DelveCost.class,
-            RevealCardFromHandCost.class);
+            RevealCardFromHandCost.class,
+            SpreeAdditionalManaCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -182,7 +184,8 @@ public class AdditionalSpellCostService {
             DelveCost delveCost,
             RevealCardFromHandCost revealCardCost,
             ChooseCreatureTypeCost chooseCreatureTypeCost,
-            PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost
+            PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost,
+            SpreeAdditionalManaCost spreeAdditionalManaCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -203,7 +206,8 @@ public class AdditionalSpellCostService {
                     || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
-                    || revealCardCost != null || chooseCreatureTypeCost != null;
+                    || revealCardCost != null || chooseCreatureTypeCost != null
+                    || spreeAdditionalManaCost != null;
         }
 
         /** True when the spell has any per-extra-mode cost. */
@@ -349,6 +353,7 @@ public class AdditionalSpellCostService {
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         RevealCardFromHandCost revealCardCost = removeFirst(effects, RevealCardFromHandCost.class);
         ChooseCreatureTypeCost chooseCreatureTypeCost = removeFirst(effects, ChooseCreatureTypeCost.class);
+        SpreeAdditionalManaCost spreeAdditionalManaCost = removeFirst(effects, SpreeAdditionalManaCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost,
                 exileCreatureCost, multiPermCost,
                 escalateSacrificeCost, escalateTapCost,
@@ -359,7 +364,7 @@ public class AdditionalSpellCostService {
                 discardCost, discardRandomCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost,
-                chooseCreatureTypeCost, payLifeOrSacrificePermanentCost);
+                chooseCreatureTypeCost, payLifeOrSacrificePermanentCost, spreeAdditionalManaCost);
     }
 
     /** Adds additional costs granted by permanents before extracting the spell's cast costs. */

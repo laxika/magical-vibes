@@ -826,10 +826,10 @@ public class TargetLegalityService {
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
         }
-        boolean hasLegacyTargetFilter = ability.getTargetFilter() != null
-                || !ability.getMultiTargetFilters().isEmpty();
-        if (targetId == null && hasLegacyTargetFilter) {
-            throw new IllegalStateException("A target is required");
+        boolean targetsSomething = EffectResolution.needsTarget(abilityEffects, List.of(), false, false)
+                && !EffectResolution.needsDamageDistribution(abilityEffects);
+        if (targetId == null && targetsSomething) {
+            throw new IllegalStateException("Ability requires a target");
         }
 
         targetValidationService.validateEffectTargets(abilityEffects,

@@ -40,6 +40,8 @@ class GisaTheHellraiserTest extends BaseCardTest {
     @DisplayName("Creates two tapped blue-black Zombie Rogue tokens after a crime")
     void createsTwoTappedZombieRogueTokensAfterCrime() {
         harness.addToBattlefield(player1, new GisaTheHellraiser());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
         castShockAtOpponent();
 
         resolveAllTriggers();

@@ -160,7 +160,8 @@ public record ConditionContext(
                 entry.isProwl(), entry.isMadness(), entry.isCastForForetell(), entry.isOverloaded(),
                 entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
                 entry.isPutCounterCostPaid(), entry.isBeholdCostPaid(), entry.getTriggeringPermanentId(),
-                entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard(),
+                entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard() != null
+                        ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot(),
                 entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.isSpectacle(),
                 entry.isControlledMountAsCast());
     }

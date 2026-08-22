@@ -35,7 +35,7 @@ class DocAurlockGrizzledGeniusTest extends BaseCardTest {
     void reducesCastCostFromGraveyard() {
         harness.addToBattlefield(player1, new DocAurlockGrizzledGenius());
         harness.setGraveyard(player1, List.of(new SqueeTheImmortal()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castFromGraveyard(player1, 0);
 
@@ -48,7 +48,7 @@ class DocAurlockGrizzledGeniusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DocAurlockGrizzledGenius());
         SqueeTheImmortal squee = new SqueeTheImmortal();
         harness.setExile(player1, List.of(squee));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castFromExile(player1, squee.getId());
 
@@ -60,7 +60,7 @@ class DocAurlockGrizzledGeniusTest extends BaseCardTest {
     void doesNotReduceNormalHandCast() {
         harness.addToBattlefield(player1, new DocAurlockGrizzledGenius());
         harness.setHand(player1, List.of(new SqueeTheImmortal()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);

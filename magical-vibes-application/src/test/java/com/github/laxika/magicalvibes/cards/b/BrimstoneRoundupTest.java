@@ -26,15 +26,15 @@ class BrimstoneRoundupTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(countPermanents(player1, "Mercenary")).isZero();
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(countPermanents(player1, "Mercenary")).isEqualTo(1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(countPermanents(player1, "Mercenary")).isEqualTo(1);
     }
 
@@ -47,9 +47,9 @@ class BrimstoneRoundupTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent mercenary = findPermanents(player1, "Mercenary").getFirst();
         mercenary.setSummoningSick(false);
@@ -75,9 +75,9 @@ class BrimstoneRoundupTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent mercenary = findPermanents(player1, "Mercenary").getFirst();
         mercenary.setSummoningSick(false);

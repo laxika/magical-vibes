@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -43,6 +44,9 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
         var e = (GrantKeywordToChosenCreatureUntilEndOfTurnEffect) effect;
         UUID chosenCreatureId = e.chosenCreatureId() != null ? e.chosenCreatureId() : entry.getChosenPermanentId();
         if (chosenCreatureId == null) {
+            if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+                return;
+            }
             List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of());
             List<UUID> eligibleIds = new ArrayList<>();
             for (Permanent permanent : battlefield) {

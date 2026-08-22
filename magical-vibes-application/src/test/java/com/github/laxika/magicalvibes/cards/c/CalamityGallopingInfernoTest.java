@@ -21,6 +21,7 @@ class CalamityGallopingInfernoTest extends BaseCardTest {
     void saddledAttackCreatesAndSacrificesTwoCopies() {
         Permanent calamity = addCreatureReady(player1, new CalamityGallopingInferno());
         Permanent saddler = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -51,7 +52,8 @@ class CalamityGallopingInfernoTest extends BaseCardTest {
             assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
         });
 
-        harness.forceStep(TurnStep.END_STEP);
+        gs.declareBlockers(gd, player2, List.of());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

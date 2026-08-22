@@ -4503,6 +4503,7 @@ public class GameQueryService {
         return effect instanceof TargetingRestrictionEffect r
                 && (r.kind() == TargetingSourceKind.SPELLS
                 || r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES)
+                && !r.opponentOnly()
                 && r.sourceCardTypes().isEmpty()
                 && r.mode() == TargetColorMode.ANY;
     }

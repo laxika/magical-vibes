@@ -41,8 +41,10 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
             return 0;
         }
         if (!reduce.sourceZones().isEmpty()
-                && reduce.sourceZones().stream().noneMatch(zone -> spellWasCastFromZone(
-                context.gameData(), context.spell(), zone))) {
+                && (context.sourceZone() == null
+                ? reduce.sourceZones().stream().noneMatch(zone -> spellWasCastFromZone(
+                        context.gameData(), context.spell(), zone))
+                : !reduce.sourceZones().contains(context.sourceZone()))) {
             return 0;
         }
         if (!predicateEvaluationService.matchesCardPredicate(

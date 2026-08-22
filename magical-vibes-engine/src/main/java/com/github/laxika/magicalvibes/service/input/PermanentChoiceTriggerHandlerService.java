@@ -183,6 +183,26 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePlotTrigger(GameData gameData, UUID permanentId,
+                                  PermanentChoiceContext.PlotTriggerAnyTarget plotTrigger) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                plotTrigger.plottedCard(),
+                plotTrigger.controllerId(),
+                plotTrigger.plottedCard().getName() + "'s ability",
+                new ArrayList<>(plotTrigger.effects())
+        );
+        entry.setTargetId(permanentId);
+        pushTriggeredEntry(gameData, entry);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextPlotTrigger(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleCopyPermanentTargetedBySpell(GameData gameData, UUID permanentId) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry == null) {

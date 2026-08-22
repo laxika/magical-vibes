@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -717,6 +718,25 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        IndependentlyTargetedGraveyardCardsEffect independentTargetEffect = pendingEffects == null
+                ? null
+                : pendingEffects.stream()
+                .filter(IndependentlyTargetedGraveyardCardsEffect.class::isInstance)
+                .map(IndependentlyTargetedGraveyardCardsEffect.class::cast)
+                .findFirst().orElse(null);
+        if (independentTargetEffect != null
+                && gameData.graveyardTargetOperation.independentTargetGroupIndex >= 0) {
+            gameData.graveyardTargetOperation.independentTargetCardIds.addAll(cardIds);
+            gameData.graveyardTargetOperation.independentTargetGroupSizes.add(cardIds.size());
+            gameData.graveyardTargetOperation.independentTargetGroupIndex++;
+            gameData.interaction.clearAwaitingInput();
+            if (graveyardTargetingService.beginIndependentGraveyardSpellTargeting(
+                    gameData, player.getId(), independentTargetEffect)) {
+                return;
+            }
+            cardIds = List.copyOf(gameData.graveyardTargetOperation.independentTargetCardIds);
+        }
+
         var exileMatchingContext = gameData.graveyardTargetOperation.resolutionTimeExileMatchingCardsResume;
         if (exileMatchingContext != null) {
             gameData.graveyardTargetOperation.resolutionTimeExileMatchingCardsResume = null;
@@ -936,6 +956,8 @@ public class GraveyardChoiceHandlerService {
         List<UUID> pendingPermanentTargetIds = gameData.graveyardTargetOperation.permanentTargetIds;
         Map<CardEffect, List<UUID>> pendingTargetCardIdsByEffect = new IdentityHashMap<>(
                 gameData.graveyardTargetOperation.spellGraveyardCardIdsByEffect);
+        List<Integer> pendingTargetCardGroupSizes = List.copyOf(
+                gameData.graveyardTargetOperation.independentTargetGroupSizes);
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
@@ -956,6 +978,9 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects = List.of();
         gameData.graveyardTargetOperation.activeSpellGraveyardChoiceEffect = null;
         gameData.graveyardTargetOperation.spellGraveyardCardIdsByEffect.clear();
+        gameData.graveyardTargetOperation.independentTargetGroupIndex = -1;
+        gameData.graveyardTargetOperation.independentTargetCardIds.clear();
+        gameData.graveyardTargetOperation.independentTargetGroupSizes.clear();
 
         List<String> targetNames = new ArrayList<>();
         for (UUID cardId : cardIds) {
@@ -983,6 +1008,7 @@ public class GraveyardChoiceHandlerService {
                     pendingPermanentTargetIds == null ? List.of() : new ArrayList<>(pendingPermanentTargetIds)
             );
             spellEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
+            spellEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
             if (pendingFlashback) {
                 spellEntry.setCastWithFlashback(true);
             }

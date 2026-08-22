@@ -146,6 +146,7 @@ import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -176,6 +177,7 @@ public class TriggerCollectionService {
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TargetLegalityService targetLegalityService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
     private final ETBTokenTargetService etbTokenTargetService;
@@ -4556,8 +4558,12 @@ public class TriggerCollectionService {
                 } else if (!ownerId.equals(activatingPlayerId)) {
                     continue;
                 }
-                if (trigger.sourceFilter() != null && !predicateEvaluationService.matchesStackEntryPredicate(
-                        abilityEntry, trigger.sourceFilter(), null)) {
+                if (trigger.sourceFilter() != null && !targetLegalityService.matchesStackEntryPredicate(
+                        gameData, abilityEntry, trigger.sourceFilter(), ownerId)) {
+                    continue;
+                }
+                if (trigger.targetPredicate() != null && !targetLegalityService.matchesStackEntryPredicate(
+                        gameData, abilityEntry, trigger.targetPredicate(), ownerId)) {
                     continue;
                 }
                 if (trigger.loyaltyAbilityOnly() && ability.getLoyaltyCost() == null) {
@@ -7342,8 +7348,10 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
+                CardEffect resolved = unwrapOncePerTurnTrigger(gameData, permanent, effect);
+                if (resolved == null) continue;
                 TriggerMatchContext match = new TriggerMatchContext(gameData, permanent, controllerId, effect);
-                registry.dispatch(match, EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, effect, ctx);
+                registry.dispatch(match, EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, resolved, ctx);
             }
         }
     }
@@ -7616,6 +7624,9 @@ public class TriggerCollectionService {
                 resolvedEffects.add(resolved);
             }
             if (resolvedEffects.isEmpty()) continue;
+            int permanentTriggerCount = triggerCount
+                    + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                    gameData, landControllerId, perm);
 
             boolean needsPlayerTarget = resolvedEffects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
@@ -7630,7 +7641,7 @@ public class TriggerCollectionService {
                 TargetFilter targetFilter = targetGroupIndex >= 0
                         ? perm.getCard().getSpellTargets().get(targetGroupIndex).getFilter()
                         : perm.getCard().getTargetFilter();
-                for (int i = 0; i < triggerCount; i++) {
+                for (int i = 0; i < permanentTriggerCount; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(),
                             landControllerId,
@@ -7650,7 +7661,7 @@ public class TriggerCollectionService {
             }
 
             if (resolvedEffects.size() == 1 && resolvedEffects.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
-                for (int i = 0; i < triggerCount; i++) {
+                for (int i = 0; i < permanentTriggerCount; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                             perm.getCard(), landControllerId, chooseOneEffect, perm.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -7659,7 +7670,7 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            for (int i = 0; i < triggerCount; i++) {
+            for (int i = 0; i < permanentTriggerCount; i++) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),

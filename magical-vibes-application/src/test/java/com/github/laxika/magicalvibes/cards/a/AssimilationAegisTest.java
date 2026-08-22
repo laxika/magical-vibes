@@ -52,6 +52,7 @@ class AssimilationAegisTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aegis),
                 null, firstHost.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, firstHost)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, firstHost)).isEqualTo(3);
@@ -59,6 +60,7 @@ class AssimilationAegisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aegis),
                 null, secondHost.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, firstHost)).isEqualTo(2);
@@ -79,6 +81,7 @@ class AssimilationAegisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aegis),
                 null, host.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())

@@ -33,12 +33,14 @@ public class AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID attachedCreatureId = entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getTargetId();
         if (equipment == null || !equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                || entry.getTargetId() == null
-                || !entry.getTargetId().equals(equipment.getAttachedTo())) {
+                || attachedCreatureId == null
+                || !attachedCreatureId.equals(equipment.getAttachedTo())) {
             return;
         }
-        Permanent attached = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent attached = gameQueryService.findPermanentById(gameData, attachedCreatureId);
         if (attached == null) {
             return;
         }

@@ -54,8 +54,8 @@ class ErietteTheBeguilerTest extends BaseCardTest {
 
     private void castZephidsEmbrace(Permanent target) {
         harness.setHand(player1, List.of(new ZephidsEmbrace()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castEnchantment(player1, 0, target.getId());
     }
 }

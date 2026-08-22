@@ -970,6 +970,12 @@ public class CardChoiceHandlerService {
                 } else {
                     exileService.exileCard(gameData, targetPlayerId, exiled);
                 }
+                if (revealedHandChoice.plot()) {
+                    gameData.plottedCardIds.add(exiled.getId());
+                    gameData.exilePlayPermissions.put(exiled.getId(), targetPlayerId);
+                    gameData.exilePlayWithoutPayingManaCost.add(exiled.getId());
+                    triggerCollectionService.checkPlotTriggers(gameData, targetPlayerId, exiled);
+                }
                 if (revealedHandChoice.imprintOnSource() && sourcePermanentId != null) {
                     exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
                 }
@@ -1051,6 +1057,12 @@ public class CardChoiceHandlerService {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
             return;
         }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextPlotTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
 
         // Resume resolving remaining effects on the same spell/ability
         // (e.g. Thoughtseize: choose + discard a nonland card, then "you lose 2 life")
@@ -1127,6 +1139,13 @@ public class CardChoiceHandlerService {
         String declineLog = player.getUsername() + " chooses no card from " + targetName + "'s hand.";
         gameLogService.append(gameData, GameLog.text(declineLog));
         log.info("Game {} - {} declines the revealed-hand choice", gameData.id, player.getUsername());
+
+        if (revealedHandChoice.declineEffect() != null
+                && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(revealedHandChoice.declineEffect()));
+        }
 
         // Nightsnare: declining makes the target discard cards of their own choice instead.
         if (revealedHandChoice.declineFallbackDiscardCount() > 0) {

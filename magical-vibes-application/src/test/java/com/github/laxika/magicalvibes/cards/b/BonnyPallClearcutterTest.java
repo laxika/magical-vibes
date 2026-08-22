@@ -63,7 +63,7 @@ class BonnyPallClearcutterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnLand, landInHand);
         PendingInteraction.PutCardFromHandOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PutCardFromHandOrGraveyardChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(landInHand.getId());
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(landInHand.getId(), drawnLand.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(landInHand.getId()));
 
@@ -89,7 +89,7 @@ class BonnyPallClearcutterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnLand);
         PendingInteraction.PutCardFromHandOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PutCardFromHandOrGraveyardChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(landInGraveyard.getId());
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(landInGraveyard.getId(), drawnLand.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of());
 

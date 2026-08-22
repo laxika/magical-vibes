@@ -36,6 +36,7 @@ class DroverGrizzlyTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, helper, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
 
+        gs.declareBlockers(gd, player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

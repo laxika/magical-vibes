@@ -43,8 +43,10 @@ class CaughtInTheCrossfireTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Deathcult Rogue");
         harness.assertOnBattlefield(player2, "Deathcult Rogue");
-        harness.assertNotOnBattlefield(player1, "Hill Giant");
-        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(findPermanent(player1, "Hill Giant").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -57,7 +59,10 @@ class CaughtInTheCrossfireTest extends BaseCardTest {
 
         cast(new int[]{0, 1}, 4);
 
-        assertThatBattlefieldsAreEmpty();
+        harness.assertNotOnBattlefield(player1, "Deathcult Rogue");
+        harness.assertNotOnBattlefield(player2, "Deathcult Rogue");
+        assertThat(findPermanent(player1, "Hill Giant").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -68,8 +73,4 @@ class CaughtInTheCrossfireTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void assertThatBattlefieldsAreEmpty() {
-        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-    }
 }

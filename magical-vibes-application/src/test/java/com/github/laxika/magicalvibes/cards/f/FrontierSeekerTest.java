@@ -76,6 +76,7 @@ class FrontierSeekerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private void setupTopFive(List<Card> cards) {
