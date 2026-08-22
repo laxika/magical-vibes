@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -28,12 +27,7 @@ class ConduitPylonsTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
-        assertThat(surveil).isNotNull();
-        assertThat(surveil.cards()).containsExactly(topCard);
-
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
     }

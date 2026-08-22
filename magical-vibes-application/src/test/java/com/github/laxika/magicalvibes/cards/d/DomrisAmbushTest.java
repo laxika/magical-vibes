@@ -59,6 +59,7 @@ class DomrisAmbushTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's creature as the first target")
     void firstTargetMustBeControlled() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent opponentSource = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent opponentTarget = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new DomrisAmbush()));

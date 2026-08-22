@@ -21,7 +21,9 @@ class DivineArrowTest extends BaseCardTest {
 
     @Test
     void dealsFourDamageToAnAttackingCreature() {
-        Permanent target = new Permanent(new AirElemental());
+        AirElemental airElemental = new AirElemental();
+        airElemental.setToughness(5);
+        Permanent target = new Permanent(airElemental);
         target.setSummoningSick(false);
         target.setAttacking(true);
         harness.getGameData().playerBattlefields.get(player1.getId()).add(target);

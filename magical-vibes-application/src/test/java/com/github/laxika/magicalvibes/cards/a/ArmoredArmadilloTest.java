@@ -58,7 +58,6 @@ class ArmoredArmadilloTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, armadillo.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Shock");
     }

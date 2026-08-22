@@ -63,7 +63,6 @@ class DovinsVetoTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(might, new Cancel()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.setHand(player2, List.of(veto));
         harness.addMana(player2, ManaColor.WHITE, 1);
@@ -72,6 +71,7 @@ class DovinsVetoTest extends BaseCardTest {
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
         harness.castInstant(player2, 0, might.getId());
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castInstant(player1, 0, veto.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

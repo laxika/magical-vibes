@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsWithCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOrDealDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -91,6 +92,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingC
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
@@ -1821,6 +1823,13 @@ public class SpellCastTriggerCollectorService {
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
+        if (triggeringSpell != null) {
+            StackEntry spellSnapshot = new StackEntry(triggeringSpell);
+            resolved = resolved.stream()
+                    .map(effect -> snapshotTriggeringSpell(effect, spellSnapshot, castingPlayerId))
+                    .toList();
+        }
         // Snapshot CountersOnSource damage at trigger time (Imminent Doom ruling: damage equals
         // the counter count as the ability triggered, not as it resolves).
         resolved = snapshotCountersOnSourceDamage(resolved, match.permanent());
@@ -2012,6 +2021,31 @@ public class SpellCastTriggerCollectorService {
             }
         }
         return snapshotted;
+    }
+
+    private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,
+                                               UUID castingPlayerId) {
+        if (effect instanceof FlipCoinCopyTriggeringSpellOrDealDamageEffect breechesEffect
+                && breechesEffect.spellSnapshot() == null) {
+            return new FlipCoinCopyTriggeringSpellOrDealDamageEffect(
+                    new StackEntry(spellSnapshot), castingPlayerId);
+        }
+        if (effect instanceof MayEffect may) {
+            CardEffect wrapped = snapshotTriggeringSpell(may.wrapped(), spellSnapshot, castingPlayerId);
+            CardEffect elseEffect = may.elseEffect() == null
+                    ? null
+                    : snapshotTriggeringSpell(may.elseEffect(), spellSnapshot, castingPlayerId);
+            return new MayEffect(wrapped, may.prompt(), elseEffect, may.choicePlayer());
+        }
+        if (effect instanceof SacrificePermanentThenEffect sacrifice && sacrifice.thenEffect() != null) {
+            return new SacrificePermanentThenEffect(
+                    sacrifice.filter(),
+                    snapshotTriggeringSpell(sacrifice.thenEffect(), spellSnapshot, castingPlayerId),
+                    sacrifice.permanentDescription(),
+                    sacrifice.targetBeforeSacrifice(),
+                    sacrifice.reflexive());
+        }
+        return effect;
     }
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {

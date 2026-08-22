@@ -20,6 +20,8 @@ class BloodHustlerTest extends BaseCardTest {
         Permanent hustler = harness.addToBattlefieldAndReturn(player1, new BloodHustler());
         int opponentLifeBefore = gd.getLife(player2.getId());
         int controllerLifeBefore = gd.getLife(player1.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         activateDrain(hustler);
         harness.passBothPriorities();

@@ -20,7 +20,7 @@ class DavrielRogueShadowmageTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 2 damage to an opponent with one or fewer cards during that opponent's upkeep")
     void dealsDamageWhenOpponentHasOneOrFewerCards() {
-        harness.addToBattlefield(player1, new DavrielRogueShadowmage());
+        addReadyDavriel(player1);
         harness.setHand(player2, List.of(new GrizzlyBears()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -33,7 +33,7 @@ class DavrielRogueShadowmageTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when the opponent has more than one card")
     void doesNotDealDamageWhenOpponentHasMoreThanOneCard() {
-        harness.addToBattlefield(player1, new DavrielRogueShadowmage());
+        addReadyDavriel(player1);
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -46,7 +46,7 @@ class DavrielRogueShadowmageTest extends BaseCardTest {
     @Test
     @DisplayName("Rechecks the opponent's hand size when the trigger resolves")
     void rechecksHandSizeAtResolution() {
-        harness.addToBattlefield(player1, new DavrielRogueShadowmage());
+        addReadyDavriel(player1);
         harness.setHand(player2, List.of(new GrizzlyBears()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 

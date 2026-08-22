@@ -18,7 +18,7 @@ class HardbristleBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping it adds one mana of the chosen color")
     void tapsForAnyColor() {
-        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new HardbristleBandit());
+        Permanent bandit = addReadyBandit();
 
         tapForMana(bandit, ManaColor.BLUE);
 
@@ -29,7 +29,7 @@ class HardbristleBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps after its controller commits a crime")
     void untapsAfterCrime() {
-        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new HardbristleBandit());
+        Permanent bandit = addReadyBandit();
         tapForMana(bandit, ManaColor.GREEN);
 
         commitCrime();
@@ -40,7 +40,7 @@ class HardbristleBanditTest extends BaseCardTest {
     @Test
     @DisplayName("The crime trigger untaps it only once each turn")
     void crimeTriggerFiresOnlyOnceEachTurn() {
-        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new HardbristleBandit());
+        Permanent bandit = addReadyBandit();
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -56,6 +56,12 @@ class HardbristleBanditTest extends BaseCardTest {
         int banditIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bandit);
         harness.activateAbility(player1, banditIndex, 0, null, null);
         harness.handleListChoice(player1, color.name());
+    }
+
+    private Permanent addReadyBandit() {
+        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new HardbristleBandit());
+        bandit.setSummoningSick(false);
+        return bandit;
     }
 
     private void commitCrime() {

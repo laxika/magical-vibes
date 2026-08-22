@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -91,6 +92,7 @@ public class StackResolutionService {
     private final ExileService exileService;
     private final ParadigmService paradigmService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final GameMutationCoordinator mutationCoordinator;
     private final CardRevealService cardRevealService;
     private final AuraCopyService auraCopyService;
@@ -110,6 +112,7 @@ public class StackResolutionService {
                                   StateTriggerService stateTriggerService,
                                   ExileService exileService,
                                   GraveyardReturnSupport graveyardReturnSupport,
+                                  PermanentCounterSupport permanentCounterSupport,
                                   GameMutationCoordinator mutationCoordinator,
                                   CardRevealService cardRevealService,
                                   AuraCopyService auraCopyService,
@@ -129,6 +132,7 @@ public class StackResolutionService {
         this.stateTriggerService = stateTriggerService;
         this.exileService = exileService;
         this.graveyardReturnSupport = graveyardReturnSupport;
+        this.permanentCounterSupport = permanentCounterSupport;
         this.mutationCoordinator = mutationCoordinator;
         this.cardRevealService = cardRevealService;
         this.auraCopyService = auraCopyService;
@@ -893,6 +897,8 @@ public class StackResolutionService {
         perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);
         perm.setSummoningSick(false);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+                gameData, controllerId, startingLoyalty);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(

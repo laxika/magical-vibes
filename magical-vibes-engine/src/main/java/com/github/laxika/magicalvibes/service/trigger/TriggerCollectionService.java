@@ -7348,10 +7348,15 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
+                boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
                 CardEffect resolved = unwrapOncePerTurnTrigger(gameData, permanent, effect);
                 if (resolved == null) continue;
-                TriggerMatchContext match = new TriggerMatchContext(gameData, permanent, controllerId, effect);
-                registry.dispatch(match, EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, resolved, ctx);
+                TriggerMatchContext match = new TriggerMatchContext(gameData, permanent, controllerId, resolved);
+                boolean triggered = registry.dispatch(
+                        match, EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, resolved, ctx);
+                if (triggered && oncePerTurn) {
+                    gameData.oncePerTurnTriggersFiredThisTurn.add(permanent.getId());
+                }
             }
         }
     }

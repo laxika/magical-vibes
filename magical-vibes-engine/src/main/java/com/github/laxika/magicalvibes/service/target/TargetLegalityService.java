@@ -826,10 +826,24 @@ public class TargetLegalityService {
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
         }
-        boolean targetsSomething = EffectResolution.needsTarget(abilityEffects, List.of(), false, false)
+        boolean hasLegacyTargetFilter = ability.getTargetFilter() != null
+                || !ability.getMultiTargetFilters().isEmpty();
+        if (targetId == null && hasLegacyTargetFilter) {
+            throw new IllegalStateException("A target is required");
+        }
+        boolean targetsSomething = abilityEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().declaredTarget() != null
+                        && !(effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && returnEffect.upTo()))
                 && !EffectResolution.needsDamageDistribution(abilityEffects);
         if (targetId == null && targetsSomething) {
-            throw new IllegalStateException("Ability requires a target");
+            boolean playerOnly = abilityEffects.stream()
+                    .filter(effect -> effect.targetSpec().declaredTarget() != null)
+                    .allMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+            throw new IllegalStateException(playerOnly
+                    ? "Ability requires a target player"
+                    : "Ability requires a target");
         }
 
         targetValidationService.validateEffectTargets(abilityEffects,
@@ -1021,8 +1035,10 @@ public class TargetLegalityService {
 
         TargetFilter effectiveTargetFilter = targetFilterForKickedCast(card.getTargetFilter(), kicked);
 
-        if (target != null && effectiveTargetFilter instanceof PlayerPredicateTargetFilter) {
-            return Optional.of("This spell can only target players");
+        if (target != null && effectiveTargetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
+            return Optional.of(card.getCastTimeTargetFilter() != null
+                    ? playerFilter.errorMessage()
+                    : "This spell can only target players");
         }
 
         if (needsTarget) {
@@ -1567,10 +1583,10 @@ public class TargetLegalityService {
             TargetFilter positionFilter = slotFilter;
             if (positionFilter != null) {
                 predicateEvaluationService.validateTargetFilter(targetFilterForKickedCast(positionFilter, kicked), target,
-                        filterContext(gameData, card.getId(), controllerId));
+                        filterContext(gameData, card.getId(), controllerId).withXValue(xValue));
             } else if (card.getTargetFilter() != null) {
                 predicateEvaluationService.validateTargetFilter(targetFilterForKickedCast(card.getTargetFilter(), kicked), target,
-                        filterContext(gameData, card.getId(), controllerId));
+                        filterContext(gameData, card.getId(), controllerId).withXValue(xValue));
             } else if (declaredRestriction != null) {
                 if (!predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
                         filterContext(gameData, card.getId(), controllerId))) {
@@ -3105,7 +3121,8 @@ public class TargetLegalityService {
     }
 
     private boolean predicateAdmitsAbilityTarget(StackEntryPredicate predicate) {
-        if (predicate instanceof StackEntryHasTargetPredicate) {
+        if (predicate instanceof StackEntryHasTargetPredicate
+                || predicate instanceof StackEntryIsSingleTargetPredicate) {
             return true;
         }
         if (predicate instanceof StackEntryTargetsPermanentPredicate) {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
@@ -388,6 +389,9 @@ public class CombatDamageService {
 
         // Process delayed combat damage loot triggers (e.g. Jace, Cunning Castaway's +1)
         processDelayedCombatDamageLootTriggers(gameData, state.combatDamageDealtToPlayer, activeId);
+
+        processDelayedCombatDamageTokenTriggers(
+                gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
         processDelayedCombatDamageLookAtHandAndDrawTriggers(gameData, state);
 
@@ -1717,6 +1721,34 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.cardThen(loot.sourceCard(),
                         "'s delayed trigger fires — draw " + loot.drawAmount()
                                 + ", discard " + loot.discardAmount() + "."));
+            }
+        }
+    }
+
+    private void processDelayedCombatDamageTokenTriggers(GameData gameData,
+                                                           Map<Permanent, Integer> combatDamageDealtToPlayer,
+                                                           UUID attackerId,
+                                                           UUID defenderId) {
+        if (!gameData.hasDelayedAction(DelayedCombatDamageToken.class)) return;
+
+        for (DelayedCombatDamageToken delayed : gameData.getDelayedActions(DelayedCombatDamageToken.class)) {
+            if (!delayed.controllerId().equals(attackerId)
+                    || !delayed.targetPlayerId().equals(defenderId)) {
+                continue;
+            }
+            for (var damageEntry : combatDamageDealtToPlayer.entrySet()) {
+                if (damageEntry.getValue() <= 0) continue;
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        delayed.sourceCard(),
+                        delayed.controllerId(),
+                        delayed.sourceCard().getName() + "'s delayed trigger",
+                        List.of(delayed.tokenEffect())
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
+                        "'s delayed trigger goes on the stack."));
             }
         }
     }

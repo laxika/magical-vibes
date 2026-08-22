@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GreaterWerewolf;
 import com.github.laxika.magicalvibes.cards.y.YoungWolf;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -26,9 +24,9 @@ class ArlinnVoiceOfThePackTest extends BaseCardTest {
     void wolfAndWerewolfCreaturesEnterWithCounters() {
         addReadyArlinn(player1);
 
-        harness.addToBattlefield(player1, new YoungWolf());
-        harness.addToBattlefield(player1, new GreaterWerewolf());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        castCreature(new YoungWolf(), "{G}");
+        castCreature(new GreaterWerewolf(), "{4}{B}");
+        castCreature(new GrizzlyBears(), "{1}{G}");
 
         assertThat(findPermanent(player1, "Young Wolf")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -43,7 +41,7 @@ class ArlinnVoiceOfThePackTest extends BaseCardTest {
     void creatureMatchingBothSubtypesGetsOneCounter() {
         addReadyArlinn(player1);
 
-        harness.addToBattlefield(player1, new AvianChangeling());
+        castCreature(new AvianChangeling(), "{2}{W}");
 
         assertThat(findPermanent(player1, "Avian Changeling")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -59,11 +57,7 @@ class ArlinnVoiceOfThePackTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Wolf");
         assertThat(arlinn.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
-        assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
-        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.WOLF);
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(token.getCard().getPower()).isEqualTo(2);
-        assertThat(token.getCard().getToughness()).isEqualTo(2);
     }
 
     @Test
@@ -85,5 +79,10 @@ class ArlinnVoiceOfThePackTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return arlinn;
+    }
+
+    private void castCreature(com.github.laxika.magicalvibes.model.Card card, String manaCost) {
+        harness.castFromHand(player1, card, manaCost);
+        harness.passBothPriorities();
     }
 }

@@ -72,8 +72,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DamagePreventionReplacementSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -326,9 +326,8 @@ public class DamagePreventionService {
                         isCombatDamage, damageSource);
                 if (damage <= 0) return 0;
             }
-            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof PreventAllDamageEffect
-                            && !permanent.isStaticEffectSuppressed(e.getClass()))) return 0;
+            if (gameQueryService.hasActiveStaticEffect(
+                    gameData, permanent, PreventAllDamageEffect.class)) return 0;
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(PreventDamageToSelfAndDealThatMuchDamageEffect.class::isInstance)) {
                 queuePhyrexianVindicatorTrigger(gameData, permanent, damage);

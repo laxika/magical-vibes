@@ -48,6 +48,7 @@ class GideonsSacrificeTest extends BaseCardTest {
     @DisplayName("Can redirect damage to a chosen planeswalker")
     void redirectsDamageToChosenPlaneswalker() {
         Permanent chosen = harness.addToBattlefieldAndReturn(player1, new UginTheIneffable());
+        chosen.setCounterCount(CounterType.LOYALTY, 4);
         int startingLoyalty = chosen.getCounterCount(CounterType.LOYALTY);
 
         castAndChoose(chosen);

@@ -22,7 +22,7 @@ class FinaleOfEternityTest extends BaseCardTest {
         var bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new HillGiant());
         harness.setHand(player1, List.of(new FinaleOfEternity()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0, 2, List.of(bears.getId()));
         harness.passBothPriorities();
@@ -35,7 +35,7 @@ class FinaleOfEternityTest extends BaseCardTest {
     void rejectsCreatureWithToughnessGreaterThanX() {
         var giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new FinaleOfEternity()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.BLACK, 5);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, List.of(giant.getId())))
                 .isInstanceOf(IllegalStateException.class)
@@ -47,7 +47,7 @@ class FinaleOfEternityTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant(), new Plains()));
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new FinaleOfEternity()));
-        harness.addMana(player1, ManaColor.BLACK, 12);
+        harness.addMana(player1, ManaColor.BLACK, 13);
 
         harness.castSorcery(player1, 0, 10);
         harness.passBothPriorities();

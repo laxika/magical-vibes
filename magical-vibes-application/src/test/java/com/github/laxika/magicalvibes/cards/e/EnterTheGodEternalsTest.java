@@ -88,7 +88,7 @@ class EnterTheGodEternalsTest extends BaseCardTest {
     private void castEnterTheGodEternals(Permanent creatureTarget) {
         harness.setHand(player1, List.of(new EnterTheGodEternals()));
         addMana();
-        harness.castSorcery(player1, 0, creatureTarget.getId(), List.of(player2.getId()));
+        harness.castSorcery(player1, 0, List.of(creatureTarget.getId(), player2.getId()));
         harness.passBothPriorities();
     }
 

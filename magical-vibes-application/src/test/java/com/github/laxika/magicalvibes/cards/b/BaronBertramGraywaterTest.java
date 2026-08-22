@@ -54,11 +54,12 @@ class BaronBertramGraywaterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -69,11 +70,12 @@ class BaronBertramGraywaterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         harness.assertInGraveyard(player1, "Pristine Talisman");
     }
 }

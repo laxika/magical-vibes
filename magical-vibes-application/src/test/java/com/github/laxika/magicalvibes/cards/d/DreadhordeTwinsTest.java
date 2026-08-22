@@ -18,7 +18,9 @@ class DreadhordeTwinsTest extends BaseCardTest {
     @Test
     @DisplayName("Enters and amasses Zombies 2 without an Army")
     void entersAndAmassesWithoutAnArmy() {
-        Permanent twins = harness.addToBattlefieldAndReturn(player1, new DreadhordeTwins());
+        harness.castFromHand(player1, new DreadhordeTwins(), "{3}{R}");
+        harness.passBothPriorities();
+        Permanent twins = findPermanent(player1, "Dreadhorde Twins");
         harness.passBothPriorities();
 
         Permanent army = findPermanent(player1, "Zombie Army");
@@ -35,7 +37,9 @@ class DreadhordeTwinsTest extends BaseCardTest {
     void entersAndAmassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         army.getGrantedSubtypes().add(CardSubtype.ARMY);
-        Permanent twins = harness.addToBattlefieldAndReturn(player1, new DreadhordeTwins());
+        harness.castFromHand(player1, new DreadhordeTwins(), "{3}{R}");
+        harness.passBothPriorities();
+        Permanent twins = findPermanent(player1, "Dreadhorde Twins");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

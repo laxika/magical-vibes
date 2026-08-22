@@ -56,6 +56,7 @@ class BoltBendTest extends BaseCardTest {
     void retargetsSingleTargetAbility() {
         Permanent sorcerer = harness.addToBattlefieldAndReturn(player1, new ProdigalSorcerer());
         sorcerer.setSummoningSick(false);
+        harness.addToBattlefield(player2, new AirElemental());
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player2, new LlanowarElves());
         UUID originalTarget = harness.getPermanentId(player1, "Llanowar Elves");

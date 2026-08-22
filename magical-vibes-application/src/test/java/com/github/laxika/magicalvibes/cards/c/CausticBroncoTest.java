@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CausticBronco.class, GrizzlyBears.class})
+@CardUsed({CausticBronco.class, GrizzlyBears.class, HillGiant.class})
 class CausticBroncoTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,7 @@ class CausticBroncoTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(bronco.isSaddled()).isFalse();
     }
 
@@ -39,7 +40,7 @@ class CausticBroncoTest extends BaseCardTest {
     void attacksSaddled() {
         Card topCard = new GrizzlyBears();
         Permanent bronco = addCreatureReady(player1, new CausticBronco());
-        Permanent saddler = addCreatureReady(player1, new GrizzlyBears());
+        Permanent saddler = addCreatureReady(player1, new HillGiant());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.setLibrary(player1, List.of(topCard));
@@ -53,6 +54,6 @@ class CausticBroncoTest extends BaseCardTest {
         assertThat(saddler.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 }

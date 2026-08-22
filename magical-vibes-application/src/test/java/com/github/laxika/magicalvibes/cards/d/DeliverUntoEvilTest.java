@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasGodPharaoh;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -47,7 +48,8 @@ class DeliverUntoEvilTest extends BaseCardTest {
         Card shock = new Shock();
         List<Card> targets = List.of(island, shock);
         harness.setGraveyard(player1, targets);
-        harness.addToBattlefield(player1, new NicolBolasGodPharaoh());
+        var bolas = harness.addToBattlefieldAndReturn(player1, new NicolBolasGodPharaoh());
+        bolas.setCounterCount(CounterType.LOYALTY, 7);
         cast(targets);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -69,7 +71,13 @@ class DeliverUntoEvilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DeliverUntoEvil()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, targets.stream().map(Card::getId).toList());
+        harness.castSorcery(player1, 0, 0);
+        if (!targets.isEmpty()) {
+            PendingInteraction.MultiGraveyardChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+            assertThat(choice.playerId()).isEqualTo(player1.getId());
+            harness.handleMultipleCardsChosen(player1, targets.stream().map(Card::getId).toList());
+        }
         harness.passBothPriorities();
     }
 }

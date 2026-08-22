@@ -59,7 +59,13 @@ class AvenInterrupterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player2, bears.getId()))
                 .hasMessageContaining("on the turn it became plotted");
 
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player2, ManaColor.GREEN, 2); // Aven Interrupter taxes this exile cast.
         harness.castFromExile(player2, bears.getId());

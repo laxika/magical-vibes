@@ -46,6 +46,7 @@ class CardImmutabilityArchTest {
             "CopySupport",             // assembles fresh spell-copy cards
             "CopyControllerCastSpellEffectHandler", // decorates the fresh spell-copy card
             "CopySpellEffectHandler",  // decorates the fresh spell-copy card
+            "CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler", // decorates the fresh drawn-card copy
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeCopyOfEnteringCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Unstable Shapeshifter)

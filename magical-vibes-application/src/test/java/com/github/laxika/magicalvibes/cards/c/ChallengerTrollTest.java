@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,14 +14,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChallengerTroll.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({ChallengerTroll.class, GrizzlyBears.class})
 class ChallengerTrollTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creatures with power 4 or greater can't be blocked by more than one creature")
     void highPowerCreatureCannotBeBlockedByTwoCreatures() {
         addCreatureReady(player1, new ChallengerTroll());
-        Permanent attacker = addCreatureReady(player1, new AirElemental());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         attacker.setAttacking(true);
         Permanent blockerOne = addCreatureReady(player2, new GrizzlyBears());
         Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());

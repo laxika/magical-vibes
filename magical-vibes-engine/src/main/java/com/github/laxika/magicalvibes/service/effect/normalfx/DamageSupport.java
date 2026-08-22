@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
@@ -779,7 +780,9 @@ public class DamageSupport {
                 // loyalty loss. The creature-damage path applies this set in DamagePreventionService, but
                 // the loyalty branch below bypasses it, so guard it here.
                 if (gameQueryService.isDamagePreventable(gameData)
-                        && gameData.creaturesWithAllDamagePrevented.contains(targetPermanent.getId())) {
+                        && (gameData.creaturesWithAllDamagePrevented.contains(targetPermanent.getId())
+                        || gameQueryService.hasActiveStaticEffect(
+                                gameData, targetPermanent, PreventAllDamageEffect.class))) {
                     gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
                     return;
                 }

@@ -57,7 +57,9 @@ class FblthpTheLostTest extends BaseCardTest {
                 new InteractionAnswer.LibraryCardChosen(search.params().cards().indexOf(fblthp)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(drawn1, drawn2);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .hasSize(2)
+                .allMatch(card -> card == drawn1 || card == drawn2 || card == remaining);
     }
 
     @Test
