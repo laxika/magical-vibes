@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,14 +41,21 @@ class ObekaSplitterOfSecondsTest extends BaseCardTest {
     void noAdditionalUpkeepStepsWithoutCombatDamageToPlayer() {
         Permanent obeka = addCreatureReady(player1, new ObekaSplitterOfSeconds());
         Permanent clock = harness.addToBattlefieldAndReturn(player1, new ArmageddonClock());
-        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent firstBlocker = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent secondBlocker = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         obeka.setAttacking(true);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1,
+                secondBlocker.getId(), 1));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(clock.getCounterCount(CounterType.DOOM)).isZero();

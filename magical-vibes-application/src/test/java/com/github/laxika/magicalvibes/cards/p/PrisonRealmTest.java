@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -41,7 +43,8 @@ class PrisonRealmTest extends BaseCardTest {
     @Test
     @DisplayName("ETB can exile an opponent's planeswalker")
     void exilesPlaneswalker() {
-        harness.addToBattlefield(player2, new GideonBlackblade());
+        Permanent gideon = harness.addToBattlefieldAndReturn(player2, new GideonBlackblade());
+        gideon.setCounterCount(CounterType.LOYALTY, 4);
         UUID gideonId = harness.getPermanentId(player2, "Gideon Blackblade");
 
         castAndResolve(gideonId);

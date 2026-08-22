@@ -5485,7 +5485,8 @@ public class SpellCastingService {
         // case it is cast without paying its mana cost. If anyManaType, any mana can pay for any color.
         int phyrexianManaPaidWithLife = 0;
         if (playWithoutPaying) {
-            // Cast without paying its mana cost — no payment.
+            payFreeExileCastCostIncrease(gameData, playerId, card, effectiveXValue);
+            // The printed mana cost is waived; cost increases still apply.
         } else if (castForForetell) {
             ManaCost cost = gameData.foretoldCardCosts.get(exileCardId);
             if (cost == null) {
@@ -5661,6 +5662,11 @@ public class SpellCastingService {
         stackEntry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         stackEntry.setCopy(copy);
+        stackEntry.setManaSpentToCast(gameData.getSpellCastManaSpent(card.getId()));
+        boolean controlledMount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
+                        .contains(CardSubtype.MOUNT));
+        stackEntry.setControlledMountAsCast(controlledMount);
         gameData.stack.add(stackEntry);
 
         // Use null hand list — card was already removed from exile
@@ -5679,6 +5685,40 @@ public class SpellCastingService {
         if (autoPass) {
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    private void payFreeExileCastCostIncrease(GameData gameData, UUID playerId, Card card, int effectiveXValue) {
+        int additionalCost = castingCostService.getCastCostModifier(
+                gameData, playerId, card, effectiveXValue, Zone.EXILE);
+        if (additionalCost <= 0) {
+            return;
+        }
+
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        ManaCost freeCost = new ManaCost("{0}");
+        ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, false);
+        boolean powerstoneContext = gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, playerId)
+                && pool.getPowerstoneOnlyColorless() > 0;
+        if (!freeCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost,
+                flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
+                flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
+                flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
+                flags.subtypeSpellOnlyContext())) {
+            throw new IllegalStateException("Not enough mana to pay spell cost increase");
+        }
+        int before = pool.getTotalAllMana();
+        freeCost.payWithAdditionalGenericCost(pool, 0, additionalCost,
+                flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
+                flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
+                flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
+                flags.subtypeSpellOnlyContext());
+        gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
     }
 
     /** Commits a successful cast by moving the card out of exile and consuming its permissions. */
@@ -8124,6 +8164,11 @@ public class SpellCastingService {
         if (!gameData.stack.isEmpty()) {
             StackEntry castEntry = gameData.stack.getLast();
             if (castEntry.getCard() != null && castEntry.getCard().getId().equals(card.getId())) {
+                castEntry.setManaSpentToCast(gameData.getSpellCastManaSpent(card.getId()));
+                boolean controlledMount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
+                                .contains(CardSubtype.MOUNT));
+                castEntry.setControlledMountAsCast(controlledMount);
                 triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
             }
         }

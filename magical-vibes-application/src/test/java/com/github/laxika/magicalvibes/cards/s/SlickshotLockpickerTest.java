@@ -38,6 +38,7 @@ class SlickshotLockpickerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
 
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castFlashback(player1, 0, player2.getId());
         harness.passBothPriorities();
 

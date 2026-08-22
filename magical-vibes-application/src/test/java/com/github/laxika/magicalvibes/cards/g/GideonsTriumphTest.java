@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,7 +38,7 @@ class GideonsTriumphTest extends BaseCardTest {
     @Test
     @DisplayName("A Gideon planeswalker makes the opponent sacrifice two eligible creatures")
     void gideonMakesOpponentSacrificeTwo() {
-        harness.addToBattlefield(player1, new GideonBlackblade());
+        addGideon(player1);
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
@@ -63,7 +64,7 @@ class GideonsTriumphTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GideonsTriumph()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castInstant(player1, 0, player2.getId());
-        harness.addToBattlefield(player1, new GideonBlackblade());
+        addGideon(player1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker, blocker);
@@ -95,5 +96,10 @@ class GideonsTriumphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castInstant(player1, 0, targetPlayer.getId());
         harness.passBothPriorities();
+    }
+
+    private void addGideon(Player player) {
+        Permanent gideon = harness.addToBattlefieldAndReturn(player, new GideonBlackblade());
+        gideon.setCounterCount(CounterType.LOYALTY, 4);
     }
 }

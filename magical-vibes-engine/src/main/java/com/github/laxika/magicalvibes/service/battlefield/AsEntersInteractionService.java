@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
@@ -227,6 +228,37 @@ public class AsEntersInteractionService {
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
                     subtypeChoice.allowedSubtypes());
             return;
+        }
+
+        MayReturnPermanentToHandAndEnterWithCountersEffect returnChoice =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(MayReturnPermanentToHandAndEnterWithCountersEffect.class::isInstance)
+                        .map(MayReturnPermanentToHandAndEnterWithCountersEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (returnChoice != null) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = battlefield.getLast();
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(card.getId())
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentId(justEntered.getId());
+            boolean hasValidChoice = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, returnChoice.filter(), filterContext));
+            if (hasValidChoice) {
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        card,
+                        controllerId,
+                        List.of(returnChoice),
+                        card.getName() + " — Return " + returnChoice.permanentDescription()
+                                + " you control to its owner's hand?",
+                        targetId,
+                        null,
+                        justEntered.getId()));
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
         }
 
         // Devour (CR 702.82a): "As this creature enters, you may sacrifice any number of creatures.

@@ -41,12 +41,10 @@ class LoanSharkTest extends BaseCardTest {
     @DisplayName("Does not draw when fewer than two spells were cast this turn")
     void doesNotDrawBeforeThreshold() {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new Ornithopter(), new LoanShark()));
+        harness.setHand(player1, List.of(new LoanShark()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 

@@ -20,6 +20,8 @@ class RavenOfFellOmensTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new RavenOfFellOmens());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
         castShockAtOpponent();
 
         harness.passBothPriorities();
@@ -44,7 +46,7 @@ class RavenOfFellOmensTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
     }
 

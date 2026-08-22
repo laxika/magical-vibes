@@ -85,6 +85,8 @@ class FinaleOfPromiseTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(14);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(finale, shock);

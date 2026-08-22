@@ -71,11 +71,13 @@ class UnscrupulousContractorTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice sacrificeChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(sacrificeChoice.validIds()).containsExactly(creature.getId());
+        Permanent contractor = findPermanent(player1, "Unscrupulous Contractor");
+        assertThat(sacrificeChoice.validIds()).containsExactlyInAnyOrder(creature.getId(), contractor.getId());
         assertThat(sacrificeChoice.validIds()).doesNotContain(land.getId());
     }
 
     private void castContractor() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new UnscrupulousContractor()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);

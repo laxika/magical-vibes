@@ -27,6 +27,7 @@ class ThunderingCeratokTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.TRAMPLE)).isFalse();

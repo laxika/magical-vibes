@@ -107,6 +107,13 @@ public record FlickerEffect(
                 TurnStep.END_STEP, false, null, null, counters, false, false);
     }
 
+    /** Exile target permanent, returning it with +1/+1 counters only if it is a creature. */
+    public static FlickerEffect exileTargetReturnAtEndStepWithCreatureCounters(int counters) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, counters, false, false,
+                false, true, 0);
+    }
+
     public static FlickerEffect exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, counters, false, false,

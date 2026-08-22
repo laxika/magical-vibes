@@ -69,6 +69,6 @@ class DavrielsShadowfugueTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a player");
+                .hasMessageContaining("only target players");
     }
 }

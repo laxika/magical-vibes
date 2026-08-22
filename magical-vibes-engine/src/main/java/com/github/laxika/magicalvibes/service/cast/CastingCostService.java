@@ -1445,26 +1445,22 @@ public class CastingCostService {
             return battlefieldReduction;
         }
 
-        UUID firstTargetId = targetIds.getFirst();
-        Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
-        if (firstTarget != null) {
-            ReduceOwnCastCostIfTargetingPermanentEffect permanentEffect = card.getEffects(EffectSlot.STATIC).stream()
-                    .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
-                    .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
-                    .findFirst().orElse(null);
-            if (permanentEffect == null) {
-                return 0;
-            }
-            if (permanentEffect.controlledByCaster()
-                    && !playerId.equals(gameQueryService.findPermanentController(gameData, firstTargetId))) {
-                return 0;
-            }
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, firstTarget, permanentEffect.predicate())) {
-                return permanentEffect.amount();
-            }
-            return 0;
+        int ownPermanentReduction = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
+                .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
+                .mapToInt(effect -> targetIds.stream()
+                        .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
+                        .filter(java.util.Objects::nonNull)
+                        .filter(target -> !effect.controlledByCaster()
+                                || playerId.equals(gameQueryService.findPermanentController(gameData, target.getId())))
+                        .anyMatch(target -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, target, effect.predicate())) ? effect.amount() : 0)
+                .sum();
+        if (ownPermanentReduction != 0) {
+            return ownPermanentReduction;
         }
 
+        UUID firstTargetId = targetIds.getFirst();
         Card firstTargetCard = gameQueryService.findCardInGraveyardById(gameData, firstTargetId);
         if (firstTargetCard != null) {
             GraveyardCardTargetCostReductionEffect graveyardEffect = card.getEffects(EffectSlot.STATIC).stream()

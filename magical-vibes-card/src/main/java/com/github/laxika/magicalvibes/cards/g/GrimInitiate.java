@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
@@ -32,17 +31,18 @@ public class GrimInitiate extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ARMY)));
         ControlsPermanent controlsArmy = new ControlsPermanent(army);
 
-        addEffect(EffectSlot.ON_DEATH,
-                ConditionalEffect.unless(controlsArmy,
-                        SequenceEffect.of(
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1, army),
-                                new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addEffect(EffectSlot.ON_DEATH,
-                ConditionalEffect.unless(new NotCondition(controlsArmy),
+        addEffect(EffectSlot.ON_DEATH, new ConditionalReplacementEffect(
+                controlsArmy,
+                SequenceEffect.of(
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,
                                 List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of(),
-                                false, false, Map.of(), List.of(), false, false, false, 1, Set.of())));
+                                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()),
+                        new PutCounterOnChosenOwnPermanentEffect(
+                                CounterType.PLUS_ONE_PLUS_ONE, 1, army)),
+                SequenceEffect.of(
+                        new PutCounterOnChosenOwnPermanentEffect(
+                                CounterType.PLUS_ONE_PLUS_ONE, 1, army),
+                        new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
     }
 }

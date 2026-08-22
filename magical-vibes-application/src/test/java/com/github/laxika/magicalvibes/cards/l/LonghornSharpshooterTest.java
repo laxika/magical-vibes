@@ -38,13 +38,18 @@ class LonghornSharpshooterTest extends BaseCardTest {
         AvenInterrupter interrupter = new AvenInterrupter();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(sharpshooter, interrupter));
+        harness.setHand(player1, List.of(sharpshooter));
+        harness.setHand(player2, List.of(interrupter));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.castCreature(player1, 0, sharpshooter.getId());
+        harness.passPriority(player1);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, sharpshooter.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();

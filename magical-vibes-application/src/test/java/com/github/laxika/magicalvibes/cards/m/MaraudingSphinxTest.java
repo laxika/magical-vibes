@@ -53,7 +53,9 @@ class MaraudingSphinxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .hasSize(1);
     }
 
     private void castShockAtOpponent() {

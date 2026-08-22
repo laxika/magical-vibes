@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.SmugglersCopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IntrepidStablemaster.class})
+@CardUsed({IntrepidStablemaster.class, SmugglersCopter.class})
 class IntrepidStablemasterTest extends BaseCardTest {
 
     @Test
@@ -40,7 +39,7 @@ class IntrepidStablemasterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "RED");
 
-        Card vehicle = testVehicle();
+        Card vehicle = new SmugglersCopter();
         harness.setHand(player1, List.of(vehicle));
         harness.castArtifact(player1, 0);
 
@@ -69,22 +68,8 @@ class IntrepidStablemasterTest extends BaseCardTest {
         return stablemaster;
     }
 
-    private Card testVehicle() {
-        Card vehicle = new Card();
-        vehicle.setName("Test Vehicle");
-        vehicle.setType(CardType.ARTIFACT);
-        vehicle.setSubtypes(List.of(CardSubtype.VEHICLE));
-        vehicle.setManaCost("{2}");
-        return vehicle;
-    }
-
     private Card testCreature() {
         Card creature = new Card();
-        creature.setName("Test Creature");
-        creature.setType(CardType.CREATURE);
-        creature.setManaCost("{2}");
-        creature.setPower(2);
-        creature.setToughness(2);
         return creature;
     }
 }

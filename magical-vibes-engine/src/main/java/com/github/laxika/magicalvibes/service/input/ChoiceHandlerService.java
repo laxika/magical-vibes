@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -828,6 +829,7 @@ public class ChoiceHandlerService {
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
             }
+            resolveProducedManaTriggers(gameData, manaColor);
             // The mana this activation owed has now landed, so the parked snapshot can become a
             // real revertable entry — this is what lets "cancel casting" untap a Birds of Paradise.
             if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
@@ -864,6 +866,18 @@ public class ChoiceHandlerService {
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void resolveProducedManaTriggers(GameData gameData, ManaColor manaColor) {
+        List<StackEntry> triggers = gameData.pendingManaAbilityTriggers.stream()
+                .filter(entry -> entry.getEffectsToResolve().stream()
+                        .anyMatch(AddManaOfTypeProducedByTappedPermanentEffect.class::isInstance))
+                .toList();
+        gameData.pendingManaAbilityTriggers.removeAll(triggers);
+        for (StackEntry trigger : triggers) {
+            trigger.setProducedManaColor(manaColor);
+            effectResolutionService.resolveEffects(gameData, trigger);
+        }
     }
 
     private void handleDifferentColorManaChosen(GameData gameData, Player player, String colorName,

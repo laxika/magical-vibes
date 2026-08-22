@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LeatherbackBaloth;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OutcasterTrailblazer.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({OutcasterTrailblazer.class, LeatherbackBaloth.class, GrizzlyBears.class})
 class OutcasterTrailblazerTest extends BaseCardTest {
 
     @Test
@@ -39,8 +39,8 @@ class OutcasterTrailblazerTest extends BaseCardTest {
     @DisplayName("Draws a card when another creature with power 4 or greater enters under its controller's control")
     void drawsWhenAnotherHighPowerCreatureEnters() {
         harness.addToBattlefield(player1, new OutcasterTrailblazer());
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setHand(player1, List.of(new LeatherbackBaloth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

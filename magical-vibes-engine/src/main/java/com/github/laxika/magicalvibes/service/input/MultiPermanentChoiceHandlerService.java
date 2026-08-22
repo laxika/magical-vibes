@@ -1146,6 +1146,13 @@ public class MultiPermanentChoiceHandlerService {
             destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
         }
 
+        if (context.recordSacrificedCount() && gameData.pendingEffectResolutionEntry != null) {
+            int sacrificedCount = simultaneousFlow
+                    ? context.accumulatedSacrificeIds().size() + permanentIds.size()
+                    : permanentIds.size();
+            gameData.pendingEffectResolutionEntry.setEventValue(sacrificedCount);
+        }
+
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Follow the same pattern as proliferate completion: SBA → may abilities → resume effects

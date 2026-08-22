@@ -11,6 +11,6 @@ public class TeferisTimeTwist extends Card {
 
     public TeferisTimeTwist() {
         target(TargetFilters.permanentYouControl())
-                .addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStepWithCounters(1));
+                .addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStepWithCreatureCounters(1));
     }
 }

@@ -44,7 +44,14 @@ class SpinewoodsPaladinTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(card -> card.getId()).contains(paladin.getId());
 
+        harness.setHand(player2, List.of());
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, paladin.getId());
         harness.passBothPriorities();

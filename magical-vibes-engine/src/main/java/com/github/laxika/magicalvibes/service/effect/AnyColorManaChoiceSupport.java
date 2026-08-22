@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -189,9 +190,8 @@ public final class AnyColorManaChoiceSupport {
             case CREATURE_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.creatureSpellOrAbilityOnly(playerId, amount);
             case MOUNT_OR_VEHICLE_SPELL ->
-                    ChoiceContext.ManaColorChoice.subtypeSpellOnly(playerId, amount,
-                            new com.github.laxika.magicalvibes.model.effect.ManaRestriction.SubtypeOrPlaneswalkerSpells(
-                                    CardSubtype.MOUNT, CardSubtype.VEHICLE));
+                    new ChoiceContext.ManaColorSpellChoice(
+                            playerId, amount, Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE));
             case PLANESWALKER_SPELLS ->
                     ChoiceContext.ManaColorChoice.planeswalkerSpellOnly(playerId, amount);
             case SUBTYPE_SPELL -> effect.spellOnlySubtypes().isEmpty()

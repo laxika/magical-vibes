@@ -43,7 +43,8 @@ class SelvalaEagerTrailblazerTest extends BaseCardTest {
         Permanent selvala = harness.addToBattlefieldAndReturn(player1, new SelvalaEagerTrailblazer());
         Card bearsCard = new GrizzlyBears();
         harness.setHand(player1, List.of(bearsCard));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

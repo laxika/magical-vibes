@@ -26,7 +26,6 @@ class InsatiableAvariceTest extends BaseCardTest {
         Card first = new GrizzlyBears();
         Card second = new Swamp();
         harness.setLibrary(player1, List.of(first, second));
-
         cast(new int[]{0}, List.of(), 3);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -58,13 +57,14 @@ class InsatiableAvariceTest extends BaseCardTest {
         Card first = new GrizzlyBears();
         Card second = new Swamp();
         harness.setLibrary(player1, List.of(first, second));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
 
         cast(new int[]{0, 1}, List.of(player2.getId()), 5);
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }

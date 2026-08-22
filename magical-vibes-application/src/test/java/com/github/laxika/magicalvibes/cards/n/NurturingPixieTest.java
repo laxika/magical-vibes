@@ -28,6 +28,7 @@ class NurturingPixieTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, 0, bears.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
         Permanent pixie = findPermanent(player1, "Nurturing Pixie");

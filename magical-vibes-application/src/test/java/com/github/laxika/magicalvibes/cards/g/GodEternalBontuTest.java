@@ -36,6 +36,7 @@ class GodEternalBontuTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent bontu = gd.playerBattlefields.get(player1.getId()).getLast();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);

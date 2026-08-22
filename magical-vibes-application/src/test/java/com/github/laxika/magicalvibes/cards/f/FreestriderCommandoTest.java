@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AvenInterrupter;
+import com.github.laxika.magicalvibes.cards.b.BondOfRevival;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,13 +16,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FreestriderCommando.class, AvenInterrupter.class})
+@CardUsed({FreestriderCommando.class, AvenInterrupter.class, BondOfRevival.class})
 class FreestriderCommandoTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with two +1/+1 counters when it was not cast")
     void entersWithCountersWhenPutOntoBattlefield() {
-        Permanent commando = harness.addToBattlefieldAndReturn(player1, new FreestriderCommando());
+        FreestriderCommando commandoCard = new FreestriderCommando();
+        harness.setGraveyard(player1, List.of(commandoCard));
+        harness.setHand(player1, List.of(new BondOfRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, commandoCard.getId());
+        harness.passBothPriorities();
+
+        Permanent commando = findPermanent(player1, "Freestrider Commando");
 
         assertThat(commando.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -87,7 +97,14 @@ class FreestriderCommandoTest extends BaseCardTest {
 
     private void advanceToNextMainPhase(Player player) {
         Player otherPlayer = player.equals(player1) ? player2 : player1;
+        harness.setHand(otherPlayer, List.of());
+        harness.passUntil(player, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player, List.of());
         harness.passUntil(otherPlayer, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(otherPlayer, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, otherPlayer, List.of());
         harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 }

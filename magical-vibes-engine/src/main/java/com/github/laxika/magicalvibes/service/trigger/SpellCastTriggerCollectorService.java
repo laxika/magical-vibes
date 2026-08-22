@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -1852,7 +1853,7 @@ public class SpellCastTriggerCollectorService {
         int spellManaSpentX = needsSpellManaSpentX
                 ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
         boolean carriesTriggeringSpellManaValue = resolved.stream()
-                .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance);
+                .anyMatch(TriggeringSpellManaValueEffect.class::isInstance);
         int triggeringSpellManaValue = carriesTriggeringSpellManaValue
                 ? spellManaValue(match.gameData(), spellCard) : 0;
 

@@ -36,6 +36,7 @@ class GodEternalRhonasTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent rhonas = findPermanent(player1, "God-Eternal Rhonas");
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
@@ -59,6 +60,7 @@ class GodEternalRhonasTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(10);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
@@ -71,6 +73,7 @@ class GodEternalRhonasTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GodEternalRhonas()));
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
