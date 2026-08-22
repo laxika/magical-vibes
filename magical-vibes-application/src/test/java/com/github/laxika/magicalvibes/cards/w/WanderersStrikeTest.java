@@ -24,8 +24,9 @@ class WanderersStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles target creature and then proliferates")
     void exilesCreatureAndProliferates() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID targetId = target.getId();
+        UUID targetCardId = target.getCard().getId();
 
         Permanent otherBears = new Permanent(new GrizzlyBears());
         otherBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
@@ -42,7 +43,7 @@ class WanderersStrikeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getId().equals(targetId));
+                .anyMatch(card -> card.getId().equals(targetCardId));
 
         harness.handleMultiplePermanentsChosen(player1, List.of(otherBears.getId()));
 

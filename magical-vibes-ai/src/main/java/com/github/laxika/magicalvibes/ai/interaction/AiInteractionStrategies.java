@@ -88,6 +88,9 @@ public final class AiInteractionStrategies {
         register(new TargetLibraryDestinationChoiceAiStrategy());
         register(new VividCardChoiceAiStrategy());
         register(new CombatDamageAssignmentAiStrategy());
+        register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
+        register(new NivMizzetColorPairChoiceAiStrategy());
+        register(new FaceUpExiledCardChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

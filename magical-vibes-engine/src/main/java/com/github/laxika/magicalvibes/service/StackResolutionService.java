@@ -170,6 +170,7 @@ public class StackResolutionService {
         // state-based actions can orphan an Aura that the choice may move.
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
+            return;
         }
 
         // If the ETB handler or a resolution-time may choice already set up a user interaction,
