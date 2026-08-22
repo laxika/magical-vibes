@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Set;
@@ -154,6 +155,12 @@ public record FlickerEffect(
     /** Exile target permanent, immediately return it under its owner's control (Ghostly Flicker). */
     public static FlickerEffect flickerTarget() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
+    public static FlickerEffect controllersChooseAnyNumberCreaturesRepeatedByX() {
+        return new FlickerEffect(FlickerScope.CONTROLLERS_PERMANENTS,
+                new PermanentIsCreaturePredicate(), ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, false, false);
     }
 

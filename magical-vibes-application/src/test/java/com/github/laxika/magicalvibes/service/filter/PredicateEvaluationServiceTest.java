@@ -1747,6 +1747,22 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("ownership predicates account for stolen permanents in static filters")
+        void ownershipPredicateAccountsForStolenPermanents() {
+            Permanent owned = addPermanent(player1Id, createCreature("Owned Creature", 2, 2, CardColor.GREEN));
+            Permanent stolen = addPermanent(player1Id, createCreature("Stolen Creature", 2, 2, CardColor.GREEN));
+            gd.stolenCreatures.put(stolen.getId(), player2Id);
+            FilterContext sourceContext = ctx().withSourceControllerId(player1Id);
+
+            PermanentOwnedBySourceControllerPredicate ownedPredicate =
+                    new PermanentOwnedBySourceControllerPredicate();
+            assertThat(evaluator.matchesStaticFilter(owned, ownedPredicate, sourceContext)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(stolen, ownedPredicate, sourceContext)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(stolen,
+                    new PermanentNotPredicate(ownedPredicate), sourceContext)).isTrue();
+        }
+
+        @Test
         @DisplayName("the source-permanent predicate uses the source snapshot or explicit source ID")
         void sourcePermanentUsesContextIdentity() {
             Permanent source = addPermanent(player1Id, createEnchantment("Sterling Grove"));

@@ -94,7 +94,8 @@ class FlickerEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new FlickerEffectHandler(exileSupport, gameQueryService, predicateEvaluationService,
                 gameLogService, permanentRemovalService, battlefieldEntryService,
-                drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler);
+                drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class));
     }
 
     private Card createCreatureCard(String name) {

@@ -1372,6 +1372,35 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        @DisplayName("multi-target ability keeps candidates that fit independent artifact, creature, and land slots")
+        void multiTarget_filtersArtifactCreatureAndLandAssignments() {
+            Card sourceCard = createCreatureCard();
+            Permanent artifact = addPermanentToBattlefield(player2Id, createCard());
+            artifact.getCard().setType(CardType.ARTIFACT);
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+            Permanent land = addPermanentToBattlefield(player2Id, createCard());
+            land.getCard().setType(CardType.LAND);
+            when(gameQueryService.findPermanentById(gameData, artifact.getId())).thenReturn(artifact);
+            when(gameQueryService.findPermanentById(gameData, creature.getId())).thenReturn(creature);
+            when(gameQueryService.findPermanentById(gameData, land.getId())).thenReturn(land);
+            when(gameQueryService.isArtifact(gameData, artifact)).thenReturn(true);
+            when(gameQueryService.isLand(gameData, land)).thenReturn(true);
+
+            ActivatedAbility ability = new ActivatedAbility(true, "{1}",
+                    List.of(new DestroyTargetPermanentEffect()),
+                    "Destroy up to three targets", List.of(), 0, 3)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint
+                                    .AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0,
+                    List.of(land.getId(), creature.getId()));
+
+            assertThat(response.validPermanentIds()).containsExactly(artifact.getId());
+        }
+
+        @Test
         @DisplayName("X-scaled ability caps its max targets at the announced X")
         void xScaledTargets_boundedByAnnouncedX() {
             Card sourceCard = createCreatureCard();

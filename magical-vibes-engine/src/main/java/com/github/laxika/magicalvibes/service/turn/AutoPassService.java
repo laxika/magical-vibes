@@ -129,6 +129,11 @@ public class AutoPassService {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextPlotTrigger(gameData);
+        }
+
         // Process any pending targeted controller-discard triggers (e.g. Zenith Seeker)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)) {
             triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);

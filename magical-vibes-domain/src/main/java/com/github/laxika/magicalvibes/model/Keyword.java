@@ -90,7 +90,8 @@ public enum Keyword {
     EPIC,
     TOXIC,
     COMPLEATED,
-    MOBILIZE;
+    MOBILIZE,
+    PLOT;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

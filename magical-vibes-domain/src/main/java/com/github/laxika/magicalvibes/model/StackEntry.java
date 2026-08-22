@@ -31,6 +31,8 @@ public class StackEntry {
     private final String description;
     private List<CardEffect> effectsToResolve;
     private final int xValue;
+    /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
+    @Setter private Integer modalModeCount;
     @Setter private int phyrexianManaPaidWithLife;
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
@@ -43,8 +45,12 @@ public class StackEntry {
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
+    /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
+    @Setter private int manaSpentToCast;
     private final Zone targetZone;
     @Setter private List<UUID> targetCardIds;
+    /** Target counts per independently optional graveyard target group, in group order. */
+    @Setter private List<Integer> targetCardGroupSizes = List.of();
     private Map<CardEffect, List<UUID>> targetCardIdsByEffect = Map.of();
     @Setter private TargetFilter targetFilter;
     @Setter private boolean copy;
@@ -139,6 +145,8 @@ public class StackEntry {
     /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
      *  reads "each", and per CR 702.96b the spell has no targets at all. */
     @Setter private boolean overloaded;
+    /** Whether the spell's controller controlled a Mount when the spell was finished being cast. */
+    @Setter private boolean controlledMountAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
@@ -155,6 +163,8 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
      */
     @Setter private int eventValue;
+    /** The mana type produced by the tap event that created this triggered ability. */
+    @Setter private ManaColor producedManaColor;
     @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
@@ -514,6 +524,7 @@ public class StackEntry {
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.xValue = source.xValue;
+        this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
         this.etbMode = source.etbMode;
         this.targetId = source.targetId;
@@ -522,8 +533,11 @@ public class StackEntry {
         this.counters.putAll(source.counters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
+        this.manaSpentToCast = source.manaSpentToCast;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
+        this.targetCardGroupSizes = source.targetCardGroupSizes.isEmpty()
+                ? List.of() : new ArrayList<>(source.targetCardGroupSizes);
         this.targetCardIdsByEffect = copyTargetCardIdsByEffect(source.targetCardIdsByEffect);
         this.targetFilter = source.targetFilter;
         this.copy = source.copy;
@@ -554,6 +568,7 @@ public class StackEntry {
         this.castForForetell = source.castForForetell;
         this.alternateCost = source.alternateCost;
         this.overloaded = source.overloaded;
+        this.controlledMountAsCast = source.controlledMountAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
@@ -562,6 +577,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);

@@ -504,6 +504,8 @@ public class Permanent {
      *  (as opposed to being put onto the battlefield), gating "if you cast it" abilities.
      *  NOT cleared by {@link #resetModifiers()}. */
     @Setter private boolean cast;
+    /** Mana spent to cast the spell that produced this permanent, for as-enters conditions. */
+    @Setter private int manaSpentToCast;
     /** Total bloodthirst granted to the spell that produced this permanent while it was on the stack
      *  (Bloodlord of Vaasgoth). Read as an as-enters replacement alongside the card's printed
      *  bloodthirst; per CR 702.54c each instance applies separately, so grants simply add up. */
@@ -775,6 +777,7 @@ public class Permanent {
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
         this.cast = source.cast;
+        this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
         this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -83,6 +85,11 @@ public class PlayCardRequestDispatchService {
                     request.damageAssignments(), listOrEmpty(request.targetIds()), request.discardHandCardIndex());
             return;
         }
+        if (isPlotAlternateCast(gameData, player, request)) {
+            gameService.playCardWithAlternateCost(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));
+            return;
+        }
         CardSubtype chosenBeholdType = request.beholdCreatureType() != null
                 ? CardSubtype.valueOf(request.beholdCreatureType()) : null;
         CardSubtype chosenCreatureType = request.chosenCreatureType() != null
@@ -142,5 +149,16 @@ public class PlayCardRequestDispatchService {
 
     private static <T> List<T> nullIfEmpty(List<T> list) {
         return list == null || list.isEmpty() ? null : list;
+    }
+
+    private static boolean isPlotAlternateCast(GameData gameData, Player player, PlayCardRequest request) {
+        List<UUID> alternateCostIds = request.alternateCostSacrificePermanentIds();
+        if (alternateCostIds == null || !alternateCostIds.isEmpty() || Boolean.TRUE.equals(request.fromGraveyard())
+                || request.cardIndex() < 0) {
+            return false;
+        }
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        return hand != null && request.cardIndex() < hand.size()
+                && hand.get(request.cardIndex()).getKeywords().contains(Keyword.PLOT);
     }
 }

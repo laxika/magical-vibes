@@ -1656,6 +1656,14 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(validIndices), sourcePermanentId, prompt, grantCastPermission, faceDown));
     }
 
+    public void beginPlotFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                playerId, playerId, new ArrayList<>(validIndices), 1, false, true,
+                List.of(), null, prompt, false, true, false,
+                null, null, 0, null, false, false, false, false,
+                false, false, true));
+    }
+
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId, int remainingCount) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, null, remainingCount);
     }
@@ -1744,7 +1752,8 @@ public class PlayerInputService {
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                    int remainingCount, DiscardFollowUp followUp,
                                    CardType stopAfterDiscardingType, boolean declinable) {
-        if (remainingCount > 0 && !validIndices.isEmpty()) {
+        if (remainingCount > 0 && !validIndices.isEmpty()
+                && !followUp.targetOpponentsDiscardThenDraw()) {
             if (gameData.discardEventPlayerId == null) {
                 gameData.discardEventPlayerId = playerId;
                 gameData.discardEventCardCount = 0;

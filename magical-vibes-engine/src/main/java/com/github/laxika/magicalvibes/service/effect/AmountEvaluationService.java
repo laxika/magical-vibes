@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesThatCrewedSourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockedBySource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
@@ -49,7 +51,6 @@ import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponen
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
-import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
@@ -236,6 +237,8 @@ public class AmountEvaluationService {
                     countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
+            case CardsDrawnThisTurn c ->
+                    countCardsDrawnThisTurn(gameData, c, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
                     countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctManaValuesAmongControlledPermanents ignored ->
@@ -361,6 +364,8 @@ public class AmountEvaluationService {
                     countCreatureSubtypeDeathsThisTurn(gameData, c, ctx);
             case CreaturesEnteredBattlefieldThisTurn c ->
                     countCreaturesEnteredBattlefieldThisTurn(gameData, c, ctx);
+            case CreaturesThatCrewedSourceThisTurn ignored ->
+                    countCreaturesThatCrewedSourceThisTurn(gameData, ctx);
             case PermanentsEnteredBattlefieldThisTurn c ->
                     countPermanentsEnteredBattlefieldThisTurn(gameData, c, ctx);
             case LifeGainedThisTurn c ->
@@ -384,9 +389,6 @@ public class AmountEvaluationService {
             case CardsDiscardedOrCycledThisTurn ignored ->
                     ctx.controllerId() == null ? 0
                             : gameData.cardsDiscardedThisTurn.getOrDefault(ctx.controllerId(), 0);
-            case CardsDrawnThisTurn ignored ->
-                    ctx.controllerId() == null ? 0
-                            : gameData.cardsDrawnThisTurn.getOrDefault(ctx.controllerId(), 0);
             case CardsPutIntoGraveyardByTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
@@ -1327,9 +1329,22 @@ public class AmountEvaluationService {
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
-            total += gameData.getSpellsCastThisTurnCount(playerId);
+            total += (int) gameData.getSpellsCastThisTurn(playerId).stream()
+                    .filter(spell -> count.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            spell, count.filter(), null, gameData, playerId))
+                    .count();
         }
         return total;
+    }
+
+    private int countCreaturesThatCrewedSourceThisTurn(GameData gameData, AmountContext ctx) {
+        if (gameData == null || ctx.sourcePermanent() == null) {
+            return 0;
+        }
+        return gameData.creaturesThatCrewedPermanentThisTurn
+                .getOrDefault(ctx.sourcePermanent().getId(), java.util.Set.of())
+                .size();
     }
 
     private int countLifeGainedThisTurn(GameData gameData, LifeGainedThisTurn count, AmountContext ctx) {
@@ -1337,6 +1352,15 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += gameData.getLifeGainedThisTurn(playerId);
+        }
+        return total;
+    }
+
+    private int countCardsDrawnThisTurn(GameData gameData, CardsDrawnThisTurn count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
         }
         return total;
     }

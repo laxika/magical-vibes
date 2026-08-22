@@ -403,10 +403,10 @@ public class AnimationSupport {
     }
 
     /**
-     * TARGET scope, PERMANENT duration — the targeted permanent(s) become creatures with no wear-off
-     * (Tezzeret, Waker). Multi-target abilities animate every permanent in the target group, mirroring
-     * {@link #animateSingle} (Nissa, Sage Animist's "Untap up to six target lands. They become 6/6
-     * Elemental creatures.").
+     * TARGET or SELF scope, PERMANENT duration — the permanent(s) become creatures with no wear-off
+     * (Tezzeret, Waker, and triggered self-animations). Multi-target abilities animate every
+     * permanent in the target group, mirroring {@link #animateSingle} (Nissa, Sage Animist's
+     * "Untap up to six target lands. They become 6/6 Elemental creatures.").
      */
     public void animatePermanentTarget(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
@@ -415,6 +415,8 @@ public class AnimationSupport {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
+        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
+            targetIds = List.of(entry.getSourcePermanentId());
         } else {
             return;
         }

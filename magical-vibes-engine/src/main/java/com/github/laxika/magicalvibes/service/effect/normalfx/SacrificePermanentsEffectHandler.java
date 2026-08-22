@@ -190,7 +190,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             // More matching permanents than required — prompt player to choose
             List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
             playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,
-                    new MultiPermanentChoiceContext.ForcedSacrifice(playerId, List.of(), List.of()),
+                    new MultiPermanentChoiceContext.ForcedSacrifice(
+                            playerId, List.of(), List.of(), false, e.recordSacrificedCount()),
                     "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to sacrifice.");
         }
     }

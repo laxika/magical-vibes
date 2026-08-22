@@ -1756,6 +1756,10 @@ public class TargetLegalityService {
             validateAtMostTwoCreaturesAndTwoLands(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND) {
+            validateAtMostOneArtifactOneCreatureAndOneLand(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
             validateAtMostOnePerController(gameData, targetIds);
@@ -1805,6 +1809,7 @@ public class TargetLegalityService {
                         }
                     }
                     case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+                         AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
                          AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND -> {
                         // Handled by early returns above.
@@ -1938,6 +1943,51 @@ public class TargetLegalityService {
             return false;
         }
         return duals <= (2 - pureCreatures) + (2 - pureLands);
+    }
+
+    private void validateAtMostOneArtifactOneCreatureAndOneLand(GameData gameData, List<UUID> targetIds) {
+        if (!fitsAtMostOneArtifactOneCreatureAndOneLand(gameData, targetIds)) {
+            throw new IllegalStateException(
+                    "Must target at most one artifact, at most one creature, and at most one land");
+        }
+    }
+
+    public boolean fitsAtMostOneArtifactOneCreatureAndOneLand(GameData gameData, List<UUID> targetIds) {
+        if (targetIds == null || targetIds.size() > 3
+                || targetIds.stream().distinct().count() != targetIds.size()) {
+            return false;
+        }
+        List<Permanent> targets = new ArrayList<>(targetIds.size());
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                return false;
+            }
+            targets.add(target);
+        }
+        return canAssignArtifactCreatureAndLandTargets(gameData, targets, 0, 0);
+    }
+
+    private boolean canAssignArtifactCreatureAndLandTargets(GameData gameData, List<Permanent> targets,
+                                                            int targetIndex, int usedCategories) {
+        if (targetIndex == targets.size()) {
+            return true;
+        }
+        Permanent target = targets.get(targetIndex);
+        boolean[] matches = {
+                gameQueryService.isArtifact(gameData, target),
+                gameQueryService.isCreature(gameData, target),
+                gameQueryService.isLand(gameData, target)
+        };
+        for (int category = 0; category < matches.length; category++) {
+            int categoryBit = 1 << category;
+            if (matches[category] && (usedCategories & categoryBit) == 0
+                    && canAssignArtifactCreatureAndLandTargets(
+                    gameData, targets, targetIndex + 1, usedCategories | categoryBit)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

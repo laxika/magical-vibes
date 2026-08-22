@@ -72,6 +72,18 @@ public class EquipSupport {
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, host, attachRestriction);
     }
 
+    public UUID attachEquipment(GameData gameData, Permanent equipment, Permanent host) {
+        UUID oldAttachedTo = equipment.getAttachedTo();
+        if (host.getId().equals(oldAttachedTo)) {
+            return oldAttachedTo;
+        }
+        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipment.setAttachedTo(host.getId());
+        equipment.setTimestamp(gameData.nextTimestamp());
+        triggerCollectionService.checkEquipmentAttachedTriggers(gameData, equipment, oldAttachedTo);
+        return oldAttachedTo;
+    }
+
     public void applySacrificeOnUnattachIfNeeded(GameData gameData, Permanent equipment,
                                                 UUID oldAttachedTo, UUID newAttachedTo) {
         if (oldAttachedTo != null && !oldAttachedTo.equals(newAttachedTo)) {

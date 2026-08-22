@@ -607,6 +607,7 @@ public class LayerSystemService {
         h = mix(h, gameData.timestampCounter);
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
+            h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
             if (enteredThisTurn != null) {

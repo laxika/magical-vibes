@@ -176,6 +176,13 @@ public class StackResolutionService {
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         stateBasedActionService.performStateBasedActions(gameData);
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextPlotTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
@@ -1035,6 +1042,7 @@ public class StackResolutionService {
         // where entry.getOwnerId() carries the true owner so the card returns to their zones.
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
+        boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
 
         // CR 702.33a: "If the flashback cost was paid, exile this card instead of
         // putting it anywhere else any time it would leave the stack." This overrides
@@ -1103,6 +1111,13 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
+        } else if (plotOnResolution) {
+            exileService.exileCard(gameData, ownerId, physicalCard);
+            gameData.plottedCardIds.add(physicalCard.getId());
+            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
+            gameData.exilePlayWithoutPayingManaCost.add(physicalCard.getId());
+            triggerCollectionService.checkPlotTriggers(gameData, ownerId, physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(physicalCard, " becomes plotted."));
         } else if (gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId())) {
             gameData.addToExile(ownerId, physicalCard);
             gameData.exiledCardDreamCounters.put(physicalCard.getId(), 1);

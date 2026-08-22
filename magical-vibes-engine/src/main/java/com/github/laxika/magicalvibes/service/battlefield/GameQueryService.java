@@ -1599,8 +1599,17 @@ public class GameQueryService {
      */
     public boolean hasControllerCastAnotherSpellThisTurn(
             GameData gameData, UUID controllerId, Card excludeSpell, CardPredicate filter) {
+        return hasControllerCastAnotherSpellThisTurn(gameData, controllerId, excludeSpell, filter, false);
+    }
+
+    public boolean hasControllerCastAnotherSpellThisTurn(
+            GameData gameData, UUID controllerId, Card excludeSpell, CardPredicate filter,
+            boolean fromHandOnly) {
         for (Card spell : gameData.getSpellsCastThisTurn(controllerId)) {
             if (spell == excludeSpell) {
+                continue;
+            }
+            if (fromHandOnly && !gameData.wasSpellCastFromHandThisTurn(spell.getId())) {
                 continue;
             }
             if (predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId())) {
@@ -2100,7 +2109,7 @@ public class GameQueryService {
         }
         int result = count;
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : staticEffectsIncludingTemporary(permanent)) {
                 if (effect instanceof CounterReplacementEffect replacement
                         && replacement.appliesTo(counterType, affectedPermanentIsCreature,
                         affectedPermanentIsArtifact)) {
@@ -2125,7 +2134,7 @@ public class GameQueryService {
         }
         int result = count;
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : staticEffectsIncludingTemporary(permanent)) {
                 if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
                         && replacement.appliesToNonCreatureVehicles()) {
                     result = replacement.replace(result);
@@ -2136,6 +2145,12 @@ public class GameQueryService {
             }
         }
         return result;
+    }
+
+    private List<CardEffect> staticEffectsIncludingTemporary(Permanent permanent) {
+        List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.STATIC));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        return effects;
     }
 
     /** Applies all counter replacements for a permanent already on the battlefield. */
@@ -5228,6 +5243,14 @@ public class GameQueryService {
                 }
             }
         }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!attacker.getId().equals(floating.affectedPermanentId())) continue;
+                if (floating.effect() instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
+                    maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
+                }
+            }
+        }
         return maxBlockers;
     }
 
@@ -6426,6 +6449,14 @@ public class GameQueryService {
             bonus += colorMap.getOrDefault(color, 0);
         }
         return bonus;
+    }
+
+    /** Returns the additive noncombat damage bonus for sources controlled by {@code controllerId}. */
+    public int getControllerNoncombatDamageBonus(GameData gameData, UUID controllerId) {
+        if (controllerId == null) {
+            return 0;
+        }
+        return gameData.controllerNoncombatDamageBonusThisTurn.getOrDefault(controllerId, 0);
     }
 
     /**

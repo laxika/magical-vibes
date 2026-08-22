@@ -53,6 +53,6 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), target.getId());
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
     }
 }

@@ -177,6 +177,10 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype());
             case CREATURE_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.creatureSpellOrAbilityOnly(playerId, amount);
+            case MOUNT_OR_VEHICLE_SPELL ->
+                    ChoiceContext.ManaColorChoice.subtypeSpellOnly(playerId, amount,
+                            new com.github.laxika.magicalvibes.model.effect.ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                                    CardSubtype.MOUNT, CardSubtype.VEHICLE));
             case SUBTYPE_SPELL -> effect.spellOnlySubtypes().isEmpty()
                     ? new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype())
                     : new ChoiceContext.ManaColorSpellChoice(playerId, amount, effect.spellOnlySubtypes());

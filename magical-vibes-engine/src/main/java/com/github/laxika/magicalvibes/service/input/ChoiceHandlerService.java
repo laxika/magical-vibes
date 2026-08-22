@@ -737,6 +737,11 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds {} {} mana (mana value 4 or greater only)",
                     gameData.id, player.getUsername(), amount, colorName.toLowerCase());
+        } else if (ctx.restrictedToSubtypeSpell() != null) {
+            manaPool.addSubtypeOrPlaneswalkerSpellMana(ctx.restrictedToSubtypeSpell(), manaColor, amount);
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                    + (amount == 1 ? "one" : String.valueOf(amount)) + " "
+                    + colorName.toLowerCase() + " mana (Mount or Vehicle spells only)."));
         } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount, ctx.grantsUncounterable());
         } else if (ctx.creatureSpellOnly()) {

@@ -910,7 +910,7 @@ public class AbilityActivationService {
         log.info("Game {} - {} sacrifices {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         // Put activated ability on stack
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 permanent.getCard(),
                 playerId,
@@ -919,7 +919,9 @@ public class AbilityActivationService {
                 0,
                 targetId,
                 Map.of()
-        ));
+        );
+        gameData.stack.add(stackEntry);
+        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         gameData.priorityPassedBy.clear();
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
@@ -1471,6 +1473,7 @@ public class AbilityActivationService {
                 );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
+        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         flushActivatedAbilityCostTriggers(gameData);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
@@ -1607,7 +1610,7 @@ public class AbilityActivationService {
         // A spell/ability-on-stack target (e.g. a cycling counter trigger) must carry Zone.STACK so
         // the ability resolves against the stack instead of fizzling as a missing permanent target.
         Zone targetZone = ability.isNeedsSpellTarget() ? Zone.STACK : null;
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 card,
                 playerId,
@@ -1620,7 +1623,9 @@ public class AbilityActivationService {
                 targetZone,
                 List.of(),
                 List.of()
-        ));
+        );
+        gameData.stack.add(stackEntry);
+        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
 
         // Discard triggers fire after the ability is on the stack (CR 601.2h), so a "whenever you
         // cycle or discard" trigger (e.g. Curator of Mysteries) lands above the cycling draw and
@@ -1679,7 +1684,7 @@ public class AbilityActivationService {
         permanentRemovalService.removePermanentToHand(gameData, attacker);
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), " is returned to its owner's hand."));
 
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 card,
                 playerId,
@@ -1692,7 +1697,9 @@ public class AbilityActivationService {
                 null,
                 List.of(),
                 List.of()
-        ));
+        );
+        gameData.stack.add(stackEntry);
+        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates ninjutsu on ", card, "."));
         log.info("Game {} - {} activates ninjutsu on {}", gameData.id, player.getUsername(), card.getName());
@@ -1817,7 +1824,7 @@ public class AbilityActivationService {
                 snapshotEffects.add(effect);
             }
         }
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 card,
                 playerId,
@@ -1830,7 +1837,9 @@ public class AbilityActivationService {
                 Zone.GRAVEYARD,
                 graveyardCardIds,
                 List.of()
-        ));
+        );
+        gameData.stack.add(stackEntry);
+        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         flushActivatedAbilityCostTriggers(gameData);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));

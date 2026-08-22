@@ -259,6 +259,7 @@ public class DestructionSupport {
                 gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             endSimultaneousCreatureDeaths(gameData);
         }

@@ -117,6 +117,7 @@ public enum CounterType {
     WIND,
     WISH,
     LORE,
+    LOOT,
     SILVER,
     PAGE,
     TOWER,

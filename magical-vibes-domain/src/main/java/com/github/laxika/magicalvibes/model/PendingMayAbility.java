@@ -141,4 +141,11 @@ public record PendingMayAbility(
         this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
                 tapPermanentsCost, lifeCost, additionalLifeCost, null, null);
     }
+
+    public PendingMayAbility withEventValue(int updatedEventValue) {
+        return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
+                sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
+                activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
+                updatedEventValue);
+    }
 }

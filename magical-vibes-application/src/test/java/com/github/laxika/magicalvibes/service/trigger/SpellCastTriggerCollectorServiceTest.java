@@ -1152,6 +1152,58 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("fires on the second and every later matching spell during the controller's turn")
+        void firesOnSecondAndLaterMatchingSpells() {
+            Permanent perm = createPermanent("Geralf, the Fleshwright");
+            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var effect = SpellCastTriggerEffect.atLeastDuringYourTurn(2, null, List.of(innerEffect));
+            Card firstSpell = createInstant("Opt");
+            Card secondSpell = createInstant("Consider");
+            Card thirdSpell = createInstant("Brainstorm");
+            gd.activePlayerId = player1Id;
+
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(null), any(),
+                    eq(gd), eq(player1Id))).thenReturn(true);
+
+            gd.recordSpellCast(player1Id, firstSpell);
+            assertThat(registry.dispatch(match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(firstSpell, player1Id, true))).isFalse();
+
+            gd.recordSpellCast(player1Id, secondSpell);
+            assertThat(registry.dispatch(match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(secondSpell, player1Id, true))).isTrue();
+
+            gd.recordSpellCast(player1Id, thirdSpell);
+            assertThat(registry.dispatch(match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(thirdSpell, player1Id, true))).isTrue();
+            assertThat(gd.stack).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("does not fire the own-turn minimum spell trigger during an opponent's turn")
+        void doesNotFireDuringOpponentsTurn() {
+            Permanent perm = createPermanent("Geralf, the Fleshwright");
+            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var effect = SpellCastTriggerEffect.atLeastDuringYourTurn(2, null, List.of(innerEffect));
+            Card firstSpell = createInstant("Opt");
+            Card secondSpell = createInstant("Consider");
+            gd.activePlayerId = player2Id;
+            gd.recordSpellCast(player1Id, firstSpell);
+            gd.recordSpellCast(player1Id, secondSpell);
+
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(null), any(),
+                    eq(gd), eq(player1Id))).thenReturn(true);
+
+            assertThat(registry.dispatch(match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(secondSpell, player1Id, true))).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("queues targeting triggered ability as a SpellTargetTriggerAnyTarget interaction")
         void putsTargetingTriggeredAbilityIntoPendingQueue() {
             Permanent perm = createPermanent("Guttersnipe");

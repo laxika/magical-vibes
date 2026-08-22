@@ -57,6 +57,9 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControlledMountAsCast;
+import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFromExileThisTurn;
@@ -404,6 +407,9 @@ public class ConditionEvaluationService {
             case GainedLifeThisTurn gainedLife ->
                     ctx.controllerId() != null
                             && gameData.getLifeGainedThisTurn(ctx.controllerId()) >= gainedLife.minimumAmount();
+            case CommittedCrimeThisTurn ignored ->
+                    ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
+            case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
             case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
                     ctx.controllerId() != null
                             && ctx.targetId() != null
@@ -544,6 +550,13 @@ public class ConditionEvaluationService {
                     c.sourceZone() == ctx.sourceZone();
             case CastNotFromHand ignored ->
                     ctx.sourceZone() != Zone.HAND;
+            case NoManaSpentToCast ignored -> {
+                Permanent castPermanent = ctx.triggeringPermanentId() == null
+                        ? ctx.sourcePermanent()
+                        : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                yield castPermanent == null || !castPermanent.isCast()
+                        || castPermanent.getManaSpentToCast() == 0;
+            }
             case WasCast ignored -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());

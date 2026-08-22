@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -132,6 +133,37 @@ public class DamageTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers after an ally creature dealt combat damage to a creature",
+                gameData.id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = DrawCardEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
+    private boolean handleAllySourceDealsNoncombatDamageToCreatureDraw(TriggerMatchContext match,
+            DrawCardEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsNoncombatDamageToCreature damageContext =
+                (TriggerContext.SourceDealsNoncombatDamageToCreature) ctx;
+        Permanent damagedCreature = damageContext.damagedCreature();
+        GameData gameData = match.gameData();
+        if (match.permanent() == null || damagedCreature == null
+                || !gameQueryService.isCreature(gameData, damagedCreature)
+                || damageContext.damageDealt() != gameQueryService.getEffectiveToughness(gameData, damagedCreature)) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers after a source dealt noncombat damage equal to a creature's toughness",
                 gameData.id, match.permanent().getCard().getName());
         return true;
     }

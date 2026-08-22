@@ -173,6 +173,21 @@ public sealed interface MultiPermanentChoiceContext {
     record ReturnAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
     }
 
+    /** Resolve one choice in a repeated immediate controller-creature flicker. */
+    record FlickerAnyNumber(StackEntry resolvingEntry,
+                            com.github.laxika.magicalvibes.model.effect.FlickerEffect effect,
+                            int remainingIterations) implements MultiPermanentChoiceContext {
+    }
+
+    /** Choose up to one creature that saddled the source this turn, then flicker the source and it. */
+    record ExileSelfAndSaddledCreature(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    }
+
+    /** Choose a saddler, create its tapped and attacking token copy, and repeat as needed. */
+    record CreateTokenCopiesOfSaddledCreature(StackEntry resolvingEntry, int remainingIterations)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Forced sacrifice pick ("target player sacrifices N" / "each player sacrifices N").
      * {@code sacrificingPlayerId} is the current chooser. For the each-player flow (CR 101.4:
@@ -180,18 +195,27 @@ public sealed interface MultiPermanentChoiceContext {
      * the players still to choose in APNAP order and {@code accumulatedSacrificeIds} the ids
      * chosen so far (including auto-picks made at begin time); each answered pick re-begins
      * with the head of the remainder. For the direct single-player flow both lists are empty
-     * and the chosen permanents are sacrificed immediately.
+     * and the chosen permanents are sacrificed immediately. {@code recordSacrificedCount} carries
+     * the actual number sacrificed back to the parked stack entry for a following effect.
      */
     record ForcedSacrifice(UUID sacrificingPlayerId,
                            java.util.List<PendingForcedSacrifice> remainingChoosers,
                            java.util.List<UUID> accumulatedSacrificeIds,
-                           boolean simultaneousFlow)
+                           boolean simultaneousFlow,
+                           boolean recordSacrificedCount)
             implements MultiPermanentChoiceContext {
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false);
+        }
+
+        public ForcedSacrifice(UUID sacrificingPlayerId,
+                               java.util.List<PendingForcedSacrifice> remainingChoosers,
+                               java.util.List<UUID> accumulatedSacrificeIds,
+                               boolean simultaneousFlow) {
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false);
         }
     }
 

@@ -545,6 +545,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new CardsLeftGraveyardThisTurn(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new DidntActivateLoyaltyAbilityThisTurn(), wrapped)` | - | yes | yes (controller end step) | controller activated no planeswalker loyalty ability this turn (The Chain Veil) — reads `GameData.playersWhoActivatedLoyaltyAbilityThisTurn`, recorded when the loyalty cost is paid |
 | `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
+| `ConditionalReplacementEffect(new ControlledMountAsCast(), base, upgraded)` | - | yes | - | cast-time snapshot for "if you controlled a Mount as you cast this spell"; the snapshot is retained even if the Mount leaves before resolution |
 | `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new SelfDealtDamageThisTurn(n), wrapped)` | - | yes | yes (end step) | source has dealt **n or more** damage this turn to *any* recipient — players, planeswalkers, battles, creatures; combat and noncombat alike (Chandra, Fire of Kaladesh). Reads `damageDealtThisTurnBySource`, accumulated in `DamageSupport` (noncombat) and `CombatDamageService` (combat). Damage dealt earlier in the same resolution already counts |

@@ -317,6 +317,7 @@ public class GraveyardService {
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
                                        Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
+        gameData.spellsWithPlotOnResolution.remove(card.getId());
         // CR 614.7 — self-replacement effects apply first
 
         if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)) {

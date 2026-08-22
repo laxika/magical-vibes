@@ -165,6 +165,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingMayAbilities.clear();
         gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.PlotTriggerAnyTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
@@ -208,6 +209,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.crimeCandidatesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.activatedAbilityUsesThisGame.clear();

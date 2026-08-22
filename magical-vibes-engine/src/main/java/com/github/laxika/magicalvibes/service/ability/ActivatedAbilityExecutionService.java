@@ -522,6 +522,16 @@ public class ActivatedAbilityExecutionService {
             if (ability.isRequiresTap() && gameQueryService.isCreature(gameData, permanent)) {
                 triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
             }
+            if (ability.isRequiresTap()) {
+                int stackBeforeSelfTapTriggers = gameData.stack.size();
+                triggerCollectionService.checkSelfTappedForManaTriggers(gameData, permanent, playerId);
+                if (gameData.stack.size() > stackBeforeSelfTapTriggers) {
+                    List<StackEntry> deferredSelfTapTriggers = new ArrayList<>(
+                            gameData.stack.subList(stackBeforeSelfTapTriggers, gameData.stack.size()));
+                    gameData.stack.subList(stackBeforeSelfTapTriggers, gameData.stack.size()).clear();
+                    gameData.pendingManaAbilityTriggers.addAll(deferredSelfTapTriggers);
+                }
+            }
             // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
             // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
             // watchers must see it exactly as they see a printed ON_TAP land.
@@ -590,6 +600,7 @@ public class ActivatedAbilityExecutionService {
         // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
         // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
+        triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
         triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
                 gameData, playerId, abilityEntry, ability, permanent);
         // "Whenever an opponent activates a non-mana ability" triggers (Harsh Mentor). Reached only on

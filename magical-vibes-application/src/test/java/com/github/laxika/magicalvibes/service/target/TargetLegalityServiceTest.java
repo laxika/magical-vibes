@@ -1043,6 +1043,54 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("accepts one artifact, one creature, and one land in any order")
+        void acceptsOneArtifactCreatureAndLand() {
+            Card artifactCard = new Card();
+            artifactCard.setType(CardType.ARTIFACT);
+            Card creatureCard = createCreature("Bear", CardColor.GREEN);
+            Card landCard = new Card();
+            landCard.setType(CardType.LAND);
+            Permanent artifact = addPermanent(player2Id, artifactCard);
+            Permanent creature = addPermanent(player2Id, creatureCard);
+            Permanent land = addPermanent(player2Id, landCard);
+            when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
+            when(gameQueryService.isLand(gd, land)).thenReturn(true);
+
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 0, 3)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint
+                                    .AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND);
+
+            sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(land.getId(), creature.getId(), artifact.getId()), source);
+        }
+
+        @Test
+        @DisplayName("rejects two artifacts for artifact, creature, and land slots")
+        void rejectsTwoArtifacts() {
+            Card firstCard = new Card();
+            firstCard.setType(CardType.ARTIFACT);
+            Card secondCard = new Card();
+            secondCard.setType(CardType.ARTIFACT);
+            Permanent first = addPermanent(player2Id, firstCard);
+            Permanent second = addPermanent(player2Id, secondCard);
+            when(gameQueryService.isArtifact(gd, first)).thenReturn(true);
+            when(gameQueryService.isArtifact(gd, second)).thenReturn(true);
+
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 0, 3)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint
+                                    .AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND);
+
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(first.getId(), second.getId()), source))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("at most one artifact");
+        }
+
+        @Test
         @DisplayName("throws when permanent target has shroud")
         void throwsWhenPermanentTargetHasShroud() {
             Card source = createCreature("Source", CardColor.RED);

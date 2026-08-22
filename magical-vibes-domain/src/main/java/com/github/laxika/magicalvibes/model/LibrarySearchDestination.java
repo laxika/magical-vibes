@@ -37,6 +37,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Exile one chosen card, then offer it for casting without paying its mana cost. */
+    EXILE_AND_MAY_CAST_WITHOUT_PAYING,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the
     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
     EXILE_FOR_FREE_CAST,

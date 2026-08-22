@@ -89,7 +89,7 @@ components are exhausted.
 `ReduceOwnCastCostPer<Thing>Effect` record + bespoke handler. Those collapse onto the two shapes
 above (amount axis → `DynamicAmount`, condition axis → `ConditionalEffect`). A battlefield-source
 effect that filters *which other spells* are discounted is
-`ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope)` — not a
+`ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope[, Set<Zone>, boolean])` — not a
 new record. Heartless Summoning is that effect with a `CardTypePredicate(CREATURE)` and `SELF` scope;
 `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (Semblance Anvil) keeps its own handler because
 it compares against the imprinted card rather than a predicate.
@@ -145,10 +145,11 @@ modifiers do not affect foretell.
   `IncreaseOwnCastCostEffect(int amount)`; returns `+amount` for the spell being cast. Wrap it in
   `ConditionalEffect` for a cast-time condition such as `NotControllerTurn`.
 - `cast/costmod/ReduceCastCostForMatchingSpellsEffectHandler.java` — battlefield handler for
-  `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope)`; scopes by
-  `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), matches the spell against the predicate, and evaluates the amount with the **source
-  permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less for each +1/+1 counter
-  on this creature" — Herald of War).
+  `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope[, Set<Zone>, boolean])`; scopes by
+  `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), optionally
+  restricts by source zone or hand plotting, matches the spell against the predicate, and evaluates the
+  amount with the **source permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less
+  for each +1/+1 counter on this creature" — Herald of War).
 - `cast/costmod/ReduceBuybackCostEffectHandler.java` — battlefield handler for
   `ReduceBuybackCostEffect(int)`; contributes only through `modifyBuybackCost`, so the effect is
   isolated from ordinary spell-cost calculations.

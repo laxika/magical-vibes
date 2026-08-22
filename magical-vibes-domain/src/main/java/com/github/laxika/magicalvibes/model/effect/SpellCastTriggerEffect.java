@@ -55,6 +55,7 @@ public record SpellCastTriggerEffect(
         boolean onlyDuringControllerTurn,
         Condition intervening,
         int nthSpellNumber,
+        int minimumSpellNumber,
         boolean triggersOnAnyPlayer
 ) implements CardEffect {
 
@@ -62,59 +63,93 @@ public record SpellCastTriggerEffect(
                                   String manaCost, TargetFilter targetFilter,
                                   StackEntryPredicate castSpellTargetCondition,
                                   boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
+                                  Condition intervening, int nthSpellNumber,
+                                  boolean triggersOnAnyPlayer) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber, 0,
+                triggersOnAnyPlayer);
+    }
+
+    public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
+                                  String manaCost, TargetFilter targetFilter,
+                                  StackEntryPredicate castSpellTargetCondition,
+                                  boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
+                                  Condition intervening, int nthSpellNumber, int minimumSpellNumber) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
+                minimumSpellNumber, false);
+    }
+
+    public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
+                                  String manaCost, TargetFilter targetFilter,
+                                  StackEntryPredicate castSpellTargetCondition,
+                                  boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
                                   Condition intervening, int nthSpellNumber) {
         this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
-                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber, false);
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber, 0, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        this(spellFilter, resolvedEffects, null, null, null, false, false, null, 0, false);
+        this(spellFilter, resolvedEffects, null, null, null, false, false, null, 0, 0, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost) {
-        this(spellFilter, resolvedEffects, manaCost, null, null, false, false, null, 0, false);
+        this(spellFilter, resolvedEffects, manaCost, null, null, false, false, null, 0, 0, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
                                   TargetFilter targetFilter) {
-        this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false, false, null, 0, false);
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false, false, null, 0, 0, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
                                   TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
                                   boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn) {
         this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
-                onlyDuringOpponentTurn, onlyDuringControllerTurn, null, 0, false);
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, null, 0, 0, false);
     }
 
     /** Trigger gated on the cast spell's targets (e.g. Repartee — "spell that targets a creature"). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition, false, false, null, 0, false);
+        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition, false, false, null, 0, 0, false);
     }
 
     /** Targets-gated trigger whose resolved effect itself targets (e.g. Graduation Day). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition, false, false, null, 0, false);
+        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition, false, false, null, 0, 0, false);
     }
 
     /** Trigger that only fires when the spell is cast during an opponent's turn (e.g. Glen Elendra Pranksters). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   boolean onlyDuringOpponentTurn) {
-        this(spellFilter, resolvedEffects, null, null, null, onlyDuringOpponentTurn, false, null, 0, false);
+        this(spellFilter, resolvedEffects, null, null, null, onlyDuringOpponentTurn, false, null, 0, 0, false);
     }
 
     /** Trigger only on the controller's Nth spell matching {@code spellFilter} this turn. */
     public static SpellCastTriggerEffect nth(int spellNumber, CardPredicate spellFilter,
                                              List<CardEffect> resolvedEffects) {
         return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
-                false, false, null, spellNumber, false);
+                false, false, null, spellNumber, 0, false);
+    }
+
+    public static SpellCastTriggerEffect atLeast(int spellNumber, CardPredicate spellFilter,
+                                                  List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
+                false, false, null, 0, spellNumber, false);
+    }
+
+    public static SpellCastTriggerEffect atLeastDuringYourTurn(int spellNumber,
+                                                                CardPredicate spellFilter,
+                                                                List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
+                false, true, null, 0, spellNumber, false);
     }
 
     /** Trigger that only fires when the spell is cast during the source controller's own turn (e.g. Eyes of the Wisent). */
     public static SpellCastTriggerEffect duringYourTurn(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null, false, true, null, 0, false);
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null, false, true, null, 0, 0, false);
     }
 
     /** Spell-cast trigger with a source-relative intervening condition. */
@@ -122,11 +157,11 @@ public record SpellCastTriggerEffect(
                                                          List<CardEffect> resolvedEffects,
                                                          Condition intervening) {
         return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
-                false, false, intervening, 0, false);
+                false, false, intervening, 0, 0, false);
     }
 
     public static SpellCastTriggerEffect anyPlayer(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
         return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
-                false, false, null, 0, true);
+                false, false, null, 0, 0, true);
     }
 }

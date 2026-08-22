@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithMa
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
@@ -860,6 +861,24 @@ public class CastingPermissionService {
         return false;
     }
 
+    /**
+     * Returns true when the controller has permission to take the plot special action for a
+     * nonland card on top of their library.
+     */
+    public boolean canPlotNonlandCardsFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PlotNonlandCardsFromTopOfLibraryEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean canPlayLandNow(GameData gameData, UUID playerId, Card card) {
         return card.hasType(CardType.LAND)
                 && playerId.equals(gameData.activePlayerId)
@@ -1390,6 +1409,12 @@ public class CastingPermissionService {
     }
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
+        GameData.GraveyardCardCastPermission graveyardPermission =
+                gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(cardId);
+        if (graveyardPermission != null && graveyardPermission.anyManaType()
+                && playerId.equals(graveyardPermission.castingPlayerId())) {
+            return true;
+        }
         if (hasStashCounterPermission(gameData, playerId, cardId, true)) return true;
         // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
         if (gameData.exilePlayAnyManaType.contains(cardId)

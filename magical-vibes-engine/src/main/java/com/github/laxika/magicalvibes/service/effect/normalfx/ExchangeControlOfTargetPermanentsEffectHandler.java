@@ -142,9 +142,15 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
     }
 
     private List<UUID> resolveExchangeTargetIds(StackEntry entry,
-                                                 ExchangeControlOfTargetPermanentsEffect exchange,
-                                                 List<UUID> targetIds) {
+                                                   ExchangeControlOfTargetPermanentsEffect exchange,
+                                                   List<UUID> targetIds) {
         int boundGroup = entry.getCard().getEffectTargetIndex(exchange);
+        if (exchange.targetPairInSingleGroup()) {
+            if (boundGroup < 0) {
+                return targetIds == null ? List.of() : targetIds;
+            }
+            return entry.targetsForGroup(boundGroup);
+        }
         if (boundGroup > 0) {
             List<UUID> firstTarget = entry.targetsForGroup(boundGroup - 1);
             List<UUID> secondTarget = entry.targetsForGroup(boundGroup);

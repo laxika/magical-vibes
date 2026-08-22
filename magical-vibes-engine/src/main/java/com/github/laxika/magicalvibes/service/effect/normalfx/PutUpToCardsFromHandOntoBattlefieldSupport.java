@@ -32,6 +32,9 @@ public class PutUpToCardsFromHandOntoBattlefieldSupport {
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             int maxCount, UUID sourceCardId, String sourceCardName) {
+        if (maxCount <= 0) {
+            return;
+        }
         List<Card> hand = gameData.playerHands.get(playerId);
         List<UUID> validCardIds = new ArrayList<>();
         if (hand != null) {

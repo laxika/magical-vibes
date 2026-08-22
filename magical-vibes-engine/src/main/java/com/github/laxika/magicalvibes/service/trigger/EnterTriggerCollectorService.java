@@ -1094,7 +1094,7 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to add counters to.
             return true;
         }
-        CardEffect counters = new PutCounterOnTargetPermanentEffect(effect.counterType(), effect.count());
+        CardEffect counters = new PutCounterOnTargetPermanentEffect(effect.counterType(), effect.amount());
         if (effect.requiredCounterType() != null) {
             counters = new ConditionalEffect(
                     new TargetPermanentMatches(new PermanentHasCountersPredicate(effect.requiredCounterType())),
@@ -1103,7 +1103,7 @@ public class EnterTriggerCollectorService {
         String counterDescription = effect.counterType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
         if (effect.optional()) {
             var may = new MayEffect(counters,
-                    "Put " + effect.count() + " " + counterDescription + " counter(s) on "
+                    "Put " + effect.amount() + " " + counterDescription + " counter(s) on "
                             + pe.enteringCard().getName() + "?");
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
@@ -1124,7 +1124,7 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering ({} put {} {} counter(s) on it)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
-                effect.optional() ? "may" : "mandatory", effect.count(), counterDescription);
+                effect.optional() ? "may" : "mandatory", effect.amount(), counterDescription);
         return true;
     }
 

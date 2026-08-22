@@ -1127,6 +1127,15 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("includes temporary static replacement effects")
+        void includesTemporaryStaticReplacementEffects() {
+            Permanent scales = addPermanent(player1Id, createCreature("Hardened Scales", 0, 0, CardColor.GREEN));
+            scales.addTemporaryTriggeredEffect(EffectSlot.STATIC, new AddOnePlusOneCountersEffect());
+
+            assertThat(gqs.replacePlusOnePlusOneCounters(gd, player1Id, 1)).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("two markers multiply by four")
         void twoMarkersMultiplyByFour() {
             Card a = createCreature("Corpsejack Menace", 4, 4, CardColor.GREEN);

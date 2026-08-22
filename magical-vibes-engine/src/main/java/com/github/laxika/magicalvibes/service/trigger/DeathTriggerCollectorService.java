@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureAsTreasureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
@@ -2236,6 +2237,34 @@ public class DeathTriggerCollectorService {
                 new ReturnDyingOpponentCreatureUnderYourControlEffect(dyingCard.getId()),
                 "return " + dyingCard.getName() + " to the battlefield under your control?");
         gameData.queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        logOpponentCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnDyingOpponentCreatureAsTreasureEffect.class,
+            slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    boolean handleOpponentCreatureReturnAsTreasure(TriggerMatchContext match,
+            ReturnDyingOpponentCreatureAsTreasureEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        GameData gameData = match.gameData();
+        Card dyingCard = cd.dyingCard();
+        if (dyingCard == null || dyingCard.isToken()) {
+            return false;
+        }
+
+        MayPayManaEffect rawMayPay = (MayPayManaEffect) match.rawEffect();
+        CardEffect returnEffect = new ReturnDyingOpponentCreatureAsTreasureEffect(dyingCard.getId());
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                match.permanent().getCard(),
+                match.controllerId(),
+                List.of(returnEffect),
+                match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
+                        + " to return " + dyingCard.getName() + " to the battlefield under your control as a Treasure?",
+                dyingCard.getId(),
+                rawMayPay.manaCost()
+        ));
+        gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
+                "'s ability triggers (", dyingCard, " died)."));
         logOpponentCreatureDeath(match);
         return true;
     }

@@ -186,6 +186,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostControlledSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostXWhenMadnessOtherwisePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentThatSaddledSourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -1114,19 +1115,7 @@ public class PredicateEvaluationService {
                         .anyMatch(cast -> cast.getId().equals(cardId));
             }
             case PermanentOwnedBySourceControllerPredicate ignored -> {
-                if (sourceControllerId == null || gameData == null) {
-                    yield false;
-                }
-                boolean ownedByController = false;
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                    if (battlefield != null && battlefield.contains(permanent)) {
-                        UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), playerId);
-                        ownedByController = ownerId.equals(sourceControllerId);
-                        break;
-                    }
-                }
-                yield ownedByController;
+                yield ownedBySourceController(permanent, filterContext);
             }
             case PermanentControllerControlsPermanentPredicate controllerControlsPredicate -> {
                 if (gameData == null) {
@@ -1283,6 +1272,26 @@ public class PredicateEvaluationService {
                         : sourcePermanent.getId();
                 yield permanent.isBlocking()
                         && permanent.getBlockingTargetIds().contains(blockedId);
+            }
+            case PermanentThatSaddledSourceThisTurnPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID sourcePermanentId = filterContext != null ? filterContext.sourcePermanentId() : null;
+                if (sourcePermanentId == null && filterContext != null
+                        && filterContext.sourcePermanentSnapshot() != null) {
+                    sourcePermanentId = filterContext.sourcePermanentSnapshot().getId();
+                }
+                if (sourcePermanentId == null && sourceCardId != null) {
+                    Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                    if (sourcePermanent != null) {
+                        sourcePermanentId = sourcePermanent.getId();
+                    }
+                }
+                yield sourcePermanentId != null
+                        && gameData.creaturesThatSaddledPermanentThisTurn
+                                .getOrDefault(sourcePermanentId, java.util.Set.of())
+                                .contains(permanent.getId());
             }
             case PermanentInCombatWithSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -1725,6 +1734,21 @@ public class PredicateEvaluationService {
                     && protection.protectionScope() == null
                     && protection.protectionFromColors().contains(color)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean ownedBySourceController(Permanent permanent, FilterContext context) {
+        if (context == null || context.sourceControllerId() == null || context.gameData() == null) {
+            return false;
+        }
+        GameData gameData = context.gameData();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(permanent)) {
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), playerId);
+                return ownerId.equals(context.sourceControllerId());
             }
         }
         return false;

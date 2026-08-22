@@ -41,7 +41,8 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
         String playerName = gameData.playerIdToName.get(controllerId);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(controllerId);
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId());
 
         List<UUID> validIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);

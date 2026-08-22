@@ -101,6 +101,8 @@ public enum CardSubtype {
     SHAPESHIFTER("Shapeshifter"),
     CRAB("Crab"),
     COWARD("Coward"),
+    COYOTE("Coyote"),
+    VARMINT("Varmint"),
     DESERTER("Deserter"),
     DJINN("Djinn"),
     DOG("Dog"),

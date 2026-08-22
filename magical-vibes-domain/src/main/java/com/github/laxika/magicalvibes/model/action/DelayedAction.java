@@ -61,6 +61,7 @@ public sealed interface DelayedAction permits
         DelayedCombatDamageDraw,
         DelayedCombatDamageLookAtHandAndDraw,
         DelayedCombatDamageLoot,
+        DelayedCombatDamageToken,
         DelayedCombatDamageReflection,
         DelayedBlockerBoost,
         DelayedAttackerBoost,

@@ -132,6 +132,13 @@ public sealed interface TriggerContext {
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
                                           int damageDealt, boolean combatDamage) implements TriggerContext {}
 
+    /** Context for a source dealing noncombat damage to a creature. */
+    record SourceDealsNoncombatDamageToCreature(Permanent damagedCreature, int damageDealt,
+                                                 UUID sourceControllerId) implements TriggerContext {}
+
+    /** Context for a permanent becoming saddled. */
+    record SelfBecomesSaddled(UUID controllerId) implements TriggerContext {}
+
     /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
     record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,
                                   int damageDealt) implements TriggerContext {}
@@ -528,4 +535,6 @@ public sealed interface TriggerContext {
     record SourceDamageToYouOrYourPermanent(Card sourceCard, UUID sourceControllerId,
                                             UUID sourcePermanentId, UUID damagedPlayerId)
             implements TriggerContext {}
+
+    record Crime(UUID committingPlayerId) implements TriggerContext {}
 }

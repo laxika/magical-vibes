@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -187,6 +188,34 @@ public class TurnProgressionService {
                 && gameData.additionalCombatPhasesAfterMainReturnStep != null) {
             next = gameData.additionalCombatPhasesAfterMainReturnStep;
             gameData.additionalCombatPhasesAfterMainReturnStep = null;
+        }
+
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT
+                && gameData.additionalUpkeepStepsAfterCombat > 0) {
+            gameData.additionalUpkeepReturnStep = next;
+            if (stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
+                gameData.additionalUpkeepStepsAfterCombat = 0;
+                gameData.additionalUpkeepReturnStep = null;
+                logSkippedPhase(gameData, "additional upkeep steps");
+            } else {
+                next = TurnStep.UPKEEP;
+                gameData.additionalUpkeepStepsAfterCombat--;
+            }
+        } else if (gameData.currentStep == TurnStep.UPKEEP
+                && gameData.additionalUpkeepReturnStep != null) {
+            if (gameData.additionalUpkeepStepsAfterCombat > 0
+                    && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
+                gameData.additionalUpkeepStepsAfterCombat = 0;
+                next = gameData.additionalUpkeepReturnStep;
+                gameData.additionalUpkeepReturnStep = null;
+                logSkippedPhase(gameData, "remaining additional upkeep steps");
+            } else if (gameData.additionalUpkeepStepsAfterCombat > 0) {
+                next = TurnStep.UPKEEP;
+                gameData.additionalUpkeepStepsAfterCombat--;
+            } else {
+                next = gameData.additionalUpkeepReturnStep;
+                gameData.additionalUpkeepReturnStep = null;
+            }
         }
 
         // Blinding Angel: the active player skips their next combat phase — jump straight from the
@@ -459,6 +488,9 @@ public class TurnProgressionService {
                 gameData.permanentsEnteredBattlefieldLastTurn.put(playerId, new ArrayList<>(entered)));
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
+        gameData.crimeCandidatesThisTurn.clear();
+        gameData.clearSpellsCastFromHandThisTurn();
+        gameData.controllerNoncombatDamageBonusThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
@@ -512,7 +544,10 @@ public class TurnProgressionService {
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
         gameData.playersAttackedThisTurn.clear();
+        gameData.creaturesThatSaddledPermanentThisTurn.clear();
+        gameData.creaturesThatCrewedPermanentThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
+        gameData.clearDelayedActions(DelayedCombatDamageToken.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
@@ -572,6 +607,9 @@ public class TurnProgressionService {
         gameData.additionalCombatPhasesOnly = 0;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
+        gameData.additionalUpkeepStepsAfterCombat = 0;
+        gameData.additionalUpkeepReturnStep = null;
+        gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.clear();
         gameData.combatPhasesThisTurn = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();

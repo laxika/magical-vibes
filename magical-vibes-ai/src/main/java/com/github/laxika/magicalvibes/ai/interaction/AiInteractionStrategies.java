@@ -33,6 +33,7 @@ public final class AiInteractionStrategies {
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
+        register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new ExiledCardMayPlayChoiceAiStrategy());
         register(new ExileInstantOrSorcerySpellCostChoiceAiStrategy());

@@ -215,6 +215,12 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (destination == LibrarySearchDestination.EXILE_AND_MAY_CAST_WITHOUT_PAYING) {
+                handleExileAndMayCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
+                        searchCards, sourceCards, deck, deckOwnerId);
+                return;
+            }
+
             // Aladdin's Lamp: keep the chosen card on top, rest to bottom in a random order, then draw it.
             if (destination == LibrarySearchDestination.DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM) {
                 handleDrawChosenRestToBottomRandom(gameData, cardIndex, searchCards, sourceCards, deck, deckOwnerId);
@@ -270,6 +276,8 @@ public class LibraryChoiceHandlerService {
                     }
                     if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT && librarySearch.attachToPermanentId() != null) {
                         perm.setAttachedTo(librarySearch.attachToPermanentId());
+                        triggerCollectionService.checkEquipmentAttachedTriggers(
+                                gameData, perm, librarySearch.attachToPermanentId());
                     }
                     if (!perm.getCard().isAura()) {
                         triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
@@ -1109,6 +1117,8 @@ public class LibraryChoiceHandlerService {
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
+                triggerCollectionService.checkEquipmentAttachedTriggers(
+                        gameData, perm, librarySearch.attachToPermanentId());
             }
             if (!perm.getCard().isAura()) {
                 triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
@@ -1250,6 +1260,8 @@ public class LibraryChoiceHandlerService {
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
                 case CAST_WITHOUT_PAYING -> throw new IllegalStateException("CAST_WITHOUT_PAYING should be handled earlier");
+                case EXILE_AND_MAY_CAST_WITHOUT_PAYING -> throw new IllegalStateException(
+                        "EXILE_AND_MAY_CAST_WITHOUT_PAYING should be handled earlier");
                 case EXILE_FOR_FREE_CAST -> throw new IllegalStateException("EXILE_FOR_FREE_CAST should be handled earlier");
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
                 case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");
@@ -2581,6 +2593,42 @@ public class LibraryChoiceHandlerService {
         }
 
         castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    private void handleExileAndMayCastWithoutPayingChoice(GameData gameData, Player player,
+                                                           int cardIndex, boolean canFailToFind,
+                                                           List<Card> searchCards,
+                                                           List<Card> sourceCards, List<Card> deck,
+                                                           UUID deckOwnerId) {
+        Card chosenCard = null;
+        if (cardIndex == -1) {
+            if (!canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+        } else {
+            chosenCard = searchCards.get(cardIndex);
+            Card selectedCard = chosenCard;
+            sourceCards.removeIf(card -> card.getId().equals(selectedCard.getId()));
+            exileService.exileCard(gameData, deckOwnerId, selectedCard);
+        }
+
+        if (!sourceCards.isEmpty()) {
+            Collections.shuffle(sourceCards);
+            deck.addAll(sourceCards);
+        }
+
+        if (chosenCard != null) {
+            Card sourceCard = gameData.pendingEffectResolutionEntry != null
+                    ? gameData.pendingEffectResolutionEntry.getCard() : chosenCard;
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    sourceCard,
+                    player.getId(),
+                    List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
+                    "Cast " + chosenCard.getName() + " without paying its mana cost?",
+                    chosenCard.getId()));
+        }
+
+        finishSearchAndResume(gameData);
     }
 
     /**

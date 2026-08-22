@@ -5166,30 +5166,43 @@ public class SpellCastingService {
     // --- Play from exile ---
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
-        playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId, List.of(), List.of(), false, true);
+        playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId, List.of(), List.of(), false, true, false);
     }
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                   UUID targetId, List<UUID> exileCounterCostPermanentIds) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                exileCounterCostPermanentIds, List.of(), false, true);
+                exileCounterCostPermanentIds, List.of(), false, true, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, UUID targetId) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                List.of(), List.of(), true, false);
+                List.of(), List.of(), true, false, false);
+    }
+
+    public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
+                                                  Integer xValue, UUID targetId, boolean copy) {
+        playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
+                List.of(), List.of(), true, false, copy);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, List<UUID> targetIds) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, null,
-                List.of(), targetIds, true, false);
+                List.of(), targetIds, true, false, false);
+    }
+
+    public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
+                                                  Integer xValue, List<UUID> targetIds, boolean copy) {
+        playCardFromExileInternal(gameData, player, exileCardId, xValue, null,
+                List.of(), targetIds, true, false, copy);
     }
 
     private void playCardFromExileInternal(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                            UUID targetId, List<UUID> exileCounterCostPermanentIds,
-                                           List<UUID> targetIds, boolean resolutionCast, boolean autoPass) {
+                                           List<UUID> targetIds, boolean resolutionCast, boolean autoPass,
+                                           boolean copy) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -5293,7 +5306,7 @@ public class SpellCastingService {
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
 
         if (card.hasType(CardType.LAND)) {
-            commitExileCast(gameData, playerId, exileCardId, sourceFreeCast);
+            commitExileCast(gameData, playerId, exileCardId, sourceFreeCast, copy);
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             Permanent permanent = new Permanent(card);
             permanent.setCard(landFace);
@@ -5452,7 +5465,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Spell requires a target");
         }
 
-        commitExileCast(gameData, playerId, exileCardId, sourceFreeCast);
+        commitExileCast(gameData, playerId, exileCardId, sourceFreeCast, copy);
 
         StackEntry stackEntry;
         if (!targetIds.isEmpty()) {
@@ -5491,6 +5504,7 @@ public class SpellCastingService {
         }
         stackEntry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
+        stackEntry.setCopy(copy);
         gameData.stack.add(stackEntry);
 
         // Use null hand list — card was already removed from exile
@@ -5513,7 +5527,7 @@ public class SpellCastingService {
 
     /** Commits a successful cast by moving the card out of exile and consuming its permissions. */
     private void commitExileCast(GameData gameData, UUID playerId, UUID exileCardId,
-                                 boolean sourceFreeCast) {
+                                 boolean sourceFreeCast, boolean copy) {
         if (sourceFreeCast
                 && !castingPermissionService.consumeFreeCastFromExiledWithSource(
                         gameData, playerId, exileCardId)) {
@@ -5522,7 +5536,9 @@ public class SpellCastingService {
         gameData.clearDelayedActions(ReturnExiledCardToHandAtNextEndStep.class,
                 action -> action.cardId().equals(exileCardId));
         gameData.removeFromExile(exileCardId);
-        gameData.recordCardPlayedFromExile(playerId);
+        if (!copy) {
+            gameData.recordCardPlayedFromExile(playerId);
+        }
     }
 
     /**
@@ -7894,6 +7910,12 @@ public class SpellCastingService {
 
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
+        if (!gameData.stack.isEmpty()) {
+            StackEntry castEntry = gameData.stack.getLast();
+            if (castEntry.getCard() != null && castEntry.getCard().getId().equals(card.getId())) {
+                triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
+            }
+        }
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, castFromHand);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         if (!gameData.pendingSpellCastCostTriggers.isEmpty()) {

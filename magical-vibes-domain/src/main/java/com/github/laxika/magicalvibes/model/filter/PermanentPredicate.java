@@ -125,5 +125,6 @@ public sealed interface PermanentPredicate permits
         PermanentToughnessAtMostControlledSubtypeCountPredicate,
         PermanentToughnessAtMostXWhenMadnessOtherwisePredicate,
         PermanentToughnessLessThanSourcePowerPredicate,
+        PermanentThatSaddledSourceThisTurnPredicate,
         PermanentTruePredicate {
 }

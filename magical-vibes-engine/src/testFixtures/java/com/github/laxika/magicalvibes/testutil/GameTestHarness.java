@@ -369,6 +369,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, mode, targetId, null);
     }
 
+    public void castCreature(Player player, int cardIndex, UUID targetId) {
+        castCreature(player, cardIndex, 0, targetId);
+    }
+
     public void castCreature(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
@@ -1074,6 +1078,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex,
                 ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
                 null, null, targetIds, List.of());
+    }
+
+    public void castModalInstantWithModes(Player player, int cardIndex, int choicesRequired, int choicesMax,
+                                          int[] modeIndices, UUID targetId, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                targetId, null, targetIds, List.of());
     }
 
     /**

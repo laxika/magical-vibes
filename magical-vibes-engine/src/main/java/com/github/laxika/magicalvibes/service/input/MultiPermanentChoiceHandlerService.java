@@ -79,6 +79,7 @@ public class MultiPermanentChoiceHandlerService {
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.FlickerEffectHandler flickerEffectHandler;
     private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler distinctTokenCopyHandler;
@@ -333,6 +334,15 @@ public class MultiPermanentChoiceHandlerService {
                 && !new HashSet<>(permanentIds).equals(new HashSet<>(validIds))) {
             throw new IllegalStateException("All matching permanents must be ordered");
         }
+        if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber
+                && permanentIds.stream().anyMatch(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent == null
+                            || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
+                            || !gameQueryService.isCreature(gameData, permanent);
+                })) {
+            throw new IllegalStateException("A selected permanent is no longer a creature you control");
+        }
         if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfChosenDistinctControlledTokens) {
             Set<String> chosenNames = new HashSet<>();
             for (UUID permanentId : permanentIds) {
@@ -395,6 +405,11 @@ public class MultiPermanentChoiceHandlerService {
             handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnAnyNumberAndRecordCount ctx) {
             handleReturnAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber ctx) {
+            if (flickerEffectHandler.completeAnyNumberChoice(gameData, permanentIds, ctx)
+                    && !gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof MultiPermanentChoiceContext.CombatDamageBounce ctx) {
             handleCombatDamageBounce(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AimCounterPlacement) {

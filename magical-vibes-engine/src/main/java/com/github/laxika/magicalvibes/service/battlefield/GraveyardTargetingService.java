@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -832,6 +833,40 @@ public class GraveyardTargetingService {
                 effect.filters().size(),
                 "Choose up to " + effect.filters().size()
                         + " target cards from your graveyard to return to your hand.");
+    }
+
+    /** Begins the ordered, independently optional graveyard target groups of a spell. */
+    public boolean beginIndependentGraveyardSpellTargeting(GameData gameData, UUID controllerId,
+                                                            IndependentlyTargetedGraveyardCardsEffect effect) {
+        while (gameData.graveyardTargetOperation.independentTargetGroupIndex
+                < effect.targetFilters().size()) {
+            int groupIndex = gameData.graveyardTargetOperation.independentTargetGroupIndex;
+            List<Card> matchingCards = new ArrayList<>();
+            List<Card> graveyard = targetableGraveyard(gameData, controllerId);
+            if (graveyard != null) {
+                for (Card graveyardCard : graveyard) {
+                    if (predicateEvaluationService.matchesCardPredicate(
+                            graveyardCard, effect.targetFilters().get(groupIndex),
+                            gameData.graveyardTargetOperation.card.getId())) {
+                        matchingCards.add(graveyardCard);
+                    }
+                }
+            }
+
+            if (matchingCards.isEmpty()) {
+                gameData.graveyardTargetOperation.independentTargetGroupSizes.add(0);
+                gameData.graveyardTargetOperation.independentTargetGroupIndex++;
+                continue;
+            }
+
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
+                    "Choose up to one target " + effect.targetDescriptions().get(groupIndex)
+                            + " from your graveyard.");
+            return true;
+        }
+
+        gameData.graveyardTargetOperation.independentTargetGroupIndex = -1;
+        return false;
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,

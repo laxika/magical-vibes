@@ -53,7 +53,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record LegendRule(String cardName) implements PermanentChoiceContext {}
 
-    record BounceCreature(UUID bouncingPlayerId) implements PermanentChoiceContext {}
+    record BounceCreature(UUID bouncingPlayerId, PermanentPredicate thenCondition, CardEffect thenEffect)
+            implements PermanentChoiceContext {
+        public BounceCreature(UUID bouncingPlayerId) {
+            this(bouncingPlayerId, null, null);
+        }
+    }
 
     /** A chosen permanent is returned to hand, then a reflexive follow-up resolves. */
     record BouncePermanentThen(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
@@ -746,7 +751,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SacrificeCreatureThenMassDamageEqualToPower(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
-                                boolean copy, List<UUID> chosenTargets, int genericCostReduction) implements PermanentChoiceContext {
+                                boolean copy, List<UUID> chosenTargets, int genericCostReduction,
+                                boolean resolutionCast, int lifeLossAfterCast) implements PermanentChoiceContext {
         // {@code copy=true} marks a Paradigm copy that must cease to exist rather than being placed in
         // a zone (CR 707.10a) — both on resolution and when it can't be legally cast. Defaults to false
         // for real cards cast from exile.
@@ -754,16 +760,38 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         // order, while a multi-target spell walks its target slots one at a time. Empty for the
         // single-target path (which stores its lone target as the StackEntry's {@code targetId}).
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType, boolean copy) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0, false, 0);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0);
+            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0, false, 0);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean copy, List<UUID> chosenTargets) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, 0);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, 0, false, 0);
+        }
+
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                    StackEntryType spellType, boolean copy, List<UUID> chosenTargets,
+                                    int genericCostReduction) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets,
+                    genericCostReduction, false, 0);
+        }
+
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                    StackEntryType spellType, boolean copy, List<UUID> chosenTargets,
+                                    boolean resolutionCast, int lifeLossAfterCast) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets,
+                    0, resolutionCast, lifeLossAfterCast);
+        }
+
+        public static ExileCastSpellTarget resolutionCastCopy(Card cardToCast, UUID controllerId,
+                                                               List<CardEffect> spellEffects,
+                                                               StackEntryType spellType,
+                                                               int lifeLossAfterCast) {
+            return new ExileCastSpellTarget(cardToCast, controllerId, spellEffects, spellType,
+                    true, List.of(), 0, true, lifeLossAfterCast);
         }
     }
 
@@ -1166,5 +1194,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record JuxtaposeTieBreak(Card sourceCard, UUID controllerId, UUID targetPlayerId,
                              boolean artifactPhase, boolean controllerChosen,
                              UUID controllerPermanentId) implements PermanentChoiceContext {}
+
+    record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
+
+    record PlotTriggerAnyTarget(Card plottedCard, UUID controllerId, List<CardEffect> effects)
+            implements PermanentChoiceContext {}
 
 }

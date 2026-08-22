@@ -3885,7 +3885,7 @@ public class StepTriggerService {
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, pending.auraOwnerId(), auraPermanent);
                 triggerCollectionService.checkAuraAttachedTriggers(
-                        gameData, auraCard, enchantedPermanent.getId());
+                        gameData, auraPermanent, enchantedPermanent.getId());
                 gameLogService.append(gameData, GameLog.builder()
                         .card(auraCard)
                         .text(" returns to the battlefield attached to ")
@@ -5106,6 +5106,25 @@ public class StepTriggerService {
 
         if (mandatoryEffects.isEmpty()) {
             return;
+        }
+
+        ChooseOneEffect targetedModal = mandatoryEffects.stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .filter(modal -> modal.options().stream()
+                        .flatMap(option -> option.effects().stream())
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)))
+                .findFirst()
+                .orElse(null);
+        if (targetedModal != null) {
+            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    perm.getCard(), controllerId, targetedModal, perm.getId()));
+            mandatoryEffects.remove(targetedModal);
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            if (mandatoryEffects.isEmpty()) {
+                return;
+            }
         }
 
         boolean needsPermanentTarget = mandatoryEffects.stream()

@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.UUID;
 
 public class GraveyardTargetOperationState {
+    public int independentTargetGroupIndex = -1;
+    public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
+    public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
+    public boolean resolutionTimeExileThenMayBecomeCopyResume;
 
     public Card card;
     public UUID controllerId;

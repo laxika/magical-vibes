@@ -83,6 +83,9 @@ public enum ManaSpendRestriction {
      */
     SUBTYPE_SPELL_OR_ABILITY,
 
+    /** Spendable only to cast Mount or Vehicle spells (Intrepid Stablemaster). */
+    MOUNT_OR_VEHICLE_SPELL,
+
     /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
     MANA_VALUE_AT_LEAST_FOUR,
 

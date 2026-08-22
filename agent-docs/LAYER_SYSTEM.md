@@ -514,6 +514,7 @@ Reasoning behind the non-obvious mappings:
   `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `CopyPermanentOnEnterEffect`) → L1; control
   (`GainControlOfTargetEffect`, `ControlEnchantedCreatureEffect`,
   `GainControlOfEnchantedTargetEffect`, `GainControlOfTargetAuraEffect`,
+  `GainControlOfAuraAttachedPermanentEffect`,
   `TargetPlayerGainsControlOfSourceCreatureEffect`) → L2; `ChangeColorTextEffect` (Mind Bend)
   → L3; `LoseAllCreatureTypesEffect` → L4; `BoostTargetCreatureEffect` (Giant Growth) → 7c;
   `SwitchPowerToughnessEffect` → 7d.

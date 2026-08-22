@@ -61,6 +61,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
+        register(PendingInteraction.AssimilationAegisCopyChoice.class,
+                this::projectAssimilationAegisCopyChoice);
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
@@ -111,6 +113,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
         register(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class,
                 this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
+        register(PendingInteraction.PutCardFromHandOrGraveyardChoice.class,
+                this::projectPutCardFromHandOrGraveyardChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
         register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
@@ -161,6 +165,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
+        register(PendingInteraction.FaceUpExiledCardChoice.class,
+                this::projectFaceUpExiledCardChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
         register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
@@ -672,6 +678,21 @@ public class InteractionPromptProjectionRegistry {
                         + " permanent cards from your hand to put onto the battlefield.");
     }
 
+    private InteractionPromptMessage projectPutCardFromHandOrGraveyardChoice(
+            GameData gameData, PendingInteraction.PutCardFromHandOrGraveyardChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(interaction.playerId(), List.of()),
+                interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of()),
+                interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "Choose up to one " + interaction.label()
+                        + " card from your hand or graveyard to put onto the battlefield.");
+    }
+
     private InteractionPromptMessage projectExileNonlandCardFromTargetHandOrGraveyardChoice(
             GameData gameData, PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice interaction) {
         UUID targetPlayerId = interaction.targetPlayerId();
@@ -968,6 +989,31 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may reveal a " + interaction.cardLabel()
                         + " from outside the game or choose one in face-up exile.");
+    }
+
+    private InteractionPromptMessage projectAssimilationAegisCopyChoice(
+            GameData gameData, PendingInteraction.AssimilationAegisCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a creature card exiled with Assimilation Aegis to copy.");
+    }
+
+    private InteractionPromptMessage projectFaceUpExiledCardChoice(
+            GameData gameData, PendingInteraction.FaceUpExiledCardChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        synchronized (gameData.exiledCards) {
+            gameData.exiledCards.stream()
+                    .filter(entry -> interaction.ownerId().equals(entry.ownerId()) && !entry.faceDown())
+                    .filter(entry -> interaction.validCardIds().contains(entry.card().getId()))
+                    .map(ExiledCardEntry::card)
+                    .map(cardViewFactory::create)
+                    .forEach(cardViews::add);
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "You may put a face-up exiled card they own into their graveyard.");
     }
 
     private InteractionPromptMessage projectPermanentChoice(

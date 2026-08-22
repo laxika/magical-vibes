@@ -1797,6 +1797,11 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
+        if (trigger.minimumSpellNumber() > 0
+                && !hasAtLeastMatchingSpell(match.gameData(), trigger, castingPlayerId)) {
+            return false;
+        }
+
         if (trigger.intervening() != null
                 && !conditionEvaluationService.isMet(match.gameData(), trigger.intervening(),
                 ConditionContext.forPermanent(match.permanent(), match.controllerId())
@@ -1957,11 +1962,19 @@ public class SpellCastTriggerCollectorService {
     }
 
     private boolean isNthMatchingSpell(GameData gameData, SpellCastTriggerEffect trigger, UUID playerId) {
+        return matchingSpellCount(gameData, trigger, playerId) == trigger.nthSpellNumber();
+    }
+
+    private boolean hasAtLeastMatchingSpell(GameData gameData, SpellCastTriggerEffect trigger, UUID playerId) {
+        return matchingSpellCount(gameData, trigger, playerId) >= trigger.minimumSpellNumber();
+    }
+
+    private long matchingSpellCount(GameData gameData, SpellCastTriggerEffect trigger, UUID playerId) {
         long matchingSpells = gameData.getSpellsCastThisTurn(playerId).stream()
                 .filter(spell -> predicateEvaluationService.matchesCardPredicate(
                         spell, trigger.spellFilter(), null, gameData, playerId))
                 .count();
-        return matchingSpells == trigger.nthSpellNumber();
+        return matchingSpells;
     }
 
     private boolean hasOptionalSingleTarget(Card card, CardEffect effect) {

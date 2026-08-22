@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,6 +57,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GrantKeywordEffectHandler grantKeywordEffectHandler;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,6 +68,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (FlickerEffect) effect;
         if (e.timing() == ReturnTiming.IMMEDIATE) {
+            if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.CONTROLLERS_PERMANENTS) {
+                beginControllersPermanentsImmediateChoice(gameData, entry, e, entry.getXValue() + 1);
+                return;
+            }
             resolveImmediate(gameData, entry, e);
             return;
         }
@@ -216,6 +223,51 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         for (FlickeredPermanent flickered : exiled) {
             returnAfterImmediateExile(gameData, entry, e, flickered);
         }
+    }
+
+    public void flickerPermanentsUnderOwnersControl(
+            GameData gameData, StackEntry entry, List<UUID> permanentIds) {
+        List<FlickeredPermanent> exiled = new ArrayList<>();
+        FlickerEffect effect = FlickerEffect.flickerTarget();
+        for (UUID permanentId : permanentIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target != null) {
+                exiled.add(exileForImmediateReturn(gameData, entry, effect, target));
+            }
+        }
+        if (exiled.isEmpty()) {
+            return;
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        for (FlickeredPermanent flickered : exiled) {
+            returnAfterImmediateExile(gameData, entry, effect, flickered);
+        }
+    }
+
+    private void beginControllersPermanentsImmediateChoice(
+            GameData gameData, StackEntry entry, FlickerEffect effect, int remainingIterations) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+        List<UUID> validIds = battlefield.stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, effect.filter()))
+                .map(Permanent::getId)
+                .toList();
+        if (validIds.isEmpty()) return;
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, validIds, validIds.size(),
+                new MultiPermanentChoiceContext.FlickerAnyNumber(entry, effect, remainingIterations),
+                entry.getCard().getName() + " — Choose any number of creatures you control to exile.");
+    }
+
+    public boolean completeAnyNumberChoice(GameData gameData, List<UUID> permanentIds,
+                                            MultiPermanentChoiceContext.FlickerAnyNumber context) {
+        flickerPermanentsUnderOwnersControl(gameData, context.resolvingEntry(), permanentIds);
+        int remainingIterations = context.remainingIterations() - 1;
+        if (remainingIterations <= 0) return true;
+        beginControllersPermanentsImmediateChoice(
+                gameData, context.resolvingEntry(), context.effect(), remainingIterations);
+        return !gameData.interaction.isAwaitingInput();
     }
 
     /**

@@ -155,6 +155,7 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostIsPlot = false;
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostRevealsHandCard = false;
@@ -366,6 +367,7 @@ export class TargetingChoiceService {
   alternateCostTapCount = 0;
   alternateCostReturnCount = 0;
   alternateCostManaCost = '';
+  alternateCostIsPlot = false;
   alternateCostExileHandCount = 0;
   alternateCostExileHandLabel = '';
   alternateCostRevealsHandCard = false;
@@ -571,6 +573,7 @@ export class TargetingChoiceService {
         this.alternateCostTapCount = card.alternateCostTapCount;
         this.alternateCostReturnCount = card.alternateCostReturnCount;
         this.alternateCostManaCost = card.alternateCostManaCost ?? '';
+        this.alternateCostIsPlot = card.keywords.includes('PLOT');
         this.alternateCostExileHandCount = card.alternateCostExileHandCount ?? 0;
         this.alternateCostExileHandLabel = card.alternateCostExileHandLabel ?? '';
         this.alternateCostRevealsHandCard = card.alternateCostRevealsHandCard ?? false;
@@ -2452,7 +2455,7 @@ export class TargetingChoiceService {
       }
       return;
     }
-    // Free / condition-only alternate cost (no permanent or hand payment)
+    // Alternate cost with no permanent or hand payment
     this.websocketService.send({
       type: MessageType.PLAY_CARD,
       cardIndex: this.alternateCostCardIndex,
@@ -2564,6 +2567,7 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostIsPlot = false;
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostRevealsHandCard = false;
