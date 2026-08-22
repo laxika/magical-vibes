@@ -818,10 +818,16 @@ public class TargetLegalityService {
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
         }
+        boolean targetsSomething = ability.getTargetFilter() != null
+                || !ability.getMultiTargetFilters().isEmpty()
+                || EffectResolution.needsTarget(abilityEffects, List.of(), false, false);
+        if (targetId == null && targetsSomething) {
+            throw new IllegalStateException("A target is required");
+        }
 
         targetValidationService.validateEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
-                        null, null, deferCostDerivedXValueChecks));
+                        playerId, null, deferCostDerivedXValueChecks));
 
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -838,9 +844,30 @@ public class TargetLegalityService {
                 validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage(),
                         findSourcePermanentIdByCardId(gameData, sourceCard.getId()));
             }
+        } else if (!ability.getMultiTargetFilters().isEmpty()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null) {
+                predicateEvaluationService.validateTargetFilter(ability.getMultiTargetFilters().getFirst(),
+                        target,
+                        filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
+            }
         }
 
         validateTargetable(gameData, targetId, playerId);
+
+        Permanent protectedTarget = gameQueryService.findPermanentById(gameData, targetId);
+        if (protectedTarget != null) {
+            for (CardColor color : effectiveSourceColors(gameData, sourceCard)) {
+                if (gameQueryService.hasProtectionFrom(gameData, protectedTarget, color)) {
+                    throw new IllegalStateException(protectedTarget.getCard().getName()
+                            + " has protection from " + color.name().toLowerCase());
+                }
+            }
+            if (gameQueryService.hasProtectionFromSource(gameData, protectedTarget, sourceCard, playerId)) {
+                throw new IllegalStateException(protectedTarget.getCard().getName()
+                        + " has protection from this source");
+            }
+        }
 
         if (targetId != null && (gameQueryService.findPermanentById(gameData, targetId) != null
                 || gameData.playerIds.contains(targetId))) {
@@ -1014,7 +1041,10 @@ public class TargetLegalityService {
             }
         }
 
-        if (target != null && needsTarget) {
+        boolean declaresPermanentTarget = needsTarget
+                || effectiveTargetFilter != null
+                || !card.getSpellTargets().isEmpty();
+        if (target != null && declaresPermanentTarget) {
             Optional<String> structuralReason = checkSpellPermanentTargetableReason(
                     gameData, target, card, controllerId, spellEffects, effectiveTargetFilter);
             if (structuralReason.isPresent()) return structuralReason;

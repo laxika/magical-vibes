@@ -13,10 +13,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -52,11 +50,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 public class PermanentCounterSupport {
-
-    private static final DoesntUntapWithCounterEffect FUNGUS_UNTAP_LOCK =
-            new DoesntUntapWithCounterEffect(CounterType.FUNGUS);
-    private static final RemoveCounterFromSourceEffect REMOVE_FUNGUS_COUNTER =
-            new RemoveCounterFromSourceEffect(CounterType.FUNGUS, 1);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -395,7 +388,6 @@ public class PermanentCounterSupport {
             case FUNGUS -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.FUNGUS, target.getCounterCount(CounterType.FUNGUS) + count);
-                grantFungusCounterAbilities(target);
                 yield "fungus";
             }
             case FUSE -> { target.setCounterCount(CounterType.FUSE, target.getCounterCount(CounterType.FUSE) + count); yield "fuse"; }
@@ -465,27 +457,6 @@ public class PermanentCounterSupport {
             fireCounterPutOnControlledCreatureTriggers(gameData, target, count);
         }
         return count;
-    }
-
-    /**
-     * Mindbender Spores hands the blocked creature two abilities along with its fungus counters:
-     * "This creature doesn't untap during your untap step if it has a fungus counter on it" and
-     * "At the beginning of your upkeep, remove a fungus counter from this creature". Both are tied
-     * to the counter rather than to the source, so they are granted here (idempotently) wherever
-     * fungus counters land, and they outlive the creature that placed them.
-     */
-    private static void grantFungusCounterAbilities(Permanent target) {
-        if (!hasGrantedEffect(target, EffectSlot.STATIC, FUNGUS_UNTAP_LOCK)) {
-            target.addPersistentTriggeredEffect(EffectSlot.STATIC, FUNGUS_UNTAP_LOCK);
-        }
-        if (!hasGrantedEffect(target, EffectSlot.UPKEEP_TRIGGERED, REMOVE_FUNGUS_COUNTER)) {
-            target.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, REMOVE_FUNGUS_COUNTER);
-        }
-    }
-
-    private static boolean hasGrantedEffect(Permanent target, EffectSlot slot, CardEffect effect) {
-        return target.getCard().getEffects(slot).contains(effect)
-                || target.getPersistentTriggeredEffects(slot).contains(effect);
     }
 
     public String counterTypeName(CounterType counterType) {

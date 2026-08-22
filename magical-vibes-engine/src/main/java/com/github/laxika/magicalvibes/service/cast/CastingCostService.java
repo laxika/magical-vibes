@@ -315,6 +315,11 @@ public class CastingCostService {
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
+                ManaCost increase = handler.coloredManaCostIncrease(
+                        context, effect, CostModificationSource.SPELL_ITSELF);
+                if (increase != null) {
+                    effectiveCost = effectiveCost.increasedBy(increase);
+                }
                 ManaCost reduction = handler.coloredManaCostReduction(
                         context, effect, CostModificationSource.SPELL_ITSELF);
                 if (reduction != null) {
@@ -325,6 +330,11 @@ public class CastingCostService {
             }
         }
         for (CollectedCostModifier modifier : snapshot.modifiers()) {
+            ManaCost increase = modifier.handler().coloredManaCostIncrease(
+                    context, modifier.effect(), modifier.source());
+            if (increase != null) {
+                effectiveCost = effectiveCost.increasedBy(increase);
+            }
             ManaCost reduction = modifier.handler().coloredManaCostReduction(
                     context, modifier.effect(), modifier.source());
             if (reduction != null) {

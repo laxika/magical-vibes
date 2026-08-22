@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -106,7 +107,9 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         Predicate<Card> deckFilter = card ->
                 (filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
-                        && matchesBound(card, boundValue, bound);
+                        && matchesBound(card, boundValue, bound)
+                        && (!putsOntoBattlefield(effect.destination())
+                        || !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY));
         List<Card> matchingCards = deck.stream().filter(deckFilter).toList();
 
         String baseDesc = describe(filter, boundValue, bound);
@@ -190,6 +193,15 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         return bound.exact()
                 ? card.getManaValue() == boundValue
                 : card.getManaValue() <= boundValue;
+    }
+
+    private boolean putsOntoBattlefield(LibrarySearchDestination destination) {
+        return switch (destination) {
+            case BATTLEFIELD, BATTLEFIELD_TAPPED, BATTLEFIELD_ATTACHED_TO_PLAYER,
+                    BATTLEFIELD_ATTACHED_TO_CREATURE, BATTLEFIELD_ATTACHED_TO_PERMANENT,
+                    BATTLEFIELD_UNDER_SEARCHER -> true;
+            default -> false;
+        };
     }
 
     /** Human description of the search target, e.g. "creature card with mana value 3 or less". */

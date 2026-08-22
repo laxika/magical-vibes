@@ -30,6 +30,7 @@ public class Permanent {
     @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
     private int untapSequence;
+    private int controlChangeSequence;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
      *  Post) has been paid for this permanent, so the re-entry after the choice isn't replaced again. */
     @Setter private boolean entryCostPaid;
@@ -611,6 +612,7 @@ public class Permanent {
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
         this.untapSequence = source.untapSequence;
+        this.controlChangeSequence = source.controlChangeSequence;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
@@ -877,6 +879,10 @@ public class Permanent {
             this.untapSequence++;
         }
         this.tapped = false;
+    }
+
+    public void recordControlChange() {
+        this.controlChangeSequence++;
     }
 
     public void setAttacking(boolean attacking) {

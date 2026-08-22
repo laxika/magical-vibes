@@ -1608,14 +1608,17 @@ public class LibraryChoiceHandlerService {
      */
     private boolean startSecondBoundedPick(GameData gameData, UUID controllerId, List<Card> lookedAtCards,
             List<Card> accumulatedCards, LibrarySearchFollowUp.SecondBoundedPick spec) {
-        if (spec.type() == null && spec.subtype() == null) {
+        if (spec.type() == null && spec.subtype() == null && spec.predicate() == null) {
             return false;
         }
 
         List<Card> eligible = lookedAtCards.stream()
-                .filter(card -> spec.subtype() != null
-                        ? card.getSubtypes().contains(spec.subtype())
-                        : card.hasType(spec.type()))
+                .filter(card -> spec.predicate() != null
+                        ? predicateEvaluationService.matchesCardPredicate(
+                                card, spec.predicate(), null, gameData, controllerId)
+                        : spec.subtype() != null
+                                ? card.getSubtypes().contains(spec.subtype())
+                                : card.hasType(spec.type()))
                 .toList();
         if (eligible.isEmpty()) {
             if (!spec.remainingSubtypes().isEmpty()) {
@@ -1635,12 +1638,14 @@ public class LibraryChoiceHandlerService {
             return false;
         }
 
-        String category = spec.subtype() != null
+        String category = spec.prompt() != null ? spec.prompt() : spec.subtype() != null
                 ? spec.subtype().getDisplayName().toLowerCase()
                 : spec.type().getDisplayName().toLowerCase();
         String destinationPhrase = spec.destination() == LibrarySearchDestination.BATTLEFIELD
                 ? "onto the battlefield" : "into your hand";
-        String prompt = "You may reveal a " + category
+        String prompt = spec.prompt() != null
+                ? "You may reveal " + category + " from among them and put it " + destinationPhrase + "."
+                : "You may reveal a " + category
                 + " card from among them and put it " + destinationPhrase + ".";
         LibrarySearchFollowUp nextFollowUp;
         if (spec.subtype() != null) {

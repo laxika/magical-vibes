@@ -78,6 +78,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
@@ -1360,7 +1361,8 @@ class ActivatedAbilityExecutionServiceTest {
                     .thenReturn(1);
             // Shield absorbs all 1 damage
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(0);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(0), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player1Id), eq(0), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(0);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -1391,7 +1393,8 @@ class ActivatedAbilityExecutionServiceTest {
             when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), 2))
                     .thenReturn(1);
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(1), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player1Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
             when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
@@ -1423,7 +1426,8 @@ class ActivatedAbilityExecutionServiceTest {
             when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player2Id, perm.getId(), 2))
                     .thenReturn(1);
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player2Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player2Id), eq(1), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player2Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player2Id)).thenReturn(false);
             when(gameQueryService.canPlayerLifeChange(gameData, player2Id)).thenReturn(true);
@@ -1630,7 +1634,8 @@ class ActivatedAbilityExecutionServiceTest {
         when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), damage))
                 .thenReturn(damage);
         when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, damage)).thenReturn(damage);
-        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(damage), anyString()))
+        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                eq(gameData), eq(player1Id), eq(damage), anyString(), anyBoolean(), eq(perm.getId())))
                 .thenReturn(damage);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
         when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);

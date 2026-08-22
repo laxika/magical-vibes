@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -1510,6 +1511,8 @@ class ValidTargetServiceTest {
         void returnsTrue_forExileTargetingSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
+            Card exiledCard = createCard();
+            gameData.exiledCards.add(new ExiledCardEntry(exiledCard, player2Id, null));
             CardEffect exileEffect = new CardEffect() {
                 @Override
                 public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.exileCard()); }

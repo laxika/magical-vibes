@@ -737,6 +737,7 @@ public class LayerSystemService {
         h = hashEnums(h, p.getPersistentGrantedCardTypes());
         h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getUntilNextTurnLandTypeOverride()));
+        h = mix(h, enumOrdinal(p.getPersistentLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getTransientCreatureTypeOverride()));
         h = hashEnums(h, p.getTransientCreatureTypeOverrides());
         // Source-bound land type changes drive a layer-4 type grant.

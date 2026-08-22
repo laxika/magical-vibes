@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockPairConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockParticipant;
 import com.github.laxika.magicalvibes.model.effect.BlockedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -462,6 +464,9 @@ public class CombatBlockService {
                                 gameData, attacker, permConditional.predicate())) {
                             resolvedBlockEffects.add(permConditional.wrapped());
                         }
+                    } else if (e instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
+                        addResolvedCombatOpponentBoost(gameData, resolvedBlockEffects, conditional,
+                                List.of(attacker));
                     } else if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                         if (hasEquipmentAttached(gameData, attacker)) {
                             resolvedBlockEffects.add(e);
@@ -590,7 +595,12 @@ public class CombatBlockService {
                                 || !c.referencesCombatOpponent())
                         .toList());
 
-                pushRegularBecomesBlockedTriggers(gameData, attacker, activeId, regularEffects);
+                List<Permanent> blockers = blockerAssignments.stream()
+                        .filter(assignment -> assignment.attackerIndex() == atkIdx)
+                        .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
+                        .toList();
+                pushRegularBecomesBlockedTriggers(gameData, attacker, activeId,
+                        resolveCombatOpponentBoosts(gameData, regularEffects, blockers));
 
                 if (!blockerSpecificEffects.isEmpty()) {
                     for (BlockerAssignment assignment : blockerAssignments) {
@@ -839,6 +849,8 @@ public class CombatBlockService {
                 if (predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, conditional.predicate())) {
                     resolvedEffects.add(conditional.wrapped());
                 }
+            } else if (effect instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
+                addResolvedCombatOpponentBoost(gameData, resolvedEffects, conditional, List.of(attacker));
             } else if (effect instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                 if (hasEquipmentAttached(gameData, attacker)) {
                     resolvedEffects.add(effect);
@@ -913,7 +925,8 @@ public class CombatBlockService {
                         || !combatOpponent.referencesCombatOpponent())
                 .toList());
 
-        pushRegularBecomesBlockedTriggers(gameData, attacker, activeId, regularEffects);
+        pushRegularBecomesBlockedTriggers(gameData, attacker, activeId,
+                resolveCombatOpponentBoosts(gameData, regularEffects, List.of(blocker)));
 
         if (!blockerSpecificEffects.isEmpty()) {
             List<CardEffect> filteredEffects = new ArrayList<>();
@@ -1240,6 +1253,23 @@ public class CombatBlockService {
                 continue;
             }
             List<CardEffect> effects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);
+            List<UUID> defendingCreatureIds = defenderBattlefield == null ? List.of() : defenderBattlefield.stream()
+                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            effects = effects.stream().map(effect -> {
+                if (!(effect instanceof MayEffect may)
+                        || !(may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect sacrifice)) {
+                    return effect;
+                }
+                if (defendingCreatureIds.isEmpty()) {
+                    return null;
+                }
+                return new MayEffect(
+                        new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect(
+                                sacrifice.cannotBeRegenerated(), defendingCreatureIds),
+                        may.prompt(), may.elseEffect(), may.choicePlayer());
+            }).filter(java.util.Objects::nonNull).toList();
             GraveyardCardChoosingEffect graveyardChoice = effects.stream()
                     .filter(GraveyardCardChoosingEffect.class::isInstance)
                     .map(GraveyardCardChoosingEffect.class::cast)
@@ -1649,6 +1679,34 @@ public class CombatBlockService {
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                 "'s becomes-blocked ability triggers."));
         log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+    }
+
+    private List<CardEffect> resolveCombatOpponentBoosts(GameData gameData, List<CardEffect> effects,
+                                                          List<Permanent> opponents) {
+        List<CardEffect> resolved = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            if (effect instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
+                addResolvedCombatOpponentBoost(gameData, resolved, conditional, opponents);
+            } else {
+                resolved.add(effect);
+            }
+        }
+        return resolved;
+    }
+
+    private void addResolvedCombatOpponentBoost(GameData gameData, List<CardEffect> resolved,
+                                                 BoostSelfWhenCombatOpponentMatchesEffect conditional,
+                                                 List<Permanent> opponents) {
+        boolean matches = opponents.stream().anyMatch(opponent ->
+                predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, opponent, conditional.opponentFilter()));
+        if (!matches) {
+            return;
+        }
+        resolved.add(new BoostSelfEffect(conditional.powerBoost(), conditional.toughnessBoost()));
+        if (!conditional.grantedKeywords().isEmpty()) {
+            resolved.add(new GrantKeywordEffect(conditional.grantedKeywords(), GrantScope.SELF));
+        }
     }
 
     /**

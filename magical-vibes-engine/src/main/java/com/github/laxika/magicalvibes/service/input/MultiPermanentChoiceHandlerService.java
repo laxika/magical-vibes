@@ -346,6 +346,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.isEmpty()) {
             throw new IllegalStateException("At least one target creature must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy
+                && permanentIds.isEmpty()) {
+            throw new IllegalStateException("A creature target is required after accepting the sacrifice");
+        }
 
         gameData.interaction.clearAwaitingInput();
 
@@ -581,10 +585,7 @@ public class MultiPermanentChoiceHandlerService {
                                               MultiPermanentChoiceContext.SacrificeSelfToDestroy context) {
         UUID sourcePermId = context.sourcePermanentId();
 
-        if (permanentIds.isEmpty()) {
-            String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to sacrifice.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-        } else {
+        if (!permanentIds.isEmpty()) {
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
             if (source != null) {
                 if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {

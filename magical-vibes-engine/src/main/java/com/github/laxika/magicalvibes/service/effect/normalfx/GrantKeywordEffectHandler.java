@@ -248,7 +248,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             UUID triggeringId = entry.getTriggeringPermanentId();
             ids = triggeringId != null ? List.of(triggeringId) : List.of();
         } else if (grant.scope() == GrantScope.BANDED_WITH_SELF) {
-            ids = bandmatesOf(gameData, entry.getSourcePermanentId());
+            ids = bandmatesOf(gameData, entry);
         } else if (grant.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
             ids = List.copyOf(entry.getCreatedPermanentIds());
         } else {
@@ -315,18 +315,23 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
      * The other attacking creatures sharing the source's attacking band (CR 702.22c). The source
      * itself is excluded, and an empty list is returned when it is not attacking in a band.
      */
-    private List<UUID> bandmatesOf(GameData gameData, UUID sourceId) {
+    private List<UUID> bandmatesOf(GameData gameData, StackEntry entry) {
+        UUID sourceId = entry.getSourcePermanentId();
         if (sourceId == null) {
             return List.of();
         }
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source == null || source.getBandId() == null) {
             return List.of();
         }
+        UUID bandId = source.getBandId();
         List<UUID> bandmates = new java.util.ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.isAttacking()
-                    && source.getBandId().equals(permanent.getBandId())
+                    && bandId.equals(permanent.getBandId())
                     && !permanent.getId().equals(sourceId)) {
                 bandmates.add(permanent.getId());
             }

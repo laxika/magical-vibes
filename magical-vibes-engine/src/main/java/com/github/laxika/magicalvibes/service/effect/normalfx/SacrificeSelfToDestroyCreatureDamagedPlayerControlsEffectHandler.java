@@ -54,7 +54,11 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 List<UUID> validCreatureIds = new ArrayList<>();
                 if (defenderBattlefield != null) {
                     for (Permanent perm : defenderBattlefield) {
-                        if (gameQueryService.isCreature(gameData, perm)) {
+                        if (gameQueryService.isCreature(gameData, perm)
+                                && (((SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect) effect)
+                                        .eligibleTargetIds().isEmpty()
+                                || ((SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect) effect)
+                                        .eligibleTargetIds().contains(perm.getId()))) {
                             validCreatureIds.add(perm.getId());
                         }
                     }

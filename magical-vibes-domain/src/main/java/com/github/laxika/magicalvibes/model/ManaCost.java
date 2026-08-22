@@ -133,6 +133,27 @@ public class ManaCost {
                 snowCost, source.xSymbolCount, source.cumulativeUpkeepPayment);
     }
 
+    /** Returns this cost with every component of {@code increase} added to it. */
+    public ManaCost increasedBy(ManaCost increase) {
+        if (increase == null) {
+            return this;
+        }
+        Map<ManaColor, Integer> combinedColored = new EnumMap<>(coloredCosts);
+        increase.coloredCosts.forEach((color, count) -> combinedColored.merge(color, count, Integer::sum));
+        Map<ManaColor, Integer> combinedPhyrexian = new EnumMap<>(phyrexianCosts);
+        increase.phyrexianCosts.forEach((color, count) -> combinedPhyrexian.merge(color, count, Integer::sum));
+        List<HybridSymbol> combinedHybrid = new ArrayList<>(hybridCosts);
+        combinedHybrid.addAll(increase.hybridCosts);
+        return new ManaCost(
+                genericCost + increase.genericCost,
+                combinedColored,
+                combinedPhyrexian,
+                combinedHybrid,
+                snowCost + increase.snowCost,
+                xSymbolCount + increase.xSymbolCount,
+                cumulativeUpkeepPayment);
+    }
+
     /**
      * Returns this cost after reducing it by the regular generic and colored components of
      * {@code reduction}. Matching colored components reduce the same colored requirements first;

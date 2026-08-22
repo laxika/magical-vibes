@@ -477,14 +477,13 @@ public class CastingPermissionService {
 
     public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card) {
         Card mostRecentSpell = gameData.getMostRecentSpellCastThisTurn();
-        if (mostRecentSpell == null) return false;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof SpellCastingRestrictionEffect restriction
-                            && restriction.preventsCasting(mostRecentSpell, card)) {
+                            && restriction.preventsCasting(perm, mostRecentSpell, card)) {
                         return true;
                     }
                 }

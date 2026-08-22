@@ -1290,7 +1290,7 @@ public class DamageTriggerCollectorService {
     private boolean handleEquippedCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect,
                                                               TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
-        if (sd.damageToPlayers() <= 0 || match.permanent() == null) return false;
+        if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
 
         Permanent equipment = match.permanent();
         if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {

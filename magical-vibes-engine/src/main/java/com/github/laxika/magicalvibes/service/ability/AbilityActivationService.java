@@ -2618,6 +2618,11 @@ public class AbilityActivationService {
                     gameData, playerId, activationEffects,
                     targetIds != null ? targetIds : List.of(), permanent.getCard().getId(), effectiveXValue,
                     ability.getMultiTargetConstraint());
+        } else if (ability.isMultiTarget() && ability.getMaxTargets() == 1
+                && (targetIds == null || targetIds.isEmpty())) {
+            targetLegalityService.validateActivatedAbilityTargeting(
+                    gameData, playerId, ability, activationEffects, targetId, targetZone,
+                    permanent.getCard(), effectiveXValue);
         } else if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
                 targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
                     targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue, activationEffects);
@@ -4236,9 +4241,9 @@ public class AbilityActivationService {
                                               int xValue, UUID targetId, Zone targetZone,
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments) {
+        recordAbilityActivationUse(gameData, permanent, abilityIndex);
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting, targetIds, damageAssignments);
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
     }
 
     private void sacrificePermanentAsCost(GameData gameData, Player player, Permanent sacTarget) {

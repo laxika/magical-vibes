@@ -22,7 +22,7 @@ class SpectacleMageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, List.of());
+        harness.castSorcery(player1, 0, player1.getId());
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -59,7 +59,7 @@ class SpectacleMageTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);
 
-        assertThatThrownBy(() -> harness.castSorcery(player2, 0, List.of()))
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

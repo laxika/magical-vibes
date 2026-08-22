@@ -65,6 +65,12 @@ public interface CostModificationHandlerBean {
         return null;
     }
 
+    /** Returns a non-generic mana-cost increase for this occurrence, or {@code null}. */
+    default ManaCost coloredManaCostIncrease(CostModificationContext context, CardEffect effect,
+                                             CostModificationSource source) {
+        return null;
+    }
+
     /**
      * Whether a colored reduction may reduce generic mana after matching colored components are
      * exhausted. Ordinary colored-only reductions such as Ragemonger's default to false.

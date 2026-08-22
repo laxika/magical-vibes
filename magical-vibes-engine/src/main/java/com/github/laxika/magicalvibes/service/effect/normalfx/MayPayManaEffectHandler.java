@@ -78,7 +78,16 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 entry.getTargetId(),
                 e.manaCost(),
                 entry.getSourcePermanentId(),
-                e.lifeCost()
+                null,
+                e.lifeCost(),
+                0,
+                entry.getAttackedTargetId(),
+                entry.getActivePlayerId(),
+                null,
+                entry.getSourcePermanentSnapshot(),
+                entry.getControllerId(),
+                entry.getTriggeringCardId(),
+                entry.getEventValue()
         ));
 
     }

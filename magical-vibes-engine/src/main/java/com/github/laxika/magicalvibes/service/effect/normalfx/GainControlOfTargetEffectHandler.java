@@ -101,15 +101,19 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
                     "'s ability has no effect (source left the battlefield)."));
             return;
         }
+        Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
         if (requireSourceController) {
             UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
-            if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
+            if (sourceController == null || !sourceController.equals(entry.getControllerId())
+                    || sourceSnapshot == null
+                    || source.getControlChangeSequence() != sourceSnapshot.getControlChangeSequence()) {
                 gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                         "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ")."));
                 return;
             }
         }
-        if (requireSourceTapped && !source.isTapped()) {
+        if (requireSourceTapped && (!source.isTapped() || sourceSnapshot == null
+                || source.getUntapSequence() != sourceSnapshot.getUntapSequence())) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability has no effect (" + source.getCard().getName() + " is no longer tapped)."));
             return;

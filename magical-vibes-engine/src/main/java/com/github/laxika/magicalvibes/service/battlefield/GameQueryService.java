@@ -4330,7 +4330,8 @@ public class GameQueryService {
 
     private static boolean isAnySpellRestriction(CardEffect effect) {
         return effect instanceof TargetingRestrictionEffect r
-                && r.kind() == TargetingSourceKind.SPELLS
+                && (r.kind() == TargetingSourceKind.SPELLS
+                || r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES)
                 && r.sourceCardTypes().isEmpty()
                 && r.mode() == TargetColorMode.ANY;
     }
@@ -4398,7 +4399,8 @@ public class GameQueryService {
     private static boolean isSpellColorRestriction(CardEffect effect, CardColor spellColor,
                                                    boolean opponentControlled) {
         return effect instanceof TargetingRestrictionEffect r
-                && r.kind() == TargetingSourceKind.SPELLS
+                && (r.kind() == TargetingSourceKind.SPELLS
+                || r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES)
                 && r.mode() == TargetColorMode.BLOCKED_COLORS
                 && r.colors().contains(spellColor)
                 && (!r.opponentOnly() || opponentControlled);

@@ -1194,22 +1194,24 @@ public class CombatDamageService {
                 }
 
                 if (effect instanceof MayEffect may) {
+                    MayEffect queuedMay = may;
                     if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect
                             || may.wrapped() instanceof TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect) {
                         List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
-                        boolean hasCreatureTargets = false;
-                        if (defenderBf != null) {
-                            for (Permanent p : defenderBf) {
-                                if (gameQueryService.isCreature(gameData, p)) {
-                                    hasCreatureTargets = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!hasCreatureTargets) {
+                        List<UUID> creatureTargetIds = defenderBf == null ? List.of() : defenderBf.stream()
+                                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                                .map(Permanent::getId)
+                                .toList();
+                        if (creatureTargetIds.isEmpty()) {
                             gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                     "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no creatures."));
                             continue;
+                        }
+                        if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect sacrifice) {
+                            queuedMay = new MayEffect(
+                                    new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect(
+                                            sacrifice.cannotBeRegenerated(), creatureTargetIds),
+                                    may.prompt(), may.elseEffect(), may.choicePlayer());
                         }
                     }
                     if (may.wrapped() instanceof ExilePermanentDamagedPlayerControlsEffect exileEffect) {
@@ -1264,7 +1266,7 @@ public class CombatDamageService {
                     // a NONE target spec and keep the baked-in defender context.
                     UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             ? null : defenderId;
-                    gameData.queueMayAbility(creature.getCard(), attackerId, may, mayTargetId, creature.getId(), mayEventValue);
+                    gameData.queueMayAbility(creature.getCard(), attackerId, queuedMay, mayTargetId, creature.getId(), mayEventValue);
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
                     continue;
                 }

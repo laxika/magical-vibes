@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RainbowVale.class, RuinsOfTrokair.class})
@@ -92,7 +94,8 @@ class RainbowValeTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.CLEANUP));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.CLEANUP));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);

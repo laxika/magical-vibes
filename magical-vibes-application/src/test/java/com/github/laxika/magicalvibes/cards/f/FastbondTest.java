@@ -25,16 +25,16 @@ class FastbondTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
-        harness.assertLife(player1, 21);
-
-        harness.playLand(player1, 0);
-        harness.passBothPriorities();
-        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(2);
         harness.assertLife(player1, 20);
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(2);
         harness.assertLife(player1, 19);
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(3);
+        harness.assertLife(player1, 18);
     }
 }

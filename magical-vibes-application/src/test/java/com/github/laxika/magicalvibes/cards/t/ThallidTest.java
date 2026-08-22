@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +69,7 @@ class ThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         thallid.tap();
-        advanceToUpkeep(player1);
+        advanceThroughPlayerOneUntap();
 
         assertThat(thallid.isTapped()).isFalse();
     }
@@ -81,7 +82,7 @@ class ThallidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        advanceToUpkeep(player1);
+        advanceThroughPlayerOneUntap();
         resolveAllTriggers();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
@@ -89,5 +90,12 @@ class ThallidTest extends BaseCardTest {
 
     private Permanent addThallid() {
         return addCreatureReady(player1, new Thallid());
+    }
+
+    private void advanceThroughPlayerOneUntap() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 }

@@ -86,8 +86,10 @@ class SeasingerTest extends BaseCardTest {
         harness.activateAbility(player1, idx, null, bears.getId());
         gd.playerBattlefields.get(player1.getId()).remove(seasinger);
         gd.playerBattlefields.get(player2.getId()).add(seasinger);
+        seasinger.recordControlChange();
         gd.playerBattlefields.get(player2.getId()).remove(seasinger);
         gd.playerBattlefields.get(player1.getId()).add(seasinger);
+        seasinger.recordControlChange();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(bears.getId()));

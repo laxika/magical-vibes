@@ -161,14 +161,8 @@ public class StackResolutionService {
             gameData.currentlyResolvingControllerId = null;
         }
 
-        // Resolution-time may choices are part of the resolving ability, so present them before
-        // state-based actions can orphan an Aura that the choice may move.
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-        }
-
-        // If the ETB handler or a resolution-time may choice already set up a user interaction,
-        // skip post-resolution SBA until the choice resolves.
+        // If the ETB handler already set up a user interaction, skip post-resolution SBA until
+        // the choice resolves.
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }

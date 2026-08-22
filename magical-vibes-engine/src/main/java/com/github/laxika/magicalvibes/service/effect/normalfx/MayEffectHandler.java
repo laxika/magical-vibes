@@ -80,7 +80,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 null,
                 entry.getSourcePermanentSnapshot(),
                 null,
-                null,
+                entry.getTriggeringCardId(),
                 entry.getEventValue(),
                 entry.getTriggeringPermanentId()
         ));

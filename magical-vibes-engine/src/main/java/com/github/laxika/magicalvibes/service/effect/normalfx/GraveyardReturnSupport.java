@@ -395,22 +395,27 @@ public class GraveyardReturnSupport {
 
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect, StackEntry entry) {
+        boolean exiledCostSubtypeMatches = effect.plusOneCountersIfExiledCostCardHasSubtype() != null
+                && entry != null
+                && entry.getExiledCostCardSnapshot() != null
+                && entry.getExiledCostCardSnapshot().getSubtypes() != null
+                && entry.getExiledCostCardSnapshot().getSubtypes()
+                .contains(effect.plusOneCountersIfExiledCostCardHasSubtype());
         boolean plusOneCounters = effect.plusOneCounterCount() > 0
                 && (effect.plusOneCountersIfSubtype() == null
                 || (card.getSubtypes() != null
                 && card.getSubtypes().contains(effect.plusOneCountersIfSubtype())))
                 && (effect.plusOneCountersIfExiledCostCardHasSubtype() == null
-                || (entry != null
-                && entry.getExiledCostCardSnapshot() != null
-                && entry.getExiledCostCardSnapshot().getSubtypes() != null
-                && entry.getExiledCostCardSnapshot().getSubtypes()
-                .contains(effect.plusOneCountersIfExiledCostCardHasSubtype())))
+                || exiledCostSubtypeMatches)
                 && (effect.plusOneCountersIfCardType() == null
                 || effect.plusOneCountersIfCardType() == CardType.CREATURE
                 || card.hasType(effect.plusOneCountersIfCardType()))
                 && (effect.plusOneCountersIfCondition() == null
                 || conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
                 ConditionContext.forCasting(controllerId)));
+        boolean exiledCostCounter = exiledCostSubtypeMatches
+                && effect.counterIfExiledCostCardHasSubtype() != null
+                && effect.counterCountIfExiledCostCardHasSubtype() > 0;
         boolean enterWithCounter = effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         boolean enterWithCounters = effect.enterWithCounters() != null && !effect.enterWithCounters().isEmpty();
         if (!effect.enterWithMannequinCounter()
@@ -419,6 +424,7 @@ public class GraveyardReturnSupport {
                 && !effect.exileIfLeavesBattlefield()
                 && !effect.unearth()
                 && !plusOneCounters
+                && !exiledCostCounter
                 && (effect.grantKeywords() == null || effect.grantKeywords().isEmpty())
                 && !effect.grantHasteUntilNextTurn()
                 && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
@@ -472,6 +478,11 @@ public class GraveyardReturnSupport {
                     permanentCounterSupport.applyPlusOnePlusOneCounters(
                             gameData, null, p, effect.plusOneCounterCount());
                 }
+            }
+            if (exiledCostCounter) {
+                permanentCounterSupport.placeCounterOnPermanent(gameData, entry, p,
+                        effect.counterIfExiledCostCardHasSubtype(),
+                        effect.counterCountIfExiledCostCardHasSubtype());
             }
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
                 p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,

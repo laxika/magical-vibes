@@ -90,6 +90,7 @@ public sealed interface DelayedAction permits
         PayManaOrLoseGameAtNextUpkeep,
         DrawCardsAtNextUpkeep,
         DrawCardsAtNextEndStep,
+        SacrificeSelfAtNextEndStepTrigger,
         ExileToOwnerGraveyardAtNextUpkeep,
         ExilePermanentAtNextUpkeep,
         PutCounterOnPermanentAtNextUpkeep,

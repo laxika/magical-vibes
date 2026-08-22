@@ -33,7 +33,8 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopySpellEffect copyEffect = (CopySpellEffect) effect;
-        UUID targetCardId = entry.getTargetId();
+        UUID targetCardId = entry.getTriggeringCardId() != null
+                ? entry.getTriggeringCardId() : entry.getTargetId();
         if (targetCardId == null) return;
 
         StackEntry targetEntry = null;
