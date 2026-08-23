@@ -67,6 +67,7 @@ class FlamingGambitTest extends BaseCardTest {
     void planeswalkerControllerMayRedirectDamage() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         int loyaltyBefore = planeswalker.getCounterCount(CounterType.LOYALTY);
         harness.setHand(player1, List.of(new FlamingGambit()));
         harness.addMana(player1, ManaColor.RED, 1);

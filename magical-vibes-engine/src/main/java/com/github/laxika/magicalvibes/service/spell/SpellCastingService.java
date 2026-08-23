@@ -1926,11 +1926,8 @@ public class SpellCastingService {
         //  - a non-modal "counter up to N target spells" (Double Negative): a single spell-on-stack
         //    target group with max > 1 (bound to a CounterEachTargetSpellEffect) and no permanent/player
         //    targets. In both cases the chosen targets ride in the flat targetIds list.
-        long selectedSpellTargetCount = targetingSpellEffects.stream()
-                .filter(EffectResolution::targetsSpellOnStack)
-                .count();
         boolean multipleSpellTargets = unwrappedNeedsSpellTarget && (wasModal
-                ? selectedSpellTargetCount > 1 && !allSpellTargetsAlsoAllowPermanents
+                ? targetId == null && !targetIds.isEmpty() && !allSpellTargetsAlsoAllowPermanents
                 : !unwrappedNeedsTarget && card.getMaxTargets() > 1);
 
         // A "spell or permanent" single-target chooser (e.g. Glamerdye) can target either zone. Infer
@@ -5664,7 +5661,7 @@ public class SpellCastingService {
         // validation and payment. A failed cast (for example, one that cannot pay its mana cost)
         // does not move the card out of exile.
         boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(exileCardId)
-                || sourceFreeCast || (resolutionCast && copy);
+                || sourceFreeCast;
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
 
         if (card.hasType(CardType.LAND)) {

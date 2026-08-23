@@ -340,6 +340,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetCreatureAndAllWithSameNameEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndImprintEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ExileTargetPermanentAndTrackWithSourceEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -440,6 +441,7 @@ public class TargetPolarityClassifier {
             // Chandra's Ignition: the target is a creature you control and is only the damage
             // source — it takes no damage itself, so the AI should aim at its own board.
             entry("TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect", TargetPolarity.BENEFICIAL),
+            entry("TapTargetThenEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
@@ -473,6 +475,7 @@ public class TargetPolarityClassifier {
             // permanents (NEUTRAL keeps the own-battlefield-first fallback for them).
             entry("AddCardTypeToTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("AddAnotherCounterOfEachKindToTargetEffect", TargetPolarity.NEUTRAL),
+            entry("AdjustChosenCounterOnTargetEffect", TargetPolarity.NEUTRAL),
             // Quarry Hauler chooses add-or-remove per counter kind at resolution — no fixed direction.
             entry("AdjustEachCounterKindOnTargetEffect", TargetPolarity.NEUTRAL),
             entry("AttachAllAurasToAnotherPermanentEffect", TargetPolarity.NEUTRAL),

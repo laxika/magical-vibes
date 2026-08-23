@@ -19,13 +19,13 @@ public class DealDividedDamageSupport {
     private final AmountEvaluationService amountEvaluationService;
 
     public int damageAssignedToSingleTarget(GameData gameData, List<CardEffect> effects,
-                                            UUID controllerId, int xValue) {
+                                            UUID controllerId, int xValue, boolean madness) {
         return effects.stream()
                 .filter(DealDividedDamageEffect.class::isInstance)
                 .map(DealDividedDamageEffect.class::cast)
                 .findFirst()
                 .map(effect -> amountEvaluationService.evaluate(gameData, effect.totalDamage(),
-                        AmountContext.forCasting(controllerId, xValue)))
+                        AmountContext.forCasting(controllerId, xValue, madness)))
                 .orElse(xValue);
     }
 }

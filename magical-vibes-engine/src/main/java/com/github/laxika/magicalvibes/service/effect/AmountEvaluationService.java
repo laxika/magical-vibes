@@ -492,13 +492,15 @@ public class AmountEvaluationService {
     /**
      * Projects the amount context onto a condition context so {@code FixedIfCondition} can reuse
      * the condition hierarchy. Only the values both contexts carry are transferred; cast-time flags
-     * (kicked, buyback, …) are not part of an amount context and read as false.
+     * Most cast-time flags are not part of an amount context and read as false; madness is carried
+     * because some divided amounts differ when a spell is cast using it.
      */
     private ConditionContext conditionContext(AmountContext ctx) {
         return new ConditionContext(ctx.controllerId(),
                 ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
-                ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, false, null,
-                ctx.xValue(), ctx.targetPermanentId(), null, ctx.staticEvaluation());
+                ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, ctx.madness(), false,
+                null, ctx.xValue(), ctx.targetPermanentId(), null, ctx.staticEvaluation(), false,
+                null, null, null);
     }
 
     private int chosenPermanentEffectivePower(GameData gameData, AmountContext ctx) {

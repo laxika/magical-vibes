@@ -540,7 +540,7 @@ public class PermanentChoiceSpellHandlerService {
             Map<UUID, Integer> damageAssignments = hct.castForMadnessCost()
                     && EffectResolution.needsDamageDistribution(hct.spellEffects())
                     ? Map.of(permanentId, dealDividedDamageSupport.damageAssignedToSingleTarget(
-                            gameData, hct.spellEffects(), hct.controllerId(), hct.xValue()))
+                            gameData, hct.spellEffects(), hct.controllerId(), hct.xValue(), true))
                     : null;
             StackEntry entry = new StackEntry(
                     hct.spellType(),

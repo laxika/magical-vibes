@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LaquatussChampion.class, DoomBlade.class})
+@CardUsed({LaquatussChampion.class, Murder.class})
 class LaquatussChampionTest extends BaseCardTest {
 
     @Test
@@ -75,8 +75,8 @@ class LaquatussChampionTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Laquatus's Champion"));
         harness.passBothPriorities();

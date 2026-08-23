@@ -46,6 +46,7 @@ import java.util.UUID;
  * @param sacrificedPower   effective power snapshotted from a permanent sacrificed as a cost
  * @param sacrificedToughness effective toughness snapshotted from a permanent sacrificed as a cost
  * @param targetCardIds      graveyard card ids chosen by the resolving stack entry
+ * @param madness            whether the spell was cast using madness
  */
 public record AmountContext(
         UUID controllerId,
@@ -62,8 +63,22 @@ public record AmountContext(
         Integer triggeringPermanentPowerAtTrigger,
         int sacrificedPower,
         int sacrificedToughness,
-        List<UUID> targetCardIds
+        List<UUID> targetCardIds,
+        boolean madness
 ) {
+
+    /** Backward-compatible full context constructor for contexts that are not madness casts. */
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation,
+                         UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard,
+                         StackEntry stackEntry, Integer chosenPermanentPowerAtTrigger,
+                         Integer triggeringPermanentPowerAtTrigger, int sacrificedPower,
+                         int sacrificedToughness, List<UUID> targetCardIds) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, stackEntry,
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger, sacrificedPower,
+                sacrificedToughness, targetCardIds, false);
+    }
 
     /** Backward-compatible context constructor without last-known or sacrificed-permanent snapshots. */
     public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
@@ -104,7 +119,7 @@ public record AmountContext(
                 eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
                 stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
-                sacrificedPower, sacrificedToughness, targetCardIds);
+                sacrificedPower, sacrificedToughness, targetCardIds, madness);
     }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
@@ -115,7 +130,8 @@ public record AmountContext(
                 entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getSacrificedPower(),
                 entry.getSacrificedToughness(),
-                entry.getTargetCardIds() == null ? List.of() : List.copyOf(entry.getTargetCardIds()));
+                entry.getTargetCardIds() == null ? List.of() : List.copyOf(entry.getTargetCardIds()),
+                entry.isMadness());
     }
 
     /**
@@ -171,6 +187,12 @@ public record AmountContext(
      */
     public static AmountContext forCasting(UUID castingPlayerId, int xValue) {
         return new AmountContext(castingPlayerId, null, null, xValue, 0);
+    }
+
+    /** Cast-time context that also records whether the spell is being cast using madness. */
+    public static AmountContext forCasting(UUID castingPlayerId, int xValue, boolean madness) {
+        return new AmountContext(castingPlayerId, null, null, xValue, 0, false, null,
+                List.of(), null, null, null, null, 0, 0, List.of(), madness);
     }
 
     /** Cast-time context for a spell whose source card is still in a zone being counted. */

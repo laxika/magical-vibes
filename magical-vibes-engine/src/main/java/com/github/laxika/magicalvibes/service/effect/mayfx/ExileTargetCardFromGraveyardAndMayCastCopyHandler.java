@@ -66,6 +66,9 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (effect.withoutPayingManaCost()) {
+            gameData.exilePlayWithoutPayingManaCost.add(copy.getId());
+        }
 
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(copy);
         List<CardEffect> spellEffects = new ArrayList<>(copy.getEffects(EffectSlot.SPELL));
