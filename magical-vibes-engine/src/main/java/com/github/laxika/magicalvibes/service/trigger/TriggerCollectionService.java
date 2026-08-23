@@ -3550,6 +3550,7 @@ public class TriggerCollectionService {
                         watcher.getCard().getName(), punisher.amountToDamagedCreatureController(),
                         gameData.playerIdToName.get(damagedCreatureControllerId), punisher.amountToSelf());
             } else if (effect instanceof DamagedCreatureTriggerEffect damagedCreatureTrigger) {
+                if (damagedCreatureTrigger.combatDamageOnly() && !combatDamage) continue;
                 Permanent triggerSource = damageSource;
                 if (damagedCreatureTrigger.equipmentScoped()) {
                     if (!isEquippedBy(gameData, watcher, damageSource)) continue;

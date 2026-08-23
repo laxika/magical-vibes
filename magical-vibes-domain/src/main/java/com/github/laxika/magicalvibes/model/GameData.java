@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -737,6 +738,9 @@ public class GameData {
     public boolean damageCantBePreventedThisTurn = false;
     /** Per-player life floors imposed by resolving effects until end of turn (Angel of Grace). */
     public final Map<UUID, Integer> damageLifeFloorsUntilEndOfTurn = new ConcurrentHashMap<>();
+    /** Active global damage replacement effects registered by spells for the current turn. */
+    public final List<ReplaceDamageAboveThresholdThisTurnEffect> damageReplacementsThisTurn =
+            Collections.synchronizedList(new ArrayList<>());
     /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
     public boolean playersCantGainLifeThisTurn = false;
     /** When true, no creature can attack this turn. Cleared at turn cleanup. */
@@ -1116,6 +1120,9 @@ public class GameData {
 
     /** Pending one-shot grants that make the next spell cast this turn uncounterable. */
     public final Map<UUID, Integer> pendingNextSpellUncounterableThisTurnCount = new ConcurrentHashMap<>();
+
+    /** Pending one-shot grants that make the next instant or sorcery cast this turn uncounterable. */
+    public final Map<UUID, Integer> pendingNextInstantSorceryUncounterableThisTurnCount = new ConcurrentHashMap<>();
 
     /** Pending one-shot loyalty-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
@@ -2428,6 +2435,7 @@ public class GameData {
         consumeNextSpellCostReductions(playerId, card);
         consumeNextCreatureSpellEmpowerments(playerId, card);
         consumeNextSpellUncounterableGrant(playerId, card);
+        consumeNextInstantSorceryUncounterableGrant(playerId, card);
     }
 
     public void recordSpellCastFromHand(Card card) {
@@ -2569,6 +2577,13 @@ public class GameData {
     /** Makes the next spell cast by the player uncounterable and consumes all pending grants. */
     private void consumeNextSpellUncounterableGrant(UUID playerId, Card card) {
         if (pendingNextSpellUncounterableThisTurnCount.remove(playerId) != null) {
+            spellsMadeUncounterable.add(card.getId());
+        }
+    }
+
+    private void consumeNextInstantSorceryUncounterableGrant(UUID playerId, Card card) {
+        if (!card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY)) return;
+        if (pendingNextInstantSorceryUncounterableThisTurnCount.remove(playerId) != null) {
             spellsMadeUncounterable.add(card.getId());
         }
     }
@@ -3564,6 +3579,7 @@ public class GameData {
         });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.damageLifeFloorsUntilEndOfTurn.putAll(this.damageLifeFloorsUntilEndOfTurn);
+        copy.damageReplacementsThisTurn.addAll(this.damageReplacementsThisTurn);
         copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
         copy.creaturesCantAttackThisTurn = this.creaturesCantAttackThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
@@ -3865,6 +3881,8 @@ public class GameData {
         copy.graveyardTargetOperation.anyNumber = this.graveyardTargetOperation.anyNumber;
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
         copy.graveyardTargetOperation.cumulativeUpkeepPayment = this.graveyardTargetOperation.cumulativeUpkeepPayment;
+        copy.graveyardTargetOperation.controllerGraveyardPayment =
+                this.graveyardTargetOperation.controllerGraveyardPayment;
         copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
         copy.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects =
                 this.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects == null
@@ -4067,6 +4085,8 @@ public class GameData {
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
         copy.pendingNextSpellUncounterableThisTurnCount.putAll(this.pendingNextSpellUncounterableThisTurnCount);
+        copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
+                this.pendingNextInstantSorceryUncounterableThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
         copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);

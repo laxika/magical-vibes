@@ -149,6 +149,7 @@ on what the mana may pay for.
 | Destroy (no regen) + target's controller gains life by mana value | `c/Crumble.java` | DestroyTargetPermanentThenEffect(MANA_VALUE, GainLifeEffect(EventValue()), TARGET_CONTROLLER, true) + artifact filter — the trailing `true` sets cannotBeRegenerated |
 | Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentThenEffect(LoseLifeEffect(1), TARGET_CONTROLLER) + artifact filter |
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
+| Board wipe + return the controller's cards destroyed this way | `c/CleansingMeditation.java` | `ConditionalReplacementEffect(GraveyardCardThreshold(7, null), DestroyAllPermanentsEffect(enchantment), SequenceEffect.of(DestroyAllPermanentsEffect(enchantment), ReturnCardsDestroyedThisWayFromGraveyardEffect()))`; threshold is checked before destruction, and the rider returns only matching cards still in the controller's graveyard |
 | Chosen mana-value wipe + targeted hand discard | `v/Void.java` | `VoidEffect()` + `target(PlayerPredicateTargetFilter(ANY))` — resolution-time number choice; destroy all artifacts and creatures with that mana value, then reveal the target player's hand and discard all matching nonland cards |
 | Filtered wipe + per-permanent pay-or-damage rider | `s/StenchOfEvil.java` | DestroyAllPermanentsEffect(PermanentHasSubtypePredicate(PLAINS), DamageEachDestroyedPermanentControllerUnlessPaysEffect(1, "{2}")) — destroy all Plains, then one independent "pay {2} or take 1" per land destroyed (a player who lost 3 Plains is asked 3 times) |
 | Board wipe + opponent library search to graveyard | `l/LifesFinale.java` | DestroyAllPermanentsEffect + SearchTargetLibraryEffect(3, CardTypePredicate(CREATURE), GRAVEYARD, true) + PlayerPredicateTargetFilter(OPPONENT) |
@@ -276,6 +277,7 @@ on what the mana may pay for.
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |
 | Extra combat | `r/RelentlessAssault.java` | AdditionalCombatMainPhaseEffect |
 | Mill half library (spell) | `t/Traumatize.java` | MillHalfLibraryEffect(false) |
+| Mill seven, then exile seven from your graveyard at the next end step | `f/FalseMemories.java` | `MillEffect(7, CONTROLLER)` + `RegisterExileCardsFromOwnGraveyardAtNextEndStepEffect(7)` |
 | Shuffle own GY into library, mill that many | `p/PsychicSpiral.java` | ShuffleControllerGraveyardIntoLibraryThenMillTargetEffect() — the count is captured between the shuffle and the mill, so it cannot be composed from ShuffleGraveyardIntoLibraryEffect + MillEffect(CardsInGraveyard) |
 | Mill half library (ON_ATTACK) | `f/FleetSwallower.java` | ON_ATTACK MillHalfLibraryEffect(true) — creature attacks, target player mills half library rounded up |
 | Self-mill three + one Zombie for any creature card put into the graveyard from the library | `s/SidisiBroodTyrant.java` | ON_ENTER_BATTLEFIELD and ON_ATTACK `MillEffect(3, CONTROLLER)` + `ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY CreateTokenEffect.blackZombie(1)` |

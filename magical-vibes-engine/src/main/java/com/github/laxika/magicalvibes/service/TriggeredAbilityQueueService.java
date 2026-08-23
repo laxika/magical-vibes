@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -26,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -40,6 +43,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -134,6 +138,38 @@ public class TriggeredAbilityQueueService {
                 log.info("Game {} - {} death trigger skipped (no valid creature targets)",
                         gameData.id, pending.dyingCard().getName());
                 continue;
+            }
+
+            DistributeCountersAmongTargetsEffect counterDistribution = pending.effects().stream()
+                    .filter(DistributeCountersAmongTargetsEffect.class::isInstance)
+                    .map(DistributeCountersAmongTargetsEffect.class::cast)
+                    .filter(e -> e.mode() == DivisionMode.CHOSEN && e.removeAtNextEndStep())
+                    .findFirst()
+                    .orElse(null);
+            if (counterDistribution != null && pending.dyingCard().getSpellTargets().size() == 1) {
+                int total = counterDistribution.total() instanceof Fixed fixed ? fixed.value() : 0;
+                if (total > 0) {
+                    gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+                    int maxTargets = Math.min(total, Math.min(
+                            pending.dyingCard().getMaxTargets(), result.validTargets().size()));
+                    playerInputService.beginMultiPermanentChoice(
+                            gameData,
+                            pending.controllerId(),
+                            result.validTargets(),
+                            maxTargets,
+                            new MultiPermanentChoiceContext.CounterDistribution(
+                                    pending.dyingCard(), pending.controllerId(), pending.effects(),
+                                    pending.sourcePermanentSnapshot() == null
+                                            ? null : pending.sourcePermanentSnapshot().getId(),
+                                    counterDistribution.counterType(), total),
+                            pending.dyingCard().getName()
+                                    + "'s ability — Choose one, two, or three target creatures.");
+                    gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
+                            "'s death trigger — choose creatures for counter distribution."));
+                    log.info("Game {} - {} death trigger awaiting counter distribution targets",
+                            gameData.id, pending.dyingCard().getName());
+                    return;
+                }
             }
 
             // Remove from queue and begin permanent choice

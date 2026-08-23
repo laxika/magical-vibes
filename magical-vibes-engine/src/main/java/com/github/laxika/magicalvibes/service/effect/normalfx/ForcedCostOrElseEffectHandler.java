@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -187,6 +189,47 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 allGraveyardCards(gameData), cost.cardsPerPayment(), cost.cardsPerPayment(),
                 "Choose " + cost.cardsPerPayment()
                         + " cards from a single graveyard for the first cumulative upkeep payment.");
+        return true;
+    }
+
+    public boolean beginControllerGraveyardPayment(GameData gameData, PendingMayAbility ability,
+                                                    UUID controllerId) {
+        ForcedCostOrElseEffect forcedCost = ability.effects().stream()
+                .filter(ForcedCostOrElseEffect.class::isInstance)
+                .map(ForcedCostOrElseEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (forcedCost == null
+                || !(forcedCost.forcedCost() instanceof PutCardsFromGraveyardOnBottomOfLibraryCost cost)) {
+            return false;
+        }
+
+        return beginControllerGraveyardPayment(gameData, ability.sourceCard(), ability.sourcePermanentId(),
+                forcedCost, controllerId);
+    }
+
+    public boolean beginControllerGraveyardPayment(GameData gameData, Card sourceCard,
+                                                    UUID sourcePermanentId,
+                                                    ForcedCostOrElseEffect forcedCost,
+                                                    UUID controllerId) {
+        if (!(forcedCost.forcedCost() instanceof PutCardsFromGraveyardOnBottomOfLibraryCost cost)) {
+            return false;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
+        if (graveyard.size() < cost.count()) {
+            return false;
+        }
+
+        gameData.graveyardTargetOperation.controllerGraveyardPayment =
+                new com.github.laxika.magicalvibes.model.GraveyardTargetOperationState
+                        .ControllerGraveyardPaymentContext(
+                            controllerId, sourceCard, sourcePermanentId, forcedCost,
+                            cost.count());
+        gameData.graveyardTargetOperation.singleGraveyard = false;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, graveyard,
+                cost.count(), cost.count(), "Choose " + cost.count()
+                        + " cards from your graveyard to put on the bottom of your library.");
         return true;
     }
 
@@ -469,6 +512,46 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             beginGraveyardReturnToHandChoice(gameData, entry.getControllerId(), returnFromGraveyardCost.predicate());
+            return;
+        }
+
+        if (e.forcedCost() instanceof PutCardsFromGraveyardOnBottomOfLibraryCost cost) {
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of());
+            if (graveyard.size() < cost.count()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Put " + cost.count()
+                                + " cards from your graveyard on the bottom of your library?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            if (beginControllerGraveyardPayment(gameData, entry.getCard(), entry.getSourcePermanentId(),
+                    e, entry.getControllerId())) {
+                return;
+            }
+            destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+            return;
+        }
+
+        if (e.forcedCost() instanceof PutCardFromGraveyardOnBottomOfLibraryCost) {
+            List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
+            if (graveyard == null || graveyard.isEmpty()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName()
+                                + " - Put a card from your graveyard on the bottom of your library?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            beginGraveyardBottomChoice(gameData, entry.getControllerId());
             return;
         }
 
@@ -1011,6 +1094,22 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                         .builder(playerId, matchingIndices,
                                 com.github.laxika.magicalvibes.model.GraveyardChoiceDestination.HAND,
                                 "Choose a " + label + " to return to your hand.")
+                        .mandatory(true)
+                        .build());
+    }
+
+    /** Pays by putting one card from the controller's graveyard on the bottom of its library. */
+    public void beginGraveyardBottomChoice(GameData gameData, UUID playerId) {
+        List<com.github.laxika.magicalvibes.model.Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Integer> cardIndices = new ArrayList<>();
+        for (int i = 0; graveyard != null && i < graveyard.size(); i++) {
+            cardIndices.add(i);
+        }
+        interactionHandlerRegistry.begin(gameData,
+                com.github.laxika.magicalvibes.model.PendingInteraction.GraveyardChoice
+                        .builder(playerId, cardIndices,
+                                com.github.laxika.magicalvibes.model.GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY,
+                                "Choose a card to put on the bottom of your library.")
                         .mandatory(true)
                         .build());
     }

@@ -150,6 +150,13 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 null, null, null, null, null, permanentId, amount, null, false, 0, false);
     }
 
+    /** Put counters on a permanent and draw cards after a filtered discard completes. */
+    public static DiscardFollowUp plusOnePlusOneCountersAndDraw(UUID permanentId, int counterAmount,
+                                                                  int drawCount) {
+        return new DiscardFollowUp(drawCount, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                null, null, null, null, null, permanentId, counterAmount, null, false, 0, false);
+    }
+
     public static DiscardFollowUp eachPlayer(List<UUID> remainingChoosers, UUID controllerId, int amount) {
         return new DiscardFollowUp(0, null, remainingChoosers, controllerId, amount, 0, List.of(), null, 0, 0,
                 null, null, null, null, null, null, 0, null, false, 0, false);

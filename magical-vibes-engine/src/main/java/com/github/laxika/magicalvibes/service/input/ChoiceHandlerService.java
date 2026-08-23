@@ -174,6 +174,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.CounterDistributionAssignment ctx) {
+            handleCounterDistributionAssignment(gameData, player, colorName, colorChoice, ctx);
+            return;
+        }
+
         // Attack mana split choice (Grand Warlord Radha, etc.)
         if (colorChoice.context() instanceof ChoiceContext.AttackManaSplitChoice ctx) {
             handleAttackManaSplitChosen(gameData, player, colorName, ctx);
@@ -2725,6 +2730,55 @@ public class ChoiceHandlerService {
                 ctx.targetIds()));
         gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
                 "'s chapter " + ctx.chapterName() + " counter distribution is set."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCounterDistributionAssignment(
+            GameData gameData, Player player, String numberText,
+            PendingInteraction.ColorChoice colorChoice,
+            ChoiceContext.CounterDistributionAssignment ctx) {
+        if (!colorChoice.options().contains(numberText)) {
+            throw new IllegalArgumentException("Invalid counter assignment: " + numberText);
+        }
+
+        int chosen = Integer.parseInt(numberText);
+        UUID targetId = ctx.targetIds().get(ctx.nextTargetIndex());
+        java.util.Map<UUID, Integer> assignments = new java.util.LinkedHashMap<>(ctx.assignments());
+        assignments.put(targetId, chosen);
+        int assigned = assignments.values().stream().mapToInt(Integer::intValue).sum();
+        int nextTargetIndex = ctx.nextTargetIndex() + 1;
+
+        if (nextTargetIndex < ctx.targetIds().size()) {
+            gameData.interaction.clearAwaitingInput();
+            ChoiceContext.CounterDistributionAssignment next =
+                    new ChoiceContext.CounterDistributionAssignment(
+                            ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
+                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex);
+            playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        if (assigned != ctx.total()) {
+            throw new IllegalStateException("Counter assignments must total " + ctx.total());
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ctx.sourceCard(),
+                ctx.controllerId(),
+                ctx.sourceCard().getName() + "'s ability",
+                new java.util.ArrayList<>(ctx.effects()),
+                0,
+                null,
+                ctx.sourcePermanentId(),
+                assignments,
+                null,
+                List.of(),
+                ctx.targetIds()));
+        gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
+                "'s counter distribution is set."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

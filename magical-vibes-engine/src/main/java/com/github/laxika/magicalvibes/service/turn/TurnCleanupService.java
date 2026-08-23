@@ -282,6 +282,7 @@ public class TurnCleanupService {
         gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.damageLifeFloorsUntilEndOfTurn.clear();
+        gameData.damageReplacementsThisTurn.clear();
         gameData.playersCantGainLifeThisTurn = false;
         gameData.creaturesCantAttackThisTurn = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
@@ -357,6 +358,7 @@ public class TurnCleanupService {
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
+        gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();

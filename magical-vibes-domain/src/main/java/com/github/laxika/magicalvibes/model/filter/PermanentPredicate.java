@@ -118,6 +118,7 @@ public sealed interface PermanentPredicate permits
         PermanentPowerAtMostSourcePowerPredicate,
         PermanentPowerAtMostXPredicate,
         PermanentPowerLessThanXPredicate,
+        PermanentPowerLessThanControllerGraveyardCountPredicate,
         PermanentPowerEqualsToughnessPredicate,
         PermanentPowerLessThanSourcePowerPredicate,
         PermanentToughnessAtLeastPredicate,

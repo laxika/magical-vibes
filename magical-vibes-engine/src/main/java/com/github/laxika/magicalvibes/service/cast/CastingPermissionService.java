@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
@@ -126,6 +127,7 @@ public class CastingPermissionService {
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return false;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
+        if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
@@ -469,6 +471,29 @@ public class CastingPermissionService {
     }
 
     /**
+     * Static restrictions such as Llawan's apply to spells matching a card predicate, but only
+     * when the caster is an opponent of the permanent's controller.
+     */
+    public boolean isOpponentsSpellMatchingPredicateRestricted(GameData gameData, UUID castingPlayerId,
+                                                                 Card card) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(castingPlayerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
+                            && predicateEvaluationService.matchesCardPredicate(
+                            card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Ethersworn Canonist: "Each player who has cast a nonartifact spell this turn can't cast
      * additional nonartifact spells." Returns true if {@code card} is a nonartifact spell, some
      * permanent carries the effect, and {@code playerId} has already cast a nonartifact spell this
@@ -627,6 +652,7 @@ public class CastingPermissionService {
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return true;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
+        if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
     }
 

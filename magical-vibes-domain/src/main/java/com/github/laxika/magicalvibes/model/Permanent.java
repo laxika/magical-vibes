@@ -155,6 +155,8 @@ public class Permanent {
     private final Set<String> chosenModeLabelsThisTurn = new HashSet<>();
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
+    /** Player targeted by a linked enter-the-battlefield ability. */
+    @Setter private UUID rememberedTargetPlayerId;
     /** Permanents tapped this turn to pay for activated abilities whose source tracks that payment. */
     private final List<UUID> tappedPermanentsForAbilityThisTurn = new ArrayList<>();
     /**
@@ -668,6 +670,7 @@ public class Permanent {
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
         this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null

@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEf
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
@@ -304,6 +305,7 @@ public class GameQueryService {
      * @param toughness                 total toughness modifier from static effects
      * @param keywords                  keywords granted by static effects
      * @param protectionColors          protection colors granted by static effects
+     * @param removedProtectionColors   protection colors removed by static effects
      * @param animatedCreature          whether the permanent is animated into a creature
      * @param grantedActivatedAbilities activated abilities granted by static effects
      * @param grantedEffects            card effects granted by static effects
@@ -314,8 +316,18 @@ public class GameQueryService {
      * @param subtypeOverriding         whether granted subtypes replace the permanent's natural subtypes
      * @param cardTypeOverriding        whether granted card types replace the permanent's natural card types
      */
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities, boolean losesAllNonManaAbilities, boolean ptSwitched, String name) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false, false, null);
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors,
+                              Set<CardColor> removedProtectionColors, boolean animatedCreature,
+                              List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects,
+                              Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes,
+                              Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes,
+                              boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding,
+                              boolean cardTypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden,
+                              int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities,
+                              boolean losesAllNonManaAbilities, boolean ptSwitched, String name) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), Set.of(), false,
+                List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false,
+                Set.of(), false, 0, 0, false, false, false, null);
 
         public StaticBonus(int power, int toughness, Set<Keyword> keywords,
                            Set<CardColor> protectionColors, boolean animatedCreature,
@@ -327,7 +339,7 @@ public class GameQueryService {
                            boolean cardTypeOverriding, Set<Keyword> removedKeywords,
                            boolean basePTOverridden, Integer basePowerOverride, Integer baseToughnessOverride,
                            boolean losesAllAbilities, boolean ptSwitched) {
-            this(power, toughness, keywords, protectionColors, animatedCreature,
+            this(power, toughness, keywords, protectionColors, Set.of(), animatedCreature,
                     grantedActivatedAbilities, grantedEffects, grantedColors, grantedSubtypes,
                     grantedCardTypes, grantedSupertypes, colorOverriding, subtypeOverriding,
                     landSubtypeOverriding, cardTypeOverriding, removedKeywords,
@@ -3562,6 +3574,7 @@ public class GameQueryService {
         Set<CardColor> grantedColors = accumulator.getGrantedColors();
         boolean colorOverriding = accumulator.isColorOverriding();
         Set<CardColor> protectionColors = accumulator.getProtectionColors();
+        Set<CardColor> removedProtectionColors = Set.of();
         List<ActivatedAbility> grantedActivatedAbilities = accumulator.getGrantedActivatedAbilities();
         List<CardEffect> grantedEffects = accumulator.getGrantedEffects();
         boolean losesAllAbilities = accumulator.isLosesAllAbilities();
@@ -3591,6 +3604,7 @@ public class GameQueryService {
             mergedProtection.addAll(state.getProtectionColors());
             mergedProtection.addAll(accumulator.getProtectionColors());
             protectionColors = mergedProtection;
+            removedProtectionColors = Set.copyOf(state.getRemovedProtectionColors());
             List<ActivatedAbility> mergedAbilities = new ArrayList<>(state.getGrantedActivatedAbilities());
             mergedAbilities.addAll(accumulator.getGrantedActivatedAbilities());
             grantedActivatedAbilities = mergedAbilities;
@@ -3627,7 +3641,8 @@ public class GameQueryService {
         }
 
         return new StaticBonus(accumulator.getPower(), accumulator.getToughness(), keywords,
-                protectionColors, accumulator.isAnimatedCreature() || isSelfAnimated,
+                protectionColors, removedProtectionColors,
+                accumulator.isAnimatedCreature() || isSelfAnimated,
                 grantedActivatedAbilities, grantedEffects, grantedColors,
                 accumulator.getGrantedSubtypes(), accumulator.getGrantedCardTypes(),
                 accumulator.getGrantedSupertypes(), colorOverriding,
@@ -3707,21 +3722,25 @@ public class GameQueryService {
         }
         // Layered layer-6 protection state: own printed protection (removable by a
         // later-timestamp "loses all abilities") plus protection grants.
-        if (bonus.protectionColors().contains(sourceColor)) {
+        if (!bonus.removedProtectionColors().contains(sourceColor)
+                && bonus.protectionColors().contains(sourceColor)) {
             return true;
         }
         // Protection granted by another permanent's static effect (e.g. Favor of the Mighty
         // via GrantEffectEffect(ProtectionFromColorsEffect, ...)).
-        for (CardEffect effect : bonus.grantedEffects()) {
-            if (effect instanceof ProtectionGrantingEffect protection
-                    && protection.protectionFromColors().contains(sourceColor)) {
-                return true;
+        if (!bonus.removedProtectionColors().contains(sourceColor)) {
+            for (CardEffect effect : bonus.grantedEffects()) {
+                if (effect instanceof ProtectionGrantingEffect protection
+                        && protection.protectionFromColors().contains(sourceColor)) {
+                    return true;
+                }
             }
         }
         if (target.getProtectionFromColorsUntilEndOfTurn().contains(sourceColor)) {
             return true;
         }
-        if (!bonus.losesAllAbilities()
+        if (!bonus.removedProtectionColors().contains(sourceColor)
+                && !bonus.losesAllAbilities()
                 && target.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof ProtectionFromColorsOfPermanentsYouControlEffect protection
                                 && protection.scope() == null)
@@ -5015,6 +5034,12 @@ public class GameQueryService {
                 }
             }
         });
+        for (ReplaceDamageAboveThresholdThisTurnEffect replacement
+                : List.copyOf(gameData.damageReplacementsThisTurn)) {
+            if (result[0] >= replacement.threshold()) {
+                result[0] = replacement.replacementDamage();
+            }
+        }
         return result[0];
     }
 

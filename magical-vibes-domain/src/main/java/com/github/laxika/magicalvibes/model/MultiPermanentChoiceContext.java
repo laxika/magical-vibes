@@ -28,6 +28,15 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                               UUID sourcePermanentId, CounterType counterType, int total)
+            implements MultiPermanentChoiceContext {
+
+        public CounterDistribution {
+            effects = List.copyOf(effects);
+        }
+    }
+
     /** Exile a permanent the damaged player controls (combat damage trigger). */
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
     }

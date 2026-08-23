@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTy
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
@@ -2205,6 +2206,8 @@ public class LayerSystemService {
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(remove.keyword()), false));
                     }
+                    case RemoveProtectionFromColorUntilEndOfTurnEffect remove ->
+                            state.removeProtectionColors(Set.of(remove.color()));
                     case GrantKeywordEffect grant -> {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),

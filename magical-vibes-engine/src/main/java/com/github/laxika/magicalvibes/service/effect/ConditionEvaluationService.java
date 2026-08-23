@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInHa
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
@@ -545,6 +546,8 @@ public class ConditionEvaluationService {
                             && ctx.controllerId() != null
                             && countCardsInHand(gameData, ctx.targetId())
                             > countCardsInHand(gameData, ctx.controllerId());
+            case TargetPlayerControlsPermanent c ->
+                    targetPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case TargetPlayerLifeTotalEquals c ->
                     ctx.targetId() != null && gameData.getLife(ctx.targetId()) == c.lifeTotal();
             case CastFromZone c ->
@@ -1485,6 +1488,23 @@ public class ConditionEvaluationService {
     private boolean controlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
         if (ctx.controllerId() == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+        return battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
+    }
+
+    private boolean targetPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx,
+                                                          PermanentPredicate filter) {
+        UUID targetPlayerId = ctx.targetId();
+        if (targetPlayerId == null) return false;
+
+        if (!gameData.playerIds.contains(targetPlayerId)) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetPlayerId);
+            if (target == null) return false;
+            targetPlayerId = gameQueryService.findPermanentController(gameData, target.getId());
+        }
+
+        if (targetPlayerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
     }

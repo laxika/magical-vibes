@@ -378,6 +378,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.isEmpty()) {
             throw new IllegalStateException("A creature target is required after accepting the sacrifice");
         }
+        if (context instanceof MultiPermanentChoiceContext.CounterDistribution
+                && permanentIds.isEmpty()) {
+            throw new IllegalStateException("At least one target creature must be selected");
+        }
 
         gameData.interaction.clearAwaitingInput();
 
@@ -572,6 +576,8 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SagaChapterCounterDistribution ctx) {
             handleSagaChapterCounterDistribution(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.CounterDistribution ctx) {
+            handleCounterDistribution(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
@@ -624,6 +630,18 @@ public class MultiPermanentChoiceHandlerService {
                         context.sourcePermanentId(), context.chapterName(), context.counterType(),
                         permanentIds, java.util.Map.of(), context.total(), 0);
         playerInputService.beginSagaChapterCounterAssignmentChoice(
+                gameData, context.controllerId(), assignment);
+    }
+
+    private void handleCounterDistribution(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.CounterDistribution context) {
+        ChoiceContext.CounterDistributionAssignment assignment =
+                new ChoiceContext.CounterDistributionAssignment(
+                        context.sourceCard(), context.controllerId(), context.effects(),
+                        context.sourcePermanentId(), context.counterType(), permanentIds,
+                        java.util.Map.of(), context.total(), 0);
+        playerInputService.beginCounterDistributionAssignmentChoice(
                 gameData, context.controllerId(), assignment);
     }
 

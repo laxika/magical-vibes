@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -101,6 +102,46 @@ public class CardChoiceHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+
+    /** Answers Retraced Image's mandatory hand reveal and conditional battlefield entry. */
+    public void handleRetracedImageCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.RetracedImageCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.RetracedImageCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Card card = hand.remove(cardIndex);
+        gameLogService.append(gameData,
+                GameLog.textCardText(player.getUsername() + " reveals ", card, " from their hand."));
+
+        boolean sharesNameWithPermanent = predicateEvaluationService.matchesCardPredicate(
+                card, new CardSharesNameWithAPermanentPredicate(), card.getId(), gameData, player.getId());
+        if (sharesNameWithPermanent) {
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
+            gameLogService.append(gameData,
+                    GameLog.textCardText(player.getUsername() + " puts ", card, " onto the battlefield."));
+            if (card.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
+            }
+        } else {
+            hand.add(cardIndex, card);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(card, " does not share a name with a permanent and remains in their hand."));
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -472,6 +513,17 @@ public class CardChoiceHandlerService {
             return;
         }
 
+        // Apply counters before drawing for combined filtered-discard follow-ups. This preserves
+        // the written order of effects such as "put counters on this creature and draw".
+        if (followUp.plusOnePlusOneCounterPermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData,
+                    followUp.plusOnePlusOneCounterPermanentId());
+            if (source != null) {
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source,
+                        followUp.plusOnePlusOneCounterAmount());
+            }
+        }
+
         // Draw cards after "discard up to N, then draw that many" completes
         if (followUp.rummageDrawCount() > 0) {
             int drawCount = followUp.rummageDrawCount();
@@ -520,15 +572,6 @@ public class CardChoiceHandlerService {
                         break;
                     }
                 }
-            }
-        }
-
-        if (followUp.plusOnePlusOneCounterPermanentId() != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData,
-                    followUp.plusOnePlusOneCounterPermanentId());
-            if (source != null) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source,
-                        followUp.plusOnePlusOneCounterAmount());
             }
         }
 

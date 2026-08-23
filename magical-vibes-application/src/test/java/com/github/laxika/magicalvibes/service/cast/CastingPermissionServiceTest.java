@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -437,6 +439,37 @@ class CastingPermissionServiceTest {
             bolt.setManaCost("{R}");
 
             assertThat(svc.isSpellCastingAllowed(gd, player1Id, bolt)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Rejects an opponent's spell matching a permanent's predicate")
+        void rejectsOpponentSpellMatchingPredicate() {
+            Card llawan = new Card();
+            llawan.addEffect(EffectSlot.STATIC,
+                    new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(llawan));
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+            when(predicateEvaluationService.matchesCardPredicate(
+                    eq(creature), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player2Id)))
+                    .thenReturn(true);
+
+            assertThat(svc.isSpellCastingAllowed(gd, player2Id, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Does not apply a matching-predicate restriction to its controller")
+        void matchingPredicateRestrictionDoesNotAffectSourceController() {
+            Card llawan = new Card();
+            llawan.addEffect(EffectSlot.STATIC,
+                    new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(llawan));
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, creature)).isTrue();
         }
 
         @Test

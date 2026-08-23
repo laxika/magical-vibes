@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChandraTorchExileCastSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -65,6 +66,7 @@ public class PermanentChoiceSpellHandlerService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final CopySupport copySupport;
     private final LifeSupport lifeSupport;
+    private final DealDividedDamageSupport dealDividedDamageSupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -80,7 +82,8 @@ public class PermanentChoiceSpellHandlerService {
                                               TargetLegalityService targetLegalityService,
                                               InteractionHandlerRegistry interactionHandlerRegistry,
                                               CopySupport copySupport,
-                                              LifeSupport lifeSupport) {
+                                              LifeSupport lifeSupport,
+                                              DealDividedDamageSupport dealDividedDamageSupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -96,6 +99,7 @@ public class PermanentChoiceSpellHandlerService {
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.copySupport = copySupport;
         this.lifeSupport = lifeSupport;
+        this.dealDividedDamageSupport = dealDividedDamageSupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -522,7 +526,8 @@ public class PermanentChoiceSpellHandlerService {
         if (isPermanentOrPlayerTarget || isSpellTarget) {
             Map<UUID, Integer> damageAssignments = hct.castForMadnessCost()
                     && EffectResolution.needsDamageDistribution(hct.spellEffects())
-                    ? Map.of(permanentId, hct.xValue())
+                    ? Map.of(permanentId, dealDividedDamageSupport.damageAssignedToSingleTarget(
+                            gameData, hct.spellEffects(), hct.controllerId(), hct.xValue()))
                     : null;
             StackEntry entry = new StackEntry(
                     hct.spellType(),

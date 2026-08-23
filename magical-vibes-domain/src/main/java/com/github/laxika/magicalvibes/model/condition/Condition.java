@@ -238,6 +238,7 @@ public sealed interface Condition permits
         TargetPlayerLifeTotalEquals,
         TargetPlayerHasMoreCardsInHandThanController,
         TargetPlayerHandEmpty,
+        TargetPlayerControlsPermanent,
         TargetSpellCanBeCountered,
         ControllerControlsMoreCreaturesThanTargetSpellController,
         TargetSpellMatches,

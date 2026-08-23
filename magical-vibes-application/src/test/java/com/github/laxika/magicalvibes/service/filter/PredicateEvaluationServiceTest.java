@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
@@ -1091,6 +1092,23 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(weaker, new PermanentPowerLessThanSourcePowerPredicate(), ctx)).isTrue();
             assertThat(evaluator.matchesPermanentPredicate(equal, new PermanentPowerLessThanSourcePowerPredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentPowerLessThanControllerGraveyardCountPredicate uses the source controller's graveyard and is strict")
+        void powerLessThanControllerGraveyardCount() {
+            Permanent target = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            gd.playerGraveyards.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            gd.playerGraveyards.get(player2Id).addAll(List.of(new Card(), new Card(), new Card(), new Card()));
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+            PermanentPowerLessThanControllerGraveyardCountPredicate predicate =
+                    new PermanentPowerLessThanControllerGraveyardCountPredicate();
+
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, ctx)).isTrue();
+
+            gd.playerGraveyards.get(player1Id).remove(2);
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, ctx)).isFalse();
         }
 
         @Test

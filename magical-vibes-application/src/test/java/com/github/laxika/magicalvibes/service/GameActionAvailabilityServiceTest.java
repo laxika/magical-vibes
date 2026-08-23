@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
@@ -270,6 +271,24 @@ class GameActionAvailabilityServiceTest {
             ManaPool pool = new ManaPool();
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLUE);
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLACK);
+
+            assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Exact-X target group with discard-X cost is playable at X=0 without a legal target")
+        void exactXTargetGroupWithDiscardCostIsPlayableAtZero() {
+            Card card = new Card();
+            card.setName("Discard X exact spell");
+            card.setType(CardType.INSTANT);
+            card.setManaCost("{W}{W}");
+            card.addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
+            card.targetExactlyX(new PermanentPredicateTargetFilter(
+                    new PermanentTruePredicate(), "Target must be a permanent"), 100)
+                    .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2);
 
             assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
         }

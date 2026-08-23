@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsFromEnchantedCre
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateSpiritTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnLinkedCardToOwnerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -108,6 +109,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeC
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
@@ -118,6 +120,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -1580,6 +1583,26 @@ public class DeathTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAnyPermanentGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                apg.graveyardOwnerId(),
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (permanent put into a graveyard from the battlefield)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAnyNontokenPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -2389,6 +2412,24 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleReturnAllCardsExiledWithSourceToOwnerGraveyard(TriggerMatchContext match,
+            ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect())),
+                null,
+                match.permanent().getId());
+        match.gameData().stack.add(entry);
+        logSelfLeaves(match);
+        return true;
+    }
+
     @CollectsTrigger(value = SelfExiledFromBattlefieldEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
     boolean handleSelfExiledFromBattlefield(TriggerMatchContext match,
             SelfExiledFromBattlefieldEffect effect, TriggerContext ctx) {
@@ -2646,6 +2687,47 @@ public class DeathTriggerCollectorService {
         int amount = amountEvaluationService.evaluate(match.gameData(), effect.amount(), amountContext);
         GainLifeEffect frozen = new GainLifeEffect(new Fixed(amount), effect.recipient(), effect.targetsPlayer());
         return handleSelfLeavesDefault(match, frozen, ctx);
+    }
+
+    @CollectsTrigger(value = TargetPlayerGainsLifeEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfLeavesTargetPlayerGainsLife(TriggerMatchContext match,
+            TargetPlayerGainsLifeEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        UUID targetPlayerId = match.permanent().getRememberedTargetPlayerId();
+        if (targetPlayerId == null) {
+            targetPlayerId = findPendingEnterTarget(match.gameData(), match.permanent());
+        }
+        if (targetPlayerId == null || !match.gameData().playerIds.contains(targetPlayerId)) {
+            return false;
+        }
+
+        AmountContext amountContext = new AmountContext(sl.controllerId(), match.permanent(), null, 0, 0);
+        int amount = amountEvaluationService.evaluate(match.gameData(), effect.amount(), amountContext);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new TargetPlayerGainsLifeEffect(new Fixed(amount)))),
+                targetPlayerId,
+                match.permanent().getId());
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        logSelfLeaves(match);
+        return true;
+    }
+
+    private UUID findPendingEnterTarget(GameData gameData, Permanent source) {
+        return gameData.stack.stream()
+                .filter(entry -> source.getId().equals(entry.getSourcePermanentId()))
+                .filter(entry -> entry.getEffectsToResolve().stream()
+                        .anyMatch(RememberTargetPlayerEffect.class::isInstance))
+                .map(StackEntry::getTargetId)
+                .filter(gameData.playerIds::contains)
+                .findFirst()
+                .orElse(null);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)

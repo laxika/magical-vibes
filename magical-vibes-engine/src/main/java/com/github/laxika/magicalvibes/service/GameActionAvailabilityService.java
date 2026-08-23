@@ -382,9 +382,13 @@ public class GameActionAvailabilityService {
         boolean needsSpellCastTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
         Integer maxXValue = maxAnnounceableX(card, pool);
+        boolean externalXCanBeZero = maxXValue == null
+                && card.hasXScaledTargets()
+                && card.getEffectiveMinTargets(0) == 0;
         boolean allTargetsOptional = !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0
-                || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0);
+                || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0
+                || externalXCanBeZero);
         if (!targetsAlreadyDeclared && !allTargetsOptional && needsSpellCastTarget) {
             boolean hasValidTarget = validTargetService.hasValidTargetsForSpell(
                     gameData, card, playerId, maxXValue);
@@ -1143,9 +1147,18 @@ public class GameActionAvailabilityService {
             }
             if (manaCostStr == null) {
                 // Flashback with no mana cost — e.g. Group Project's "tap three creatures" cost.
-                if (flashback.isPresent() && castingCostService.canPayFlashbackTapCost(gameData, playerId, flashback.get())) {
+                boolean hasLifeCost = flashback.isPresent()
+                        && flashback.get().getCost(LifeCastingCost.class).isPresent();
+                if (flashback.isPresent()
+                        && castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashback.get())
+                        && (hasLifeCost
+                        || castingCostService.canPayFlashbackTapCost(gameData, playerId, flashback.get()))) {
                     playable.add(i);
                 }
+                continue;
+            }
+            if (flashback.isPresent()
+                    && !castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashback.get())) {
                 continue;
             }
             ManaPool pool = gameData.playerManaPools.get(playerId);

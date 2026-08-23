@@ -179,6 +179,8 @@ public class StackEntry {
      * Duplicates are meaningful: a player who lost three lands appears three times.
      */
     @Setter private List<UUID> eventPlayerIds = List.of();
+    /** Card ids of the permanents actually destroyed by the event that produced this entry. */
+    @Setter private List<UUID> eventCardIds = List.of();
     /**
      * The per-permanent mana value payload behind this entry, positionally aligned with
      * {@link #eventPlayerIds}. Stamped by {@code DestroyAllPermanentsEffectHandler} with the
@@ -584,6 +586,7 @@ public class StackEntry {
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
+        this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;

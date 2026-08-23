@@ -1799,6 +1799,26 @@ public class AdditionalSpellCostService {
         if (announcedX < 0) {
             throw new IllegalStateException("X cannot be negative for " + card.getName());
         }
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (cost != null && cost.randomSelection()) {
+            if (announcedX == 0) {
+                return List.of();
+            }
+            if (hand == null) {
+                throw new IllegalStateException("Must discard cards at random to cast " + card.getName());
+            }
+            long eligibleCount = hand.stream()
+                    .filter(candidate -> !candidate.getId().equals(card.getId()))
+                    .filter(candidate -> cost.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            candidate, cost.predicate(), candidate.getId()))
+                    .count();
+            if (eligibleCount < announcedX) {
+                throw new IllegalStateException("Must discard " + announcedX + " card"
+                        + (announcedX == 1 ? "" : "s") + " at random to cast " + card.getName());
+            }
+            return List.of();
+        }
         List<Integer> indices = discardHandCardIndices != null ? discardHandCardIndices : List.of();
         if (indices.size() != announcedX) {
             throw new IllegalStateException("Must discard " + announcedX + " card"
@@ -1810,7 +1830,6 @@ public class AdditionalSpellCostService {
         if (indices.stream().distinct().count() != indices.size()) {
             throw new IllegalStateException("Duplicate discard indices for " + card.getName());
         }
-        List<Card> hand = gameData.playerHands.get(player.getId());
         if (hand == null) {
             throw new IllegalStateException("Must discard cards to cast " + card.getName());
         }

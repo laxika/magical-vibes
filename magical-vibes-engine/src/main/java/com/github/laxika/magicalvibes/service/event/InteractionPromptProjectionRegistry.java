@@ -135,6 +135,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectActivatedAbilityGraveyardExileCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.RetracedImageCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.MasterOfPredicamentsCardChoice.class,
@@ -519,9 +521,11 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
-                interaction.pool().size(),
-                "Choose any number of " + interaction.cardLabel()
-                        + " cards to reveal and put on top of your library.");
+                interaction.maximumSelectionCount(),
+                interaction.requiredCount() < 0
+                        ? "Choose any number of " + interaction.cardLabel()
+                                + " cards to reveal and put on top of your library."
+                        : "Choose " + interaction.minimumSelectionCount() + " cards to put on top of your library.");
     }
 
     private InteractionPromptMessage projectIntuitionSearchChoice(

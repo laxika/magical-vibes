@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedExileCreatedPermanentsAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileCardsFromOwnGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -45,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
@@ -3649,6 +3652,26 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(RemoveCounterFromPermanentAtNextEndStep.class)) {
+            List<RemoveCounterFromPermanentAtNextEndStep> pendingRemovals =
+                    gameData.drainDelayedActions(RemoveCounterFromPermanentAtNextEndStep.class);
+            for (RemoveCounterFromPermanentAtNextEndStep action : pendingRemovals) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new RemoveCounterFromTargetPermanentEffect(
+                                action.counterType(), null, 1))),
+                        action.permanentId(),
+                        (UUID) null);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers to remove a counter."));
+            }
+        }
+
         // Process delayed untap permanents triggers (e.g. Teferi, Hero of Dominaria +1)
         if (gameData.hasDelayedAction(DelayedUntapPermanents.class)) {
             List<DelayedUntapPermanents> pendingUntaps =
@@ -3745,6 +3768,27 @@ public class StepTriggerService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards cards."));
                 log.info("Game {} - {} delayed discard trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
+            }
+        }
+
+        if (gameData.hasDelayedAction(ExileCardsFromOwnGraveyardAtNextEndStep.class)) {
+            List<ExileCardsFromOwnGraveyardAtNextEndStep> pendingExiles =
+                    gameData.drainDelayedActions(ExileCardsFromOwnGraveyardAtNextEndStep.class);
+            for (ExileCardsFromOwnGraveyardAtNextEndStep pending : pendingExiles) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — exile cards from graveyard",
+                        new ArrayList<>(List.of(new ExileGraveyardCardsEffect(
+                                pending.count(), GraveyardExileScope.OWN)))
+                );
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger exiles cards from graveyard."));
+                log.info("Game {} - {} delayed graveyard exile trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName());
             }
         }

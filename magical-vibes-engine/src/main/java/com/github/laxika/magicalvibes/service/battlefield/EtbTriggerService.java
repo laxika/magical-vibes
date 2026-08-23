@@ -705,10 +705,14 @@ public class EtbTriggerService {
         }
 
         // Handle graveyard exile effects: targets must be chosen at trigger time
+        List<Permanent> enteredBattlefield = gameData.playerBattlefields.get(controllerId);
+        UUID graveyardSourcePermanentId = enteredBattlefield == null || enteredBattlefield.isEmpty()
+                ? null : enteredBattlefield.getLast().getId();
         for (CardEffect effect : graveyardExileEffects) {
             ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+                graveyardTargetingService.handleGraveyardExileETBTargeting(
+                        gameData, controllerId, card, mandatoryEffects, graveyardSourcePermanentId, exile);
             }
         }
 

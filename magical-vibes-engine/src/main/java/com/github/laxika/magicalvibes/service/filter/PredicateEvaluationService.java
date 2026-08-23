@@ -176,6 +176,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCou
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanActivePlayerHandSizePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanXPredicate;
@@ -807,6 +808,15 @@ public class PredicateEvaluationService {
                     yield gameQueryService.powerForStaticFilter(permanent) < xVal;
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) < xVal;
+            }
+            case PermanentPowerLessThanControllerGraveyardCountPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                int graveyardCount = gameData.playerGraveyards
+                        .getOrDefault(sourceControllerId, List.of())
+                        .size();
+                yield gameQueryService.getEffectivePower(gameData, permanent) < graveyardCount;
             }
             case PermanentPowerAtMostControlledCreatureCountPredicate ignored -> {
                 if (gameData == null || sourceControllerId == null) {

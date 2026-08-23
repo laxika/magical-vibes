@@ -1332,11 +1332,20 @@ public class GraveyardReturnSupport {
     }
 
     public boolean exileCardFromAnyGraveyard(GameData gameData, UUID cardId, Card card) {
+        return exileCardFromAnyGraveyard(gameData, cardId, card, null);
+    }
+
+    public boolean exileCardFromAnyGraveyard(GameData gameData, UUID cardId, Card card,
+                                             UUID sourcePermanentId) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, pid, card);
-                exileService.exileCard(gameData, pid, card);
+                if (sourcePermanentId == null) {
+                    exileService.exileCard(gameData, pid, card);
+                } else {
+                    exileService.exileCard(gameData, pid, card, sourcePermanentId);
+                }
                 return true;
             }
         }

@@ -1616,6 +1616,13 @@ public class CastingCostService {
         return matchingCount >= tapCost.get().count();
     }
 
+    public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
+        var lifeCost = flashback.getCost(LifeCastingCost.class);
+        return lifeCost.isEmpty()
+                || (gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && gameData.getLife(playerId) >= lifeCost.get().amount());
+    }
+
     /**
      * CR 601.2b/601.2f: can the player currently satisfy every non-mana additional cast cost on
      * the card? Thin delegate to {@link AdditionalSpellCostService#satisfiable} — the engine's

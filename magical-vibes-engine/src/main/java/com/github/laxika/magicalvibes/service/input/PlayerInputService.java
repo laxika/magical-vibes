@@ -242,6 +242,21 @@ public class PlayerInputService {
                 "Choose how many " + counterLabel + " counters to put on the target creature."));
     }
 
+    public void beginCounterDistributionAssignmentChoice(
+            GameData gameData, UUID playerId, ChoiceContext.CounterDistributionAssignment context) {
+        int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
+        int remaining = context.total() - assigned;
+        int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
+        int maxForTarget = remaining - (remainingTargets - 1);
+        List<String> options = java.util.stream.IntStream.rangeClosed(1, maxForTarget)
+                .mapToObj(Integer::toString)
+                .toList();
+        String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, options,
+                "Choose how many " + counterLabel + " counters to put on the target creature."));
+    }
+
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
         beginMultiGraveyardChoice(gameData, playerId, cards, maxCount, 0, prompt);
     }

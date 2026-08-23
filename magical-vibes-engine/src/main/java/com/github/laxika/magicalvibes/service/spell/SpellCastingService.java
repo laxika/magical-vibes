@@ -477,6 +477,35 @@ public class SpellCastingService {
      */
     private int payDiscardXCardsCost(GameData gameData, Player player, Card card, DiscardXCardsCost cost,
                                      int announcedX, List<Integer> discardHandCardIndices, int spellCardIndex) {
+        if (cost.randomSelection()) {
+            additionalSpellCostService.validateDiscardXCardsCost(
+                    gameData, player, card, cost, announcedX, List.of(), spellCardIndex);
+            UUID playerId = player.getId();
+            List<Card> hand = gameData.playerHands.get(playerId);
+            int discardedManaValue = 0;
+            for (int i = 0; i < announcedX; i++) {
+                List<Card> eligibleCards = hand.stream()
+                        .filter(candidate -> !candidate.getId().equals(card.getId()))
+                        .filter(candidate -> cost.predicate() == null
+                                || predicateEvaluationService.matchesCardPredicate(
+                                candidate, cost.predicate(), candidate.getId()))
+                        .toList();
+                Card toDiscard = eligibleCards.get(ThreadLocalRandom.current().nextInt(eligibleCards.size()));
+                discardedManaValue += toDiscard.getManaValue();
+                hand.remove(toDiscard);
+                graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+                gameData.discardCausedByOpponent = false;
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " discards ")
+                        .card(toDiscard)
+                        .text(" at random to cast ")
+                        .card(card)
+                        .text(".")
+                        .build());
+                triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+            }
+            return cost.trackManaValue() ? discardedManaValue : 0;
+        }
         List<Integer> effectiveIndices = new ArrayList<>(
                 additionalSpellCostService.validateDiscardXCardsCost(
                         gameData, player, card, cost, announcedX, discardHandCardIndices, spellCardIndex));
@@ -1764,6 +1793,7 @@ public class SpellCastingService {
         effectiveXValue = additionalSpellCostService.resolveXValue(
                 additionalCosts, costSelection, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -4813,6 +4843,7 @@ public class SpellCastingService {
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
@@ -5018,6 +5049,10 @@ public class SpellCastingService {
         int targetingLifeTax = castingCostService.getTargetingLifeTax(gameData, playerId, targetId, targetIds);
         if (targetingLifeTax > 0 && targetingLifeTax > gameData.getLife(playerId)) {
             throw new IllegalStateException("Not enough life to pay the targeting life cost");
+        }
+        if (flashbackOpt.isPresent()
+                && !castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashbackOpt.get())) {
+            throw new IllegalStateException("Cannot pay flashback life cost");
         }
         if (isGraveyardCast) {
             validateGraveyardCastAdditionalCosts(gameData, playerId, graveyardCastOpt.orElseThrow(),
@@ -5434,6 +5469,7 @@ public class SpellCastingService {
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
@@ -5955,6 +5991,7 @@ public class SpellCastingService {
                 ? 0 : resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -6044,6 +6081,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Spells cannot be cast from libraries");
         }
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, 0)) {
             throw new IllegalStateException("Card is not playable");
@@ -7551,7 +7589,16 @@ public class SpellCastingService {
                             .text(".")
                             .build());
                 }
-            } else if (manaCostOpt.isEmpty()) {
+            }
+
+            var lifeCost = flashback.getCost(LifeCastingCost.class);
+            lifeCost.ifPresent(cost -> {
+                gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - cost.amount());
+                gameData.lifeLostThisTurn.merge(playerId, cost.amount(), Integer::sum);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + cost.amount() + " life for ", card, "."));
+            });
+            if (manaCostOpt.isEmpty() && tapCost.isEmpty() && lifeCost.isEmpty()) {
                 throw new IllegalStateException("Flashback has no cost");
             }
         }

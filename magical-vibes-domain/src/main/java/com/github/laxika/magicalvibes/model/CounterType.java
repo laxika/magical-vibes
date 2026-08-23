@@ -107,6 +107,7 @@ public enum CounterType {
     SHELL,
     SLEIGHT,
     SLIME,
+    SHRED,
     SOOT,
     SOUL,
     STORAGE,

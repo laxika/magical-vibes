@@ -30,6 +30,8 @@ public class GraveyardTargetOperationState {
     public boolean singleGraveyard;
     /** In-progress cumulative-upkeep payments, one single-graveyard choice per age counter. */
     public CumulativeUpkeepPaymentContext cumulativeUpkeepPayment;
+    /** In-progress payment that moves a fixed number of cards from the controller's graveyard. */
+    public ControllerGraveyardPaymentContext controllerGraveyardPayment;
 
     public record CumulativeUpkeepPaymentContext(UUID sourceControllerId, Card sourceCard,
                                                   UUID sourcePermanentId, ForcedCostOrElseEffect forcedCost,
@@ -38,6 +40,11 @@ public class GraveyardTargetOperationState {
         public CumulativeUpkeepPaymentContext {
             selectedCardIds = List.copyOf(selectedCardIds);
         }
+    }
+
+    public record ControllerGraveyardPaymentContext(UUID sourceControllerId, Card sourceCard,
+                                                     UUID sourcePermanentId,
+                                                     ForcedCostOrElseEffect forcedCost, int count) {
     }
     /** Target player for effects like "Target player shuffles ... from their graveyard" */
     public UUID targetPlayerId;

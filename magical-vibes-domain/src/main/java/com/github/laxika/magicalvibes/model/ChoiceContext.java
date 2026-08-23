@@ -26,6 +26,18 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, CounterType counterType,
+                                          List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                          int nextTargetIndex) implements ChoiceContext {
+
+        public CounterDistributionAssignment {
+            effects = List.copyOf(effects);
+            targetIds = List.copyOf(targetIds);
+            assignments = Map.copyOf(new java.util.LinkedHashMap<>(assignments));
+        }
+    }
+
     record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) implements ChoiceContext {}
 
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn)

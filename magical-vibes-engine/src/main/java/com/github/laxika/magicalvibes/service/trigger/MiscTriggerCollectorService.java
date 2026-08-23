@@ -658,6 +658,37 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "Whenever you lose life, you gain that much life". The trigger goes on the stack; the life
+     * lost is snapshotted onto the entry's event value so an {@code EventValue()} amount reads it
+     * back at resolution.
+     */
+    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleGainLifeOnControllerLifeLoss(TriggerMatchContext match,
+            GainLifeEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        if (amountEvaluationService.referencesEventValue(effect.amount())) {
+            entry.setEventValue(ll.lifeLostAmount());
+        }
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on controller life loss ({} life), controller gains life",
+                gameData.id, cardName, ll.lifeLostAmount());
+        return true;
+    }
+
     @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCounters(TriggerMatchContext match,
             PutCountersOnSourceEffect effect, TriggerContext ctx) {

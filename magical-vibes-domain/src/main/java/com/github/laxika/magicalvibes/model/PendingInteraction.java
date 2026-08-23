@@ -78,7 +78,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.ActivatedAbilityGraveyardExileCostChoice,
-        PendingInteraction.HandCardChoice, PendingInteraction.StrongholdGambitCardChoice,
+        PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
         PendingInteraction.RevealedFreeCastGroup,
@@ -975,22 +976,35 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Search-to-top: choose any number of the matching {@code pool} cards (held out of the library)
-     * to put on top of the library. The unchosen matching cards are returned to the library, the
-     * library is shuffled, and the chosen cards are placed on top in any order. {@code cardLabel}
-     * is the display label of the searched-for cards (for prompt/log text).
-     * IDs and card views are derived from {@code pool} at prompt time.
+     * Search-to-top: choose cards from the held-out matching {@code pool} to put on top of the
+     * library. With a negative {@code requiredCount}, any number may be chosen; otherwise exactly
+     * that many cards, or as many as the pool contains, must be chosen. The unchosen matching cards
+     * are returned to the library, the library is shuffled, and the chosen cards are placed on top
+     * in any order. {@code cardLabel} is the display label of the searched-for cards.
      */
-    record SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String cardLabel)
+    record SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String cardLabel,
+                                    int requiredCount, boolean revealCards)
             implements PendingInteraction {
 
         public SearchLibraryToTopChoice {
             pool = java.util.List.copyOf(pool);
         }
 
+        public SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String cardLabel) {
+            this(playerId, pool, cardLabel, -1, true);
+        }
+
         /** The selectable card IDs, in begin-time pool order. */
         public java.util.List<UUID> validCardIds() {
             return pool.stream().map(Card::getId).toList();
+        }
+
+        public int minimumSelectionCount() {
+            return requiredCount < 0 ? 0 : Math.min(requiredCount, pool.size());
+        }
+
+        public int maximumSelectionCount() {
+            return requiredCount < 0 ? pool.size() : Math.min(requiredCount, pool.size());
         }
 
         @Override
@@ -1000,7 +1014,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, pool.size());
+            return new InteractionOptions.MultiCardPick(validCardIds(),
+                    minimumSelectionCount(), maximumSelectionCount());
         }
     }
 
@@ -1955,6 +1970,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         java.util.List<Integer> validIndices();
 
         String prompt();
+    }
+
+    /** Retraced Image: reveal one card from hand, then conditionally put it onto the battlefield. */
+    record RetracedImageCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public RetracedImageCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /**
