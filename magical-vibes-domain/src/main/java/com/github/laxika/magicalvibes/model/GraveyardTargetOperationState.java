@@ -14,6 +14,8 @@ public class GraveyardTargetOperationState {
     public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
     public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
     public boolean resolutionTimeExileThenMayBecomeCopyResume;
+    /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
+    public boolean resolutionTimeReturnCardsToBattlefieldResume;
 
     public Card card;
     public UUID controllerId;

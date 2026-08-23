@@ -152,6 +152,12 @@ class TargetLegalityServiceTest {
         lenient().when(gameQueryService.isCreature(eq(gd), any(Permanent.class)))
                 .thenAnswer(invocation ->
                         invocation.<Permanent>getArgument(1).getCard().hasType(CardType.CREATURE));
+        lenient().when(gameQueryService.isArtifact(eq(gd), any(Permanent.class)))
+                .thenAnswer(invocation ->
+                        invocation.<Permanent>getArgument(1).getCard().hasType(CardType.ARTIFACT));
+        lenient().when(gameQueryService.isLand(eq(gd), any(Permanent.class)))
+                .thenAnswer(invocation ->
+                        invocation.<Permanent>getArgument(1).getCard().hasType(CardType.LAND));
         lenient().when(gameQueryService.getEffectiveCardColors(eq(gd), any(Card.class)))
                 .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
     }
@@ -1053,9 +1059,6 @@ class TargetLegalityServiceTest {
             Permanent artifact = addPermanent(player2Id, artifactCard);
             Permanent creature = addPermanent(player2Id, creatureCard);
             Permanent land = addPermanent(player2Id, landCard);
-            when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
-            when(gameQueryService.isLand(gd, land)).thenReturn(true);
-
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 0, 3)
                     .withMultiTargetConstraint(

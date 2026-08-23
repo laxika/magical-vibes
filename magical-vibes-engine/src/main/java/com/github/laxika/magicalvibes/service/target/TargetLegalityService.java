@@ -223,10 +223,12 @@ public class TargetLegalityService {
                     ? "Must choose " + maxTargets + " target spells"
                     : "Must choose up to " + maxTargets + " target spells");
         }
-        for (int i = 0; i < targetIds.size(); i++) {
-            for (int j = i + 1; j < targetIds.size(); j++) {
-                if (targetIds.get(i).equals(targetIds.get(j))) {
-                    throw new IllegalStateException("Targets must be different spells");
+        if (!card.isAllowSharedTargets()) {
+            for (int i = 0; i < targetIds.size(); i++) {
+                for (int j = i + 1; j < targetIds.size(); j++) {
+                    if (targetIds.get(i).equals(targetIds.get(j))) {
+                        throw new IllegalStateException("Targets must be different spells");
+                    }
                 }
             }
         }
@@ -2458,7 +2460,7 @@ public class TargetLegalityService {
                 && targetValidationService.checkEffectTargets(entry.getEffectsToResolve(),
                 new TargetValidationContext(gameData, targetId, entry.getTargetZone(), entry.getCard(), entry.getXValue(),
                         entry.getControllerId(), entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                        entry.getTriggeringPermanentPowerAtTrigger()))
+                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)))
                 .isPresent()) {
             return false;
         }

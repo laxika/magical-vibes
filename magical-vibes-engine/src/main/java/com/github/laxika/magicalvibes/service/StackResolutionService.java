@@ -314,6 +314,11 @@ public class StackResolutionService {
             perm.setCard(characteristics);
             perm.setTransformed(true);
         }
+        if (entry.isCopy() && !perm.getCard().isToken()) {
+            Card tokenCard = perm.getCard().createRuntimeCopy();
+            tokenCard.setToken(true);
+            perm.setCard(tokenCard);
+        }
         return perm;
     }
 

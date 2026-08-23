@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChandraTorchExileCastSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -63,6 +64,7 @@ public class PermanentChoiceSpellHandlerService {
     private final TargetLegalityService targetLegalityService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final CopySupport copySupport;
+    private final LifeSupport lifeSupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -77,7 +79,8 @@ public class PermanentChoiceSpellHandlerService {
                                               @Lazy ChandraTorchExileCastSupport chandraTorchExileCastSupport,
                                               TargetLegalityService targetLegalityService,
                                               InteractionHandlerRegistry interactionHandlerRegistry,
-                                              CopySupport copySupport) {
+                                              CopySupport copySupport,
+                                              LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -92,6 +95,7 @@ public class PermanentChoiceSpellHandlerService {
         this.targetLegalityService = targetLegalityService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.copySupport = copySupport;
+        this.lifeSupport = lifeSupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -247,6 +251,23 @@ public class PermanentChoiceSpellHandlerService {
         boolean isGraveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
 
         if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
+            if (ect.resolutionCast()) {
+                try {
+                    spellCastingService.playCardFromExileAsResolutionCast(gameData,
+                            new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
+                            ect.cardToCast().getId(), 0, permanentId, ect.copy());
+                    if (ect.lifeLossAfterCast() > 0) {
+                        lifeSupport.applyLifeLoss(gameData, ect.controllerId(), ect.lifeLossAfterCast(),
+                                ect.cardToCast().getName());
+                    }
+                } catch (IllegalStateException ex) {
+                    gameData.removeFromExile(ect.cardToCast().getId());
+                    gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
+                            " can't be cast and ceases to exist."));
+                }
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             if (ect.genericCostReduction() > 0) {
                 try {
                     spellCastingService.playCardFromExileAsResolutionCast(gameData,

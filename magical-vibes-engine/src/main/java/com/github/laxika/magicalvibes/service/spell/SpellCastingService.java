@@ -677,7 +677,9 @@ public class SpellCastingService {
                                     card.registerEffectTargetIndex(chosen.effects().get(t), spellTarget.getIndex());
                                 }
                             }
-                        } else if (chosen.targetFilter() != null) {
+                        } else if (chosen.targetFilter() != null
+                                || EffectResolution.needsSpellCastTarget(chosen.effects(), false, false)
+                                || EffectResolution.needsSpellTarget(chosen.effects())) {
                             SpellTarget spellTarget = declareModeTarget(card, chosen);
                             for (CardEffect modeEffect : chosen.effects()) {
                                 card.registerEffectTargetIndex(modeEffect, spellTarget.getIndex());
@@ -1706,6 +1708,12 @@ public class SpellCastingService {
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
         int modeEncoding = effectiveXValue;
+        int modalModeCount = filteredSpellEffects.stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .map(modal -> modal.decodeModeIndices(modeEncoding).size())
+                .orElse(0);
         String selectedModeManaCost = selectedModalManaCost(filteredSpellEffects, modeEncoding);
         filteredSpellEffects.stream()
                 .filter(ChooseOneEffect.class::isInstance)
@@ -1767,7 +1775,8 @@ public class SpellCastingService {
         // the spell's effects and therefore does not make ETB targets cast-time requirements.
         boolean modalHasBattlefieldOrPlayerTarget = wasModal && card.getSpellTargets().stream()
                 .map(SpellTarget::getFilter)
-                .anyMatch(filter -> !(filter instanceof StackEntryPredicateTargetFilter)
+                .anyMatch(filter -> filter != null
+                        && !(filter instanceof StackEntryPredicateTargetFilter)
                         && !(filter instanceof GraveyardCardPredicateTargetFilter));
         TargetFilter castTimeTargetFilter = card.getCastTimeTargetFilter();
         modalHasBattlefieldOrPlayerTarget |= wasModal && castTimeTargetFilter != null
@@ -1785,11 +1794,8 @@ public class SpellCastingService {
         //  - a non-modal "counter up to N target spells" (Double Negative): a single spell-on-stack
         //    target group with max > 1 (bound to a CounterEachTargetSpellEffect) and no permanent/player
         //    targets. In both cases the chosen targets ride in the flat targetIds list.
-        long spellTargetGroupCount = card.getSpellTargets().stream()
-                .filter(spellTarget -> spellTarget.getFilter() instanceof StackEntryPredicateTargetFilter)
-                .count();
         boolean multipleSpellTargets = unwrappedNeedsSpellTarget && (wasModal
-                ? spellTargetGroupCount > 1 && !allSpellTargetsAlsoAllowPermanents
+                ? !targetIds.isEmpty() && !allSpellTargetsAlsoAllowPermanents
                 : !unwrappedNeedsTarget && card.getMaxTargets() > 1);
 
         // A "spell or permanent" single-target chooser (e.g. Glamerdye) can target either zone. Infer
@@ -2113,6 +2119,14 @@ public class SpellCastingService {
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
                 .findFirst().orElse(null);
         boolean needsExileTargeting = exileTargetingEffect != null;
+        boolean hasGraveyardTargetInTargetIds = targetIds.stream().anyMatch(candidateId ->
+                gameData.orderedPlayerIds.stream()
+                        .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream())
+                        .anyMatch(graveyardCard -> graveyardCard.getId().equals(candidateId)));
+        boolean hasExileTargetInTargetIds = targetIds.stream().anyMatch(candidateId ->
+                gameData.orderedPlayerIds.stream()
+                        .flatMap(ownerId -> gameData.getPlayerExiledCards(ownerId).stream())
+                        .anyMatch(exiledCard -> exiledCard.getId().equals(candidateId)));
 
         if (targetId == null && targetIds.isEmpty()
                 && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget
@@ -2185,16 +2199,17 @@ public class SpellCastingService {
                 targetLegalityService.validateSpellTargeting(gameData, card, primaryTargetEffects,
                         targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue, kicked);
             }
-        } else if (unwrappedNeedsTarget && needsExileTargeting) {
+        } else if (unwrappedNeedsTarget && needsExileTargeting && !hasExileTargetInTargetIds) {
             throw new IllegalStateException("Must target a card in exile");
-        } else if (unwrappedNeedsTarget && needsSingleGraveyardTargeting) {
+        } else if (unwrappedNeedsTarget && needsSingleGraveyardTargeting && !hasGraveyardTargetInTargetIds) {
             // "Up to one" graveyard targets (Yawgmoth) may be omitted; mandatory ones (Crawl) may not,
             // even when the spell also has optional permanent target groups.
             if (!graveyardReturnEffect.upTo()) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
             }
-        } else if (unwrappedNeedsTarget && needsImmediateGraveyardEffectTargeting) {
+        } else if (unwrappedNeedsTarget && needsImmediateGraveyardEffectTargeting
+                && !hasGraveyardTargetInTargetIds) {
             // Non-ReturnCard graveyard targets with no permanent groups still require a target.
             if (card.getMaxTargets() == 0) {
                 throw new IllegalStateException("Must target a card in a graveyard");
@@ -2676,6 +2691,9 @@ public class SpellCastingService {
             }
             if (hasModalEtb) {
                 entry.setEtbMode(xValue != null ? xValue : 0);
+            }
+            if (wasModal) {
+                entry.setModalModeCount(modalModeCount);
             }
             entry.setSourceZone(Zone.HAND);
             // Mirage flash clause: the permanent this becomes is sacrificed at the next cleanup step
@@ -3657,6 +3675,9 @@ public class SpellCastingService {
                 gameData.stack.getLast().setBeholdChosenSubtype(beholdChosenSubtype);
                 gameData.stack.getLast().setChosenCreatureType(chosenCreatureType);
                 gameData.stack.getLast().setSourceZone(Zone.HAND);
+                if (wasModal) {
+                    gameData.stack.getLast().setModalModeCount(modalModeCount);
+                }
             }
             finishSpellCast(gameData, playerId, player, hand, card);
         }
@@ -7455,7 +7476,15 @@ public class SpellCastingService {
                     new ManaCost(withoutPayingManaCost ? "" : card.getManaCost()), cardHasFlashback);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            if (cardHasFlashback) {
+            boolean anyManaType = grantedGraveyardCardCast
+                    && castingPermissionService.hasAnyManaTypePermission(
+                    gameData, playerId, card.getId());
+            if (anyManaType) {
+                if (!cost.canPayAsGeneric(pool, effectiveXValue, additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay casting cost");
+                }
+                cost.payAsGeneric(pool, effectiveXValue, additionalCost);
+            } else if (cardHasFlashback) {
                 if (!cost.canPayFlashback(pool, effectiveXValue + additionalCost)) {
                     throw new IllegalStateException("Not enough mana to pay flashback cost");
                 }

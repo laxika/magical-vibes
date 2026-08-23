@@ -66,8 +66,10 @@ class TumbleweedRisingTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, List.of());
 
         assertThat(gd.plottedCardIds).contains(rising.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        gd.turnNumber++;
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castFromExile(player1, rising.getId());
         harness.passBothPriorities();
 

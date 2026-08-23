@@ -1629,6 +1629,16 @@ public class PermanentChoiceBattlefieldHandlerService {
                 .findFirst()
                 .orElse(null);
 
+        int sacrificedPower = gameQueryService.getEffectivePower(gameData, toSacrifice);
+        int sacrificedToughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
+        Permanent sacrificedSnapshot = new Permanent(toSacrifice);
+        StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
+        if (originalEntry != null) {
+            originalEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
+            originalEntry.setSacrificedPower(sacrificedPower);
+            originalEntry.setSacrificedToughness(sacrificedToughness);
+        }
+
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -1638,7 +1648,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         if (!ctx.reflexive()) {
             if (ctx.thenEffect() != null) {
-                StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
                 if (originalEntry == null) {
                     throw new IllegalStateException("No pending effect resolution for synchronous sacrifice follow-up");
                 }
@@ -1702,7 +1711,6 @@ public class PermanentChoiceBattlefieldHandlerService {
                     return;
                 }
             } else {
-                StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
                 List<UUID> targetCardIds = originalEntry == null || originalEntry.getTargetCardIds() == null
                         ? List.of() : new ArrayList<>(originalEntry.getTargetCardIds());
                 StackEntry triggeredEntry = new StackEntry(
@@ -1719,6 +1727,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                         targetCardIds,
                         List.of()
                 );
+                triggeredEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
+                triggeredEntry.setSacrificedPower(sacrificedPower);
+                triggeredEntry.setSacrificedToughness(sacrificedToughness);
                 gameData.stack.add(triggeredEntry);
             }
         }

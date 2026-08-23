@@ -34,11 +34,9 @@ class VaultPlundererTest extends BaseCardTest {
     @DisplayName("ETB can target its controller")
     void targetsController() {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        int handBefore = gd.playerHands.get(player1.getId()).size();
-
         castVaultPlunderer(player1.getId());
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);

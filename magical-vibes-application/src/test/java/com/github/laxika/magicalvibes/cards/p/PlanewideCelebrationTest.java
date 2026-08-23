@@ -96,15 +96,16 @@ class PlanewideCelebrationTest extends BaseCardTest {
         Card first = new Plains();
         Card second = new Plains();
         Card third = new Plains();
+        Card fourth = new Plains();
         Card instant = new Shock();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(first, second, third, instant)));
+        harness.setGraveyard(player1, new ArrayList<>(List.of(first, second, third, fourth, instant)));
         harness.setHand(player1, List.of(new PlanewideCelebration()));
         addMana();
 
         harness.castSorcery(player1, 0, 20);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(first.getId(), second.getId(), third.getId());
+                .validCardIds()).containsExactly(first.getId(), second.getId(), third.getId(), fourth.getId());
     }
 
     private void addMana() {

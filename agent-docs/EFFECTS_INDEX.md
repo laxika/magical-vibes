@@ -3860,7 +3860,7 @@ Samite Blessing uses `PreventDamageFromChosenSourceEffect.nextDamageToTargetCrea
 | `IncreaseOpponentLifeCostForTargetingControlledPermanentEffect` | `(PermanentPredicate predicate, int amount)` | Adds a life cost to opponent spells targeting a matching permanent controlled by the tax source's controller. |
 | `PayManaThenMayTapOrUntapTargetCreatureEffect` | `(String manaCost)` | Pays during resolution, then creates the separate optional targeted tap-or-untap reflexive trigger. |
 | `PreventDamageToControllerAndPutCounterOnSelfEffect` | `(CounterType counterType)` | Prevents each damage event to the controller and puts one counter on the source permanent. |
-| `PutUpToCardsFromHandOntoBattlefieldEffect` | `(CardPredicate predicate, String label, int maxCount)` | Multi-selects up to the limit from hand and puts the chosen permanent cards onto the battlefield. |
+| `PutUpToCardsFromHandOntoBattlefieldEffect` | `(CardPredicate predicate, String label, DynamicAmount maxCount[, boolean tapped])` | Multi-selects up to the limit from hand and puts the chosen permanent cards onto the battlefield, optionally tapped. |
 | `ReduceOwnCastCostByManaCostEffect` | `(String reduction)` / `(ManaCost reduction)` | Reduces matching colored requirements as well as generic mana; wrap in a cast-time condition when needed. |
 | `RegisterDelayedNontokenAttackTokenEffect` | `(CreateTokenEffect token)` | Registers a turn-scoped trigger that counts declared nontoken attackers and creates that many attacking tokens. |
 | `SearchLibraryAndOrGraveyardForCardToBattlefieldEffect` | `(CardPredicate filter)` | Lets the controller choose one matching card from their library and/or graveyard and puts it onto the battlefield; a library choice shuffles the library. |

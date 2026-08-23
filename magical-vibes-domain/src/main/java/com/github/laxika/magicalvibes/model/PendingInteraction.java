@@ -812,7 +812,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Chooses up to a bounded number of matching cards from hand to enter together. */
     record PutUpToCardsFromHandOntoBattlefieldChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                      int maxCount, String cardName)
+                                                      int maxCount, String cardName, boolean tapped)
             implements PendingInteraction {
 
         public PutUpToCardsFromHandOntoBattlefieldChoice {

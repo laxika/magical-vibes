@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByCastSpellManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.ModalSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -1744,6 +1745,23 @@ public class SpellCastTriggerCollectorService {
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        if (trigger.targetFilter() == null
+                && resolved.size() == 1
+                && resolved.getFirst() instanceof LoseLifeEffect loseLife
+                && loseLife.recipient() == LoseLifeRecipient.TARGET_PLAYER) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    resolved,
+                    spellCopy.copyingPlayerId(),
+                    match.permanent().getId());
+            entry.setTriggeringCardId(spellCopy.copiedSpell().getCard().getId());
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
+            return true;
+        }
         boolean needsPlayerTarget = resolved.stream()
                 .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PLAYER));
         boolean needsPermanentTarget = resolved.stream()
@@ -2022,6 +2040,25 @@ public class SpellCastTriggerCollectorService {
             }
         }
         return snapshotted;
+    }
+
+    @CollectsTrigger(value = ModalSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleModalSpellCastTrigger(TriggerMatchContext match,
+            ModalSpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast spellCast = (TriggerContext.SpellCast) ctx;
+        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCast.spellCard().getId());
+        if (triggeringSpell == null || triggeringSpell.getModalModeCount() == null
+                || triggeringSpell.getModalModeCount() <= 0) {
+            return false;
+        }
+
+        int choices = Math.min(triggeringSpell.getModalModeCount(), trigger.options().size());
+        ChooseOneEffect modalChoice = new ChooseOneEffect(trigger.options(), choices);
+        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                match.permanent().getCard(), match.controllerId(), modalChoice,
+                match.permanent().getId(), true));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
     }
 
     private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,

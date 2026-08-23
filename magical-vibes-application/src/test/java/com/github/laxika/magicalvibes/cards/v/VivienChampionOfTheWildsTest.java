@@ -136,7 +136,7 @@ class VivienChampionOfTheWildsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("No permission");
     }
 
     private Permanent addReadyVivien(int loyalty) {

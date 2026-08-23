@@ -221,6 +221,8 @@ public class DamageSupport {
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
                     gameData, sourceControllerId, targetControllerId);
+            rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
+                    gameData, sourceControllerId);
         }
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
         // combat counterpart lives in GameQueryService.applyCombatDamageMultiplier.
@@ -366,6 +368,8 @@ public class DamageSupport {
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage,
                     null, targetControllerId);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId);
+            triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
+                    gameData, sourceControllerId, target, damage);
 
             UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             Permanent reflectionSource = damageSource != null
@@ -543,6 +547,8 @@ public class DamageSupport {
                     sourcePermanent == null ? entry.getEffectiveDamageSourceCard() : sourcePermanent.getCard(),
                     sourcePermanent,
                     gameQueryService.findPermanentController(gameData, target.getId()));
+            damage += gameQueryService.getControllerNoncombatDamageBonus(
+                    gameData, sourceControllerId);
         }
 
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn()) {
@@ -561,6 +567,8 @@ public class DamageSupport {
                     entry.getControllerId(), entry.getSourcePermanentId(), damage,
                     null, gameQueryService.findPermanentController(gameData, target.getId()));
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, entry.getControllerId());
+            triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
+                    gameData, sourceControllerId, target, damage);
 
             // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
             UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
@@ -931,8 +939,7 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId)
                             + " is dealt to its controller instead."));
-            dealDamageToPlayer(gameData, entry, redirectedTarget, rawDamage);
-            return;
+            playerId = redirectedTarget;
         }
         String cardName = source.getName();
         while (true) {
@@ -950,6 +957,8 @@ public class DamageSupport {
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
                     gameData, sourceControllerId, playerId);
+            rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
+                    gameData, sourceControllerId);
         }
         // Energy Storm and Hidden Retreat: prevent all damage dealt by instant and sorcery spells.
         if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {

@@ -2614,6 +2614,11 @@ public class AbilityActivationService {
         validateDividedDamageAssignments(gameData, playerId, permanent, ability, activationEffects,
                 effectiveXValue, damageAssignments);
 
+        if (ability.getTargetFilter() != null && ability.getMinTargets() > 0
+                && targetId == null && (targetIds == null || targetIds.isEmpty())) {
+            throw new IllegalStateException("Ability requires a target");
+        }
+
         boolean selectedModeNeedsTarget = ability.isModalChoiceAtActivation()
                 && EffectResolution.needsTarget(activationEffects, List.of(), false, false);
         if (selectedModeNeedsTarget && targetId == null) {
@@ -5556,9 +5561,6 @@ public class AbilityActivationService {
         }
 
         if (maxActivationsPerTurn != null && currentCount >= maxActivationsPerTurn) {
-            if (maxActivationsPerTurn == 1) {
-                throw new IllegalStateException("This ability can be activated only once each turn");
-            }
             throw new IllegalStateException("This ability can be activated no more than " + maxActivationsPerTurn + " times each turn");
         }
     }

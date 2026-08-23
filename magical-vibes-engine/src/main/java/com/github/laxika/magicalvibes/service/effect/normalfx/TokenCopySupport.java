@@ -108,6 +108,9 @@ public class TokenCopySupport {
             }
             simultaneouslyEntered.add(tokenPermanent);
         }
+
+        battlefieldEntryService.checkAllyTokenEntersTriggers(
+                gameData, tokenControllerId, tokens.stream().map(Permanent::getId).toList());
     }
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {

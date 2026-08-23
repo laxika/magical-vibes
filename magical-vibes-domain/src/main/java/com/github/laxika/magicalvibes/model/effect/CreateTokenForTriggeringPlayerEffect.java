@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * @param token token blueprint to create
  */
 public record CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token)
-        implements TokenCreatingEffect {
+        implements TokenCreatingEffect, TriggeringSpellManaValueEffect {
 
     @Override
     public DynamicAmount tokenAmount() {

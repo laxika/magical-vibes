@@ -155,6 +155,11 @@ public class BattlefieldEntryService {
         triggerService.checkAllyTokenEntersTriggers(gameData, controllerId, count);
     }
 
+    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId,
+                                              List<UUID> permanentIds) {
+        triggerService.checkAllyTokenEntersTriggers(gameData, controllerId, permanentIds);
+    }
+
     public void handleCreatureEnteredBattlefield(
             GameData gameData, UUID controllerId, Card card, UUID targetId,
             boolean wasCastFromHand, int etbMode) {

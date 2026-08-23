@@ -32,7 +32,7 @@ class MijaeDjinnTest extends BaseCardTest {
             assertThat(djinn.isTapped()).isTrue();
         } else {
             assertThat(djinn.isAttacking()).isTrue();
-            assertThat(djinn.isTapped()).isFalse();
+            assertThat(djinn.isTapped()).isTrue();
         }
     }
 }

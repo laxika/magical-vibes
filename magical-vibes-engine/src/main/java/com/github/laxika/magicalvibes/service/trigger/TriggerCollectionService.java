@@ -397,6 +397,8 @@ public class TriggerCollectionService {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx);
         });
 
+        collectTemporaryControllerSpellCastTriggers(gameData, spellCard, castingPlayerId);
+
         processDelayedControllerSpellCastTriggers(gameData, spellCard, castingPlayerId);
 
         // ON_OPPONENT_CASTS_SPELL (only opponents' permanents)
@@ -5356,6 +5358,7 @@ public class TriggerCollectionService {
                 CardEffect resolvedEffect = unwrapCreatureDeathConditional(
                         effect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId, perm);
                 if (resolvedEffect == null) continue;
+                if (resolvedEffect instanceof BatchedCreatureDeathTriggerEffect) continue;
                 if (!passesInterveningIf(gameData, perm, dyingCreatureControllerId, resolvedEffect,
                         dyingPermanent.getId(), dyingPower)) continue;
 
@@ -7335,13 +7338,63 @@ public class TriggerCollectionService {
 
     /** Fires once for a batch of one or more tokens entering under a player's control. */
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
+        checkAllyTokenEntersTriggers(gameData, controllerId, count, List.of());
+    }
+
+    private void collectTemporaryControllerSpellCastTriggers(GameData gameData, Card spellCard,
+                                                               UUID castingPlayerId) {
+        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (watcher.slot() != EffectSlot.ON_CONTROLLER_CASTS_SPELL
+                    || !watcher.controllerId().equals(castingPlayerId)
+                    || !(watcher.effect() instanceof CopyControllerCastSpellOnSpellCastEffect trigger)
+                    || !predicateEvaluationService.matchesCardPredicate(
+                    spellCard, trigger.spellFilter(), null, gameData, castingPlayerId)) {
+                continue;
+            }
+
+            StackEntry spellEntry = gameData.stack.stream()
+                    .filter(entry -> entry.getCard().getId().equals(spellCard.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (spellEntry == null) {
+                continue;
+            }
+
+            CardEffect copyEffect = new CopyControllerCastSpellEffect(
+                    new StackEntry(spellEntry), castingPlayerId,
+                    trigger.grantedKeywords(), trigger.additionalTypes(),
+                    trigger.tokenCopy(), trigger.mayChooseNewTargets());
+            CardEffect resolutionEffect = trigger.manaCost() == null
+                    ? copyEffect
+                    : new MayPayManaEffect(trigger.manaCost(), copyEffect,
+                    "Pay " + trigger.manaCost() + " to copy " + spellCard.getName() + "?");
+            StackEntry triggerEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(resolutionEffect)));
+            triggerEntry.setNonTargeting(true);
+            gameData.stack.add(triggerEntry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+        }
+    }
+
+    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId,
+                                              List<UUID> permanentIds) {
+        checkAllyTokenEntersTriggers(gameData, controllerId, permanentIds.size(), permanentIds);
+    }
+
+    private void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count,
+                                               List<UUID> permanentIds) {
         if (count <= 0) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
         int extraTriggers = gameQueryService.countETBExtraTriggersForAnyPermanent(gameData, controllerId);
-        TriggerContext.TokensEnter ctx = new TriggerContext.TokensEnter(count, 1 + extraTriggers);
+        TriggerContext.TokensEnter ctx = new TriggerContext.TokensEnter(
+                count, 1 + extraTriggers, permanentIds);
         for (Permanent permanent : battlefield) {
             if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) continue;
             List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD);
@@ -7356,6 +7409,38 @@ public class TriggerCollectionService {
                         match, EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, resolved, ctx);
                 if (triggered && oncePerTurn) {
                     gameData.oncePerTurnTriggersFiredThisTurn.add(permanent.getId());
+                }
+            }
+        }
+
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (opponentId.equals(controllerId)) {
+                continue;
+            }
+            List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(opponentId);
+            if (opponentBattlefield == null || opponentBattlefield.isEmpty()) {
+                continue;
+            }
+            int opponentExtraTriggers = gameQueryService.countETBExtraTriggersForAnyPermanent(
+                    gameData, opponentId);
+            TriggerContext.TokensEnter opponentContext = new TriggerContext.TokensEnter(
+                    count, 1 + opponentExtraTriggers, permanentIds);
+            for (Permanent permanent : opponentBattlefield) {
+                List<CardEffect> effects = permanent.getCard().getEffects(
+                        EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD);
+                for (CardEffect effect : effects) {
+                    boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
+                    CardEffect resolved = unwrapOncePerTurnTrigger(gameData, permanent, effect);
+                    if (resolved == null) {
+                        continue;
+                    }
+                    TriggerMatchContext match = new TriggerMatchContext(
+                            gameData, permanent, opponentId, resolved);
+                    boolean triggered = registry.dispatch(match,
+                            EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD, resolved, opponentContext);
+                    if (triggered && oncePerTurn) {
+                        gameData.oncePerTurnTriggersFiredThisTurn.add(permanent.getId());
+                    }
                 }
             }
         }
@@ -8326,6 +8411,23 @@ public class TriggerCollectionService {
         for (CardEffect effect : saddledPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_SADDLED)) {
             registry.dispatch(new TriggerMatchContext(gameData, saddledPermanent, controllerId, effect),
                     EffectSlot.ON_SELF_BECOMES_SADDLED, effect, context);
+        }
+    }
+
+    public void checkAllySourceDealtNoncombatDamageToCreatureTriggers(
+            GameData gameData, UUID sourceControllerId, Permanent damagedCreature, int damageDealt) {
+        if (sourceControllerId == null || damagedCreature == null || damageDealt <= 0) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+        if (battlefield == null) return;
+
+        TriggerContext context = new TriggerContext.SourceDealsNoncombatDamageToCreature(
+                damagedCreature, damageDealt, sourceControllerId);
+        for (Permanent watcher : List.copyOf(battlefield)) {
+            for (CardEffect effect : watcher.getCard().getEffects(
+                    EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)) {
+                registry.dispatch(new TriggerMatchContext(gameData, watcher, sourceControllerId, effect),
+                        EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE, effect, context);
+            }
         }
     }
 

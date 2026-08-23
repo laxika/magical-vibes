@@ -19,16 +19,18 @@ public class IronFistPulverizer extends Card {
     public IronFistPulverizer() {
         // Whenever you cast your second spell each turn, this creature deals 2 damage to target
         // opponent. Scry 1.
-        target(new PlayerPredicateTargetFilter(
+        PlayerPredicateTargetFilter opponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(
+        );
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(
                 2,
                 null,
                 List.of(
                         new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER),
                         new ScryEffect(1)
-                )
+                ),
+                opponent
         ));
     }
 }

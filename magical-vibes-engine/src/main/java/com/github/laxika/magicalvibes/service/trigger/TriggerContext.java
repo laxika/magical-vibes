@@ -243,9 +243,17 @@ public sealed interface TriggerContext {
      * The dying permanent may be null when the 4-arg overload is used.
      */
     /** Context for one token-creation event, preserving the number of tokens that entered together. */
-    record TokensEnter(int count, int perEffectTriggerCount) implements TriggerContext {
+    record TokensEnter(int count, int perEffectTriggerCount, List<UUID> permanentIds) implements TriggerContext {
+        public TokensEnter {
+            permanentIds = permanentIds == null ? List.of() : List.copyOf(permanentIds);
+        }
+
         public TokensEnter(int count) {
-            this(count, 1);
+            this(count, 1, List.of());
+        }
+
+        public TokensEnter(int count, int perEffectTriggerCount) {
+            this(count, perEffectTriggerCount, List.of());
         }
     }
 

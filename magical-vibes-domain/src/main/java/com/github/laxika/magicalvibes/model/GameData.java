@@ -3880,6 +3880,10 @@ public class GameData {
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
+        copy.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume =
+                this.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume;
+        copy.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume =
+                this.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume;
         copy.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume =
                 this.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
         copy.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume =

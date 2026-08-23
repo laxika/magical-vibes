@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
@@ -503,6 +504,53 @@ public class GraveyardChoiceHandlerService {
             if (!validIds.contains(cardId)) {
                 throw new IllegalStateException("Invalid card: " + cardId);
             }
+        }
+
+        if (multiGraveyardChoice.maxTotalManaValue() != null) {
+            int totalManaValue = multiGraveyardChoice.cards().stream()
+                    .filter(card -> uniqueIds.contains(card.getId()))
+                    .mapToInt(Card::getManaValue)
+                    .sum();
+            if (totalManaValue > multiGraveyardChoice.maxTotalManaValue()) {
+                throw new IllegalStateException("Selected cards have total mana value " + totalManaValue
+                        + ", greater than the maximum total mana value "
+                        + multiGraveyardChoice.maxTotalManaValue());
+            }
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume) {
+            gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume = false;
+            gameData.interaction.clearAwaitingInput();
+            for (UUID cardId : cardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null) {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+                    graveyardReturnSupport.putCardOntoBattlefield(gameData, player.getId(), card);
+                }
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume) {
+            gameData.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume = false;
+            gameData.interaction.clearAwaitingInput();
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            if (!cardIds.isEmpty() && pendingEntry != null) {
+                UUID cardId = cardIds.getFirst();
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card)
+                        && card.hasType(CardType.CREATURE)) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            pendingEntry.getCard(), pendingEntry.getControllerId(),
+                            List.of(new BecomeCopyOfCardUntilEndOfTurnEffect(card)),
+                            "Have " + pendingEntry.getCard().getName() + " become a copy of "
+                                    + card.getName() + " until end of turn?",
+                            null, null, pendingEntry.getSourcePermanentId()));
+                }
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
         }
 
         if (gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume) {

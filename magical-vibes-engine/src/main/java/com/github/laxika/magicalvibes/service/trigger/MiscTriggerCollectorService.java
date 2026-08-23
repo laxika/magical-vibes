@@ -1405,6 +1405,52 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = OncePerTurnTriggerEffect.class,
+            slot = EffectSlot.ON_SELF_BECOMES_SADDLED)
+    private boolean handleBecomesSaddledOncePerTurn(TriggerMatchContext match,
+            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        if (source == null || gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
+            return false;
+        }
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                match.controllerId(),
+                source.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.wrapped())),
+                null,
+                source.getId()));
+        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers on becoming saddled (once per turn)",
+                gameData.id, source.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_SADDLED)
+    private boolean handleBecomesSaddledDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        if (source == null) return false;
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                match.controllerId(),
+                source.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                source.getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers on becoming saddled",
+                gameData.id, source.getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = SequenceEffect.class,
             slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,
@@ -1563,7 +1609,10 @@ public class MiscTriggerCollectorService {
         boolean needsTarget = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-        if (needsTarget) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    source.getCard(), match.controllerId(), effects));
+        } else if (needsTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                     source.getCard(), match.controllerId(), effects,
                     "crime", source.getId()));

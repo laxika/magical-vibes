@@ -1484,6 +1484,13 @@ public class GameQueryService {
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
+    private boolean isLandInStaticPass(LayerSystemService.LayeredBoardState board, Permanent permanent) {
+        CharacteristicState state = board.states().get(permanent.getId());
+        return state != null
+                ? state.hasCardType(CardType.LAND)
+                : hasCardType(permanent, CardType.LAND);
+    }
+
     /**
      * Returns {@code true} if an aura attached to the given permanent carries an
      * {@link EnchantedPermanentBecomesCreatureEffect} (e.g. Living Terrain), which continuously
@@ -2313,7 +2320,7 @@ public class GameQueryService {
             boolean sourceControlsAffected = Objects.equals(sourceControllerId, affectedControllerId);
             boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
             for (Permanent source : battlefield) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(source)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     boolean applies;
                     if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
@@ -2324,7 +2331,8 @@ public class GameQueryService {
                         applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
                                 sourceControllerIsPlacing, false);
                     } else {
-                        applies = sourceControlsAffected && replacement.appliesTo(counterType, creature, artifact);
+                        applies = sourceControlsAffected && replacement.appliesTo(
+                                counterType, creature, artifact, source, permanent);
                     }
                     if (applies) result[0] = replacement.replace(counterType, result[0]);
                 }
@@ -3356,7 +3364,9 @@ public class GameQueryService {
                     accumulator.addToughness(boost.toughnessBoost());
                     accumulator.addKeywords(boost.grantedKeywords());
                 } else if (effect instanceof GrantKeywordEffect grant
-                        && grant.scope() == GrantScope.OWN_PERMANENTS
+                        && (grant.scope() == GrantScope.OWN_PERMANENTS
+                        || grant.scope() == GrantScope.OWN_LANDS
+                        && isLandInStaticPass(board, target))
                         // Evaluate the filter with a null GameData so type predicates read the
                         // permanent's printed/granted types directly instead of re-entering
                         // computeStaticBonus for this same target (which would recurse forever).

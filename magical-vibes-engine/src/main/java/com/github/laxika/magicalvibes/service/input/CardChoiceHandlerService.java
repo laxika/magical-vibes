@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -319,6 +320,11 @@ public class CardChoiceHandlerService {
         checkPendingBoostSourceByDiscardedManaValue(gameData, card);
 
         DiscardFollowUp followUp = discardChoice.followUp();
+        if (followUp.targetOpponentsDiscardThenDraw()) {
+            gameData.targetOpponentsDiscardThenDraw.selectedDiscards.add(
+                    new TargetOpponentsDiscardThenDrawState.SelectedDiscard(
+                            playerId, card.getId(), card.getManaValue(), !replacedByBattlefield));
+        }
         if (followUp.enteringPermanent() != null) {
             gameData.interaction.clearAwaitingInput();
             battlefieldEntryService.completeDiscardCardToEnter(

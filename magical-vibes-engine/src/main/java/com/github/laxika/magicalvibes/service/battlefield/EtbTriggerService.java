@@ -105,6 +105,11 @@ public class EtbTriggerService {
         triggerCollectionService.checkAllyTokenEntersTriggers(gameData, controllerId, count);
     }
 
+    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId,
+                                              List<UUID> permanentIds) {
+        triggerCollectionService.checkAllyTokenEntersTriggers(gameData, controllerId, permanentIds);
+    }
+
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, List.of());
     }

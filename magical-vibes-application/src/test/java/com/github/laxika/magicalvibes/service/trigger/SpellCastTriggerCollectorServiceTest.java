@@ -1194,9 +1194,6 @@ class SpellCastTriggerCollectorServiceTest {
             gd.recordSpellCast(player1Id, firstSpell);
             gd.recordSpellCast(player1Id, secondSpell);
 
-            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(null), any(),
-                    eq(gd), eq(player1Id))).thenReturn(true);
-
             assertThat(registry.dispatch(match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
                     new TriggerContext.SpellCast(secondSpell, player1Id, true))).isFalse();

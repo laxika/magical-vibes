@@ -42,11 +42,12 @@ class StubbornBurrowfiendTest extends BaseCardTest {
     @DisplayName("The saddle trigger fires only once each turn")
     void saddleTriggerFiresOnlyOnceEachTurn() {
         Permanent burrowfiend = addCreatureReady(player1, new StubbornBurrowfiend());
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstSaddler = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondSaddler = addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, firstSaddler.getId());
         harness.passBothPriorities();
         resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, burrowfiend)).isEqualTo(4);

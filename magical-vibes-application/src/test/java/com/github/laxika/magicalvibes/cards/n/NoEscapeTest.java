@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NoEscape.class, Cancel.class, ChandraNalaar.class, GrizzlyBears.class})
+@CardUsed({NoEscape.class, Opt.class, ChandraNalaar.class, GrizzlyBears.class})
 class NoEscapeTest extends BaseCardTest {
 
     @Test
@@ -64,9 +64,9 @@ class NoEscapeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature, nonplaneswalker spell")
     void cannotTargetOtherSpell() {
-        Cancel cancel = new Cancel();
-        harness.setHand(player1, List.of(cancel));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        Opt opt = new Opt();
+        harness.setHand(player1, List.of(opt));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.setHand(player2, List.of(new NoEscape()));
         harness.addMana(player2, ManaColor.BLUE, 3);
@@ -74,7 +74,7 @@ class NoEscapeTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, cancel.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, opt.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

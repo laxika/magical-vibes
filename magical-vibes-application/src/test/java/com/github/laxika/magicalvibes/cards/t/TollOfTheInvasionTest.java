@@ -41,7 +41,7 @@ class TollOfTheInvasionTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(army.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE, CardSubtype.ARMY);
     }
 
     @Test

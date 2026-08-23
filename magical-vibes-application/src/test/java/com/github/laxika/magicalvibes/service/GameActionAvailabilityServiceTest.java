@@ -70,6 +70,10 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class GameActionAvailabilityServiceTest {
 
+    private static final GameQueryService.StaticBonus NO_BONUS = new GameQueryService.StaticBonus(
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(),
+            false, false, false, false, Set.of(), false, 0, 0, false, false);
+
     @Mock private CardViewFactory cardViewFactory;
     @Mock private PermanentViewFactory permanentViewFactory;
     @Mock private StackEntryViewFactory stackEntryViewFactory;
@@ -92,6 +96,7 @@ class GameActionAvailabilityServiceTest {
         lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
                 .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
                         invocation.getArgument(1)).get());
+        lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(NO_BONUS);
 
         // Real casting services (with the real handler registry) over the mocked collaborators,
         // so the playable-index computation exercises the same cost/permission code paths as production.

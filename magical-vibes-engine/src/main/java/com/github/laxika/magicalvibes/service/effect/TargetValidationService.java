@@ -289,6 +289,9 @@ public class TargetValidationService {
                 filterContext = filterContext.withSourcePermanentSnapshot(ctx.sourcePermanentSnapshot());
             }
         }
+        if (ctx.defendingPlayerId() != null) {
+            filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
+        }
         return filterContext;
     }
 
