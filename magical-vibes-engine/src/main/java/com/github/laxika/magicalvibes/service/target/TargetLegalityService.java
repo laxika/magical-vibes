@@ -1431,7 +1431,15 @@ public class TargetLegalityService {
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                           UUID controllerId, int xValue, boolean kicked) {
-        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0);
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0,
+                card.getEffects(EffectSlot.SPELL));
+    }
+
+    public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                          UUID controllerId, int xValue, boolean kicked,
+                                          List<CardEffect> selectedEffects) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0,
+                selectedEffects);
     }
 
     /**
@@ -1470,13 +1478,21 @@ public class TargetLegalityService {
      */
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
                                                        UUID controllerId, int xValue) {
+        validateMixedSpellAndPermanentTargets(
+                gameData, card, targetIds, controllerId, xValue, card.getEffects(EffectSlot.SPELL));
+    }
+
+    public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                                       UUID controllerId, int xValue,
+                                                       List<CardEffect> selectedEffects) {
         if (card.getSpellTargets().size() <= 1) {
             for (UUID targetId : targetIds) {
                 validateSpellTargeting(gameData, card, targetId, null, controllerId, true, xValue);
             }
             return;
         }
-        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 1);
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 1,
+                selectedEffects);
     }
 
     public void validateSpellTargetGroupsAfterPrimary(GameData gameData, Card card,
@@ -1487,6 +1503,13 @@ public class TargetLegalityService {
 
     private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                            UUID controllerId, int xValue, boolean kicked, int firstGroupIndex) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked,
+                firstGroupIndex, card.getEffects(EffectSlot.SPELL));
+    }
+
+    private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                           UUID controllerId, int xValue, boolean kicked, int firstGroupIndex,
+                                           List<CardEffect> selectedEffects) {
         List<SpellTarget> targetGroups = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .toList();
@@ -1520,16 +1543,28 @@ public class TargetLegalityService {
                                 Math.max(group.getMaxTargets(), group.getKickedMaxTargets()))
                         .mapToObj(ignored -> group.getFilter()))
                 .toList();
+        List<SpellTarget> perPositionGroups = targetGroups.stream()
+                .flatMap(group -> java.util.stream.IntStream.range(0,
+                                Math.max(group.getMaxTargets(), group.getKickedMaxTargets()))
+                        .mapToObj(ignored -> group))
+                .toList();
         int positionOffset = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() < firstGroupIndex)
                 .mapToInt(SpellTarget::getMaxTargets)
                 .sum();
         // The restriction an unfiltered position inherits from the spell's own effects, read the
         // same way target enumeration reads it (ValidTargetService.isValidPermanentTarget).
-        PermanentPredicate declaredRestriction = EffectResolution
-                .declaredPermanentRestriction(card.getEffects(EffectSlot.SPELL)).orElse(null);
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
+            SpellTarget targetGroup = perPositionGroups.get(i);
+            List<CardEffect> groupEffects = selectedEffects.stream()
+                    .filter(effect -> card.getEffectTargetIndex(effect) == targetGroup.getIndex())
+                    .toList();
+            List<CardEffect> restrictionEffects = groupEffects.isEmpty() ? selectedEffects : groupEffects;
+            PermanentPredicate declaredRestriction = EffectResolution
+                    .declaredPermanentRestriction(restrictionEffects).orElse(null);
+            boolean groupAdmitsPermanent = restrictionEffects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
             // Player-targeting position
             if (gameData.playerIds.contains(targetId)) {
@@ -1589,7 +1624,7 @@ public class TargetLegalityService {
                         filterContext(gameData, card.getId(), controllerId))) {
                     throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
                 }
-            } else if (!gameQueryService.isCreature(gameData, target)) {
+            } else if (!groupAdmitsPermanent && !gameQueryService.isCreature(gameData, target)) {
                 throw new IllegalStateException(target.getCard().getName() + " is not a creature");
             }
 

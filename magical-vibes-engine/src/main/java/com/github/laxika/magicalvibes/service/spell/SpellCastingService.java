@@ -678,8 +678,7 @@ public class SpellCastingService {
                                 }
                             }
                         } else if (chosen.targetFilter() != null
-                                || EffectResolution.needsSpellCastTarget(chosen.effects(), false, false)
-                                || EffectResolution.needsSpellTarget(chosen.effects())) {
+                                || needsFlatModalTargetGroup(chosen.effects())) {
                             SpellTarget spellTarget = declareModeTarget(card, chosen);
                             for (CardEffect modeEffect : chosen.effects()) {
                                 card.registerEffectTargetIndex(modeEffect, spellTarget.getIndex());
@@ -830,6 +829,13 @@ public class SpellCastingService {
             return card.target(chosen.targetFilter(), chosen.minTargets(), chosen.maxTargets());
         }
         return card.target(chosen.targetFilter());
+    }
+
+    private static boolean needsFlatModalTargetGroup(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || EffectResolution.targetsSpellOnStack(effect));
     }
 
     private void applyModalEtbTargetFilter(Card card, int effectiveXValue) {
@@ -1794,8 +1800,11 @@ public class SpellCastingService {
         //  - a non-modal "counter up to N target spells" (Double Negative): a single spell-on-stack
         //    target group with max > 1 (bound to a CounterEachTargetSpellEffect) and no permanent/player
         //    targets. In both cases the chosen targets ride in the flat targetIds list.
+        long selectedSpellTargetCount = targetingSpellEffects.stream()
+                .filter(EffectResolution::targetsSpellOnStack)
+                .count();
         boolean multipleSpellTargets = unwrappedNeedsSpellTarget && (wasModal
-                ? !targetIds.isEmpty() && !allSpellTargetsAlsoAllowPermanents
+                ? selectedSpellTargetCount > 1 && !allSpellTargetsAlsoAllowPermanents
                 : !unwrappedNeedsTarget && card.getMaxTargets() > 1);
 
         // A "spell or permanent" single-target chooser (e.g. Glamerdye) can target either zone. Infer
@@ -2237,10 +2246,10 @@ public class SpellCastingService {
         } else if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
             if (mixedSpellAndPermanentTargets) {
                 targetLegalityService.validateMixedSpellAndPermanentTargets(
-                        gameData, card, targetIds, playerId, effectiveXValue);
+                        gameData, card, targetIds, playerId, effectiveXValue, targetingSpellEffects);
             } else {
                 targetLegalityService.validateMultiSpellTargets(
-                        gameData, card, targetIds, playerId, effectiveXValue, kicked);
+                        gameData, card, targetIds, playerId, effectiveXValue, kicked, targetingSpellEffects);
             }
         }
 
@@ -5479,7 +5488,7 @@ public class SpellCastingService {
         // validation and payment. A failed cast (for example, one that cannot pay its mana cost)
         // does not move the card out of exile.
         boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(exileCardId)
-                || sourceFreeCast;
+                || sourceFreeCast || (resolutionCast && copy);
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
 
         if (card.hasType(CardType.LAND)) {

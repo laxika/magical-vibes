@@ -40,6 +40,7 @@ class CardImmutabilityArchTest {
             "CardPrinting",            // stamps printing data on freshly constructed cards and their back faces
             "GameSetupService",        // stamps ownerId, then freezes
             "SpellCastingService",     // mutates the modal runtime copy it just created
+            "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
             "PermanentCopierService",  // assembles fresh clone-copy cards
             "CloneService",            // "except it has ..." on the fresh clone-copy card
