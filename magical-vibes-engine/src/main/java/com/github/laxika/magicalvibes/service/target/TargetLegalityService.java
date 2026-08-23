@@ -1563,9 +1563,6 @@ public class TargetLegalityService {
             List<CardEffect> restrictionEffects = groupEffects.isEmpty() ? selectedEffects : groupEffects;
             PermanentPredicate declaredRestriction = EffectResolution
                     .declaredPermanentRestriction(restrictionEffects).orElse(null);
-            boolean groupAdmitsPermanent = restrictionEffects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-
             // Player-targeting position
             if (gameData.playerIds.contains(targetId)) {
                 if (!card.doesPositionAllowPlayerTargets(positionOffset + i)) {
@@ -1624,7 +1621,7 @@ public class TargetLegalityService {
                         filterContext(gameData, card.getId(), controllerId))) {
                     throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
                 }
-            } else if (!groupAdmitsPermanent && !gameQueryService.isCreature(gameData, target)) {
+            } else if (!gameQueryService.isCreature(gameData, target)) {
                 throw new IllegalStateException(target.getCard().getName() + " is not a creature");
             }
 
