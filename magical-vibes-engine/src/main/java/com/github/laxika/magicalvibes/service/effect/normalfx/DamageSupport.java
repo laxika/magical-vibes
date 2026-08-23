@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerA
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayingShieldDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CrumblingSanctuaryDamageReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DralnuDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.CounterType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -69,6 +71,7 @@ public class DamageSupport {
     private final PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final ObjectProvider<DestructionSupport> destructionSupportProvider;
 
     /** Colours of a non-permanent damage source (spell/ability card), for colour-based prevention. */
     private static Set<CardColor> sourceCardColors(Card card) {
@@ -270,6 +273,17 @@ public class DamageSupport {
             // a chosen source to the protected creature onto another permanent.
             rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
+        }
+        if (applyDralnuReplacement(gameData, target, rawDamage) > 0) {
+            return 0;
+        }
+        if (!targetDamageUnpreventable && damageSource == null && rawDamage > 0) {
+            int prevented = Math.min(rawDamage, gameQueryService.getSpellDamagePrevention(gameData, entry));
+            if (prevented > 0) {
+                rawDamage -= prevented;
+                gameLogService.append(gameData, GameLog.textCardText(prevented + " of ",
+                        target.getCard(), "'s damage is prevented."));
+            }
         }
         // Apply target+source-specific prevention shields (e.g. Healing Grace)
         if (!targetDamageUnpreventable && sourcePermId != null) {
@@ -558,6 +572,10 @@ public class DamageSupport {
         }
         if (damage <= 0) return;
 
+        if (applyDralnuReplacement(gameData, target, damage) > 0) {
+            return;
+        }
+
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
         }
@@ -784,6 +802,14 @@ public class DamageSupport {
                     gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
                     return;
                 }
+                if (!targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn() && rawDamage > 0) {
+                    int prevented = Math.min(rawDamage, gameQueryService.getSpellDamagePrevention(gameData, entry));
+                    if (prevented > 0) {
+                        rawDamage -= prevented;
+                        gameLogService.append(gameData, GameLog.textCardText(prevented + " of ",
+                                targetPermanent.getCard(), "'s damage is prevented."));
+                    }
+                }
                 // "Prevent all damage that would be dealt to ~" (e.g. Gideon of the Trials 0) also stops
                 // loyalty loss. The creature-damage path applies this set in DamagePreventionService, but
                 // the loyalty branch below bypasses it, so guard it here.
@@ -986,6 +1012,14 @@ public class DamageSupport {
                     gameData, sourceControllerId, source, sourcePermanent, playerId);
         }
         rawDamage = gameQueryService.applyDamageReplacementEffects(gameData, rawDamage);
+        if (rawDamage > 0) {
+            int prevented = Math.min(rawDamage, gameQueryService.getSpellDamagePrevention(gameData, entry));
+            if (prevented > 0) {
+                rawDamage -= prevented;
+                gameLogService.append(gameData, GameLog.cardThen(source,
+                        "'s " + prevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            }
+        }
         if (damagePreventionService.isColorDamagePreventedForTarget(gameData, playerId, sourceColors)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
@@ -1348,8 +1382,8 @@ public class DamageSupport {
 
             if (redirectEffective > 0) {
                 if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
-                    int currentLife = gameData.getLife(targetId);
-                    gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
+                    gameData.playerLifeTotals.put(targetId,
+                            gameQueryService.lifeAfterDamage(gameData, targetId, redirectEffective));
                 }
                 Permanent sourcePermanent = redirect.sourcePermanentId() == null
                         ? null
@@ -1426,8 +1460,8 @@ public class DamageSupport {
 
                 if (redirectEffective > 0) {
                     if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
-                        int currentLife = gameData.getLife(targetId);
-                        gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
+                        gameData.playerLifeTotals.put(targetId,
+                                gameQueryService.lifeAfterDamage(gameData, targetId, redirectEffective));
                     }
                     Permanent sourcePermanent = redirect.damageSourceId() == null
                             ? null
@@ -1682,6 +1716,28 @@ public class DamageSupport {
             }
         }
         return damage;
+    }
+
+    /**
+     * Replaces damage to Dralnu with a sacrifice of that many permanents controlled by its
+     * controller. If the controller has fewer permanents, all of them are sacrificed.
+     */
+    public int applyDralnuReplacement(GameData gameData, Permanent target, int damage) {
+        if (damage <= 0 || !hasDralnuDamageReplacement(target)) return 0;
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId != null) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            int count = battlefield == null ? 0 : Math.min(damage, battlefield.size());
+            destructionSupportProvider.getObject().sacrificePlayerMatchingPermanents(
+                    gameData, controllerId, count, new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate());
+        }
+        return damage;
+    }
+
+    public boolean hasDralnuDamageReplacement(Permanent target) {
+        return target != null && target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(DralnuDamageReplacementEffect.class::isInstance);
     }
 
     /**

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
+import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
@@ -1621,6 +1622,54 @@ public class CastingCostService {
         return lifeCost.isEmpty()
                 || (gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
                 && gameData.getLife(playerId) >= lifeCost.get().amount());
+    }
+
+    /** Returns whether all supported permanent components of a flashback cost can be paid. */
+    public boolean canPayFlashbackPermanentCosts(GameData gameData, UUID playerId, FlashbackCast flashback) {
+        for (CastingCost cost : flashback.costs()) {
+            if (!(cost instanceof ManaCastingCost)
+                    && !(cost instanceof TapUntappedPermanentsCost)
+                    && !(cost instanceof SacrificePermanentsCost)
+                    && !(cost instanceof DiscardXCardsCastingCost)
+                    && !(cost instanceof LifeCastingCost)) {
+                return false;
+            }
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return flashback.costs().stream().allMatch(cost -> cost instanceof ManaCastingCost
+                    || cost instanceof DiscardXCardsCastingCost
+                    || cost instanceof LifeCastingCost);
+        }
+
+        var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);
+        if (tapCost.isPresent()) {
+            long matchingUntapped = battlefield.stream()
+                    .filter(p -> !p.isTapped() && predicateEvaluationService.matchesPermanentPredicate(
+                            p, tapCost.get().filter(), FilterContext.of(gameData).withSourceControllerId(playerId)))
+                    .count();
+            if (matchingUntapped < tapCost.get().count()) {
+                return false;
+            }
+        }
+
+        int requiredSacrifices = flashback.costs().stream()
+                .filter(SacrificePermanentsCost.class::isInstance)
+                .map(SacrificePermanentsCost.class::cast)
+                .mapToInt(SacrificePermanentsCost::count)
+                .sum();
+        if (requiredSacrifices > 0) {
+            long matchingSacrifices = battlefield.stream()
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
+                            p, flashback.getCost(SacrificePermanentsCost.class).orElseThrow().filter(),
+                            FilterContext.of(gameData).withSourceControllerId(playerId)))
+                    .count();
+            if (matchingSacrifices < requiredSacrifices) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

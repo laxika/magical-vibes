@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
@@ -137,6 +138,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswal
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -169,7 +171,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PregameBattlefieldChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -491,7 +493,7 @@ public class StepTriggerService {
                 }
 
                 ForcedCostOrElseEffect payEchoOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayManaCost(action.manaCost()),
+                        new PayEchoCost(action.manaCost()),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true);
                 StackEntry entry = new StackEntry(
@@ -1545,6 +1547,59 @@ public class StepTriggerService {
             }
         }
 
+        // Suspend: "At the beginning of your upkeep, remove a time counter from this card."
+        if (!gameData.exiledCardTimeCounters.isEmpty()) {
+            List<Card> exiledCards = gameData.getPlayerExiledCards(activePlayerId);
+            for (Card card : new ArrayList<>(exiledCards)) {
+                Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
+                if (timeCounters != null && timeCounters > 0) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            activePlayerId,
+                            card.getName() + "'s suspend ability",
+                            new ArrayList<>(List.of(new RemoveTimeCounterFromExiledCardEffect(card.getId())))
+                    ));
+
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, "'s suspend ability triggers."));
+                    log.info("Game {} - {} suspend upkeep trigger pushed onto stack", gameData.id, card.getName());
+                }
+            }
+        }
+
+        // Suspended cards may also trigger during every player's upkeep.
+        for (var exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            Card card = exiledEntry.card();
+            Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
+            if (timeCounters == null || timeCounters <= 0) {
+                continue;
+            }
+
+            for (CardEffect effect : card.getEffects(EffectSlot.SUSPENDED_EACH_UPKEEP_TRIGGERED)) {
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, exiledEntry.ownerId(), may, activePlayerId, null,
+                            activePlayerId, null);
+                } else {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            exiledEntry.ownerId(),
+                            card.getName() + "'s suspended ability",
+                            new ArrayList<>(List.of(effect)),
+                            activePlayerId,
+                            (UUID) null
+                    );
+                    entry.setActivePlayerId(activePlayerId);
+                    gameData.stack.add(entry);
+                }
+
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s suspended upkeep ability triggers."));
+                log.info("Game {} - {} suspended upkeep trigger pushed onto stack", gameData.id, card.getName());
+            }
+        }
+
         // Ertai's Meddling: "At the beginning of each of that player's upkeeps, if that card is
         // exiled, remove a delay counter from it." The trigger belongs to the exiled spell's
         // controller, so it only fires on their own upkeeps.
@@ -2228,7 +2283,7 @@ public class StepTriggerService {
                     // Leyline effects are handled during the pregame procedure
                     // (MulliganService.startGame), not during the first upkeep.
                     if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof LeylineStartOnBattlefieldEffect) {
+                            && may.wrapped() instanceof PregameBattlefieldChoiceEffect) {
                         continue;
                     }
                     if (effect instanceof MayEffect may) {

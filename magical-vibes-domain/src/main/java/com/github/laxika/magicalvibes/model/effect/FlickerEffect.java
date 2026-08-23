@@ -216,6 +216,9 @@ public record FlickerEffect(
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
             return TargetSpec.benign(TargetPredicates.player());
         }
+        if (scope == FlickerScope.SELF) {
+            return new TargetSpec(null, false, null, true, 1);
+        }
         return TargetSpec.NONE;
     }
 }

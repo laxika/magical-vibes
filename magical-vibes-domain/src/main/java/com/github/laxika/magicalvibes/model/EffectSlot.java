@@ -46,6 +46,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of the controller's combat while this card is in their graveyard. */
     GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
     EACH_UPKEEP_TRIGGERED,
+    SUSPENDED_EACH_UPKEEP_TRIGGERED,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
@@ -182,6 +183,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (pair with {@code DrawCardEffect}). */
     ON_BECOMES_TARGET_OF_AURA_SPELL,
     ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+    /** Triggers when this permanent becomes the target of an opponent-controlled spell, but not an ability. */
+    ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY,
     /** Triggers when this permanent's controller becomes the target of a spell. */
     ON_CONTROLLER_BECOMES_TARGET_OF_SPELL,
     /** Triggers when the controller of a permanent with this slot becomes the target of a spell or

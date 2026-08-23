@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -93,6 +94,7 @@ import com.github.laxika.magicalvibes.model.effect.ModalSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -101,6 +103,8 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.RashmiRevealTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RashmiTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByCastSpellManaValueEffect;
@@ -114,11 +118,14 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -716,6 +723,42 @@ public class SpellCastTriggerCollectorService {
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
     }
 
+    @CollectsTrigger(value = SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleSameNameArtifactSpellCastTrigger(TriggerMatchContext match,
+            SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.spellCard().hasType(CardType.ARTIFACT)) {
+            return false;
+        }
+
+        CardEffect searchEffect = new SearchZonesForCardNamedToBattlefieldEffect(sc.spellCard().getName());
+        Card sourceCard = match.permanent().getCard();
+        if (match.rawEffect() instanceof MayEffect may) {
+            match.gameData().pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
+                    sourceCard,
+                    match.controllerId(),
+                    List.of(searchEffect),
+                    sourceCard.getName() + " — " + may.prompt(),
+                    null,
+                    match.permanent().getId(),
+                    sc.spellCard().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(searchEffect)));
+            entry.setTriggeringCardId(sc.spellCard().getId());
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        }
+        return true;
+    }
+
     @CollectsTrigger(value = CastSameNameCardFromGraveyardOnSpellCastEffect.class,
             slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCastSameNameCardFromGraveyard(TriggerMatchContext match,
@@ -1159,13 +1202,14 @@ public class SpellCastTriggerCollectorService {
     }
 
     @CollectsTrigger(value = DealDamageEqualToSpellManaValueToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTrigger(value = DealDamageEqualToSpellManaValueToAnyTargetEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
     private boolean handleManaValueDamage(TriggerMatchContext match,
             DealDamageEqualToSpellManaValueToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                 match.gameData(), sc.castingPlayerId())) return false;
 
-        int manaValue = sc.spellCard().getManaValue();
+        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
         List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(manaValue));
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
@@ -1438,6 +1482,58 @@ public class SpellCastTriggerCollectorService {
     private boolean handleOpponentSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = RemoveTimeCounterWhenOpponentCastsSpellEffect.class,
+            slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleSuspendedCardOpponentSpellCastTrigger(TriggerMatchContext match,
+            RemoveTimeCounterWhenOpponentCastsSpellEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        Card sourceCard = match.sourceCard();
+        if (sourceCard == null) {
+            return false;
+        }
+
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()))));
+        triggerEntry.setTriggeringCardId(sc.spellCard().getId());
+        triggerEntry.setNonTargeting(true);
+        match.gameData().stack.add(triggerEntry);
+        gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard, "'s ability triggers."));
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleSuspendedCardMayPutTimeCounterTrigger(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (match.permanent() != null
+                || match.sourceCard() == null
+                || !conditional.interveningIf()
+                || !(conditional.condition() instanceof SourceCardSuspended)
+                || !(conditional.wrapped() instanceof MayEffect may)
+                || may.choicePlayer() != MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER
+                || !(may.wrapped() instanceof PutTimeCountersOnSuspendedCardEffect)) {
+            return false;
+        }
+
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.sourceCard(),
+                match.controllerId(),
+                match.sourceCard().getName() + "'s ability",
+                new ArrayList<>(List.of(conditional)));
+        triggerEntry.setTargetId(sc.castingPlayerId());
+        triggerEntry.setEventValue(1);
+        triggerEntry.setTriggeringCardId(sc.spellCard().getId());
+        triggerEntry.setNonTargeting(true);
+        match.gameData().stack.add(triggerEntry);
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.sourceCard(), "'s ability triggers."));
+        return true;
     }
 
     @CollectsTrigger(value = ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect.class,

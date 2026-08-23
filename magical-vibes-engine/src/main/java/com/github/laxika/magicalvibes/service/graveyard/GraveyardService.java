@@ -901,6 +901,7 @@ public class GraveyardService {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
                 .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                .filter(effect -> !effect.mayChoose())
                 .findFirst()
                 .orElse(null);
     }

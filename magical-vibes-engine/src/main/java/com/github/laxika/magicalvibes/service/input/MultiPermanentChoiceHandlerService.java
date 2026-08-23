@@ -856,6 +856,11 @@ public class MultiPermanentChoiceHandlerService {
                     gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                             " won't untap as long as " + context.sourceName() + " remains on the battlefield."));
                 }
+                if (context.skipNextUntap()) {
+                    target.setSkipUntapCount(target.getSkipUntapCount() + 1);
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                            " won't untap during its controller's next untap step."));
+                }
             }
         }
 

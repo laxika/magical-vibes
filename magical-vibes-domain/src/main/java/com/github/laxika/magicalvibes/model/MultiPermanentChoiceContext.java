@@ -75,11 +75,12 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record TapChosenPermanent(String sourceName, UUID sourcePermanentId,
                               boolean preventUntapWhileSourceTapped,
-                              boolean preventUntapWhileSourceOnBattlefield) implements MultiPermanentChoiceContext {
+                              boolean preventUntapWhileSourceOnBattlefield,
+                              boolean skipNextUntap) implements MultiPermanentChoiceContext {
 
         public TapChosenPermanent(String sourceName, UUID sourcePermanentId,
                                   boolean preventUntapWhileSourceTapped) {
-            this(sourceName, sourcePermanentId, preventUntapWhileSourceTapped, false);
+            this(sourceName, sourcePermanentId, preventUntapWhileSourceTapped, false, false);
         }
     }
 

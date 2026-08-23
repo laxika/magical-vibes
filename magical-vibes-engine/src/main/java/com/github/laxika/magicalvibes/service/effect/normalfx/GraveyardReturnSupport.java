@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -1910,6 +1911,7 @@ public class GraveyardReturnSupport {
         UUID controllerId = state.controllerId();
         String destText = switch (state.disposition()) {
             case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM -> "put into your hand";
+            case ONE_FROM_CHOSEN_HAND_AND_BOTTOM -> "put one card into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
             case OPPONENT_CHOOSES_EXILE -> "exile";
             default -> "put onto the battlefield";
@@ -1986,6 +1988,21 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        if (state.disposition() == CardPileDisposition.ONE_FROM_CHOSEN_HAND_AND_BOTTOM) {
+            List<Card> chosenPile = chosenPileCardIds.stream()
+                    .map(cardId -> allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            List<Card> otherCards = otherPileCardIds.stream()
+                    .map(cardId -> allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            gameData.queueInteraction(new PendingTruthOrTaleCardChoice(controllerId, chosenPile, otherCards));
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, chosenPile, 1, 1,
+                    "Choose one card from the chosen pile to put into your hand.");
+            return;
+        }
+
         if (state.disposition() == CardPileDisposition.HAND
                 || state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
             // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.
@@ -2039,6 +2056,43 @@ public class GraveyardReturnSupport {
                 gameLogService.append(gameData, GameLog.cardThen(card, " returns to " + ownerName + "'s graveyard."));
             }
         }
+    }
+
+    /** Completes Truth or Tale's one-card choice and starts the ordered bottoming step if needed. */
+    public void completeTruthOrTaleCardChoice(GameData gameData, List<UUID> selectedCardIds) {
+        PendingTruthOrTaleCardChoice state = gameData.pollPendingInteraction(PendingTruthOrTaleCardChoice.class);
+        if (state == null || selectedCardIds.size() != 1) {
+            throw new IllegalStateException("Truth or Tale requires exactly one card");
+        }
+
+        UUID selectedCardId = selectedCardIds.getFirst();
+        Card selectedCard = state.chosenPileCards().stream()
+                .filter(card -> card.getId().equals(selectedCardId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Invalid Truth or Tale card"));
+        gameData.interaction.clearAwaitingInput();
+        UUID controllerId = state.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        gameData.addCardToHand(controllerId, selectedCard);
+        gameLogService.append(gameData, GameLog.textCardText(
+                controllerName + " puts ", selectedCard, " into their hand."));
+
+        List<Card> toBottom = new ArrayList<>(state.otherCards());
+        state.chosenPileCards().stream()
+                .filter(card -> !card.getId().equals(selectedCardId))
+                .forEach(toBottom::add);
+        if (toBottom.isEmpty()) {
+            return;
+        }
+        if (toBottom.size() == 1) {
+            gameData.playerDecks.get(controllerId).add(toBottom.getFirst());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    controllerName + " puts ", toBottom.getFirst(), " on the bottom of their library."));
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                controllerId, toBottom, true, controllerId,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
     }
 
     private void completeDeathOrGloryPileChoice(GameData gameData, PendingPileSeparation state,

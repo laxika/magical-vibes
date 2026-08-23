@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
+import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -707,6 +708,48 @@ public class MayMiscHandlerService {
             // All leyline choices resolved — continue with game start
             mulliganService.continueStartGame(gameData);
         }
+    }
+
+    public void handleGemstoneCavernsChoice(GameData gameData, Player player, boolean accepted,
+                                            PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean sourceInHand = hand != null && hand.stream()
+                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
+
+        if (!accepted || !sourceInHand) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + (accepted ? " cannot begin the game with " : " declines to begin the game with "),
+                    card, " on the battlefield."));
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                mulliganService.continueStartGame(gameData);
+            }
+            return;
+        }
+
+        hand.removeIf(handCard -> handCard.getId().equals(card.getId()));
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        permanent.setCounterCount(CounterType.LUCK, 1);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+
+        if (hand.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " begins the game with ", card, " on the battlefield."));
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                mulliganService.continueStartGame(gameData);
+            }
+            return;
+        }
+
+        gameData.pendingGemstoneCavernsChoice = new PendingGemstoneCavernsChoice(card, controllerId);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " begins the game with ", card,
+                " on the battlefield and must exile a card from their hand."));
+        playerInputService.beginExileFromHandChoice(gameData, controllerId, null, 1);
     }
 
     public void handleSphinxAmbassadorChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
+import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
@@ -148,9 +150,11 @@ public class LibraryChoiceHandlerService {
                 : LibrarySearchDestination.HAND;
         boolean toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD
                 || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED
+                || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER
                 || destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER
                 || destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT;
-        boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
+        boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED
+                || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER;
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
         String filterCardName = librarySearch.filterCardName();
@@ -176,6 +180,8 @@ public class LibraryChoiceHandlerService {
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
+        UUID battlefieldControllerId = librarySearch.battlefieldControllerId() != null
+                ? librarySearch.battlefieldControllerId() : handOwnerId;
 
         // Validate before touching interaction state: a rejected answer must leave the prompt
         // standing so the player can answer again. Clearing first and then throwing (every branch
@@ -268,6 +274,7 @@ public class LibraryChoiceHandlerService {
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm);
                     if (gameData.pendingEffectResolutionEntry != null) {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
                     }
@@ -291,7 +298,7 @@ public class LibraryChoiceHandlerService {
                         triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
                     }
                     if (chosenCard.hasType(CardType.CREATURE)) {
-                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
+                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, battlefieldControllerId, chosenCard, null, false);
                     }
                     if (chosenCard.hasType(CardType.PLANESWALKER) && chosenCard.getLoyalty() != null) {
                         int loyalty = gameQueryService.replaceCounters(gameData, perm,
@@ -300,7 +307,7 @@ public class LibraryChoiceHandlerService {
                         perm.setSummoningSick(false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
-                        legendRuleService.checkLegendRule(gameData, playerId);
+                        legendRuleService.checkLegendRule(gameData, battlefieldControllerId);
                     }
                 } else if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
                     // Chosen card stays on top; the rest are reordered to the bottom below
@@ -1099,7 +1106,16 @@ public class LibraryChoiceHandlerService {
             finishSearchAndResume(gameData);
             return;
         } else if (toGraveyard) {
-            graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
+            boolean enteredGraveyard = graveyardService.addCardToGraveyard(
+                    gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
+            if (enteredGraveyard
+                    && librarySearch.sourcePermanentId() != null
+                    && gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                        gameData.pendingEffectResolutionIndex,
+                        List.of(new BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect(
+                                chosenCard.getId())));
+            }
         } else if (destination == LibrarySearchDestination.REVEAL_ONLY) {
             deck.add(chosenCard);
         } else if (destination == LibrarySearchDestination.HAND) {
@@ -1147,7 +1163,7 @@ public class LibraryChoiceHandlerService {
                 // Final pick (or single pick) — place all accumulated + current simultaneously
                 List<Card> allCards = new ArrayList<>(accumulatedCards);
                 allCards.add(chosenCard);
-                placeCardsOnBattlefieldSimultaneously(gameData, allCards, handOwnerId, toBattlefieldTapped,
+                placeCardsOnBattlefieldSimultaneously(gameData, allCards, battlefieldControllerId, toBattlefieldTapped,
                         grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
                         battlefieldCounter, enterWithCounters);
             }
@@ -1229,6 +1245,7 @@ public class LibraryChoiceHandlerService {
                     .filterCardName(filterCardName)
                     .filterPredicate(filterPredicate)
                     .accumulatedCards(accumulatedCards)
+                    .battlefieldControllerId(battlefieldControllerId)
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
                     .manaValueBound(manaValueBoundValue, manaValueExact)
@@ -1262,6 +1279,7 @@ public class LibraryChoiceHandlerService {
                     ? LibrarySearchDestination.BATTLEFIELD : destination) {
                 case BATTLEFIELD -> "onto the battlefield";
                 case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
+                case BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER -> "onto the battlefield tapped under the target player's control";
                 case BATTLEFIELD_ATTACHED_TO_PLAYER -> "onto the battlefield";
                 case BATTLEFIELD_ATTACHED_TO_PERMANENT -> "onto the battlefield";
                 case BATTLEFIELD_ATTACHED_TO_CREATURE -> throw new IllegalStateException("BATTLEFIELD_ATTACHED_TO_CREATURE should be handled earlier");
@@ -1861,6 +1879,14 @@ public class LibraryChoiceHandlerService {
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
 
+        PendingPsychoticEpisodeChoice psychoticEpisodeChoice =
+                gameData.pollPendingInteraction(PendingPsychoticEpisodeChoice.class);
+        if (psychoticEpisodeChoice != null) {
+            handlePsychoticEpisodeChoice(gameData, player, psychoticEpisodeChoice,
+                    allRevealedCards, cardIds);
+            return;
+        }
+
         // Karn, Scion of Urza +1: opponent chose which card goes to controller's hand
         if (gameData.hasPendingInteraction(PendingKarnScionRevealChoice.class)) {
             handleKarnScionRevealChoice(gameData, allRevealedCards, cardIds);
@@ -2047,6 +2073,36 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        finishSearchAndResume(gameData);
+    }
+
+    private void handlePsychoticEpisodeChoice(GameData gameData, Player player,
+                                              PendingPsychoticEpisodeChoice choice,
+                                              List<Card> allRevealedCards,
+                                              List<UUID> selectedCardIds) {
+        if (selectedCardIds.size() != 1) {
+            throw new IllegalStateException("Psychotic Episode requires one card");
+        }
+
+        UUID chosenId = selectedCardIds.getFirst();
+        Card chosenCard = allRevealedCards.stream()
+                .filter(card -> card.getId().equals(chosenId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Invalid Psychotic Episode card"));
+        List<Card> deck = gameData.playerDecks.get(choice.targetPlayerId());
+
+        if (chosenId.equals(choice.topCardId())) {
+            deck.removeIf(card -> card.getId().equals(chosenId));
+        } else {
+            gameData.playerHands.get(choice.targetPlayerId()).removeIf(
+                    card -> card.getId().equals(chosenId));
+        }
+        deck.add(chosenCard);
+
+        String targetName = gameData.playerIdToName.get(choice.targetPlayerId());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses ", chosenCard,
+                " to put on the bottom of " + targetName + "'s library."));
         finishSearchAndResume(gameData);
     }
 

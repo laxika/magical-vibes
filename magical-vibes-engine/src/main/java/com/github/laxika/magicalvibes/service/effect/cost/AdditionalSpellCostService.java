@@ -1253,6 +1253,25 @@ public class AdditionalSpellCostService {
         return chosen;
     }
 
+    /** Validates an exact-count permanent sacrifice cost using an arbitrary permanent predicate. */
+    public List<Permanent> validateMultipleSacrificeCost(GameData gameData, Player player, Card card,
+                                                         int count, String typeDescription,
+                                                         Predicate<Permanent> typeCheck,
+                                                         List<UUID> sacrificePermanentIds) {
+        List<UUID> ids = sacrificePermanentIds != null ? sacrificePermanentIds : List.of();
+        if (ids.size() != count) {
+            throw new IllegalStateException("Must sacrifice " + typeDescription + " to cast " + card.getName());
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate sacrifice targets for " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        for (UUID id : ids) {
+            chosen.add(validateSingleSacrificeCost(gameData, player, card, id, typeDescription, typeCheck));
+        }
+        return chosen;
+    }
+
     /**
      * Validates a sacrifice cost that is paid once for each selected mode beyond the first.
      */

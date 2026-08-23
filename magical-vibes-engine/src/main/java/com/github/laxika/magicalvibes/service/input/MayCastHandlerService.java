@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,7 @@ public class MayCastHandlerService {
     private final SpellCastingService spellCastingService;
     private final TargetLegalityService targetLegalityService;
     private final CopySupport copySupport;
+    private final ValidTargetService validTargetService;
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -431,6 +433,12 @@ public class MayCastHandlerService {
                     validTargets.add(targetId);
                 }
             }
+        }
+        boolean canTargetGraveyard = spellEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (canTargetGraveyard) {
+            validTargets.addAll(validTargetService.computeValidTargetsForSpell(
+                    gameData, card, controllerId, List.of(), xValue, null).validGraveyardCardIds());
         }
         return validTargets;
     }

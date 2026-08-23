@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSu
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -97,6 +98,7 @@ public class CardChoiceHandlerService {
     private final EquipSupport equipSupport;
     private final ExileSupport exileSupport;
     private final ExileService exileService;
+    private final MulliganService mulliganService;
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -825,6 +827,11 @@ public class CardChoiceHandlerService {
                     exileChoice.untapPermanentId());
         } else {
             gameData.interaction.clearAwaitingInput();
+
+            if (gameData.pendingGemstoneCavernsChoice != null) {
+                mulliganService.completeGemstoneCavernsExile(gameData, playerId);
+                return;
+            }
 
             if (exileChoice.untapPermanentId() != null) {
                 Permanent source = gameQueryService.findPermanentById(gameData, exileChoice.untapPermanentId());

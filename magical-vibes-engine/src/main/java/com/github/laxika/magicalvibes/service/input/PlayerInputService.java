@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
@@ -990,6 +991,32 @@ public class PlayerInputService {
                 sourceCardName + " — choose how many "
                         + ChoiceContext.RemoveCountersOfKindChoice.counterLabel(counterKind)
                         + " counters to remove (0-" + max + ")."));
+    }
+
+    /** Clockspinning: choose which counter on the target to add or remove. */
+    public void beginAdjustChosenCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                   Zone targetZone, String sourceCardName,
+                                                   List<CounterType> counterTypes) {
+        ChoiceContext.AdjustChosenCounterTypeChoice context = new ChoiceContext.AdjustChosenCounterTypeChoice(
+                targetId, targetZone, playerId, sourceCardName, counterTypes);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, context.options(),
+                sourceCardName + " — Choose a counter to add or remove."));
+        log.info("Game {} - Awaiting {} to choose a counter kind for {}", gameData.id, playerId, targetId);
+    }
+
+    /** Clockspinning: choose whether to add or remove the selected counter. */
+    public void beginAdjustChosenCounterActionChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                     Zone targetZone, String sourceCardName,
+                                                     CounterType counterType) {
+        ChoiceContext.AdjustChosenCounterActionChoice context =
+                new ChoiceContext.AdjustChosenCounterActionChoice(
+                        targetId, targetZone, playerId, sourceCardName, counterType);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, ChoiceContext.AdjustChosenCounterActionChoice.OPTIONS,
+                sourceCardName + " — Add or remove a "
+                        + ChoiceContext.AdjustChosenCounterTypeChoice.counterLabel(counterType) + "?"));
+        log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerId, counterType);
     }
 
     /** Animation Module: choose a counter kind already present on the target, then add one more. */

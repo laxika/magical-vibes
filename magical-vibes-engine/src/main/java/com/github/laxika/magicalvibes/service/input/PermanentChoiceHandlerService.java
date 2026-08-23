@@ -62,6 +62,8 @@ public class PermanentChoiceHandlerService {
 
         if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.TurnFaceUpCopy turnFaceUpCopy) {
+            battlefieldHandler.handleTurnFaceUpCopy(gameData, permanentId, turnFaceUpCopy);
         } else if (context instanceof PermanentChoiceContext.CipherEncode) {
             battlefieldHandler.handleCipherEncode(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.CreateTokensAndAttachEquipment attachEquipment) {
@@ -256,6 +258,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleGraveyardCastSpellTarget(gameData, permanentId, gct);
         } else if (context instanceof PermanentChoiceContext.HandCastSpellTarget hct) {
             spellHandler.handleHandCastSpellTarget(gameData, permanentId, hct);
+        } else if (context instanceof PermanentChoiceContext.OpponentChosenSpellTarget opponentTarget) {
+            spellHandler.handleOpponentChosenSpellTarget(gameData, permanentId, opponentTarget);
         } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
         } else if (context instanceof PermanentChoiceContext.CreateTokensAttacking createTokens) {

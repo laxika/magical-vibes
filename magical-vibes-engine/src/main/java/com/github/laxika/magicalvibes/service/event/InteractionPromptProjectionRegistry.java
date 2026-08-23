@@ -122,6 +122,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
+        register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
         register(PendingInteraction.RevealCardsDiscardChoice.class,
@@ -781,6 +782,16 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()),
                 interaction.maxCount(),
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectExiledCardChoice(
+            GameData gameData, PendingInteraction.ExiledCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose an exiled card named \"" + interaction.cardName()
+                        + "\" to return to the battlefield.");
     }
 
     private InteractionPromptMessage projectColorChoice(

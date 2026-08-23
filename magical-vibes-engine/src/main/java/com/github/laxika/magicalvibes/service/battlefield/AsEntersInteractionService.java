@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffe
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnOtherNontokenCreaturesFaceDownOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -107,6 +109,23 @@ public class AsEntersInteractionService {
                                                  List<String> repeatedAdditionalCosts,
                                                  List<UUID> convokeCreatureIds) {
         controllerId = resolveTokenControllerForEntry(gameData, controllerId, card);
+
+        boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
+        if (turnsOtherCreaturesFaceDown) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent == justEntered || permanent.isFaceDown() || permanent.getCard().isToken()
+                            || permanent.getOriginalCard().getBackFaceCard() != null
+                            || !gameQueryService.isCreature(gameData, permanent)) {
+                        continue;
+                    }
+                    permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+                }
+            }
+        }
+
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);

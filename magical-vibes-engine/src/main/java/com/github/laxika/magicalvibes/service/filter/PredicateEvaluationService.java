@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceContro
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
@@ -243,6 +244,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * The single evaluation point for the predicate and target-filter hierarchies
@@ -1158,6 +1160,20 @@ public class PredicateEvaluationService {
                 UUID currentCardId = permanent.getCard().getId();
                 UUID originalCardId = permanent.getOriginalCard().getId();
                 yield gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
+                        .flatMap(List::stream)
+                        .anyMatch(card -> card.getId().equals(currentCardId)
+                                || card.getId().equals(originalCardId));
+            }
+            case PermanentEnteredBattlefieldThisOrLastTurnPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null
+                        || gameData.turnsTakenByPlayer.getOrDefault(sourceControllerId, 0) < 2) {
+                    yield false;
+                }
+                UUID currentCardId = permanent.getCard().getId();
+                UUID originalCardId = permanent.getOriginalCard().getId();
+                yield Stream.concat(
+                                gameData.permanentsEnteredBattlefieldThisTurn.values().stream(),
+                                gameData.permanentsEnteredBattlefieldLastTurn.values().stream())
                         .flatMap(List::stream)
                         .anyMatch(card -> card.getId().equals(currentCardId)
                                 || card.getId().equals(originalCardId));

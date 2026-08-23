@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -960,6 +961,16 @@ public class GraveyardChoiceHandlerService {
 
         // Card pile separation (Boneyard Parley, Brilliant Ultimatum, Unesh, Curator of Destinies):
         // the separating player assigns cards to piles
+        PendingTruthOrTaleCardChoice truthOrTaleChoice =
+                gameData.peekPendingInteraction(PendingTruthOrTaleCardChoice.class);
+        if (truthOrTaleChoice != null) {
+            graveyardReturnSupport.completeTruthOrTaleCardChoice(gameData, cardIds);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+            return;
+        }
+
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null && pileSeparation.cardPileMode()) {
             gameData.interaction.clearAwaitingInput();

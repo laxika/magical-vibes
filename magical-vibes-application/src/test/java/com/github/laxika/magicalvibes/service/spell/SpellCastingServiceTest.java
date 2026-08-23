@@ -53,12 +53,14 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -99,6 +101,9 @@ class SpellCastingServiceTest {
 
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
+
+    @Mock
+    private CloneService cloneService;
 
     @Mock
     private GameQueryService gameQueryService;
@@ -153,6 +158,9 @@ class SpellCastingServiceTest {
     @Mock
     private LifeSupport lifeSupport;
 
+    @Mock
+    private PlayerInputService playerInputService;
+
     private SpellCastingService svc;
 
     private GameData gd;
@@ -165,14 +173,14 @@ class SpellCastingServiceTest {
     void setUp() {
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
-        svc = new SpellCastingService(cardRevealService, battlefieldEntryService, graveyardTargetingService,
+        svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, new TargetGroupAssignmentService(gameQueryService),
                 permanentRemovalService, triggerCollectionService,
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
-                mutationCoordinator, stateBasedActionService, lifeSupport);
+                mutationCoordinator, stateBasedActionService, lifeSupport, playerInputService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");

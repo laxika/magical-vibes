@@ -447,8 +447,8 @@ public class DestructionSupport {
             return;
         }
 
-        int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+        gameData.playerLifeTotals.put(playerId,
+                gameQueryService.lifeAfterDamage(gameData, playerId, effectiveDamage));
 
         if (effectiveDamage > 0) {
             String playerName = gameData.playerIdToName.get(playerId);

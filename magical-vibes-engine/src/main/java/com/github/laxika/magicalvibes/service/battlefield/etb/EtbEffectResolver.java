@@ -103,7 +103,7 @@ public class EtbEffectResolver {
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false,
                     sourceZone, 0, null, null, false, false, null, null, null,
-                    ctx.repeatedAdditionalCosts());
+                    ctx.repeatedAdditionalCosts(), false);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;

@@ -113,6 +113,7 @@ public class CastingPermissionService {
      * restrictions: spell limit, type restrictions, forbidden names, silence, etc.
      */
     public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
+        if (isSplitSecondActive(gameData)) return false;
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         if (spellsCast >= maxSpells) return false;
@@ -646,6 +647,7 @@ public class CastingPermissionService {
      */
     public boolean isSpellRestricted(GameData gameData, UUID playerId, Card card,
                                      Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
+        if (isSplitSecondActive(gameData)) return true;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
@@ -654,6 +656,12 @@ public class CastingPermissionService {
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
+    }
+
+    public boolean isSplitSecondActive(GameData gameData) {
+        return gameData.stack.stream()
+                .anyMatch(entry -> entry.getCard() != null
+                        && entry.getCard().getKeywords().contains(Keyword.SPLIT_SECOND));
     }
 
     public boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
@@ -691,13 +699,18 @@ public class CastingPermissionService {
         if (isSorcerySpeedOnlyForPlayer(gameData, playerId)) {
             return sorceryTimingAvailable(gameData, playerId);
         }
+        boolean sorceryTiming = isActivePlayer && isMainPhase && stackEmpty;
+        if (gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, playerId)) {
+            return sorceryTiming;
+        }
+
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || card.getKeywords().contains(Keyword.FLASH)
                 || hasFlashGrantForCard(gameData, playerId, card)
                 || grantsItselfFlashTiming(card)
                 || hasMetFlashCastCondition(gameData, playerId, card)
                 || hasAvailableFlashAlternateCast(gameData, playerId, card);
-        return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+        return isInstantSpeed || sorceryTiming;
     }
 
     private boolean isSorcerySpeedOnlyForPlayer(GameData gameData, UUID playerId) {

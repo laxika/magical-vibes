@@ -33,6 +33,7 @@ public record LibrarySearchParams(
         String filterCardName,
         UUID attachToPlayerId,
         UUID attachToPermanentId,
+        UUID battlefieldControllerId,
         CardPredicate filterPredicate,
         UUID sourcePermanentId,
         LibrarySearchFollowUp followUp,
@@ -78,6 +79,7 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
@@ -91,6 +93,7 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
@@ -119,6 +122,7 @@ public record LibrarySearchParams(
         private String filterCardName;
         private UUID attachToPlayerId;
         private UUID attachToPermanentId;
+        private UUID battlefieldControllerId;
         private CardPredicate filterPredicate;
         private UUID sourcePermanentId;
         private LibrarySearchFollowUp followUp = LibrarySearchFollowUp.NONE;
@@ -230,6 +234,11 @@ public record LibrarySearchParams(
 
         public Builder attachToPermanentId(UUID attachToPermanentId) {
             this.attachToPermanentId = attachToPermanentId;
+            return this;
+        }
+
+        public Builder battlefieldControllerId(UUID battlefieldControllerId) {
+            this.battlefieldControllerId = battlefieldControllerId;
             return this;
         }
 
@@ -350,6 +359,7 @@ public record LibrarySearchParams(
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                    battlefieldControllerId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                     returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,

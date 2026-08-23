@@ -115,6 +115,7 @@ public enum CardSet {
     SET_RQS("RQS"),
     SET_MGB("MGB"),
     SET_TPR("TPR"),
+    SET_TSP("TSP"),
     SET_ATH("ATH"),
     SET_FDN("FDN"),
     SET_ULG("ULG"),

@@ -28,6 +28,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingBendOrBreak,
+        PendingPsychoticEpisodeChoice,
+        PendingTruthOrTaleCardChoice,
         PendingWhimsOfTheFates,
         PendingHostileNegotiations,
         PendingEachPlayerLibraryExile, PendingGuildFeud,
@@ -68,6 +70,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
         PendingInteraction.MagesContestBidChoice,
         PendingInteraction.PainsRewardBidChoice,
+        PendingInteraction.ExiledCardChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
         PendingInteraction.BeholdChoice,
@@ -832,14 +835,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * One player may put one matching card from their hand onto the battlefield. The selected cards
-     * are held in {@code chosenCardIds} until every player has chosen, then enter simultaneously.
+     * One player may put one matching card from their hand onto the battlefield. In the normal
+     * mode, selected cards are held in {@code chosenCardIds} until every player has chosen, then
+     * enter simultaneously. The repeating mode puts the selected card in immediately and carries
+     * the controller-first round state through the interaction.
      */
     record EachPlayerMayPutCardFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                               java.util.List<UUID> remainingPlayerIds,
                                               java.util.List<UUID> chosenCardIds,
                                               com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
-                                              String label, String cardName) implements PendingInteraction {
+                                              String label, String cardName,
+                                              boolean repeatUntilNoOne, UUID startingPlayerId,
+                                              boolean cardPutThisRound)
+            implements PendingInteraction {
+
+        public EachPlayerMayPutCardFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                  java.util.List<UUID> remainingPlayerIds,
+                                                  java.util.List<UUID> chosenCardIds,
+                                                  com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
+                                                  String label, String cardName) {
+            this(playerId, validCardIds, remainingPlayerIds, chosenCardIds, predicate, label, cardName,
+                    false, null, false);
+        }
 
         public EachPlayerMayPutCardFromHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
@@ -1393,6 +1410,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
+        }
+    }
+
+    /** Chooses one matching face-up card from exile to return to the battlefield. */
+    record ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

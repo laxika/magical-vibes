@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -52,13 +53,19 @@ public class CloneService {
     private final PermanentCopierService permanentCopierService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
-        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0);
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0, false);
     }
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue) {
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, false);
+    }
+
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 int xValue, boolean landPlay) {
         CopyPermanentOnEnterEffect copyEffect = findCopyEffect(gameData, controllerId, card);
         if (copyEffect == null) return false;
 
@@ -94,6 +101,8 @@ public class CloneService {
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
+        gameData.cloneOperation.entersTapped = copyEffect.entersTapped();
+        gameData.cloneOperation.landPlay = landPlay;
         gameData.cloneOperation.xValue = xValue;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
@@ -147,6 +156,8 @@ public class CloneService {
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
         boolean copyColor = gameData.cloneOperation.copyColor;
+        boolean entersTapped = gameData.cloneOperation.entersTapped;
+        boolean landPlay = gameData.cloneOperation.landPlay;
         int xValue = gameData.cloneOperation.xValue;
 
         gameData.cloneOperation.card = null;
@@ -171,6 +182,8 @@ public class CloneService {
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
         gameData.cloneOperation.copyColor = true;
+        gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.landPlay = false;
         gameData.cloneOperation.xValue = 0;
 
         Permanent perm = new Permanent(card);
@@ -219,6 +232,9 @@ public class CloneService {
                 if (addTypeAppropriateCounters) {
                     applyTypeAppropriateCounters(gameData, controllerId, perm);
                 }
+                if (entersTapped) {
+                    perm.tap();
+                }
             }
         }
 
@@ -246,7 +262,14 @@ public class CloneService {
             log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
         }
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);
+        if (landPlay) {
+            battlefieldEntryService.processLandETBEffects(gameData, controllerId, perm.getCard());
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
+            }
+        } else {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);
+        }
 
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);

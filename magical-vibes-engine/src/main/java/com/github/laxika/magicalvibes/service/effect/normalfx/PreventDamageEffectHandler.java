@@ -136,6 +136,15 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                         "All damage that would be dealt to " + gameData.playerIdToName.get(controllerId)
                                 + " this turn by matching creatures is prevented."));
             }
+            case ALL_TO_PLAYERS_FROM_MATCHING_SOURCES -> {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    gameData.playersWithDamageFromMatchingSourcesPrevented
+                            .computeIfAbsent(playerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .add(e.sourcePredicate());
+                }
+                gameLogService.append(gameData, GameLog.text(
+                        "All damage that would be dealt to players this turn by matching sources is prevented."));
+            }
             case ALL_FROM_COLORS -> {
                 gameData.preventDamageFromColors.addAll(e.sourceColors());
                 String colorNames = e.sourceColors().stream()

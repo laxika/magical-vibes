@@ -29,7 +29,8 @@ import java.util.Set;
  * @param gainLife        whether the controller gains life equal to damage prevented by a
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
  * @param sourcePredicate damage sources matching this predicate for
- *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES}
+ *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
+ *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES}
  */
 public record PreventDamageEffect(
         PreventionScope scope,
@@ -96,9 +97,11 @@ public record PreventDamageEffect(
         if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
             throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
         }
-        if ((sourcePredicate != null) != (scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES)) {
+        boolean acceptsSourcePredicate = scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES;
+        if ((sourcePredicate != null) != acceptsSourcePredicate) {
             throw new IllegalArgumentException(
-                    "sourcePredicate is exactly the ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES parameter: " + scope);
+                    "sourcePredicate is exactly a matching-source prevention parameter: " + scope);
         }
     }
 
@@ -287,6 +290,13 @@ public record PreventDamageEffect(
     public static PreventDamageEffect allToControllerFromMatchingSources(PermanentPredicate sourcePredicate) {
         return new PreventDamageEffect(
                 PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
+    }
+
+    /** "Prevent all damage that would be dealt to players this turn by matching sources." */
+    public static PreventDamageEffect allToPlayersFromMatchingSources(PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES,
                 null, false, null, null, null, false, sourcePredicate);
     }
 

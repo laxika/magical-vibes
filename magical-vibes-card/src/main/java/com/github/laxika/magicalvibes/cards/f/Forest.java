@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "304")
 @CardRegistration(set = "SUM", collectorNumber = "305")
 @CardRegistration(set = "SUM", collectorNumber = "306")
+@CardRegistration(set = "TSP", collectorNumber = "299")
 @CardRegistration(set = "BRB", collectorNumber = "103")
 @CardRegistration(set = "BRB", collectorNumber = "104")
 @CardRegistration(set = "10E", collectorNumber = "381")
@@ -260,6 +261,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "WAR", collectorNumber = "262")
 @CardRegistration(set = "WAR", collectorNumber = "263")
 @CardRegistration(set = "WAR", collectorNumber = "264")
+@CardRegistration(set = "TSP", collectorNumber = "298")
+@CardRegistration(set = "TSP", collectorNumber = "300")
+@CardRegistration(set = "TSP", collectorNumber = "301")
 public class Forest extends Card {
 
     public Forest() {

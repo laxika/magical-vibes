@@ -83,6 +83,9 @@ class CombatDamageState {
     // creature ID, Value: its controller ID at damage time.
     final Map<UUID, UUID> combatDamageTargetControllers = new HashMap<>();
 
+    final Map<UUID, Permanent> pendingDralnuReplacementTargets = new LinkedHashMap<>();
+    final Map<UUID, Integer> pendingDralnuReplacementDamage = new LinkedHashMap<>();
+
     // CR 510.1 — Snapshot of whether defender's damage should be dealt as infect (Phyrexian Unlife),
     // captured before lifelink is processed so simultaneous combat damage uses pre-damage life total.
     boolean defenderDamageAsInfect;

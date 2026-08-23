@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastForForetellCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
+import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -208,6 +209,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisTurn;
@@ -778,6 +780,8 @@ public class ConditionEvaluationService {
             case SnowManaSpentToCast ignored ->
                     ctx.sourceCard() != null
                             && gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId()) > 0;
+            case CastDuringMainPhase ignored ->
+                    ctx.castDuringMainPhase();
             case ControllerTurn ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
             case ControllerMainPhase ignored ->
@@ -848,6 +852,8 @@ public class ConditionEvaluationService {
                     isSourceCardInCommandZone(gameData, ctx);
             case SourceCardInGraveyard ignored ->
                     isSourceCardInGraveyard(gameData, ctx);
+            case SourceCardSuspended ignored ->
+                    isSourceCardSuspended(gameData, ctx);
             case SourceAttackedOrBlockedThisCombat ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && (source.isAttackedThisCombat() || source.isBlockedThisCombat());
@@ -1343,6 +1349,14 @@ public class ConditionEvaluationService {
         if (ctx.controllerId() == null || ctx.sourceCard() == null) return false;
         List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
         return graveyard != null && graveyard.contains(ctx.sourceCard());
+    }
+
+    /** True when the source card is still exiled with a positive time-counter entry. */
+    private boolean isSourceCardSuspended(GameData gameData, ConditionContext ctx) {
+        if (ctx.sourceCard() == null) return false;
+        UUID cardId = ctx.sourceCard().getId();
+        Integer timeCounters = gameData.exiledCardTimeCounters.get(cardId);
+        return timeCounters != null && timeCounters > 0 && gameData.findExiledCard(cardId) != null;
     }
 
     /**

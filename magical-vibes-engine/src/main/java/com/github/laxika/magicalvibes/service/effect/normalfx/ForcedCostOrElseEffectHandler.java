@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
@@ -262,6 +263,14 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             playerInputService.beginMultiGraveyardChoice(gameData, entry.getControllerId(), candidates,
                     cost.count(), cost.count(), "Choose " + cost.count() + " cards to exile from your graveyard.");
             return;
+        }
+        if (e.forcedCost() instanceof PayEchoCost echoCost) {
+            String alternativeCost = gameQueryService.findAlternativeEchoCost(gameData, entry.getControllerId());
+            e = new ForcedCostOrElseEffect(
+                    new com.github.laxika.magicalvibes.model.effect.PayManaCost(
+                            alternativeCost == null ? echoCost.echoCost() : alternativeCost),
+                    e.elseEffects(), e.optional(), e.anyPlayerMayPay(), e.payerIsEnchantedController(),
+                    e.payerIsDefendingPlayer(), e.paidEffects());
         }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
@@ -820,6 +829,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                                 payerId, entry.getSourcePermanentId(), entry.getCard(), e));
                 playerInputService.beginPermanentChoice(gameData, payerId, matchingPermanentIds,
                         "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
+                return;
     }
 
     private boolean hasEnoughCumulativeUpkeepCards(GameData gameData,

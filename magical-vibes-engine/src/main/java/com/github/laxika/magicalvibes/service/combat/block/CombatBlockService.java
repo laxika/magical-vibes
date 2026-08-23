@@ -1724,10 +1724,20 @@ public class CombatBlockService {
             if (effects.isEmpty()) continue;
 
             List<CardEffect> matchingEffects = new ArrayList<>();
+            FilterContext watcherContext = FilterContext.of(gameData)
+                    .withSourceCardId(perm.getCard().getId())
+                    .withSourceControllerId(activeId)
+                    .withSourcePermanentId(perm.getId());
             for (CardEffect effect : effects) {
                 if (effect instanceof TriggeringCardConditionalEffect conditional) {
                     if (!predicateEvaluationService.matchesCardPredicate(blockedAttacker.getCard(), conditional.predicate(),
                             null, gameData, activeId)) {
+                        continue;
+                    }
+                    matchingEffects.add(conditional.wrapped());
+                } else if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(
+                            blockedAttacker, conditional.predicate(), watcherContext)) {
                         continue;
                     }
                     matchingEffects.add(conditional.wrapped());
@@ -1761,6 +1771,7 @@ public class CombatBlockService {
             );
             // "It" references the blocked creature without targeting it — can't fizzle.
             trigger.setNonTargeting(true);
+            trigger.setSourcePermanentSnapshot(new Permanent(blockedAttacker));
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",

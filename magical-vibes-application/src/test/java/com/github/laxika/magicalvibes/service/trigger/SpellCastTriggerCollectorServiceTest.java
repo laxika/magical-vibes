@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEnd
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
@@ -66,6 +68,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -1390,6 +1394,50 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — same-name artifact search")
+    class ControllerSameNameArtifactSearch {
+
+        @Test
+        @DisplayName("snapshots the artifact spell name into the may ability")
+        void snapshotsArtifactSpellName() {
+            Permanent perm = createPermanent("Mishra, Artificer Prodigy");
+            var inner = new SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect();
+            var effect = new MayEffect(inner, "Search for a copy?");
+            Card spellCard = createCard("Spellbook");
+            spellCard.setType(CardType.ARTIFACT);
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+            var pending = gd.pendingMayAbilities.getFirst();
+            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(pending.effects()).containsExactly(
+                    new SearchZonesForCardNamedToBattlefieldEffect("Spellbook"));
+        }
+
+        @Test
+        @DisplayName("does not trigger for a nonartifact spell")
+        void doesNotTriggerForNonartifactSpell() {
+            Permanent perm = createPermanent("Mishra, Artificer Prodigy");
+            var inner = new SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect();
+            var effect = new MayEffect(inner, "Search for a copy?");
+            Card spellCard = createCard("Grizzly Bears");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.pendingMayAbilities).isEmpty();
+        }
+    }
+
     // ===== ON_CONTROLLER_CASTS_SPELL — CastFromGraveyardTriggerEffect =====
 
     @Nested
@@ -1904,6 +1952,32 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_CASTS_SPELL — suspended exiled card")
+    class SuspendedExiledCardSpellCast {
+
+        @Test
+        @DisplayName("queues removal of a time counter for the suspended source card")
+        void queuesTimeCounterRemoval() {
+            Card sourceCard = createCard("Deep-Sea Kraken");
+            var effect = new RemoveTimeCounterWhenOpponentCastsSpellEffect();
+            Card spellCard = createCard("Opponent Spell");
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var match = new TriggerMatchContext(gd, null, player1Id, effect, sourceCard);
+
+            boolean result = registry.dispatch(match, EffectSlot.ON_OPPONENT_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry triggerEntry = gd.stack.getLast();
+            assertThat(triggerEntry.getCard()).isSameAs(sourceCard);
+            assertThat(triggerEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(triggerEntry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(triggerEntry.getEffectsToResolve()).containsExactly(
+                    new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()));
         }
     }
 

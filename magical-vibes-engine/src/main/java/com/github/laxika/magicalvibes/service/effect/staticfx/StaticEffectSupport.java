@@ -180,8 +180,13 @@ public class StaticEffectSupport {
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         if (wrapped instanceof StaticBoostEffect boost) {
             if (selfInScope(context, boost.scope(), boost.filter())) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
+                int multiplier = boost.scalingCounter() == null
+                        ? 1
+                        : (boost.scalingCounterOnTarget()
+                                ? context.target().getCounterCount(boost.scalingCounter())
+                                : context.source().getCounterCount(boost.scalingCounter()));
+                accumulator.addPower(boost.powerBoost() * multiplier);
+                accumulator.addToughness(boost.toughnessBoost() * multiplier);
                 accumulator.addKeywords(boost.grantedKeywords());
             }
         } else if (wrapped instanceof BoostSelfEffect boost) {

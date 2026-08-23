@@ -125,6 +125,15 @@ public class ValidTargetService {
 
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
+        if (spellEffects.stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::cast)
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect::opponentChoosesTarget)) {
+            List<UUID> validOpponentIds = targetLegalityService.computeValidOpponentChosenTargetPlayers(
+                    gameData, card, controllerId, effectiveXValue, Boolean.TRUE.equals(kicked));
+            return new ValidTargetsResponse(List.of(), validOpponentIds, List.of(), List.of(),
+                    1, 1, "Choose an opponent for " + card.getName());
+        }
         TargetFilter modeFilter = chosenMode != null ? chosenMode.targetFilter() : null;
         Set<TargetType> allowedTargets;
         if (kicked != null || modeSelection != null) {
@@ -668,24 +677,30 @@ public class ValidTargetService {
             return List.of();
         }
         FilterContext context = targetFilterContext(gameData, sourceCard.getId(), controllerId, null);
-        List<UUID> validIds = new ArrayList<>();
-        for (Card exiledCard : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
-            if (excludeIds.contains(exiledCard.getId())) {
+        Set<UUID> validIds = new java.util.LinkedHashSet<>();
+        for (CardEffect effect : ability.getEffects()) {
+            if (!effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)) {
                 continue;
             }
-            boolean valid = ability.getEffects().stream()
-                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
-                    .anyMatch(effect -> targetPredicateEvaluationService.matchesExiledCard(
-                            effect.targetSpec().targetPredicate(), exiledCard, context)
-                            && targetValidationService.checkEffectTargets(List.of(effect),
-                                    new TargetValidationContext(gameData, exiledCard.getId(),
-                                            com.github.laxika.magicalvibes.model.Zone.EXILE, sourceCard, 0,
-                                            controllerId, sourcePermanent)).isEmpty());
-            if (valid) {
-                validIds.add(exiledCard.getId());
+            List<Card> candidateCards = effect.targetsAllExiledCardsInAbility()
+                    ? gameData.exiledCards.stream().map(entry -> entry.card()).toList()
+                    : gameData.getCardsExiledByPermanent(sourcePermanentId);
+            for (Card exiledCard : candidateCards) {
+                if (excludeIds.contains(exiledCard.getId())) {
+                    continue;
+                }
+                boolean valid = targetPredicateEvaluationService.matchesExiledCard(
+                        effect.targetSpec().targetPredicate(), exiledCard, context)
+                        && targetValidationService.checkEffectTargets(List.of(effect),
+                                new TargetValidationContext(gameData, exiledCard.getId(),
+                                        com.github.laxika.magicalvibes.model.Zone.EXILE, sourceCard, 0,
+                                        controllerId, sourcePermanent)).isEmpty();
+                if (valid) {
+                    validIds.add(exiledCard.getId());
+                }
             }
         }
-        return validIds;
+        return List.copyOf(validIds);
     }
 
     /**
@@ -1056,6 +1071,14 @@ public class ValidTargetService {
         List<CardEffect> spellEffects = kicked == null
                 ? card.getEffects(EffectSlot.SPELL)
                 : EffectResolution.resolveEffects(card.getEffects(EffectSlot.SPELL), kicked, null);
+        if (spellEffects.stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::cast)
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect::opponentChoosesTarget)) {
+            int xValue = maxXValue != null ? maxXValue : 0;
+            return !targetLegalityService.computeValidOpponentChosenTargetPlayers(
+                    gameData, card, controllerId, xValue, Boolean.TRUE.equals(kicked)).isEmpty();
+        }
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
                 spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
                 card.isAura(), card.isEnchantPlayer());

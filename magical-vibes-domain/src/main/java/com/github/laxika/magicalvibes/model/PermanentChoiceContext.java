@@ -26,6 +26,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record CloneCopy() implements PermanentChoiceContext {}
 
     record CopyPermanentTargetedBySpell() implements PermanentChoiceContext {}
+    record TurnFaceUpCopy(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
     record CipherEncode() implements PermanentChoiceContext {}
 
@@ -242,26 +243,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       int remaining,
                                       List<UUID> chosenSoFar,
                                       ActivatedAbility ability,
-                                      Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
+                                      Permanent sourcePermanentSnapshot,
+                                      Card sourceCard) implements PermanentChoiceContext {
 
         public ActivatedAbilityCostChoice {
             targetIds = targetIds != null ? List.copyOf(targetIds) : List.of();
         }
-
         /** Permanents already paid toward this cost, for costs whose valid choices depend on prior
          *  picks (e.g. "tap two creatures that share a creature type"). Empty for count-only costs. */
         public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
                                           Integer xValue, UUID targetId, Zone targetZone, CardEffect costEffect,
                                           int remaining) {
             this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, List.of(),
-                    costEffect, remaining, List.of(), null, null);
+                    costEffect, remaining, List.of(), null, null, null);
         }
 
         public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
                                           Integer xValue, UUID targetId, Zone targetZone, CardEffect costEffect,
                                           int remaining, List<UUID> chosenSoFar) {
             this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, List.of(),
-                    costEffect, remaining, chosenSoFar, null, null);
+                    costEffect, remaining, chosenSoFar, null, null, null);
         }
     }
 
@@ -870,6 +871,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(cardToCast, controllerId, spellEffects, spellType, xValue, false);
         }
     }
+
+    /** A spell whose controller chooses an opponent, then that opponent chooses the creature target. */
+    record OpponentChosenSpellTarget(Player caster, Card cardToCast, int cardIndex, Integer xValue,
+                                     boolean buyback, UUID chosenOpponentId)
+            implements PermanentChoiceContext {}
 
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}

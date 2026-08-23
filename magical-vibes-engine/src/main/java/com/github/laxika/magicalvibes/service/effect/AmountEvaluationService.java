@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
+import com.github.laxika.magicalvibes.model.amount.TargetPowerPlusToughness;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -451,6 +452,8 @@ public class AmountEvaluationService {
                     targetEffectiveToughness(gameData, ctx);
             case TargetPower ignored ->
                     targetEffectivePower(gameData, ctx);
+            case TargetPowerPlusToughness ignored ->
+                    targetEffectivePowerPlusToughness(gameData, ctx);
             case TargetManaValue ignored ->
                     targetManaValue(gameData, ctx);
             case TargetCardsManaValueSum ignored ->
@@ -556,6 +559,14 @@ public class AmountEvaluationService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         // No legal target at resolution -> 0, matching the fizzle behaviour of the handlers this replaces.
         return target == null ? 0 : Math.max(0, gameQueryService.getEffectivePower(gameData, target));
+    }
+
+    private int targetEffectivePowerPlusToughness(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        if (target == null) return 0;
+        return gameQueryService.getEffectivePower(gameData, target)
+                + gameQueryService.getEffectiveToughness(gameData, target);
     }
 
     private int targetManaValue(GameData gameData, AmountContext ctx) {

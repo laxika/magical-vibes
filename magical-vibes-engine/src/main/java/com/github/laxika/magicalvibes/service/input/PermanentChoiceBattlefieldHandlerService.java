@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
+import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -94,6 +95,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final EquipSupport equipSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final CloneService cloneService;
+    private final TurnFaceUpCopyService turnFaceUpCopyService;
     private final CipherSupport cipherSupport;
     private final WarpWorldService warpWorldService;
     private final GameLogService gameLogService;
@@ -273,6 +275,11 @@ public class PermanentChoiceBattlefieldHandlerService {
             // epilogue must run to resume the parked entry.
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    public void handleTurnFaceUpCopy(GameData gameData, UUID chosenId,
+                                     PermanentChoiceContext.TurnFaceUpCopy context) {
+        turnFaceUpCopyService.completeChoice(gameData, context.sourcePermanentId(), context.controllerId(), chosenId);
     }
 
     public void handleCipherEncode(GameData gameData, UUID permanentId) {

@@ -606,9 +606,20 @@ public sealed interface ChoiceContext {
      * (times {@code manaMultiplier} for Mana Reflection; {@code fromCreature} marks creature mana).
      * Used by the storage-land cycle via {@code RemoveCountersForManaEffect}.
      */
-    record RemoveCountersForManaChoice(UUID playerId, UUID permanentId, ManaColor color,
+    record RemoveCountersForManaChoice(UUID playerId, UUID permanentId, List<ManaColor> colors,
                                        CounterType counterType, boolean fromCreature,
-                                       int manaMultiplier) implements ChoiceContext {}
+                                       int manaMultiplier) implements ChoiceContext {
+
+        public RemoveCountersForManaChoice {
+            colors = List.copyOf(colors);
+        }
+
+        public RemoveCountersForManaChoice(UUID playerId, UUID permanentId, ManaColor color,
+                                           CounterType counterType, boolean fromCreature,
+                                           int manaMultiplier) {
+            this(playerId, permanentId, List.of(color), counterType, fromCreature, manaMultiplier);
+        }
+    }
 
     /**
      * Tetravus first upkeep trigger: the controller chooses how many of {@code permanentId}'s +1/+1
@@ -1040,6 +1051,38 @@ public sealed interface ChoiceContext {
                 default -> counterKind.toLowerCase().replace('_', ' ');
             };
         }
+    }
+
+    /** Clockspinning's choice of a counter on a permanent or suspended card. */
+    record AdjustChosenCounterTypeChoice(UUID targetId, Zone targetZone, UUID controllerId,
+                                         String sourceCardName, List<CounterType> counterTypes)
+            implements ChoiceContext {
+
+        public AdjustChosenCounterTypeChoice {
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream().map(AdjustChosenCounterTypeChoice::counterLabel).toList();
+        }
+
+        public static String counterLabel(CounterType counterType) {
+            return switch (counterType) {
+                case PLUS_ONE_PLUS_ONE -> "+1/+1 counters";
+                case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
+                default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
+            };
+        }
+    }
+
+    /** Clockspinning's choice to add or remove the selected counter. */
+    record AdjustChosenCounterActionChoice(UUID targetId, Zone targetZone, UUID controllerId,
+                                           String sourceCardName, CounterType counterType)
+            implements ChoiceContext {
+
+        public static final String ADD = "ADD";
+        public static final String REMOVE = "REMOVE";
+        public static final List<String> OPTIONS = List.of(ADD, REMOVE);
     }
 
     /** Animation Module's choice of a counter kind to add to the target. */

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -406,6 +407,8 @@ public class TriggerCollectionService {
             if (playerId.equals(castingPlayerId)) return;
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx);
         });
+
+        dispatchSuspendedExiledCardSpellCastTriggers(gameData, castingPlayerId, ctx);
 
         // Increment keyword (CR keyword): "Whenever you cast a spell, if the amount of mana you spent
         // is greater than this creature's power or toughness, put a +1/+1 counter on it." Driven by the
@@ -1076,6 +1079,26 @@ public class TriggerCollectionService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void dispatchSuspendedExiledCardSpellCastTriggers(GameData gameData, UUID castingPlayerId,
+            TriggerContext.SpellCast context) {
+        for (ExiledCardEntry exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            UUID ownerId = exiledEntry.ownerId();
+            if (ownerId.equals(castingPlayerId)) {
+                continue;
+            }
+            Integer timeCounters = gameData.exiledCardTimeCounters.get(exiledEntry.card().getId());
+            if (timeCounters == null || timeCounters <= 0) {
+                continue;
+            }
+
+            Card card = exiledEntry.card();
+            for (CardEffect effect : card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)) {
+                registry.dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card),
+                        EffectSlot.ON_OPPONENT_CASTS_SPELL, effect, context);
+            }
+        }
     }
 
     private boolean isNthMatchingSpell(GameData gameData, SpellCastTriggerEffect trigger, UUID playerId) {
@@ -2377,6 +2400,8 @@ public class TriggerCollectionService {
                 collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent, spellEntry);
                 collectBecomesTargetOfAuraSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
                 collectBecomesTargetOfOpponentCounterTriggers(gameData, targetPermanent, controllerId, spellEntry);
+                collectBecomesTargetOfOpponentSpellOnlyTriggers(gameData, targetPermanent, controllerId,
+                        spellEntry.getControllerId());
                 collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId, spellEntry);
                 collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
                         gameData, targetPermanent, controllerId, spellEntry.getControllerId());
@@ -3013,6 +3038,32 @@ public class TriggerCollectionService {
                 gameData.id, source.getCard().getName());
     }
 
+    private void collectBecomesTargetOfOpponentSpellOnlyTriggers(
+            GameData gameData, Permanent source, UUID controllerId, UUID spellControllerId) {
+        if (controllerId.equals(spellControllerId)) return;
+
+        List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
+                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY));
+        if (effects.isEmpty()) return;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                controllerId,
+                source.getCard().getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                source.getId()
+        );
+        gameData.stack.add(entry);
+
+        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+        log.info("Game {} - {} becomes-target-of-opponent-spell-only trigger queued",
+                gameData.id, source.getCard().getName());
+    }
+
     /**
      * Checks ALL permanents on the targeted creature's controller's battlefield for
      * {@link EffectSlot#ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY}.
@@ -3263,7 +3314,9 @@ public class TriggerCollectionService {
             checkEnchantedCreatureDealtDamageTriggers(gameData, damagedCreature, damageDealt);
         }
 
-        List<CardEffect> effects = damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
+        List<CardEffect> effects = new ArrayList<>(damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                gameData, damagedCreature, EffectSlot.ON_DEALT_DAMAGE));
         if (effects.isEmpty()) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
@@ -6667,6 +6720,10 @@ public class TriggerCollectionService {
         }
 
         for (DelayedReturnOnDeath delayedReturn : delayedReturns) {
+            if (delayedReturn.requireControllerGraveyard()
+                    && !delayedReturn.controllerId().equals(ownerId)) {
+                continue;
+            }
             UUID triggerControllerId = delayedReturn.returnUnderController()
                     ? delayedReturn.controllerId() : ownerId;
 

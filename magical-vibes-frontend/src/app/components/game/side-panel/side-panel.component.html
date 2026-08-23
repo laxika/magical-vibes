@@ -444,9 +444,9 @@
 
     @if (choice.targeting.choosingBuybackSacrifice) {
       <div class="side-prompt prompt-targeting">
-        <span class="side-prompt-text">Select a land to sacrifice for {{ choice.targeting.buybackSacrificeDescription }}</span>
+        <span class="side-prompt-text">Select {{ choice.targeting.buybackSacrificeDescription }}</span>
         <div class="side-prompt-buttons side-prompt-buttons-stacked">
-          <button class="btn-side-prompt" (click)="choice.targeting.confirmBuybackSacrifice()" [disabled]="choice.targeting.buybackSacrificeSelectedId() == null">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmBuybackSacrifice()" [disabled]="choice.targeting.buybackSacrificeSelectedIds().length !== choice.targeting.buybackSacrificeCount">Cast</button>
           <button class="btn-side-prompt" (click)="choice.targeting.cancelBuybackSacrifice()">Cancel</button>
         </div>
       </div>

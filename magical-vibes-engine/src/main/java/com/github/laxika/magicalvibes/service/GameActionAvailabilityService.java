@@ -146,6 +146,9 @@ public class GameActionAvailabilityService {
             VirtualManaPool poolWithoutSource = null;
             for (int i = 0; i < abilities.size(); i++) {
                 ActivatedAbility ability = abilities.get(i);
+                if (castingPermissionService.isSplitSecondActive(gameData) && !ability.isManaAbility()) {
+                    continue;
+                }
                 String abilityManaCost = effectiveAbilityManaCost(gameData, playerId, perm, ability);
                 if (abilityManaCost == null
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
@@ -1116,9 +1119,8 @@ public class GameActionAvailabilityService {
                 continue;
             }
 
-            boolean isInstantSpeed = castHalf.hasType(CardType.INSTANT);
-            boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
-            if (!canCastTiming) {
+            if (!castingPermissionService.canCastWithTiming(gameData, playerId, castHalf,
+                    isActivePlayer, isMainPhase, stackEmpty)) {
                 continue;
             }
 
@@ -1147,12 +1149,12 @@ public class GameActionAvailabilityService {
             }
             if (manaCostStr == null) {
                 // Flashback with no mana cost — e.g. Group Project's "tap three creatures" cost.
-                boolean hasLifeCost = flashback.isPresent()
-                        && flashback.get().getCost(LifeCastingCost.class).isPresent();
                 if (flashback.isPresent()
                         && castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashback.get())
-                        && (hasLifeCost
-                        || castingCostService.canPayFlashbackTapCost(gameData, playerId, flashback.get()))) {
+                        && castingCostService.canPayFlashbackPermanentCosts(
+                        gameData, playerId, flashback.get())) {
+                // Flashback with no mana cost — e.g. Group Project's tap cost or Dread Return's
+                // sacrifice cost.
                     playable.add(i);
                 }
                 continue;
@@ -1178,6 +1180,11 @@ public class GameActionAvailabilityService {
                         .anyMatch(power -> cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost - power));
             }
             if (!canPayMana) {
+                continue;
+            }
+
+            if (flashback.isPresent() && !castingCostService.canPayFlashbackPermanentCosts(
+                    gameData, playerId, flashback.get())) {
                 continue;
             }
 

@@ -55,7 +55,9 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCa
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoCostAlternativeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
@@ -109,6 +111,7 @@ import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageFromSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
@@ -411,6 +414,25 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    public String findAlternativeEchoCost(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return null;
+        for (Permanent permanent : bf) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EchoCostAlternativeEffect alternative) {
+                    return alternative.alternativeEchoCost();
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean playerHasTemporaryStaticEffect(GameData gameData, UUID playerId,
+                                                   Class<? extends CardEffect> effectType) {
+        List<CardEffect> effects = gameData.playerStaticEffectsUntilEndOfTurn.get(playerId);
+        return effects != null && effects.stream().anyMatch(effectType::isInstance);
     }
 
     /**
@@ -1303,7 +1325,8 @@ public class GameQueryService {
      * {@link CantWinGameEffect}).
      */
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
-        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
+        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)
+                || playerHasTemporaryStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
             return false;
         }
         if (playerEmblemHasActiveStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
@@ -1322,7 +1345,8 @@ public class GameQueryService {
      * winning the game.
      */
     public boolean playerHasCantWinGameEffect(GameData gameData, UUID playerId) {
-        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantWinGameEffect.class)) {
+        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantWinGameEffect.class)
+                || playerHasTemporaryStaticEffect(gameData, playerId, CantWinGameEffect.class)) {
             return true;
         }
         return playerEmblemHasActiveStaticEffect(gameData, playerId, CantWinGameEffect.class);
@@ -1349,10 +1373,12 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player can lose the game from having 0 or less life
-     * (i.e. no {@link CantLoseGameFromLifeEffect} is present on their battlefield).
+     * (i.e. no {@link CantLoseGameFromLifeEffect} is present on their battlefield or in their
+     * temporary player effects).
      */
     public boolean canPlayerLoseFromLife(GameData gameData, UUID playerId) {
-        return !playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameFromLifeEffect.class);
+        return !playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameFromLifeEffect.class)
+                && !playerHasTemporaryStaticEffect(gameData, playerId, CantLoseGameFromLifeEffect.class);
     }
 
     /**
@@ -1371,6 +1397,8 @@ public class GameQueryService {
     /**
      * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
      * or {@code 0} when no battlefield or turn-scoped life-floor effect currently applies.
+     * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield or in their temporary
+     * player effects currently applies.
      * Callers must treat {@code 0} as "no floor" (do not clamp life to 0). Each such effect only
      * contributes its floor while its {@link LifeFloorCondition} holds, evaluated against the
      * player's state before the damage is applied ({@code currentLife}).
@@ -1378,22 +1406,41 @@ public class GameQueryService {
     public int damageLifeFloor(GameData gameData, UUID playerId, int currentLife) {
         int floor = gameData.damageLifeFloorsUntilEndOfTurn.getOrDefault(playerId, 0);
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return floor;
-        boolean controlsCreature = bf.stream().anyMatch(p -> isCreature(gameData, p));
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (!(effect instanceof DamageLifeFloorEffect lifeFloor)) continue;
-                boolean active = switch (lifeFloor.condition()) {
-                    case ALWAYS -> true;
-                    case CONTROLS_A_CREATURE -> controlsCreature;
-                    case LIFE_AT_LEAST_FLOOR -> currentLife >= lifeFloor.floor();
-                };
-                if (active && currentLife >= lifeFloor.floor()) {
-                    floor = Math.max(floor, lifeFloor.floor());
+        boolean controlsCreature = bf != null && bf.stream().anyMatch(p -> isCreature(gameData, p));
+        if (bf != null) {
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof DamageLifeFloorEffect lifeFloor) {
+                        floor = Math.max(floor, activeDamageLifeFloor(lifeFloor, controlsCreature, currentLife));
+                    }
                 }
             }
         }
+        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn
+                .getOrDefault(playerId, List.of())) {
+            if (effect instanceof DamageLifeFloorEffect lifeFloor) {
+                floor = Math.max(floor, activeDamageLifeFloor(lifeFloor, controlsCreature, currentLife));
+            }
+        }
         return floor;
+    }
+
+    private int activeDamageLifeFloor(DamageLifeFloorEffect lifeFloor, boolean controlsCreature,
+                                      int currentLife) {
+        boolean active = switch (lifeFloor.condition()) {
+            case ALWAYS -> true;
+            case CONTROLS_A_CREATURE -> controlsCreature;
+            case LIFE_AT_LEAST_FLOOR -> currentLife >= lifeFloor.floor();
+        };
+        return active ? lifeFloor.floor() : 0;
+    }
+
+    /** Returns the player's life total after applying damage replacement floors. */
+    public int lifeAfterDamage(GameData gameData, UUID playerId, int damage) {
+        int currentLife = gameData.getLife(playerId);
+        int newLife = currentLife - damage;
+        int lifeFloor = damageLifeFloor(gameData, playerId, currentLife);
+        return lifeFloor > 0 ? Math.max(newLife, lifeFloor) : newLife;
     }
 
     // --- Creature / type classification ---
@@ -5015,6 +5062,28 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the amount prevented from each damage event dealt by a spell as itself, or zero when
+     * the event is not preventable spell damage.
+     */
+    public int getSpellDamagePrevention(GameData gameData, StackEntry entry) {
+        if (!isDamagePreventable(gameData) || entry == null || entry.getSourcePermanentId() != null
+                || !isSpellStackEntry(entry.getEntryType())) {
+            return 0;
+        }
+        int[] total = {0};
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PreventFixedDamageFromSpellsEffect prevention) {
+                        total[0] += prevention.amount();
+                    }
+                }
+            }
+        });
+        return total[0];
+    }
+
+    /**
      * Applies global damage replacement effects to one damage event. The amount is passed through
      * each matching effect once, so a replacement can make the event too small for a later copy to
      * apply.
@@ -6224,6 +6293,23 @@ public class GameQueryService {
         return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> effect instanceof OpponentsCantCastOrActivateDuringYourTurnEffect restriction
                         && restriction.restrictsActivatedAbilities()));
+    }
+
+    /**
+     * True if {@code playerId} is an opponent of a permanent with a
+     * {@link OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect} static effect.
+     */
+    public boolean isLockedOutByOpponentsSorceryTimingRestriction(GameData gameData, UUID playerId) {
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            if (battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect.class::isInstance))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

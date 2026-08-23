@@ -895,7 +895,7 @@ public class ActivatedAbilityExecutionService {
                 if (available > 0) {
                     ChoiceContext.RemoveCountersForManaChoice choiceContext =
                             new ChoiceContext.RemoveCountersForManaChoice(playerId, permanent.getId(),
-                                    rc.color(), rc.counterType(), isCreatureSource, manaMultiplier);
+                                    rc.colors(), rc.counterType(), isCreatureSource, manaMultiplier);
                     List<String> options = java.util.stream.IntStream.rangeClosed(0, available)
                             .mapToObj(Integer::toString)
                             .toList();
@@ -1155,8 +1155,8 @@ public class ActivatedAbilityExecutionService {
                     } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                     } else {
-                        int currentLife = gameData.getLife(playerId);
-                        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                        gameData.playerLifeTotals.put(playerId,
+                                gameQueryService.lifeAfterDamage(gameData, playerId, effectiveDamage));
                         if (effectiveDamage > 0) {
                             String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
                             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -1318,8 +1318,8 @@ public class ActivatedAbilityExecutionService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
-                int currentLife = gameData.getLife(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                gameData.playerLifeTotals.put(playerId,
+                        gameQueryService.lifeAfterDamage(gameData, playerId, effectiveDamage));
                 if (effectiveDamage > 0) {
                     gameLogService.append(gameData, GameLog.text(playerName + " takes " + effectiveDamage + " damage from " + cardName + "."));
                     log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);

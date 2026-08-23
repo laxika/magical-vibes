@@ -562,6 +562,10 @@ public class BlockLegalityService {
                 }
             }
         }
+        if (!blocksShadowAsThoughShadow) {
+            blocksShadowAsThoughShadow = !gameQueryService.collectAuraEffects(
+                    gameData, blocker, CanBlockCreaturesWithShadowEffect.class).isEmpty();
+        }
         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> auraRestrictions =
                 gameQueryService.collectAuraEffects(gameData, blocker, CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
         if (!auraRestrictions.isEmpty()) {

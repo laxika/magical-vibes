@@ -34,5 +34,8 @@ public class CloneOperationState {
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
     public Map<EffectSlot, List<CardEffect>> additionalSlotEffects = Map.of();
     public boolean copyColor = true;
+    // Vesuva: applied only to the chosen copy entry, not retained by the resulting copy.
+    public boolean entersTapped;
+    public boolean landPlay;
     public int xValue;
 }

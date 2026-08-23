@@ -349,6 +349,8 @@ public class GameData {
     public final Set<UUID> antedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
+    /** Maps suspended exiled card UUID → remaining time counter count. */
+    public final Map<UUID, Integer> exiledCardTimeCounters = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → dream counter count (Goliath Daydreamer). */
     public final Map<UUID, Integer> exiledCardDreamCounters = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → hit counter count (Etrata, the Silencer). */
@@ -415,6 +417,7 @@ public class GameData {
     /** Target IDs to colors whose damage is prevented to that target until end of turn. */
     public final Map<UUID, Set<CardColor>> colorDamagePreventionUntilEndOfTurn = new ConcurrentHashMap<>();
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
+    public PendingGemstoneCavernsChoice pendingGemstoneCavernsChoice;
     /** Tariff: players (APNAP order) still to be processed after the one currently being resolved. */
     public final List<UUID> tariffRemainingPlayers = new ArrayList<>();
     /**
@@ -615,6 +618,10 @@ public class GameData {
      * in engine code pushes/polls this deque at the same end.
      */
     public final Deque<Boolean> extraTurnSkipsUntap = new ArrayDeque<>();
+    /** Additional upkeep steps still to be taken during the active player's current turn. */
+    public int additionalUpkeepsRemaining;
+    /** Whether the current upkeep step was inserted after the turn's first upkeep. */
+    public boolean currentUpkeepIsAdditional;
     public int additionalCombatMainPhasePairs;
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
      *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
@@ -884,6 +891,8 @@ public class GameData {
 
     /** Per-player: this player has a temporary targeting keyword until end of turn. */
     public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
+    /** Static effects granted directly to players until end of turn (e.g. Angel's Grace). */
+    public final Map<UUID, List<CardEffect>> playerStaticEffectsUntilEndOfTurn = new ConcurrentHashMap<>();
 
     /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
     public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
@@ -3115,6 +3124,7 @@ public class GameData {
             exilePlayAnyManaType.remove(cardId);
             exilePlayWithoutPayingManaCost.remove(cardId);
             exileInsteadOfGraveyard.remove(cardId);
+            exiledCardTimeCounters.remove(cardId);
             exiledCardHitCounters.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
         }
@@ -3371,6 +3381,8 @@ public class GameData {
         copy.activePlayerId = this.activePlayerId;
         copy.turnNumber = this.turnNumber;
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
+        copy.additionalUpkeepsRemaining = this.additionalUpkeepsRemaining;
+        copy.currentUpkeepIsAdditional = this.currentUpkeepIsAdditional;
         copy.permanentWithOilCounterPutIntoGraveyardThisTurn = this.permanentWithOilCounterPutIntoGraveyardThisTurn;
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
@@ -3767,6 +3779,7 @@ public class GameData {
         copy.exiledCards.addAll(this.exiledCards);
         copy.antedCardIds.addAll(this.antedCardIds);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
+        copy.exiledCardTimeCounters.putAll(this.exiledCardTimeCounters);
         copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
         copy.exiledCardHitCounters.putAll(this.exiledCardHitCounters);
         copy.exiledCardRefineCounters.putAll(this.exiledCardRefineCounters);
@@ -3849,6 +3862,7 @@ public class GameData {
 
         // --- PendingMayAbility list (records with shared Card refs) ---
         copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
+        copy.pendingGemstoneCavernsChoice = this.pendingGemstoneCavernsChoice;
         copy.tariffRemainingPlayers.addAll(this.tariffRemainingPlayers);
         copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
@@ -3973,6 +3987,9 @@ public class GameData {
         copy.cloneOperation.copyColor = this.cloneOperation.copyColor;
         copy.cloneOperation.removedSupertypesOverride = this.cloneOperation.removedSupertypesOverride;
         copy.cloneOperation.addTypeAppropriateCounters = this.cloneOperation.addTypeAppropriateCounters;
+        copy.cloneOperation.entersTapped = this.cloneOperation.entersTapped;
+        copy.cloneOperation.landPlay = this.cloneOperation.landPlay;
+        copy.cloneOperation.xValue = this.cloneOperation.xValue;
 
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);
@@ -4043,6 +4060,8 @@ public class GameData {
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
+        this.playerStaticEffectsUntilEndOfTurn.forEach((k, v) ->
+                copy.playerStaticEffectsUntilEndOfTurn.put(k, new ArrayList<>(v)));
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);

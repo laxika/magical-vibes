@@ -2275,11 +2275,27 @@ public class DeathTriggerCollectorService {
         if (graveyard == null || graveyard.stream().noneMatch(c -> c.getId().equals(dyingCard.getId()))) {
             return false;
         }
+        if (match.rawEffect() instanceof MayPayManaEffect rawMayPay) {
+            ReturnDyingOpponentCreatureUnderYourControlEffect returnEffect =
+                    new ReturnDyingOpponentCreatureUnderYourControlEffect(
+                            dyingCard.getId(), effect.grantSubtype());
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    new ArrayList<>(List.of(returnEffect)),
+                    match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
+                            + " to return " + dyingCard.getName() + " to the battlefield under your control?",
+                    dyingCard.getId(),
+                    rawMayPay.manaCost()
+            ));
+            logOpponentCreatureDeath(match);
+            return true;
+        }
         // "You may return that card ..." — a resolution-time optional. Bake the dying card id into
         // the effect itself (not the stack entry's targetId, which the engine would validate as an
         // on-battlefield permanent target and fizzle).
         MayEffect may = new MayEffect(
-                new ReturnDyingOpponentCreatureUnderYourControlEffect(dyingCard.getId()),
+                new ReturnDyingOpponentCreatureUnderYourControlEffect(dyingCard.getId(), effect.grantSubtype()),
                 "return " + dyingCard.getName() + " to the battlefield under your control?");
         gameData.queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
         logOpponentCreatureDeath(match);

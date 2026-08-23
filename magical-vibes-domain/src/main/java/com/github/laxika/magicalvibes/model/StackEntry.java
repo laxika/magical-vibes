@@ -37,6 +37,8 @@ public class StackEntry {
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
     @Setter private UUID targetId;
+    /** The opponent chosen before that opponent selected the spell's creature target. */
+    @Setter private UUID opponentChosenTargetPlayerId;
     private boolean targetIdOverriddenForEffectResolution;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
@@ -131,6 +133,8 @@ public class StackEntry {
      * sacrifice at the next cleanup step when it is set.
      */
     @Setter private boolean castWhenSorceryCouldNotBeCast;
+    /** Whether this spell was cast during its controller's precombat or postcombat main phase. */
+    @Setter private boolean castDuringMainPhase;
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
     private Card bestowOriginalCard;
@@ -532,6 +536,7 @@ public class StackEntry {
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
         this.etbMode = source.etbMode;
         this.targetId = source.targetId;
+        this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
         this.counters.putAll(source.counters);
@@ -565,6 +570,7 @@ public class StackEntry {
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
+        this.castDuringMainPhase = source.castDuringMainPhase;
         this.evoked = source.evoked;
         this.bestowOriginalCard = source.bestowOriginalCard;
         this.physicalCard = source.physicalCard;

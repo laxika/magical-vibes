@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -1342,6 +1343,44 @@ public class TargetLegalityService {
         }
     }
 
+    public List<UUID> computeValidOpponentChosenTargetPlayers(GameData gameData, Card card,
+                                                               UUID controllerId, int xValue, boolean kicked) {
+        if (gameQueryService.isPeaceTalksActive(gameData)) {
+            return List.of();
+        }
+        List<UUID> validPlayers = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId)) {
+                continue;
+            }
+            if (!computeValidOpponentChosenTargetPermanents(gameData, card, controllerId, playerId,
+                    xValue, kicked).isEmpty()) {
+                validPlayers.add(playerId);
+            }
+        }
+        return validPlayers;
+    }
+
+    public List<UUID> computeValidOpponentChosenTargetPermanents(GameData gameData, Card card,
+                                                                  UUID controllerId,
+                                                                  UUID chosenOpponentId, int xValue,
+                                                                  boolean kicked) {
+        if (chosenOpponentId == null || controllerId.equals(chosenOpponentId)
+                || !gameData.playerIds.contains(chosenOpponentId)
+                || gameQueryService.isPeaceTalksActive(gameData)) {
+            return List.of();
+        }
+        List<UUID> validTargets = new ArrayList<>();
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(chosenOpponentId, List.of())) {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && checkSpellTargeting(gameData, card, permanent.getId(), null, controllerId,
+                    EffectResolution.needsTarget(card), xValue, kicked, false).isEmpty()) {
+                validTargets.add(permanent.getId());
+            }
+        }
+        return validTargets;
+    }
+
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone) {
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
                 new TargetValidationContext(gameData, targetId, targetZone, card));
@@ -2398,7 +2437,17 @@ public class TargetLegalityService {
 
     public boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {
         if (entry.getTargetZone() == Zone.EXILE) {
-            return gameQueryService.findCardInExileById(gameData, targetId) != null;
+            if (gameQueryService.findCardInExileById(gameData, targetId) == null) {
+                return false;
+            }
+            List<CardEffect> exileTargetEffects = entry.getEffectsToResolve().stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                    .toList();
+            return targetValidationService.checkEffectTargets(
+                    exileTargetEffects,
+                    new TargetValidationContext(gameData, targetId, Zone.EXILE,
+                            entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                            entry.getSourcePermanentSnapshot())).isEmpty();
         }
         if (entry.getTargetZone() == Zone.GRAVEYARD) {
             if (gameQueryService.findCardInGraveyardById(gameData, targetId) == null) {
@@ -2454,6 +2503,16 @@ public class TargetLegalityService {
                         entry.getSourcePermanentId());
             }
             return true;
+        }
+
+        if (entry.getOpponentChosenTargetPlayerId() != null
+                && entry.getEffectsToResolve().stream()
+                .filter(GainControlOfTargetEffect.class::isInstance)
+                .map(GainControlOfTargetEffect.class::cast)
+                .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget)
+                && !entry.getOpponentChosenTargetPlayerId().equals(
+                gameQueryService.findPermanentController(gameData, targetId))) {
+            return false;
         }
 
         if (untargetableReason(gameData, target, entry.getControllerId()) != null) {
