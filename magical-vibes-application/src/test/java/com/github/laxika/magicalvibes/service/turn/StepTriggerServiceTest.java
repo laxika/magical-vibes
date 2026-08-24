@@ -71,6 +71,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndRetur
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -1530,6 +1532,24 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Controller end-step multi-target effect queues multi-target selection")
+        void controllerEndStepMultiTargetEffectQueuesMultiTargetSelection() {
+            Card card = createCardWithName("Multi-Target End Step Card");
+            UntapPermanentsEffect effect = new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS);
+            card.target(null, 0, 4)
+                    .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, effect);
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            when(etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)).thenReturn(true);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)).isTrue();
+            verify(etbTokenTargetService).processNextETBTokenMultiTargetTrigger(gd);
+        }
+
+        @Test
         @DisplayName("Controller end-step permanent does not trigger during opponent's end step")
         void controllerEndStepDoesNotTriggerDuringOpponentEndStep() {
             gd.activePlayerId = player2Id;
@@ -1544,7 +1564,7 @@ class StepTriggerServiceTest {
 
         @Test
         @DisplayName("Controller end-step multi-target effect queues slot-by-slot target selection")
-        void controllerEndStepMultiTargetEffectQueuesMultiTargetSelection() {
+        void controllerEndStepMultiTargetEffectQueuesSlotBySlotSelection() {
             Card card = createCardWithName("Magmatic Core");
             DealDividedDamageEffect effect = DealDividedDamageEffect.xAmongTargetCreaturesAtResolution();
             card.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),

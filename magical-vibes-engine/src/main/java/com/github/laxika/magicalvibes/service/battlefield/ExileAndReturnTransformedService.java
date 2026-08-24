@@ -40,6 +40,14 @@ public class ExileAndReturnTransformedService {
      *         "if you do" condition callers such as Liliana, Heretical Healer hang their rider on
      */
     public boolean exileAndReturnTransformed(GameData gameData, UUID permanentId) {
+        return exileAndReturn(gameData, permanentId, true);
+    }
+
+    public boolean exileAndReturnFront(GameData gameData, UUID permanentId) {
+        return exileAndReturn(gameData, permanentId, false);
+    }
+
+    private boolean exileAndReturn(GameData gameData, UUID permanentId, boolean transformed) {
         Permanent perm = null;
         UUID controllerId = null;
         for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
@@ -55,31 +63,40 @@ public class ExileAndReturnTransformedService {
         if (perm == null) return false;
 
         Card originalCard = perm.getOriginalCard();
-        Card backFace = originalCard.getBackFaceCard();
-        if (backFace == null) return false;
+        Card returnedCard = transformed ? originalCard.getBackFaceCard() : originalCard;
+        if (returnedCard == null) return false;
+        UUID returnControllerId = originalCard.getOwnerId() != null
+                ? originalCard.getOwnerId() : controllerId;
 
         permanentRemovalService.removePermanentToExile(gameData, perm);
         // Removed from exile immediately — it returns right away as the back face.
         gameData.removeFromExile(originalCard.getId());
 
         Permanent newPerm = new Permanent(originalCard);
-        newPerm.setCard(backFace);
-        newPerm.setTransformed(true);
+        newPerm.setCard(returnedCard);
+        newPerm.setTransformed(transformed);
         newPerm.setSummoningSick(false);
         // A back face can be a planeswalker (Kytheon, Hero of Akros; Jace, Vryn's Prodigy): it
         // enters with its starting loyalty, otherwise the state-based check kills it immediately.
-        if (backFace.hasType(CardType.PLANESWALKER) && backFace.getLoyalty() != null) {
-            int loyalty = gameQueryService.replaceCounters(gameData, newPerm, controllerId,
-                    CounterType.LOYALTY, backFace.getLoyalty(), controllerId);
+        if (returnedCard.hasType(CardType.PLANESWALKER) && returnedCard.getLoyalty() != null) {
+            int loyalty = gameQueryService.replaceCounters(gameData, newPerm, returnControllerId,
+                    CounterType.LOYALTY, returnedCard.getLoyalty(), returnControllerId);
             newPerm.setCounterCount(CounterType.LOYALTY, loyalty);
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, newPerm);
 
-        gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
-                " is exiled and returns transformed as ", backFace, "."));
-        log.info("Game {} - {} exiled and returned transformed as {}",
-                gameData.id, originalCard.getName(), backFace.getName());
+        if (transformed) {
+            gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
+                    " is exiled and returns transformed as ", returnedCard, "."));
+            log.info("Game {} - {} exiled and returned transformed as {}",
+                    gameData.id, originalCard.getName(), returnedCard.getName());
+        } else {
+            gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
+                    " is exiled and returns as ", returnedCard, "."));
+            log.info("Game {} - {} exiled and returned as {}",
+                    gameData.id, originalCard.getName(), returnedCard.getName());
+        }
         return true;
     }
 }

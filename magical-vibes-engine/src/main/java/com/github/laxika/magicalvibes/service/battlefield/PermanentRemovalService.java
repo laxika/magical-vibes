@@ -1134,7 +1134,7 @@ public class PermanentRemovalService {
                 gameData.recordPermanentWithOilCounterPutIntoGraveyard();
             }
             triggerCollectionService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target,
-                    grantedDeathEffects);
+                    grantedDeathEffects, dyingPowerAtDeath);
             // Any permanent an opponent controls is put into a graveyard (Prince of Thralls).
             triggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers(
                     gameData, target.getOriginalCard(), controllerId, ownerId);

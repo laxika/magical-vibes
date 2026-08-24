@@ -169,6 +169,7 @@ public class MayPenaltyChoiceHandlerService {
         int lifeCost = effect.lifeCost();
         boolean exileIfCountered = effect.exileIfCountered();
         List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
+        List<CardEffect> onPaidEffects = effect.onPaidEffects();
         UUID targetCardId = ability.targetCardId();
         String manaCost = effect.manaCost() != null ? effect.manaCost() : "{" + amount + "}";
         String costText = manaCost.equals("{0}") && lifeCost > 0
@@ -217,6 +218,8 @@ public class MayPenaltyChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
+                counterSupport.resolvePaidRider(gameData, ability.sourceCard(), ability.sourceControllerId(),
+                        onPaidEffects);
             } else {
                 counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
             }

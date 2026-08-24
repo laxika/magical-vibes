@@ -542,7 +542,7 @@ public class GraveyardChoiceHandlerService {
             }
 
             gameData.interaction.clearAwaitingInput();
-            cloneService.completeCloneEntryFromGraveyard(gameData, selectedCard);
+            cloneService.completeCloneEntryFromGraveyardChoice(gameData, selectedCard);
             stateBasedActionService.performStateBasedActions(gameData);
 
             if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {

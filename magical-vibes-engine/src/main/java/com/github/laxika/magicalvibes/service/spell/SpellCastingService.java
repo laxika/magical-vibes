@@ -232,12 +232,18 @@ public class SpellCastingService {
      * that lack the innate ability keyword.
      */
     private boolean hasSpellCastingAbilityGrantForCard(GameData gameData, UUID playerId, Card card, Keyword ability) {
+        return hasSpellCastingAbilityGrantForCard(gameData, playerId, card, ability, Zone.HAND);
+    }
+
+    private boolean hasSpellCastingAbilityGrantForCard(GameData gameData, UUID playerId, Card card,
+                                                        Keyword ability, Zone sourceZone) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
                         && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                     return true;
                 }
@@ -690,10 +696,15 @@ public class SpellCastingService {
         return card;
     }
 
-    private int unwrapChooseOneEffect(Card card, List<CardEffect> effects, int effectiveXValue) {
+    private int unwrapChooseOneEffect(GameData gameData, UUID controllerId, Card card,
+                                      List<CardEffect> effects, int effectiveXValue) {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ChooseOneEffect coe) {
-                List<Integer> chosenModeIndices = coe.decodeModeIndices(effectiveXValue);
+                boolean additionalModesAllowed = coe.additionalModesCondition() == null
+                        || conditionEvaluationService.isMet(gameData, coe.additionalModesCondition(),
+                        com.github.laxika.magicalvibes.service.effect.ConditionContext.forCasting(controllerId));
+                List<Integer> chosenModeIndices = coe.decodeModeIndices(
+                        effectiveXValue, coe.effectiveChoicesMax(additionalModesAllowed));
                 List<ChooseOneEffect.ChooseOneOption> chosenModes = chosenModeIndices.stream()
                         .map(idx -> coe.options().get(idx))
                         .toList();
@@ -755,8 +766,13 @@ public class SpellCastingService {
         return effectiveXValue;
     }
 
+    public int prepareModalSpellCast(GameData gameData, UUID controllerId, Card card,
+                                     List<CardEffect> effects, int modeEncoding) {
+        return unwrapChooseOneEffect(gameData, controllerId, card, effects, modeEncoding);
+    }
+
     public int prepareModalSpellCast(Card card, List<CardEffect> effects, int modeEncoding) {
-        return unwrapChooseOneEffect(card, effects, modeEncoding);
+        return unwrapChooseOneEffect(null, null, card, effects, modeEncoding);
     }
 
     private static void validateOptionalCostModalSelection(
@@ -1896,7 +1912,7 @@ public class SpellCastingService {
                 .map(ChooseOneEffect.class::cast)
                 .forEach(modal -> validateOptionalCostModalSelection(
                         modal, additionalCosts, costSelection, modeEncoding));
-        effectiveXValue = unwrapChooseOneEffect(card, filteredSpellEffects, effectiveXValue);
+        effectiveXValue = unwrapChooseOneEffect(gameData, playerId, card, filteredSpellEffects, effectiveXValue);
         DealDividedDamageEffect castTimeDividedDamage = findChosenDividedDamageEffect(filteredSpellEffects);
         if (castTimeDividedDamage != null && damageAssignments != null && !damageAssignments.isEmpty()
                 && card.getSpellTargets().size() > 1) {
@@ -5670,44 +5686,56 @@ public class SpellCastingService {
     // --- Play from exile ---
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
-        playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId, List.of(), List.of(), false, true, false);
+        playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
+                List.of(), List.of(), List.of(), false, true, false);
     }
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                   UUID targetId, List<UUID> exileCounterCostPermanentIds) {
+        playCardFromExile(gameData, player, exileCardId, xValue, targetId,
+                exileCounterCostPermanentIds, List.of());
+    }
+
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, List<UUID> exileCounterCostPermanentIds,
+                                  List<UUID> convokeCreatureIds) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                exileCounterCostPermanentIds, List.of(), false, true, false);
+                exileCounterCostPermanentIds, convokeCreatureIds, List.of(), false, true, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, UUID targetId) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                List.of(), List.of(), true, false, false);
+                List.of(), List.of(), List.of(), true, false, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, UUID targetId, boolean copy) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                List.of(), List.of(), true, false, copy);
+                List.of(), List.of(), List.of(), true, false, copy);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, List<UUID> targetIds) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, null,
-                List.of(), targetIds, true, false, false);
+                List.of(), List.of(), targetIds, true, false, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, List<UUID> targetIds, boolean copy) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, null,
-                List.of(), targetIds, true, false, copy);
+                List.of(), List.of(), targetIds, true, false, copy);
     }
 
     private void playCardFromExileInternal(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                            UUID targetId, List<UUID> exileCounterCostPermanentIds,
-                                           List<UUID> targetIds, boolean resolutionCast, boolean autoPass,
+                                           List<UUID> convokeCreatureIds, List<UUID> targetIds,
+                                           boolean resolutionCast, boolean autoPass,
                                            boolean copy) {
         int effectiveXValue = xValue != null ? xValue : 0;
+        if (exileCounterCostPermanentIds == null) exileCounterCostPermanentIds = List.of();
+        if (convokeCreatureIds == null) convokeCreatureIds = List.of();
+        if (targetIds == null) targetIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -5837,6 +5865,8 @@ public class SpellCastingService {
 
         // Pay mana cost — unless this card was granted a free play (e.g. Oracle's Vault), in which
         // case it is cast without paying its mana cost. If anyManaType, any mana can pay for any color.
+        List<ManaColor> convokeContributions = applyConvokeOrImprovise(
+                gameData, playerId, card, convokeCreatureIds, Zone.EXILE);
         int phyrexianManaPaidWithLife = 0;
         ManaPool pool = gameData.playerManaPools.get(playerId);
         Map<ManaColor, Integer> exileSpellOnly = pool.promoteExiledSpellOnlyMana();
@@ -5885,7 +5915,7 @@ public class SpellCastingService {
                         castingCostService.getCastCostModifier(gameData, playerId, card));
             } else {
                 phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
-                        gameData, playerId, card, effectiveXValue, Zone.EXILE);
+                        gameData, playerId, card, effectiveXValue, Zone.EXILE, convokeContributions);
             }
         } finally {
             restoreExileRestrictedMana(pool, exileCardId, exactExileOnly, exileSpellOnly, promotedPool);
@@ -5907,7 +5937,7 @@ public class SpellCastingService {
         if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             additionalSpellCostService.extractAndRemove(effectsToResolve);
-            effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
+            effectiveXValue = unwrapChooseOneEffect(gameData, playerId, card, effectsToResolve, effectiveXValue);
         } else {
             effectsToResolve = List.of();
         }
@@ -6330,7 +6360,7 @@ public class SpellCastingService {
         if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             additionalSpellCostService.extractAndRemove(effectsToResolve);
-            effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
+            effectiveXValue = unwrapChooseOneEffect(gameData, playerId, card, effectsToResolve, effectiveXValue);
         } else {
             effectsToResolve = List.of();
         }
@@ -6401,7 +6431,7 @@ public class SpellCastingService {
                 ? new ArrayList<>(castCard.getEffects(EffectSlot.SPELL))
                 : new ArrayList<>();
         additionalSpellCostService.extractAndRemove(effectsToResolve);
-        effectiveXValue = unwrapChooseOneEffect(castCard, effectsToResolve, effectiveXValue);
+        effectiveXValue = unwrapChooseOneEffect(gameData, playerId, castCard, effectsToResolve, effectiveXValue);
 
         StackEntry stackEntry = new StackEntry(
                 cardTypeToStackEntryType(castCard.getType()), castCard, playerId, castCard.getName(),
@@ -6599,13 +6629,20 @@ public class SpellCastingService {
      */
     public int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card, int effectiveXValue,
                                                 Zone sourceZone) {
+        return paySpellManaCostFromNonHandZone(
+                gameData, playerId, card, effectiveXValue, sourceZone, List.of());
+    }
+
+    public int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card,
+                                                int effectiveXValue, Zone sourceZone,
+                                                List<ManaColor> convokeContributions) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
-        SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, List.of(),
+        SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         null, false, 0, 0, 0, "", "", sourceZone);
         gameData.addSpellCastManaSpent(card.getId(), payment.manaSpent());
         recordSnowManaSpent(gameData, card, snowManaBefore, pool.getSnowManaTotals());
@@ -6749,6 +6786,39 @@ public class SpellCastingService {
                 contribution = creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null;
             }
             contributions.add(contribution);
+        }
+        return contributions;
+    }
+
+    private List<ManaColor> applyConvokeOrImprovise(GameData gameData, UUID playerId, Card card,
+                                                     List<UUID> sourceIds, Zone sourceZone) {
+        if (sourceIds == null || sourceIds.isEmpty()) return List.of();
+
+        boolean hasConvoke = card.getKeywords().contains(Keyword.CONVOKE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONVOKE, sourceZone);
+        boolean hasImprovise = card.getKeywords().contains(Keyword.IMPROVISE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.IMPROVISE, sourceZone);
+        if (!hasConvoke && !hasImprovise) {
+            throw new IllegalStateException(card.getName() + " doesn't have convoke or improvise");
+        }
+
+        List<ManaColor> contributions = collectConvokeContributions(
+                gameData, playerId, sourceIds, hasConvoke, hasImprovise);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        List<Permanent> validatedSources = sourceIds.stream()
+                .map(sourceId -> battlefield.stream()
+                        .filter(p -> p.getId().equals(sourceId)).findFirst().orElseThrow())
+                .toList();
+        int stackBeforeTriggers = gameData.stack.size();
+        for (Permanent source : validatedSources) {
+            source.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, source);
+        }
+        if (gameData.stack.size() > stackBeforeTriggers) {
+            List<StackEntry> deferred = new ArrayList<>(
+                    gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
+            gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
+            gameData.pendingManaAbilityTriggers.addAll(deferred);
         }
         return contributions;
     }

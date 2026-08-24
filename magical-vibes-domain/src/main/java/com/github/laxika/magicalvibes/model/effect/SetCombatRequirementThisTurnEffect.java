@@ -20,13 +20,26 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  *                    {@link GrantScope#SELF} applies to the source permanent, and
  *                    {@link GrantScope#ALL_OWN_CREATURES} applies to every creature the controller controls
  */
-public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope) implements CardEffect {
+public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope,
+                                                 boolean allowPermanentTarget) implements CardEffect {
+
+    public SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope) {
+        this(requirement, scope, false);
+    }
 
     /**
      * The overwhelmingly common shape: the requirement lands on the spell's single target.
      */
     public SetCombatRequirementThisTurnEffect(CombatRequirement requirement) {
-        this(requirement, GrantScope.TARGET);
+        this(requirement, GrantScope.TARGET, false);
+    }
+
+    /**
+     * Targets a permanent that an earlier effect in the same resolution turns into a creature.
+     * The card's own target filter must still restrict that permanent to the card's legal choices.
+     */
+    public static SetCombatRequirementThisTurnEffect targetPermanent(CombatRequirement requirement) {
+        return new SetCombatRequirementThisTurnEffect(requirement, GrantScope.TARGET, true);
     }
 
     /**
@@ -42,6 +55,10 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
         }
         if (scope != GrantScope.TARGET) {
             return TargetSpec.NONE;
+        }
+
+        if (allowPermanentTarget) {
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
 
         return requirement == CombatRequirement.MUST_BLOCK

@@ -609,6 +609,9 @@ public class GameActionAvailabilityService {
         if (castingPermissionService.isSpellCastingFromHandRestricted(gameData, playerId)) {
             return false;
         }
+        if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) {
+            return false;
+        }
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
             return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
@@ -756,7 +759,7 @@ public class GameActionAvailabilityService {
         ManaCost cost = card.getParsedManaCost();
 
         if (card.getKeywords().contains(Keyword.CONVOKE)
-                || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.CONVOKE)) {
+                || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.CONVOKE, Zone.HAND)) {
             // Check if castable with convoke: mana pool + untapped creatures >= total cost
             int untappedCreatureCount = 0;
             if (ctx.battlefield() != null) {
@@ -774,7 +777,7 @@ public class GameActionAvailabilityService {
         }
 
         if (card.getKeywords().contains(Keyword.IMPROVISE)
-                || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.IMPROVISE)) {
+                || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.IMPROVISE, Zone.HAND)) {
             int untappedArtifactCount = 0;
             if (ctx.battlefield() != null) {
                 for (Permanent perm : ctx.battlefield()) {
@@ -905,12 +908,18 @@ public class GameActionAvailabilityService {
     }
 
     private boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card, Keyword ability) {
+        return hasSpellCastingAbilityGrant(gameData, playerId, card, ability, Zone.HAND);
+    }
+
+    private boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card,
+                                                Keyword ability, Zone sourceZone) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
                         && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                     return true;
                 }

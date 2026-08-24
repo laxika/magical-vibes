@@ -1,5 +1,7 @@
 # PREDICATES_REFERENCE
 
+`PermanentProtectedByDefendingPlayerPredicate()` matches battles protected by the defending player in the combat context carried by `FilterContext`; it is intended for attack-trigger target filters.
+
 Complete reference for all `TargetFilter`, `PermanentPredicate`, `StackEntryPredicate`, and `PlayerPredicate` types. Extracted from ACTIVATED_ABILITY_GUIDE.md for standalone readability.
 
 All of these base interfaces are **sealed**: a new predicate/filter must be added to the interface's `permits` clause, and the exhaustive switch in the engine's `PredicateEvaluationService` (`magical-vibes-engine/.../service/filter/`) must gain a matching case — the compiler enforces both. `StackEntryPredicate` types used for *targeting* are evaluated by `TargetLegalityService` instead.
@@ -68,7 +70,9 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentAttachedToCreaturePredicate` | `()` | any permanent currently attached to a creature, regardless of card type — needs game data. Used by End Hostilities to include Auras and Equipment in its mass destruction |
 | `PermanentIsAuraAttachedToSourcePredicate` | `()` | an Aura permanent currently attached to the **source** permanent, whoever controls the Aura — needs game data + `sourceCardId`. Pair with `DestroyAllPermanentsEffect` for "Destroy all Auras attached to CARDNAME" (Hakim, Loreweaver) |
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
+| `PermanentActivatedThisTurnPredicate` | `()` | permanents that were the source of an activated ability this turn; needs game data |
 | `PermanentIsBattlePredicate` | `()` | battles. Layer-aware like the planeswalker leaf; the permanent half of `TargetPredicates.anyTarget()` (CR 115.4) and the only leaf that separates it from `creatureOrPlaneswalker()`. Deliberately **not** in `matchesStaticFilter`'s whitelist — no static ability filters on "battle" |
+| `PermanentProtectedByOpponentOfSourceControllerPredicate` | `()` | battles whose protector is an opponent of the source controller; needs game data and a `FilterContext` source controller. Etched Host Doombringer |
 | `PermanentIsKindredPredicate` | `()` | kindred permanents, including continuous card-type changes |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
@@ -84,6 +88,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentAttackedDuringControllersLastTurnPredicate` | `()` | creatures that attacked during their controller's *previous* turn (Halls of Mist). Reads `Permanent.attackedDuringControllersLastTurn`, which is rolled over from `attackedDuringControllersCurrentTurn` by `TurnProgressionService` only when that permanent's controller's turn begins — so it survives the intervening opponent turns, unlike `PermanentAttackedOrBlockedThisTurnPredicate` |
 | `PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate` | `(CardSubtype)` | creatures that blocked or were blocked by a creature of the subtype at any point this turn (turn-scoped, recorded at declare-blockers time in `GameData.combatBlockOpponentSubtypesThisTurn`; Changeling opponents count as every subtype). Subtype-ness is judged at block time, so the target stays legal after combat ends or the other creature leaves/changes types. Needs `gameData`. AND with `PermanentIsCreaturePredicate` for "target creature that ..." (Time to Reflect) |
 | `PermanentIsTokenPredicate` | `()` | token permanents |
+| `PermanentIsTransformedPredicate` | `()` | permanents currently showing their transformed face |
 | `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |
 
@@ -96,6 +101,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors. **A land never matches**: CR 202.2 gives an object the colors of its mana cost, and a land has none, so Plains is colorless and Anarchy ("destroy all white permanents") leaves it alone. A land's color identity is carried separately as `Card.getColorIdentity()`, which is display-only (it tints the frame) and must never be read by a predicate. This is also why Mistveil Plains and friends do not count themselves toward "two or more white permanents" |
 | `PermanentIsMonocoloredPredicate` | `()` | permanents with exactly one effective color (colorless and multicolored don't match); Defiler of Souls |
 | `PermanentIsColorlessPredicate` | `()` | permanents with zero effective colors (monocolored and multicolored don't match); zero-color counterpart of `PermanentIsMonocoloredPredicate`; Infernal Reckoning ("target colorless creature" via `PermanentAllOfPredicate` with `PermanentIsCreaturePredicate`) |
+| `PermanentHasExactlyTwoColorsPredicate` | `()` | permanents with exactly two effective colors; Invasion of Ravnica's non-two-color target restriction |
 | `PermanentIsMulticoloredPredicate` | `()` | permanents with two or more effective colors (colorless and monocolored don't match); complement of `PermanentIsMonocoloredPredicate`, battlefield counterpart of `CardIsMulticoloredPredicate`; Esper Stormblade ("another multicolored permanent" via `ControlsAnotherPermanent`) |
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
 | `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
@@ -135,6 +141,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentPowerLessThanXPredicate` | `()` | creatures with power strictly < X (from FilterContext.xValue). Pair with `SacrificeSelfCost(true)`, which snapshots the source's effective power into the ability's X at payment, for "creatures you control with power less than this creature's power" (Lena, Selfless Champion) — works after the source has left the battlefield, unlike `PermanentPowerLessThanSourcePowerPredicate` | `xValue` |
 | `PermanentPowerLessThanControllerGraveyardCountPredicate` | `()` | permanents with effective power strictly less than the number of cards in the source controller's graveyard | `gameData` + `sourceControllerId` |
 | `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures source's controller controls | `gameData` + `sourceControllerId` |
+| `PermanentPowerAtMostControlledCountPredicate` | `(PermanentPredicate countFilter)` | permanents with power <= the number of matching permanents source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentPowerAtLeastSourceControllerLifeTotalPredicate` | `()` | permanents with power >= the source controller's current life total | `gameData` + `sourceControllerId` |
 | `PermanentPowerGreaterThanActivePlayerHandSizePredicate` | `()` | permanents with effective power greater than the active player's current hand size | `gameData` |
 | `PermanentPowerAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | creatures with power <= number of permanents of the subtype source's controller controls | `gameData` + `sourceControllerId` |
@@ -330,7 +337,9 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardTruePredicate` | `()` | always matches (no restriction). Card counterpart of `PermanentTruePredicate`; use for unrestricted "spells" wordings (Helm of Awakening) |
 | `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `ON_ALLY_CREATURE_ATTACKS` via `TriggeringCardConditionalEffect`) |
 | `CardIsMulticoloredPredicate` | `()` | a card with two or more colours (`Card.getColors().size() >= 2`); monocoloured and colourless cards never match. Card-in-any-zone counterpart of `PermanentIsMonocoloredPredicate`; used as a graveyard filter for "target multicolored card from your graveyard" (Reborn Hope) |
+| `CardHasExactlyTwoColorsPredicate` | `()` | a card with exactly two colors; used for Invasion of Ravnica's cast trigger and library selection |
 | `CardIsColorlessPredicate` | `()` | colorless cards (`Card.getColors()` empty). Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "colorless creature card" (Grizzled Angler) |
+| `CardIsDoubleFacedPredicate` | `()` | physical double-faced cards; recognizes modal, transforming, disturb, and battle double-faced cards while excluding split, flip, and meld cards |
 | `CardControllerDoesNotOwnPredicate` | `()` | a card whose owner is not the perspective player (the `cardOwnerId` argument of `matchesCardPredicate`, which is the casting player in the spell-cast trigger path). Cards with no tracked owner (tokens/copies) never match. Use as a `SpellCastTriggerEffect` filter for "a spell you don't own" (Nita, Forum Conciliator). Ownership is stamped at game setup on `Card.ownerId` and preserved across zones |
 | `CardPowerAtMostPredicate` | `(int maxPower)` | a card whose printed power is <= `maxPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for library searches like "a creature card with power 2 or less" (Imperial Recruiter) |
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |

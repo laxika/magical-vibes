@@ -654,6 +654,7 @@ public class ManaCost {
         pool.setWhiteSpendableAsAnyColor(false);
         pool.setWhiteSpendableAsAnyColorWithoutRestriction(false);
         pool.setBlueSpendableAsAnyColorForActivatedAbilities(false);
+        pool.setAllManaSpendableAsAnyColorForActivatedAbilities(false);
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             convertAnyManaTo(pool, entry.getKey(), entry.getValue());
         }
@@ -841,6 +842,11 @@ public class ManaCost {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue));
         }
+        if (pool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPay(rewritten, xValue);
+        }
         if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
             return canPayWithBlueAsAnyColor(pool, p -> canPay(p, xValue));
         }
@@ -890,6 +896,11 @@ public class ManaCost {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool,
                     p -> canPayWithAdditionalGenericCost(p, xValue, additionalGenericCost));
+        }
+        if (pool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost);
         }
         if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
             return canPayWithBlueAsAnyColor(pool,
@@ -1610,6 +1621,17 @@ public class ManaCost {
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
                     powerstoneContext, subtypeSpellOnlyContext));
         }
+        if (pool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost,
+                    artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                    instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                    subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    powerstoneContext);
+        }
         if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
             return canPayWithBlueAsAnyColor(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
                     additionalGenericCost, artifactContext, myrContext, restrictedRedContext,
@@ -2051,6 +2073,9 @@ public class ManaCost {
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool);
         }
+        if (pool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
+            applyAllManaAsAnyColor(pool);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue));
         }
@@ -2091,6 +2116,9 @@ public class ManaCost {
             applySnowManaAsAnyColor(pool);
         }
         if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool);
+        }
+        if (pool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
             applyAllManaAsAnyColor(pool);
         }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
@@ -2387,6 +2415,9 @@ public class ManaCost {
                     boolean restrictedRedContext, boolean kickedOnlyGreenContext,
                     boolean instantSorceryOnlyColorlessContext, boolean powerstoneContext) {
         if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool);
+        }
+        if (pool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
             applyAllManaAsAnyColor(pool);
         }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
@@ -2811,6 +2842,9 @@ public class ManaCost {
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
                     powerstoneContext, subtypeSpellOnlyContext));
         }
+        if (pool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
+            applyAllManaAsAnyColor(pool);
+        }
         if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
             applyBlueAsAnyColorForPayment(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
                     additionalGenericCost, artifactContext, myrContext, restrictedRedContext,
@@ -3233,6 +3267,7 @@ public class ManaCost {
                 && !pool.isWhiteSpendableAsAnyColor()
                 && !pool.isWhiteSpendableAsAnyColorWithoutRestriction()
                 && !pool.isAllManaSpendableAsAnyColor()
+                && !pool.isAllManaSpendableAsAnyColorForActivatedAbilities()
                 && !pool.isBlueSpendableAsAnyColorForActivatedAbilities();
     }
 

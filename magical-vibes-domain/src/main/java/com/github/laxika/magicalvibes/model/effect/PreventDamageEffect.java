@@ -20,7 +20,7 @@ import java.util.Set;
  * @param scope           which shield-state slot to write
  * @param amount          the shield size for {@code NEXT_*} scopes ({@code null} for ALL-style scopes)
      * @param combatOnly      combat-only window for the controller, target-creature, and matching-permanent scopes
- * @param sourceColors    the prevented source colors for {@link PreventionScope#ALL_FROM_COLORS}
+ * @param sourceColors    the prevented source colors for color-based prevention scopes
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
      * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
      *                        or all combat damage to which is prevented for
@@ -77,8 +77,10 @@ public record PreventDamageEffect(
         if (!needsAmount && amount != null) {
             throw new IllegalArgumentException("ALL-style prevention scopes take no amount: " + scope);
         }
-        if ((sourceColors != null) != (scope == PreventionScope.ALL_FROM_COLORS)) {
-            throw new IllegalArgumentException("sourceColors is exactly the ALL_FROM_COLORS parameter: " + scope);
+        boolean colorSourceScope = scope == PreventionScope.ALL_FROM_COLORS
+                || scope == PreventionScope.ALL_FROM_COLORS_TO_CONTROLLED_CREATURES;
+        if ((sourceColors != null) != colorSourceScope) {
+            throw new IllegalArgumentException("sourceColors is exactly a color-based prevention parameter: " + scope);
         }
         if ((exemptPredicate != null) != (scope == PreventionScope.ALL_COMBAT_EXCEPT)) {
             throw new IllegalArgumentException("exemptPredicate is exactly the ALL_COMBAT_EXCEPT parameter: " + scope);
@@ -303,6 +305,12 @@ public record PreventDamageEffect(
     /** "Prevent all damage that sources of the given colors would deal this turn" (Luminesce). */
     public static PreventDamageEffect fromColors(Set<CardColor> colors) {
         return new PreventDamageEffect(PreventionScope.ALL_FROM_COLORS, null, false, colors, null, null);
+    }
+
+    /** "Prevent all damage that black and/or red sources would deal to creatures you control this turn." */
+    public static PreventDamageEffect fromColorsToControlledCreatures(Set<CardColor> colors) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_FROM_COLORS_TO_CONTROLLED_CREATURES, null, false, colors, null, null);
     }
 
     /** "Prevent all damage that would be dealt this turn by non-Human sources" (Repel the Abominable). */

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 /**
  * Deals damage to any target (creature, planeswalker, or player). The amount is a
@@ -35,6 +37,8 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
                                           boolean onlyIfSacrificed,
                                           boolean cantBeRedirectedWhenUnpreventable)
         implements DamageDealingEffect {
+
+    private static final int ANY_OTHER_TARGET = -2;
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
@@ -90,9 +94,17 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         return new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, targetGroup, null);
     }
 
+    /** Damage to any target other than the effect's source permanent. */
+    public static DealDamageToAnyTargetEffect toAnyOtherTarget(DynamicAmount damage) {
+        return new DealDamageToAnyTargetEffect(damage, false, false, ANY_OTHER_TARGET, null);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.anyTarget());
+        return targetGroup == ANY_OTHER_TARGET
+                ? TargetSpec.harmful(TargetPredicates.anyTarget(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))
+                : TargetSpec.harmful(TargetPredicates.anyTarget());
     }
 
     @Override

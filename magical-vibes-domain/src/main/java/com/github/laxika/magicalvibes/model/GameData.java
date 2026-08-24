@@ -172,12 +172,16 @@ public class GameData {
     public final Set<UUID> playersWhoRemovedOilCountersFromControlledPermanentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Whether a permanent carrying an oil counter was put into a graveyard this turn. */
     public boolean permanentWithOilCounterPutIntoGraveyardThisTurn;
+    public boolean artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
+    public boolean permanentPutIntoGraveyardFromBattlefieldThisTurn;
     /** Players who controlled a permanent that received a +1/+1 counter this turn. */
     public final Set<UUID> playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
+    public final Set<UUID> permanentsThatReceivedPlusOnePlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who sacrificed at least one permanent this turn. */
     public final Set<UUID> playersWhoSacrificedPermanentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
     public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
+    public final Set<UUID> permanentsThatAttackedBattlesThisTurn = ConcurrentHashMap.newKeySet();
     /** Cumulative count of attacking creatures by subtype each player declared this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creaturesAttackedCountBySubtypeThisTurn = new ConcurrentHashMap<>();
     /**
@@ -841,6 +845,7 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
+    public PendingGraveyardReturnBatch pendingGraveyardReturnBatch;
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** APNAP-ordered queue of players still to choose for "each other player may draw up to N" effects. */
@@ -874,6 +879,8 @@ public class GameData {
 
     /** Per-player: this player has hexproof from these colors this turn. Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerHexproofFromColorsThisTurn = new ConcurrentHashMap<>();
+    public final Set<UUID> playersWithHexproofThisTurn = ConcurrentHashMap.newKeySet();
+    public final Set<UUID> playersWithShroudThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Per-permanent: this permanent has hexproof from these colors this turn. Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> permanentHexproofFromColorsThisTurn = new ConcurrentHashMap<>();
@@ -1073,30 +1080,60 @@ public class GameData {
                                               boolean copySourceActivatedAbilities,
                                               boolean exileInsteadOfGraveyard,
                                               int additionalGenericCost,
-                                              boolean anyManaType) {
+                                              boolean anyManaType,
+                                              boolean withoutPayingManaCost) {
+        public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
+                                           boolean copySourceActivatedAbilities,
+                                           boolean exileInsteadOfGraveyard,
+                                           int additionalGenericCost,
+                                           boolean anyManaType) {
+            this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
+                    exileInsteadOfGraveyard, additionalGenericCost, anyManaType, false);
+        }
+
+        public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
+                                           boolean copySourceActivatedAbilities,
+                                           boolean exileInsteadOfGraveyard,
+                                           boolean withoutPayingManaCost) {
+            this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
+                    exileInsteadOfGraveyard, 0, false, withoutPayingManaCost);
+        }
+
         public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
                                            boolean copySourceActivatedAbilities,
                                            boolean exileInsteadOfGraveyard,
                                            int additionalGenericCost) {
             this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
-                    exileInsteadOfGraveyard, additionalGenericCost, false);
+                    exileInsteadOfGraveyard, additionalGenericCost, false, false);
         }
 
         public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
                                             boolean copySourceActivatedAbilities,
                                             boolean exileInsteadOfGraveyard) {
             this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
-                    exileInsteadOfGraveyard, 0, false);
+                    exileInsteadOfGraveyard, 0, false, false);
         }
     }
 
     /** A turn-scoped grant letting {@code playerId} cast any card matching {@code filter} from
      *  their own graveyard, paying its normal costs. */
-    public record GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {}
+    public record GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
+                                                boolean anyGraveyard,
+                                                boolean exileInsteadOfGraveyard) {
+        public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {
+            this(playerId, filter, false, false);
+        }
+    }
 
     /** One source-linked, one-card cast grant created by a temporary activated ability. */
     public record ExileCastPermission(UUID grantId, UUID sourcePermanentId, UUID castingPlayerId,
-                                      UUID cardId, boolean withoutPayingManaCost) {}
+                                      UUID cardId, boolean withoutPayingManaCost,
+                                      boolean putOnBottomOfOwnersLibrary) {
+        public ExileCastPermission(UUID grantId, UUID sourcePermanentId, UUID castingPlayerId,
+                                   UUID cardId, boolean withoutPayingManaCost) {
+            this(grantId, sourcePermanentId, castingPlayerId, cardId, withoutPayingManaCost, false);
+        }
+    }
 
     /** Targeted cards that may be cast from a graveyard this turn.
      *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
@@ -1333,6 +1370,8 @@ public class GameData {
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+    public final Set<UUID> playersDealtCombatDamageSinceTheirLastTurn = ConcurrentHashMap.newKeySet();
+    public final Set<UUID> playersDealtCombatDamageLastTurn = ConcurrentHashMap.newKeySet();
 
     /** Permanent IDs of creatures that dealt combat damage to a creature this turn. */
     public final Set<UUID> combatDamageSourcesThatDealtToCreaturesThisTurn = ConcurrentHashMap.newKeySet();
@@ -4032,6 +4071,8 @@ public class GameData {
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
+        copy.cloneOperation.physicalCard = this.cloneOperation.physicalCard;
+        copy.cloneOperation.transformed = this.cloneOperation.transformed;
         copy.cloneOperation.controllerId = this.cloneOperation.controllerId;
         copy.cloneOperation.etbTargetId = this.cloneOperation.etbTargetId;
         copy.cloneOperation.powerOverride = this.cloneOperation.powerOverride;
@@ -4046,11 +4087,14 @@ public class GameData {
         copy.cloneOperation.embalmRemoveManaCost = this.cloneOperation.embalmRemoveManaCost;
         copy.cloneOperation.additionalPlusOnePlusOneCounters = this.cloneOperation.additionalPlusOnePlusOneCounters;
         copy.cloneOperation.additionalKeywordsOverride = this.cloneOperation.additionalKeywordsOverride;
+        copy.cloneOperation.additionalColorsOverride = this.cloneOperation.additionalColorsOverride;
         copy.cloneOperation.additionalCreatureOnlyCharacteristics = this.cloneOperation.additionalCreatureOnlyCharacteristics;
         copy.cloneOperation.additionalSubtypesOverride = this.cloneOperation.additionalSubtypesOverride;
         copy.cloneOperation.additionalSlotEffects = this.cloneOperation.additionalSlotEffects;
         copy.cloneOperation.xValue = this.cloneOperation.xValue;
         copy.cloneOperation.graveyardCopyChoicePending = this.cloneOperation.graveyardCopyChoicePending;
+        copy.cloneOperation.exileCopiedGraveyardCardAfterEntry =
+                this.cloneOperation.exileCopiedGraveyardCardAfterEntry;
         copy.cloneOperation.copyColor = this.cloneOperation.copyColor;
         copy.cloneOperation.removedSupertypesOverride = this.cloneOperation.removedSupertypesOverride;
         copy.cloneOperation.addTypeAppropriateCounters = this.cloneOperation.addTypeAppropriateCounters;

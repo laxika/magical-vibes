@@ -101,6 +101,9 @@ public class GrantedAbilityViewFactory {
         if (!remainingProtection.isEmpty()) {
             result.add(new GrantedAbilityView(formatProtectionColors(remainingProtection), null));
         }
+        if (permanent.isProtectionFromColorlessUntilEndOfTurn()) {
+            result.add(new GrantedAbilityView("Protection from colorless", null));
+        }
         if (permanent.isCantBeBlocked()) {
             result.add(new GrantedAbilityView("Can't be blocked", null));
         }

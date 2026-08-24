@@ -11,6 +11,8 @@ import java.util.UUID;
 public class CloneOperationState {
 
     public Card card;
+    public Card physicalCard;
+    public boolean transformed;
     public UUID controllerId;
     public UUID etbTargetId;
     public Integer powerOverride;
@@ -29,6 +31,7 @@ public class CloneOperationState {
     // Altered Ego: "except it enters with X additional +1/+1 counters" — only when copying.
     public DynamicAmount additionalPlusOnePlusOneCounters;
     public Set<Keyword> additionalKeywordsOverride = Set.of();
+    public Set<CardColor> additionalColorsOverride = Set.of();
     public boolean additionalCreatureOnlyCharacteristics;
     // Phantasmal Image: "except it's an Illusion in addition to its other types and it has ..." — only when copying.
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
@@ -39,4 +42,5 @@ public class CloneOperationState {
     public boolean landPlay;
     public int xValue;
     public boolean graveyardCopyChoicePending;
+    public boolean exileCopiedGraveyardCardAfterEntry;
 }

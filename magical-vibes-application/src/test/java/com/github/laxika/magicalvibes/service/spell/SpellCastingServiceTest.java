@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -356,6 +357,24 @@ class SpellCastingServiceTest {
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactlyElementsOf(targetIds);
         assertThat(gd.stack.getFirst().getCard().getSpellTargets()).hasSize(2);
         assertThat(gd.playerHands.get(player1Id)).containsExactly(spliced);
+    }
+
+    @Test
+    @DisplayName("Allows an optional counter distribution to be cast with no targets")
+    void allowsOptionalCounterDistributionWithNoTargets() {
+        Card spell = createSorcery("Optional Counter Spell", "{2}{G}{G}");
+        spell.target(TargetFilters.creatureYouControl(), 0, 4)
+                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
+                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+        setHand(player1Id, List.of(spell));
+        addMana(player1Id, ManaColor.GREEN, 4);
+        when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+        when(amountEvaluationService.evaluate(eq(gd), any(), any())).thenReturn(4);
+
+        svc.playCard(gd, player1, 0, null, null, Map.of(), List.of(), List.of(), false, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getDamageAssignments()).isEmpty();
     }
 
     // =========================================================================

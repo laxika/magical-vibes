@@ -13,6 +13,7 @@ public class CombatDamagePhase1State {
     public final Map<Integer, Integer> defDamageTaken;
     public final Map<UUID, Integer> combatDamageDealt;
     public final Map<UUID, Integer> combatDamageDealtToPlayer;
+    public final Map<UUID, Integer> combatDamageDealtToBattle;
     public final Map<UUID, List<UUID>> combatDamageDealtToCreatures;
     public final Map<UUID, UUID> combatDamageDealerControllers;
     public final Map<UUID, Map<UUID, Integer>> combatDamageAmountsToCreatures;
@@ -50,6 +51,36 @@ public class CombatDamagePhase1State {
             int unpreventableDamageToDefendingPlayer,
             Map<Integer, Integer> unpreventableAtkDamageTaken,
             Map<Integer, Integer> unpreventableDefDamageTaken) {
+        this(deadAttackerIndices, deadDefenderIndices, atkDamageTaken, defDamageTaken,
+                combatDamageDealt, combatDamageDealtToPlayer, Map.of(), combatDamageDealtToCreatures,
+                combatDamageDealerControllers, combatDamageAmountsToCreatures, damageToDefendingPlayer,
+                damageRedirectedToGuard, deathtouchDamageRedirectedToGuard, damageToPlaneswalkers,
+                blockerMap, anyFirstStrike, deathtouchDamagedAttackerIndices, deathtouchDamagedDefenderIndices,
+                unpreventableDamageToDefendingPlayer, unpreventableAtkDamageTaken, unpreventableDefDamageTaken);
+    }
+
+    public CombatDamagePhase1State(
+            Set<Integer> deadAttackerIndices,
+            Set<Integer> deadDefenderIndices,
+            Map<Integer, Integer> atkDamageTaken,
+            Map<Integer, Integer> defDamageTaken,
+            Map<UUID, Integer> combatDamageDealt,
+            Map<UUID, Integer> combatDamageDealtToPlayer,
+            Map<UUID, Integer> combatDamageDealtToBattle,
+            Map<UUID, List<UUID>> combatDamageDealtToCreatures,
+            Map<UUID, UUID> combatDamageDealerControllers,
+            Map<UUID, Map<UUID, Integer>> combatDamageAmountsToCreatures,
+            int damageToDefendingPlayer,
+            int damageRedirectedToGuard,
+            boolean deathtouchDamageRedirectedToGuard,
+            Map<UUID, Integer> damageToPlaneswalkers,
+            Map<Integer, List<Integer>> blockerMap,
+            boolean anyFirstStrike,
+            Set<Integer> deathtouchDamagedAttackerIndices,
+            Set<Integer> deathtouchDamagedDefenderIndices,
+            int unpreventableDamageToDefendingPlayer,
+            Map<Integer, Integer> unpreventableAtkDamageTaken,
+            Map<Integer, Integer> unpreventableDefDamageTaken) {
         this.unpreventableDamageToDefendingPlayer = unpreventableDamageToDefendingPlayer;
         this.unpreventableAtkDamageTaken = unpreventableAtkDamageTaken;
         this.unpreventableDefDamageTaken = unpreventableDefDamageTaken;
@@ -59,6 +90,7 @@ public class CombatDamagePhase1State {
         this.defDamageTaken = defDamageTaken;
         this.combatDamageDealt = combatDamageDealt;
         this.combatDamageDealtToPlayer = combatDamageDealtToPlayer;
+        this.combatDamageDealtToBattle = combatDamageDealtToBattle;
         this.combatDamageDealtToCreatures = combatDamageDealtToCreatures;
         this.combatDamageDealerControllers = combatDamageDealerControllers;
         this.combatDamageAmountsToCreatures = combatDamageAmountsToCreatures;

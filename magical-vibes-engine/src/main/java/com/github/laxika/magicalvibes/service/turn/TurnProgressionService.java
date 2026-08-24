@@ -518,10 +518,13 @@ public class TurnProgressionService {
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
         gameData.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn.clear();
         gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
+        gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
+        gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
+        gameData.permanentsThatAttackedBattlesThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         Set<CardType> nextTurnRestrictedTypes = gameData.playersCantCastSpellTypesNextTurn.remove(nextActive);
         if (nextTurnRestrictedTypes != null) {
@@ -555,6 +558,10 @@ public class TurnProgressionService {
         gameData.lifeLostLastTurn.clear();
         gameData.lifeLostLastTurn.putAll(gameData.lifeLostThisTurn);
         gameData.lifeLostThisTurn.clear();
+        gameData.playersDealtCombatDamageLastTurn.clear();
+        if (gameData.playersDealtCombatDamageSinceTheirLastTurn.remove(nextActive)) {
+            gameData.playersDealtCombatDamageLastTurn.add(nextActive);
+        }
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
@@ -611,6 +618,7 @@ public class TurnProgressionService {
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
+        gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
@@ -642,6 +650,7 @@ public class TurnProgressionService {
             p.setAttackedThisTurn(false);
             p.setBlockedThisTurn(false);
             p.setBecomeTargetCounterUsedThisTurn(false);
+            p.setBackupAbilityCopyUsedThisTurn(false);
             p.getChosenModeLabelsThisTurn().clear();
         });
         gameData.phasedOutPermanents.values().forEach(

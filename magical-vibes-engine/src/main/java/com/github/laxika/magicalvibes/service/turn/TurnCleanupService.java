@@ -313,6 +313,8 @@ public class TurnCleanupService {
         gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playerHexproofFromColorsThisTurn.clear();
+        gameData.playersWithHexproofThisTurn.clear();
+        gameData.playersWithShroudThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
         gameData.playerKeywordsUntilEndOfTurn.clear();
@@ -429,7 +431,7 @@ public class TurnCleanupService {
 
     /**
      * Drains each player's mana pool, applying global and controller-scoped prevention effects.
-     * A controller's mana is converted to colorless instead when that controller has a
+     * A controller's mana is converted to the replacement color instead when that controller has a
      * {@link ReplaceManaDrainWithColorlessEffect}. Mana marked as persistent survives the drain;
      * only non-persistent mana is removed.
      *
@@ -453,15 +455,19 @@ public class TurnCleanupService {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                boolean replaceManaDrain = battlefield != null && battlefield.stream()
+                ManaColor replacementColor = battlefield == null ? null : battlefield.stream()
                         .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
-                        .anyMatch(ReplaceManaDrainWithColorlessEffect.class::isInstance);
-                if (replaceManaDrain) {
-                    manaPool.convertNonPersistentManaToColorless();
+                        .filter(ReplaceManaDrainWithColorlessEffect.class::isInstance)
+                        .map(ReplaceManaDrainWithColorlessEffect.class::cast)
+                        .map(ReplaceManaDrainWithColorlessEffect::replacementColor)
+                        .findFirst()
+                        .orElse(null);
+                if (replacementColor != null) {
+                    manaPool.convertNonPersistentManaTo(replacementColor);
                 }
                 Set<ManaColor> protectedColors = protectedManaColors(gameData, playerId);
-                if (replaceManaDrain) {
-                    protectedColors.add(ManaColor.COLORLESS);
+                if (replacementColor != null) {
+                    protectedColors.add(replacementColor);
                 }
                 manaPool.drainNonPersistent(protectedColors);
                 boolean copyGrantManaPersists = protectedColors.stream()

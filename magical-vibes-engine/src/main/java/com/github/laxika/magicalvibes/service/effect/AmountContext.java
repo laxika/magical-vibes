@@ -64,8 +64,21 @@ public record AmountContext(
         int sacrificedPower,
         int sacrificedToughness,
         List<UUID> targetCardIds,
-        boolean madness
+        boolean madness,
+        int convokeCreatureCount
 ) {
+
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation,
+                         UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard,
+                         StackEntry stackEntry, Integer chosenPermanentPowerAtTrigger,
+                         Integer triggeringPermanentPowerAtTrigger, int sacrificedPower,
+                         int sacrificedToughness, List<UUID> targetCardIds, boolean madness) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, stackEntry,
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger, sacrificedPower,
+                sacrificedToughness, targetCardIds, madness, 0);
+    }
 
     /** Backward-compatible full context constructor for contexts that are not madness casts. */
     public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
@@ -119,7 +132,7 @@ public record AmountContext(
                 eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
                 stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
-                sacrificedPower, sacrificedToughness, targetCardIds, madness);
+                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount);
     }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
@@ -131,7 +144,7 @@ public record AmountContext(
                 entry.getSacrificedPower(),
                 entry.getSacrificedToughness(),
                 entry.getTargetCardIds() == null ? List.of() : List.copyOf(entry.getTargetCardIds()),
-                entry.isMadness());
+                entry.isMadness(), entry.getConvokeCreatureIds().size());
     }
 
     /**

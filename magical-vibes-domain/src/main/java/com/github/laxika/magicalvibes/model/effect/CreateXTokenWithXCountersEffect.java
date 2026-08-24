@@ -3,21 +3,23 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 
 import java.util.List;
 import java.util.Set;
 
-/**
- * Creates a single creature token and puts X counters of the given type on it, where X comes from
- * the spell or activated ability's X value ({@code StackEntry.getXValue()}).
- */
+/** Creates one token from a template and puts a dynamic number of counters on it. */
 public record CreateXTokenWithXCountersEffect(
-        String tokenName,
-        int power,
-        int toughness,
-        CardColor color,
-        Set<CardColor> colors,
-        List<CardSubtype> subtypes,
+        CreateTokenEffect tokenTemplate,
+        DynamicAmount counterAmount,
         CounterType counterType
 ) implements CardEffect {
+
+    public CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness,
+                                           CardColor color, Set<CardColor> colors,
+                                           List<CardSubtype> subtypes, CounterType counterType) {
+        this(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes),
+                new XValue(), counterType);
+    }
 }

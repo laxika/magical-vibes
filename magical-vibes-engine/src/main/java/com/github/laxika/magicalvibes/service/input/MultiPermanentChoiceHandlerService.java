@@ -98,6 +98,10 @@ public class MultiPermanentChoiceHandlerService {
     private final DamagePreventionService damagePreventionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.QueueReflexiveAbilityEffectHandler
+            queueReflexiveAbilityEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeCreatureUnblockableEffectHandler
+            makeCreatureUnblockableEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.KillingWaveEffectHandler killingWaveEffectHandler;
@@ -320,12 +324,38 @@ public class MultiPermanentChoiceHandlerService {
                 })) {
             throw new IllegalStateException("A selected permanent is no longer untapped");
         }
+        if (context instanceof MultiPermanentChoiceContext.TapCreaturesThenQueueReflexiveAbility
+                && permanentIds.stream().anyMatch(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent == null || permanent.isTapped()
+                            || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
+                            || !gameQueryService.isCreature(gameData, permanent);
+                })) {
+            throw new IllegalStateException("A selected creature is no longer untapped and controlled by you");
+        }
         if (context instanceof MultiPermanentChoiceContext.TapCreaturesBoostSelf
                 && permanentIds.stream().anyMatch(id -> {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, id);
                     return permanent == null || permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent);
                 })) {
             throw new IllegalStateException("A selected creature is no longer untapped");
+        }
+        if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable tapCtx
+                && !permanentIds.isEmpty()) {
+            if (permanentIds.size() != tapCtx.requiredCount()) {
+                throw new IllegalStateException("Must select exactly " + tapCtx.requiredCount()
+                        + " creatures or none to decline");
+            }
+            if (permanentIds.stream().anyMatch(id -> {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                return permanent == null || permanent.isTapped()
+                        || !gameQueryService.isCreature(gameData, permanent)
+                        || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
+                        || id.equals(tapCtx.sourcePermanentId());
+            })) {
+                throw new IllegalStateException(
+                        "A selected creature is no longer an eligible other untapped creature you control");
+            }
         }
         if (context instanceof MultiPermanentChoiceContext.RaidingPartyTapChoice) {
             if (permanentIds.stream().anyMatch(id -> {
@@ -475,6 +505,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapAnyNumberBoostSelf(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesBoostSelf ctx) {
             handleTapCreaturesBoostSelf(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable ctx) {
+            handleTapOtherCreaturesForUnblockable(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice ctx) {
             handleDestroyRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
@@ -502,6 +534,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesCreateTokens ctx) {
             handleTapCreaturesCreateTokens(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesThenQueueReflexiveAbility ctx) {
+            handleTapCreaturesThenQueueReflexiveAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsDrawPerTapped) {
             handleTapPermanentsDrawPerTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsAndPutCounters ctx) {
@@ -2046,6 +2080,30 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleTapOtherCreaturesForUnblockable(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable context) {
+        if (permanentIds.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + " chooses not to tap other creatures."));
+        } else {
+            int tappedCount = 0;
+            for (UUID permanentId : permanentIds) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+                if (permanent != null && gameQueryService.isCreature(gameData, permanent)
+                        && tapUntapSupport.tapPermanent(gameData, permanent)) {
+                    tappedCount++;
+                }
+            }
+            if (tappedCount == context.requiredCount()) {
+                makeCreatureUnblockableEffectHandler.makeUnblockable(
+                        gameData, gameQueryService.findPermanentById(gameData, context.sourcePermanentId()));
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handleTapCreaturesCreateTokens(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                                 MultiPermanentChoiceContext.TapCreaturesCreateTokens context) {
         List<Card> tappedCards = new ArrayList<>();
@@ -2091,6 +2149,29 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTapCreaturesThenQueueReflexiveAbility(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.TapCreaturesThenQueueReflexiveAbility context) {
+        int tapped = 0;
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent)) {
+                tapped++;
+            }
+        }
+
+        context.resolvingEntry().setEventValue(tapped);
+        context.resolvingEntry().setXValue(tapped);
+        if (tapped > 0) {
+            queueReflexiveAbilityEffectHandler.resolve(gameData, context.resolvingEntry(),
+                    new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
+                            context.reflexiveEffect()));
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
     }
 
     private void handleTapPermanentsAndPutCounters(GameData gameData, UUID playerId, List<UUID> permanentIds,

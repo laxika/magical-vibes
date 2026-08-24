@@ -205,6 +205,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playerHexproofFromColorsThisTurn.clear();
+        gameData.playersWithHexproofThisTurn.clear();
+        gameData.playersWithShroudThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.playersCantCastSpellsForRestOfGame.clear();
@@ -224,6 +226,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.clear();
         gameData.pendingTurnControl.clear();
         gameData.pendingTurnControlExtraTurn.clear();
+        gameData.playersDealtCombatDamageSinceTheirLastTurn.clear();
+        gameData.playersDealtCombatDamageLastTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
@@ -319,6 +323,9 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
                 gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             }
         }
+
+        gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
+        gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
 
         gameData.interaction.clearAwaitingInput();
         gameData.turnNumber = 1;

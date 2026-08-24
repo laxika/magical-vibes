@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -130,7 +131,52 @@ public class MayCopyHandlerService {
                 ? player.getUsername() + " has no creature card to copy; it enters without copying."
                 : player.getUsername() + " declines to copy a creature card from a graveyard. ";
         gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(), " enters without copying."));
+        finishCloneEntryWithoutFurtherChoice(gameData);
+    }
+
+    public void handleCopyCreatureCardFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                                           PendingMayAbility ability,
+                                                           CopyCreatureCardFromGraveyardOnEnterEffect copyEffect) {
+        if (accepted) {
+            List<Card> validCards = new ArrayList<>();
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                if (graveyard != null) {
+                    graveyard.stream()
+                            .filter(card -> card.hasType(CardType.CREATURE))
+                            .forEach(validCards::add);
+                }
+            }
+            if (validCards.isEmpty()) {
+                finishCloneEntryWithoutFurtherChoice(gameData);
+                return;
+            }
+            playerInputService.beginMultiGraveyardChoice(gameData, ability.controllerId(), validCards, 1,
+                    "Choose a creature card in a graveyard to copy.");
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " accepts — choosing a creature card in a graveyard to copy."));
+            log.info("Game {} - {} accepts graveyard copy", gameData.id, player.getUsername());
+            return;
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " declines to copy a creature card. ", ability.sourceCard(),
+                " enters without copying."));
+        log.info("Game {} - {} declines graveyard copy", gameData.id, player.getUsername());
+        finishCloneEntryWithoutFurtherChoice(gameData);
+    }
+
+    public void finishCloneEntryWithoutFurtherChoice(GameData gameData) {
         cloneService.completeCloneEntry(gameData, null);
+        finishCloneEntry(gameData);
+    }
+
+    public void finishCloneEntryFromCard(GameData gameData, Card targetCard) {
+        cloneService.completeCloneEntryFromCard(gameData, targetCard);
+        finishCloneEntry(gameData);
+    }
+
+    private void finishCloneEntry(GameData gameData) {
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {

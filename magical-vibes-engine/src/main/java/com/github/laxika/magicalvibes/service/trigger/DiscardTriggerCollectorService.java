@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -268,6 +269,12 @@ public class DiscardTriggerCollectorService {
                 gameData.id, sourceCard.getName(), discarded.getName(),
                 trigger.trackWithSource() ? " with the source" : "");
         return true;
+    }
+
+    @CollectsTrigger(value = ExileTopCardMayPlayThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleExileTopCardMayPlayOnDiscard(TriggerMatchContext match,
+            ExileTopCardMayPlayThisTurnEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "exile top card and allow play");
     }
 
     @CollectsTrigger(value = ScryEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)

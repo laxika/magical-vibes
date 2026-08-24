@@ -149,13 +149,20 @@ class PlayCardRequestDispatchServiceTest {
     @DisplayName("Cast from exile routes to playCardFromExile")
     void fromExileRoutes() {
         UUID exileCardId = UUID.randomUUID();
-        PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
-                null, null, exileCardId, null, null, null, null, null, null, null, null, null, null, null);
+        UUID convokeCreatureId = UUID.randomUUID();
+        PlayCardRequest request = new PlayCardRequest(
+                0, null, null, null,
+                null, List.of(convokeCreatureId), null, null,
+                null, exileCardId, null, null,
+                null, null, null, null,
+                null, null, null, null,
+                null);
 
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playCardFromExile(
-                eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(), eq(List.of()));
+                eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(), eq(List.of()),
+                eq(List.of(convokeCreatureId)));
         verifyNoMoreInteractions(gameService);
     }
 }

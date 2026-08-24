@@ -121,6 +121,7 @@ public class GraveyardTargetingSupport {
                 case HAND -> "to your hand";
                 case BATTLEFIELD -> "to the battlefield";
                 case TOP_OF_OWNERS_LIBRARY -> "on top of its owner's library";
+                case TOP_OF_CONTROLLERS_LIBRARY -> "on top of your library";
                 case BOTTOM_OF_OWNERS_LIBRARY -> "on the bottom of its owner's library";
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> "into its owner's library";
                 case EXILE -> "to exile";

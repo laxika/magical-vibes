@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -48,6 +49,7 @@ abstract class AbstractDamageHandlerTest {
     @Mock protected TriggerCollectionService triggerCollectionService;
     @Mock protected LifeSupport lifeSupport;
     @Mock protected com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+    @Mock protected BattleDefeatSupport battleDefeatSupport;
 
     @InjectMocks protected DamageSupport damageSupport;
 

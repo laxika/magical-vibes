@@ -78,6 +78,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.AttachSourceAuraToChosenPermanent attachAura) {
             battlefieldHandler.handleAttachSourceAuraToChosenPermanent(gameData, permanentId, attachAura);
+        } else if (context instanceof PermanentChoiceContext.TransformChosenPermanent) {
+            battlefieldHandler.handleTransformChosenPermanent(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.AttachTargetAuraToAnotherPermanentOfSameType attachAura) {
             battlefieldHandler.handleAttachTargetAuraToAnotherPermanentOfSameType(gameData, permanentId, attachAura);
         } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
@@ -94,6 +96,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeOneOfTwoThenCounterOnOther(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.CannibalizeChoice cannibalize) {
             battlefieldHandler.handleCannibalizeChoice(gameData, permanentId, cannibalize);
+        } else if (context instanceof PermanentChoiceContext.PutCounterOnEitherTarget counterChoice) {
+            battlefieldHandler.handlePutCounterOnEitherTarget(gameData, permanentId, counterChoice);
         } else if (context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand sacrificeOneOfTwo) {
             battlefieldHandler.handleSacrificeOneOfTwoThenReturnOtherToHand(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
@@ -122,6 +126,10 @@ public class PermanentChoiceHandlerService {
             guidedPassageEffectHandler.completeOpponentChoice(gameData, permanentId, guidedPassageChoice);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy echoChamberChoice) {
             battlefieldHandler.handleOpponentChoosesCreatureTheyControlToCopy(gameData, permanentId, echoChamberChoice);
+        } else if (context instanceof PermanentChoiceContext.AwakenTheMaelstromPermanentCopyChoice copyChoice) {
+            battlefieldHandler.handleAwakenTheMaelstromPermanentCopyChoice(gameData, permanentId, copyChoice);
+        } else if (context instanceof PermanentChoiceContext.AwakenTheMaelstromCounterCreatureChoice) {
+            battlefieldHandler.handleAwakenTheMaelstromCounterCreatureChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.OpponentMayGainControlOfCreatureYouControl opponentSteal) {
             battlefieldHandler.handleOpponentMayGainControlOfCreatureYouControl(gameData, permanentId, opponentSteal);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilityCostChoice costChoice) {

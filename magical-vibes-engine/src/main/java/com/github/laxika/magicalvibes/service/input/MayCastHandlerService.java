@@ -1209,6 +1209,11 @@ public class MayCastHandlerService {
      */
     public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
                                                     PendingMayAbility ability) {
+        handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, true);
+    }
+
+    public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability, boolean clearOtherOffers) {
         boolean revealCardOnDecline = ability.effects().stream()
                 .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
                 .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
@@ -1216,7 +1221,8 @@ public class MayCastHandlerService {
                 .map(MayCastFromHandWithoutPayingManaCostEffect::revealCardOnDecline)
                 .orElse(true);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability,
-                MayCastFromHandWithoutPayingManaCostEffect.class, revealCardOnDecline, false);
+                clearOtherOffers ? MayCastFromHandWithoutPayingManaCostEffect.class : null,
+                revealCardOnDecline, false);
     }
 
     public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
@@ -1282,8 +1288,10 @@ public class MayCastHandlerService {
         }
 
         // Remove remaining may-cast-from-hand abilities (only cast one spell)
-        gameData.pendingMayAbilities.removeIf(pma ->
-                pma.effects().stream().anyMatch(pendingEffectType::isInstance));
+        if (pendingEffectType != null) {
+            gameData.pendingMayAbilities.removeIf(pma ->
+                    pma.effects().stream().anyMatch(pendingEffectType::isInstance));
+        }
 
         // Remove from hand and cast
         hand.remove(cardIndex);

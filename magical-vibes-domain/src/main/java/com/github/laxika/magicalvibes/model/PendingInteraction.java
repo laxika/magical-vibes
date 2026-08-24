@@ -982,6 +982,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
                                              java.util.Set<UUID> libraryCardIds,
                                              java.util.Set<UUID> handCardIds,
+                                             java.util.Set<UUID> outsideGameCardIds,
                                              boolean librarySearchAllowed,
                                              String cardLabel,
                                              LibrarySearchDestination destination,
@@ -991,14 +992,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  java.util.Set<UUID> libraryCardIds,
                                                  boolean librarySearchAllowed,
                                                  String cardLabel) {
-            this(playerId, pool, libraryCardIds, java.util.Set.of(), librarySearchAllowed, cardLabel,
+            this(playerId, pool, libraryCardIds, java.util.Set.of(), java.util.Set.of(), librarySearchAllowed, cardLabel,
                     LibrarySearchDestination.HAND, null);
+        }
+
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 java.util.Set<UUID> handCardIds,
+                                                 boolean librarySearchAllowed, String cardLabel,
+                                                 LibrarySearchDestination destination,
+                                                 UUID attachToPermanentId) {
+            this(playerId, pool, libraryCardIds, handCardIds, java.util.Set.of(),
+                    librarySearchAllowed, cardLabel, destination, attachToPermanentId);
+        }
+
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 java.util.Set<UUID> outsideGameCardIds,
+                                                 boolean librarySearchAllowed, String cardLabel) {
+            this(playerId, pool, libraryCardIds, java.util.Set.of(), outsideGameCardIds,
+                    librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null);
         }
 
         public SearchLibraryAndOrGraveyardChoice {
             pool = java.util.List.copyOf(pool);
             libraryCardIds = java.util.Set.copyOf(libraryCardIds);
             handCardIds = java.util.Set.copyOf(handCardIds);
+            outsideGameCardIds = java.util.Set.copyOf(outsideGameCardIds);
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -1830,7 +1850,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
                            UUID mayAbilitySourcePermanentId,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
-                           boolean enterTapped, boolean mandatory, String prompt)
+                           boolean enterTapped, boolean exileIfLeavesBattlefield,
+                           boolean mandatory, String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -1875,6 +1896,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private CardSubtype grantSourceHasteIfSubtype;
             private UUID grantSourceHasteSourcePermanentId;
             private boolean enterTapped;
+            private boolean exileIfLeavesBattlefield;
             private boolean mandatory;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -1946,6 +1968,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder exileIfLeavesBattlefield(boolean exileIfLeavesBattlefield) {
+                this.exileIfLeavesBattlefield = exileIfLeavesBattlefield;
+                return this;
+            }
+
             public Builder mandatory(boolean mandatory) {
                 this.mandatory = mandatory;
                 return this;
@@ -1958,7 +1985,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
                         grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
-                        enterTapped, mandatory, prompt);
+                        enterTapped, exileIfLeavesBattlefield, mandatory, prompt);
             }
         }
     }
@@ -2328,6 +2355,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 HandToLibraryPlacement placement) {
             return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, 0, maxCount, placement,
                     false, null, null, false);
+        }
+
+        public static PutCardsFromHandOnLibraryCardChoice putOnLibraryThenEffect(UUID playerId,
+                java.util.List<UUID> validCardIds, java.util.List<Card> cards, int count,
+                HandToLibraryPlacement placement, Card sourceCard,
+                com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect) {
+            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, count,
+                    count, placement, false, sourceCard, thenEffect, false);
         }
 
         /** "Put a card from your hand on top of your library" (mandatory when the hand is nonempty). */

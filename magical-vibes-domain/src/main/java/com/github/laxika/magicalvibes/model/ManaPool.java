@@ -159,6 +159,9 @@ public class ManaPool {
     /** Permission flag (not mana): while set, blue mana in this pool may additionally pay any
      * colored requirement of an activated ability of the current source creature. */
     private boolean blueSpendableAsAnyColorForActivatedAbilities;
+    /** Permission flag (not mana): while set, all mana in this pool may pay colored requirements
+     * of an activated ability of the current source creature. */
+    private boolean allManaSpendableAsAnyColorForActivatedAbilities;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -264,6 +267,7 @@ public class ManaPool {
         this.allManaSpendableAsAnyColor = source.allManaSpendableAsAnyColor;
         this.snowManaSpendableAsAnyColor = source.snowManaSpendableAsAnyColor;
         this.blueSpendableAsAnyColorForActivatedAbilities = source.blueSpendableAsAnyColorForActivatedAbilities;
+        this.allManaSpendableAsAnyColorForActivatedAbilities = source.allManaSpendableAsAnyColorForActivatedAbilities;
     }
 
     /** See {@link #whiteSpendableAsRed}. */
@@ -316,6 +320,14 @@ public class ManaPool {
 
     public void setBlueSpendableAsAnyColorForActivatedAbilities(boolean enabled) {
         this.blueSpendableAsAnyColorForActivatedAbilities = enabled;
+    }
+
+    public boolean isAllManaSpendableAsAnyColorForActivatedAbilities() {
+        return allManaSpendableAsAnyColorForActivatedAbilities;
+    }
+
+    public void setAllManaSpendableAsAnyColorForActivatedAbilities(boolean enabled) {
+        this.allManaSpendableAsAnyColorForActivatedAbilities = enabled;
     }
 
     public void add(ManaColor color) {
@@ -2177,6 +2189,125 @@ public class ManaPool {
             moveColoredManaToColorless(entry.getValue());
         }
         moveColoredManaToColorless(exiledSpellOnlyMana);
+    }
+
+    /** Changes all mana that would drain at the next boundary to the requested color. */
+    public void convertNonPersistentManaTo(ManaColor replacementColor) {
+        if (replacementColor == ManaColor.COLORLESS) {
+            convertNonPersistentManaToColorless();
+            return;
+        }
+
+        for (ManaColor color : ManaColor.values()) {
+            if (color == replacementColor) {
+                continue;
+            }
+            int current = pool.getOrDefault(color, 0);
+            int persistent = persistentMana.getOrDefault(color, 0);
+            int amount = Math.max(0, current - persistent);
+            if (amount == 0) {
+                continue;
+            }
+            pool.put(color, current - amount);
+            pool.merge(replacementColor, amount, Integer::sum);
+            moveTaggedMana(snowMana, color, replacementColor, amount);
+            moveTaggedMana(creatureMana, color, replacementColor, amount);
+            moveTaggedMana(spellOnlyMana, color, replacementColor, amount);
+            moveTaggedMana(promotedAbilityOnlyMana, color, replacementColor, amount);
+            moveTaggedMana(hasteGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(additionalCounterGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(riotGrantingMana, color, replacementColor, amount);
+        }
+
+        moveManaToPool(replacementColor, artifactOnlyColorless);
+        artifactOnlyColorless = 0;
+        moveManaToPool(replacementColor, artifactAbilityOnlyColorless);
+        artifactAbilityOnlyColorless = 0;
+        moveManaToPool(replacementColor, powerstoneOnlyColorless);
+        powerstoneOnlyColorless = 0;
+        moveManaToPool(replacementColor, myrOnlyColorless);
+        myrOnlyColorless = 0;
+        moveManaToPool(replacementColor, legendarySpellOnlyColorless);
+        legendarySpellOnlyColorless = 0;
+        moveManaToPool(replacementColor, instantSorceryOnlyColorless);
+        instantSorceryOnlyColorless = 0;
+        moveManaToPool(replacementColor, foretellOrInstantSorceryOnlyColorless);
+        foretellOrInstantSorceryOnlyColorless = 0;
+        moveManaToPool(replacementColor, foretellSpellOnlyColorless);
+        foretellSpellOnlyColorless = 0;
+        moveManaToPool(replacementColor, xCostOnlyColorless);
+        xCostOnlyColorless = 0;
+        moveManaToPool(replacementColor, cumulativeUpkeepOnlyColorless);
+        cumulativeUpkeepOnlyColorless = 0;
+        moveManaToPool(replacementColor, restrictedRed);
+        restrictedRed = 0;
+        moveManaToPool(replacementColor, kickedOnlyGreen);
+        kickedOnlyGreen = 0;
+        int colorlessSubtypeMana = colorlessSubtypeSpellOrAbilityMana.values().stream()
+                .mapToInt(Integer::intValue).sum();
+        moveManaToPool(replacementColor, colorlessSubtypeMana);
+        colorlessSubtypeSpellOrAbilityMana.clear();
+
+        moveManaTo(replacementColor, artifactOnlyMana);
+        moveManaTo(replacementColor, artifactSpellOrAbilityOnlyMana);
+        moveManaTo(replacementColor, promotedArtifactSpellOrAbilityOnlyMana);
+        moveManaTo(replacementColor, instantSorceryOnlyColored);
+        moveManaTo(replacementColor, foretellOrInstantSorceryOnlyColored);
+        moveManaTo(replacementColor, foretellSpellOnlyColored);
+        moveManaTo(replacementColor, cumulativeUpkeepOnlyColored);
+        moveManaTo(replacementColor, flashbackOnlyMana);
+        moveManaTo(replacementColor, abilityOnlyMana);
+        moveManaToBuckets(replacementColor, subtypeCreatureMana);
+        moveManaToBuckets(replacementColor, subtypeOrLegendaryCreatureMana);
+        moveManaToBuckets(replacementColor, uncounterableSubtypeCreatureMana);
+        moveManaToBuckets(replacementColor, subtypeSpellOrAbilityMana);
+        moveManaToBuckets(replacementColor, subtypeSpellOnlyMana);
+        moveManaToBuckets(replacementColor, subtypeCreatureSourceSpellOrAbilityMana);
+        moveManaToBuckets(replacementColor, subtypeOrPlaneswalkerSpellMana);
+        moveManaTo(replacementColor, partySpellOrAbilityMana);
+        moveManaTo(replacementColor, creatureSpellOnlyMana);
+        moveManaTo(replacementColor, creatureOrEnchantmentSpellOnlyMana);
+        moveManaTo(replacementColor, creatureSpellOrAbilityMana);
+        moveManaTo(replacementColor, manaValueAtLeastFourOnlyMana);
+        for (EnumMap<ManaColor, Integer> bucket : exiledCardOnlyMana.values()) {
+            moveManaTo(replacementColor, bucket);
+        }
+    }
+
+    private void moveManaToPool(ManaColor replacementColor, int amount) {
+        if (amount > 0) {
+            pool.merge(replacementColor, amount, Integer::sum);
+        }
+    }
+
+    private static void moveTaggedMana(EnumMap<ManaColor, Integer> bucket,
+                                       ManaColor from, ManaColor to, int amount) {
+        int tagged = Math.min(amount, bucket.getOrDefault(from, 0));
+        if (tagged > 0) {
+            bucket.put(from, bucket.get(from) - tagged);
+            bucket.merge(to, tagged, Integer::sum);
+        }
+    }
+
+    private static void moveManaTo(ManaColor replacementColor, Map<ManaColor, Integer> bucket) {
+        for (ManaColor color : ManaColor.values()) {
+            if (color == replacementColor) {
+                continue;
+            }
+            int amount = bucket.getOrDefault(color, 0);
+            if (amount > 0) {
+                bucket.put(color, 0);
+                bucket.merge(replacementColor, amount, Integer::sum);
+            }
+        }
+    }
+
+    private static void moveManaToBuckets(ManaColor replacementColor,
+                                          Map<?, EnumMap<ManaColor, Integer>> buckets) {
+        for (EnumMap<ManaColor, Integer> bucket : buckets.values()) {
+            moveManaTo(replacementColor, bucket);
+        }
     }
 
     private static void moveTaggedManaToColorless(EnumMap<ManaColor, Integer> tags,

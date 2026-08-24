@@ -1342,6 +1342,7 @@ public class DrawService {
     }
 
     public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerId.equals(drawingPlayerId)) return;
 
@@ -1349,7 +1350,12 @@ public class DrawService {
                 List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DRAWS);
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
-                for (CardEffect effect : drawEffects) {
+                for (CardEffect authoredEffect : drawEffects) {
+                    CardEffect effect = authoredEffect;
+                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                        if (effect == null) continue;
+                    }
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may);
                     } else {

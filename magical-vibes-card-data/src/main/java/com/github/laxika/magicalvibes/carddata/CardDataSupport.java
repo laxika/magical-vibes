@@ -48,6 +48,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Split second", Keyword.SPLIT_SECOND);
         KEYWORD_MAP.put("Fading", Keyword.FADING);
         KEYWORD_MAP.put("Vigilance", Keyword.VIGILANCE);
+        KEYWORD_MAP.put("Backup", Keyword.BACKUP);
         KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
         KEYWORD_MAP.put("Changeling", Keyword.CHANGELING);
         KEYWORD_MAP.put("Fear", Keyword.FEAR);

@@ -435,10 +435,12 @@ public class StackResolutionService {
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
+        Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
 
-        if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
-                entry.getXValue())) {
+        if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(
+                gameData, controllerId, characteristics, entry.getTargetId(), entry.getXValue(),
+                entry.getPhysicalCard(), characteristics != card)) {
             return;
         }
 
@@ -450,7 +452,7 @@ public class StackResolutionService {
             return;
         }
 
-        Permanent perm = createEnteringPermanent(entry, card, disturbCharacteristics(entry, card));
+        Permanent perm = createEnteringPermanent(entry, card, characteristics);
         perm.setChosenSubtype(entry.getBeholdChosenSubtype());
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
         // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.

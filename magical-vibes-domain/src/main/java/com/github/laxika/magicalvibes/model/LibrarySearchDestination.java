@@ -43,6 +43,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    CAST_ONE_AND_PUT_OTHER_INTO_HAND,
+    PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,
     /** Exile one chosen card, then offer it for casting without paying its mana cost. */
     EXILE_AND_MAY_CAST_WITHOUT_PAYING,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the

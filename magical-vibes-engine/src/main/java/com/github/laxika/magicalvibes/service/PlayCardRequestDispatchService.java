@@ -54,7 +54,8 @@ public class PlayCardRequestDispatchService {
         }
         if (request.fromExileCardId() != null) {
             gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()));
+                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                    listOrEmpty(request.convokeCreatureIds()));
             return;
         }
         if (Boolean.TRUE.equals(request.morph())) {

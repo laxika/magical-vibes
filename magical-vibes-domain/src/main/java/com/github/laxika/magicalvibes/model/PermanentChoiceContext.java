@@ -51,6 +51,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Attach the source Aura to the chosen permanent after a resolving effect pauses for input. */
     record AttachSourceAuraToChosenPermanent(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** A resolving effect asks its controller to choose one permanent to transform. */
+    record TransformChosenPermanent() implements PermanentChoiceContext {}
+
     /** Enchantment Alteration: move the targeted Aura to another permanent of the same type. */
     record AttachTargetAuraToAnotherPermanentOfSameType(UUID auraPermanentId) implements PermanentChoiceContext {}
 
@@ -164,6 +167,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             Card sourceCard
     ) implements PermanentChoiceContext {}
 
+    /** Awaken the Maelstrom: choose a permanent you control for the token-copy effect. */
+    record AwakenTheMaelstromPermanentCopyChoice(UUID controllerId, Card sourceCard)
+            implements PermanentChoiceContext {}
+
+    /** Awaken the Maelstrom: choose a creature for the next counter allocation. */
+    record AwakenTheMaelstromCounterCreatureChoice() implements PermanentChoiceContext {}
+
     /**
      * Opponent accepted Infernal Denizen's upkeep may and is picking which creature of
      * {@code victimControllerId}'s to gain control of for {@code duration}, keyed to {@code sourcePermanentId}.
@@ -186,6 +196,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Cannibalize: the spell's controller picks which target to exile; the other gets two +1/+1 counters. */
     record CannibalizeChoice(Card sourceCard, UUID controllerId,
                              UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
+
+    /** A resolving effect asks its controller which of its chosen targets receives a counter. */
+    record PutCounterOnEitherTarget(Card sourceCard, UUID controllerId, CounterType counterType,
+                                    List<UUID> targetIds) implements PermanentChoiceContext {
+        public PutCounterOnEitherTarget {
+            targetIds = List.copyOf(targetIds);
+        }
+    }
     /** Barrin's Spite: the creatures' controller picks which target to sacrifice; the other returns
      *  to its owner's hand. */
     record SacrificeOneOfTwoThenReturnOtherToHand(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,

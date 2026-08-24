@@ -150,6 +150,7 @@ public enum CardSubtype {
     GOBLIN("Goblin"),
     GOAT("Goat"),
     GOD("God"),
+    DEMIGOD("Demigod"),
     KAVU("Kavu"),
     CYCLOPS("Cyclops"),
     HORROR("Horror"),

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -42,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.GlobalLandPlayRestrictionEffe
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitNonPhyrexianSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
@@ -508,6 +510,27 @@ public class CastingPermissionService {
         if (!anyPlayerControlsEtherswornCanonist(gameData)) return false;
         return gameData.getSpellsCastThisTurn(playerId).stream()
                 .anyMatch(cast -> !gameQueryService.cardHasType(cast, CardType.ARTIFACT, gameData, playerId));
+    }
+
+    public boolean isAdditionalNonPhyrexianSpellRestricted(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
+        if (gameQueryService.cardHasSubtype(card, CardSubtype.PHYREXIAN, gameData, playerId)) return false;
+        if (!anyPlayerControlsPhyrexianCensor(gameData)) return false;
+        return gameData.getSpellsCastThisTurn(playerId).stream()
+                .anyMatch(cast -> !gameQueryService.cardHasSubtype(
+                        cast, CardSubtype.PHYREXIAN, gameData, playerId));
+    }
+
+    private boolean anyPlayerControlsPhyrexianCensor(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(LimitNonPhyrexianSpellsPerTurnEffect.class::isInstance)) return true;
+            }
+        }
+        return false;
     }
 
     public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card) {

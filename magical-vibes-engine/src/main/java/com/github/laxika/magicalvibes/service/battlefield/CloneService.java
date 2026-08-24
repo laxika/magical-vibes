@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -65,13 +66,29 @@ public class CloneService {
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue) {
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, card, false);
+    }
+
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 int xValue, Card physicalCard, boolean transformed) {
         CopyCreatureCardInGraveyardOnEnterEffect graveyardCopyEffect = findGraveyardCopyEffect(card);
         if (graveyardCopyEffect != null
-                && prepareGraveyardCloneReplacementEffect(gameData, controllerId, card, graveyardCopyEffect, xValue)) {
+                && prepareGraveyardCloneReplacementEffect(
+                        gameData, controllerId, card, physicalCard, transformed, graveyardCopyEffect, xValue)) {
+            return true;
+        }
+        if (findFixedGraveyardCopyEffect(card) != null
+                && prepareFixedGraveyardCloneReplacementEffect(
+                        gameData, controllerId, card, physicalCard, transformed, xValue)) {
             return true;
         }
 
-        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, false);
+        boolean prepared = prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, false);
+        if (prepared) {
+            gameData.cloneOperation.physicalCard = physicalCard;
+            gameData.cloneOperation.transformed = transformed;
+        }
+        return prepared;
     }
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
@@ -90,6 +107,8 @@ public class CloneService {
         if (validIds.isEmpty()) return false;
 
         gameData.cloneOperation.card = card;
+        gameData.cloneOperation.physicalCard = card;
+        gameData.cloneOperation.transformed = false;
         gameData.cloneOperation.controllerId = controllerId;
         gameData.cloneOperation.etbTargetId = targetId;
         gameData.cloneOperation.powerOverride = copyEffect.powerOverride();
@@ -107,6 +126,7 @@ public class CloneService {
         gameData.cloneOperation.additionalPlusOnePlusOneCounters = copyEffect.additionalPlusOnePlusOneCounters();
         gameData.cloneOperation.additionalSupertypesOverride = copyEffect.additionalSupertypesOverride();
         gameData.cloneOperation.additionalKeywordsOverride = copyEffect.additionalKeywordsOverride();
+        gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
@@ -115,6 +135,7 @@ public class CloneService {
         gameData.cloneOperation.landPlay = landPlay;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -128,6 +149,7 @@ public class CloneService {
     }
 
     private boolean prepareGraveyardCloneReplacementEffect(GameData gameData, UUID controllerId, Card card,
+                                                           Card physicalCard, boolean transformed,
                                                            CopyCreatureCardInGraveyardOnEnterEffect copyEffect,
                                                            int xValue) {
         boolean hasCreatureCard = gameData.playerGraveyards.values().stream()
@@ -138,6 +160,8 @@ public class CloneService {
         }
 
         gameData.cloneOperation.card = card;
+        gameData.cloneOperation.physicalCard = physicalCard;
+        gameData.cloneOperation.transformed = transformed;
         gameData.cloneOperation.controllerId = controllerId;
         gameData.cloneOperation.etbTargetId = null;
         gameData.cloneOperation.powerOverride = copyEffect.powerOverride();
@@ -152,12 +176,64 @@ public class CloneService {
         gameData.cloneOperation.embalmRemoveManaCost = false;
         gameData.cloneOperation.additionalPlusOnePlusOneCounters = null;
         gameData.cloneOperation.additionalKeywordsOverride = Set.of();
+        gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
+        gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = true;
 
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                card,
+                controllerId,
+                List.of(copyEffect),
+                card.getName() + " — You may have it enter as a copy of any creature card in a graveyard."
+        ));
+        playerInputService.processNextMayAbility(gameData);
+        return true;
+    }
+
+    private boolean prepareFixedGraveyardCloneReplacementEffect(GameData gameData, UUID controllerId, Card card,
+                                                                Card physicalCard, boolean transformed, int xValue) {
+        boolean hasCreatureCard = gameData.playerGraveyards.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(graveyardCard -> graveyardCard.hasType(CardType.CREATURE));
+        if (!hasCreatureCard) {
+            return false;
+        }
+
+        gameData.cloneOperation.card = card;
+        gameData.cloneOperation.physicalCard = physicalCard;
+        gameData.cloneOperation.transformed = transformed;
+        gameData.cloneOperation.controllerId = controllerId;
+        gameData.cloneOperation.etbTargetId = null;
+        gameData.cloneOperation.powerOverride = 4;
+        gameData.cloneOperation.toughnessOverride = 4;
+        gameData.cloneOperation.copyPowerToughnessFromSource = false;
+        gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.additionalActivatedAbilities = List.of();
+        gameData.cloneOperation.nameOverride = null;
+        gameData.cloneOperation.additionalSupertypesOverride = Set.of();
+        gameData.cloneOperation.removedSupertypesOverride = Set.of();
+        gameData.cloneOperation.addTypeAppropriateCounters = false;
+        gameData.cloneOperation.embalmColorOverride = null;
+        gameData.cloneOperation.embalmAddedSubtype = null;
+        gameData.cloneOperation.embalmRemoveManaCost = false;
+        gameData.cloneOperation.additionalPlusOnePlusOneCounters = null;
+        gameData.cloneOperation.additionalKeywordsOverride = Set.of();
+        gameData.cloneOperation.additionalColorsOverride = Set.of(CardColor.BLACK);
+        gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
+        gameData.cloneOperation.additionalSubtypesOverride = Set.of(CardSubtype.ZOMBIE);
+        gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.copyColor = true;
+        gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.landPlay = false;
+        gameData.cloneOperation.xValue = xValue;
+        gameData.cloneOperation.graveyardCopyChoicePending = true;
+        gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
+
+        CopyCreatureCardFromGraveyardOnEnterEffect copyEffect = findFixedGraveyardCopyEffect(card);
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 card,
                 controllerId,
@@ -171,6 +247,15 @@ public class CloneService {
     private CopyCreatureCardInGraveyardOnEnterEffect findGraveyardCopyEffect(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             if (effect instanceof CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
+                return copyEffect;
+            }
+        }
+        return null;
+    }
+
+    private CopyCreatureCardFromGraveyardOnEnterEffect findFixedGraveyardCopyEffect(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof CopyCreatureCardFromGraveyardOnEnterEffect copyEffect) {
                 return copyEffect;
             }
         }
@@ -196,15 +281,27 @@ public class CloneService {
     }
 
     public void completeCloneEntry(GameData gameData, UUID targetId) {
-        completeCloneEntry(gameData, targetId, null);
+        completeCloneEntry(gameData, targetId, null, false);
     }
 
     public void completeCloneEntryFromGraveyard(GameData gameData, Card graveyardCard) {
-        completeCloneEntry(gameData, null, graveyardCard);
+        completeCloneEntry(gameData, null, graveyardCard, true);
     }
 
-    private void completeCloneEntry(GameData gameData, UUID targetId, Card graveyardCard) {
+    public void completeCloneEntryFromCard(GameData gameData, Card targetCard) {
+        completeCloneEntry(gameData, null, targetCard, false);
+    }
+
+    public void completeCloneEntryFromGraveyardChoice(GameData gameData, Card targetCard) {
+        completeCloneEntry(gameData, null, targetCard,
+                gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry);
+    }
+
+    private void completeCloneEntry(GameData gameData, UUID targetId, Card targetCard,
+                                    boolean exileCopiedGraveyardCard) {
         Card card = gameData.cloneOperation.card;
+        Card physicalCard = gameData.cloneOperation.physicalCard;
+        boolean transformed = gameData.cloneOperation.transformed;
         UUID controllerId = gameData.cloneOperation.controllerId;
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
         Integer powerOverride = gameData.cloneOperation.powerOverride;
@@ -221,6 +318,7 @@ public class CloneService {
         boolean embalmRemoveManaCost = gameData.cloneOperation.embalmRemoveManaCost;
         DynamicAmount additionalPlusOnePlusOneCounters = gameData.cloneOperation.additionalPlusOnePlusOneCounters;
         Set<Keyword> additionalKeywordsOverride = gameData.cloneOperation.additionalKeywordsOverride;
+        Set<CardColor> additionalColorsOverride = gameData.cloneOperation.additionalColorsOverride;
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
@@ -230,6 +328,8 @@ public class CloneService {
         int xValue = gameData.cloneOperation.xValue;
 
         gameData.cloneOperation.card = null;
+        gameData.cloneOperation.physicalCard = null;
+        gameData.cloneOperation.transformed = false;
         gameData.cloneOperation.controllerId = null;
         gameData.cloneOperation.etbTargetId = null;
         gameData.cloneOperation.powerOverride = null;
@@ -247,6 +347,7 @@ public class CloneService {
         gameData.cloneOperation.additionalPlusOnePlusOneCounters = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
         gameData.cloneOperation.additionalKeywordsOverride = Set.of();
+        gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
@@ -255,42 +356,27 @@ public class CloneService {
         gameData.cloneOperation.landPlay = false;
         gameData.cloneOperation.xValue = 0;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
 
-        Permanent perm = new Permanent(card);
-
-        if (graveyardCard != null) {
-            permanentCopierService.applyCloneCopy(
-                    perm, graveyardCard, powerOverride, toughnessOverride, additionalTypesOverride,
-                    additionalActivatedAbilities);
-            applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,
-                    additionalKeywordsOverride);
-            if (nameOverride != null) {
-                perm.getCard().setName(nameOverride);
-            }
-            applyAdditionalSupertypes(perm.getCard(), additionalSupertypesOverride);
-            applyAdditionalSubtypes(perm.getCard(), additionalSubtypesOverride);
-            additionalSlotEffects.forEach((slot, effects) ->
-                    effects.forEach(effect -> perm.getCard().addEffect(slot, effect)));
-            if (card.isToken()) {
-                perm.getCard().setToken(true);
-                applyEmbalmExceptionToCopy(perm.getCard(), embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost);
-            }
-            applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
-                    additionalPlusOnePlusOneCounters, xValue);
+        Permanent perm = new Permanent(physicalCard != null ? physicalCard : card);
+        if (transformed) {
+            perm.setCard(card);
+            perm.setTransformed(true);
         }
 
-        if (targetId != null) {
-            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-            if (targetPerm != null) {
+        Permanent targetPerm = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
+        Card copiedCard = targetCard != null ? targetCard : targetPerm == null ? null : targetPerm.getCard();
+        if (copiedCard != null) {
                 Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
                 Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
                 permanentCopierService.applyCloneCopy(
-                        perm, targetPerm.getCard(), effectivePowerOverride, effectiveToughnessOverride,
+                        perm, copiedCard, effectivePowerOverride, effectiveToughnessOverride,
                         additionalTypesOverride, List.of(), copyColor);
                 boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
                         || perm.getCard().hasType(CardType.CREATURE);
                 applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,
                         creatureOnlyCharacteristicsApply ? additionalKeywordsOverride : Set.of());
+                applyAdditionalColors(perm.getCard(), additionalColorsOverride);
                 // "except it has..." — add additional abilities to the copy (e.g. Evil Twin)
                 for (ActivatedAbility extraAbility : additionalActivatedAbilities) {
                     perm.getCard().addActivatedAbility(extraAbility);
@@ -326,37 +412,21 @@ public class CloneService {
                 if (entersTapped) {
                     perm.tap();
                 }
-            }
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         Card enteredCard = perm.getCard();
-        if (targetId != null) {
-            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-            if (targetPerm != null) {
+        if (copiedCard != null) {
                 gameLogService.append(gameData, GameLog.builder()
                         .card(enteredCard)
                         .text(" enters the battlefield as a copy of ")
-                        .card(targetPerm.getCard())
+                        .card(copiedCard)
                         .text(" under " + playerName + "'s control.")
                         .build());
                 log.info("Game {} - {} enters as copy of {} for {}", gameData.id, enteredCard.getName(),
-                        targetPerm.getCard().getName(), playerName);
-            } else {
-                gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
-                log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
-            }
-        } else if (graveyardCard != null) {
-            gameLogService.append(gameData, GameLog.builder()
-                    .card(enteredCard)
-                    .text(" enters the battlefield as a copy of ")
-                    .card(graveyardCard)
-                    .text(" from a graveyard under " + playerName + "'s control.")
-                    .build());
-            log.info("Game {} - {} enters as copy of graveyard card {} for {}", gameData.id,
-                    enteredCard.getName(), graveyardCard.getName(), playerName);
+                        copiedCard.getName(), playerName);
         } else {
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
             log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
@@ -371,7 +441,7 @@ public class CloneService {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);
         }
 
-        if (graveyardCard != null) {
+        if (exileCopiedGraveyardCard && targetCard != null) {
             StackEntry exileTrigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     enteredCard,
@@ -380,7 +450,7 @@ public class CloneService {
                     List.of(new ExileTriggeringCardFromGraveyardEffect()),
                     0,
                     perm.getId());
-            exileTrigger.setTriggeringCardId(graveyardCard.getId());
+            exileTrigger.setTriggeringCardId(targetCard.getId());
             gameData.stack.add(exileTrigger);
         }
 
@@ -420,6 +490,18 @@ public class CloneService {
             keywords.addAll(additionalKeywords);
             copy.setKeywords(keywords);
         }
+    }
+
+    private void applyAdditionalColors(Card copy, Set<CardColor> additionalColors) {
+        if (additionalColors == null || additionalColors.isEmpty()) return;
+        EnumSet<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        colors.addAll(copy.getColors());
+        if (copy.getColor() != null) {
+            colors.add(copy.getColor());
+        }
+        colors.addAll(additionalColors);
+        copy.setColors(List.copyOf(colors));
+        copy.setColor(colors.size() == 1 ? colors.iterator().next() : null);
     }
 
     private void applyAdditionalSubtypes(Card copy, Set<CardSubtype> additionalSubtypes) {

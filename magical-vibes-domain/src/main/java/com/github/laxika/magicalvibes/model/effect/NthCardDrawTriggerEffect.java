@@ -4,8 +4,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Trigger payload for "whenever you draw your Nth card each turn" abilities.
- * It is consumed by the {@code ON_CONTROLLER_DRAWS} trigger path and is not resolved directly.
+ * Trigger payload for abilities that care about a player's Nth card draw each turn.
+ * It is consumed by the controller- or opponent-draw trigger path and is not resolved directly.
  */
 public record NthCardDrawTriggerEffect(int cardNumber, CardEffect resolvedEffect)
         implements DrawTriggerEffect {
