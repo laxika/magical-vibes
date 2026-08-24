@@ -130,6 +130,7 @@ public class ExampleCard extends Card {
 
 - Flashback spell (cast from graveyard for alternate cost, then exile):
   - `addCastingOption(new FlashbackCast("{cost}"))` + normal effects/targeting
+  - Variable counter costs use `new RemoveXCountersFromControlledPermanentsCastingCost(counterType, predicate)` in the `FlashbackCast` cost list; pass the selected permanent IDs through the flashback additional-cost selection field
   - Card is cast as a spell from the graveyard (counterable, triggers "whenever you cast"), then exiled whether it resolves or fizzles
   - Distinct from graveyard activated abilities (which put ABILITIES on stack, not spells)
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AncientGrudge.java`

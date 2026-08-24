@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -227,8 +228,8 @@ public class TriggerCollectionService {
     }
 
     public void checkSpellCopyTriggers(GameData gameData, StackEntry copiedSpell) {
-        if (copiedSpell.getEntryType() != StackEntryType.INSTANT_SPELL
-                && copiedSpell.getEntryType() != StackEntryType.SORCERY_SPELL) {
+        if (copiedSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                || copiedSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
             return;
         }
 
@@ -5009,6 +5010,16 @@ public class TriggerCollectionService {
 
     // ── Noncombat-damage-to-opponent triggers ──────────────────────────
 
+    /** Fires for each creature card put into any player's graveyard from a library. */
+    public void checkAnyCreatureCardPutIntoGraveyardFromLibraryTriggers(
+            GameData gameData, UUID graveyardOwnerId, Card creatureCard) {
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyardFromLibrary(
+                creatureCard, graveyardOwnerId);
+        gameData.forEachPermanent((playerId, permanent) -> dispatchSlot(
+                gameData, permanent, playerId,
+                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, ctx));
+    }
+
     public void checkNoncombatDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId) {
         checkNoncombatDamageToOpponentTriggers(gameData, damagedPlayerId, null, 0);
     }
@@ -5756,11 +5767,14 @@ public class TriggerCollectionService {
         }
     }
 
-    public void checkEquippedCreatureDeathTriggers(GameData gameData, UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
+    public void checkEquippedCreatureDeathTriggers(GameData gameData, UUID dyingCreatureId,
+                                                   UUID dyingCreatureControllerId, Card dyingCard,
+                                                   int dyingCreaturePower) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
-        var ctx = new TriggerContext.EquippedCreatureDeath(dyingCreatureId, dyingCreatureControllerId, dyingCard);
+        var ctx = new TriggerContext.EquippedCreatureDeath(
+                dyingCreatureId, dyingCreatureControllerId, dyingCard, dyingCreaturePower);
 
         for (Permanent perm : battlefield) {
             if (!dyingCreatureId.equals(perm.getAttachedTo())) continue;
@@ -6293,7 +6307,7 @@ public class TriggerCollectionService {
             // Blowfly Infestation's "if it had a -1/-1 counter on it") — evaluate against the
             // dying permanent, not just its card.
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                    toResolve, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
+                    toResolve, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId, perm);
             if (resolvedEffect == null) continue;
             var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
             if (dispatch(match, EffectSlot.ON_ANY_CREATURE_DIES, resolvedEffect, ctx)
@@ -6903,6 +6917,49 @@ public class TriggerCollectionService {
         }
     }
 
+    public void checkDayNightChangeTriggers(GameData gameData, DayNight previous, DayNight current) {
+        if (previous == current || previous == DayNight.NEITHER || current == DayNight.NEITHER) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.DayNightChange(previous, current);
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                for (Permanent permanent : new ArrayList<>(battlefield)) {
+                    dispatchSlot(gameData, permanent, controllerId,
+                            EffectSlot.ON_DAY_NIGHT_CHANGE, context);
+                }
+            }
+            checkGraveyardDayNightChangeTriggers(gameData, controllerId);
+        }
+        triggeredAbilityQueueService.processNextDayNightTriggerTarget(gameData);
+    }
+
+    private void checkGraveyardDayNightChangeTriggers(GameData gameData, UUID controllerId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard == null) return;
+
+        for (Card card : new ArrayList<>(graveyard)) {
+            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} triggers from the graveyard when day/night changes",
+                        gameData.id, card.getName());
+            }
+        }
+    }
+
+    public void processNextDayNightTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextDayNightTriggerTarget(gameData);
+    }
+
     public void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
         if (enteringCreature.getToughness() == null) return;
 
@@ -7203,6 +7260,28 @@ public class TriggerCollectionService {
                         EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, effect, effectContext);
             }
         });
+
+        if (enteringCard.getToughness() != null || enteringCard.hasType(CardType.ENCHANTMENT)) {
+            for (TemporaryGlobalTriggeredAbility watcher
+                    : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+                if (watcher.slot() != EffectSlot.ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD
+                        || !watcher.controllerId().equals(enteringControllerId)) {
+                    continue;
+                }
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.sourceCard(),
+                        watcher.controllerId(),
+                        watcher.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(watcher.effect())));
+                entry.setNonTargeting(true);
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+                log.info("Game {} - {} temporary creature-or-enchantment-enter trigger fires",
+                        gameData.id, watcher.sourceCard().getName());
+            }
+        }
     }
 
     /** "Whenever a creature enters under an opponent's control" (ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD). */

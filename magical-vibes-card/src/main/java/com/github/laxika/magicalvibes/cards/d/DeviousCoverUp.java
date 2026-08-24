@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "35")
+@CardRegistration(set = "MID", collectorNumber = "48")
 public class DeviousCoverUp extends Card {
 
     public DeviousCoverUp() {

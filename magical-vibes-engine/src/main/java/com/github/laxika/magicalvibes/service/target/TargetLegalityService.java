@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
@@ -3300,6 +3301,10 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntrySharesChosenNameWithSourcePredicate) {
             return source != null && source.getChosenName() != null
                     && source.getChosenName().equals(stackEntry.getCard().getName());
+        }
+        if (predicate instanceof StackEntryControlledByEnchantedPlayerPredicate) {
+            return source != null && source.getAttachedTo() != null
+                    && source.getAttachedTo().equals(stackEntry.getControllerId());
         }
         if (predicate instanceof StackEntrySharesNameWithCardExiledWithSourcePredicate) {
             return source != null

@@ -176,6 +176,10 @@ import java.util.Set;
  *                             replacement (e.g. Dreams of the Dead — "If the creature would leave the
  *                             battlefield, exile it instead of putting it anywhere else"; also Unearth's
  *                             CR 702.100 rider, where it pairs with {@link #exileAtEndStep})
+ * @param exileIfDying         {@code true} to set the permanent's "if this creature would die, exile it
+ *                             instead" replacement (e.g. Can't Stay Away); unlike
+ *                             {@link #exileIfLeavesBattlefield}, this does not replace moves to hand or
+ *                             library
  * @param plusOneCountersIfSubtype when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
  *                             the returned permanent only if the returned card has this subtype (e.g. Defy
  *                             Death — "If it's an Angel, put two +1/+1 counters on it"); when null,
@@ -283,6 +287,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean greatestPower,
         boolean topmost,
         boolean exileIfLeavesBattlefield,
+        boolean exileIfDying,
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
         CardSubtype plusOneCountersIfExiledCostCardHasSubtype,

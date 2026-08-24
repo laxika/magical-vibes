@@ -877,6 +877,7 @@ public class PermanentRemovalService {
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
         if (!target.isExileIfLeavesBattlefield()
                 && !target.isExileIfLeavesBattlefieldUntilEndOfTurn()
+                && !(checkExileInsteadOfDie && target.isExileIfDying())
                 && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
                 && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
                 && !permanentGraveyardReplacement) {
@@ -1092,7 +1093,12 @@ public class PermanentRemovalService {
                 || (wasCreature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty());
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
-                exileService.exileCard(gameData, ownerId, leaving);
+                if (opponentExileReplacement != null && opponentExileReplacement.effect().trackWithSource()) {
+                    exileService.exileCard(gameData, ownerId, leaving,
+                            opponentExileReplacement.sourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, ownerId, leaving);
+                }
                 if (opponentExileReplacement != null && opponentExileReplacement.effect().addIceCounter()) {
                     gameData.exiledCardsWithIceCounters.add(leaving.getId());
                 }
@@ -1163,7 +1169,8 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
                 triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId, target);
-                triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
+                triggerCollectionService.checkEquippedCreatureDeathTriggers(
+                        gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath);
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                 collectUndyingTrigger(gameData, target, ownerId, hadUndying);
                 collectPersistTrigger(gameData, target, ownerId, hadPersist);

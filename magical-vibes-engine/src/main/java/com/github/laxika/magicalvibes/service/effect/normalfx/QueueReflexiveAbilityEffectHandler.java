@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final GraveyardTargetingSupport graveyardTargetingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +39,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
-        if (queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (graveyardTargetingSupport.findTarget(List.of(queueEffect.effect())) != null
+                || queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect())));
             return;

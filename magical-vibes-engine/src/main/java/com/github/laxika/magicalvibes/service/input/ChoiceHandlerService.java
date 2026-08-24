@@ -170,6 +170,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.GraveyardManaColorChoice ctx) {
+            handleGraveyardManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx);
@@ -648,6 +653,27 @@ public class ChoiceHandlerService {
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleGraveyardManaColorChosen(GameData gameData, Player player, String colorName,
+                                                 ChoiceContext.GraveyardManaColorChoice ctx) {
+        ManaColor manaColor = ManaColor.valueOf(colorName);
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.addGraveyardOnlyMana(manaColor, ctx.amount());
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase()
+                        + " mana (graveyard spells only)."));
+        log.info("Game {} - {} adds {} {} graveyard-spell-only mana", gameData.id,
+                player.getUsername(), manaWord, colorName.toLowerCase());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSu
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
@@ -72,6 +73,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentChoiceTriggerHandlerService triggerHandler;
     private final TurnProgressionService turnProgressionService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
     private final DestructionSupport destructionSupport;
@@ -143,6 +145,7 @@ public class MultiPermanentChoiceHandlerService {
             culturalExchangeSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final WormsOfTheEarthEffectHandler wormsOfTheEarthEffectHandler;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -391,6 +394,8 @@ public class MultiPermanentChoiceHandlerService {
 
         if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets ctx) {
+            triggerHandler.handleUpkeepAnyNumberPlayerTargets(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls ctx) {
             handleDealDamageToDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyDamagedPlayerControls ctx) {
@@ -413,6 +418,8 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
             handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TransformAnyNumber ctx) {
+            handleTransformAnyNumber(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {
@@ -773,6 +780,26 @@ public class MultiPermanentChoiceHandlerService {
         } else {
             animationSupport.completeTransformAndAttach(
                     gameData, playerId, sourcePermId, permanentIds.getFirst());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTransformAnyNumber(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                          MultiPermanentChoiceContext.TransformAnyNumber context) {
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent == null
+                    || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
+                    || !predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, context.filter())
+                    || gameQueryService.isTransformPrevented(gameData, permanent)) {
+                continue;
+            }
+            if (!permanent.isTransformed()) {
+                animationSupport.transformToBackFace(gameData, permanent);
+            } else {
+                animationSupport.transformToFrontFace(gameData, permanent);
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

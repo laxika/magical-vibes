@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
@@ -31,9 +32,11 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -54,6 +57,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -528,6 +533,23 @@ class DeathTriggerCollectorServiceTest {
     class EquippedCreatureDeathDefault {
 
         @Test
+        @DisplayName("Snapshots dying power for the optional life payment and draw")
+        void snapshotsDyingPowerForPaymentAndDraw() {
+            Card equipment = createEquipment("Mask");
+            var effect = new MayPayLifeAndDrawEqualToDyingPowerEffect();
+            Permanent perm = new Permanent(equipment);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null, 4);
+
+            svc.handleEquippedCreatureDeathMayPayLifeAndDrawEqualToPower(
+                    match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            var resolved = (MayPayLifeEffect) gd.stack.get(0).getEffectsToResolve().get(0);
+            assertThat(resolved.lifeCost()).isEqualTo(4);
+            assertThat(resolved.wrapped()).isEqualTo(new DrawCardEffect(4));
+        }
+
+        @Test
         @DisplayName("Non-targeting effect adds to stack")
         void nonTargetingAddsToStack() {
             Card equipment = createEquipment("Death Sword");
@@ -724,6 +746,22 @@ class DeathTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getCard()).isEqualTo(aura);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent put into graveyard")));
+        }
+
+        @Test
+        @DisplayName("Snapshots event value for a dynamic look count")
+        void snapshotsEventValueForDynamicLookCount() {
+            Card aura = createEnchantment("Necrosynthesis");
+            var effect = new LookAtTopCardsEffect(
+                    new EventValue(), new Fixed(1), null,
+                    LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false);
+            Permanent perm = new Permanent(aura);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 3, 3);
+
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
         }
     }
 

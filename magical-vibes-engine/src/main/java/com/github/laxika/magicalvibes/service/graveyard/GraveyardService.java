@@ -490,8 +490,13 @@ public class GraveyardService {
         }
         if (!card.isToken() && card.hasType(CardType.CREATURE)) {
             triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-            if (sourceZone == Zone.LIBRARY && !suppressLibraryCreatureCardsTrigger) {
-                triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(gameData, ownerId, 1);
+            if (sourceZone == Zone.LIBRARY) {
+                triggerCollectionService.checkAnyCreatureCardPutIntoGraveyardFromLibraryTriggers(
+                        gameData, ownerId, card);
+                if (!suppressLibraryCreatureCardsTrigger) {
+                    triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
+                            gameData, ownerId, 1);
+                }
             }
         }
         if (!card.isToken()) {

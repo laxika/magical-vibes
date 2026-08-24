@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -92,6 +93,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.ControllerEndStep;
 import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
+import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerPlayedOrCastFromOutsideHandThisTurn;
@@ -150,6 +152,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
+import com.github.laxika.magicalvibes.model.condition.IsNight;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -342,6 +345,8 @@ public class ConditionEvaluationService {
             }
             case Metalcraft ignored ->
                     isMetalcraftMet(gameData, ctx);
+            case BasicLandTypesAmongControlledLandsAtLeast c ->
+                    basicLandTypesAmongControlledLandsAtLeast(gameData, ctx, c.threshold());
             case MaxSpeed ignored ->
                     ctx.controllerId() != null && gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0) == 4;
             case Delirium ignored ->
@@ -622,6 +627,8 @@ public class ConditionEvaluationService {
                     isAnyOpponentHandEmpty(gameData, ctx.controllerId());
             case NoSpellsCastLastTurn ignored ->
                     noSpellsCastLastTurn(gameData);
+            case IsNight ignored ->
+                    gameData.dayNight == DayNight.NIGHT;
             case NoCreaturesAttackedThisTurn ignored ->
                     gameData.creaturesAttackedCountThisTurn.values().stream().noneMatch(count -> count > 0);
             case TwoOrMoreSpellsCastLastTurn ignored ->
@@ -1399,6 +1406,23 @@ public class ConditionEvaluationService {
         return battlefield.stream()
                 .filter(permanent -> predicateEvaluationService.matchesStaticLeaf(permanent, ARTIFACT_FILTER))
                 .count() >= 3;
+    }
+
+    private boolean basicLandTypesAmongControlledLandsAtLeast(GameData gameData,
+                                                               ConditionContext ctx,
+                                                               int threshold) {
+        if (ctx.controllerId() == null) return false;
+        Set<CardSubtype> basicLandTypes = EnumSet.noneOf(CardSubtype.class);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().hasType(CardType.LAND)) {
+                basicLandTypes.addAll(GameQueryService.isStaticEvaluationActive()
+                        ? gameQueryService.basicLandTypesForStaticEvaluation(gameData, permanent)
+                        : gameQueryService.effectiveBasicLandTypes(gameData, permanent));
+            }
+        }
+        return basicLandTypes.size() >= threshold;
     }
 
     /** Coven: three or more controlled creatures with different effective powers. */

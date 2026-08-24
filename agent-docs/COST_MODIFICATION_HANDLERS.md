@@ -94,7 +94,9 @@ components are exhausted.
 above (amount axis → `DynamicAmount`, condition axis → `ConditionalEffect`). A battlefield-source
 effect that filters *which other spells* are discounted is
 `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope[, Set<Zone>, boolean])` — not a
-new record. Heartless Summoning is that effect with a `CardTypePredicate(CREATURE)` and `SELF` scope;
+new record. Its optional source-zone set restricts which cast sources match; Patrician Geist uses
+`Set.of(Zone.GRAVEYARD)` with `CardTruePredicate` and `SELF` scope. Heartless Summoning is that effect with a
+`CardTypePredicate(CREATURE)` and `SELF` scope; the boolean enables the plot-from-hand-only restriction.
 `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (Semblance Anvil) keeps its own handler because
 it compares against the imprinted card rather than a predicate.
 
@@ -166,6 +168,10 @@ modifiers do not affect foretell.
   `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
   whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record
   because the matching name lives on the source permanent, which the `CardPredicate` path does not carry.
+- `cast/costmod/IncreaseCastCostForChosenNameSpellsEffectHandler.java` — battlefield handler for
+  `IncreaseCastCostForChosenNameSpellsEffect(int amount)`; applies only to spells cast by the player
+  enchanted by the source Aura whose name equals its `chosenName` (Curse of Silence, {2}). Its own
+  record because both the matching name and enchanted player live on the source permanent.
 - `cast/costmod/ReduceCastCostForChosenSubtypeSpellsEffectHandler.java` — battlefield handler for
   `ReduceCastCostForChosenSubtypeSpellsEffect(int amount)`; applies only to the source controller's
   creature spells with the source permanent's chosen creature subtype (Urza's Incubator, {2}). It

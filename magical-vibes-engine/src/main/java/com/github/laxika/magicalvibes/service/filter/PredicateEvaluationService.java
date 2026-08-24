@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -22,10 +23,12 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
@@ -383,6 +386,8 @@ public class PredicateEvaluationService {
                     isAuraEnchantingCreature(card);
             case CardHasFlashbackPredicate ignored ->
                     card.getCastingOption(FlashbackCast.class).isPresent();
+            case CardHasDisturbPredicate ignored ->
+                    card.getCastingOption(DisturbCast.class).isPresent();
             case CardHasCyclingPredicate ignored ->
                     card.getHandActivatedAbilities().stream()
                             .anyMatch(ActivatedAbility::isCyclingAbility);
@@ -391,6 +396,10 @@ public class PredicateEvaluationService {
                             .anyMatch(ActivatedAbility::isEmbalmOrEternalize);
             case CardHasForetellPredicate ignored ->
                     card.getCastingOption(ForetellCast.class).isPresent();
+            case CardHasManaAbilityPredicate ignored ->
+                    PotentialManaService.hasOnTapManaEffects(card)
+                            || card.getActivatedAbilities().stream()
+                            .anyMatch(AbilityActivationService::isManaAbility);
             case CardHasNoAbilitiesPredicate ignored ->
                     card.getCardText() == null && card.getKeywords().isEmpty();
             case CardIsPermanentPredicate ignored ->

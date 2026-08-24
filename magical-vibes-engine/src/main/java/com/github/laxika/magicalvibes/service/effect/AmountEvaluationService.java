@@ -35,8 +35,10 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
+import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesEnteredBattlefieldThisTurn;
@@ -131,6 +133,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPowerPlusToughness;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -370,6 +373,10 @@ public class AmountEvaluationService {
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
             case CreatureDeathsThisTurn c ->
                     countCreatureDeathsThisTurn(gameData, c, ctx);
+            case CreatureCardsExiledWithSource ignored ->
+                    countCreatureCardsExiledWithSource(gameData, ctx);
+            case CreaturesAttackedThisTurn c ->
+                    countCreaturesAttackedThisTurn(gameData, c, ctx);
             case NontokenCreatureDeathsThisTurn c ->
                     countNontokenCreatureDeathsThisTurn(gameData, c, ctx);
             case CreatureSubtypeDeathsThisTurn c ->
@@ -475,6 +482,8 @@ public class AmountEvaluationService {
                     targetSpellManaValue(gameData, ctx);
             case TargetSpellPower ignored ->
                     targetSpellPower(gameData, ctx);
+            case TriggeringSpellColorCount ignored ->
+                    triggeringSpellColorCount(gameData, ctx);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
             case ChosenNumberOnSource ignored ->
@@ -1023,6 +1032,26 @@ public class AmountEvaluationService {
                 .orElse(0);
     }
 
+    private int triggeringSpellColorCount(GameData gameData, AmountContext ctx) {
+        if (gameData == null || ctx.stackEntry() == null || ctx.stackEntry().getTriggeringCardId() == null) {
+            return 0;
+        }
+        UUID triggeringCardId = ctx.stackEntry().getTriggeringCardId();
+        Card triggeringSpell = gameData.stack.stream()
+                .filter(entry -> entry.getCard() != null)
+                .filter(entry -> triggeringCardId.equals(entry.getCard().getId()))
+                .findFirst()
+                .map(StackEntry::getCard)
+                .orElseGet(() -> gameData.orderedPlayerIds.stream()
+                        .flatMap(playerId -> gameData.getSpellsCastThisTurn(playerId).stream())
+                        .filter(card -> triggeringCardId.equals(card.getId()))
+                        .findFirst()
+                        .orElse(null));
+        return triggeringSpell == null
+                ? 0
+                : gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).size();
+    }
+
     private int countColorManaSymbolsInHand(
             GameData gameData, ColorManaSymbolsInHand amount, AmountContext ctx) {
         List<Card> hand = gameData.playerHands.get(ctx.controllerId());
@@ -1322,6 +1351,17 @@ public class AmountEvaluationService {
         return total;
     }
 
+    private int countCreaturesAttackedThisTurn(GameData gameData,
+                                                CreaturesAttackedThisTurn count,
+                                                AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += gameData.creaturesAttackedCountThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
+    }
+
     private int countNontokenCreatureDeathsThisTurn(GameData gameData,
                                                      NontokenCreatureDeathsThisTurn count,
                                                      AmountContext ctx) {
@@ -1509,6 +1549,14 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int countCreatureCardsExiledWithSource(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+        return (int) gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
+                .filter(card -> !card.isToken())
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .count();
     }
 
     private int imprintedCardManaValue(GameData gameData, AmountContext ctx) {

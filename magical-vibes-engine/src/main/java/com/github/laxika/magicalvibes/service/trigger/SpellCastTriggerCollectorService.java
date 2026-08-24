@@ -95,8 +95,10 @@ import com.github.laxika.magicalvibes.model.effect.ModalSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect;
@@ -114,6 +116,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureByCastSpellMana
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -1851,6 +1854,21 @@ public class SpellCastTriggerCollectorService {
     private boolean handleSpellCopyTrigger(TriggerMatchContext match,
             SpellCopyTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCopy spellCopy = (TriggerContext.SpellCopy) ctx;
+        boolean isSpell = switch (spellCopy.copiedSpell().getEntryType()) {
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
+                 ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            default -> false;
+        };
+        if (!isSpell || (!trigger.allSpellTypes()
+                && !spellCopy.copiedSpell().getCard().hasType(CardType.INSTANT)
+                && !spellCopy.copiedSpell().getCard().hasType(CardType.SORCERY))) {
+            return false;
+        }
+        if (trigger.copiedSpellCondition() != null
+                && !predicateEvaluationService.matchesStackEntryPredicate(
+                spellCopy.copiedSpell(), trigger.copiedSpellCondition(), match.permanent().getAttachedTo())) {
+            return false;
+        }
         if (trigger.spellFilter() != null
                 && !predicateEvaluationService.matchesCardPredicate(
                 spellCopy.copiedSpell().getCard(), trigger.spellFilter(),
@@ -2216,6 +2234,20 @@ public class SpellCastTriggerCollectorService {
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {
+        if (effect instanceof PutCountersOnSelfEffect putCounters
+                && putCounters.amount() != null
+                && amountEvaluationService.referencesXValue(putCounters.amount())) {
+            return true;
+        }
+        if (effect instanceof RemoveCounterFromSourceEffect removeCounter
+                && removeCounter.dynamicAmount() != null
+                && amountEvaluationService.referencesXValue(removeCounter.dynamicAmount())) {
+            return true;
+        }
+        if (effect instanceof SequenceEffect sequence
+                && sequence.steps().stream().anyMatch(this::effectNeedsSpellManaSpentX)) {
+            return true;
+        }
         if (effect instanceof BoostSelfEffect boost
                 && (amountEvaluationService.referencesXValue(boost.powerBoost())
                 || amountEvaluationService.referencesXValue(boost.toughnessBoost()))) {

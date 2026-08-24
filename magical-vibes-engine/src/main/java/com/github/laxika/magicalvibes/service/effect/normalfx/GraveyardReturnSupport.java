@@ -391,7 +391,7 @@ public class GraveyardReturnSupport {
 
     /**
      * Applies optional battlefield-entry riders from a {@link ReturnCardFromGraveyardEffect}
-     * (mannequin counter, generic enter-with counter, exile-if-leaves replacement, granted cumulative
+     * (mannequin counter, generic enter-with counter, exile-if-leaves replacement, exile-if-dying replacement, granted cumulative
      * upkeep, +1/+1 counters — unconditional when both {@code plusOneCountersIfSubtype} and
      * {@code plusOneCountersIfCondition} are null, else gated by whichever is set).
      */
@@ -429,6 +429,7 @@ public class GraveyardReturnSupport {
                 && !enterWithCounter
                 && !enterWithCounters
                 && !effect.exileIfLeavesBattlefield()
+                && !effect.exileIfDying()
                 && !effect.unearth()
                 && !plusOneCounters
                 && !exiledCostCounter
@@ -462,6 +463,9 @@ public class GraveyardReturnSupport {
             }
             if (effect.exileIfLeavesBattlefield()) {
                 p.setExileIfLeavesBattlefield(true);
+            }
+            if (effect.exileIfDying()) {
+                p.setExileIfDying(true);
             }
             if (effect.unearth()) {
                 p.setEnteredViaUnearth(true);

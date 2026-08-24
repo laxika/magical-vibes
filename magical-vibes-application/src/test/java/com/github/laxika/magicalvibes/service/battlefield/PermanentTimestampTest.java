@@ -51,6 +51,7 @@ class PermanentTimestampTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     @Mock private PermanentRemovalService permanentRemovalService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler;
     @Mock private AsEntersInteractionService asEntersInteractionService;
     @Mock private EtbTriggerService etbTriggerService;
     @Mock private UnattachTriggerSupport unattachTriggerSupport;
@@ -69,7 +70,7 @@ class PermanentTimestampTest {
                 gameQueryService, gameLogService, playerInputService, permanentCopierService,
                 triggerCollectionService, amountEvaluationService, conditionEvaluationService,
                 predicateEvaluationService, permanentCounterSupport, graveyardService,
-                permanentRemovalService);
+                permanentRemovalService, becomeDayAsEntersEffectHandler);
         battlefieldEntryService = new BattlefieldEntryService(
                 placementService, asEntersInteractionService, etbTriggerService);
         equipSupport = new EquipSupport(gameQueryService, gameLogService, permanentRemovalService,

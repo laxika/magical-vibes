@@ -45,6 +45,7 @@ public record FlickerEffect(
         boolean returnAtOwnerNextEndStep,
         boolean plusOnePlusOneCountersOnlyOnCreatures,
         int loyaltyCountersOnPlaneswalkersOnReturn,
+        boolean addCounterIfReturnedUnderControllerOtherwiseTap,
         Set<Keyword> grantedKeywordsOnReturn) implements CardEffect {
 
     public FlickerEffect {
@@ -63,7 +64,22 @@ public record FlickerEffect(
         this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
                 plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
                 returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures,
-                loyaltyCountersOnPlaneswalkersOnReturn, Set.of());
+                loyaltyCountersOnPlaneswalkersOnReturn, false, Set.of());
+    }
+
+    public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+                         TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+                         CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+                         boolean returnUnderController, boolean grantHaste,
+                         boolean returnAtOwnerNextEndStep,
+                         boolean plusOnePlusOneCountersOnlyOnCreatures,
+                         int loyaltyCountersOnPlaneswalkersOnReturn,
+                         boolean addCounterIfReturnedUnderControllerOtherwiseTap) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
+                returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkersOnReturn,
+                addCounterIfReturnedUnderControllerOtherwiseTap, Set.of());
     }
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
@@ -73,7 +89,7 @@ public record FlickerEffect(
                          boolean returnAtOwnerNextEndStep) {
         this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
                 plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
-                returnAtOwnerNextEndStep, false, 0);
+                returnAtOwnerNextEndStep, false, 0, false, Set.of());
     }
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
@@ -81,7 +97,8 @@ public record FlickerEffect(
                          CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
                          boolean returnUnderController, boolean grantHaste) {
         this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
-                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, false);
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, false, false, 0,
+                false, Set.of());
     }
 
     /** Exile target permanent, return it at the beginning of the next end step (Glimmerpoint Stag). */
@@ -117,7 +134,7 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, counters, false, false,
-                false, true, counters);
+                false, true, counters, false, Set.of());
     }
 
     /** Exile this permanent, return it under your control at the beginning of the next end step (Argent Sphinx). */
@@ -201,11 +218,17 @@ public record FlickerEffect(
                 TurnStep.END_STEP, false, bonusSubtype, null, counters, false, false);
     }
 
+    /** Immediate flicker that puts a counter on your return, otherwise taps the returned creature. */
+    public static FlickerEffect flickerTargetWithControllerConditionalCounterOrTap() {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false, false, false, 0, true);
+    }
+
     /** Immediate flicker that returns the permanent with the given keywords until end of turn. */
     public static FlickerEffect flickerTargetWithKeywords(Set<Keyword> keywords) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, false, false,
-                false, false, 0, keywords);
+                false, false, 0, false, keywords);
     }
 
     @Override

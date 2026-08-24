@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "240")
+@CardRegistration(set = "MID", collectorNumber = "226")
 public class GrizzlyGhoul extends Card {
 
     public GrizzlyGhoul() {

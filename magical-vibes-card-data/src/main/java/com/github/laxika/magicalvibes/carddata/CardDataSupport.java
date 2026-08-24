@@ -73,6 +73,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
         KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
+        KEYWORD_MAP.put("Daybound", Keyword.DAYBOUND);
+        KEYWORD_MAP.put("Nightbound", Keyword.NIGHTBOUND);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);

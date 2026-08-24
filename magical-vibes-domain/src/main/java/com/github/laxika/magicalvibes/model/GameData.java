@@ -162,6 +162,8 @@ public class GameData {
     public final Set<UUID> oncePerTurnGraveyardCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
+    /** The game's current day/night designation. */
+    public DayNight dayNight = DayNight.NEITHER;
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who put at least one counter on a creature this turn. */
@@ -411,6 +413,9 @@ public class GameData {
      * (CR 614.1c) that survives the source leaving the battlefield.
      */
     public final Map<UUID, Integer> additionalEnterCountersThisTurn = new ConcurrentHashMap<>();
+    /** Per-player count of additional +1/+1 counters that creatures entering under that player's
+     *  control receive until the beginning of that player's next turn. */
+    public final Map<UUID, Integer> additionalEnterCountersUntilNextTurn = new ConcurrentHashMap<>();
     /** Per-controller, per-color additive damage bonus this turn (e.g. The Flame of Keld Chapter III). */
     public final Map<UUID, Map<CardColor, Integer>> colorSourceDamageBonusThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> controllerNoncombatDamageBonusThisTurn = new ConcurrentHashMap<>();
@@ -2642,9 +2647,25 @@ public class GameData {
                 .add(predicate);
     }
 
+    /** Adds an unlimited flash permission for spells matching the predicate until the player's next turn. */
+    public void addCardPredicateFlashGrantUntilNextTurn(UUID playerId, CardPredicate predicate) {
+        cardTypeFlashGrantsUntilNextTurn
+                .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet())
+                .add(predicate);
+    }
+
     /** Returns true if the player may cast spells of the card's type as though they had flash. */
     public boolean hasCardTypeFlashGrant(UUID playerId, Card card) {
         Set<CardPredicate> grants = cardTypeFlashGrantsThisTurn.get(playerId);
+        return grants != null && grants.stream()
+                .filter(CardTypePredicate.class::isInstance)
+                .map(CardTypePredicate.class::cast)
+                .anyMatch(grant -> card.hasType(grant.cardType()));
+    }
+
+    /** Returns true if a until-next-turn flash grant names one of the card's types. */
+    public boolean hasCardTypeFlashGrantUntilNextTurn(UUID playerId, Card card) {
+        Set<CardPredicate> grants = cardTypeFlashGrantsUntilNextTurn.get(playerId);
         return grants != null && grants.stream()
                 .filter(CardTypePredicate.class::isInstance)
                 .map(CardTypePredicate.class::cast)
@@ -3421,6 +3442,7 @@ public class GameData {
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
+        copy.additionalEnterCountersUntilNextTurn.putAll(this.additionalEnterCountersUntilNextTurn);
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
                 copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
@@ -3690,6 +3712,7 @@ public class GameData {
         this.spellNameCastCountsThisGame.forEach((k, v) ->
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
+        copy.dayNight = this.dayNight;
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
@@ -3960,6 +3983,12 @@ public class GameData {
                 this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
         copy.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId =
                 this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId;
+        copy.graveyardTargetOperation.resolutionTimeExileThenEffectResume =
+                this.graveyardTargetOperation.resolutionTimeExileThenEffectResume;
+        copy.graveyardTargetOperation.resolutionTimeExileThenEffectChoiceMade =
+                this.graveyardTargetOperation.resolutionTimeExileThenEffectChoiceMade;
+        copy.graveyardTargetOperation.resolutionTimeExileThenEffectChosenCardId =
+                this.graveyardTargetOperation.resolutionTimeExileThenEffectChosenCardId;
         copy.graveyardTargetOperation.resolutionTimeDragonApproachResume =
                 this.graveyardTargetOperation.resolutionTimeDragonApproachResume;
         copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersResume =
@@ -4109,10 +4138,6 @@ public class GameData {
                 copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
-        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
-                copy.cardTypeFlashGrantsUntilNextTurn.put(k, ConcurrentHashMap.newKeySet()));
-        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
-                copy.cardTypeFlashGrantsUntilNextTurn.get(k).addAll(v));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;
@@ -4264,6 +4289,10 @@ public class GameData {
                 copy.cardTypeFlashGrantsThisTurn.put(k, ConcurrentHashMap.newKeySet()));
         this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->
                 copy.cardTypeFlashGrantsThisTurn.get(k).addAll(v));
+        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
+                copy.cardTypeFlashGrantsUntilNextTurn.put(k, ConcurrentHashMap.newKeySet()));
+        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
+                copy.cardTypeFlashGrantsUntilNextTurn.get(k).addAll(v));
         this.nextSpellFlashGrantsThisTurn.forEach((k, v) ->
                 copy.nextSpellFlashGrantsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextSpellCostReductionsThisTurn.forEach((k, v) ->

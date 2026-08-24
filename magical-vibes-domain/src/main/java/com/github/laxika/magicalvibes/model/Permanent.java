@@ -405,6 +405,8 @@ public class Permanent {
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
+    /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
+    @Setter private boolean exileIfDying;
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield this turn. */
     @Setter private boolean exileIfLeavesBattlefieldUntilEndOfTurn;
     @Setter private boolean enteredViaUnearth;
@@ -766,6 +768,7 @@ public class Permanent {
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
+        this.exileIfDying = source.exileIfDying;
         this.exileIfLeavesBattlefieldUntilEndOfTurn = source.exileIfLeavesBattlefieldUntilEndOfTurn;
         this.enteredViaUnearth = source.enteredViaUnearth;
         this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);

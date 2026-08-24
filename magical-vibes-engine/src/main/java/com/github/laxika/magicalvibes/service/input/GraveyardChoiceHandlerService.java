@@ -154,6 +154,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeWakeToSlaughterResume) {
+            gameData.graveyardTargetOperation.resolutionTimeWakeToSlaughterResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.wakeToSlaughterChosenCardId = chosen.getId();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimeScroungeResume) {
             gameData.graveyardTargetOperation.resolutionTimeScroungeResume = false;
             Card chosen = cardPool.get(cardIndex);

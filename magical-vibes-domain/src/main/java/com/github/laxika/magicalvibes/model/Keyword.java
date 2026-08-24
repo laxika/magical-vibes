@@ -42,6 +42,8 @@ public enum Keyword {
     FLASHBACK,
     AFTERMATH,
     TRANSFORM,
+    DAYBOUND,
+    NIGHTBOUND,
     KICKER,
     CREW,
     EXPLORE,

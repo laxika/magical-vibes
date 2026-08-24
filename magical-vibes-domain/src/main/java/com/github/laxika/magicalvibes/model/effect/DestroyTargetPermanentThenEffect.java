@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * permanent's mana value / toughness cannot be recomputed once it leaves the battlefield,
  * {@link #stat()} snapshots that last-known value onto the stack entry's {@code eventValue} channel
  * before destruction so a then-effect built on the {@code EventValue} amount reads it correctly.
+ * {@link EventStat#BASIC_LAND_SEARCH_COUNT} is the exception: it snapshots one or two based on
+ * whether the targeted permanent was a land that was actually destroyed.
  *
  * <p>By default the then-effect happens regardless of whether destruction actually succeeds
  * (indestructible / regeneration), matching the "second sentence" wording of most cards that map

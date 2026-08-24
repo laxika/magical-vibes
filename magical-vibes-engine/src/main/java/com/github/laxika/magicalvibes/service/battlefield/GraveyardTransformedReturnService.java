@@ -44,7 +44,7 @@ public class GraveyardTransformedReturnService {
 
     /**
      * Moves {@code cardId} from the graveyard onto the battlefield transformed and, when supplied,
-     * attaches the resulting Aura to the target player.
+     * attaches the resulting permanent to the target identified by {@code attachmentTargetId}.
      */
     public boolean returnTransformed(GameData gameData, UUID cardId, UUID ownerId, UUID controllerId,
                                      UUID attachmentTargetId) {

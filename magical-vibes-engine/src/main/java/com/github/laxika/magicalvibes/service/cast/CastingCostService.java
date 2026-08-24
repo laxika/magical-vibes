@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
+import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
@@ -276,6 +277,24 @@ public class CastingCostService {
                                    boolean fromGraveyard, int xValue) {
         return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
                 false, fromGraveyard ? Zone.GRAVEYARD : null);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, false, 0, false, sourceZone);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   boolean flashbackCost, int xValue, Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
+                flashbackCost, xValue, false, sourceZone);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                   Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
+                false, sourceZone);
     }
 
     /** Returns the generic adjustment that explicitly applies to plotting a card from hand. */
@@ -1664,6 +1683,26 @@ public class CastingCostService {
         return matchingCount >= tapCost.get().count();
     }
 
+    public boolean canPayFlashbackCounterCosts(GameData gameData, UUID playerId, FlashbackCast flashback) {
+        return flashback.costs().stream()
+                .filter(RemoveXCountersFromControlledPermanentsCastingCost.class::isInstance)
+                .map(RemoveXCountersFromControlledPermanentsCastingCost.class::cast)
+                .allMatch(cost -> totalMatchingCounters(gameData, playerId, cost) > 0);
+    }
+
+    private int totalMatchingCounters(GameData gameData, UUID playerId,
+                                       RemoveXCountersFromControlledPermanentsCastingCost cost) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> cost.permanentPredicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(permanent, cost.permanentPredicate(),
+                        FilterContext.of(gameData).withSourceControllerId(playerId)))
+                .mapToInt(permanent -> cost.counterType() == CounterType.ANY
+                        ? permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                        + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+                        : permanent.getCounterCount(cost.counterType()))
+                .sum();
+    }
+
     public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
         var lifeCost = flashback.getCost(LifeCastingCost.class);
         return lifeCost.isEmpty()
@@ -1678,16 +1717,22 @@ public class CastingCostService {
                     && !(cost instanceof TapUntappedPermanentsCost)
                     && !(cost instanceof SacrificePermanentsCost)
                     && !(cost instanceof DiscardXCardsCastingCost)
-                    && !(cost instanceof LifeCastingCost)) {
+                    && !(cost instanceof LifeCastingCost)
+                    && !(cost instanceof RemoveXCountersFromControlledPermanentsCastingCost)) {
                 return false;
             }
+        }
+
+        if (!canPayFlashbackCounterCosts(gameData, playerId, flashback)) {
+            return false;
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
             return flashback.costs().stream().allMatch(cost -> cost instanceof ManaCastingCost
                     || cost instanceof DiscardXCardsCastingCost
-                    || cost instanceof LifeCastingCost);
+                    || cost instanceof LifeCastingCost
+                    || cost instanceof RemoveXCountersFromControlledPermanentsCastingCost);
         }
 
         var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);

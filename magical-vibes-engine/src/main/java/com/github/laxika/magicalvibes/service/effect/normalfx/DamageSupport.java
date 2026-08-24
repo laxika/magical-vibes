@@ -169,6 +169,14 @@ public class DamageSupport {
                 && (entry == null || !damageSource.getId().equals(entry.getSourcePermanentId()))) {
             rawDamage *= gameQueryService.getPermanentDamageMultiplier(gameData, damageSource.getId());
         }
+        if (!targetDamageUnpreventable && damageSource == null) {
+            UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            if (gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(
+                    gameData, entry, targetControllerId)) {
+                gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+                return 0;
+            }
+        }
         // Energy Storm and Hidden Retreat: prevent damage dealt by instant/sorcery spells themselves
         // (not fight/bite damage from permanents that a spell merely caused to deal damage).
         if (!targetDamageUnpreventable && damageSource == null
@@ -224,6 +232,8 @@ public class DamageSupport {
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
                     gameData, sourceControllerId, targetControllerId);
+            rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
+                    gameData, entry, targetControllerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
         }
@@ -976,6 +986,11 @@ public class DamageSupport {
             }
             playerId = redirectedPlayerId;
         }
+        if (gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(gameData, entry, playerId)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
         // Curse of Bloodletting and similar: double damage dealt to the enchanted player (replacement effect)
         rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
         // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
@@ -983,6 +998,8 @@ public class DamageSupport {
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
                     gameData, sourceControllerId, playerId);
+            rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
+                    gameData, entry, playerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
                     gameData, sourceControllerId);
         }

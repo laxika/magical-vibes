@@ -197,7 +197,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             List<Card> cards = group.getValue();
             gameData.queueDelayedAction(new PendingExileReturn(
                     cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()), false, e.grantHaste()));
+                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()), false, e.grantHaste(),
+                    false, false, null, null, false, e.plusOnePlusOneCountersOnlyOnCreatures(),
+                    e.loyaltyCountersOnPlaneswalkersOnReturn()));
         }
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
@@ -334,6 +336,20 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, card, null, false);
 
+        if (e.addCounterIfReturnedUnderControllerOtherwiseTap()) {
+            if (returnControllerId.equals(entry.getControllerId())) {
+                if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, returned, returnControllerId)) {
+                    int returnCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                            gameData, returned, returnControllerId, 1);
+                    if (returnCounters > 0) {
+                        returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                                returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + returnCounters);
+                    }
+                }
+            } else {
+                returned.tap();
+            }
+        }
         if (!e.grantedKeywordsOnReturn().isEmpty()) {
             grantKeywordEffectHandler.grantToPermanent(gameData, entry, returned, e.grantedKeywordsOnReturn());
         }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -1735,6 +1736,94 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
             turnProgressionService.processNextUpkeepPermanentTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleUpkeepAnyNumberPlayerTargets(GameData gameData, List<UUID> targetIds,
+                                                    MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets context) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s upkeep ability",
+                new ArrayList<>(context.effects()),
+                context.sourcePermanentId(),
+                targetIds);
+        entry.setActivePlayerId(context.controllerId());
+        pushTriggeredEntry(gameData, entry);
+
+        gameLogService.append(gameData, GameLog.builder().card(context.sourceCard())
+                .text("'s ability targets " + targetIds.size() + " player"
+                        + (targetIds.size() == 1 ? "" : "s") + ".").build());
+        log.info("Game {} - {} upkeep trigger targets {} player(s)",
+                gameData.id, context.sourceCard().getName(), targetIds.size());
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
+            turnProgressionService.processNextUpkeepPlayerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDayNightTriggerTarget(GameData gameData, UUID chosenId,
+            PermanentChoiceContext.DayNightTriggerTarget dntt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                dntt.sourceCard(),
+                dntt.controllerId(),
+                dntt.sourceCard().getName() + "'s ability",
+                new ArrayList<>(dntt.effects()),
+                chosenId,
+                dntt.sourcePermanentId()
+        );
+        pushTriggeredEntry(gameData, entry);
+
+        String targetName = getTargetDisplayName(gameData, chosenId);
+        gameLogService.append(gameData, GameLog.builder().card(dntt.sourceCard())
+                .text("'s ability targets " + targetName + ".").build());
+        log.info("Game {} - {} day/night trigger targets {}",
+                gameData.id, dntt.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class)) {
+            triggerCollectionService.processNextDayNightTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDayNightTransformAttachment(GameData gameData, UUID chosenId,
+            PermanentChoiceContext.DayNightTransformAttachment dnta) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, dnta.permanentId());
+        if (permanent != null && permanent.getCard().isAura() && permanent.getCard().isEnchantPlayer()) {
+            permanent.setAttachedTo(chosenId);
+            permanent.setTimestamp(gameData.nextTimestamp());
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                    " attaches to " + getTargetDisplayName(gameData, chosenId) + "."));
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTransformAttachment.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class)) {
+            triggerCollectionService.processNextDayNightTriggerTarget(gameData);
             return;
         }
 

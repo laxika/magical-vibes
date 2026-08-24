@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrifice
 import com.github.laxika.magicalvibes.model.effect.GrantMayhemToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalLandPlayRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
@@ -883,6 +884,7 @@ public class CastingPermissionService {
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
         if (gameData.playersWithFlashUntilEndOfTurn.contains(playerId)) return true;
         if (gameData.hasCardTypeFlashGrant(playerId, card)) return true;
+        if (gameData.hasCardTypeFlashGrantUntilNextTurn(playerId, card)) return true;
         if (gameData.cardTypeFlashGrantsThisTurn.getOrDefault(playerId, Set.of()).stream()
                 .anyMatch(filter -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, playerId))) {
@@ -956,7 +958,8 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PlayLandsFromTopOfLibraryEffect) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof PlayLandsFromTopOfLibraryEffect) {
                     return true;
                 }
             }
@@ -1167,7 +1170,15 @@ public class CastingPermissionService {
         return Optional.empty();
     }
 
-    public boolean hasEmblemGrantedFlashback(GameData gameData, UUID playerId, Card card) {
+    public boolean hasGrantedFlashback(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield != null && battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(GrantFlashbackToGraveyardCardsEffect.class::isInstance)
+                .map(GrantFlashbackToGraveyardCardsEffect.class::cast)
+                .anyMatch(effect -> effect.cardTypes().stream().anyMatch(card::hasType))) {
+            return true;
+        }
         for (Emblem emblem : gameData.emblems) {
             if (!emblem.controllerId().equals(playerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {
@@ -1230,7 +1241,8 @@ public class CastingPermissionService {
         if (battlefield == null) return castableTypes;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AllowCastFromTopOfLibraryEffect allow) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof AllowCastFromTopOfLibraryEffect allow) {
                     castableTypes.addAll(allow.castableTypes());
                 }
             }
@@ -1289,7 +1301,8 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AllowCastFromTopOfLibraryEffect allow
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
                         && (allow.matches(card)
                         || (card.getType() != CardType.LAND && allow.filter() != null
                         && predicateEvaluationService.matchesCardPredicate(
@@ -1310,7 +1323,9 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AnyManaTypeCastEffect anyMana && cardHasAnyType(card, anyMana.spellTypes())) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof AnyManaTypeCastEffect anyMana
+                        && cardHasAnyType(card, anyMana.spellTypes())) {
                     return true;
                 }
             }

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "226")
+@CardRegistration(set = "MID", collectorNumber = "208")
 public class WrennAndSeven extends Card {
 
     public WrennAndSeven() {

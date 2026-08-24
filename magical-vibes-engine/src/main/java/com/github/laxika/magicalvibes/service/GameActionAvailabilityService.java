@@ -1042,7 +1042,7 @@ public class GameActionAvailabilityService {
                     && !isHarmonize
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback
-                    && castingPermissionService.hasEmblemGrantedFlashback(gameData, playerId, card);
+                    && castingPermissionService.hasGrantedFlashback(gameData, playerId, card);
             boolean grantedGraveyardCardCast = flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
@@ -1185,17 +1185,19 @@ public class GameActionAvailabilityService {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, new ManaCost(manaCostStr), cardHasFlashback);
             int additionalCost = castingCostService.getCastCostModifier(
-                    gameData, playerId, card, cardHasFlashback, true);
-            // Flashback-only mana (e.g. Altar of the Lost) can be spent on any spell with flashback
-            // cast from a graveyard, but not on GraveyardCast-only or Muldrotha-style non-flashback casts.
-            boolean canPayMana = cardHasFlashback
-                    ? cost.canPayFlashback(pool, additionalCost)
-                    : cost.canPay(pool, additionalCost);
+                    gameData, playerId, card, cardHasFlashback, 0, Zone.GRAVEYARD);
+            // Flashback-only mana and graveyard-only mana are exposed only for their matching
+            // graveyard cast paths.
+            boolean canPayMana = isDisturb
+                    ? cost.canPayForDisturbFromGraveyard(pool, 0, additionalCost)
+                    : cardHasFlashback
+                    ? cost.canPayFlashbackFromGraveyard(pool, additionalCost)
+                    : cost.canPayFromGraveyard(pool, additionalCost);
             if (isHarmonize) {
                 canPayMana = canPayMana || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                         .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))
                         .mapToInt(permanent -> Math.max(0, gameQueryService.getEffectivePower(gameData, permanent)))
-                        .anyMatch(power -> cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost - power));
+                        .anyMatch(power -> cost.canPayFromGraveyard(pool, 0, additionalCost - power));
             }
             if (!canPayMana) {
                 continue;

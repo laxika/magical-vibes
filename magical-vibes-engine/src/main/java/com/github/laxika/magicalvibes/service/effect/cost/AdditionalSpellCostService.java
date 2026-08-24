@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
+import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -1211,6 +1213,58 @@ public class AdditionalSpellCostService {
                         + card.getName() + "'s cost");
             }
         }
+    }
+
+    /** Validates a variable counter cost on a graveyard cast. */
+    public void validateRemoveXCountersFromControlledPermanentsCost(
+            GameData gameData, Player player, Card card,
+            RemoveXCountersFromControlledPermanentsCastingCost cost, int xValue,
+            List<UUID> permanentIds) {
+        if (cost == null) {
+            return;
+        }
+        if (xValue < 1) {
+            throw new IllegalStateException("X must be greater than zero for " + card.getName()
+                    + "'s counter cost");
+        }
+        List<UUID> ids = permanentIds != null ? permanentIds : List.of();
+        if (ids.size() != xValue) {
+            throw new IllegalStateException("Must remove exactly " + xValue
+                    + " counters to cast " + card.getName());
+        }
+
+        HashMap<UUID, Integer> selectedCounts = new HashMap<>();
+        for (UUID id : ids) {
+            if (id == null) {
+                throw new IllegalStateException("Invalid permanent selected for the counter cost");
+            }
+            selectedCounts.merge(id, 1, Integer::sum);
+        }
+        for (var selected : selectedCounts.entrySet()) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, selected.getKey());
+            if (permanent == null
+                    || !player.getId().equals(gameQueryService.findPermanentController(gameData, selected.getKey()))) {
+                throw new IllegalStateException("Counters must be removed from permanents you control");
+            }
+            if (cost.permanentPredicate() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(permanent, cost.permanentPredicate(),
+                    FilterContext.of(gameData)
+                            .withSourceControllerId(player.getId()))) {
+                throw new IllegalStateException("Permanent does not match the counter cost restriction");
+            }
+            if (counterCountForVariableCost(permanent, cost.counterType()) < selected.getValue()) {
+                throw new IllegalStateException("Permanent does not have enough counters to pay "
+                        + card.getName() + "'s cost");
+            }
+        }
+    }
+
+    private int counterCountForVariableCost(Permanent permanent, CounterType counterType) {
+        if (counterType == CounterType.ANY) {
+            return permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                    + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+        }
+        return permanent.getCounterCount(counterType);
     }
 
     private int counterCount(Permanent permanent, CounterType counterType) {

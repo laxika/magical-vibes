@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
@@ -65,6 +67,7 @@ public class AnimationSupport {
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerCollectionService triggerCollectionService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final LudevicCopySupport ludevicCopySupport;
 
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
@@ -595,10 +598,23 @@ public class AnimationSupport {
     }
 
     public boolean transformToBackFace(GameData gameData, Permanent self) {
+        return transformToBackFace(gameData, self, false);
+    }
+
+    public boolean transformToBackFaceForDayNight(GameData gameData, Permanent self) {
+        return transformToBackFace(gameData, self, true);
+    }
+
+    private boolean transformToBackFace(GameData gameData, Permanent self, boolean dayNightTransition) {
         Card originalCard = self.getOriginalCard();
         Card backFace = originalCard.getBackFaceCard();
         if (backFace == null) {
             log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
+            return false;
+        }
+
+        if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
+                && isDayNightBound(self)) {
             return false;
         }
 
@@ -628,7 +644,20 @@ public class AnimationSupport {
         return true;
     }
 
-    public void transformToFrontFace(GameData gameData, Permanent self) {
+    public boolean transformToFrontFace(GameData gameData, Permanent self) {
+        return transformToFrontFace(gameData, self, false);
+    }
+
+    public boolean transformToFrontFaceForDayNight(GameData gameData, Permanent self) {
+        return transformToFrontFace(gameData, self, true);
+    }
+
+    private boolean transformToFrontFace(GameData gameData, Permanent self, boolean dayNightTransition) {
+        if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
+                && isDayNightBound(self)) {
+            return false;
+        }
+
         Card originalCard = self.getOriginalCard();
         Card backCard = self.getCard();
         String backName = backCard.getName();
@@ -640,6 +669,12 @@ public class AnimationSupport {
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
         fireEquipmentTransformTriggers(gameData, self);
         fireAllyPermanentTransformTriggers(gameData, self, originalCard);
+        return true;
+    }
+
+    private boolean isDayNightBound(Permanent permanent) {
+        return permanent.getCard().getKeywords().contains(Keyword.DAYBOUND)
+                || permanent.getCard().getKeywords().contains(Keyword.NIGHTBOUND);
     }
 
     private void fireAllyPermanentTransformTriggers(GameData gameData, Permanent transformed, Card transformedCard) {
@@ -697,6 +732,10 @@ public class AnimationSupport {
         }
 
         for (CardEffect e : effects) {
+            if (e instanceof ApplyLudevicCopyEffect) {
+                ludevicCopySupport.resolveAfterTransform(gameData, self);
+                continue;
+            }
             if (e instanceof MayEffect may) {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
