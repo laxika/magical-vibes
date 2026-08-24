@@ -532,26 +532,28 @@ public class BlockLegalityService {
         boolean cantBlockPowerAtLeastOwnToughnessStatic = false;
         boolean blocksShadowAsThoughShadow = false;
         Integer cantBlockPowerAtLeast = null;
-        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CanBlockCreaturesWithShadowEffect) {
-                blocksShadowAsThoughShadow = true;
-            }
-            if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
-                if (attackerFilterRestrictions == null) {
-                    attackerFilterRestrictions = new ArrayList<>(2);
+        if (!bonus.losesAllAbilities() && !blocker.isLosesAllAbilitiesUntilEndOfTurn()) {
+            for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CanBlockCreaturesWithShadowEffect) {
+                    blocksShadowAsThoughShadow = true;
                 }
-                attackerFilterRestrictions.add(restriction);
-            }
-            if (effect instanceof BlockingRestrictionEffect restriction) {
-                if (restriction.cantBlock()) {
-                    cantBlockStatic = true;
+                if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
+                    if (attackerFilterRestrictions == null) {
+                        attackerFilterRestrictions = new ArrayList<>(2);
+                    }
+                    attackerFilterRestrictions.add(restriction);
                 }
-                if (restriction.cantBlockCreaturesWithPowerAtLeastOwnToughness()) {
-                    cantBlockPowerAtLeastOwnToughnessStatic = true;
-                }
-                Integer threshold = restriction.cantBlockCreaturesWithPowerAtLeast();
-                if (threshold != null && (cantBlockPowerAtLeast == null || threshold < cantBlockPowerAtLeast)) {
-                    cantBlockPowerAtLeast = threshold;
+                if (effect instanceof BlockingRestrictionEffect restriction) {
+                    if (restriction.cantBlock()) {
+                        cantBlockStatic = true;
+                    }
+                    if (restriction.cantBlockCreaturesWithPowerAtLeastOwnToughness()) {
+                        cantBlockPowerAtLeastOwnToughnessStatic = true;
+                    }
+                    Integer threshold = restriction.cantBlockCreaturesWithPowerAtLeast();
+                    if (threshold != null && (cantBlockPowerAtLeast == null || threshold < cantBlockPowerAtLeast)) {
+                        cantBlockPowerAtLeast = threshold;
+                    }
                 }
             }
         }

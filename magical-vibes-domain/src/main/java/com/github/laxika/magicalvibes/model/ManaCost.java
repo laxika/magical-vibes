@@ -746,6 +746,39 @@ public class ManaCost {
         return canPay(pool.copyForForetellPayment(), 0, false, false, false, false, true);
     }
 
+    public boolean canPayForDisturb(ManaPool pool, int xValue, int additionalGenericCost) {
+        ManaPool paymentPool = pool.copyForDisturbPayment();
+        return canPayWithAdditionalGenericCost(paymentPool, xValue, additionalGenericCost,
+                false, false, false, false, true);
+    }
+
+    /** Checks payment for a spell cast from a graveyard, including graveyard-only mana. */
+    public boolean canPayFromGraveyard(ManaPool pool, int xValue, int additionalGenericCost) {
+        ManaPool paymentPool = copyManaPool(pool);
+        ManaPool.GraveyardOnlyManaState state = paymentPool.promoteGraveyardOnlyMana();
+        try {
+            return canPayWithAdditionalGenericCost(paymentPool, xValue, additionalGenericCost);
+        } finally {
+            paymentPool.restorePromotedGraveyardOnlyMana(state);
+        }
+    }
+
+    public boolean canPayFromGraveyard(ManaPool pool, int additionalGenericCost) {
+        return canPayFromGraveyard(pool, 0, additionalGenericCost);
+    }
+
+    /** Checks a disturb-style graveyard cast using graveyard-only mana. */
+    public boolean canPayForDisturbFromGraveyard(ManaPool pool, int xValue, int additionalGenericCost) {
+        ManaPool paymentPool = pool.copyForDisturbPayment();
+        ManaPool.GraveyardOnlyManaState state = paymentPool.promoteGraveyardOnlyMana();
+        try {
+            return canPayWithAdditionalGenericCost(paymentPool, xValue, additionalGenericCost,
+                    false, false, false, false, true);
+        } finally {
+            paymentPool.restorePromotedGraveyardOnlyMana(state);
+        }
+    }
+
     public boolean canPay(ManaPool pool, int xValue) {
         if (snowCost > 0) {
             if (pool.getSnowManaTotal() < snowCost) {
@@ -1707,6 +1740,17 @@ public class ManaCost {
         return remaining >= genericCost + xValue * effectiveXMultiplier();
     }
 
+    /** Checks a flashback-style graveyard cast using both restricted graveyard mana buckets. */
+    public boolean canPayFlashbackFromGraveyard(ManaPool pool, int xValue) {
+        ManaPool paymentPool = copyManaPool(pool);
+        ManaPool.GraveyardOnlyManaState state = paymentPool.promoteGraveyardOnlyMana();
+        try {
+            return canPayFlashback(paymentPool, xValue);
+        } finally {
+            paymentPool.restorePromotedGraveyardOnlyMana(state);
+        }
+    }
+
     /**
      * Pays the mana cost using flashback-only mana first, then regular mana.
      */
@@ -1744,6 +1788,30 @@ public class ManaCost {
         }
 
         payGenericPreferColorless(pool, remainingGeneric);
+    }
+
+    /** Pays a spell cast from a graveyard, allowing graveyard-only mana for its cost. */
+    public void payFromGraveyard(ManaPool pool, int xValue, int additionalGenericCost) {
+        ManaPool.GraveyardOnlyManaState state = pool.promoteGraveyardOnlyMana();
+        try {
+            payWithAdditionalGenericCost(pool, xValue, additionalGenericCost);
+        } finally {
+            pool.restorePromotedGraveyardOnlyMana(state);
+        }
+    }
+
+    public void payFromGraveyard(ManaPool pool, int additionalGenericCost) {
+        payFromGraveyard(pool, 0, additionalGenericCost);
+    }
+
+    /** Pays a flashback-style graveyard cast using both restricted graveyard mana buckets. */
+    public void payFlashbackFromGraveyard(ManaPool pool, int xValue) {
+        ManaPool.GraveyardOnlyManaState state = pool.promoteGraveyardOnlyMana();
+        try {
+            payFlashback(pool, xValue);
+        } finally {
+            pool.restorePromotedGraveyardOnlyMana(state);
+        }
     }
 
     public boolean canPay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
@@ -1877,6 +1945,26 @@ public class ManaCost {
             pay(pool, 0, false, false, false, false, true);
         } finally {
             pool.endForetellPayment(state);
+        }
+    }
+
+    public void payForDisturb(ManaPool pool, int xValue, int additionalGenericCost) {
+        ManaPool.DisturbPaymentState state = pool.beginDisturbPayment();
+        try {
+            payWithAdditionalGenericCost(pool, xValue, additionalGenericCost,
+                    false, false, false, false, true);
+        } finally {
+            pool.endDisturbPayment(state);
+        }
+    }
+
+    /** Pays a disturb-style graveyard cast using graveyard-only mana. */
+    public void payForDisturbFromGraveyard(ManaPool pool, int xValue, int additionalGenericCost) {
+        ManaPool.GraveyardOnlyManaState state = pool.promoteGraveyardOnlyMana();
+        try {
+            payForDisturb(pool, xValue, additionalGenericCost);
+        } finally {
+            pool.restorePromotedGraveyardOnlyMana(state);
         }
     }
 

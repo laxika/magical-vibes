@@ -103,11 +103,11 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimePutOnBottomThenExileTopCardsResume;
     public boolean resolutionTimePutOnBottomThenExileTopCardsChoiceMade;
     public UUID resolutionTimePutOnBottomThenExileTopCardsChosenCardId;
-    /** Whether an optional graveyard exile with a reflexive follow-up is awaiting its answer. */
+    /** Whether an optional graveyard exile with a follow-up is awaiting its answer. */
     public boolean resolutionTimeExileThenEffectResume;
-    /** Whether the optional graveyard exile with a reflexive follow-up has been answered. */
+    /** Whether the optional graveyard exile with a follow-up has been answered. */
     public boolean resolutionTimeExileThenEffectChoiceMade;
-    /** The card chosen for the optional graveyard exile, or {@code null} for decline. */
+    /** The card chosen for the optional graveyard exile, or {@code null} for a decline. */
     public UUID resolutionTimeExileThenEffectChosenCardId;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore). When set,
@@ -126,6 +126,10 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimePhyrexianGrimoireResume;
     /** Card the opponent just picked for the above, consumed on the next re-entry. */
     public UUID phyrexianGrimoireChosenCardId;
+    /** Whether Wake to Slaughter is awaiting the opponent's choice between its two targets. */
+    public boolean resolutionTimeWakeToSlaughterResume;
+    /** Card the opponent just chose to return to hand for Wake to Slaughter. */
+    public UUID wakeToSlaughterChosenCardId;
     /** Card chosen by the target opponent for a resolution-time opponent graveyard choice. */
     public UUID scroungeChosenCardId;
     /** Whether a resolution-time target-opponent graveyard choice is awaiting an answer. */

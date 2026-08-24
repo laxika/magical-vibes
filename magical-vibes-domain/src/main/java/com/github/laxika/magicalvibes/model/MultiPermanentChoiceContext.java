@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,6 +25,15 @@ public sealed interface MultiPermanentChoiceContext {
                                           int total) implements MultiPermanentChoiceContext {
 
         public SagaChapterCounterDistribution {
+            effects = List.copyOf(effects);
+        }
+    }
+
+    /** Selects zero or more players for an upkeep trigger. */
+    record UpkeepAnyNumberPlayerTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                        UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+
+        public UpkeepAnyNumberPlayerTargets {
             effects = List.copyOf(effects);
         }
     }
@@ -100,6 +110,11 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Transform [source] and attach it to a creature the damaged player controls. */
     record TransformAndAttach(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller transforms any number of matching permanents. */
+    record TransformAnyNumber(StackEntry resolvingEntry, PermanentPredicate filter)
+            implements MultiPermanentChoiceContext {
     }
 
     /** The defending player sacrifices the chosen attacking creatures. */

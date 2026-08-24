@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "185")
+@CardRegistration(set = "MID", collectorNumber = "123")
 public class StromkirkBloodthief extends Card {
 
     public StromkirkBloodthief() {

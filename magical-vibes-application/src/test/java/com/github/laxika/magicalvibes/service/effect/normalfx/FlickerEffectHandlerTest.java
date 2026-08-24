@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -248,6 +249,59 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled. It will return at the beginning of the next end step.")));
+        }
+    }
+
+    @Nested
+    @DisplayName("Immediate controller-conditional return rider")
+    class ImmediateControllerConditionalReturn {
+
+        @Test
+        @DisplayName("Adds a counter when the permanent returns under the effect controller")
+        void addsCounterForControllerReturn() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Hallowed Respite");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithControllerConditionalCounterOrTap();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+            when(gameQueryService.doublePlusOnePlusOneCounters(
+                    eq(gd), any(Permanent.class), eq(player1Id), eq(1))).thenReturn(1);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().getCounterCount(
+                    com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(returnedCaptor.getValue().isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Taps the permanent when it returns under another player's control")
+        void tapsForOpponentReturn() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Hallowed Respite");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithControllerConditionalCounterOrTap();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player2Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().getCounterCount(
+                    com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(returnedCaptor.getValue().isTapped()).isTrue();
         }
     }
 

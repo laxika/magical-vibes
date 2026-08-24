@@ -602,6 +602,8 @@ public class TurnProgressionService {
             // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
             activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);
         }
+        gameData.additionalEnterCountersUntilNextTurn.remove(nextActive);
+        gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
         // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
         // player whose turn is beginning (its entries are keyed by that controlling player).
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);

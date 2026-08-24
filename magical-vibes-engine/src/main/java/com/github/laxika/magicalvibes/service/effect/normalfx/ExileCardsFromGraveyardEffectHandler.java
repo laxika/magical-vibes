@@ -68,18 +68,21 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
             lifeSupport.applyGainLife(gameData, controllerId, lifeGain);
         }
 
-        boolean conditionalRiderApplies = e.conditionalFilter() != null
-                && exiledCards.stream().anyMatch(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, e.conditionalFilter(), entry.getCard().getId()));
-        if (conditionalRiderApplies) {
+        int conditionalMatchCount = e.conditionalFilter() == null ? 0
+                : (int) exiledCards.stream().filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, e.conditionalFilter(), entry.getCard().getId())).count();
+        if (conditionalMatchCount > 0) {
+            int riderMultiplier = e.conditionalLifePerMatchingCard() ? conditionalMatchCount : 1;
             if (e.conditionalLifeGain() > 0) {
-                lifeSupport.applyGainLife(gameData, controllerId, e.conditionalLifeGain());
+                lifeSupport.applyGainLife(gameData, controllerId,
+                        e.conditionalLifeGain() * riderMultiplier);
             }
             if (e.conditionalLifeLossEachOpponent() > 0) {
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     if (!playerId.equals(controllerId)) {
                         lifeSupport.applyLifeLoss(gameData, playerId,
-                                e.conditionalLifeLossEachOpponent(), entry.getCard().getName());
+                                e.conditionalLifeLossEachOpponent() * riderMultiplier,
+                                entry.getCard().getName());
                     }
                 }
             }

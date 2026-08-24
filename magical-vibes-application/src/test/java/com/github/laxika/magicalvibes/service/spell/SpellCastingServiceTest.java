@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -264,6 +265,36 @@ class SpellCastingServiceTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Pays a single-permanent sacrifice cost when casting flashback from the graveyard")
+    void paysSinglePermanentSacrificeCostFromGraveyard() {
+        Card spell = createSorcery("Graveyard Sacrifice Spell", "{W}{B}");
+        spell.addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+                new PermanentIsArtifactPredicate(), "an artifact"));
+        spell.addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        spell.addCastingOption(new FlashbackCast("{2}{W}{B}"));
+        Permanent artifact = new Permanent(createArtifact("Test Ingot", "{1}"));
+        gd.playerBattlefields.get(player1Id).add(artifact);
+        gd.playerGraveyards.get(player1Id).add(spell);
+        addMana(player1Id, ManaColor.COLORLESS, 2);
+        addMana(player1Id, ManaColor.WHITE, 1);
+        addMana(player1Id, ManaColor.BLACK, 1);
+        when(castingPermissionService.canUseFlashback(eq(gd), eq(player1Id), any(FlashbackCast.class)))
+                .thenReturn(true);
+        when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, spell)).thenReturn(true);
+        when(gameQueryService.findPermanentById(gd, artifact.getId())).thenReturn(artifact);
+        when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
+                .thenReturn(true);
+        when(permanentRemovalService.removePermanentToGraveyard(gd, artifact)).thenReturn(true);
+
+        svc.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
+                List.of(), null, artifact.getId());
+
+        verify(permanentRemovalService).removePermanentToGraveyard(gd, artifact);
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

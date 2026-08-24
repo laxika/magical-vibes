@@ -237,6 +237,10 @@ public class LibraryChoiceHandlerService {
                             librarySearch.sourcePermanentId());
                     gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
                     gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+                } else if (destination == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
+                    exileService.exileCard(gameData, deckOwnerId, chosenCard);
+                    gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+                    gameData.exilePlayPermissionsExpireEndOfTurn.add(chosenCard.getId());
                 } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                     exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
                     UUID sourcePermanentId = followUp.imprintSourcePermanentId();
@@ -319,6 +323,11 @@ public class LibraryChoiceHandlerService {
                 } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest into the graveyard.");
+                } else if (destination == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
+                    logEntry = chosenCard == null
+                            ? GameLog.text(player.getUsername() + " does not exile a card.")
+                            : GameLog.textCardText(player.getUsername() + " exiles ", chosenCard,
+                                    " and may play it this turn; the rest are put on the bottom of the library in a random order.");
                 } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                     logEntry = chosenCard == null
                             ? GameLog.text(player.getUsername() + "'s imprint ability does nothing.")
@@ -356,7 +365,8 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
-            if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
+            if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                    || destination == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
                 Collections.shuffle(sourceCards);
                 deck.addAll(sourceCards);
                 finishSearchAndResume(gameData);
@@ -1240,7 +1250,8 @@ public class LibraryChoiceHandlerService {
                 case REVEAL_ONLY -> "back into their library";
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, EXILE_FOR_MAY_CAST -> "into exile";
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+                        EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
                 case EXILE_PLAYABLE_ANY_NUMBER -> throw new IllegalStateException(

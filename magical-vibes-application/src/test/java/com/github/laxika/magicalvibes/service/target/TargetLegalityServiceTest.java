@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
@@ -1927,6 +1928,22 @@ class TargetLegalityServiceTest {
     @Nested
     @DisplayName("matchesStackEntryPredicate")
     class MatchesStackEntryPredicate {
+
+        @Test
+        @DisplayName("matches StackEntryControlledByEnchantedPlayerPredicate against the source attachment")
+        void matchesControlledByEnchantedPlayerPredicate() {
+            Permanent source = new Permanent(createCreature("Curse", CardColor.BLACK));
+            source.setAttachedTo(player2Id);
+            StackEntry entry = new StackEntry(createCreature("Bear", CardColor.GREEN), player2Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryControlledByEnchantedPlayerPredicate(), player1Id, source))
+                    .isTrue();
+            StackEntry opponentEntry = new StackEntry(createCreature("Bear", CardColor.GREEN), player1Id);
+            assertThat(sut.matchesStackEntryPredicate(gd, opponentEntry,
+                    new StackEntryControlledByEnchantedPlayerPredicate(), player1Id, source))
+                    .isFalse();
+        }
 
         @Test
         @DisplayName("matches StackEntryTypeInPredicate")

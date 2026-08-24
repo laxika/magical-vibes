@@ -22,6 +22,9 @@ public enum ManaSpendRestriction {
     /** Choose from the colors of the source permanent's imprinted card (Chrome Mox). */
     IMPRINTED_CARD_COLORS,
 
+    /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
+    SOURCE_PERMANENT_COLORS,
+
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it
      * pays for (Primal Wellspring).
@@ -36,6 +39,9 @@ public enum ManaSpendRestriction {
 
     /** Spendable only to cast spells with flashback from a graveyard (Altar of the Lost). */
     FLASHBACK_ONLY,
+
+    /** Spendable only to cast spells from a graveyard (Rootcoil Creeper). */
+    GRAVEYARD_SPELL_ONLY,
 
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,

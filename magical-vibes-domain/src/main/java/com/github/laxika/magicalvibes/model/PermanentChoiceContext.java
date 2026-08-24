@@ -612,15 +612,34 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** {@code targetFilter} overrides the source card's own filter when the trigger's legal targets
      *  belong to one chosen mode rather than to the whole card (Demonic Pact's "target opponent"). */
     record UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
-                                     TargetFilter targetFilter, UUID choosingPlayerId) implements PermanentChoiceContext {
+                                     TargetFilter targetFilter, UUID choosingPlayerId,
+                                     boolean anyNumberTargets, UUID excludedPlayerId) implements PermanentChoiceContext {
 
         public UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null, controllerId);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, controllerId, false, null);
         }
 
         public UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                          UUID sourcePermanentId, TargetFilter targetFilter) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, controllerId);
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, controllerId, false, null);
+        }
+
+        public UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId, TargetFilter targetFilter, UUID choosingPlayerId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, choosingPlayerId, false, null);
+        }
+
+        public UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId, TargetFilter targetFilter, UUID choosingPlayerId,
+                                         boolean anyNumberTargets, UUID excludedPlayerId) {
+            this.sourceCard = sourceCard;
+            this.controllerId = controllerId;
+            this.effects = List.copyOf(effects);
+            this.sourcePermanentId = sourcePermanentId;
+            this.targetFilter = targetFilter;
+            this.choosingPlayerId = choosingPlayerId;
+            this.anyNumberTargets = anyNumberTargets;
+            this.excludedPlayerId = excludedPlayerId;
         }
     }
 
@@ -692,6 +711,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record EndStepTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record BeginningOfCombatTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    record DayNightTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    record DayNightTransformAttachment(UUID permanentId, UUID controllerId) implements PermanentChoiceContext {}
 
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                   StackEntryType spellType, List<Card> cardsToBottom) implements PermanentChoiceContext {
@@ -994,26 +1017,31 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * {@code GraveyardSearchScope}.
      */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                       UUID graveyardOwnerId, int minCount, int xValue)
+                                       UUID graveyardOwnerId, int minCount, int xValue, int maxCount)
             implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null, 0, 0);
+            this(sourceCard, controllerId, effects, null, 0, 0, 0);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            int xValue) {
-            this(sourceCard, controllerId, effects, null, 0, xValue);
+            this(sourceCard, controllerId, effects, null, 0, xValue, 0);
         }
     }
 

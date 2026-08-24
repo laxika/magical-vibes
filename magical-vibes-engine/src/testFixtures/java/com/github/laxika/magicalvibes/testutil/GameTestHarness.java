@@ -815,6 +815,11 @@ public class GameTestHarness {
                 null, null, null, false, null, null, null, sacrificePermanentIds);
     }
 
+    public void castInstantWithSacrifices(Player player, int cardIndex, UUID targetId,
+                                          List<UUID> sacrificePermanentIds) {
+        castSorceryWithSacrifices(player, cardIndex, targetId, sacrificePermanentIds);
+    }
+
     /**
      * Cast a targeted sorcery paying a "tap any number of permanents you control" additional cast
      * cost (Burn at the Stake). The tapped ids ride on the same wire field as a multi-permanent
@@ -1249,6 +1254,13 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId);
     }
 
+    public void castFlashbackWithCounterCost(Player player, int graveyardCardIndex, int xValue,
+                                             UUID targetId, List<UUID> counterCostPermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, List.of(),
+                null, null, List.of(), null, null, counterCostPermanentIds, Map.of());
+    }
+
     public void castFlashback(Player player, int graveyardCardIndex, Map<UUID, Integer> damageAssignments) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(),
@@ -1284,6 +1296,13 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(),
                 null, null, List.of(), null, sacrificePermanentId);
+    }
+
+    public void castFlashbackWithSacrifices(Player player, int graveyardCardIndex, UUID targetId,
+                                            List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(),
+                null, null, List.of(), null, null, sacrificePermanentIds, Map.of());
     }
 
     public void castFlashbackWithBehold(Player player, int graveyardCardIndex, UUID targetId,

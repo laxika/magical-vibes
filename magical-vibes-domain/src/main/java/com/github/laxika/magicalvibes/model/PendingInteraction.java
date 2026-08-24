@@ -40,6 +40,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
+        PendingInteraction.LudevicCopyChoice,
         PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
         PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
@@ -525,6 +526,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Chooses which creature card exiled with Ludevic is copied by Olag. */
+    record LudevicCopyChoice(UUID playerId, UUID sourcePermanentId, java.util.List<Card> cards)
+            implements PendingInteraction {
+
+        public LudevicCopyChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

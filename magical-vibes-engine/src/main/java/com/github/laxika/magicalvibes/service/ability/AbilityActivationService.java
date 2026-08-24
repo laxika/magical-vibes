@@ -2640,6 +2640,9 @@ public class AbilityActivationService {
                 exileXGraveyardCardIndices = List.of();
             }
             effectiveXValue = exileXGraveyardCardIndices.size();
+            if (exileXGraveyardCost.requireAtLeastOne() && effectiveXValue < 1) {
+                throw new IllegalStateException("Must exile at least one card from your graveyard");
+            }
         }
 
         // Pay the loyalty cost only now that full legality, including targets, is confirmed
@@ -2884,9 +2887,11 @@ public class AbilityActivationService {
         if (exileXGraveyardCostToPay != null) {
             if (exileXGraveyardCardIndices != null) {
                 payChosenGraveyardExileXCost(
-                        gameData, player, exileXGraveyardCostToPay, exileXGraveyardCardIndices);
+                        gameData, player, exileXGraveyardCostToPay, exileXGraveyardCardIndices,
+                        permanent.getId());
             } else {
-                payGraveyardExileXCost(gameData, player, exileXGraveyardCostToPay, effectiveXValue, null);
+                payGraveyardExileXCost(gameData, player, exileXGraveyardCostToPay, effectiveXValue, null,
+                        permanent.getId());
             }
         }
 
@@ -5283,6 +5288,11 @@ public class AbilityActivationService {
 
     private void payGraveyardExileXCost(GameData gameData, Player player, ExileXCardsFromGraveyardCost cost,
                                         int count, Card sourceCard) {
+        payGraveyardExileXCost(gameData, player, cost, count, sourceCard, null);
+    }
+
+    private void payGraveyardExileXCost(GameData gameData, Player player, ExileXCardsFromGraveyardCost cost,
+                                        int count, Card sourceCard, UUID sourcePermanentId) {
         if (count < 0) {
             throw new IllegalStateException("X value cannot be negative");
         }
@@ -5300,7 +5310,11 @@ public class AbilityActivationService {
         graveyard.removeAll(toExile);
         graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {
-            exileService.exileCard(gameData, playerId, exiled);
+            if (sourcePermanentId == null) {
+                exileService.exileCard(gameData, playerId, exiled);
+            } else {
+                exileService.exileCard(gameData, playerId, exiled, sourcePermanentId);
+            }
         }
         String typeName = graveyardExileFilterLabel(cost.requiredType(), null);
         String logEntry = player.getUsername() + " exiles " + toExile.size() + " " + typeName
@@ -5313,6 +5327,13 @@ public class AbilityActivationService {
     private void payChosenGraveyardExileXCost(GameData gameData, Player player,
                                                ExileXCardsFromGraveyardCost cost,
                                                List<Integer> selectedIndices) {
+        payChosenGraveyardExileXCost(gameData, player, cost, selectedIndices, null);
+    }
+
+    private void payChosenGraveyardExileXCost(GameData gameData, Player player,
+                                               ExileXCardsFromGraveyardCost cost,
+                                               List<Integer> selectedIndices,
+                                               UUID sourcePermanentId) {
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null) {
@@ -5337,7 +5358,11 @@ public class AbilityActivationService {
         graveyard.removeAll(toExile);
         graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {
-            exileService.exileCard(gameData, playerId, exiled);
+            if (sourcePermanentId == null) {
+                exileService.exileCard(gameData, playerId, exiled);
+            } else {
+                exileService.exileCard(gameData, playerId, exiled, sourcePermanentId);
+            }
         }
         String typeName = graveyardExileFilterLabel(cost.requiredType(), null);
         String logEntry = player.getUsername() + " exiles " + toExile.size() + " " + typeName

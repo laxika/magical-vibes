@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "254")
+@CardRegistration(set = "MID", collectorNumber = "262")
 public class FieldOfRuin extends Card {
 
     public FieldOfRuin() {

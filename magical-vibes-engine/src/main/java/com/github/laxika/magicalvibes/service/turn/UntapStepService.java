@@ -61,6 +61,7 @@ public class UntapStepService {
     private final PhasingService phasingService;
     private final PermanentRemovalService permanentRemovalService;
     private final UntapPreventionSupport untapPreventionSupport;
+    private final DayNightService dayNightService;
 
     /**
      * Performs the untap step for the active player.
@@ -153,6 +154,7 @@ public class UntapStepService {
         // CR 502.1: phasing is the untap step's first turn-based action, resolved before anything
         // untaps (and skipped entirely along with the rest of the step above).
         phasingService.applyPhasing(gameData, activePlayerId);
+        dayNightService.checkAtUntap(gameData, activePlayerId);
 
         // A permanent that phased out is treated as though it does not exist (CR 702.26b), so an
         // attachment that was kept from following it out (Spatial Binding) is now attached to
@@ -510,13 +512,24 @@ public class UntapStepService {
     List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> collectUntapOnEachOtherPlayersStepEffects(
             GameData gameData, UUID playerId, TurnStep step) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return List.of();
-        }
         List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> result = new ArrayList<>();
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
+                }
+            }
+        }
+        for (Emblem emblem : gameData.emblems) {
+            if (!playerId.equals(emblem.controllerId())) {
+                continue;
+            }
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                        && configuredEffect.step() == step
+                        && configuredEffect.scope() == TapUntapScope.CONTROLLED) {
+                    result.add(configuredEffect);
+                }
             }
         }
         return result;

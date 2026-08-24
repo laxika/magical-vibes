@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "86")
+@CardRegistration(set = "MID", collectorNumber = "87")
 public class Bladebrand extends Card {
 
     public Bladebrand() {

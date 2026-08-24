@@ -171,6 +171,13 @@ public record LookAtTopCardsEffect(
                 LookDestination.EXILE, false);
     }
 
+    /** Exile one looked-at card face up with permission to play it this turn; rest go to the bottom randomly. */
+    public static LookAtTopCardsEffect chooseOneToExilePlayableRestOnBottomRandom(DynamicAmount lookCount) {
+        return new LookAtTopCardsEffect(lookCount, new Fixed(1), null,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, false);
+    }
+
     /** Up to {@code chooseCount} cards to hand, the rest into the graveyard. */
     public static LookAtTopCardsEffect chooseNToHandRestToGraveyard(int lookCount, int chooseCount) {
         return chooseNToHandRestToGraveyard(lookCount, chooseCount, null, false);
@@ -319,5 +326,11 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect mayPutOneOnTopRestToGraveyard(int lookCount) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
                 LookDestination.GRAVEYARD, false, LibrarySearchDestination.TOP_OF_LIBRARY, true);
+    }
+
+    /** Put one of the looked-at cards into the graveyard and the rest back on top of the library. */
+    public static LookAtTopCardsEffect putOneIntoGraveyardRestOnTop(int lookCount) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+                LookDestination.TOP_OF_LIBRARY, false, LibrarySearchDestination.GRAVEYARD, false);
     }
 }

@@ -34,6 +34,9 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         if (!applies) {
             return 0;
         }
+        if (reduce.sourceZone() != null && reduce.sourceZone() != context.sourceZone()) {
+            return 0;
+        }
         if (!predicateEvaluationService.matchesCardPredicate(
                 context.spell(), reduce.predicate(),
                 source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),

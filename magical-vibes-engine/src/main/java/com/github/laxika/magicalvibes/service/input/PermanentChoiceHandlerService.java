@@ -259,6 +259,10 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepAnyTargetTrigger(gameData, permanentId, uat);
         } else if (context instanceof PermanentChoiceContext.UpkeepPermanentTargetTrigger uptt) {
             triggerHandler.handleUpkeepPermanentTargetTrigger(gameData, permanentId, uptt);
+        } else if (context instanceof PermanentChoiceContext.DayNightTransformAttachment dnta) {
+            triggerHandler.handleDayNightTransformAttachment(gameData, permanentId, dnta);
+        } else if (context instanceof PermanentChoiceContext.DayNightTriggerTarget dntt) {
+            triggerHandler.handleDayNightTriggerTarget(gameData, permanentId, dntt);
         } else if (context instanceof PermanentChoiceContext.PhasesInTriggerTarget pit) {
             triggerHandler.handlePhasesInTriggerTarget(gameData, permanentId, pit);
         } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {

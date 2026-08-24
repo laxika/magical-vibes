@@ -95,6 +95,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             } else {
                 resolvePutOneOnTop(gameData, entry, lookCount);
             }
+        } else if (e.chosenDestination() == LibrarySearchDestination.GRAVEYARD
+                && e.restDestination() == LookDestination.TOP_OF_LIBRARY) {
+            resolveOneToGraveyardRestOnTop(gameData, entry, lookCount);
+        } else if (e.chosenDestination() == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
+            resolveOneToExilePlayableRestOnBottomRandom(gameData, entry, lookCount);
         } else if (e.optional()) {
             resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.GRAVEYARD) {
@@ -262,6 +267,43 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .build(),
                 prompt,
                 true));
+    }
+
+    private void resolveOneToGraveyardRestOnTop(GameData gameData, StackEntry entry, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+
+        String prompt = "Put one card into your graveyard. Put the rest back on top of your library.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(result.controllerId(), result.topCards())
+                        .sourceCards(new ArrayList<>(result.topCards()))
+                        .reorderRemainingToTop(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.GRAVEYARD)
+                        .build(),
+                prompt,
+                false));
+    }
+
+    private void resolveOneToExilePlayableRestOnBottomRandom(
+            GameData gameData, StackEntry entry, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, false);
+        if (result == null) return;
+
+        String prompt = "Exile one card to play this turn. Put the rest on the bottom of your library in a random order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(result.controllerId(), result.topCards())
+                        .sourceCards(new ArrayList<>(result.topCards()))
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM)
+                        .build(),
+                prompt,
+                false));
     }
 
     /**

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
+import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
@@ -245,8 +246,31 @@ public class CastingCostService {
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue, Zone.HAND);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   int xValue, Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
+                false, xValue, sourceZone);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, false, 0, sourceZone);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   boolean flashbackCost, int xValue, Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
+                flashbackCost, xValue, sourceZone);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                   Zone sourceZone) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
-                flashbackCost, xValue);
+                flashbackCost, xValue, sourceZone);
         int delta = 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
@@ -1513,6 +1537,26 @@ public class CastingCostService {
                         tapCost.get().filter(), FilterContext.of(gameData).withSourceControllerId(playerId)))
                 .count();
         return matchingCount >= tapCost.get().count();
+    }
+
+    public boolean canPayFlashbackCounterCosts(GameData gameData, UUID playerId, FlashbackCast flashback) {
+        return flashback.costs().stream()
+                .filter(RemoveXCountersFromControlledPermanentsCastingCost.class::isInstance)
+                .map(RemoveXCountersFromControlledPermanentsCastingCost.class::cast)
+                .allMatch(cost -> totalMatchingCounters(gameData, playerId, cost) > 0);
+    }
+
+    private int totalMatchingCounters(GameData gameData, UUID playerId,
+                                       RemoveXCountersFromControlledPermanentsCastingCost cost) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> cost.permanentPredicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(permanent, cost.permanentPredicate(),
+                        FilterContext.of(gameData).withSourceControllerId(playerId)))
+                .mapToInt(permanent -> cost.counterType() == CounterType.ANY
+                        ? permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                        + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+                        : permanent.getCounterCount(cost.counterType()))
+                .sum();
     }
 
     /**

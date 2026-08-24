@@ -64,6 +64,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
+        register(PendingInteraction.LudevicCopyChoice.class, this::projectLudevicCopyChoice);
         register(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class,
                 this::projectExileInstantOrSorcerySpellCostChoice);
         register(PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice.class,
@@ -321,6 +322,15 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
                 "Choose a card exiled this way to play until the end of your next turn.");
+    }
+
+    private InteractionPromptMessage projectLudevicCopyChoice(
+            GameData gameData, PendingInteraction.LudevicCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "Choose a creature card exiled with Ludevic to copy.");
     }
 
     private InteractionPromptMessage projectExileInstantOrSorcerySpellCostChoice(

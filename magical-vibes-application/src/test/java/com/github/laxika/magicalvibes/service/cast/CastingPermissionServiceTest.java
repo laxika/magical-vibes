@@ -163,6 +163,25 @@ class CastingPermissionServiceTest {
 
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isTrue();
         }
+
+        @Test
+        @DisplayName("conditional top-library permission applies only when its condition is met")
+        void conditionalTopLibraryPermission() {
+            Card augur = new Card();
+            SourceHasChosenMode coven = new SourceHasChosenMode("Coven");
+            augur.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                    coven, new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE))));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(augur));
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(coven), any())).thenReturn(false);
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isFalse();
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(coven), any())).thenReturn(true);
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isTrue();
+        }
     }
 
     @Test

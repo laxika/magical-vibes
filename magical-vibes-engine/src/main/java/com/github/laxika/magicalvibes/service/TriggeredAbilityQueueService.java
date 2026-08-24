@@ -72,6 +72,51 @@ public class TriggeredAbilityQueueService {
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
 
+    public void processNextDayNightTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTransformAttachment.class)) {
+            PermanentChoiceContext.DayNightTransformAttachment pending =
+                    gameData.pollPendingInteraction(PermanentChoiceContext.DayNightTransformAttachment.class);
+            Permanent permanent = gameQueryService.findPermanentById(gameData, pending.permanentId());
+            if (permanent == null || !permanent.getCard().isAura() || !permanent.getCard().isEnchantPlayer()) {
+                continue;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPlayerChoice(gameData, pending.controllerId(), gameData.orderedPlayerIds,
+                    permanent.getCard().getName() + " - Choose a player to enchant.");
+            return;
+        }
+
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class)) {
+            PermanentChoiceContext.DayNightTriggerTarget pending =
+                    gameData.pollPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class);
+
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    pending.sourceCard().getTargetFilter(),
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.DAY_NIGHT);
+            if (result.validTargets().isEmpty()) {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s day/night ability has no valid targets."));
+                log.info("Game {} - {} day/night trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                    pending.sourceCard().getName() + "'s ability - Choose a nonland permanent.");
+            gameLogService.append(gameData,
+                    GameLog.cardThen(pending.sourceCard(), "'s day/night ability - choose a nonland permanent."));
+            log.info("Game {} - {} day/night trigger awaiting target selection",
+                    gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     public void processNextDeathTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             PermanentChoiceContext.DeathTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
@@ -263,6 +308,17 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
+            ReturnTargetCardsFromGraveyardToHandEffect gyReturn = pending.effects().stream()
+                    .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                    .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (gyReturn != null) {
+                if (beginSelfLeavesGraveyardReturnToHandTarget(gameData, pending, gyReturn)) {
+                    return;
+                }
+                continue;
+            }
+
             TargetFilter selfLeavesFilter = targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
             Permanent sourcePermanentSnapshot = pending.sourcePermanentId() == null
                     ? null
@@ -358,6 +414,58 @@ public class TriggeredAbilityQueueService {
                 "'s leaves-the-battlefield trigger — choose a graveyard target."));
         log.info("Game {} - {} leaves-battlefield graveyard trigger awaiting target selection",
                 gameData.id, pending.sourceCard().getName());
+        return true;
+    }
+
+    private boolean beginSelfLeavesGraveyardReturnToHandTarget(GameData gameData,
+            PermanentChoiceContext.SelfTriggeredAbilityTarget pending,
+            ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
+        List<Card> matchingCards = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (returnEffect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, returnEffect.filter(), pending.sourceCard().getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+
+        if (matchingCards.isEmpty()) {
+            if (returnEffect.minTargets() == 0) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(pending.effects()),
+                        List.of()
+                ));
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s leaves-the-battlefield ability triggers targeting no cards."));
+                return false;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                    "'s leaves-the-battlefield trigger has no valid graveyard targets."));
+            return false;
+        }
+
+        gameData.graveyardTargetOperation.card = pending.sourceCard();
+        gameData.graveyardTargetOperation.controllerId = pending.controllerId();
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+
+        int maxTargets = Math.min(returnEffect.maxTargets(), matchingCards.size());
+        String filterLabel = CardPredicateUtils.describeFilter(returnEffect.filter());
+        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards,
+                maxTargets, returnEffect.minTargets(),
+                pending.sourceCard().getName() + "'s ability — Choose up to " + maxTargets
+                        + " target " + filterLabel + " cards from your graveyard to return to your hand.");
+
+        gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                "'s leaves-the-battlefield ability triggers — choose graveyard targets."));
         return true;
     }
 
@@ -1353,9 +1461,10 @@ public class TriggeredAbilityQueueService {
                 case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
                 case CONTROLLERS_GRAVEYARD -> "your graveyard";
             };
-            int maxTargets = describedTarget == null
-                    ? Math.min(1, matchingCards.size())
-                    : Math.min(describedTarget.maxTargets(), matchingCards.size());
+            int requestedMaxTargets = pending.maxCount() > 0
+                    ? pending.maxCount()
+                    : describedTarget == null ? 1 : describedTarget.maxTargets();
+            int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
             String countLabel = maxTargets == 1 ? "target " : minTargets == maxTargets
                     ? maxTargets + " target " : "up to " + maxTargets + " target ";
             playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, maxTargets,

@@ -46,6 +46,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasNoAbilitiesPredicate) {
             return "card with no abilities";
         }
+        if (predicate instanceof CardHasManaAbilityPredicate) {
+            return "card with a mana ability";
+        }
         if (predicate instanceof CardIsAuraPredicate) {
             return "Aura card";
         }
@@ -60,6 +63,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
+        }
+        if (predicate instanceof CardHasDisturbPredicate) {
+            return "card with disturb";
         }
         if (predicate instanceof CardIsHistoricPredicate) {
             return "historic card";

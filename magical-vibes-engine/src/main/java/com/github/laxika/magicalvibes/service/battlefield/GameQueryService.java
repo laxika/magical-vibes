@@ -131,6 +131,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentPermanentsEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
@@ -138,9 +139,11 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTrigge
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
@@ -4691,6 +4694,16 @@ public class GameQueryService {
         return anyBattlefieldHasStaticEffect(gameData, PreventDamageFromInstantAndSorcerySpellsEffect.class);
     }
 
+    /** Returns whether a spell's damage is prevented for the given controller or that controller's permanents. */
+    public boolean isSpellDamageToControllerAndPermanentsPrevented(GameData gameData, StackEntry entry,
+                                                                    UUID recipientControllerId) {
+        if (!isDamagePreventable(gameData) || entry == null || recipientControllerId == null
+                || !isSpellStackEntry(entry.getEntryType())) {
+            return false;
+        }
+        return playerBattlefieldHasStaticEffect(gameData, recipientControllerId, SpellDamagePreventionEffect.class);
+    }
+
     /** Returns the first turn-scoped damage-prevention shield matching the targeted spell. */
     public TargetSpellDamagePreventionShield getTargetSpellDamagePreventionShield(
             GameData gameData, StackEntry entry) {
@@ -4830,7 +4843,8 @@ public class GameQueryService {
      * its own "can't be countered" ability ({@link CantBeCounteredEffect}), because it was
      * individually made uncounterable while on the stack (e.g. Vexing Shusher), or because
      * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells, or
-     * a {@link ControllerSpellsCantBeCounteredEffect} protects spells controlled by the spell's controller.
+     * a {@link ControllerSpellsCantBeCounteredEffect} protects spells controlled by the spell's controller,
+     * or a {@link SpellsCantBeCounteredEffect} protects every spell.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
@@ -4850,8 +4864,10 @@ public class GameQueryService {
                 && gameData.playersSpellsCantBeCounteredThisTurn.contains(stackEntry.getControllerId())) {
             return true;
         }
-        if (stackEntry != null && playerBattlefieldHasStaticEffect(gameData, stackEntry.getControllerId(),
-                ControllerSpellsCantBeCounteredEffect.class)) {
+        if (stackEntry != null && controllerSpellsCantBeCountered(gameData, stackEntry.getControllerId(), card)) {
+            return true;
+        }
+        if (anyBattlefieldHasStaticEffect(gameData, SpellsCantBeCounteredEffect.class)) {
             return true;
         }
         if (!hasCardType(card, CardType.CREATURE)) {
@@ -4861,6 +4877,19 @@ public class GameQueryService {
             return true;
         }
         return controllerProtectsHighPowerCreatureSpell(gameData, card);
+    }
+
+    private boolean controllerSpellsCantBeCountered(GameData gameData, UUID controllerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        boolean creatureSpell = hasCardType(card, CardType.CREATURE);
+        return battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(ControllerSpellsCantBeCounteredEffect.class::isInstance)
+                .map(ControllerSpellsCantBeCounteredEffect.class::cast)
+                .anyMatch(effect -> !effect.noncreatureOnly() || !creatureSpell);
     }
 
     private boolean isSpellStackEntry(StackEntryType entryType) {
@@ -5862,6 +5891,28 @@ public class GameQueryService {
         return bonus[0];
     }
 
+    /**
+     * Returns the additive damage bonus from static effects that apply to spell damage dealt to an
+     * opponent of the effect controller or to a permanent that opponent controls.
+     */
+    public int getAdditionalSpellDamageToOpponentsBonus(GameData gameData, StackEntry entry,
+                                                        UUID recipientControllerId) {
+        if (entry == null || recipientControllerId == null || !isSpellStackEntry(entry.getEntryType())) {
+            return 0;
+        }
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (recipientControllerId.equals(controllerId)) return;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof OpponentDamageBonusEffect damageBonus) {
+                    bonus[0] += damageBonus.amount();
+                }
+            }
+        });
+        return bonus[0];
+    }
+
     private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
                                                      Permanent source, UUID controllerId) {
         if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus) {
@@ -6392,7 +6443,9 @@ public class GameQueryService {
         if (!isDamagePreventable(gameData)) return false;
         if (isDamageByCreaturePrevented(gameData, creature)
                 || hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || hasAuraWithEffect(gameData, creature, PreventAllDamageDealtByEnchantedCreatureEffect.class)
+                || hasAuraWithEffect(gameData, creature,
+                effect -> effect instanceof PreventAllDamageDealtByEnchantedCreatureEffect prevented
+                        && (!prevented.combatOnly() || isCombatDamage))
                 || gameData.isPreventedFromDealingDamage(creature.getId())) {
             return true;
         }

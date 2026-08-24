@@ -7,13 +7,18 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 /** Resolves a continuation by placing its effect on the stack as a reflexive ability. */
 @Component
+@RequiredArgsConstructor
 public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBean {
+
+    private final GraveyardTargetingSupport graveyardTargetingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -23,7 +28,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
-        if (queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (graveyardTargetingSupport.findTarget(List.of(queueEffect.effect())) != null
+                || queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect())));
             return;

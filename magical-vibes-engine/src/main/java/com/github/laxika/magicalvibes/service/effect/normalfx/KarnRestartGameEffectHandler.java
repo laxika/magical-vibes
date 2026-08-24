@@ -185,6 +185,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoCastFirstSpellInGame.clear();
         gameData.playersWithNoMaximumHandSize.clear();
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.clear();
+        gameData.additionalEnterCountersUntilNextTurn.clear();
+        gameData.cardTypeFlashGrantsUntilNextTurn.clear();
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.clear();
         gameData.playersWithProtectionFromEverythingUntilNextTurn.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();

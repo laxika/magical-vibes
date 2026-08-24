@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -124,6 +125,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqualToAttachedCountEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -323,9 +325,10 @@ public class StepTriggerService {
      */
     private void collectEmblemStepTriggers(GameData gameData, EmblemTriggerStep step) {
         for (Emblem emblem : gameData.emblems) {
-            boolean isControllerUpkeep = gameData.activePlayerId.equals(emblem.controllerId());
-            if ((step == EmblemTriggerStep.OPPONENT_UPKEEP && isControllerUpkeep)
-                    || (step != EmblemTriggerStep.OPPONENT_UPKEEP && !isControllerUpkeep)) {
+            boolean isControllerStep = gameData.activePlayerId.equals(emblem.controllerId());
+            boolean opponentStep = step == EmblemTriggerStep.OPPONENT_UPKEEP
+                    || step == EmblemTriggerStep.OPPONENT_DRAW_STEP;
+            if ((opponentStep && isControllerStep) || (!opponentStep && !isControllerStep)) {
                 continue;
             }
             for (CardEffect effect : emblem.staticEffects()) {
@@ -359,7 +362,7 @@ public class StepTriggerService {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, source, emblem.controllerId(), description,
                         new ArrayList<>(upkeepTrigger.effects()),
-                        step == EmblemTriggerStep.OPPONENT_UPKEEP ? gameData.activePlayerId : null,
+                        opponentStep ? gameData.activePlayerId : null,
                         (UUID) null);
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
@@ -1475,9 +1478,22 @@ public class StepTriggerService {
                 CardEffect effectForStack = effect;
                 if (effect instanceof ExileGraveyardCardsEffect e && e.scope() == GraveyardExileScope.OWN) {
                     effectForStack = new ExileGraveyardCardsEffect(e.count(), GraveyardExileScope.OWN, null, enchantedPlayerId);
+                } else if (effect instanceof EachTargetPlayerDrawsCardsEqualToAttachedCountEffect e) {
+                    effectForStack = new EachTargetPlayerDrawsCardsEqualToAttachedCountEffect(e.filter(), enchantedPlayerId);
                 }
                 // DealDamageToPlayersEffect(ENCHANTED_PLAYER) reads the enchanted player from the
                 // stack entry's targetId (set below), so no per-effect baking is needed here.
+
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                            perm.getCard(), auraOwnerId, new ArrayList<>(List.of(effectForStack)), perm.getId(),
+                            null, auraOwnerId, true, enchantedPlayerId));
+                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                    log.info("Game {} - {} enchanted-player upkeep trigger awaiting any-number player targets",
+                            gameData.id, perm.getCard().getName());
+                    continue;
+                }
 
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -2012,6 +2028,37 @@ public class StepTriggerService {
                 gameData, playerTargetFilter,
                 new ArrayList<>(gameData.orderedPlayerIds), trigger.choosingPlayerId());
 
+        if (trigger.anyNumberTargets()) {
+            if (trigger.excludedPlayerId() != null) {
+                validPlayerTargets.remove(trigger.excludedPlayerId());
+            }
+
+            if (validPlayerTargets.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        trigger.sourceCard(),
+                        trigger.controllerId(),
+                        trigger.sourceCard().getName() + "'s upkeep ability",
+                        new ArrayList<>(trigger.effects()),
+                        trigger.sourcePermanentId(),
+                        List.of()));
+                processNextUpkeepPlayerTarget(gameData);
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(trigger);
+            playerInputService.beginMultiPermanentOrPlayerChoice(
+                    gameData,
+                    trigger.choosingPlayerId(),
+                    List.of(),
+                    validPlayerTargets,
+                    validPlayerTargets.size(),
+                    new MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets(
+                            trigger.sourceCard(), trigger.controllerId(), trigger.effects(), trigger.sourcePermanentId()),
+                    trigger.sourceCard().getName() + "'s ability — Choose any number of target players other than the enchanted player.");
+            return;
+        }
+
         if (validPlayerTargets.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger has no valid targets."));
@@ -2374,6 +2421,7 @@ public class StepTriggerService {
 
     public void handleDrawStepTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_DRAW_STEP);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.DRAW_STEP);
 
         // Nafs Asp: "that player loses N life at the beginning of their next draw step unless they

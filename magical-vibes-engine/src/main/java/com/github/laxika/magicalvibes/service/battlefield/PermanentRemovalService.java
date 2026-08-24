@@ -792,6 +792,7 @@ public class PermanentRemovalService {
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
         if (!target.isExileIfLeavesBattlefield()
                 && !target.isExileIfLeavesBattlefieldUntilEndOfTurn()
+                && !(checkExileInsteadOfDie && target.isExileIfDying())
                 && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
                 && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
                 && !permanentGraveyardReplacement) {
@@ -881,7 +882,7 @@ public class PermanentRemovalService {
      * Liesa, Forgotten Archangel: true when a player other than {@code controllerId} controls a
      * permanent with "if a creature an opponent controls would die, exile it instead".
      */
-    private ExileOpponentCreaturesInsteadOfDyingEffect opponentDyingCreatureExileReplacement(
+    private OpponentCreatureExileReplacement opponentDyingCreatureExileReplacement(
             GameData gameData, UUID controllerId, Card dyingCard) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
@@ -899,12 +900,15 @@ public class PermanentRemovalService {
                         .filter(candidate -> !candidate.nontokenOnly() || !dyingCard.isToken())
                         .findFirst().orElse(null);
                 if (effect != null) {
-                    return effect;
+                    return new OpponentCreatureExileReplacement(permanent.getId(), effect);
                 }
             }
         }
         return null;
     }
+
+    private record OpponentCreatureExileReplacement(UUID sourcePermanentId,
+                                                    ExileOpponentCreaturesInsteadOfDyingEffect effect) {}
 
     /**
      * True when a player other than {@code ownerId} controls a permanent with an opponent-owned
@@ -990,7 +994,7 @@ public class PermanentRemovalService {
         int exiledFromBattlefield = 0;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
-        ExileOpponentCreaturesInsteadOfDyingEffect opponentExileReplacement = wasCreature
+        OpponentCreatureExileReplacement opponentExileReplacement = wasCreature
                 ? opponentDyingCreatureExileReplacement(gameData, controllerId, target.getCard())
                 : null;
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
@@ -999,8 +1003,13 @@ public class PermanentRemovalService {
                 || (wasCreature && damagerExilesDyingCreature(gameData, target));
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
-                exileService.exileCard(gameData, ownerId, leaving);
-                if (opponentExileReplacement != null && opponentExileReplacement.addIceCounter()) {
+                if (opponentExileReplacement != null && opponentExileReplacement.effect().trackWithSource()) {
+                    exileService.exileCard(gameData, ownerId, leaving,
+                            opponentExileReplacement.sourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, ownerId, leaving);
+                }
+                if (opponentExileReplacement != null && opponentExileReplacement.effect().addIceCounter()) {
                     gameData.exiledCardsWithIceCounters.add(leaving.getId());
                 }
                 exiledFromBattlefield++;
@@ -1057,7 +1066,8 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
                 triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId, target);
-                triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
+                triggerCollectionService.checkEquippedCreatureDeathTriggers(
+                        gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath);
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                 triggerCollectionService.triggerDelayedEffectOnDeath(
                         gameData, target.getCard().getId(), controllerId, target.getEffectivePower(),

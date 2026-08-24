@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -1247,6 +1248,56 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player1Id);
             assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
+        }
+
+        @Test
+        @DisplayName("filters copied spells by the source Aura's enchanted player")
+        void filtersCopiedSpellsByEnchantedPlayer() {
+            Permanent perm = createPermanent("Curse of Shaken Faith");
+            perm.setAttachedTo(player2Id);
+            var effect = new SpellCopyTriggerEffect(null,
+                    List.of(new BoostSelfEffect(2, 2)),
+                    new StackEntryControlledByEnchantedPlayerPredicate(),
+                    true);
+            Card spellCard = createInstant("Lightning Bolt");
+            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+
+            when(predicateEvaluationService.matchesStackEntryPredicate(
+                    eq(copiedSpell), any(), eq(player2Id))).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("allows copied permanent spells when requested")
+        void allowsCopiedPermanentSpellsWhenRequested() {
+            Permanent perm = createPermanent("Curse of Shaken Faith");
+            perm.setAttachedTo(player1Id);
+            var effect = new SpellCopyTriggerEffect(null,
+                    List.of(new BoostSelfEffect(2, 2)),
+                    new StackEntryControlledByEnchantedPlayerPredicate(),
+                    true);
+            Card spellCard = createCard("Grizzly Bears");
+            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+
+            when(predicateEvaluationService.matchesStackEntryPredicate(
+                    eq(copiedSpell), any(), eq(player1Id))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
         }
 
         @Test

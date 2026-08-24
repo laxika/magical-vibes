@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>The {@code predicate} determines which spells are affected (e.g. historic, creature, artifact).
  * The {@code scope} determines whose spells are affected (SELF = controller, OPPONENT = opponents).
+ * When {@code sourceZone} is non-null, only spells cast from that zone are affected.
  * The {@code amount} is evaluated against the source permanent, so source-relative amounts
  * ({@code CountersOnSource}) express "for each counter on this creature" wordings.
  *
@@ -24,11 +26,22 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record ReduceCastCostForMatchingSpellsEffect(
         CardPredicate predicate,
         DynamicAmount amount,
-        CostModificationScope scope
+        CostModificationScope scope,
+        Zone sourceZone
 ) implements CardEffect {
+
+    public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, DynamicAmount amount,
+                                                  CostModificationScope scope) {
+        this(predicate, amount, scope, null);
+    }
 
     /** Convenience for the common flat reduction ("matching spells cost {N} less to cast"). */
     public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, int amount, CostModificationScope scope) {
-        this(predicate, new Fixed(amount), scope);
+        this(predicate, new Fixed(amount), scope, null);
+    }
+
+    public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, int amount,
+                                                  CostModificationScope scope, Zone sourceZone) {
+        this(predicate, new Fixed(amount), scope, sourceZone);
     }
 }

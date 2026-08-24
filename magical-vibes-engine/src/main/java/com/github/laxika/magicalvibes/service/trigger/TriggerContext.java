@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -216,6 +217,9 @@ public sealed interface TriggerContext {
     record PermanentTransforms(Permanent transformedPermanent, Card transformedCard, UUID controllerId)
             implements TriggerContext {}
 
+    /** Context for a change between the day and night designations. */
+    record DayNightChange(DayNight previous, DayNight current) implements TriggerContext {}
+
     // ── Death / leaves-battlefield contexts ────────────────────────────
 
     /**
@@ -273,12 +277,19 @@ public sealed interface TriggerContext {
     }
 
     /**
-     * Context for ON_EQUIPPED_CREATURE_DIES triggers. {@code dyingCard} is the card that died,
-     * needed by effects that act on it in the graveyard (Oathkeeper, Takeno's Daisho).
+     * Context for ON_EQUIPPED_CREATURE_DIES triggers. The power is the equipped creature's
+     * last-known effective power; {@code dyingCard} is the card that died, needed by effects that
+     * act on it in the graveyard (Oathkeeper, Takeno's Daisho).
      */
     record EquippedCreatureDeath(UUID dyingCreatureId,
                                  UUID dyingCreatureControllerId,
-                                 Card dyingCard) implements TriggerContext {
+                                 Card dyingCard,
+                                 int dyingCreaturePower) implements TriggerContext {
+
+        public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
+            this(dyingCreatureId, dyingCreatureControllerId, dyingCard,
+                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0);
+        }
 
         @Override
         public boolean causedByCreatureDying() {
@@ -391,6 +402,10 @@ public sealed interface TriggerContext {
 
     /** Context for ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers (Sidisi, Brood Tyrant). */
     record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount)
+            implements TriggerContext {}
+
+    /** Context for ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
+    record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}
 
     /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */

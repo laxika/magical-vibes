@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param conditionalFilter optional filter for a conditional life rider
  * @param conditionalLifeLossEachOpponent life lost by each opponent when the rider applies
  * @param conditionalLifeGain life gained by the controller when the rider applies
+ * @param conditionalLifePerMatchingCard when {@code true}, the conditional life rider applies
+ *                                      once for each exiled card matching {@code conditionalFilter}
  * @param singleGraveyard whether all selected cards must come from one graveyard
  */
 public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
@@ -28,28 +30,37 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                             CardPredicate conditionalFilter,
                                             int conditionalLifeLossEachOpponent,
                                             int conditionalLifeGain,
-                                            boolean singleGraveyard)
+                                            boolean singleGraveyard,
+                                            boolean conditionalLifePerMatchingCard)
         implements GraveyardCardChoosingEffect {
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain) {
-        this(maxTargets, lifeGain, false, null, false, null, 0, 0, false);
+        this(maxTargets, lifeGain, false, null, false, null, 0, 0, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean singleGraveyard) {
-        this(maxTargets, lifeGain, false, null, false, null, 0, 0, singleGraveyard);
+        this(maxTargets, lifeGain, false, null, false, null, 0, 0, singleGraveyard, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
                                          CardPredicate filter, boolean assignNoCombatDamage) {
         this(maxTargets, lifeGain, lifeGainPerExiledCard, filter, assignNoCombatDamage,
-                null, 0, 0, false);
+                null, 0, 0, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate conditionalFilter,
                                          int conditionalLifeLossEachOpponent, int conditionalLifeGain,
                                          boolean singleGraveyard) {
         this(maxTargets, 0, false, null, false, conditionalFilter,
-                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard);
+                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard, false);
+    }
+
+    public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate conditionalFilter,
+                                         int conditionalLifeLossEachOpponent, int conditionalLifeGain,
+                                         boolean singleGraveyard, boolean conditionalLifePerMatchingCard) {
+        this(maxTargets, 0, false, null, false, conditionalFilter,
+                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard,
+                conditionalLifePerMatchingCard);
     }
 
     /** Whether the maximum target count is supplied by the ability's X value. */

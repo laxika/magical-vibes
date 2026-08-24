@@ -20,4 +20,9 @@ public record EnchantedPermanentMatches(PermanentPredicate filter, String descri
     public String conditionNotMetReason() {
         return "the condition \"" + description + "\" is not met";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

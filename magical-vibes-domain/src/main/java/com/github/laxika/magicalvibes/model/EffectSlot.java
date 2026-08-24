@@ -12,6 +12,8 @@ public enum EffectSlot {
     ON_ENTER_BATTLEFIELD,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever a creature or enchantment enters under your control" for a turn-scoped global trigger. */
+    ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD,
     /** "Whenever this creature or another creature you control enters, …" — like
      *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
      *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})
@@ -260,6 +262,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once for each library-to-graveyard event in which one or more creature cards enter the
      *  controller's graveyard. */
     ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
+    /** Triggers whenever a creature card is put into any player's graveyard from a library. */
+    ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
@@ -404,6 +408,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_EQUIPPED_CREATURE_TRANSFORMS,
     /** Triggers whenever a permanent controlled by this permanent's controller transforms. */
     ON_ALLY_PERMANENT_TRANSFORMS,
+    /** Triggers whenever the game changes between day and night. */
+    ON_DAY_NIGHT_CHANGE,
+    /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
+    GRAVEYARD_ON_DAY_NIGHT_CHANGE,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.

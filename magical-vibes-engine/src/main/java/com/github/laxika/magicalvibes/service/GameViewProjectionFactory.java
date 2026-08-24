@@ -175,7 +175,7 @@ public class GameViewProjectionFactory {
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                    potentialPayableAbilityIndices, speeds
+                    potentialPayableAbilityIndices, speeds, gameData.dayNight
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -610,12 +610,14 @@ public class GameViewProjectionFactory {
                             gameData, playerId, card, baseCost);
                     boolean canAfford;
                     if (anyManaTypeIds.contains(card.getId())) {
-                        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+                        int additionalCost = castingCostService.getCastCostModifier(
+                                gameData, playerId, card, 0, Zone.EXILE);
                         canAfford = foretellPermission
                                 ? cost.canPayAsGeneric(cardPool, 0, additionalCost)
                                 : cost.canPayAsGeneric(cardPool);
                     } else {
-                        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+                        int additionalCost = castingCostService.getCastCostModifier(
+                                gameData, playerId, card, 0, Zone.EXILE);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
                         boolean powerstoneContext = isArtifact && cardPool.getPowerstoneOnlyColorless() > 0;
                         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
@@ -735,7 +737,8 @@ public class GameViewProjectionFactory {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, topCard, topCard.getParsedManaCost());
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, topCard);
+            int additionalCost = castingCostService.getCastCostModifier(
+                    gameData, playerId, topCard, 0, Zone.LIBRARY);
             boolean canAfford = cost.canPay(pool, additionalCost);
             if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
                 canAfford = cost.canPayAsGeneric(pool, 0, additionalCost);
@@ -806,7 +809,8 @@ public class GameViewProjectionFactory {
                 getEnergyCounters(data),
                 getStackViews(data),
                 getGraveyardViews(data),
-                getSpeeds(data)
+                getSpeeds(data),
+                data.dayNight
         );
     }
 

@@ -149,6 +149,11 @@ public class AutoPassService {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class)) {
+            triggerCollectionService.processNextDayNightTriggerTarget(gameData);
+        }
+
         // Process any pending targeted death triggers before auto-passing
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);

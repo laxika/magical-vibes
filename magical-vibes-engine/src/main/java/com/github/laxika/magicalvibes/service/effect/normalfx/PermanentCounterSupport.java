@@ -107,6 +107,7 @@ public class PermanentCounterSupport {
             case LANDMARK -> self.setCounterCount(CounterType.LANDMARK, 0);
             case SLIME -> self.setCounterCount(CounterType.SLIME, 0);
             case STUDY -> self.setCounterCount(CounterType.STUDY, 0);
+            case RITUAL -> self.setCounterCount(CounterType.RITUAL, 0);
             case WISH -> self.setCounterCount(CounterType.WISH, 0);
             case PLUS_ONE_PLUS_ONE -> self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
             case MINUS_ONE_MINUS_ONE -> self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
@@ -172,6 +173,7 @@ public class PermanentCounterSupport {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
+                    case RITUAL -> perm.setCounterCount(CounterType.RITUAL, perm.getCounterCount(CounterType.RITUAL) + placed);
                     case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
                          REACH, TRAMPLE -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
@@ -344,6 +346,7 @@ public class PermanentCounterSupport {
             case UNITY -> { target.setCounterCount(CounterType.UNITY, target.getCounterCount(CounterType.UNITY) + count); yield "unity"; }
             case KI -> { target.setCounterCount(CounterType.KI, target.getCounterCount(CounterType.KI) + count); yield "ki"; }
             case LANDMARK -> { target.setCounterCount(CounterType.LANDMARK, target.getCounterCount(CounterType.LANDMARK) + count); yield "landmark"; }
+            case RITUAL -> { target.setCounterCount(CounterType.RITUAL, target.getCounterCount(CounterType.RITUAL) + count); yield "ritual"; }
             case STUDY -> { target.setCounterCount(CounterType.STUDY, target.getCounterCount(CounterType.STUDY) + count); yield "study"; }
             case WISH -> { target.setCounterCount(CounterType.WISH, target.getCounterCount(CounterType.WISH) + count); yield "wish"; }
             case SLEIGHT -> { target.setCounterCount(CounterType.SLEIGHT, target.getCounterCount(CounterType.SLEIGHT) + count); yield "sleight"; }
@@ -376,6 +379,7 @@ public class PermanentCounterSupport {
             case AGE -> { target.setCounterCount(CounterType.AGE, target.getCounterCount(CounterType.AGE) + count); yield "age"; }
             case BAIT -> { target.setCounterCount(CounterType.BAIT, target.getCounterCount(CounterType.BAIT) + count); yield "bait"; }
             case VITALITY -> { target.setCounterCount(CounterType.VITALITY, target.getCounterCount(CounterType.VITALITY) + count); yield "vitality"; }
+            case VALOR -> { target.setCounterCount(CounterType.VALOR, target.getCounterCount(CounterType.VALOR) + count); yield "valor"; }
             case HEALING -> { target.setCounterCount(CounterType.HEALING, target.getCounterCount(CounterType.HEALING) + count); yield "healing"; }
             case FEATHER -> { target.setCounterCount(CounterType.FEATHER, target.getCounterCount(CounterType.FEATHER) + count); yield "feather"; }
             case FATE -> { target.setCounterCount(CounterType.FATE, target.getCounterCount(CounterType.FATE) + count); yield "fate"; }

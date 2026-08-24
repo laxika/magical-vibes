@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseCastCostForChosenNameSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
@@ -53,6 +55,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -302,6 +305,29 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Applies a zone-scoped reduction only to spells cast from that zone")
+        void appliesZoneScopedReductionOnlyToMatchingSourceZone() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC,
+                    new ReduceCastCostForMatchingSpellsEffect(
+                            new CardTruePredicate(), 1, CostModificationScope.SELF, Zone.GRAVEYARD));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenReturn(true);
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+            Card spell = new Card();
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{1}{R}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.GRAVEYARD))
+                    .isEqualTo(-1);
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.EXILE))
+                    .isZero();
+        }
+
+        @Test
         @DisplayName("Includes active floating cost reductions in the snapshot")
         void appliesFloatingCostReduction() {
             gd.addFloatingEffect(new FloatingContinuousEffect(
@@ -426,6 +452,29 @@ class CastingCostServiceTest {
             assertThat(svc.getCastCostModifier(gd, player1Id, giant)).isEqualTo(-2);
             assertThat(svc.getCastCostModifier(gd, player1Id, bear)).isZero();
             assertThat(svc.getCastCostModifier(gd, player2Id, giant)).isZero();
+        }
+
+        @Test
+        @DisplayName("Chosen-name cost increase applies only to the enchanted player")
+        void chosenNameCostIncreaseScopesToEnchantedPlayer() {
+            Card curse = new Card();
+            curse.addEffect(EffectSlot.STATIC, new IncreaseCastCostForChosenNameSpellsEffect(2));
+            Permanent cursePermanent = new Permanent(curse);
+            cursePermanent.setAttachedTo(player2Id);
+            cursePermanent.setChosenName("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(cursePermanent);
+
+            Card matchingSpell = new Card();
+            matchingSpell.setName("Grizzly Bears");
+            matchingSpell.setManaCost("{1}{G}");
+
+            Card differentSpell = new Card();
+            differentSpell.setName("Hill Giant");
+            differentSpell.setManaCost("{3}{R}");
+
+            assertThat(svc.getCastCostModifier(gd, player2Id, matchingSpell)).isEqualTo(2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, matchingSpell)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player2Id, differentSpell)).isZero();
         }
 
         @Test
