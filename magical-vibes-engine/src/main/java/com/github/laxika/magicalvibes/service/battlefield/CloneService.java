@@ -135,6 +135,14 @@ public class CloneService {
     }
 
     public void completeCloneEntry(GameData gameData, UUID targetId) {
+        completeCloneEntry(gameData, targetId, null);
+    }
+
+    public void completeCloneEntryFromCard(GameData gameData, Card targetCard) {
+        completeCloneEntry(gameData, null, targetCard);
+    }
+
+    private void completeCloneEntry(GameData gameData, UUID targetId, Card targetCard) {
         Card card = gameData.cloneOperation.card;
         UUID controllerId = gameData.cloneOperation.controllerId;
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
@@ -188,13 +196,13 @@ public class CloneService {
 
         Permanent perm = new Permanent(card);
 
-        if (targetId != null) {
-            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-            if (targetPerm != null) {
+        Permanent targetPerm = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
+        Card copiedCard = targetCard != null ? targetCard : targetPerm == null ? null : targetPerm.getCard();
+        if (copiedCard != null) {
                 Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
                 Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
                 permanentCopierService.applyCloneCopy(
-                        perm, targetPerm.getCard(), effectivePowerOverride, effectiveToughnessOverride,
+                        perm, copiedCard, effectivePowerOverride, effectiveToughnessOverride,
                         additionalTypesOverride, List.of(), copyColor);
                 boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
                         || perm.getCard().hasType(CardType.CREATURE);
@@ -235,28 +243,21 @@ public class CloneService {
                 if (entersTapped) {
                     perm.tap();
                 }
-            }
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         Card enteredCard = perm.getCard();
-        if (targetId != null) {
-            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-            if (targetPerm != null) {
+        if (copiedCard != null) {
                 gameLogService.append(gameData, GameLog.builder()
                         .card(enteredCard)
                         .text(" enters the battlefield as a copy of ")
-                        .card(targetPerm.getCard())
+                        .card(copiedCard)
                         .text(" under " + playerName + "'s control.")
                         .build());
                 log.info("Game {} - {} enters as copy of {} for {}", gameData.id, enteredCard.getName(),
-                        targetPerm.getCard().getName(), playerName);
-            } else {
-                gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
-                log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
-            }
+                        copiedCard.getName(), playerName);
         } else {
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
             log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);

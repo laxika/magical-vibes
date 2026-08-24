@@ -363,13 +363,21 @@ public sealed interface ChoiceContext {
          * creature-spell-only bucket.
          */
         public static ManaColorChoice creatureSpellOnly(UUID playerId, int amount) {
-            return new ManaColorChoice(playerId, false, amount, null, false, false, false, null, true);
+            return creatureSpellOnly(playerId, false, amount);
+        }
+
+        public static ManaColorChoice creatureSpellOnly(UUID playerId, boolean fromCreature, int amount) {
+            return new ManaColorChoice(playerId, fromCreature, amount, null, false, false, false, null, true);
         }
 
         /** "Add N mana of any one color, spendable only to cast creature spells or activate abilities of creature sources" (Gwenna, Eyes of Gaea). */
         public static ManaColorChoice creatureSpellOrAbilityOnly(UUID playerId, int amount) {
+            return creatureSpellOrAbilityOnly(playerId, false, amount);
+        }
+
+        public static ManaColorChoice creatureSpellOrAbilityOnly(UUID playerId, boolean fromCreature, int amount) {
             return new ManaColorChoice(
-                    playerId, false, amount, null, false, false, false, false, null,
+                    playerId, fromCreature, amount, null, false, false, false, false, null,
                     false, false, false, false, true, null, null, false, null);
         }
 
@@ -506,10 +514,15 @@ public sealed interface ChoiceContext {
      * covering all of a spell's targets ("X target creatures gain protection from the chosen
      * color", Prismatic Boon), which for most cards is a one-element list.
      */
-    record ProtectionColorChoice(List<UUID> targetIds, boolean includeArtifacts) implements ChoiceContext {
+    record ProtectionColorChoice(List<UUID> targetIds, boolean includeArtifacts, boolean includeColorless)
+            implements ChoiceContext {
 
         public ProtectionColorChoice(UUID targetId, boolean includeArtifacts) {
-            this(List.of(targetId), includeArtifacts);
+            this(List.of(targetId), includeArtifacts, false);
+        }
+
+        public ProtectionColorChoice(List<UUID> targetIds, boolean includeArtifacts) {
+            this(targetIds, includeArtifacts, false);
         }
     }
 

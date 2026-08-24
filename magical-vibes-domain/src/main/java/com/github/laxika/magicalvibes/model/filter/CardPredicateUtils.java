@@ -58,6 +58,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsColorlessPredicate) {
             return "colorless card";
         }
+        if (predicate instanceof CardIsDoubleFacedPredicate) {
+            return "double-faced card";
+        }
         if (predicate instanceof CardIsPermanentPredicate) {
             return "permanent card";
         }
@@ -78,6 +81,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";
+        }
+        if (predicate instanceof CardHasExactlyTwoColorsPredicate) {
+            return "card that's exactly two colors";
         }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";

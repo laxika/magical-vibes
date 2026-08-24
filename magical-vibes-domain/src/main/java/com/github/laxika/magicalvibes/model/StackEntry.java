@@ -30,7 +30,7 @@ public class StackEntry {
     @Setter private UUID activePlayerId;
     private final String description;
     private List<CardEffect> effectsToResolve;
-    private final int xValue;
+    @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
     @Setter private int phyrexianManaPaidWithLife;

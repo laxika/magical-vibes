@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -434,6 +435,11 @@ public sealed interface MultiPermanentChoiceContext {
     record TapCreaturesBoostSelf(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }
 
+    /** Tap exactly N other creatures, or decline, then make the source unblockable. */
+    record TapOtherCreaturesForUnblockable(UUID sourcePermanentId, int requiredCount)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Raiding Party's current player chooses any number of untapped white creatures to tap. */
     record RaidingPartyTapChoice(List<UUID> playerIds, int playerIndex, List<Integer> tappedCounts,
                                  String sourceName) implements MultiPermanentChoiceContext {
@@ -468,6 +474,12 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record TapCreaturesCreateTokens(com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                     String sourceSetCode) implements MultiPermanentChoiceContext {
+    }
+
+    /** Tap any number of creatures, then queue the target-dependent reflexive ability. */
+    record TapCreaturesThenQueueReflexiveAbility(StackEntry resolvingEntry,
+                                                 CardEffect reflexiveEffect)
+            implements MultiPermanentChoiceContext {
     }
 
     /** Tap the chosen permanents, then draw a card for each permanent tapped (Guild Summit). */

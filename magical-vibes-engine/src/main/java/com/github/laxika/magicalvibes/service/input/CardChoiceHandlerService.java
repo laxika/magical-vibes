@@ -688,7 +688,10 @@ public class CardChoiceHandlerService {
                 } else {
                     gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                    sourceCard, playerId, List.of(thenEffect), null, null, 0,
+                                    sourceCard, playerId, List.of(thenEffect),
+                                    followUp.thenEffectSourcePermanentId(),
+                                    followUp.thenEffectSourcePermanentSnapshot(),
+                                    followUp.thenEffectEventValue(),
                                     thenEffectXValue));
                     playerInputService.beginAnyTargetChoice(gameData, playerId,
                             validPermanentTargets, validPlayerTargets,
@@ -705,18 +708,20 @@ public class CardChoiceHandlerService {
                         sourceCard.getName() + "'s effect",
                         List.of(thenEffect),
                         followUp.thenEffectTargetId(),
-                        (UUID) null);
+                        followUp.thenEffectSourcePermanentId());
+                thenEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
                 thenEntry.setNonTargeting(true);
                 gameData.stack.add(thenEntry);
             } else {
-                StackEntry reflexiveEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
-                        playerId,
-                        sourceCard.getName() + "'s effect",
-                        List.of(thenEffect)
-                );
-                reflexiveEntry.setEventValue(followUp.eachPlayerNoDiscardCount());
+                StackEntry reflexiveEntry = followUp.thenEffectSourcePermanentId() == null
+                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                                sourceCard.getName() + "'s effect", List.of(thenEffect))
+                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                                sourceCard.getName() + "'s effect", List.of(thenEffect),
+                                (UUID) null, followUp.thenEffectSourcePermanentId());
+                reflexiveEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
+                reflexiveEntry.setEventValue(followUp.thenEffectEventValue() > 0
+                        ? followUp.thenEffectEventValue() : followUp.eachPlayerNoDiscardCount());
                 gameData.stack.add(reflexiveEntry);
             }
             log.info("Game {} - {} discard-then rider pushed for {}",

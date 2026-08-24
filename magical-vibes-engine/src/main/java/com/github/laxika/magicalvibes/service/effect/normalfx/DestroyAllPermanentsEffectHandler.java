@@ -48,6 +48,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
                 // CR 608.2b: filters that ask about the source (e.g. "creatures blocking it") still
                 // need it after a sacrifice cost removed it from the battlefield.
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())

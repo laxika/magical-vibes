@@ -465,13 +465,28 @@ public class PlayerInputService {
      * protection from the chosen color").
      */
     public void beginProtectionColorChoice(GameData gameData, UUID playerId, List<UUID> targetIds, boolean includeArtifacts) {
-        ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetIds, includeArtifacts);
+        beginProtectionColorChoice(gameData, playerId, targetIds, includeArtifacts, false);
+    }
+
+    public void beginProtectionColorChoice(GameData gameData, UUID playerId, List<UUID> targetIds,
+                                           boolean includeArtifacts, boolean includeColorless) {
+        ChoiceContext.ProtectionColorChoice ctx =
+                new ChoiceContext.ProtectionColorChoice(targetIds, includeArtifacts, includeColorless);
 
         List<String> options = new java.util.ArrayList<>(List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"));
         if (includeArtifacts) {
             options.addFirst("ARTIFACT");
         }
-        String prompt = includeArtifacts ? "Choose a color or artifacts." : "Choose a color.";
+        if (includeColorless) {
+            options.add("COLORLESS");
+        }
+        String prompt = includeArtifacts && includeColorless
+                ? "Choose a color, colorless, or artifacts."
+                : includeArtifacts
+                ? "Choose a color or artifacts."
+                : includeColorless
+                ? "Choose a color or colorless."
+                : "Choose a color.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, ctx, options, prompt));
 
@@ -594,8 +609,13 @@ public class PlayerInputService {
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .filter(label -> !ctx.chosenLabels().contains(label))
-                .toList();
-        String prompt = effect.choicesRequired() > 1
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+        if (effect.variableModeCount() && ctx.chosenLabels().size() >= effect.choicesRequired()) {
+            optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
+        }
+        String prompt = effect.variableModeCount()
+                ? sourceCard.getName() + " - Choose one or more modes, or Done."
+                : effect.choicesRequired() > 1
                 ? sourceCard.getName() + " - Choose " + effect.choicesRequired() + " modes."
                 : sourceCard.getName() + " - Choose one.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

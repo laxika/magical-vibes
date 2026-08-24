@@ -25,10 +25,12 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsDoubleFacedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
@@ -47,6 +49,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
@@ -86,11 +89,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourc
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -121,6 +126,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -509,6 +515,51 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("CardHasExactlyTwoColorsPredicate excludes cards with fewer or more colors")
+        void cardHasExactlyTwoColorsPredicateMatchesOnlyExactlyTwoColors() {
+            Card exactlyTwo = createCreatureWithSubtypes("Gold Creature", 2, 2, CardColor.BLACK, List.of());
+            exactlyTwo.setColors(List.of(CardColor.BLACK, CardColor.GREEN));
+            Card threeColors = createCreatureWithSubtypes("Bant Creature", 2, 2, CardColor.WHITE, List.of());
+            threeColors.setColors(List.of(CardColor.WHITE, CardColor.BLUE, CardColor.GREEN));
+            Card oneColor = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of());
+
+            assertThat(evaluator.matchesCardPredicate(exactlyTwo,
+                    new CardHasExactlyTwoColorsPredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(threeColors,
+                    new CardHasExactlyTwoColorsPredicate(), null)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(oneColor,
+                    new CardHasExactlyTwoColorsPredicate(), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardIsDoubleFacedPredicate excludes cards with modeled non-DFC faces")
+        void cardIsDoubleFacedPredicateMatchesPhysicalDoubleFacedCards() {
+            Card transforming = createCreature("Transforming Creature", 2, 2, CardColor.GREEN);
+            transforming.setBackFaceCard(new Card());
+            transforming.setKeywords(EnumSet.of(Keyword.TRANSFORM));
+
+            Card battle = createBattle("Battle");
+            battle.setBackFaceCard(new Card());
+
+            Card split = new Card();
+            split.setBackFaceCard(new Card());
+            split.setKeywords(EnumSet.of(Keyword.AFTERMATH));
+
+            Card meld = createCreature("Meld Card", 2, 2, CardColor.WHITE);
+            meld.setBackFaceCard(new Card());
+            meld.setKeywords(EnumSet.of(Keyword.MELD));
+
+            assertThat(evaluator.matchesCardPredicate(transforming,
+                    new CardIsDoubleFacedPredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(battle,
+                    new CardIsDoubleFacedPredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(split,
+                    new CardIsDoubleFacedPredicate(), null)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(meld,
+                    new CardIsDoubleFacedPredicate(), null)).isFalse();
+        }
+
+        @Test
         @DisplayName("CardIsAuraPredicate matches aura cards")
         void cardIsAuraPredicateMatches() {
             Card aura = createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect());
@@ -853,6 +904,20 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentHasExactlyTwoColorsPredicate excludes a three-colored permanent")
+        void permanentHasExactlyTwoColorsPredicateMatchesOnlyExactlyTwoColors() {
+            Card exactlyTwo = createCreature("Gold Creature", 2, 2, CardColor.BLACK);
+            exactlyTwo.setColors(List.of(CardColor.BLACK, CardColor.GREEN));
+            Card threeColors = createCreature("Bant Creature", 2, 2, CardColor.WHITE);
+            threeColors.setColors(List.of(CardColor.WHITE, CardColor.BLUE, CardColor.GREEN));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, addPermanent(player1Id, exactlyTwo),
+                    new PermanentHasExactlyTwoColorsPredicate())).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, addPermanent(player1Id, threeColors),
+                    new PermanentHasExactlyTwoColorsPredicate())).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsEnchantmentPredicate matches enchantment")
         void enchantmentPredicateMatches() {
             Permanent perm = addPermanent(player1Id, createEnchantmentWithStaticEffect("Furnace of Rath", new DoubleDamageEffect()));
@@ -886,6 +951,25 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentActivatedThisTurnPredicate matches an activated permanent")
+        void activatedThisTurnPredicateMatches() {
+            Permanent perm = addPermanent(player1Id, createCreature("Activated Permanent", 2, 2, CardColor.GREEN));
+            gd.activatedAbilityUsesThisTurn.put(perm.getId(), Map.of(0, 1));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentActivatedThisTurnPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentActivatedThisTurnPredicate rejects a permanent without an activation")
+        void activatedThisTurnPredicateRejectsUnactivated() {
+            Permanent perm = addPermanent(player1Id, createCreature("Unactivated Permanent", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentActivatedThisTurnPredicate())).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsTokenPredicate matches token")
         void tokenPredicateMatches() {
             Card tokenCard = createCreature("Soldier Token", 1, 1, CardColor.WHITE);
@@ -901,6 +985,25 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsTokenPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsTransformedPredicate matches a transformed permanent")
+        void transformedPredicateMatches() {
+            Permanent perm = addPermanent(player1Id, createCreature("Transformed Creature", 2, 2, CardColor.GREEN));
+            perm.setTransformed(true);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentIsTransformedPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentIsTransformedPredicate rejects an untransformed permanent")
+        void transformedPredicateRejectsUntransformed() {
+            Permanent perm = addPermanent(player1Id, createCreature("Front Face", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentIsTransformedPredicate())).isFalse();
         }
 
         @Test

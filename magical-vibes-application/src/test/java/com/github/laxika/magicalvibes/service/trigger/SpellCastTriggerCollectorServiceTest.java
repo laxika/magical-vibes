@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEquals
 import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -320,6 +322,29 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("snapshots triggering spell mana value for EventValue counter amounts")
+        void snapshotsTriggeringSpellManaValueForEventValueCounterAmounts() {
+            Permanent perm = createPermanent("Chrome Host Seedshark");
+            var innerEffect = new CreateXTokenWithXCountersEffect(
+                    CreateTokenEffect.whiteSpirit(1), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE);
+            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect));
+            Card spellCard = createInstant("Divination");
+            spellCard.setManaCost("{2}{U}");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+            when(amountEvaluationService.referencesEventValue(new EventValue())).thenReturn(true);
+
+            registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
         }
 
         @Test

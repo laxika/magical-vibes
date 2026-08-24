@@ -604,6 +604,7 @@ public class GameViewProjectionFactory {
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
+            if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 if (!foretellPermission
@@ -640,6 +641,20 @@ public class GameViewProjectionFactory {
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
                         if (!foretellPermission && !canAfford) {
                             canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                        }
+                        if (!canAfford
+                                && (card.getKeywords().contains(Keyword.CONVOKE)
+                                || gameQueryService.hasSpellCastingAbilityGrant(
+                                gameData, playerId, card, Keyword.CONVOKE, Zone.EXILE))) {
+                            int untappedCreatureCount = gameData.playerBattlefields
+                                    .getOrDefault(playerId, List.of())
+                                    .stream()
+                                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                                    .filter(permanent -> !permanent.isTapped())
+                                    .mapToInt(ignored -> 1)
+                                    .sum();
+                            canAfford = pool.getTotal() + untappedCreatureCount
+                                    >= cost.getManaValue() + additionalCost;
                         }
                     }
                     if (playWithoutPaying || canAfford) {
@@ -731,6 +746,7 @@ public class GameViewProjectionFactory {
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
+        if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, topCard)) return playable;
 
         if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 

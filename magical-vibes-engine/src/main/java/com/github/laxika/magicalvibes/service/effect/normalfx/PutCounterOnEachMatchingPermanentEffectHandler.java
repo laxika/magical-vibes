@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -67,9 +68,13 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
+        UUID sourceCardId = source == null || source.getOriginalCard() == null
+                ? entry.getCard().getId()
+                : source.getOriginalCard().getId();
         FilterContext ctx = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceCardId(sourceCardId)
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(source);
         int count = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
         // Vizier of Remedies reduces per creature by its own controller's copies, so the placed -1/-1

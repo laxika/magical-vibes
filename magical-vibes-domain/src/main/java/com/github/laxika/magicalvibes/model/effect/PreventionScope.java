@@ -73,6 +73,8 @@ public enum PreventionScope {
     ALL_TO_PLAYERS_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */
     ALL_FROM_COLORS,
+    /** "Prevent all damage that sources of the given colors would deal to creatures you control this turn." */
+    ALL_FROM_COLORS_TO_CONTROLLED_CREATURES,
     /** "Prevent all damage that would be dealt this turn by non-Human sources" (Repel the Abominable). */
     ALL_FROM_NON_HUMAN_SOURCES,
     /** "Prevent all combat damage this turn except that dealt by [exempt] creatures" (Moonmist). */

@@ -64,6 +64,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 
@@ -129,9 +131,11 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
     private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
     private final PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler guardDogsHandler;
+    private final TransformChosenPermanentEffectHandler transformChosenPermanentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final PutCounterOnEitherTargetPermanentEffectHandler putCounterOnEitherTargetEffectHandler;
     private final MayReturnPermanentToHandAndEnterWithCountersEffectHandler mayReturnPermanentToHandAndEnterWithCountersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
@@ -141,6 +145,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
@@ -419,6 +424,17 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePutCounterOnEitherTarget(GameData gameData, UUID permanentId,
+                                                PermanentChoiceContext.PutCounterOnEitherTarget context) {
+        putCounterOnEitherTargetEffectHandler.placeCounter(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTransformChosenPermanent(GameData gameData, UUID permanentId) {
+        transformChosenPermanentEffectHandler.transform(gameData, permanentId);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleAttachTargetAuraToAnotherPermanentOfSameType(GameData gameData, UUID permanentId,
                                                                     PermanentChoiceContext.AttachTargetAuraToAnotherPermanentOfSameType ctx) {
         attachTargetAuraHandler.attachChosen(gameData, permanentId, ctx);
@@ -613,6 +629,20 @@ public class PermanentChoiceBattlefieldHandlerService {
             PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy context) {
         opponentChoosesCreatureTheyControlTokenCopyEffectHandler.completeChoice(gameData, permanentId, context);
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAwakenTheMaelstromPermanentCopyChoice(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.AwakenTheMaelstromPermanentCopyChoice context) {
+        createTokenCopyOfChosenPermanentYouControlEffectHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAwakenTheMaelstromCounterCreatureChoice(GameData gameData, UUID permanentId) {
+        if (gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanentId);
+        }
+        gameData.rerunCurrentEffectAfterInteraction = true;
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

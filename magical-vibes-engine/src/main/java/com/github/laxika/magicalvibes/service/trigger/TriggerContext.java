@@ -262,10 +262,27 @@ public sealed interface TriggerContext {
     }
 
     record SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
-                     Permanent dyingPermanent, Card castingSpell) implements TriggerContext {
+                     Permanent dyingPermanent, Card castingSpell, int dyingPower) implements TriggerContext {
         public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
                          Permanent dyingPermanent) {
-            this(dyingCard, controllerId, wasCreature, dyingPermanent, null);
+            this(dyingCard, controllerId, wasCreature, dyingPermanent, null,
+                    defaultDyingPower(dyingCard, dyingPermanent));
+        }
+
+        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
+                         Permanent dyingPermanent, Card castingSpell) {
+            this(dyingCard, controllerId, wasCreature, dyingPermanent, castingSpell,
+                    defaultDyingPower(dyingCard, dyingPermanent));
+        }
+
+        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
+                         Permanent dyingPermanent, int dyingPower) {
+            this(dyingCard, controllerId, wasCreature, dyingPermanent, null, dyingPower);
+        }
+
+        private static int defaultDyingPower(Card dyingCard, Permanent dyingPermanent) {
+            if (dyingPermanent != null) return dyingPermanent.getEffectivePower();
+            return dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0;
         }
 
         @Override
@@ -573,8 +590,13 @@ public sealed interface TriggerContext {
 
     /** Context for any opponent-controlled source damaging this permanent's controller or their permanent. */
     record SourceDamageToYouOrYourPermanent(Card sourceCard, UUID sourceControllerId,
-                                            UUID sourcePermanentId, UUID damagedPlayerId)
-            implements TriggerContext {}
+                                            UUID sourcePermanentId, UUID damagedPlayerId,
+                                            UUID damagedPermanentId) implements TriggerContext {
+        SourceDamageToYouOrYourPermanent(Card sourceCard, UUID sourceControllerId,
+                                         UUID sourcePermanentId, UUID damagedPlayerId) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, damagedPlayerId, null);
+        }
+    }
 
     record Crime(UUID committingPlayerId) implements TriggerContext {}
 }

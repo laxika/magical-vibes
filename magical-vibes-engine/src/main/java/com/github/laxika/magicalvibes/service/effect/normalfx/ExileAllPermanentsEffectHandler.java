@@ -55,6 +55,8 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
                     gameData.id, perm.getCard().getName(), entry.getCard().getName());
         }
 
+        entry.setEventValue(toExile.size());
+
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

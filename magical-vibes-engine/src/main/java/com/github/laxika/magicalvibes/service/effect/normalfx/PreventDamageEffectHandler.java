@@ -155,6 +155,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.text(
                         "All damage from " + colorNames + " sources will be prevented this turn."));
             }
+            case ALL_FROM_COLORS_TO_CONTROLLED_CREATURES -> allFromColorsToControlledCreatures(gameData, entry, e);
             case ALL_FROM_NON_HUMAN_SOURCES -> {
                 gameData.preventAllDamageFromNonHumanSources = true;
                 gameLogService.append(gameData, GameLog.text(
@@ -172,6 +173,34 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             }
             case ALL_COMBAT_EXCEPT_TARGET -> allCombatExceptTarget(gameData, entry);
         }
+    }
+
+    private void allFromColorsToControlledCreatures(GameData gameData, StackEntry entry, PreventDamageEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (controllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                gameData.colorDamagePreventionUntilEndOfTurn
+                        .computeIfAbsent(permanent.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                        .addAll(effect.sourceColors());
+            }
+        }
+
+        String colorNames = effect.sourceColors().stream()
+                .map(color -> color.name().toLowerCase())
+                .sorted()
+                .reduce((first, second) -> first + " and " + second)
+                .orElse("");
+        gameLogService.append(gameData, GameLog.text(
+                "All damage from " + colorNames + " sources that would be dealt to creatures "
+                        + gameData.playerIdToName.get(controllerId) + " controls will be prevented this turn."));
     }
 
     private void nextToAny(GameData gameData, StackEntry entry, PreventDamageEffect e) {

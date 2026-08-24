@@ -1100,6 +1100,13 @@ public class GraveyardService {
     }
 
     private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
+        if (sourceZone == Zone.BATTLEFIELD) {
+            gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = true;
+        }
+        if (sourceZone == Zone.BATTLEFIELD
+                && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE))) {
+            gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = true;
+        }
         Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
                 .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet());
         // Tracks all non-token cards (any type) put into the graveyard from the battlefield this turn.

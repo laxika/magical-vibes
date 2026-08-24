@@ -6,6 +6,10 @@ For an ETB that free-casts an instant from your graveyard, use
 `CastTargetInstantOrSorceryFromGraveyardEffect(CONTROLLERS_GRAVEYARD, true, true,
 CardTypePredicate(INSTANT))` as in `t/TorrentialGearhulk.java`.
 
+For an ETB that pays X and then offers a free cast of an instant or sorcery with mana value X
+from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
+`h/HaloForager.java`.
+
 Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; the registrar creates a one-shot echo trigger for the source permanent's current controller.
 
 ## Vanilla creatures (empty body, all from Scryfall)

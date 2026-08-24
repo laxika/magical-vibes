@@ -55,7 +55,7 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
         }
 
         playerInputService.beginProtectionColorChoice(gameData, choosingPlayerId,
-                targets.stream().map(Permanent::getId).toList(), e.includeArtifacts());
+                targets.stream().map(Permanent::getId).toList(), e.includeArtifacts(), e.includeColorless());
     }
 
     /**

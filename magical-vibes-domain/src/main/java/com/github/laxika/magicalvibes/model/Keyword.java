@@ -13,6 +13,7 @@ public enum Keyword {
     SPLIT_SECOND,
     FADING,
     VIGILANCE,
+    BACKUP,
     SHROUD,
     CHANGELING,
     FEAR,

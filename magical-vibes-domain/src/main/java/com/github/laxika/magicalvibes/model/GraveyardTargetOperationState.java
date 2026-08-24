@@ -86,6 +86,8 @@ public class GraveyardTargetOperationState {
      * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
      */
     public boolean resolutionTimeExileCreateZombieTokenCopyResume;
+    public boolean resolutionTimeExileNCardsThenEffectResume;
+    public List<UUID> resolutionTimeExileNCardsThenEffectChosenCardIds;
     public boolean resolutionTimeDragonApproachResume;
     /** Resolution-time choice for Chandra, Heart of Fire's graveyard-and-library exile. */
     public ExileMatchingCardsFromGraveyardAndLibraryContext resolutionTimeExileMatchingCardsResume;
@@ -157,6 +159,7 @@ public class GraveyardTargetOperationState {
      * {@code BattlefieldEntryService.handleCreatureEnteredBattlefield}.
      */
     public AsEntersGraveyardExileContext asEntersExile;
+    public MilledCreatureReturnContext milledCreatureReturn;
 
     /**
      * The entry context needed to resume {@code BattlefieldEntryService.processCreatureETBEffects}
@@ -180,5 +183,11 @@ public class GraveyardTargetOperationState {
 
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {
+    }
+
+    public record MilledCreatureReturnContext(List<UUID> chosenCardIds) {
+        public MilledCreatureReturnContext {
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
     }
 }

@@ -417,6 +417,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_DAY_NIGHT_CHANGE,
     /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
     GRAVEYARD_ON_DAY_NIGHT_CHANGE,
+    /** Triggers whenever a permanent controlled by this permanent's controller enters transformed. */
+    ON_ALLY_PERMANENT_ENTERS_TRANSFORMED,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.
@@ -505,6 +507,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_LOSES_COIN_FLIP,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+    /** Triggers whenever one or more matching creatures deal combat damage to a player or battle. */
+    ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
@@ -688,6 +692,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  instant/sorcery spell that is red, or an activated/triggered ability whose source card is a red
      *  planeswalker, and the damaged player must be an opponent of that entry's controller. */
     GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER,
+    /** Triggers whenever an instant or sorcery spell the controller controls deals damage to an
+     *  opponent or a battle, while this card is in the controller's graveyard. Checked from the
+     *  batched non-combat damage flush in {@code DamageSupport}. Used by Bloodfeather Phoenix. */
+    GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
     /** Triggers whenever one or more +1/+1 counters are put on this permanent.
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
@@ -695,6 +703,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever one or more +1/+1 counters are put on another non-Hydra creature the
      *  controller controls. Fired once per counter-placement event. */
     ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
+    /** Triggers whenever one or more +1/+1 counters are put on another permanent the controller
+     *  controls for the first time that turn. */
+    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN,
     /** Triggers whenever one or more +1/+1 counters are put on a permanent the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
     /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls. */
@@ -830,6 +841,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on all permanents with this slot on the creature's controller's battlefield. The
      *  spell path only checks this slot; activated abilities do not trigger it. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL,
+    /** Triggers whenever a creature controlled by the same player becomes the target of a backup
+     *  ability. The triggering backup ability is stored by its source card ID so the effect can
+     *  copy it while it remains on the stack. */
+    ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY,
     /** Triggers whenever a creature controlled by the same player becomes the target of an instant
      *  or sorcery spell — regardless of who controls that spell. Fires on ALL permanents with this
      *  slot on the creature's controller's battlefield (not just the targeted creature). The
@@ -1034,6 +1049,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_DEALS_COMBAT_DAMAGE,
     /** Triggers whenever this permanent itself deals combat damage to a player or planeswalker. */
     ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+    /** Triggers whenever this permanent itself deals combat damage to a player or battle. */
+    ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+    /** Triggers whenever the creature equipped by this permanent deals combat damage to a player or battle. */
+    ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
     /** Triggers whenever a creature its controller controls deals combat damage to anything — a
      *  creature, a player, or a planeswalker. Fires on the watcher permanent (which need not be a
      *  creature), once per damage-dealing creature per combat damage step; all damage that creature

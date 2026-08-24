@@ -300,12 +300,22 @@ public class CounterSupport {
      */
     public void resolveNotPaidRider(GameData gameData, Card sourceCard, UUID notPayingPlayerId,
                                     List<CardEffect> onNotPaidEffects) {
-        if (onNotPaidEffects == null || onNotPaidEffects.isEmpty()) {
+        resolveRider(gameData, sourceCard, notPayingPlayerId, notPayingPlayerId, onNotPaidEffects);
+    }
+
+    public void resolvePaidRider(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                 List<CardEffect> onPaidEffects) {
+        resolveRider(gameData, sourceCard, sourceControllerId, null, onPaidEffects);
+    }
+
+    private void resolveRider(GameData gameData, Card sourceCard, UUID controllerId, UUID targetId,
+                              List<CardEffect> riderEffects) {
+        if (controllerId == null || riderEffects == null || riderEffects.isEmpty()) {
             return;
         }
-        StackEntry riderEntry = new StackEntry(StackEntryType.INSTANT_SPELL, sourceCard, notPayingPlayerId,
-                sourceCard.getName(), new ArrayList<>(onNotPaidEffects), 0);
-        riderEntry.setTargetId(notPayingPlayerId);
+        StackEntry riderEntry = new StackEntry(StackEntryType.INSTANT_SPELL, sourceCard, controllerId,
+                sourceCard.getName(), new ArrayList<>(riderEffects), 0);
+        riderEntry.setTargetId(targetId);
         effectResolutionService.resolveEffects(gameData, riderEntry);
     }
 

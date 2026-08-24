@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -128,6 +129,21 @@ class DeathTriggerCollectorServiceTest {
         card.setPower(power);
         card.setToughness(toughness);
         return card;
+    }
+
+    @Test
+    @DisplayName("Uses the dying creature's power snapshot for incubate-by-power triggers")
+    void usesDyingPowerSnapshotForIncubate() {
+        Card card = createCreature("Furnace Gremlin", 1, 2);
+        Permanent perm = new Permanent(card);
+        var effect = new CreateTokenWithDyingSourcePowerCountersEffect(null);
+        var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm, 2);
+
+        assertThat(svc.handleCreateTokenWithDyingSourcePowerCounters(
+                match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(2);
     }
 
     private Card createEnchantment(String name) {

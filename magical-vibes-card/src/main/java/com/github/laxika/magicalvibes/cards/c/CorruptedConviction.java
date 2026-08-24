@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "OTJ", collectorNumber = "84")
+@CardRegistration(set = "MOM", collectorNumber = "98")
 public class CorruptedConviction extends Card {
 
     public CorruptedConviction() {

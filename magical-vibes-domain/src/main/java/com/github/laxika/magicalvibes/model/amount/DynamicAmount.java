@@ -36,6 +36,7 @@ public sealed interface DynamicAmount permits
         ColorManaSymbolsInGraveyard,
         ColorManaSymbolsInHand,
         CardsInHand,
+        ConvokeCreatureCount,
         ChosenNumberOnSource,
         ChosenPermanentPower,
         ControllerLifeTotal,

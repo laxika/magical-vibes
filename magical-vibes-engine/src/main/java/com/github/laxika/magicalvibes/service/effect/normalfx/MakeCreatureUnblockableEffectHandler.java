@@ -48,7 +48,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId));
     }
 
-    private void makeUnblockable(GameData gameData, Permanent target) {
+    public void makeUnblockable(GameData gameData, Permanent target) {
         if (target == null) {
             return;
         }
