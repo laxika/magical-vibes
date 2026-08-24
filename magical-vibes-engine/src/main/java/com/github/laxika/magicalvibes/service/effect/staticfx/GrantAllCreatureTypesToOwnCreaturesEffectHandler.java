@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,11 +25,14 @@ public class GrantAllCreatureTypesToOwnCreaturesEffectHandler implements StaticE
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        if (!support.matchesCreatureScope(context, GrantScope.OWN_CREATURES, null)) return;
+        var grant = (GrantAllCreatureTypesToOwnCreaturesEffect) effect;
+        if (grant.scope() == GrantScope.SELF
+                || !support.matchesCreatureScope(context, grant.scope(), null)) return;
         for (CardSubtype subtype : CardSubtype.values()) {
             if (StaticEffectSupport.isCreatureSubtype(subtype)) {
                 accumulator.addGrantedSubtype(subtype);
             }
         }
+        accumulator.addKeyword(Keyword.CHANGELING);
     }
 }

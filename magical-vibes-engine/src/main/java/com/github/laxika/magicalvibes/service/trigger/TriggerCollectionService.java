@@ -1845,6 +1845,14 @@ public class TriggerCollectionService {
     public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                    UUID sourcePermanentId, int totalDamage,
                                                    Map<UUID, Integer> damageToPlayers) {
+        queueSourceDealsDamageReflections(gameData, sourceCard, sourceControllerId, sourcePermanentId,
+                totalDamage, damageToPlayers, null);
+    }
+
+    public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                                   UUID sourcePermanentId, int totalDamage,
+                                                   Map<UUID, Integer> damageToPlayers,
+                                                   List<CardEffect> snapshottedSelfEffects) {
         if (sourceCard == null || sourceControllerId == null || totalDamage <= 0) return;
 
         var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
@@ -1875,13 +1883,18 @@ public class TriggerCollectionService {
         // Self triggers (El-Hajjâj): only the damage source's own "whenever this creature deals
         // damage" abilities fire. Keyed off the source card (not a battlefield scan) so it still
         // triggers when the source died dealing that damage.
-        List<CardEffect> selfEffects = new ArrayList<>(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        List<CardEffect> selfEffects = snapshottedSelfEffects == null
+                ? new ArrayList<>(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE))
+                : new ArrayList<>(snapshottedSelfEffects);
         // Granted "whenever this creature deals damage" abilities live on the permanent, not the card
-        // (the Genju cycle grants one to the animated land until end of turn).
+        // (the Genju cycle grants one to the animated land until end of turn). If no snapshot was
+        // captured, the source is still on the battlefield and can be read here.
         Permanent sourcePermanent = findPermanentByCardId(gameData, sourceCard.getId());
-        if (sourcePermanent != null) {
+        if (snapshottedSelfEffects == null && sourcePermanent != null) {
             selfEffects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
             selfEffects.addAll(sourcePermanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            selfEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, sourcePermanent, EffectSlot.ON_SELF_DEALS_DAMAGE));
         }
         for (CardEffect effect : selfEffects) {
             var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);

@@ -1464,7 +1464,7 @@ public class AmountEvaluationService {
         if (ctx.sourcePermanent() == null) return 0;
         return (int) ctx.sourcePermanent().getDevouredCreatures().stream()
                 .filter(card -> card.getSubtypes().contains(subtype)
-                        || card.getKeywords().contains(Keyword.CHANGELING))
+                        || card.hasKeyword(Keyword.CHANGELING))
                 .count();
     }
 

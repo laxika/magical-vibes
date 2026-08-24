@@ -300,6 +300,7 @@ public class CombatDamageService {
         Map<UUID, Permanent> damagedCreatureSnapshots = snapshotCombatDamagedCreatures(gameData, state);
         snapshotDelayedCombatDamageDrawSources(gameData, state);
         snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
+        snapshotSelfDealsDamageEffects(gameData, state);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.FINISHED) {
@@ -1106,7 +1107,19 @@ public class CombatDamageService {
             if (controllerId == null) controllerId = gameData.findControllerOf(source);
             if (controllerId == null) continue;
             triggerCollectionService.queueSourceDealsDamageReflections(
-                    gameData, source.getCard(), controllerId, source.getId(), damageDealt);
+                    gameData, source.getCard(), controllerId, source.getId(), damageDealt, Map.of(),
+                    state.selfDealsDamageEffects.get(source));
+        }
+    }
+
+    private void snapshotSelfDealsDamageEffects(GameData gameData, CombatDamageState state) {
+        for (Permanent source : state.combatDamageDealt.keySet()) {
+            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_SELF_DEALS_DAMAGE));
+            state.selfDealsDamageEffects.put(source, effects);
         }
     }
 

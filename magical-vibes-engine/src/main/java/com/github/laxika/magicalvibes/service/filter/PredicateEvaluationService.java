@@ -343,7 +343,7 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.cardHasSubtype(card, source.getChosenSubtype(), gameData, cardOwnerId)
                         || (gameQueryService.isCreatureSubtype(source.getChosenSubtype())
-                        && card.getKeywords().contains(Keyword.CHANGELING));
+                        && card.hasKeyword(Keyword.CHANGELING));
             }
             case CardHasSourceChosenColorPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

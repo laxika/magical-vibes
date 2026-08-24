@@ -596,6 +596,11 @@ per the engine's 613.2 modeling (§7), NOT via dependency — reading out-of-bat
 not a same-layer dependency on anything, so the CDA prefix stays outside the dependency
 relation entirely.
 
+Graveyard static effects that modify other battlefield permanents implement
+`GraveyardStaticEffect`. The layered pass collects those effects from the controller's graveyard
+as synthetic source instances, so their ordinary static handlers can evaluate battlefield scope
+and conditions while the graveyard card remains outside the battlefield.
+
 ### Limits
 
 - **Compute-once approximation:** the CR re-evaluates dependencies after each application;

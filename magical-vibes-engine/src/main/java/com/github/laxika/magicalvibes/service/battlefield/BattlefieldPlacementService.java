@@ -1161,7 +1161,7 @@ public class BattlefieldPlacementService {
         subtypes.addAll(entering.getCard().getSubtypes());
         subtypes.addAll(entering.getTransientSubtypes());
         subtypes.addAll(entering.getGrantedSubtypes());
-        boolean changeling = entering.getCard().getKeywords().contains(Keyword.CHANGELING);
+        boolean changeling = entering.getCard().hasKeyword(Keyword.CHANGELING);
 
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
         List<Permanent> snapshot = List.copyOf(bf);

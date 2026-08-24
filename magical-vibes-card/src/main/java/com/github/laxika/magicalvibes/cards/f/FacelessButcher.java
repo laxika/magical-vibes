@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "60")
+@CardRegistration(set = "TSB", collectorNumber = "43")
 public class FacelessButcher extends Card {
 
     public FacelessButcher() {
