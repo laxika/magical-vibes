@@ -80,6 +80,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
@@ -152,6 +153,9 @@ class ActivatedAbilityExecutionServiceTest {
         // No Mana Reflection in these tests — every mana production is 1x.
         lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
+        lenient().when(gameQueryService.lifeAfterDamage(eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> gameData.getLife(invocation.getArgument(1))
+                        - (int) invocation.getArgument(2));
     }
 
     // =========================================================================

@@ -2251,6 +2251,7 @@ public class SpellCastingService {
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
                 .findFirst().orElse(null);
         boolean needsExileTargeting = exileTargetingEffect != null;
+        boolean targetIsExiledCard = targetId != null && gameData.findExiledCard(targetId) != null;
         boolean hasGraveyardTargetInTargetIds = targetIds.stream().anyMatch(candidateId ->
                 gameData.orderedPlayerIds.stream()
                         .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream())
@@ -2273,7 +2274,7 @@ public class SpellCastingService {
 
         // Validate target if specified (can be a permanent or a player)
         if (targetId != null && !targetingSpellOnStack) {
-            if (needsExileTargeting) {
+            if (needsExileTargeting && targetIsExiledCard) {
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE, playerId);
             } else if (needsSingleGraveyardTargeting) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
@@ -3742,7 +3743,7 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetIds
                 ));
-            } else if (needsExileTargeting && targetId != null) {
+            } else if (needsExileTargeting && targetIsExiledCard) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId, null,
@@ -5790,6 +5791,7 @@ public class SpellCastingService {
                 .findFirst()
                 .orElse(null);
         boolean needsExileTargeting = exileTargetingEffect != null;
+        boolean targetIsExiledCard = targetId != null && gameData.findExiledCard(targetId) != null;
 
         if (targetId == null && targetIds.isEmpty() && EffectResolution.needsTarget(card)
                 && !EffectResolution.needsSpellTarget(effectsToResolve)
@@ -5804,7 +5806,7 @@ public class SpellCastingService {
             targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
         } else if (targetId != null && EffectResolution.needsSpellTarget(effectsToResolve)) {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
-        } else if (targetId != null && needsExileTargeting) {
+        } else if (targetId != null && needsExileTargeting && targetIsExiledCard) {
             targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE, playerId);
         } else if (targetId != null && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting)) {
             if (needsSingleGraveyardTargeting
@@ -5841,7 +5843,7 @@ public class SpellCastingService {
                     effectsToResolve, effectiveXValue, targetId,
                     null, Map.of(), Zone.STACK, List.of(), List.of()
             );
-        } else if (needsExileTargeting && targetId != null) {
+        } else if (needsExileTargeting && targetIsExiledCard) {
             stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),
                     effectsToResolve, effectiveXValue, targetId, null,

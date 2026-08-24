@@ -1208,12 +1208,18 @@ public class PermanentRemovalService {
                 .map(DyingCreatureLibraryReplacementEffect.class::cast)
                 .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
                 .findFirst()
-                .orElseGet(() -> gameQueryService.computeStaticBonus(gameData, target).grantedEffects().stream()
-                        .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
-                        .map(DyingCreatureLibraryReplacementEffect.class::cast)
-                        .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
-                        .findFirst()
-                        .orElse(null));
+                .orElseGet(() -> {
+                    var bonus = gameQueryService.computeStaticBonus(gameData, target);
+                    if (bonus == null) {
+                        return null;
+                    }
+                    return bonus.grantedEffects().stream()
+                            .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
+                            .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                            .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
+                            .findFirst()
+                            .orElse(null);
+                });
         if (replacement == null) {
             return false;
         }

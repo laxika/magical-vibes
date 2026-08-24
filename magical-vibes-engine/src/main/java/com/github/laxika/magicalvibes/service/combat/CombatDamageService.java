@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -829,7 +830,9 @@ public class CombatDamageService {
         for (Permanent permanent : defendingBattlefield) {
             if (permanent.isTapped()) continue;
             boolean redirectsUnblockedCombatDamage = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(RedirectUnblockedCombatDamageToSelfEffect.class::isInstance);
+                    .anyMatch(effect -> effect instanceof RedirectUnblockedCombatDamageToSelfEffect
+                            || effect instanceof RedirectPlayerDamageToSelfEffect redirect
+                            && redirect.onlyFromUnblockedCreatures());
             if (redirectsUnblockedCombatDamage) return permanent;
         }
         return null;

@@ -70,6 +70,7 @@ class CardImmutabilityArchTest {
             "ReturnDyingOpponentCreatureAsTreasureEffectHandler", // changes a fresh runtime copy into a Treasure card
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
             "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
+            "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

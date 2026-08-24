@@ -57,6 +57,7 @@ class CostEffectClassificationTest {
             "OpponentCreatesTokensCost",
             "OpponentGainsLifeCost",
             "GainControlOfPermanentsCost",
+            "PayEchoCost",
             "PayEnergyCost",
             "PayManaCost",
             "PutCounterOnSourceCost",

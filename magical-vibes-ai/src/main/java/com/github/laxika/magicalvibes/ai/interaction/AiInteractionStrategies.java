@@ -66,6 +66,7 @@ public final class AiInteractionStrategies {
         register(new AttachAurasChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
+        register(new ExiledCardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
         register(new RevealedHandChoiceAiStrategy());
         register(new RevealCardsDiscardChoiceAiStrategy());

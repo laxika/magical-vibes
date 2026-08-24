@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -63,7 +64,11 @@ class IgniteMemoriesTest extends BaseCardTest {
 
     private void resolveSpellAndStorm() {
         for (int i = 0; i < 10 && !gd.stack.isEmpty(); i++) {
-            harness.passBothPriorities();
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                harness.handleMayAbilityChosen(player1, false);
+            } else {
+                harness.passBothPriorities();
+            }
         }
     }
 }

@@ -271,10 +271,9 @@ public class LibraryChoiceHandlerService {
                     if (grantHaste) {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
                     }
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm);
                     if (gameData.pendingEffectResolutionEntry != null) {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
                     }
