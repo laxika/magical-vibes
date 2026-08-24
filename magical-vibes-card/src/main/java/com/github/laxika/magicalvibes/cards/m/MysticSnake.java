@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "112")
+@CardRegistration(set = "TSB", collectorNumber = "97")
 public class MysticSnake extends Card {
 
     public MysticSnake() {

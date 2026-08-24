@@ -521,7 +521,7 @@ public class GameActionAvailabilityService {
                 ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
                 ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
-                || card.getKeywords().contains(Keyword.CHANGELING))
+                || card.hasKeyword(Keyword.CHANGELING))
                 ? EnumSet.allOf(CardSubtype.class) : subtypeCreatureContext
                 : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
@@ -690,7 +690,7 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
                 ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
-                || card.getKeywords().contains(Keyword.CHANGELING))
+                || card.hasKeyword(Keyword.CHANGELING))
                 ? EnumSet.allOf(CardSubtype.class) : subtypeCreatureContext
                 : Set.of();
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.

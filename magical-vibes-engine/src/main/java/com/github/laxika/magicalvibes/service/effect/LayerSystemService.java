@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -42,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffe
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -1001,6 +1003,9 @@ public class LayerSystemService {
                 continue;
             }
             for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GraveyardStaticEffect) {
+                    continue;
+                }
                 if (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer)) {
                     continue;
                 }
@@ -1016,6 +1021,35 @@ public class LayerSystemService {
                 instances.add(new EffectInstance(slot, rewritten, effect, null,
                         classification.characteristicDefining(),
                         slot.permanent().getTimestamp(), slot.position()));
+            }
+        }
+        int graveyardPosition = slots.size();
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            if (graveyard == null) {
+                continue;
+            }
+            for (Card card : graveyard) {
+                List<CardEffect> staticEffects = card.getEffects(EffectSlot.STATIC);
+                if (staticEffects.stream().noneMatch(GraveyardStaticEffect.class::isInstance)) {
+                    continue;
+                }
+                Permanent sourcePermanent = new Permanent(card);
+                PermanentSlot source = new PermanentSlot(controllerId, sourcePermanent, graveyardPosition++);
+                for (CardEffect effect : staticEffects) {
+                    if (!(effect instanceof GraveyardStaticEffect)
+                            || (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer))) {
+                        continue;
+                    }
+                    LayerClassifier.LayerClassification classification = classifyOrNull(effect);
+                    if (classification == null || !classification.layers().contains(layer)) {
+                        continue;
+                    }
+                    CardEffect rewritten = TextChangeTransformer.transform(
+                            effect, sourcePermanent.getTextReplacements(), globalWordChange);
+                    instances.add(new EffectInstance(source, rewritten, effect, null,
+                            classification.characteristicDefining(), sourcePermanent.getTimestamp(), source.position()));
+                }
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -1353,6 +1387,22 @@ public class LayerSystemService {
                             landSubtypeOverride, null, null));
                 }
             }
+            case GrantAllCreatureTypesToOwnCreaturesEffect grant -> {
+                manage(board, instance);
+                List<CardSubtype> allCreatureTypes = new ArrayList<>();
+                for (CardSubtype subtype : CardSubtype.values()) {
+                    if (StaticEffectSupport.isCreatureSubtype(subtype)) {
+                        allCreatureTypes.add(subtype);
+                    }
+                }
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), null,
+                        slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    allCreatureTypes.forEach(state::addSubtype);
+                    state.addKeyword(Keyword.CHANGELING);
+                    record(board, instance, target, new L4Contribution(allCreatureTypes, false, false));
+                }
+            }
             case SetCreatureTypesToImprintedCreatureEffect setTypes -> {
                 manage(board, instance);
                 PermanentSlot source = instance.source();
@@ -1683,8 +1733,9 @@ public class LayerSystemService {
             case LoseAllCreatureTypesEffect ignored -> {
                 // Only reachable as a floating effect (the STATIC slot never carries it).
                 for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
-                    states.get(target.permanent().getId())
-                            .removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                    state.removeKeyword(Keyword.CHANGELING);
                 }
             }
             case RemoveCardTypeFromTargetPermanentEffect remove -> {

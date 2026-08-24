@@ -4531,6 +4531,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated during combat");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_END_OF_COMBAT) {
+                if (gameData.currentStep != TurnStep.END_OF_COMBAT) {
+                    throw new IllegalStateException("This ability can only be activated during the end of combat step");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_BEFORE_END_OF_COMBAT) {
                 if (!gameData.currentStep.isBeforeEndOfCombat()) {
                     throw new IllegalStateException("This ability can only be activated before the end of combat step");

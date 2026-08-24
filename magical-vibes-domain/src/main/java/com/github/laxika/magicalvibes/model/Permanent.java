@@ -1283,7 +1283,7 @@ public class Permanent {
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
             default -> null;
         };
-        return (!faceDown && card.getKeywords().contains(keyword)) || grantedKeywords.contains(keyword)
+        return (!faceDown && card.hasKeyword(keyword)) || grantedKeywords.contains(keyword)
                 || persistentGrantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword)
                 || (keywordCounter != null && getCounterCount(keywordCounter) > 0);

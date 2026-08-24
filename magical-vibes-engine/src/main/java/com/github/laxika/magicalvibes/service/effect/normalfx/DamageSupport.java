@@ -1618,7 +1618,8 @@ public class DamageSupport {
         if (batch == null) {
             gameData.pendingSourceDamageForReflection.put(sourceCard.getId(),
                     new PendingSourceDamage(sourceCard, sourceControllerId, sourcePermanentId, damage,
-                            damagedPlayerId, damagedPermanentControllerId));
+                            damagedPlayerId, damagedPermanentControllerId,
+                            snapshotSelfDealsDamageEffects(gameData, sourceCard, sourcePermanentId)));
         } else {
             batch.add(damage, damagedPlayerId, damagedPermanentControllerId);
         }
@@ -1636,13 +1637,27 @@ public class DamageSupport {
         for (PendingSourceDamage batch : batches) {
             triggerCollectionService.queueSourceDealsDamageReflections(gameData,
                     batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount(),
-                    batch.getDamageToPlayers());
+                    batch.getDamageToPlayers(), batch.getSelfDealsDamageEffects());
             Set<UUID> damagedPlayers = new LinkedHashSet<>(batch.getDamageToPlayers().keySet());
             damagedPlayers.addAll(batch.getDamageToPermanentControllers());
             triggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers(
                     gameData, batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(),
                     damagedPlayers);
         }
+    }
+
+    private List<CardEffect> snapshotSelfDealsDamageEffects(GameData gameData, Card sourceCard,
+                                                             UUID sourcePermanentId) {
+        if (sourcePermanentId == null) return null;
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent == null) return null;
+
+        List<CardEffect> effects = new ArrayList<>(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        effects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        effects.addAll(sourcePermanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        effects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                gameData, sourcePermanent, EffectSlot.ON_SELF_DEALS_DAMAGE));
+        return effects;
     }
 
 

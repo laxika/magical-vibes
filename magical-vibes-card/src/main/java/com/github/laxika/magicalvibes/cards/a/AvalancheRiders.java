@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ULG", collectorNumber = "74")
+@CardRegistration(set = "TSB", collectorNumber = "55")
 public class AvalancheRiders extends Card {
 
     public AvalancheRiders() {

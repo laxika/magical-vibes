@@ -6653,7 +6653,7 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
                 ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
-                || card.getKeywords().contains(Keyword.CHANGELING))
+                || card.hasKeyword(Keyword.CHANGELING))
                 ? EnumSet.allOf(CardSubtype.class)
                 : nullToEmpty(gameQueryService.getCardSubtypes(card, gameData, playerId))
                 : Set.of();

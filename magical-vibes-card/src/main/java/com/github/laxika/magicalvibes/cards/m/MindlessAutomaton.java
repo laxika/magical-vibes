@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "135")
 @CardRegistration(set = "TPR", collectorNumber = "227")
+@CardRegistration(set = "TSB", collectorNumber = "111")
 public class MindlessAutomaton extends Card {
 
     public MindlessAutomaton() {

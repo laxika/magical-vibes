@@ -116,6 +116,7 @@ public class TurnFaceUpCopyService {
                 boolean includeAbilities = false;
                 if (source.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
                     spellFilter = filter.predicate();
+                    includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
                 }
                 gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                         source.getCard(), controllerId, effects, spellFilter, includeAbilities, source.getId()));

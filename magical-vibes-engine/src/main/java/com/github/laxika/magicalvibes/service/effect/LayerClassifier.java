@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffe
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
@@ -331,6 +332,7 @@ public final class LayerClassifier {
                 (effect, fromOwnStaticSlot) -> ((GrantKeywordEffect) effect).keywords().contains(Keyword.CHANGELING)
                         ? new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES), false, false)
                         : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false)));
+        map.put(GrantKeywordToOwnCreaturesFromGraveyardEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveProtectionFromColorUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));

@@ -663,6 +663,8 @@ public class GameQueryService {
      */
     public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
         if (card.getSubtypes().contains(subtype)) return true;
+        if (card.hasType(CardType.CREATURE) && isCreatureSubtype(subtype)
+                && hasSelfAllCreatureTypesEffect(card)) return true;
         if (gameData == null || cardOwnerId == null) return false;
         if (!card.hasType(CardType.CREATURE)) return false;
         if (computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype)) {
@@ -708,6 +710,11 @@ public class GameQueryService {
      */
     public Set<CardSubtype> getCardSubtypes(Card card, GameData gameData, UUID cardOwnerId) {
         Set<CardSubtype> subtypes = new java.util.HashSet<>(card.getSubtypes());
+        if (card.hasType(CardType.CREATURE) && hasSelfAllCreatureTypesEffect(card)) {
+            for (CardSubtype subtype : CardSubtype.values()) {
+                if (isCreatureSubtype(subtype)) subtypes.add(subtype);
+            }
+        }
         if (gameData != null && cardOwnerId != null && card.hasType(CardType.CREATURE)) {
             subtypes.addAll(computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId));
             if (isCardInGraveyard(gameData, cardOwnerId, card)) {
@@ -715,6 +722,12 @@ public class GameQueryService {
             }
         }
         return subtypes;
+    }
+
+    private boolean hasSelfAllCreatureTypesEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
+                        && grant.scope() == GrantScope.SELF);
     }
 
     /**
@@ -767,7 +780,8 @@ public class GameQueryService {
                     if (chosen != null && !result.contains(chosen)) {
                         result.add(chosen);
                     }
-                } else if (effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect) {
+                } else if (effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
+                        && grant.scope() != GrantScope.SELF) {
                     for (CardSubtype subtype : CardSubtype.values()) {
                         if (isCreatureSubtype(subtype) && !result.contains(subtype)) {
                             result.add(subtype);
@@ -4126,7 +4140,7 @@ public class GameQueryService {
         for (CardSubtype subtype : sourceCard.getSubtypes()) {
             if (protectedSubtypes.contains(subtype)) return true;
         }
-        if (sourceCard.getKeywords().contains(Keyword.CHANGELING)
+        if (sourceCard.hasKeyword(Keyword.CHANGELING)
                 && protectedSubtypes.stream().anyMatch(this::isCreatureSubtype)) {
             return true;
         }
@@ -4177,7 +4191,7 @@ public class GameQueryService {
                 && !sourceCard.getAdditionalTypes().contains(CardType.CREATURE)) return false;
         for (CardSubtype subtype : protectedFrom) {
             if (!sourceCard.getSubtypes().contains(subtype)
-                    && !(isCreatureSubtype(subtype) && sourceCard.getKeywords().contains(Keyword.CHANGELING))) {
+                    && !(isCreatureSubtype(subtype) && sourceCard.hasKeyword(Keyword.CHANGELING))) {
                 return true;
             }
         }
@@ -5861,7 +5875,7 @@ public class GameQueryService {
      */
     public boolean shareCreatureType(GameData gameData, Permanent permanent, Card card) {
         boolean permanentChangeling = hasKeyword(gameData, permanent, Keyword.CHANGELING);
-        boolean cardChangeling = card.getKeywords().contains(Keyword.CHANGELING);
+        boolean cardChangeling = card.hasKeyword(Keyword.CHANGELING);
         Set<CardSubtype> permanentTypes = effectiveCreatureSubtypes(gameData, permanent);
         Set<CardSubtype> cardTypes = card.getSubtypes().stream()
                 .filter(this::isCreatureSubtype)
@@ -5882,8 +5896,8 @@ public class GameQueryService {
     public boolean shareCreatureType(Card a, Card b) {
         Set<CardSubtype> aTypes = Set.copyOf(a.getSubtypes());
         Set<CardSubtype> bTypes = Set.copyOf(b.getSubtypes());
-        boolean aChangeling = a.getKeywords().contains(Keyword.CHANGELING);
-        boolean bChangeling = b.getKeywords().contains(Keyword.CHANGELING);
+        boolean aChangeling = a.hasKeyword(Keyword.CHANGELING);
+        boolean bChangeling = b.hasKeyword(Keyword.CHANGELING);
         if (aChangeling) {
             return bChangeling || !bTypes.isEmpty();
         }
@@ -5941,7 +5955,7 @@ public class GameQueryService {
         if (battlefield == null) {
             return false;
         }
-        boolean cardChangeling = card.getKeywords().contains(Keyword.CHANGELING);
+        boolean cardChangeling = card.hasKeyword(Keyword.CHANGELING);
         boolean cardHasAnyCreatureType = card.getSubtypes().stream().anyMatch(this::isCreatureSubtype);
 
         for (Permanent permanent : battlefield) {

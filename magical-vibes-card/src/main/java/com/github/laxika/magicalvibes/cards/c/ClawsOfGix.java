@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "290")
+@CardRegistration(set = "TSB", collectorNumber = "107")
 public class ClawsOfGix extends Card {
 
     public ClawsOfGix() {

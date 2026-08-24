@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -1213,7 +1215,10 @@ public class Card {
     }
 
     public boolean hasKeyword(Keyword keyword) {
-        return keywords.contains(keyword);
+        return keywords.contains(keyword)
+                || (keyword == Keyword.CHANGELING && getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
+                        && grant.scope() == GrantScope.SELF));
     }
 
     public boolean isAura() {

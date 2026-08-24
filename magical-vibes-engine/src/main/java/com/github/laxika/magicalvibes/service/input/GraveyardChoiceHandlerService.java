@@ -259,7 +259,7 @@ public class GraveyardChoiceHandlerService {
                     // until end of turn." The subtype is checked against the returned card (changeling-aware).
                     if (grantSourceHasteIfSubtype != null && grantSourceHasteSourcePermanentId != null
                             && (gameQueryService.cardHasSubtype(card, grantSourceHasteIfSubtype, gameData, playerId)
-                                || card.getKeywords().contains(com.github.laxika.magicalvibes.model.Keyword.CHANGELING))) {
+                                || card.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.CHANGELING))) {
                         Permanent sourcePerm = gameQueryService.findPermanentById(gameData, grantSourceHasteSourcePermanentId);
                         if (sourcePerm != null) {
                             sourcePerm.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.HASTE);

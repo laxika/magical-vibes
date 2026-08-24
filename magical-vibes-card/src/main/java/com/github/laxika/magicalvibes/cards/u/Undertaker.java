@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "167")
+@CardRegistration(set = "TSB", collectorNumber = "53")
 public class Undertaker extends Card {
 
     public Undertaker() {

@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -21,6 +24,7 @@ public final class PendingSourceDamage {
     private int amount;
     private final Map<UUID, Integer> damageToPlayers = new LinkedHashMap<>();
     private final Set<UUID> damageToPermanentControllers = new LinkedHashSet<>();
+    private final List<CardEffect> selfDealsDamageEffects;
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount) {
         this(sourceCard, controllerId, sourcePermanentId, amount, null);
@@ -33,10 +37,18 @@ public final class PendingSourceDamage {
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
                                UUID damagedPlayerId, UUID damagedPermanentControllerId) {
+        this(sourceCard, controllerId, sourcePermanentId, amount, damagedPlayerId,
+                damagedPermanentControllerId, null);
+    }
+
+    public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
+                               UUID damagedPlayerId, UUID damagedPermanentControllerId,
+                               List<CardEffect> selfDealsDamageEffects) {
         this.sourceCard = sourceCard;
         this.controllerId = controllerId;
         this.sourcePermanentId = sourcePermanentId;
         this.amount = amount;
+        this.selfDealsDamageEffects = selfDealsDamageEffects == null ? null : List.copyOf(selfDealsDamageEffects);
         addToPlayer(damagedPlayerId, amount);
         addToPermanentController(damagedPermanentControllerId);
     }
@@ -63,6 +75,10 @@ public final class PendingSourceDamage {
 
     public Set<UUID> getDamageToPermanentControllers() {
         return Set.copyOf(damageToPermanentControllers);
+    }
+
+    public List<CardEffect> getSelfDealsDamageEffects() {
+        return selfDealsDamageEffects;
     }
 
     public void add(int extra) {
@@ -93,7 +109,8 @@ public final class PendingSourceDamage {
     }
 
     public PendingSourceDamage copy() {
-        PendingSourceDamage copy = new PendingSourceDamage(sourceCard, controllerId, sourcePermanentId, amount);
+        PendingSourceDamage copy = new PendingSourceDamage(sourceCard, controllerId, sourcePermanentId, amount,
+                null, null, selfDealsDamageEffects);
         damageToPlayers.forEach((playerId, playerDamage) -> copy.damageToPlayers.put(playerId, playerDamage));
         copy.damageToPermanentControllers.addAll(damageToPermanentControllers);
         return copy;
