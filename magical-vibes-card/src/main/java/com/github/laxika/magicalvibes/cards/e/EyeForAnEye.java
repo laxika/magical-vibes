@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EyeForAnEyeEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "30")
 @CardRegistration(set = "4ED", collectorNumber = "25")
+@CardRegistration(set = "SUM", collectorNumber = "18")
 public class EyeForAnEye extends Card {
 
     public EyeForAnEye() {

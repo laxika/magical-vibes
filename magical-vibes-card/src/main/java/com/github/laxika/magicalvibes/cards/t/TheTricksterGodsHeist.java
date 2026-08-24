@@ -40,7 +40,7 @@ public class TheTricksterGodsHeist extends Card {
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new MayEffect(
                 new ExchangeControlOfTargetPermanentsEffect(
-                        NONBASIC_NONCREATURE, false, false, false, false, false, false, true, null),
+                        NONBASIC_NONCREATURE, false, false, false, false, false, false, true, null, false),
                 "Exchange control of the two target nonbasic, noncreature permanents?"));
         setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(

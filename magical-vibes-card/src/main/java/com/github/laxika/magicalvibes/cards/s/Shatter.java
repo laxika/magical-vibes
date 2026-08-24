@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ICE", collectorNumber = "216")
 @CardRegistration(set = "TMP", collectorNumber = "203")
 @CardRegistration(set = "RIX", collectorNumber = "114")
+@CardRegistration(set = "SUM", collectorNumber = "175")
+@CardRegistration(set = "DKM", collectorNumber = "20")
 public class Shatter extends Card {
 
     public Shatter() {

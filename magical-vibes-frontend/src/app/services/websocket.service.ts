@@ -34,6 +34,7 @@ export enum MessageType {
   INTERACTION_PROMPT = 'INTERACTION_PROMPT',
   INTERACTION_ANSWER = 'INTERACTION_ANSWER',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
+  ACTIVATE_EXILED_ABILITY = 'ACTIVATE_EXILED_ABILITY',
   ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
   ACTIVATE_HAND_ABILITY = 'ACTIVATE_HAND_ABILITY',
   REVEAL_HAND = 'REVEAL_HAND',
@@ -196,12 +197,14 @@ export interface Card {
   additionalBeholdChosenCreatureType: boolean;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   handActivatedAbilities?: ActivatedAbilityView[];
+  exileActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
   kickerRequiresTap: boolean;
   kickerRequiresReturn: boolean;
   buybackCost: string | null;
   buybackRequiresSacrifice?: boolean;
+  buybackSacrificeCount?: number;
   buybackDiscardCount?: number;
   modalChoicesRequired: number;
   modalChoicesMax: number;

@@ -24,6 +24,7 @@ class WitherbloomApprenticeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -41,8 +42,17 @@ class WitherbloomApprenticeTest extends BaseCardTest {
 
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveStack();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    private void resolveStack() {
+        int guard = 0;
+        while (!gd.stack.isEmpty() && guard++ < 10) {
+            harness.passBothPriorities();
+        }
     }
 }

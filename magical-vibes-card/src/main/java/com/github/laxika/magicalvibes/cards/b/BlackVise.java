@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "299")
+@CardRegistration(set = "SUM", collectorNumber = "236")
 public class BlackVise extends Card {
 
     public BlackVise() {

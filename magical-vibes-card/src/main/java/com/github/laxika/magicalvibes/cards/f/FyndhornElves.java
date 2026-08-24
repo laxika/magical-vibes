@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "244")
+@CardRegistration(set = "DKM", collectorNumber = "26")
 public class FyndhornElves extends Card {
 
     public FyndhornElves() {

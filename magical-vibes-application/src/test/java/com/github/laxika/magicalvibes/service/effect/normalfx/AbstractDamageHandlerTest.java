@@ -102,8 +102,9 @@ abstract class AbstractDamageHandlerTest {
                         eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through — dealDamageToPlayer calls it unconditionally.
-        lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(eq(gd), any(), anyInt()))
-                .thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         // Oracle's Attendants: consulted for every creature damage event, including spell damage with no
         // source permanent, so it must pass through when no redirect shield is set up.
         lenient().when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt()))
@@ -219,7 +220,9 @@ abstract class AbstractDamageHandlerTest {
         when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(playerId), anyInt(), anyString())).thenAnswer(inv -> inv.getArgument(2));
+        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                eq(gd), eq(playerId), anyInt(), anyString(), anyBoolean(), nullable(UUID.class)))
+                .thenAnswer(inv -> inv.getArgument(2));
         when(gameQueryService.canPlayerLifeChange(gd, playerId)).thenReturn(true);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
     }

@@ -42,6 +42,11 @@ class StormKilnArtistTest extends BaseCardTest {
         harness.castWithConspire(player1, 0, target.getId(),
                 List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        int guard = 0;
+        while (!gd.stack.isEmpty() && guard++ < 10) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()

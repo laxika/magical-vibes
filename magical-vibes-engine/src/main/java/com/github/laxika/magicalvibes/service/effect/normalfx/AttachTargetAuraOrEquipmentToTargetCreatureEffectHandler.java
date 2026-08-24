@@ -66,7 +66,7 @@ public class AttachTargetAuraOrEquipmentToTargetCreatureEffectHandler implements
             attachment.setTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardTextCard(attachment.getCard(), " is now attached to ",
                     destination.getCard(), "."));
-            triggerCollectionService.checkAuraAttachedTriggers(gameData, attachment.getCard(), destination.getId());
+            triggerCollectionService.checkAuraAttachedTriggers(gameData, attachment, destination.getId());
         } else if (attachment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                 && equipSupport.canAttachEquipment(gameData, attachment, destination)) {
             UUID oldAttachedTo = attachment.getAttachedTo();

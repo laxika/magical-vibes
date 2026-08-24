@@ -1566,7 +1566,7 @@ public abstract class AiDecisionEngine {
             GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         return Math.min(
                 Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
-                        maximumBlockersForTeam(attackerBattlefield)),
+                        maximumBlockersForTeam(gameData, attacker, attackerBattlefield)),
                 CombatHelper.getMaximumBlockers(gameData));
     }
 
@@ -1766,7 +1766,8 @@ public abstract class AiDecisionEngine {
         int maximumBlockers = Math.min(
                 gameQueryService.getMaxBlockersAllowed(gameData, attacker),
                 CombatHelper.getMaximumBlockers(gameData));
-        maximumBlockers = Math.min(maximumBlockers, maximumBlockersForTeam(attackerBattlefield));
+        maximumBlockers = Math.min(maximumBlockers,
+                maximumBlockersForTeam(gameData, attacker, attackerBattlefield));
         if (defenderIndices.size() > maximumBlockers
                 || defenderIndices.size() < AiUtils.minimumBlockersRequiredToBlock(
                         gameData, gameQueryService, attacker)) {
@@ -1779,11 +1780,15 @@ public abstract class AiDecisionEngine {
         });
     }
 
-    private int maximumBlockersForTeam(List<Permanent> attackerBattlefield) {
+    private int maximumBlockersForTeam(
+            GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         int maximumBlockers = Integer.MAX_VALUE;
         for (Permanent permanent : attackerBattlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
+                        && (restriction.affectedCreatureFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, restriction.affectedCreatureFilter()))) {
                     maximumBlockers = Math.min(maximumBlockers, restriction.maxBlockers());
                 }
             }

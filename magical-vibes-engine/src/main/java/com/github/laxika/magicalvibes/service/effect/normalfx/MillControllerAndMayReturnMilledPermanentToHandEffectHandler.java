@@ -55,7 +55,8 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card,
                     entry.getControllerId(),
-                    List.of(new ReturnMilledPermanentToHandEffect(groupId, millEffect.filter())),
+                    List.of(new ReturnMilledPermanentToHandEffect(
+                            groupId, millEffect.filter(), millEffect.maxCount())),
                     "Put " + card.getName() + " into your hand?"));
         }
     }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -26,8 +27,11 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -39,6 +43,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -178,6 +183,38 @@ public class TriggeredAbilityQueueService {
                 log.info("Game {} - {} death trigger skipped (no valid creature targets)",
                         gameData.id, pending.dyingCard().getName());
                 continue;
+            }
+
+            DistributeCountersAmongTargetsEffect counterDistribution = pending.effects().stream()
+                    .filter(DistributeCountersAmongTargetsEffect.class::isInstance)
+                    .map(DistributeCountersAmongTargetsEffect.class::cast)
+                    .filter(e -> e.mode() == DivisionMode.CHOSEN && e.removeAtNextEndStep())
+                    .findFirst()
+                    .orElse(null);
+            if (counterDistribution != null && pending.dyingCard().getSpellTargets().size() == 1) {
+                int total = counterDistribution.total() instanceof Fixed fixed ? fixed.value() : 0;
+                if (total > 0) {
+                    gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+                    int maxTargets = Math.min(total, Math.min(
+                            pending.dyingCard().getMaxTargets(), result.validTargets().size()));
+                    playerInputService.beginMultiPermanentChoice(
+                            gameData,
+                            pending.controllerId(),
+                            result.validTargets(),
+                            maxTargets,
+                            new MultiPermanentChoiceContext.CounterDistribution(
+                                    pending.dyingCard(), pending.controllerId(), pending.effects(),
+                                    pending.sourcePermanentSnapshot() == null
+                                            ? null : pending.sourcePermanentSnapshot().getId(),
+                                    counterDistribution.counterType(), total),
+                            pending.dyingCard().getName()
+                                    + "'s ability — Choose one, two, or three target creatures.");
+                    gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
+                            "'s death trigger — choose creatures for counter distribution."));
+                    log.info("Game {} - {} death trigger awaiting counter distribution targets",
+                            gameData.id, pending.dyingCard().getName());
+                    return;
+                }
             }
 
             // Remove from queue and begin permanent choice
@@ -761,6 +798,51 @@ public class TriggeredAbilityQueueService {
             gameLogService.append(gameData, GameLog.cardThen(pending.discardedCard(),
                     "'s discard trigger - choose a target."));
             log.info("Game {} - {} discard trigger awaiting target selection", gameData.id, pending.discardedCard().getName());
+            return;
+        }
+    }
+
+    public void processNextPlotTrigger(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            PermanentChoiceContext.PlotTriggerAnyTarget pending =
+                    gameData.peekPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class);
+
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    null,
+                    pending.controllerId(),
+                    pending.plottedCard(),
+                    TriggerTargetCollector.Options.ATTACK);
+            List<UUID> validPermanentTargets = result.validTargets().stream()
+                    .filter(id -> !gameData.playerIds.contains(id))
+                    .toList();
+            List<UUID> validPlayerTargets = result.validTargets().stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+
+            if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class);
+                gameLogService.append(gameData, GameLog.cardThen(pending.plottedCard(),
+                        "'s plotted trigger has no valid targets."));
+                log.info("Game {} - {} plotted trigger skipped (no valid targets)",
+                        gameData.id, pending.plottedCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            String targetDescription = result.canTargetPlayers() && result.canTargetPermanents()
+                    ? "any target"
+                    : result.canTargetPlayers() ? "target player" : "target permanent";
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets,
+                    pending.plottedCard().getName() + "'s ability - Choose " + targetDescription + ".");
+
+            gameLogService.append(gameData, GameLog.cardThen(pending.plottedCard(),
+                    "'s plotted trigger - choose " + targetDescription + "."));
+            log.info("Game {} - {} plotted trigger awaiting target selection", gameData.id,
+                    pending.plottedCard().getName());
             return;
         }
     }
@@ -1415,6 +1497,11 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
+                    if (returnEffect != null && returnEffect.targetNotPutIntoGraveyardThisCombat()
+                            && gameData.cardsPutIntoGraveyardThisCombat
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (manaValueEqualsX
                             && graveyardCard.getManaValue() != pending.xValue() + manaValueXOffset) {
                         continue;
@@ -1502,6 +1589,13 @@ public class TriggeredAbilityQueueService {
         }
         if (effect instanceof SacrificeSelfThenEffect sacrificeSelfThen) {
             return targetedReturnEffect(sacrificeSelfThen.thenEffect());
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream()
+                    .map(this::targetedReturnEffect)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
         }
         return null;
     }

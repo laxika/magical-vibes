@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -954,6 +955,30 @@ class DeathTriggerCollectorServiceTest {
             var resolved = (EnchantedControllerSacrificesCreatureOnLeaveEffect)
                     gd.stack.get(0).getEffectsToResolve().get(0);
             assertThat(resolved.enchantedControllerId()).isEqualTo(PLAYER2_ID);
+        }
+    }
+
+    @Nested
+    @DisplayName("Any permanent graveyard handlers")
+    class AnyPermanentGraveyardHandlers {
+
+        @Test
+        @DisplayName("Default effect queues a trigger for any permanent, including tokens")
+        void defaultQueuesTrigger() {
+            Card watcher = createEnchantment("Last Laugh");
+            Permanent perm = new Permanent(watcher);
+            var effect = new MassDamageEffect(1, true);
+            var dying = createArtifact("Treasure");
+            dying.setToken(true);
+            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
+
+            assertThat(svc.handleAnyPermanentGraveyardDefault(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.get(0).getTargetId()).isEqualTo(PLAYER2_ID);
+            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
     }
 

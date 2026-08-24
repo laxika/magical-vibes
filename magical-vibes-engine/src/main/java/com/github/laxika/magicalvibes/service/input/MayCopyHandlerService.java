@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -446,17 +447,18 @@ public class MayCopyHandlerService {
             return;
         }
 
-        // Apply the copy
-        String originalName = sourcePermanent.getCard().getName();
-        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
-
         // Retain the source's copy ability per "except it has this ability".
-        Card copiedCard = sourcePermanent.getCard();
         BecomeCopyOfTargetCreatureEffect copyEffect = ability.effects().stream()
                 .filter(BecomeCopyOfTargetCreatureEffect.class::isInstance)
                 .map(BecomeCopyOfTargetCreatureEffect.class::cast)
                 .findFirst()
                 .orElseThrow();
+        // Apply the copy
+        String originalName = sourcePermanent.getCard().getName();
+        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm.getCard(), null, null, Set.of(),
+                List.of(), copyEffect.copyColor());
+
+        Card copiedCard = sourcePermanent.getCard();
         EffectSlot retainedEffectSlot = copyEffect.retainedEffectSlot();
         for (EffectRegistration registration : sourcePermanent.getOriginalCard()
                 .getEffectRegistrations(retainedEffectSlot)) {

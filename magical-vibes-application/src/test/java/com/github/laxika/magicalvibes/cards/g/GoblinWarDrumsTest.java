@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.i.IcatianInfantry;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinWarDrums.class, IcatianInfantry.class})
 class GoblinWarDrumsTest extends BaseCardTest {
 
     @Test
@@ -34,42 +37,52 @@ class GoblinWarDrumsTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures you control gain menace")
     void ownCreaturesGainMenace() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent infantry = addCreatureReady(player1, new IcatianInfantry());
         harness.addToBattlefield(player1, new GoblinWarDrums());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, infantry, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering later under your control gain menace")
+    void creaturesEnteringLaterGainMenace() {
+        harness.addToBattlefield(player1, new GoblinWarDrums());
+        Permanent infantry = addCreatureReady(player1, new IcatianInfantry());
+
+        assertThat(gqs.hasKeyword(gd, infantry, Keyword.MENACE)).isTrue();
     }
 
     @Test
     @DisplayName("Opponent creatures do not gain menace")
     void opponentCreaturesDoNotGainMenace() {
-        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentInfantry = addCreatureReady(player2, new IcatianInfantry());
         harness.addToBattlefield(player1, new GoblinWarDrums());
 
-        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentInfantry, Keyword.MENACE)).isFalse();
     }
 
     @Test
     @DisplayName("Menace bonus is removed when Goblin War Drums leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent infantry = addCreatureReady(player1, new IcatianInfantry());
         harness.addToBattlefield(player1, new GoblinWarDrums());
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, infantry, Keyword.MENACE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Goblin War Drums"));
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, infantry, Keyword.MENACE)).isFalse();
     }
 
     @Test
     @DisplayName("Granted menace stops a single blocker")
     void grantedMenaceStopsSingleBlocker() {
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new IcatianInfantry());
         harness.addToBattlefield(player1, new GoblinWarDrums());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new IcatianInfantry());
 
-        attackWithFirstCreature();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
         harness.beginBlockerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -80,12 +93,13 @@ class GoblinWarDrumsTest extends BaseCardTest {
     @Test
     @DisplayName("Granted menace allows two blockers")
     void grantedMenaceAllowsTwoBlockers() {
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new IcatianInfantry());
         harness.addToBattlefield(player1, new GoblinWarDrums());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new IcatianInfantry());
+        addCreatureReady(player2, new IcatianInfantry());
 
-        attackWithFirstCreature();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
         harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(
@@ -97,13 +111,14 @@ class GoblinWarDrumsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isBlocking()).isTrue();
     }
 
-    private void attackWithFirstCreature() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("A creature version of Goblin War Drums also has menace")
+    void creatureVersionOfSourceHasMenace() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent drums = harness.addToBattlefieldAndReturn(player1, new GoblinWarDrums());
 
-        gs.declareAttackers(gd, player1, List.of(0));
-        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, drums)).isTrue();
+        assertThat(gqs.hasKeyword(gd, drums, Keyword.MENACE)).isTrue();
     }
 }

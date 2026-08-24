@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,8 +21,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
@@ -50,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -870,6 +874,31 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Conditional equip cost reduction applies only when its condition is met")
+        void conditionalEquipCostReductionChecksItsCondition() {
+            Card nahiri = new Card();
+            nahiri.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                    new ControllerTurn(), new ReduceEquipCostEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(nahiri));
+
+            Permanent equipment = new Permanent(new Card());
+            ActivatedAbility equipAbility = new EquipActivatedAbility("{2}");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerTurn.class), any()))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
+                    .isEqualTo(1);
+
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerTurn.class), any()))
+                    .thenReturn(false);
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
+                    .isZero();
+        }
+
+        @Test
         @DisplayName("Symmetric activated-ability reductions are not counted as controller-scoped reductions")
         void symmetricReductionIsNotCountedTwice() {
             Card trainingGrounds = new Card();
@@ -1406,6 +1435,40 @@ class CastingCostServiceTest {
 
             assertThat(svc.getTargetingStackEntryTax(gd, someId, null)).isZero();
         }
+    }
+
+    @Test
+    @DisplayName("Flashback sacrifice cost is payable only with enough matching permanents")
+    void flashbackSacrificeCostIsPayableWithEnoughMatchingPermanents() {
+        FlashbackCast flashback = new FlashbackCast(List.of(
+                new SacrificePermanentsCost(3, new PermanentIsCreaturePredicate())));
+        Permanent first = new Permanent(flashbackCreature("Bear 1"));
+        Permanent second = new Permanent(flashbackCreature("Bear 2"));
+        Permanent third = new Permanent(flashbackCreature("Bear 3"));
+        gd.playerBattlefields.get(player1Id).addAll(List.of(first, second, third));
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+
+        assertThat(svc.canPayFlashbackPermanentCosts(gd, player1Id, flashback)).isTrue();
+
+        gd.playerBattlefields.get(player1Id).remove(third);
+        assertThat(svc.canPayFlashbackPermanentCosts(gd, player1Id, flashback)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashback discard-X cost is supported")
+    void flashbackDiscardXCostIsSupported() {
+        FlashbackCast flashback = new FlashbackCast(List.of(new DiscardXCardsCastingCost()));
+
+        assertThat(svc.canPayFlashbackPermanentCosts(gd, player1Id, flashback)).isTrue();
+    }
+
+    private Card flashbackCreature(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        return card;
     }
 
     @Nested

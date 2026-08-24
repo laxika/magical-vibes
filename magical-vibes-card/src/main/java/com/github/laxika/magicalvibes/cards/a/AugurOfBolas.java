@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "43")
+@CardRegistration(set = "WAR", collectorNumber = "41")
 public class AugurOfBolas extends Card {
 
     public AugurOfBolas() {

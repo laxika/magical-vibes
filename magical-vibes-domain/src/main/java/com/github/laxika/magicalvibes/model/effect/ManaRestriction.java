@@ -283,6 +283,11 @@ public sealed interface ManaRestriction {
     }
 
     record SubtypeOrPlaneswalkerSpells(CardSubtype spellSubtype, CardSubtype planeswalkerSubtype) implements ManaRestriction {
+        /** Mana spendable only to cast planeswalker spells. */
+        public SubtypeOrPlaneswalkerSpells() {
+            this(null, null);
+        }
+
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
             pool.addSubtypeOrPlaneswalkerSpellMana(this, color, amount);
@@ -290,6 +295,9 @@ public sealed interface ManaRestriction {
 
         @Override
         public String description() {
+            if (spellSubtype == null && planeswalkerSubtype == null) {
+                return "planeswalker spells only";
+            }
             return spellSubtype + " or " + planeswalkerSubtype + " planeswalker spells only";
         }
     }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TestOfTalents.class, Forest.class, GrizzlyBears.class, Opt.class, Plains.class})
 class TestOfTalentsTest extends BaseCardTest {
 
     @Test
@@ -47,9 +49,12 @@ class TestOfTalentsTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player2, List.of(handCopy.getId()));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(handCopy).doesNotContain(unselectedHandCopy);
-        assertThat(gd.playerGraveyards.get(player1)).contains(castCopy);
-        assertThat(gd.playerHands.get(player1)).contains(unselectedHandCopy, drawnCard);
-        assertThat(gd.playerDecks.get(player1)).containsExactly(remainingLibraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(castCopy);
+        assertThat(gd.playerHands.get(player1.getId())).contains(unselectedHandCopy).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card == drawnCard || card == remainingLibraryCard)
+                .hasSize(1);
     }
 
     @Test

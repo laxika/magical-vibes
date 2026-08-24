@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
@@ -1094,6 +1095,23 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentPowerLessThanControllerGraveyardCountPredicate uses the source controller's graveyard and is strict")
+        void powerLessThanControllerGraveyardCount() {
+            Permanent target = addPermanent(player2Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            gd.playerGraveyards.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            gd.playerGraveyards.get(player2Id).addAll(List.of(new Card(), new Card(), new Card(), new Card()));
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+            PermanentPowerLessThanControllerGraveyardCountPredicate predicate =
+                    new PermanentPowerLessThanControllerGraveyardCountPredicate();
+
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, ctx)).isTrue();
+
+            gd.playerGraveyards.get(player1Id).remove(2);
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, ctx)).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentColorInPredicate matches color")
         void colorInPredicateMatches() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
@@ -1747,6 +1765,22 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("ownership predicates account for stolen permanents in static filters")
+        void ownershipPredicateAccountsForStolenPermanents() {
+            Permanent owned = addPermanent(player1Id, createCreature("Owned Creature", 2, 2, CardColor.GREEN));
+            Permanent stolen = addPermanent(player1Id, createCreature("Stolen Creature", 2, 2, CardColor.GREEN));
+            gd.stolenCreatures.put(stolen.getId(), player2Id);
+            FilterContext sourceContext = ctx().withSourceControllerId(player1Id);
+
+            PermanentOwnedBySourceControllerPredicate ownedPredicate =
+                    new PermanentOwnedBySourceControllerPredicate();
+            assertThat(evaluator.matchesStaticFilter(owned, ownedPredicate, sourceContext)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(stolen, ownedPredicate, sourceContext)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(stolen,
+                    new PermanentNotPredicate(ownedPredicate), sourceContext)).isTrue();
+        }
+
+        @Test
         @DisplayName("the source-permanent predicate uses the source snapshot or explicit source ID")
         void sourcePermanentUsesContextIdentity() {
             Permanent source = addPermanent(player1Id, createEnchantment("Sterling Grove"));
@@ -1836,6 +1870,10 @@ class PredicateEvaluationServiceTest {
                     new PermanentNotPredicate(isHost), withAura)).isFalse();
             assertThat(evaluator.matchesStaticFilter(other,
                     new PermanentNotPredicate(isHost), withAura)).isTrue();
+
+            FilterContext withLiveAura = ctx().withSourcePermanentId(aura.getId());
+            assertThat(evaluator.matchesPermanentPredicate(host, isHost, withLiveAura)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(other, isHost, withLiveAura)).isFalse();
         }
 
         @Test

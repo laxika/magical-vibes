@@ -52,7 +52,8 @@ public class ThallidDevourer extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
                                 )),
-                                "a Saproling"
+                                "a Saproling",
+                                false
                         ),
                         new BoostSelfEffect(1, 2)
                 ),

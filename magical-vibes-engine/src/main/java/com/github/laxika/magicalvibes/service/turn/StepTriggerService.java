@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedExileCreatedPermanentsAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileCardsFromOwnGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
@@ -33,7 +35,9 @@ import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
@@ -44,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
@@ -52,6 +57,7 @@ import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -134,6 +140,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswal
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -166,7 +173,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PregameBattlefieldChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -186,6 +193,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndR
 import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardsToTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -488,7 +496,7 @@ public class StepTriggerService {
                 }
 
                 ForcedCostOrElseEffect payEchoOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayManaCost(action.manaCost()),
+                        new PayEchoCost(action.manaCost()),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true);
                 StackEntry entry = new StackEntry(
@@ -868,7 +876,8 @@ public class StepTriggerService {
                     }
                     if (hasValidTargets) {
                         gameData.queueInteraction(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
-                                perm.getCard(), activePlayerId, perm.getId()));
+                                perm.getCard(), activePlayerId, perm.getId(),
+                                (BecomeCopyOfTargetCreatureEffect) effect));
                     }
                 } else if (effect instanceof DestroyOneOfTargetsAtRandomEffect) {
                     // Targeted upkeep trigger: targets chosen at trigger time (CR 603.3d).
@@ -1551,6 +1560,59 @@ public class StepTriggerService {
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s refine counter ability triggers."));
                 }
+            }
+        }
+
+        // Suspend: "At the beginning of your upkeep, remove a time counter from this card."
+        if (!gameData.exiledCardTimeCounters.isEmpty()) {
+            List<Card> exiledCards = gameData.getPlayerExiledCards(activePlayerId);
+            for (Card card : new ArrayList<>(exiledCards)) {
+                Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
+                if (timeCounters != null && timeCounters > 0) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            activePlayerId,
+                            card.getName() + "'s suspend ability",
+                            new ArrayList<>(List.of(new RemoveTimeCounterFromExiledCardEffect(card.getId())))
+                    ));
+
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, "'s suspend ability triggers."));
+                    log.info("Game {} - {} suspend upkeep trigger pushed onto stack", gameData.id, card.getName());
+                }
+            }
+        }
+
+        // Suspended cards may also trigger during every player's upkeep.
+        for (var exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            Card card = exiledEntry.card();
+            Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
+            if (timeCounters == null || timeCounters <= 0) {
+                continue;
+            }
+
+            for (CardEffect effect : card.getEffects(EffectSlot.SUSPENDED_EACH_UPKEEP_TRIGGERED)) {
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, exiledEntry.ownerId(), may, activePlayerId, null,
+                            activePlayerId, null);
+                } else {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            exiledEntry.ownerId(),
+                            card.getName() + "'s suspended ability",
+                            new ArrayList<>(List.of(effect)),
+                            activePlayerId,
+                            (UUID) null
+                    );
+                    entry.setActivePlayerId(activePlayerId);
+                    gameData.stack.add(entry);
+                }
+
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s suspended upkeep ability triggers."));
+                log.info("Game {} - {} suspended upkeep trigger pushed onto stack", gameData.id, card.getName());
             }
         }
 
@@ -2268,7 +2330,7 @@ public class StepTriggerService {
                     // Leyline effects are handled during the pregame procedure
                     // (MulliganService.startGame), not during the first upkeep.
                     if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof LeylineStartOnBattlefieldEffect) {
+                            && may.wrapped() instanceof PregameBattlefieldChoiceEffect) {
                         continue;
                     }
                     if (effect instanceof MayEffect may) {
@@ -3337,6 +3399,28 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(SacrificeSelfAtNextEndStepTrigger.class)) {
+            List<SacrificeSelfAtNextEndStepTrigger> pendingSacrifices =
+                    gameData.drainDelayedActions(SacrificeSelfAtNextEndStepTrigger.class);
+            for (SacrificeSelfAtNextEndStepTrigger pending : pendingSacrifices) {
+                if (gameQueryService.findPermanentById(gameData, pending.permanentId()) == null) {
+                    continue;
+                }
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new SacrificeSelfEffect())),
+                        null,
+                        pending.permanentId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(
+                        pending.sourceCard(), "'s delayed sacrifice ability triggers."));
+            }
+        }
+
         // Memory Jar: each player discards their hand and returns the cards exiled by its ability.
         if (gameData.hasDelayedAction(EachPlayerHandExileReturnAtNextEndStep.class)) {
             List<EachPlayerHandExileReturnAtNextEndStep> pending = gameData.drainDelayedActions(
@@ -3353,6 +3437,28 @@ public class StepTriggerService {
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed trigger returns the exiled hands at the next end step."));
+            }
+        }
+
+        if (gameData.hasDelayedAction(TargetPlayerHandExileReturnAtNextTurnEndStep.class,
+                action -> gameData.turnNumber > action.registeredTurnNumber()
+                        && action.playerId().equals(gameData.activePlayerId))) {
+            List<TargetPlayerHandExileReturnAtNextTurnEndStep> pending = gameData.drainDelayedActions(
+                    TargetPlayerHandExileReturnAtNextTurnEndStep.class,
+                    action -> gameData.turnNumber > action.registeredTurnNumber()
+                            && action.playerId().equals(gameData.activePlayerId));
+            for (TargetPlayerHandExileReturnAtNextTurnEndStep action : pending) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(List.of(new ReturnExiledCardsToTargetPlayerHandEffect(
+                                action.playerId(), action.cardIds()))));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed trigger returns the exiled hand at the target player's next end step."));
             }
         }
 
@@ -3649,6 +3755,26 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(RemoveCounterFromPermanentAtNextEndStep.class)) {
+            List<RemoveCounterFromPermanentAtNextEndStep> pendingRemovals =
+                    gameData.drainDelayedActions(RemoveCounterFromPermanentAtNextEndStep.class);
+            for (RemoveCounterFromPermanentAtNextEndStep action : pendingRemovals) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new RemoveCounterFromTargetPermanentEffect(
+                                action.counterType(), null, 1))),
+                        action.permanentId(),
+                        (UUID) null);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers to remove a counter."));
+            }
+        }
+
         // Process delayed untap permanents triggers (e.g. Teferi, Hero of Dominaria +1)
         if (gameData.hasDelayedAction(DelayedUntapPermanents.class)) {
             List<DelayedUntapPermanents> pendingUntaps =
@@ -3745,6 +3871,27 @@ public class StepTriggerService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards cards."));
                 log.info("Game {} - {} delayed discard trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
+            }
+        }
+
+        if (gameData.hasDelayedAction(ExileCardsFromOwnGraveyardAtNextEndStep.class)) {
+            List<ExileCardsFromOwnGraveyardAtNextEndStep> pendingExiles =
+                    gameData.drainDelayedActions(ExileCardsFromOwnGraveyardAtNextEndStep.class);
+            for (ExileCardsFromOwnGraveyardAtNextEndStep pending : pendingExiles) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — exile cards from graveyard",
+                        new ArrayList<>(List.of(new ExileGraveyardCardsEffect(
+                                pending.count(), GraveyardExileScope.OWN)))
+                );
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger exiles cards from graveyard."));
+                log.info("Game {} - {} delayed graveyard exile trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName());
             }
         }
@@ -3885,7 +4032,7 @@ public class StepTriggerService {
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, pending.auraOwnerId(), auraPermanent);
                 triggerCollectionService.checkAuraAttachedTriggers(
-                        gameData, auraCard, enchantedPermanent.getId());
+                        gameData, auraPermanent, enchantedPermanent.getId());
                 gameLogService.append(gameData, GameLog.builder()
                         .card(auraCard)
                         .text(" returns to the battlefield attached to ")
@@ -5106,6 +5253,25 @@ public class StepTriggerService {
 
         if (mandatoryEffects.isEmpty()) {
             return;
+        }
+
+        ChooseOneEffect targetedModal = mandatoryEffects.stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .filter(modal -> modal.options().stream()
+                        .flatMap(option -> option.effects().stream())
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)))
+                .findFirst()
+                .orElse(null);
+        if (targetedModal != null) {
+            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    perm.getCard(), controllerId, targetedModal, perm.getId()));
+            mandatoryEffects.remove(targetedModal);
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            if (mandatoryEffects.isEmpty()) {
+                return;
+            }
         }
 
         boolean needsPermanentTarget = mandatoryEffects.stream()

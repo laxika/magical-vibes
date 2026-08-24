@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PestilentCauldron.class, Forest.class, GrizzlyBears.class, LeoninScimitar.class, WrathOfGod.class})
 class PestilentCauldronTest extends BaseCardTest {
 
     @Test
@@ -60,6 +62,7 @@ class PestilentCauldronTest extends BaseCardTest {
         Permanent cauldron = addReadyCauldron();
         List<Card> graveyard = List.of(new Forest(), new GrizzlyBears(), new LeoninScimitar(), new Forest());
         harness.setGraveyard(player2, graveyard);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -84,7 +87,8 @@ class PestilentCauldronTest extends BaseCardTest {
         harness.setLife(player2, 10);
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castModalSorcery(player1, 0, 1, List.of(creature.getId(), land.getId()));
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(creature, land);
@@ -92,7 +96,7 @@ class PestilentCauldronTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
         assertThat(gd.getLife(player2.getId())).isEqualTo(14);
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getName().equals("Pestilent Cauldron"));
-        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getName().equals("Restorative Burst"));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getName().equals("Pestilent Cauldron"));
     }
 
     private Permanent addReadyCauldron() {

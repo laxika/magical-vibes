@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "160")
+@CardRegistration(set = "TOR", collectorNumber = "71")
 public class MortalCombat extends Card {
 
     public MortalCombat() {

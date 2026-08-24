@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -258,6 +260,22 @@ class TargetValidationServiceSpecTest {
 
         assertThat(sut.checkEffectTargets(
                 List.of(effect),
+                new TargetValidationContext(
+                        gd, null, Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("An omitted up-to-one graveyard target remains legal through a conditional wrapper")
+    void optionalGraveyardTargetMayBeOmittedThroughConditionalEffect() {
+        ReturnCardFromGraveyardEffect returnEffect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .targetGraveyard(true)
+                .upTo(true)
+                .build();
+
+        assertThat(sut.checkEffectTargets(
+                List.of(new ConditionalEffect(new Morbid(), returnEffect)),
                 new TargetValidationContext(
                         gd, null, Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
                 .isEmpty();

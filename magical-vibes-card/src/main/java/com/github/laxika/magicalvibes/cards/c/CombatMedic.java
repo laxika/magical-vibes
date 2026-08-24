@@ -16,7 +16,7 @@ public class CombatMedic extends Card {
 
     public CombatMedic() {
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}{W}",
                 List.of(PreventDamageEffect.nextToTarget(1)),
                 "{1}{W}: Prevent the next 1 damage that would be dealt to any target this turn."

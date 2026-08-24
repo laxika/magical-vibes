@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodAgeGeneral.class, GrizzlyBears.class, WindSpirit.class})
 class BloodAgeGeneralTest extends BaseCardTest {
 
     @Test
@@ -22,19 +22,20 @@ class BloodAgeGeneralTest extends BaseCardTest {
         Permanent spirit = addCreatureReady(player1, new WindSpirit());
         Permanent nonSpirit = addCreatureReady(player1, new GrizzlyBears());
         Permanent nonAttackingSpirit = addCreatureReady(player1, new WindSpirit());
-        int spiritPower = spirit.getEffectivePower();
-        int spiritToughness = spirit.getEffectiveToughness();
-        int nonSpiritPower = nonSpirit.getEffectivePower();
-        int nonAttackingSpiritPower = nonAttackingSpirit.getEffectivePower();
+        int spiritPower = gqs.getEffectivePower(gd, spirit);
+        int spiritToughness = gqs.getEffectiveToughness(gd, spirit);
+        int nonSpiritPower = gqs.getEffectivePower(gd, nonSpirit);
+        int nonAttackingSpiritPower = gqs.getEffectivePower(gd, nonAttackingSpirit);
 
-        declareAttackers(player1, List.of(indexOf(player1, spirit), indexOf(player1, nonSpirit)));
+        spirit.setAttacking(true);
+        nonSpirit.setAttacking(true);
         harness.activateAbility(player1, indexOf(player1, general), null, null);
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(spiritPower + 1);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(spiritToughness);
-        assertThat(nonSpirit.getEffectivePower()).isEqualTo(nonSpiritPower);
-        assertThat(nonAttackingSpirit.getEffectivePower()).isEqualTo(nonAttackingSpiritPower);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(spiritPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(spiritToughness);
+        assertThat(gqs.getEffectivePower(gd, nonSpirit)).isEqualTo(nonSpiritPower);
+        assertThat(gqs.getEffectivePower(gd, nonAttackingSpirit)).isEqualTo(nonAttackingSpiritPower);
     }
 
     @Test
@@ -42,18 +43,18 @@ class BloodAgeGeneralTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         Permanent general = addCreatureReady(player1, new BloodAgeGeneral());
         Permanent spirit = addCreatureReady(player1, new WindSpirit());
-        int spiritPower = spirit.getEffectivePower();
+        int spiritPower = gqs.getEffectivePower(gd, spirit);
 
-        declareAttackers(player1, List.of(indexOf(player1, spirit)));
+        spirit.setAttacking(true);
         harness.activateAbility(player1, indexOf(player1, general), null, null);
         harness.passBothPriorities();
-        assertThat(spirit.getEffectivePower()).isEqualTo(spiritPower + 1);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(spiritPower + 1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(spiritPower);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(spiritPower);
     }
 
     @Test
@@ -61,13 +62,13 @@ class BloodAgeGeneralTest extends BaseCardTest {
     void boostsOpponentsAttackingSpirits() {
         Permanent general = addCreatureReady(player1, new BloodAgeGeneral());
         Permanent spirit = addCreatureReady(player2, new WindSpirit());
-        int spiritPower = spirit.getEffectivePower();
+        int spiritPower = gqs.getEffectivePower(gd, spirit);
 
-        declareAttackers(player2, List.of(indexOf(player2, spirit)));
+        spirit.setAttacking(true);
         harness.activateAbility(player1, indexOf(player1, general), null, null);
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(spiritPower + 1);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(spiritPower + 1);
     }
 
     private int indexOf(Player player, Permanent permanent) {

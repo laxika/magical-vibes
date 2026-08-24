@@ -58,11 +58,20 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
         }
 
         gameData.discardCausedByOpponent = false;
+        UUID preservedTargetId = entry.getTargetId();
+        if (e.useEntryTarget() && preservedTargetId == null) {
+            List<UUID> effectTargets = entry.targetsForEffect(e);
+            if (!effectTargets.isEmpty()) {
+                preservedTargetId = effectTargets.getFirst();
+            } else if (entry.getTargetIds().size() == 1) {
+                preservedTargetId = entry.getTargetIds().getFirst();
+            }
+        }
         playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
                 entry.getCard().getName() + " — Choose " + e.cardDescription() + " to discard.",
                 1, DiscardFollowUp.thenEffect(entry.getCard(),
-                        e.useEntryTarget() && entry.getTargetId() == null ? null : e.thenEffect(),
-                        e.condition(), e.useEntryTarget() ? entry.getTargetId() : null,
+                        e.useEntryTarget() && preservedTargetId == null ? null : e.thenEffect(),
+                        e.condition(), e.useEntryTarget() ? preservedTargetId : null,
                         e.alternateCardType(), e.alternateThenEffect()));
 
         String logEntry = playerName + " is choosing " + e.cardDescription() + " to discard.";

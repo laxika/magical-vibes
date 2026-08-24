@@ -119,20 +119,29 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     /**
-     * State for the second of two bounded picks: the card {@code type} still to be offered and where
-     * the unchosen looked-at cards go once it resolves ({@code restToGraveyard} true = graveyard,
-     * false = bottom of the library).
+     * State for the second of two bounded picks: the card {@code type}, {@code subtype}, or custom
+     * {@code predicate} still to be offered and where the unchosen looked-at cards go once it
+     * resolves ({@code restToGraveyard} true = graveyard, false = bottom of the library).
      */
     public record SecondBoundedPick(CardType type, boolean restToGraveyard, CardSubtype subtype,
                                     List<CardSubtype> remainingSubtypes, boolean randomRest,
                                     List<CardType> remainingTypes,
-                                    LibrarySearchDestination destination) {
+                                    LibrarySearchDestination destination,
+                                    CardPredicate predicate,
+                                    String prompt) {
+
+        public SecondBoundedPick(CardType type, boolean restToGraveyard, CardSubtype subtype,
+                                 List<CardSubtype> remainingSubtypes, boolean randomRest,
+                                 List<CardType> remainingTypes, LibrarySearchDestination destination) {
+            this(type, restToGraveyard, subtype, remainingSubtypes, randomRest, remainingTypes,
+                    destination, null, null);
+        }
 
         public SecondBoundedPick(CardType type, boolean restToGraveyard, CardSubtype subtype,
                                  List<CardSubtype> remainingSubtypes, boolean randomRest,
                                  List<CardType> remainingTypes) {
             this(type, restToGraveyard, subtype, remainingSubtypes, randomRest, remainingTypes,
-                    LibrarySearchDestination.HAND);
+                    LibrarySearchDestination.HAND, null, null);
         }
 
         public SecondBoundedPick {
@@ -171,6 +180,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public static SecondBoundedPick terminal(boolean randomRest, LibrarySearchDestination destination) {
             return new SecondBoundedPick(null, false, null, List.of(), randomRest, List.of(), destination);
+        }
+
+        public static SecondBoundedPick predicate(CardPredicate predicate, String prompt,
+                                                  boolean randomRest,
+                                                  LibrarySearchDestination destination) {
+            return new SecondBoundedPick(null, false, null, List.of(), randomRest, List.of(),
+                    destination, predicate, prompt);
         }
     }
 
@@ -358,6 +374,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public static LibrarySearchFollowUp forSecondBoundedPick(CardType type, boolean restToGraveyard,
                                                               LibrarySearchDestination destination) {
         return forSecondBoundedPick(type, restToGraveyard, false, destination);
+    }
+
+    public static LibrarySearchFollowUp forSecondBoundedPick(CardPredicate predicate, String prompt,
+                                                              boolean randomRest,
+                                                              LibrarySearchDestination destination) {
+        return forBoundedPick(SecondBoundedPick.predicate(
+                predicate, prompt, randomRest, destination));
     }
 
     public static LibrarySearchFollowUp forSecondBoundedPick(CardType type, boolean restToGraveyard,

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "216")
+@CardRegistration(set = "SUM", collectorNumber = "170")
 public class PowerSurge extends Card {
 
     public PowerSurge() {

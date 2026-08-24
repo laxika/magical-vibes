@@ -12,7 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetToSourcePermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,8 +54,11 @@ class PermanentTimestampTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler;
     @Mock private AsEntersInteractionService asEntersInteractionService;
     @Mock private EtbTriggerService etbTriggerService;
+    @Mock private UnattachTriggerSupport unattachTriggerSupport;
+    @Mock private AuraCopyService auraCopyService;
 
     private BattlefieldEntryService battlefieldEntryService;
+    private EquipSupport equipSupport;
 
     private GameData gd;
     private UUID player1Id;
@@ -67,6 +73,8 @@ class PermanentTimestampTest {
                 permanentRemovalService, becomeDayAsEntersEffectHandler);
         battlefieldEntryService = new BattlefieldEntryService(
                 placementService, asEntersInteractionService, etbTriggerService);
+        equipSupport = new EquipSupport(gameQueryService, gameLogService, permanentRemovalService,
+                predicateEvaluationService, unattachTriggerSupport, triggerCollectionService, auraCopyService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -120,7 +128,7 @@ class PermanentTimestampTest {
         @DisplayName("An attachment gets a fresh timestamp when it becomes attached")
         void attachRestampsTimestamp() {
             AttachTargetToSourcePermanentEffectHandler handler =
-                    new AttachTargetToSourcePermanentEffectHandler(gameQueryService, gameLogService);
+                    new AttachTargetToSourcePermanentEffectHandler(gameQueryService, gameLogService, equipSupport);
             Permanent equipment = createEquipment("Darksteel Axe");
             Permanent creature = createCreature("Grizzly Bears");
             battlefieldEntryService.putPermanentOntoBattlefield(gd, player1Id, equipment);
@@ -132,6 +140,8 @@ class PermanentTimestampTest {
                     equipment.getId(), creature.getId());
             when(gameQueryService.findPermanentById(gd, equipment.getId())).thenReturn(equipment);
             when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             handler.resolve(gd, entry, new AttachTargetToSourcePermanentEffect());
 
             assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());

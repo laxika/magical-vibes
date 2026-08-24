@@ -74,8 +74,10 @@ public class TokenCopySupport {
                         .add(tokenPermanent.getId());
             }
 
-            if (effect.tappedAndAttacking()) {
+            if (effect.tapped() || effect.tappedAndAttacking()) {
                 tokenPermanent.tap();
+            }
+            if (effect.tappedAndAttacking()) {
                 tokenPermanent.setAttacking(true);
                 if (sourcePermanent != null) {
                     tokenPermanent.setAttackTarget(sourcePermanent.getAttackTarget());
@@ -107,6 +109,9 @@ public class TokenCopySupport {
             }
             simultaneouslyEntered.add(tokenPermanent);
         }
+
+        battlefieldEntryService.checkAllyTokenEntersTriggers(
+                gameData, tokenControllerId, tokens.stream().map(Permanent::getId).toList());
     }
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {

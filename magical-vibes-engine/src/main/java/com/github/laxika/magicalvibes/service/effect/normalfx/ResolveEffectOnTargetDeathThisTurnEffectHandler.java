@@ -35,7 +35,7 @@ public class ResolveEffectOnTargetDeathThisTurnEffectHandler implements NormalEf
             return;
         }
 
-        gameData.creatureTriggeringEffectOnDeathThisTurn
+        gameData.permanentTriggeringEffectOnDeathThisTurn
                 .computeIfAbsent(target.getCard().getId(), k -> Collections.synchronizedList(new ArrayList<>()))
                 .add(new DelayedEffectOnDeath(e.effect(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
 

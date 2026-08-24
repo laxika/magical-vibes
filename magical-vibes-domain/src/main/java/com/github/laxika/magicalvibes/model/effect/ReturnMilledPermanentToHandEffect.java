@@ -8,11 +8,22 @@ import java.util.UUID;
 /**
  * Marker effect for one permanent card offered by
  * {@link MillControllerAndMayReturnMilledPermanentToHandEffect}. The group ID keeps separate
- * resolutions from clearing one another's pending choices.
+ * resolutions from clearing one another's pending choices, and {@code maxCount} limits how many
+ * offers in the group may be accepted.
  */
-public record ReturnMilledPermanentToHandEffect(UUID groupId, CardPredicate filter) implements CardEffect {
+public record ReturnMilledPermanentToHandEffect(UUID groupId, CardPredicate filter, int maxCount) implements CardEffect {
+
+    public ReturnMilledPermanentToHandEffect(UUID groupId, CardPredicate filter) {
+        this(groupId, filter, 1);
+    }
 
     public ReturnMilledPermanentToHandEffect(UUID groupId) {
-        this(groupId, new CardIsPermanentPredicate());
+        this(groupId, new CardIsPermanentPredicate(), 1);
+    }
+
+    public ReturnMilledPermanentToHandEffect {
+        if (maxCount < 1) {
+            throw new IllegalArgumentException("maxCount must be positive");
+        }
     }
 }

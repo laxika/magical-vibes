@@ -10,12 +10,16 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
 class SkemfarElderhallTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters tapped and taps for green mana")
     void entersTappedAndTapsForGreen() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new SkemfarElderhall());
+        harness.setHand(player1, List.of(new SkemfarElderhall()));
+        harness.playLand(player1, 0);
+        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         assertThat(land.isTapped()).isTrue();
 

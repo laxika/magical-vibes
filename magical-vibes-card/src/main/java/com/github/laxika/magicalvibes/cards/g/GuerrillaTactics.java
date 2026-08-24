@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "211")
 @CardRegistration(set = "9ED", collectorNumber = "196")
 @CardRegistration(set = "8ED", collectorNumber = "192")
+@CardRegistration(set = "DKM", collectorNumber = "13a")
+@CardRegistration(set = "DKM", collectorNumber = "13b")
 public class GuerrillaTactics extends Card {
 
     public GuerrillaTactics() {

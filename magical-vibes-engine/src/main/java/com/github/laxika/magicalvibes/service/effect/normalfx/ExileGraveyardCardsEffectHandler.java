@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -179,6 +180,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
      * illegal target therefore still logs the fizzle it always did.
      */
     private void resolveTargetAnyGraveyardCards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
+        if (e.eventValueFilter() != null) {
+            entry.setEventValue(0);
+        }
+
         List<UUID> targetCardIds = new ArrayList<>();
         if (entry.getTargetId() != null) {
             targetCardIds.add(entry.getTargetId());
@@ -220,6 +225,14 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
         if (exiledCards.isEmpty()) {
             return;
+        }
+
+        if (e.eventValueFilter() != null) {
+            int matchingExiledCards = (int) exiledCards.stream()
+                    .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                            card, e.eventValueFilter(), null))
+                    .count();
+            entry.setEventValue(matchingExiledCards);
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
@@ -326,9 +339,14 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null || graveyard.isEmpty()) continue;
+            Set<UUID> battlefieldCards = effect.fromBattlefieldThisTurn()
+                    ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(playerId, Set.of())
+                    : null;
             List<Card> toExile = new ArrayList<>();
             for (Card card : graveyard) {
-                if (effect.filter() == null || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
+                if ((battlefieldCards == null || battlefieldCards.contains(card.getId()))
+                        && (effect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null))) {
                     toExile.add(card);
                 }
             }

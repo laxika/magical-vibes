@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToTopEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -35,6 +38,7 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +52,13 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
             return;
         }
 
-        CardPredicate filter = ((SearchLibraryForCardsToTopEffect) effect).filter();
+        SearchLibraryForCardsToTopEffect searchEffect = (SearchLibraryForCardsToTopEffect) effect;
+        CardPredicate filter = searchEffect.filter();
+        DynamicAmount count = searchEffect.count();
+        int requiredCount = count == null
+                ? -1
+                : Math.max(0, amountEvaluationService.evaluate(
+                        gameData, count, AmountContext.forStackEntry(entry, null)));
         String description = CardPredicateUtils.describeFilter(filter);
         String label = description.replaceFirst("\\s+card$", "");
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -56,6 +66,12 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+            return;
+        }
+
+        if (requiredCount == 0) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library. Library is shuffled."));
             return;
         }
 
@@ -76,7 +92,8 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
         deck.removeIf(card -> poolIds.contains(card.getId()));
 
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.SearchLibraryToTopChoice(controllerId, pool, label));
+                new PendingInteraction.SearchLibraryToTopChoice(
+                        controllerId, pool, label, requiredCount, searchEffect.revealCards()));
 
         log.info("Game {} - {} searches library for {} cards to put on top ({} matches)",
                 gameData.id, playerName, label, pool.size());

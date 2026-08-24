@@ -336,6 +336,28 @@ public record CreateTokenEffect(
                 )));
     }
 
+    /** Tapped Treasure token. */
+    public static CreateTokenEffect ofTappedTreasureToken(int amount) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,
+                List.of(CardSubtype.TREASURE), Set.of(), Set.of(), false, true, Map.of(),
+                List.of(new ActivatedAbility(
+                        true, null,
+                        List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
+                        "{T}, Sacrifice this artifact: Add one mana of any color."
+                )), false, false, false, 0, Set.of());
+    }
+
+    /** Tapped Treasure tokens with a dynamically computed count. */
+    public static CreateTokenEffect ofTappedTreasureToken(DynamicAmount amount) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,
+                List.of(CardSubtype.TREASURE), Set.of(), Set.of(), false, true, Map.of(),
+                List.of(new ActivatedAbility(
+                        true, null,
+                        List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
+                        "{T}, Sacrifice this artifact: Add one mana of any color."
+                )), false, false, false, 0, Set.of());
+    }
+
     /** Treasure token with a dynamically computed count. */
     public static CreateTokenEffect ofTreasureToken(DynamicAmount amount) {
         return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),

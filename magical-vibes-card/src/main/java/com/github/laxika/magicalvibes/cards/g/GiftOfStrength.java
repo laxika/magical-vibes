@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOU", collectorNumber = "117")
+@CardRegistration(set = "RNA", collectorNumber = "127")
 public class GiftOfStrength extends Card {
 
     public GiftOfStrength() {

@@ -57,8 +57,22 @@ public record SearchLibraryEffect(
         boolean onlyIfSacrificed,
         boolean battlefieldIfChosenBeholdType,
         boolean shuffleAfterSelection,
-        CounterType battlefieldCounter
+        CounterType battlefieldCounter,
+        EnterWithCountersEffect enterWithCounters
 ) implements CardEffect {
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
+                               LibrarySearchPlayer searchPlayer, boolean onlyIfSacrificed,
+                               boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
+                               CounterType battlefieldCounter) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer,
+                onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection,
+                battlefieldCounter, null);
+    }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
@@ -120,6 +134,13 @@ public record SearchLibraryEffect(
                                CounterType battlefieldCounter) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
                 LibrarySearchPlayer.CONTROLLER, false, false, true, battlefieldCounter);
+    }
+
+    /** Single card matching {@code filter} to the battlefield with an as-enters counter effect. */
+    public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, EnterWithCountersEffect enterWithCounters) {
+        this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false, false, null,
+                LibrarySearchPlayer.CONTROLLER, false, false, true, null, enterWithCounters);
     }
 
     /** Up to {@code count} cards matching {@code filter} to the given destination. */
@@ -205,6 +226,9 @@ public record SearchLibraryEffect(
 
     @Override
     public TargetSpec targetSpec() {
+        if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
         // Tithe: count scales off whether the targeted opponent controls more lands.
         return count instanceof FixedIfTargetPlayerControlsMoreLands
                 ? TargetSpec.benign(TargetPredicates.player())

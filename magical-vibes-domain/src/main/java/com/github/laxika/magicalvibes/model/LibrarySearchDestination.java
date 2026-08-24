@@ -21,6 +21,8 @@ public enum LibrarySearchDestination {
     EXILE_FACE_DOWN_PILE,
     /** Exile one card face down with a source while returning a preselected remainder to the bottom randomly. */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+    /** Exile one card face down with a source while putting a preselected remainder on the bottom in any order. */
+    EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
     /** Exile one card face down with a source while putting a preselected remainder into the target player's graveyard. */
     EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
     /** Exile one card face up with permission to play it this turn, putting the rest on the bottom randomly. */
@@ -39,6 +41,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Exile one chosen card, then offer it for casting without paying its mana cost. */
+    EXILE_AND_MAY_CAST_WITHOUT_PAYING,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the
     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
     EXILE_FOR_FREE_CAST,
@@ -46,6 +50,8 @@ public enum LibrarySearchDestination {
     EXILE_FOR_MAY_CAST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
+    /** Put the chosen card onto the battlefield tapped under a specified player's control. */
+    BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER,
     /** Gifts Ungiven — the chosen cards are held out of every zone until an opponent has chosen
      *  which two of them go to the graveyard; the rest then go to the searcher's hand. The pool is
      *  carried in {@link LibrarySearchParams#accumulatedCards()} and handed to the opponent as a

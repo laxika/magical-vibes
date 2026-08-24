@@ -23,7 +23,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -52,12 +54,14 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -71,6 +75,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -97,6 +102,9 @@ class SpellCastingServiceTest {
 
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
+
+    @Mock
+    private CloneService cloneService;
 
     @Mock
     private GameQueryService gameQueryService;
@@ -151,6 +159,9 @@ class SpellCastingServiceTest {
     @Mock
     private LifeSupport lifeSupport;
 
+    @Mock
+    private PlayerInputService playerInputService;
+
     private SpellCastingService svc;
 
     private GameData gd;
@@ -163,14 +174,14 @@ class SpellCastingServiceTest {
     void setUp() {
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
-        svc = new SpellCastingService(cardRevealService, battlefieldEntryService, graveyardTargetingService,
+        svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, new TargetGroupAssignmentService(gameQueryService),
                 permanentRemovalService, triggerCollectionService,
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
-                mutationCoordinator, stateBasedActionService, lifeSupport);
+                mutationCoordinator, stateBasedActionService, lifeSupport, playerInputService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -1073,6 +1084,33 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
             DrawCardEffect effect = (DrawCardEffect) gd.stack.getLast().getEffectsToResolve().get(0);
             assertThat(effect.amount()).isEqualTo(new Fixed(2));
+        }
+
+        @Test
+        @DisplayName("Dispatches divided damage from the selected modal mode")
+        void dispatchesDividedDamageFromSelectedMode() {
+            DealDividedDamageEffect damage = DealDividedDamageEffect.chosenAmongAnyTargets(2);
+            Card modal = createInstant("Test Split", "{1}{R}");
+            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption(
+                            "Fire",
+                            List.<CardEffect>of(damage),
+                            null, null, 1, 2, false, null
+                    ).withManaCost("{1}{R}"),
+                    new ChooseOneEffect.ChooseOneOption("Ice", new DrawCardEffect(1))
+            )));
+            setHand(player1Id, List.of(modal));
+            addMana(player1Id, ManaColor.RED, 1);
+            addMana(player1Id, ManaColor.COLORLESS, 1);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, 0, null, Map.of(player2Id, 2),
+                    List.of(player2Id), List.of(), false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getDamageAssignments())
+                    .containsExactlyEntriesOf(Map.of(player2Id, 2));
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(damage);
         }
     }
 

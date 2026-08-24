@@ -51,7 +51,10 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
                 if (card != null) {
                     exiledNames.add(card.getName());
                     exiledCards.add(card);
-                    graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+                    UUID sourcePermanentId = e.trackWithSource()
+                            ? entry.getSourcePermanentId() : null;
+                    graveyardReturnSupport.exileCardFromAnyGraveyard(
+                            gameData, cardId, card, sourcePermanentId);
                 }
             }
             exiledCount = exiledNames.size();

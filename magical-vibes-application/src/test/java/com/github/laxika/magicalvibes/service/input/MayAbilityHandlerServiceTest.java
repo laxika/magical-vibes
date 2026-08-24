@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -107,7 +108,8 @@ class MayAbilityHandlerServiceTest {
                 mock(InteractionHandlerRegistry.class),
                 validTargetService,
                 targetPredicateEvaluationService,
-                mayEffectHandlerRegistry);
+                mayEffectHandlerRegistry,
+                mock(TriggerCollectionService.class));
 
         player1 = new Player(PLAYER1_ID, "Alice");
 

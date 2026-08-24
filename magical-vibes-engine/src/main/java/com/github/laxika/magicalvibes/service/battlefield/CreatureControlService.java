@@ -155,6 +155,7 @@ public class CreatureControlService {
         removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
         gameData.playerBattlefields.get(derived).add(permanent);
+        permanent.recordControlChange();
         permanent.setSummoningSick(true);
 
         // Soulbond lasts only while you control both (CR 702.94) — control change breaks the pair.

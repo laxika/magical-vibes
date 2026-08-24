@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.GlobalBlockRestriction;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -66,6 +67,7 @@ public class BlockLegalityService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final BlockDenialMessageService blockDenialMessageService;
 
     /**
@@ -533,7 +535,12 @@ public class BlockLegalityService {
         boolean blocksShadowAsThoughShadow = false;
         Integer cantBlockPowerAtLeast = null;
         if (!bonus.losesAllAbilities() && !blocker.isLosesAllAbilitiesUntilEndOfTurn()) {
+            UUID blockerControllerId = gameQueryService.findPermanentController(gameData, blocker.getId());
             for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+                effect = staticEffectConditionResolver.resolve(gameData, blocker, blockerControllerId, effect);
+                if (effect == null) {
+                    continue;
+                }
                 if (effect instanceof CanBlockCreaturesWithShadowEffect) {
                     blocksShadowAsThoughShadow = true;
                 }
@@ -556,6 +563,10 @@ public class BlockLegalityService {
                     }
                 }
             }
+        }
+        if (!blocksShadowAsThoughShadow) {
+            blocksShadowAsThoughShadow = !gameQueryService.collectAuraEffects(
+                    gameData, blocker, CanBlockCreaturesWithShadowEffect.class).isEmpty();
         }
         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> auraRestrictions =
                 gameQueryService.collectAuraEffects(gameData, blocker, CanBlockOnlyIfAttackerMatchesPredicateEffect.class);

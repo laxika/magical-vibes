@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
@@ -368,6 +369,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, mode, targetId, null);
     }
 
+    public void castCreature(Player player, int cardIndex, UUID targetId) {
+        castCreature(player, cardIndex, 0, targetId);
+    }
+
     public void castCreature(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
@@ -482,6 +487,14 @@ public class GameTestHarness {
                 sacrificePermanentId, null, null, null, null, false, null, null, null, null, List.of(), true);
     }
 
+    public void castSorceryWithSacrificesAndBuyback(Player player, int cardIndex, UUID targetId,
+                                                     List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, sacrificePermanentIds,
+                List.of(), true);
+    }
+
     public void castCreatureWithGraveyardExile(Player player, int cardIndex, int exileGraveyardCardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, null, exileGraveyardCardIndex);
@@ -508,6 +521,13 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null,
                 List.of(), null, null, List.of(sacrificePermanentId), null, null);
+    }
+
+    public void castFromGraveyardWithSacrifices(Player player, int graveyardCardIndex, UUID targetId,
+                                                List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId,
+                List.of(), null, null, List.of(), null, null, sacrificePermanentIds, Map.of());
     }
 
     public void castFromGraveyard(Player player, int graveyardCardIndex, CardType chosenGraveyardType) {
@@ -607,6 +627,11 @@ public class GameTestHarness {
     public void turnFaceUp(Player player, int permanentIndex, int revealedHandCardIndex) {
         ensurePriority(player);
         gameService.turnFaceUp(gameData, player, permanentIndex, revealedHandCardIndex);
+    }
+
+    public void turnFaceUp(Player player, int permanentIndex, List<UUID> morphAdditionalCostPermanentIds) {
+        ensurePriority(player);
+        gameService.turnFaceUp(gameData, player, permanentIndex, null, morphAdditionalCostPermanentIds);
     }
 
     /** Cast any spell (creature, artifact, etc.) using its alternate hand cost, paying the given permanent IDs. */
@@ -1080,6 +1105,14 @@ public class GameTestHarness {
                 null, null, targetIds, List.of());
     }
 
+    public void castModalInstantWithModes(Player player, int cardIndex, int choicesRequired, int choicesMax,
+                                          int[] modeIndices, UUID targetId, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                targetId, null, targetIds, List.of());
+    }
+
     /**
      * Cast a modal instant that chooses multiple modes, supplying an optional spell target
      * ({@code targetId}) and/or permanent targets ({@code targetIds}) (e.g. Cryptic Command).
@@ -1267,6 +1300,15 @@ public class GameTestHarness {
                 null, null, List.of(), null, null, damageAssignments);
     }
 
+    public void castFlashbackForXWithDiscards(Player player, int graveyardCardIndex, int xValue,
+                                               Map<UUID, Integer> damageAssignments,
+                                               List<Integer> discardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, null, List.of(),
+                null, null, List.of(), null, null, List.of(), damageAssignments, List.of(), List.of(),
+                discardHandCardIndices);
+    }
+
     public void castFlashback(Player player, int graveyardCardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetIds);
@@ -1289,6 +1331,13 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(),
                 null, null, tapPermanentIds);
+    }
+
+    public void castFlashbackWithAdditionalCostTappingPermanents(Player player, int graveyardCardIndex,
+                                                                  UUID targetId, List<UUID> tapPermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(),
+                null, null, List.of(), null, null, tapPermanentIds, (Map<UUID, Integer>) null);
     }
 
     public void castFlashbackWithSacrifice(Player player, int graveyardCardIndex, UUID targetId,
@@ -1365,6 +1414,11 @@ public class GameTestHarness {
     public void payLifeForColorlessMana(Player player) {
         ensurePriority(player);
         gameService.payLifeForColorlessMana(gameData, player);
+    }
+
+    public void payGuardianAngel(Player player, UUID targetId) {
+        ensurePriority(player);
+        gameService.payGuardianAngel(gameData, player, targetId);
     }
 
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetId) {
@@ -1483,6 +1537,11 @@ public class GameTestHarness {
         gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId, xValue);
     }
 
+    public void activateExiledAbility(Player player, UUID exiledCardId) {
+        ensurePriority(player);
+        gameService.activateExiledAbility(gameData, player, exiledCardId, 0, null, null);
+    }
+
     public void activateHandAbilityWithGraveyardTargets(Player player, int handCardIndex, List<UUID> graveyardCardIds) {
         ensurePriority(player);
         gameService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, 0, graveyardCardIds);
@@ -1543,6 +1602,7 @@ public class GameTestHarness {
 
         TurnStep stepBefore = gameData.currentStep;
         int stackSizeBefore = gameData.stack.size();
+        StackEntry topBefore = gameData.stack.isEmpty() ? null : gameData.stack.getLast();
 
         gameService.passPriority(gameData, first);
 
@@ -1551,6 +1611,7 @@ public class GameTestHarness {
         // Also stop if the game entered an awaiting-input state (e.g. may ability prompt).
         if (gameData.status != GameStatus.RUNNING
                 || gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
+                || (!gameData.stack.isEmpty() && gameData.stack.getLast() != topBefore)
                 || gameData.interaction.isAwaitingInput()) {
             return;
         }

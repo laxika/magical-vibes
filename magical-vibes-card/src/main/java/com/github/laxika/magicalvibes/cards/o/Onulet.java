@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "340")
+@CardRegistration(set = "SUM", collectorNumber = "269")
 public class Onulet extends Card {
 
     public Onulet() {

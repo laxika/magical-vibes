@@ -10,6 +10,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class GraveyardTargetOperationState {
+    public int independentTargetGroupIndex = -1;
+    public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
+    public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
+    public boolean resolutionTimeExileThenMayBecomeCopyResume;
+    /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
+    public boolean resolutionTimeReturnCardsToBattlefieldResume;
 
     public Card card;
     public UUID controllerId;
@@ -24,6 +30,8 @@ public class GraveyardTargetOperationState {
     public boolean singleGraveyard;
     /** In-progress cumulative-upkeep payments, one single-graveyard choice per age counter. */
     public CumulativeUpkeepPaymentContext cumulativeUpkeepPayment;
+    /** In-progress payment that moves a fixed number of cards from the controller's graveyard. */
+    public ControllerGraveyardPaymentContext controllerGraveyardPayment;
 
     public record CumulativeUpkeepPaymentContext(UUID sourceControllerId, Card sourceCard,
                                                   UUID sourcePermanentId, ForcedCostOrElseEffect forcedCost,
@@ -32,6 +40,11 @@ public class GraveyardTargetOperationState {
         public CumulativeUpkeepPaymentContext {
             selectedCardIds = List.copyOf(selectedCardIds);
         }
+    }
+
+    public record ControllerGraveyardPaymentContext(UUID sourceControllerId, Card sourceCard,
+                                                     UUID sourcePermanentId,
+                                                     ForcedCostOrElseEffect forcedCost, int count) {
     }
     /** Target player for effects like "Target player shuffles ... from their graveyard" */
     public UUID targetPlayerId;
@@ -45,6 +58,8 @@ public class GraveyardTargetOperationState {
     public boolean flashback;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
+    /** Effective power of an attack-trigger source, captured before graveyard target selection. */
+    public Integer triggeringPermanentPowerAtTrigger;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
     public String chapterName;
     /**

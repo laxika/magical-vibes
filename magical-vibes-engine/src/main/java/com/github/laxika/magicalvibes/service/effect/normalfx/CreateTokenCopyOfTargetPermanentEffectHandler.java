@@ -34,31 +34,35 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
         List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
         if (targetIds == null) {
-            targetIds = entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+            targetIds = !entry.getTargetCardIds().isEmpty()
+                    ? entry.getTargetCardIds()
+                    : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()
                 && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
 
         for (UUID targetId : targetIds) {
-            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
-            if (targetPermanent == null) {
-                continue;
-            }
-
-            Card sourceCard = targetPermanent.getCard();
-            Permanent sourcePermanent = entry.getSourcePermanentId() == null
-                    ? null
-                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            UUID tokenControllerId = entry.getControllerId();
-            if (copyEffect.createForTargetController()) {
-                UUID targetControllerId = gameQueryService.findPermanentController(gameData, targetId);
-                if (targetControllerId != null) {
-                    tokenControllerId = targetControllerId;
-                }
-            }
-            tokenCopySupport.createTokenCopies(
-                    gameData, entry, List.of(sourceCard), sourcePermanent, tokenControllerId, copyEffect);
+            resolveForTarget(gameData, entry, copyEffect, targetId);
         }
+    }
+
+    void resolveForTarget(GameData gameData, StackEntry entry,
+                          CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId) {
+        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+        if (targetPermanent == null) {
+            return;
+        }
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID tokenControllerId = entry.getControllerId();
+        if (effect.createForTargetController()) {
+            UUID targetControllerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (targetControllerId != null) {
+                tokenControllerId = targetControllerId;
+            }
+        }
+        tokenCopySupport.createTokenCopies(gameData, entry, List.of(targetPermanent.getCard()),
+                sourcePermanent, tokenControllerId, effect);
     }
 }

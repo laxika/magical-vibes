@@ -25,7 +25,7 @@ public class BalmorBattlemageCaptain extends Card {
                         new CardTypePredicate(CardType.SORCERY))),
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES))
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES))
         ));
     }
 }

@@ -88,6 +88,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";
         }
+        if (predicate instanceof CardMaxManaValueXPredicate) {
+            return "card with mana value X or less";
+        }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";
         }

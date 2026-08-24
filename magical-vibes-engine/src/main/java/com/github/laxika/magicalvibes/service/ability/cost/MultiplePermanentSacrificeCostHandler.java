@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -75,7 +76,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         return battlefield.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                .filter(p -> matchesFilter(gameData, p))
                 .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
                 .map(Permanent::getId)
                 .toList();
@@ -83,7 +84,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
 
     @Override
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
-        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, filter)) {
+        if (!matchesFilter(gameData, chosen)) {
             String message = description != null
                     ? "Must sacrifice a permanent matching: " + description
                     : "Must sacrifice a matching permanent";
@@ -93,6 +94,16 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
             throw new IllegalStateException("Cannot sacrifice this permanent to its own ability");
         }
         sacrificeAction.sacrifice(gameData, player, chosen);
+    }
+
+    private boolean matchesFilter(GameData gameData, Permanent permanent) {
+        if (sourcePermanentId == null) {
+            return predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter);
+        }
+        return predicateEvaluationService.matchesPermanentPredicate(
+                permanent,
+                filter,
+                FilterContext.of(gameData).withSourcePermanentId(sourcePermanentId));
     }
 
     @Override

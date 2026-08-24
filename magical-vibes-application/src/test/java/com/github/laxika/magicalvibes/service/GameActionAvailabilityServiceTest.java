@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
@@ -70,6 +71,10 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class GameActionAvailabilityServiceTest {
 
+    private static final GameQueryService.StaticBonus NO_BONUS = new GameQueryService.StaticBonus(
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(),
+            false, false, false, false, Set.of(), false, 0, 0, false, false);
+
     @Mock private CardViewFactory cardViewFactory;
     @Mock private PermanentViewFactory permanentViewFactory;
     @Mock private StackEntryViewFactory stackEntryViewFactory;
@@ -92,6 +97,7 @@ class GameActionAvailabilityServiceTest {
         lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
                 .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
                         invocation.getArgument(1)).get());
+        lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(NO_BONUS);
 
         // Real casting services (with the real handler registry) over the mocked collaborators,
         // so the playable-index computation exercises the same cost/permission code paths as production.
@@ -265,6 +271,24 @@ class GameActionAvailabilityServiceTest {
             ManaPool pool = new ManaPool();
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLUE);
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLACK);
+
+            assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Exact-X target group with discard-X cost is playable at X=0 without a legal target")
+        void exactXTargetGroupWithDiscardCostIsPlayableAtZero() {
+            Card card = new Card();
+            card.setName("Discard X exact spell");
+            card.setType(CardType.INSTANT);
+            card.setManaCost("{W}{W}");
+            card.addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
+            card.targetExactlyX(new PermanentPredicateTargetFilter(
+                    new PermanentTruePredicate(), "Target must be a permanent"), 100)
+                    .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2);
 
             assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
         }

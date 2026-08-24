@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "167")
 @CardRegistration(set = "MBS", collectorNumber = "51")
+@CardRegistration(set = "APC", collectorNumber = "49")
 public class PhyrexianRager extends Card {
 
     public PhyrexianRager() {

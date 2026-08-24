@@ -70,6 +70,23 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.scope() == GrantScope.ALL_CREATURES
+                || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            final int[] count = {0};
+            gameData.forEachPermanent((playerId, permanent) -> {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && (e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
+                        || entry.getSourcePermanentId() == null
+                        || !permanent.getId().equals(entry.getSourcePermanentId()))) {
+                    applyEffect(gameData, entry, e, permanent);
+                    count[0]++;
+                }
+            });
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count[0] + " creature(s) lose all abilities until end of turn.").build());
+            return;
+        }
+
         UUID targetId = switch (e.scope()) {
             case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
             case TARGET -> entry.getTargetId();

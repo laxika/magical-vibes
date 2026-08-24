@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "242")
+@CardRegistration(set = "RNA", collectorNumber = "248")
 public class GodlessShrine extends Card {
 
     public GodlessShrine() {

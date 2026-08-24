@@ -47,9 +47,18 @@ class KarokWranglerTest extends BaseCardTest {
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveStack();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    private void resolveStack() {
+        int guard = 0;
+        while (!gd.stack.isEmpty() && guard++ < 10) {
+            harness.passBothPriorities();
+        }
     }
 }

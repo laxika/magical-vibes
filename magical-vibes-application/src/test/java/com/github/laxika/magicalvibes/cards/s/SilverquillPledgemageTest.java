@@ -25,8 +25,8 @@ class SilverquillPledgemageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, pledgemage.getId());
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "Flying");
+        resolveUntilChoice();
+        harness.handleListChoice(player1, "FLYING");
 
         assertThat(gqs.hasKeyword(gd, pledgemage, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, pledgemage, Keyword.LIFELINK)).isFalse();
@@ -44,9 +44,11 @@ class SilverquillPledgemageTest extends BaseCardTest {
         harness.castWithConspire(player1, 0, pledgemage.getId(),
                 List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Lifelink");
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "Lifelink");
+        harness.handleMayAbilityChosen(player1, false);
+        resolveUntilChoice();
+        harness.handleListChoice(player1, "LIFELINK");
+        resolveUntilChoice();
+        harness.handleListChoice(player1, "LIFELINK");
 
         assertThat(gqs.hasKeyword(gd, pledgemage, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, pledgemage, Keyword.FLYING)).isFalse();
@@ -60,13 +62,20 @@ class SilverquillPledgemageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, pledgemage.getId());
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "Flying");
+        resolveUntilChoice();
+        harness.handleListChoice(player1, "FLYING");
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, pledgemage, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, pledgemage, Keyword.LIFELINK)).isFalse();
+    }
+
+    private void resolveUntilChoice() {
+        int guard = 0;
+        while (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty() && guard++ < 10) {
+            harness.passBothPriorities();
+        }
     }
 }

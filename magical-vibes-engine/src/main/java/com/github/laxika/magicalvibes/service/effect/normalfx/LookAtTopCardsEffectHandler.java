@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -93,7 +94,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             if (e.optional() && e.restDestination() == LookDestination.GRAVEYARD) {
                 resolveMayPutOneOnTopRestToGraveyard(gameData, entry, lookCount);
             } else {
-                resolvePutOneOnTop(gameData, entry, lookCount);
+                resolvePutOneOnTop(gameData, entry, e, lookCount);
             }
         } else if (e.chosenDestination() == LibrarySearchDestination.GRAVEYARD
                 && e.restDestination() == LookDestination.TOP_OF_LIBRARY) {
@@ -221,7 +222,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
 
-    private void resolvePutOneOnTop(GameData gameData, StackEntry entry, int lookCount) {
+    private void resolvePutOneOnTop(GameData gameData, StackEntry entry, LookAtTopCardsEffect e, int lookCount) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
         if (result == null) return;
@@ -229,25 +230,45 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
 
-        if (topCards.size() == 1) {
+        if (topCards.size() == 1 && !e.optional()) {
             // Only one card looked at — it goes back on top, nothing to put on the bottom.
             gameData.playerDecks.get(controllerId).addFirst(topCards.getFirst());
             gameLogService.append(gameData, GameLog.text(playerName + " puts a card on top of their library."));
             return;
         }
 
+        List<Card> matchingCards = e.choosePredicate() == null
+                ? topCards
+                : filterEligibleCards(topCards, e.choosePredicate(), entry.getCard().getId(), gameData, controllerId);
+        if (matchingCards.isEmpty()) {
+            if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
+                bottomInRandomOrder(gameData, controllerId, playerName, topCards);
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            }
+            return;
+        }
+
         List<Card> sourceCards = new ArrayList<>(topCards);
-        String prompt = "Put one card on top of your library. The rest go to the bottom of your library.";
+        boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
+        String prompt = randomBottom
+                ? "You may reveal a matching card from among them and put it on top of your library. "
+                + "The rest go to the bottom of your library in a random order."
+                : "Put one card on top of your library. The rest go to the bottom of your library.";
+        LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, matchingCards)
+                .canFailToFind(e.optional())
+                .reveals(randomBottom)
+                .sourceCards(sourceCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .prompt(prompt)
+                .destination(LibrarySearchDestination.TOP_OF_LIBRARY);
+        if (randomBottom) {
+            params.followUp(LibrarySearchFollowUp.forBoundedPick(
+                    LibrarySearchFollowUp.SecondBoundedPick.terminal(true)));
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
-                LibrarySearchParams.builder(controllerId, topCards)
-                        .sourceCards(sourceCards)
-                        .reorderRemainingToBottom(true)
-                        .shuffleAfterSelection(false)
-                        .prompt(prompt)
-                        .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
-                        .build(),
-                prompt,
-                false));
+                params.build(), prompt, e.optional()));
     }
 
     private void resolveMayPutOneOnTopRestToGraveyard(GameData gameData, StackEntry entry, int lookCount) {

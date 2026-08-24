@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Resolves {@link BecomeCreatureEffect} by replacing the source permanent's frozen card with a
@@ -55,6 +59,13 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         copy.setKeywords(keywords);
         copy.freeze();
         source.setCard(copy);
+
+        if (!becomeCreature.protectionFromColors().isEmpty()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
+                    new ProtectionFromColorsEffect(becomeCreature.protectionFromColors()), source.getId(), null,
+                    null, EffectDuration.PERMANENT, 0));
+        }
 
         gameLogService.append(gameData, GameLog.cardThen(copy,
                 " becomes a " + becomeCreature.power() + "/" + becomeCreature.toughness() + " creature."));

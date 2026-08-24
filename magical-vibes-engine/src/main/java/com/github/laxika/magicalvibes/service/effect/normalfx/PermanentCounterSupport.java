@@ -13,10 +13,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -52,11 +50,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 public class PermanentCounterSupport {
-
-    private static final DoesntUntapWithCounterEffect FUNGUS_UNTAP_LOCK =
-            new DoesntUntapWithCounterEffect(CounterType.FUNGUS);
-    private static final RemoveCounterFromSourceEffect REMOVE_FUNGUS_COUNTER =
-            new RemoveCounterFromSourceEffect(CounterType.FUNGUS, 1);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -144,14 +137,15 @@ public class PermanentCounterSupport {
         if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
             return;
         }
-        counters = gameQueryService.replaceCounters(gameData, target, CounterType.PLUS_ONE_PLUS_ONE, counters);
+        counters = gameQueryService.replaceCounters(gameData, target, CounterType.PLUS_ONE_PLUS_ONE,
+                counters, placingPlayerId(gameData, entry, target));
         if (counters <= 0) {
             return;
         }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
         notifyCountersPlaced(gameData, entry, target, counters);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
-        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
@@ -165,7 +159,8 @@ public class PermanentCounterSupport {
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !gameQueryService.cantHaveCounters(gameData, perm)) {
-                int placed = gameQueryService.replaceCounters(gameData, perm, counterType, 1);
+                int placed = gameQueryService.replaceCounters(gameData, perm, counterType, 1,
+                        placingPlayerId(gameData, entry, perm));
                 if (placed <= 0) {
                     continue;
                 }
@@ -247,7 +242,8 @@ public class PermanentCounterSupport {
                                        CounterType counterType, int count) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
-        count = gameQueryService.replaceCounters(gameData, target, counterType, count);
+        count = gameQueryService.replaceCounters(gameData, target, counterType, count,
+                placingPlayerId(gameData, entry, target));
 
         String counterName = switch (counterType) {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
@@ -355,6 +351,7 @@ public class PermanentCounterSupport {
             case AIM -> { target.setCounterCount(CounterType.AIM, target.getCounterCount(CounterType.AIM) + count); yield "aim"; }
             case ARROW -> { target.setCounterCount(CounterType.ARROW, target.getCounterCount(CounterType.ARROW) + count); yield "arrow"; }
             case BLAZE -> { target.setCounterCount(CounterType.BLAZE, target.getCounterCount(CounterType.BLAZE) + count); yield "blaze"; }
+            case BLOOD -> { target.setCounterCount(CounterType.BLOOD, target.getCounterCount(CounterType.BLOOD) + count); yield "blood"; }
             case BOUNTY -> { target.setCounterCount(CounterType.BOUNTY, target.getCounterCount(CounterType.BOUNTY) + count); yield "bounty"; }
             case BRIBERY -> { target.setCounterCount(CounterType.BRIBERY, target.getCounterCount(CounterType.BRIBERY) + count); yield "bribery"; }
             case BRICK -> { target.setCounterCount(CounterType.BRICK, target.getCounterCount(CounterType.BRICK) + count); yield "brick"; }
@@ -395,7 +392,6 @@ public class PermanentCounterSupport {
             case FUNGUS -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.FUNGUS, target.getCounterCount(CounterType.FUNGUS) + count);
-                grantFungusCounterAbilities(target);
                 yield "fungus";
             }
             case FUSE -> { target.setCounterCount(CounterType.FUSE, target.getCounterCount(CounterType.FUSE) + count); yield "fuse"; }
@@ -429,14 +425,17 @@ public class PermanentCounterSupport {
                 }
                 yield counterType.name().toLowerCase();
             }
-            default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
+            default -> {
+                target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
+                yield counterType.name().toLowerCase();
+            }
         };
         if (counterName == null || count <= 0) return 0;
 
         notifyCountersPlaced(gameData, entry, target, count);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
-            recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
+            recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, count);
         }
 
         Card card = target.getCard();
@@ -445,6 +444,10 @@ public class PermanentCounterSupport {
         gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " puts " + counterText + " on ", card, "."));
         log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
                 sourceCard.getName(), count, counterName, card.getName());
+
+        if (counterType == CounterType.LOYALTY) {
+            fireLoyaltyCountersPutOnPlaneswalkerTriggers(gameData, target, count);
+        }
 
         // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
         if (entry != null && counterType == CounterType.LORE && card.isSaga()) {
@@ -462,27 +465,6 @@ public class PermanentCounterSupport {
             fireCounterPutOnControlledCreatureTriggers(gameData, target, count);
         }
         return count;
-    }
-
-    /**
-     * Mindbender Spores hands the blocked creature two abilities along with its fungus counters:
-     * "This creature doesn't untap during your untap step if it has a fungus counter on it" and
-     * "At the beginning of your upkeep, remove a fungus counter from this creature". Both are tied
-     * to the counter rather than to the source, so they are granted here (idempotently) wherever
-     * fungus counters land, and they outlive the creature that placed them.
-     */
-    private static void grantFungusCounterAbilities(Permanent target) {
-        if (!hasGrantedEffect(target, EffectSlot.STATIC, FUNGUS_UNTAP_LOCK)) {
-            target.addPersistentTriggeredEffect(EffectSlot.STATIC, FUNGUS_UNTAP_LOCK);
-        }
-        if (!hasGrantedEffect(target, EffectSlot.UPKEEP_TRIGGERED, REMOVE_FUNGUS_COUNTER)) {
-            target.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, REMOVE_FUNGUS_COUNTER);
-        }
-    }
-
-    private static boolean hasGrantedEffect(Permanent target, EffectSlot slot, CardEffect effect) {
-        return target.getCard().getEffects(slot).contains(effect)
-                || target.getPersistentTriggeredEffects(slot).contains(effect);
     }
 
     public String counterTypeName(CounterType counterType) {
@@ -826,6 +808,69 @@ public class PermanentCounterSupport {
         }
     }
 
+    /**
+     * Fires controller-scoped triggers for loyalty counters placed on planeswalkers. The amount is
+     * snapshotted on the triggered ability so "that many" remains the amount from the placement
+     * event when the trigger resolves.
+     */
+    public void fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+            GameData gameData, UUID controllerId, int count) {
+        if (controllerId == null || count <= 0) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            queueLoyaltyCounterTrigger(gameData, source, controllerId, count);
+        }
+    }
+
+    public void fireLoyaltyCountersPutOnSourceTrigger(GameData gameData, Permanent source, int count) {
+        if (source == null || count <= 0) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        queueLoyaltyCounterTrigger(gameData, source, controllerId, count);
+    }
+
+    public void fireLoyaltyCountersPutOnPlaneswalkerTriggers(
+            GameData gameData, Permanent planeswalker, int count) {
+        if (planeswalker == null || count <= 0 || !gameQueryService.isPlaneswalker(gameData, planeswalker)) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, planeswalker.getId());
+        fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(gameData, controllerId, count);
+    }
+
+    private void queueLoyaltyCounterTrigger(GameData gameData, Permanent source,
+                                            UUID controllerId, int count) {
+        if (controllerId == null) {
+            return;
+        }
+        Card card = source.getCard();
+        List<CardEffect> effects = card.getEffects(
+                EffectSlot.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS);
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                source.getId());
+        trigger.setEventValue(count);
+        gameData.stack.add(trigger);
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        log.info("Game {} - {} loyalty-counter trigger fires for {} counter(s)",
+                gameData.id, card.getName(), count);
+    }
+
     void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
         Card card = target.getCard();
         List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
@@ -957,38 +1002,66 @@ public class PermanentCounterSupport {
     }
 
     public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(GameData gameData, Permanent target) {
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, 1);
+    }
+
+    public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(GameData gameData, Permanent target,
+                                                                       int count) {
         if (target == null) {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (controllerId != null) {
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId);
+            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
+            if (gameQueryService.isCreature(gameData, target)) {
+                firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
+            }
         }
     }
 
     public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
             GameData gameData, Permanent target, UUID controllerId) {
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, controllerId, 1);
+    }
+
+    public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+            GameData gameData, Permanent target, UUID controllerId, int count) {
         if (target != null && controllerId != null) {
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId);
+            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
+            if (gameQueryService.isCreature(gameData, target)) {
+                firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
+            }
         }
     }
 
     private void firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(GameData gameData,
-                                                                              UUID controllerId) {
+                                                                              UUID controllerId, int count) {
+        firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
+                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT);
+    }
+
+    private void firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(GameData gameData,
+                                                                            UUID controllerId, int count) {
+        firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
+                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE);
+    }
+
+    private void firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(GameData gameData,
+                                                                              UUID controllerId, int count,
+                                                                              EffectSlot slot) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT);
+            List<CardEffect> effects = source.getCard().getEffects(slot);
             if (effects.isEmpty()) {
                 continue;
             }
             Card card = source.getCard();
-            gameData.stack.add(new StackEntry(
+            StackEntry triggerEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
                     controllerId,
@@ -996,7 +1069,9 @@ public class PermanentCounterSupport {
                     new ArrayList<>(effects),
                     null,
                     source.getId()
-            ));
+            );
+            triggerEntry.setEventValue(count);
+            gameData.stack.add(triggerEntry);
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
             log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
                     card.getName());

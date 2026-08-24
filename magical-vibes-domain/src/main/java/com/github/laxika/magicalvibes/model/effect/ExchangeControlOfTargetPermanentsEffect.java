@@ -48,7 +48,8 @@ public record ExchangeControlOfTargetPermanentsEffect(
         boolean triggeringPermanentIsFirstTarget,
         boolean sacrificeSourceIfNoExchange,
         boolean requireSharedCardType,
-        PermanentPredicate firstTargetPredicate) implements CardEffect {
+        PermanentPredicate firstTargetPredicate,
+        boolean targetPairInSingleGroup) implements CardEffect {
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
@@ -56,20 +57,20 @@ public record ExchangeControlOfTargetPermanentsEffect(
             boolean requireSharedArtifactOrCreatureType, boolean triggeringPermanentIsFirstTarget) {
         this(targetPredicate, requireOpponentManaValueNotGreater, requireFirstTargetControlledByController,
                 sourceIsFirstTarget, requireSharedArtifactOrCreatureType, triggeringPermanentIsFirstTarget,
-                false, false, null);
+                false, false, null, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater) {
         this(targetPredicate, requireOpponentManaValueNotGreater, true, false, false, false,
-                false, false, null);
+                false, false, null, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
             boolean requireFirstTargetControlledByController) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
-                requireFirstTargetControlledByController, false, false, false, false, false, null);
+                requireFirstTargetControlledByController, false, false, false, false, false, null, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
@@ -77,7 +78,7 @@ public record ExchangeControlOfTargetPermanentsEffect(
             boolean requireFirstTargetControlledByController, boolean sourceIsFirstTarget) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
                 requireFirstTargetControlledByController, sourceIsFirstTarget, false, false,
-                false, false, null);
+                false, false, null, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
@@ -86,26 +87,38 @@ public record ExchangeControlOfTargetPermanentsEffect(
             boolean requireSharedArtifactOrCreatureType) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
                 requireFirstTargetControlledByController, sourceIsFirstTarget,
-                requireSharedArtifactOrCreatureType, false, false, false, null);
+                requireSharedArtifactOrCreatureType, false, false, false, null, false);
     }
 
     public static ExchangeControlOfTargetPermanentsEffect forTriggeringPermanent(
             PermanentPredicate targetPredicate) {
         return new ExchangeControlOfTargetPermanentsEffect(
-                targetPredicate, false, false, false, false, true, false, false, null);
+                targetPredicate, false, false, false, false, true, false, false, null, false);
     }
 
     public static ExchangeControlOfTargetPermanentsEffect forControlledTargetsSharingCardType(
            PermanentPredicate targetPredicate) {
         return new ExchangeControlOfTargetPermanentsEffect(
                 new PermanentTruePredicate(),
-                false, true, false, false, false, false, true, targetPredicate);
+                false, true, false, false, false, false, true, targetPredicate, false);
     }
 
     public static ExchangeControlOfTargetPermanentsEffect forTriggeringPermanentAndSacrificeIfNoExchange(
             PermanentPredicate targetPredicate) {
         return new ExchangeControlOfTargetPermanentsEffect(
-                targetPredicate, false, false, false, false, true, true, false, null);
+                targetPredicate, false, false, false, false, true, true, false, null, false);
+    }
+
+    /**
+     * Modal exchange whose two targets are the two members of one target group.
+     *
+     * <p>This keeps the two targets distinct within a mode while allowing a permanent to be
+     * chosen once for another selected mode.</p>
+     */
+    public static ExchangeControlOfTargetPermanentsEffect forTwoTargetsInOneGroup(
+            PermanentPredicate targetPredicate) {
+        return new ExchangeControlOfTargetPermanentsEffect(
+                targetPredicate, false, false, false, false, false, false, false, null, true);
     }
 
     @Override

@@ -35,6 +35,7 @@ class WineOfBloodAndIronTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wine of Blood and Iron");
         harness.assertInGraveyard(player1, "Wine of Blood and Iron");

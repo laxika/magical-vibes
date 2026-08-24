@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -171,8 +172,13 @@ public class GraveyardReturnSupport {
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
         UUID targetOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
 
-        if (targetCard == null || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId))) {
+        if (targetCard == null
+                || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId))
+                || (effect.targetNotPutIntoGraveyardThisCombat()
+                && targetOwnerId != null
+                && gameData.cardsPutIntoGraveyardThisCombat
+                        .getOrDefault(targetOwnerId, Set.of()).contains(targetCardId))) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in a graveyard).";
             gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
@@ -395,22 +401,27 @@ public class GraveyardReturnSupport {
 
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect, StackEntry entry) {
+        boolean exiledCostSubtypeMatches = effect.plusOneCountersIfExiledCostCardHasSubtype() != null
+                && entry != null
+                && entry.getExiledCostCardSnapshot() != null
+                && entry.getExiledCostCardSnapshot().getSubtypes() != null
+                && entry.getExiledCostCardSnapshot().getSubtypes()
+                .contains(effect.plusOneCountersIfExiledCostCardHasSubtype());
         boolean plusOneCounters = effect.plusOneCounterCount() > 0
                 && (effect.plusOneCountersIfSubtype() == null
                 || (card.getSubtypes() != null
                 && card.getSubtypes().contains(effect.plusOneCountersIfSubtype())))
                 && (effect.plusOneCountersIfExiledCostCardHasSubtype() == null
-                || (entry != null
-                && entry.getExiledCostCardSnapshot() != null
-                && entry.getExiledCostCardSnapshot().getSubtypes() != null
-                && entry.getExiledCostCardSnapshot().getSubtypes()
-                .contains(effect.plusOneCountersIfExiledCostCardHasSubtype())))
+                || exiledCostSubtypeMatches)
                 && (effect.plusOneCountersIfCardType() == null
                 || effect.plusOneCountersIfCardType() == CardType.CREATURE
                 || card.hasType(effect.plusOneCountersIfCardType()))
                 && (effect.plusOneCountersIfCondition() == null
                 || conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
                 ConditionContext.forCasting(controllerId)));
+        boolean exiledCostCounter = exiledCostSubtypeMatches
+                && effect.counterIfExiledCostCardHasSubtype() != null
+                && effect.counterCountIfExiledCostCardHasSubtype() > 0;
         boolean enterWithCounter = effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         boolean enterWithCounters = effect.enterWithCounters() != null && !effect.enterWithCounters().isEmpty();
         if (!effect.enterWithMannequinCounter()
@@ -420,6 +431,7 @@ public class GraveyardReturnSupport {
                 && !effect.exileIfDying()
                 && !effect.unearth()
                 && !plusOneCounters
+                && !exiledCostCounter
                 && (effect.grantKeywords() == null || effect.grantKeywords().isEmpty())
                 && !effect.grantHasteUntilNextTurn()
                 && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
@@ -476,6 +488,11 @@ public class GraveyardReturnSupport {
                     permanentCounterSupport.applyPlusOnePlusOneCounters(
                             gameData, null, p, effect.plusOneCounterCount());
                 }
+            }
+            if (exiledCostCounter) {
+                permanentCounterSupport.placeCounterOnPermanent(gameData, entry, p,
+                        effect.counterIfExiledCostCardHasSubtype(),
+                        effect.counterCountIfExiledCostCardHasSubtype());
             }
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
                 p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,
@@ -1320,11 +1337,20 @@ public class GraveyardReturnSupport {
     }
 
     public boolean exileCardFromAnyGraveyard(GameData gameData, UUID cardId, Card card) {
+        return exileCardFromAnyGraveyard(gameData, cardId, card, null);
+    }
+
+    public boolean exileCardFromAnyGraveyard(GameData gameData, UUID cardId, Card card,
+                                             UUID sourcePermanentId) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, pid, card);
-                exileService.exileCard(gameData, pid, card);
+                if (sourcePermanentId == null) {
+                    exileService.exileCard(gameData, pid, card);
+                } else {
+                    exileService.exileCard(gameData, pid, card, sourcePermanentId);
+                }
                 return true;
             }
         }
@@ -1889,6 +1915,7 @@ public class GraveyardReturnSupport {
         UUID controllerId = state.controllerId();
         String destText = switch (state.disposition()) {
             case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM -> "put into your hand";
+            case ONE_FROM_CHOSEN_HAND_AND_BOTTOM -> "put one card into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
             case OPPONENT_CHOOSES_EXILE -> "exile";
             default -> "put onto the battlefield";
@@ -1965,6 +1992,21 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        if (state.disposition() == CardPileDisposition.ONE_FROM_CHOSEN_HAND_AND_BOTTOM) {
+            List<Card> chosenPile = chosenPileCardIds.stream()
+                    .map(cardId -> allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            List<Card> otherCards = otherPileCardIds.stream()
+                    .map(cardId -> allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            gameData.queueInteraction(new PendingTruthOrTaleCardChoice(controllerId, chosenPile, otherCards));
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, chosenPile, 1, 1,
+                    "Choose one card from the chosen pile to put into your hand.");
+            return;
+        }
+
         if (state.disposition() == CardPileDisposition.HAND
                 || state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
             // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.
@@ -2018,6 +2060,43 @@ public class GraveyardReturnSupport {
                 gameLogService.append(gameData, GameLog.cardThen(card, " returns to " + ownerName + "'s graveyard."));
             }
         }
+    }
+
+    /** Completes Truth or Tale's one-card choice and starts the ordered bottoming step if needed. */
+    public void completeTruthOrTaleCardChoice(GameData gameData, List<UUID> selectedCardIds) {
+        PendingTruthOrTaleCardChoice state = gameData.pollPendingInteraction(PendingTruthOrTaleCardChoice.class);
+        if (state == null || selectedCardIds.size() != 1) {
+            throw new IllegalStateException("Truth or Tale requires exactly one card");
+        }
+
+        UUID selectedCardId = selectedCardIds.getFirst();
+        Card selectedCard = state.chosenPileCards().stream()
+                .filter(card -> card.getId().equals(selectedCardId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Invalid Truth or Tale card"));
+        gameData.interaction.clearAwaitingInput();
+        UUID controllerId = state.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        gameData.addCardToHand(controllerId, selectedCard);
+        gameLogService.append(gameData, GameLog.textCardText(
+                controllerName + " puts ", selectedCard, " into their hand."));
+
+        List<Card> toBottom = new ArrayList<>(state.otherCards());
+        state.chosenPileCards().stream()
+                .filter(card -> !card.getId().equals(selectedCardId))
+                .forEach(toBottom::add);
+        if (toBottom.isEmpty()) {
+            return;
+        }
+        if (toBottom.size() == 1) {
+            gameData.playerDecks.get(controllerId).add(toBottom.getFirst());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    controllerName + " puts ", toBottom.getFirst(), " on the bottom of their library."));
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                controllerId, toBottom, true, controllerId,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
     }
 
     private void completeDeathOrGloryPileChoice(GameData gameData, PendingPileSeparation state,
@@ -2106,15 +2185,52 @@ public class GraveyardReturnSupport {
         }
     }
 
-    public void putCardOntoBattlefieldFromExile(GameData gameData, UUID controllerId, Card card) {
+    /**
+     * Completes Deliver Unto Evil: the chosen cards stay in the controller's graveyard and every
+     * other card in the held target set returns to that player's hand.
+     */
+    public void completeDeliverUntoEvilChoice(GameData gameData, List<UUID> chosenCardIds) {
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+        UUID controllerId = state.controllerId();
+        List<Card> returnedCards = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            if (graveyard != null) {
+                for (Card card : state.cards()) {
+                    if (!chosenCardIds.contains(card.getId())
+                            && graveyard.removeIf(graveyardCard -> graveyardCard.getId().equals(card.getId()))) {
+                        gameData.addCardToHand(controllerId, card);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
+                        returnedCards.add(card);
+                    }
+                }
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
+        }
+
+        if (!returnedCards.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            GameLog.Builder builder = GameLog.builder().text(playerName + " returns ");
+            appendCardList(builder, returnedCards);
+            builder.text(" from graveyard to hand.");
+            gameLogService.append(gameData, builder.build());
+        }
+    }
+
+    public Permanent putCardOntoBattlefieldFromExile(GameData gameData, UUID controllerId, Card card) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
+        initializePlaneswalkerLoyalty(permanent, card);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " onto the battlefield."));
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        return permanent;
     }
 
     /**

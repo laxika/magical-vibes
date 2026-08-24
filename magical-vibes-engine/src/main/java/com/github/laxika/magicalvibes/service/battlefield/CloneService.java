@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -51,13 +53,19 @@ public class CloneService {
     private final PermanentCopierService permanentCopierService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
-        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0);
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0, false);
     }
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue) {
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, false);
+    }
+
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 int xValue, boolean landPlay) {
         CopyPermanentOnEnterEffect copyEffect = findCopyEffect(gameData, controllerId, card);
         if (copyEffect == null) return false;
 
@@ -81,6 +89,8 @@ public class CloneService {
         gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
         gameData.cloneOperation.nameOverride = copyEffect.nameOverride();
         gameData.cloneOperation.additionalSupertypesOverride = copyEffect.additionalSupertypesOverride();
+        gameData.cloneOperation.removedSupertypesOverride = copyEffect.removedSupertypesOverride();
+        gameData.cloneOperation.addTypeAppropriateCounters = copyEffect.addTypeAppropriateCounters();
         gameData.cloneOperation.embalmColorOverride = copyEffect.embalmColorOverride();
         gameData.cloneOperation.embalmAddedSubtype = copyEffect.embalmAddedSubtype();
         gameData.cloneOperation.embalmRemoveManaCost = copyEffect.embalmRemoveManaCost();
@@ -90,6 +100,9 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
+        gameData.cloneOperation.copyColor = copyEffect.copyColor();
+        gameData.cloneOperation.entersTapped = copyEffect.entersTapped();
+        gameData.cloneOperation.landPlay = landPlay;
         gameData.cloneOperation.xValue = xValue;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
@@ -132,6 +145,8 @@ public class CloneService {
         List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
         String nameOverride = gameData.cloneOperation.nameOverride;
         Set<CardSupertype> additionalSupertypesOverride = gameData.cloneOperation.additionalSupertypesOverride;
+        Set<CardSupertype> removedSupertypesOverride = gameData.cloneOperation.removedSupertypesOverride;
+        boolean addTypeAppropriateCounters = gameData.cloneOperation.addTypeAppropriateCounters;
         CardColor embalmColorOverride = gameData.cloneOperation.embalmColorOverride;
         CardSubtype embalmAddedSubtype = gameData.cloneOperation.embalmAddedSubtype;
         boolean embalmRemoveManaCost = gameData.cloneOperation.embalmRemoveManaCost;
@@ -140,6 +155,9 @@ public class CloneService {
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
+        boolean copyColor = gameData.cloneOperation.copyColor;
+        boolean entersTapped = gameData.cloneOperation.entersTapped;
+        boolean landPlay = gameData.cloneOperation.landPlay;
         int xValue = gameData.cloneOperation.xValue;
 
         gameData.cloneOperation.card = null;
@@ -152,6 +170,8 @@ public class CloneService {
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
+        gameData.cloneOperation.removedSupertypesOverride = Set.of();
+        gameData.cloneOperation.addTypeAppropriateCounters = false;
         gameData.cloneOperation.embalmColorOverride = null;
         gameData.cloneOperation.embalmAddedSubtype = null;
         gameData.cloneOperation.embalmRemoveManaCost = false;
@@ -161,6 +181,9 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.copyColor = true;
+        gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.landPlay = false;
         gameData.cloneOperation.xValue = 0;
 
         Permanent perm = new Permanent(card);
@@ -171,7 +194,8 @@ public class CloneService {
                 Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
                 Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
                 permanentCopierService.applyCloneCopy(
-                        perm, targetPerm, effectivePowerOverride, effectiveToughnessOverride, additionalTypesOverride);
+                        perm, targetPerm.getCard(), effectivePowerOverride, effectiveToughnessOverride,
+                        additionalTypesOverride, List.of(), copyColor);
                 boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
                         || perm.getCard().hasType(CardType.CREATURE);
                 applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,
@@ -184,6 +208,7 @@ public class CloneService {
                     perm.getCard().setName(nameOverride);
                 }
                 applyAdditionalSupertypes(perm.getCard(), additionalSupertypesOverride);
+                applyRemovedSupertypes(perm.getCard(), removedSupertypesOverride);
                 // "except it's an [subtype] in addition to its other types and it has ..." (Phantasmal Image)
                 applyAdditionalSubtypes(perm.getCard(), additionalSubtypesOverride);
                 additionalSlotEffects.forEach((slot, effects) ->
@@ -203,6 +228,12 @@ public class CloneService {
                 if (creatureOnlyCharacteristicsApply) {
                     applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
                             additionalPlusOnePlusOneCounters, xValue);
+                }
+                if (addTypeAppropriateCounters) {
+                    applyTypeAppropriateCounters(gameData, controllerId, perm);
+                }
+                if (entersTapped) {
+                    perm.tap();
                 }
             }
         }
@@ -231,7 +262,14 @@ public class CloneService {
             log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
         }
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);
+        if (landPlay) {
+            battlefieldEntryService.processLandETBEffects(gameData, controllerId, perm.getCard());
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
+            }
+        } else {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);
+        }
 
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
@@ -280,6 +318,32 @@ public class CloneService {
             }
         }
         copy.setSubtypes(subtypes);
+    }
+
+    private void applyRemovedSupertypes(Card copy, Set<CardSupertype> removedSupertypes) {
+        if (removedSupertypes == null || removedSupertypes.isEmpty()) return;
+        Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+        supertypes.addAll(copy.getSupertypes());
+        supertypes.removeAll(removedSupertypes);
+        copy.setSupertypes(supertypes);
+    }
+
+    private void applyTypeAppropriateCounters(GameData gameData, UUID controllerId, Permanent perm) {
+        if (perm.getCard().hasType(CardType.CREATURE)) {
+            applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
+                    new Fixed(1), 0);
+        }
+        if (perm.getCard().hasType(CardType.PLANESWALKER)) {
+            applyAdditionalLoyaltyCounter(gameData, controllerId, perm);
+        }
+    }
+
+    private void applyAdditionalLoyaltyCounter(GameData gameData, UUID controllerId, Permanent perm) {
+        if (gameQueryService.cantHaveCountersForController(gameData, perm, controllerId)) return;
+        int printedLoyalty = perm.getCard().getLoyalty() != null ? perm.getCard().getLoyalty() : 0;
+        int count = gameQueryService.replaceCounters(gameData, perm, controllerId,
+                CounterType.LOYALTY, printedLoyalty + 1);
+        perm.setCounterCount(CounterType.LOYALTY, count);
     }
 
     private void applyAdditionalSupertypes(Card copy, Set<CardSupertype> additionalSupertypes) {

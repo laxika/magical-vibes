@@ -1356,6 +1356,26 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Targeted modal beginning-of-combat trigger queues mode selection")
+        void targetedModalBeginningOfCombatQueuesModeSelection() {
+            Card sourceCard = createCardWithName("Ferocification");
+            sourceCard.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption(
+                            "Target creature gets +2/+0",
+                            new BoostTargetCreatureEffect(2, 0),
+                            new PermanentPredicateTargetFilter(
+                                    new PermanentIsCreaturePredicate(), "Target creature"))
+            )));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            verify(triggerCollectionService).processNextTriggeredModalTrigger(gd);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)).isTrue();
+        }
+
+        @Test
         @DisplayName("OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED fires for the non-active player's permanents")
         void opponentBeginningOfCombatFiresForNonActivePlayer() {
             Card card = createCardWithName("Opponent Combat Card");

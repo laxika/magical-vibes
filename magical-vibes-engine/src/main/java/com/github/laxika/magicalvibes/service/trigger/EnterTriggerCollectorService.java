@@ -80,6 +80,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -379,7 +380,10 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
+    })
     private boolean handleTokenEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
         Card sourceCard = match.permanent().getCard();
@@ -395,6 +399,36 @@ public class EnterTriggerCollectorService {
         entry.setNonTargeting(true);
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
             match.gameData().enqueueTrigger(new StackEntry(entry));
+        }
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+            slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
+    private boolean handleOpponentTokenEnterCreateCopies(TriggerMatchContext match,
+            CreateTokenCopyOfTargetPermanentEffect effect, TriggerContext ctx) {
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        if (tokensEnter.permanentIds().isEmpty()) {
+            return false;
+        }
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    0,
+                    null,
+                    match.permanent().getId(),
+                    Map.of(),
+                    null,
+                    tokensEnter.permanentIds(),
+                    List.of());
+            entry.setNonTargeting(true);
+            match.gameData().enqueueTrigger(entry);
         }
         logTriggered(match);
         return true;
@@ -1085,6 +1119,8 @@ public class EnterTriggerCollectorService {
      */
     @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyPutCountersOnEntering(TriggerMatchContext match,
             PutCountersOnEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1094,7 +1130,7 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to add counters to.
             return true;
         }
-        CardEffect counters = new PutCounterOnTargetPermanentEffect(effect.counterType(), effect.count());
+        CardEffect counters = new PutCounterOnTargetPermanentEffect(effect.counterType(), effect.amount());
         if (effect.requiredCounterType() != null) {
             counters = new ConditionalEffect(
                     new TargetPermanentMatches(new PermanentHasCountersPredicate(effect.requiredCounterType())),
@@ -1103,7 +1139,7 @@ public class EnterTriggerCollectorService {
         String counterDescription = effect.counterType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
         if (effect.optional()) {
             var may = new MayEffect(counters,
-                    "Put " + effect.count() + " " + counterDescription + " counter(s) on "
+                    "Put " + effect.amount() + " " + counterDescription + " counter(s) on "
                             + pe.enteringCard().getName() + "?");
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
@@ -1124,7 +1160,7 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering ({} put {} {} counter(s) on it)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
-                effect.optional() ? "may" : "mandatory", effect.count(), counterDescription);
+                effect.optional() ? "may" : "mandatory", effect.amount(), counterDescription);
         return true;
     }
 
@@ -1351,6 +1387,7 @@ public class EnterTriggerCollectorService {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);
+                entry.setTriggeringCardId(enteringPermanent.getCard().getId());
                 entry.setTriggeringPermanentPowerAtTrigger(
                         gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
             }

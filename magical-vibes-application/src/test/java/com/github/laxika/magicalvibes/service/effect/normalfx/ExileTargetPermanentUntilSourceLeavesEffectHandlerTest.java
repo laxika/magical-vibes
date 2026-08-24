@@ -213,9 +213,6 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
 
                 StackEntry entry = createEntry(sourceCard, player1Id, target.getId());
 
-                when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-
                 exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
                 verify(permanentRemovalService, never()).removePermanentToExile(gd, target);

@@ -16,11 +16,20 @@ import com.github.laxika.magicalvibes.model.CardColor;
  * {@code SPELL_ON_STACK}, so only a spell on the stack is a legal target. A color set on a permanent
  * spell carries onto the permanent it resolves into (CR 400.7a).
  */
-public record SetTargetColorEffect(CardColor color, boolean spellOnly) implements CardEffect {
+public record SetTargetColorEffect(CardColor color, boolean spellOnly, boolean chooseColor) implements CardEffect {
 
     /** "Target spell or permanent becomes [color]" — the lace instants. */
     public SetTargetColorEffect(CardColor color) {
-        this(color, false);
+        this(color, false, false);
+    }
+
+    public SetTargetColorEffect(CardColor color, boolean spellOnly) {
+        this(color, spellOnly, false);
+    }
+
+    /** "Target spell becomes the color of your choice" — the resolution-time choice form. */
+    public static SetTargetColorEffect chosenColorForSpell() {
+        return new SetTargetColorEffect(null, true, true);
     }
 
     @Override
