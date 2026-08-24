@@ -1,0 +1,76 @@
+package com.github.laxika.magicalvibes.cards.l;
+
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({LivingWall.class, CrawWurm.class})
+class LivingWallTest extends BaseCardTest {
+
+    @Test
+    void resolvingRegenerationAbilityGrantsShield() {
+        addLivingWallReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Living Wall").getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void regenerationShieldSavesLivingWallFromLethalCombatDamage() {
+        Permanent wall = addLivingWallReady(player1);
+        wall.setRegenerationShield(1);
+        wall.setBlocking(true);
+        wall.addBlockingTarget(0);
+        addAttackingCrawWurm(player2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Living Wall");
+        Permanent survivingWall = findPermanent(player1, "Living Wall");
+        assertThat(survivingWall.isTapped()).isTrue();
+        assertThat(survivingWall.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void livingWallDiesFromLethalCombatDamageWithoutShield() {
+        Permanent wall = addLivingWallReady(player1);
+        wall.setBlocking(true);
+        wall.addBlockingTarget(0);
+        addAttackingCrawWurm(player2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Living Wall");
+        harness.assertInGraveyard(player1, "Living Wall");
+    }
+
+    private Permanent addLivingWallReady(Player player) {
+        Permanent perm = new Permanent(new LivingWall());
+        perm.setSummoningSick(false);
+        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    private void addAttackingCrawWurm(Player player) {
+        Permanent perm = new Permanent(new CrawWurm());
+        perm.setSummoningSick(false);
+        perm.setAttacking(true);
+        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
+    }
+}

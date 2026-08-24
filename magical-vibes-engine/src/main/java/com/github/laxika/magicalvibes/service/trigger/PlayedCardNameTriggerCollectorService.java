@@ -123,6 +123,9 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
+        if (effect instanceof TriggeringCardConditionalEffect) {
+            return false;
+        }
         return enqueueLandPlayTrigger(match, effect);
     }
 
@@ -133,6 +136,9 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
+        if (effect instanceof TriggeringCardConditionalEffect) {
+            return false;
+        }
         return enqueueLandPlayTrigger(match, effect);
     }
 

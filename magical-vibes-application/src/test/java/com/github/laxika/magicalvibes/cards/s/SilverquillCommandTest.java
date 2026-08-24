@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SilverquillCommand.class, Forest.class, GrizzlyBears.class, HillGiant.class})
 class SilverquillCommandTest extends BaseCardTest {
 
     @Test
@@ -69,7 +71,6 @@ class SilverquillCommandTest extends BaseCardTest {
         harness.castModalSorceryWithModes(player1, 0, 2, new int[]{2, 3},
                 List.of(player2.getId(), player2.getId()));
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player2, sacrificed.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         harness.assertInHand(player2, draw.getName());

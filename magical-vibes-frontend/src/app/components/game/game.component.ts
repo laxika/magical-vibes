@@ -665,6 +665,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playExileCard(card: Card): void {
     if (card.id) {
+      const exileAbility = card.exileActivatedAbilities?.[0];
+      if (exileAbility && this.hasPriority) {
+        this.websocketService.send({
+          type: MessageType.ACTIVATE_EXILED_ABILITY,
+          exiledCardId: card.id,
+          abilityIndex: 0,
+          targetId: null
+        });
+        return;
+      }
       this.choice.targeting.startExilePlay(card);
     }
   }
@@ -1653,6 +1663,8 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKickerPermanent) { t.cancelKickerPermanent(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
+    if (t.choosingBuybackSacrifice) { t.cancelBuybackSacrifice(); return true; }
+    if (t.choosingBuybackDiscard) { t.cancelBuybackDiscard(); return true; }
     if (t.choosingBuyback) { t.cancelBuyback(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
     if (t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard) { t.cancelBehold(); return true; }
@@ -1684,6 +1696,9 @@ export class GameComponent implements OnInit, OnDestroy {
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.harmonizing || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent || t.choosingBuyback
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
+      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent
+      || t.choosingBuyback || t.choosingBuybackSacrifice || t.choosingBuybackDiscard
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard || t.selectingGraveyardCastDiscard || t.selectingExileCounterCost
       || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard

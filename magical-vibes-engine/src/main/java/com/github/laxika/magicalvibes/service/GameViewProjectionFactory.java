@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
@@ -391,8 +392,8 @@ public class GameViewProjectionFactory {
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
         // Determine which players have their top card visible to the viewer.
         // PlayWithTopCardRevealedEffect = publicly revealed to all players.
-        // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect = private,
-        //   only visible to the controller.
+        // LookAtTopCardOfOwnLibraryEffect and library-cast permissions = private, only visible
+        // to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
@@ -414,7 +415,8 @@ public class GameViewProjectionFactory {
                         revealedPlayerIds.add(pid);
                     } else if (pid.equals(viewerId) &&
                             (effect instanceof LookAtTopCardOfOwnLibraryEffect
-                                    || effect instanceof AllowCastFromTopOfLibraryEffect)) {
+                                    || effect instanceof AllowCastFromTopOfLibraryEffect
+                                    || effect instanceof AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect)) {
                         // Private: only visible to the controller
                         revealedPlayerIds.add(pid);
                     }
@@ -577,6 +579,14 @@ public class GameViewProjectionFactory {
                     && exiledEntry != null
                     && playerId.equals(exiledEntry.exilerId())
                     && exiledEntry.exiledTurnNumber() < gameData.turnNumber;
+            Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
+            boolean hasSuspendedExileAbility = timeCounters != null && timeCounters > 0
+                    && card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isExileOnly);
+            if (hasSuspendedExileAbility) {
+                playable.add(cardViewFactory.create(card));
+                continue;
+            }
+
             UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
             boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
                     || castableFromExileWithSource.contains(card.getId())
@@ -657,8 +667,7 @@ public class GameViewProjectionFactory {
 
     /**
      * Returns the top card of the player's library as a playable CardView if:
-     * - the player has a permanent with AllowCastFromTopOfLibraryEffect
-     * - the top card matches one of the castable types
+     * - the player has a permanent with a permission to cast from the library top
      * - the player can afford and is allowed to cast it
      */
     List<CardView> getPlayableLibraryTopCards(GameData gameData, UUID playerId) {
@@ -737,9 +746,12 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        boolean canPayLifeAlternative = !lifeTopPlay || gameData.getLife(playerId) >= topCard.getManaValue();
-        if (freeTopPlay || (lifeTopPlay && canPayLifeAlternative)
-                || castingCostService.hasAlternativeZeroCostFromBattlefield(
+        boolean canPayLifeAlternative = castingPermissionService
+                .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, topCard)
+                && gameData.getLife(playerId) >= topCard.getManaValue()
+                && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+        if (freeTopPlay || canPayLifeAlternative || castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY)) {
             playable.add(cardViewFactory.create(topCard));
         } else {

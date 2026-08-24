@@ -32,6 +32,7 @@ public class AwardManaOfChosenColorEqualToDevotionEffectHandler implements ManaA
 
     @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
+                        CardEffect effect,
                         int manaMultiplier, boolean creatureSource) {
         ChoiceContext.DevotionManaColorChoice context = new ChoiceContext.DevotionManaColorChoice(
                 playerId, permanent.getId(), creatureSource, manaMultiplier);

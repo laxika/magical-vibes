@@ -16,6 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class GoblinWarDrums extends Card {
 
     public GoblinWarDrums() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES));
     }
 }

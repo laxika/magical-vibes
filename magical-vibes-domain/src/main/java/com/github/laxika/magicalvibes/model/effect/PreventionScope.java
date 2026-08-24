@@ -36,6 +36,8 @@ public enum PreventionScope {
     ALL_COMBAT_TO_PLAYERS,
     /** "Prevent all damage that would be dealt to creatures this turn" (Blinding Fog). */
     ALL_TO_CREATURES,
+    /** "Prevent all damage that would be dealt this turn to creatures you control." (Divine Light). */
+    ALL_TO_CONTROLLED_CREATURES,
     /** "Prevent all damage that would be dealt to [permanents matching a predicate] this turn" (Ethersworn Shieldmage). */
     ALL_TO_MATCHING_PERMANENTS,
     /** "Prevent all combat damage that would be dealt this turn to matching permanents you control" (Pack Leader). */
@@ -67,6 +69,8 @@ public enum PreventionScope {
     ALL_TO_CONTROLLER_FROM_ATTACKERS,
     /** "Prevent all damage that would be dealt to you this turn by creatures matching a predicate." */
     ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+    /** "Prevent all damage that would be dealt to players this turn by sources matching a predicate." */
+    ALL_TO_PLAYERS_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */
     ALL_FROM_COLORS,
     /** "Prevent all damage that would be dealt this turn by non-Human sources" (Repel the Abominable). */

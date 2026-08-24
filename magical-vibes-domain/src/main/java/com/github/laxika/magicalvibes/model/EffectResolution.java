@@ -269,6 +269,11 @@ public final class EffectResolution {
     public static Optional<PermanentPredicate> declaredPermanentRestriction(List<CardEffect> effects) {
         List<PermanentPredicate> declared = new ArrayList<>();
         for (CardEffect e : effects) {
+            if (e instanceof PutCounterOnTargetPermanentEffect putCounter
+                    && putCounter.targetPredicate() != null) {
+                declared.add(putCounter.targetPredicate());
+                continue;
+            }
             TargetPredicate predicate = e.targetSpec().targetPredicate();
             if (predicate == null) {
                 continue;

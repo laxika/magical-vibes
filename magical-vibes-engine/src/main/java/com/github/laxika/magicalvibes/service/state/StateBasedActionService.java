@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -41,6 +42,7 @@ public class StateBasedActionService {
     private final GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.battlefield.CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
+    private final TriggerCollectionService triggerCollectionService;
     private final LegendRuleService legendRuleService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
 
@@ -58,6 +60,7 @@ public class StateBasedActionService {
     private static final int MAX_SBA_PASSES = 100;
 
     public void performStateBasedActions(GameData gameData) {
+        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         initializeSpeedForPlayers(gameData);
 
         // CR 704.3-704.4 — all applicable state-based actions are performed as a batch, then the
@@ -177,6 +180,7 @@ public class StateBasedActionService {
             gameData.exiledCardDreamCounters.remove(cardId);
             gameData.exiledCardHitCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
+            gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
@@ -306,6 +310,7 @@ public class StateBasedActionService {
                     }
                 }
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();

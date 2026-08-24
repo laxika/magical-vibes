@@ -43,7 +43,16 @@ class WitherbloomPledgemageTest extends BaseCardTest {
         harness.castWithConspire(player1, 0, target.getId(),
                 List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveStack();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+    }
+
+    private void resolveStack() {
+        int guard = 0;
+        while (!gd.stack.isEmpty() && guard++ < 10) {
+            harness.passBothPriorities();
+        }
     }
 }

@@ -1,32 +1,35 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.DwarvenHold;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TourachsChant.class, Forest.class, IcatianPhalanx.class, DwarvenHold.class})
 class TourachsChantTest extends BaseCardTest {
 
     @Test
     @DisplayName("A Forest's controller may put a -1/-1 counter on a creature")
     void forestControllerMayPutCounterOnCreature() {
         harness.addToBattlefield(player2, new TourachsChant());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent phalanx = harness.addToBattlefieldAndReturn(player1, new IcatianPhalanx());
 
         harness.setHand(player1, List.of(new Forest()));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(phalanx.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertLife(player1, 20);
     }
 
@@ -34,7 +37,7 @@ class TourachsChantTest extends BaseCardTest {
     @DisplayName("Declining the counter choice deals 3 damage to the Forest's controller")
     void forestControllerDeclinesAndTakesDamage() {
         harness.addToBattlefield(player2, new TourachsChant());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new IcatianPhalanx());
 
         harness.setHand(player1, List.of(new Forest()));
         harness.playLand(player1, 0);
@@ -58,11 +61,24 @@ class TourachsChantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A land without the Forest subtype does not trigger Tourach's Chant")
+    void nonForestLandDoesNotTrigger() {
+        harness.addToBattlefield(player2, new TourachsChant());
+
+        harness.setHand(player1, List.of(new DwarvenHold()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("With multiple creatures, the Forest's controller chooses one for the counter")
     void forestControllerChoosesCreature() {
         harness.addToBattlefield(player2, new TourachsChant());
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new IcatianPhalanx());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new IcatianPhalanx());
 
         harness.setHand(player1, List.of(new Forest()));
         harness.playLand(player1, 0);

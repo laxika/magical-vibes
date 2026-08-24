@@ -70,6 +70,7 @@ public enum CardSubtype {
     NOMAD("Nomad"),
     ALLY("Ally"),
     KOR("Kor"),
+    KOBOLD("Kobold"),
     WIZARD("Wizard"),
     SORCERER("Sorcerer"),
     MUTANT("Mutant"),
@@ -105,6 +106,8 @@ public enum CardSubtype {
     SHAPESHIFTER("Shapeshifter"),
     CRAB("Crab"),
     COWARD("Coward"),
+    COYOTE("Coyote"),
+    VARMINT("Varmint"),
     DESERTER("Deserter"),
     DJINN("Djinn"),
     DOG("Dog"),
@@ -135,6 +138,7 @@ public enum CardSubtype {
     GORGON("Gorgon"),
     MERCENARY("Mercenary"),
     ZOMBIE("Zombie"),
+    ARMY("Army"),
     CROCODILE("Crocodile"),
     CONSTRUCT("Construct"),
     GOLEM("Golem"),
@@ -212,6 +216,7 @@ public enum CardSubtype {
     PEGASUS("Pegasus"),
     PEASANT("Peasant"),
     PENTAVITE("Pentavite"),
+    TRISKELAVITE("Triskelavite"),
     PINCHER("Pincher"),
     PEST("Pest"),
     PILOT("Pilot"),
@@ -255,6 +260,7 @@ public enum CardSubtype {
     YANLING("Yanling"),
     MITE("Mite"),
     OMEN("Omen"),
+    FLAGBEARER("Flagbearer"),
     ROBOT("Robot");
 
     @Getter

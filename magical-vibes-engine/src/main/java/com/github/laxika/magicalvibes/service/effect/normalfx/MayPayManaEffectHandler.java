@@ -28,8 +28,11 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MayPayManaEffect) effect;
 
-        if (e.payer() == MayPayPayer.ANY_PLAYER) {
+        if (e.payer() == MayPayPayer.ANY_PLAYER || e.payer() == MayPayPayer.ANY_OTHER_PLAYER) {
             List<UUID> order = apnapOrder(gameData);
+            if (e.payer() == MayPayPayer.ANY_OTHER_PLAYER && entry.getActivePlayerId() != null) {
+                order.removeIf(entry.getActivePlayerId()::equals);
+            }
             if (order.isEmpty()) {
                 return;
             }
@@ -39,7 +42,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             gameData.resolvingMayEffectFromStack = true;
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), first, List.of(e), entry.getCard().getName() + " - " + e.prompt(),
-                    entry.getTargetId(), e.manaCost(), entry.getSourcePermanentId(), null, e.lifeCost(), 0,
+                    entry.getTargetId(), e.manaCost(), entry.getSourcePermanentId(), null, 0, e.lifeCost(),
                     entry.getAttackedTargetId(), entry.getActivePlayerId(), null,
                     entry.getSourcePermanentSnapshot(), entry.getControllerId(), null, 0));
             return;
@@ -60,7 +63,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                     entry.getTargetId());
             case TRIGGERING_PLAYER -> entry.getTargetId();
             case TRIGGERING_SPELL_CONTROLLER -> entry.getTargetId();
-            case ANY_PLAYER -> null;
+            case ANY_PLAYER, ANY_OTHER_PLAYER -> null;
         };
         if (payer == null) {
             return;
@@ -75,7 +78,16 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 entry.getTargetId(),
                 e.manaCost(),
                 entry.getSourcePermanentId(),
-                e.lifeCost()
+                null,
+                0,
+                e.lifeCost(),
+                entry.getAttackedTargetId(),
+                entry.getActivePlayerId(),
+                null,
+                entry.getSourcePermanentSnapshot(),
+                entry.getControllerId(),
+                entry.getTriggeringCardId(),
+                entry.getEventValue()
         ));
 
     }

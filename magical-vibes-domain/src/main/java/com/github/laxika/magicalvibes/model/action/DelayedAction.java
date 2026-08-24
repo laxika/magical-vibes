@@ -42,6 +42,7 @@ public sealed interface DelayedAction permits
         LoseGameAtEndStep,
         DelayedPlusOneCounters,
         DelayedPlusZeroPlusOneCounters,
+        RemoveCounterFromPermanentAtNextEndStep,
         DelayedUntapPermanents,
         DelayedCreateToken,
         DelayedExileCreatedPermanentsAtEndStep,
@@ -51,6 +52,7 @@ public sealed interface DelayedAction permits
         DelayedLoseLifeAndReturnFromGraveyard,
         DelayedGraveyardToHandReturn,
         DiscardCardsAtNextEndStep,
+        ExileCardsFromOwnGraveyardAtNextEndStep,
         ReturnExiledCardToHandAtEndStep,
         ReturnExiledCardToHandAtNextEndStep,
         DelayedGraveyardToBattlefieldSelfReturn,
@@ -61,6 +63,7 @@ public sealed interface DelayedAction permits
         DelayedCombatDamageDraw,
         DelayedCombatDamageLookAtHandAndDraw,
         DelayedCombatDamageLoot,
+        DelayedCombatDamageToken,
         DelayedCombatDamageReflection,
         DelayedBlockerBoost,
         DelayedAttackerBoost,
@@ -91,6 +94,7 @@ public sealed interface DelayedAction permits
         PayManaOrLoseGameAtNextUpkeep,
         DrawCardsAtNextUpkeep,
         DrawCardsAtNextEndStep,
+        SacrificeSelfAtNextEndStepTrigger,
         ExileToOwnerGraveyardAtNextUpkeep,
         ExilePermanentAtNextUpkeep,
         PutCounterOnPermanentAtNextUpkeep,
@@ -99,5 +103,6 @@ public sealed interface DelayedAction permits
         GrantChosenLandwalkAtNextUpkeep,
         ReboundAtNextUpkeep,
         PendingExileReturn,
-        EachPlayerHandExileReturnAtNextEndStep {
+        EachPlayerHandExileReturnAtNextEndStep,
+        TargetPlayerHandExileReturnAtNextTurnEndStep {
 }

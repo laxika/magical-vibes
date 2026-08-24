@@ -42,6 +42,7 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
             case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
             // Unreachable: the record's constructor rejects SOURCE (PutCountersOnSourceEffect owns it).
             case SOURCE -> throw new IllegalStateException("SOURCE counters belong on PutCountersOnSourceEffect");
+            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
         };
         if (referenced == null) {
             return;
@@ -58,6 +59,20 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {
         return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        if (cardId == null) {
+            return null;
+        }
+        return gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(java.util.Collection::stream)
+                .filter(permanent -> cardId.equals(permanent.getCard().getId())
+                        || (permanent.getOriginalCard() != null
+                        && cardId.equals(permanent.getOriginalCard().getId())))
+                .findFirst()
+                .orElse(null);
     }
 
     private Permanent findAttached(GameData gameData, StackEntry entry, String sourceName) {

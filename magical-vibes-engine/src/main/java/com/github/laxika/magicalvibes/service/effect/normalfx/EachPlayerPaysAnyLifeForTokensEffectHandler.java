@@ -70,7 +70,7 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (amount > 0) {
-                lifeSupport.applyLifeLoss(gameData, playerId, amount, cardName);
+                lifeSupport.applyLifePayment(gameData, playerId, amount, cardName);
                 state.lifePaid.merge(playerId, amount, Integer::sum);
                 state.consecutivePasses = 0;
             } else {

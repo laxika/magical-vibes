@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -1126,6 +1127,15 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("includes temporary static replacement effects")
+        void includesTemporaryStaticReplacementEffects() {
+            Permanent scales = addPermanent(player1Id, createCreature("Hardened Scales", 0, 0, CardColor.GREEN));
+            scales.addTemporaryTriggeredEffect(EffectSlot.STATIC, new AddOnePlusOneCountersEffect());
+
+            assertThat(gqs.replacePlusOnePlusOneCounters(gd, player1Id, 1)).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("two markers multiply by four")
         void twoMarkersMultiplyByFour() {
             Card a = createCreature("Corpsejack Menace", 4, 4, CardColor.GREEN);
@@ -1662,6 +1672,31 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("playerHasHexproof")
+    class PlayerHasHexproof {
+
+        @Test
+        @DisplayName("honors an active conditional controller keyword grant")
+        void honorsActiveConditionalGrant() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gruul Spellbreaker", 3, 3, CardColor.RED,
+                    new ConditionalEffect(new ControllerTurn(), new GrantControllerKeywordEffect(Keyword.HEXPROOF))));
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+            assertThat(gqs.playerHasHexproof(gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("ignores an inactive conditional controller keyword grant")
+        void ignoresInactiveConditionalGrant() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gruul Spellbreaker", 3, 3, CardColor.RED,
+                    new ConditionalEffect(new ControllerTurn(), new GrantControllerKeywordEffect(Keyword.HEXPROOF))));
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+            assertThat(gqs.playerHasHexproof(gd, player1Id)).isFalse();
+        }
+    }
+
     // ===== isUncounterable =====
 
     @Nested
@@ -1721,6 +1756,21 @@ class GameQueryServiceTest {
             Card creature = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+        }
+
+        @Test
+        @DisplayName("turn-scoped controller protection applies only to that player's creature spells")
+        void controllerCreatureSpellProtectionThisTurn() {
+            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
+            Card creature = creatureOnStack("Grizzly Bears", 2, player1Id);
+            Card instant = new Card();
+            instant.setName("Shock");
+            instant.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, instant, player1Id,
+                    "Shock", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+            assertThat(gqs.isUncounterable(gd, instant)).isFalse();
         }
 
         @Test

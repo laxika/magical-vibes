@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "288")
+@CardRegistration(set = "TSB", collectorNumber = "92")
 public class FieryJustice extends Card {
 
     public FieryJustice() {

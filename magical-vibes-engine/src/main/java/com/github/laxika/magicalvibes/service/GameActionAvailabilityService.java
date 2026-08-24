@@ -146,6 +146,9 @@ public class GameActionAvailabilityService {
             VirtualManaPool poolWithoutSource = null;
             for (int i = 0; i < abilities.size(); i++) {
                 ActivatedAbility ability = abilities.get(i);
+                if (castingPermissionService.isSplitSecondActive(gameData) && !ability.isManaAbility()) {
+                    continue;
+                }
                 String abilityManaCost = effectiveAbilityManaCost(gameData, playerId, perm, ability);
                 if (abilityManaCost == null
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
@@ -331,6 +334,13 @@ public class GameActionAvailabilityService {
             flagged.setWhiteSpendableAsAnyColor(true);
             pool = flagged;
         }
+        if (gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, playerId)
+                && !pool.isWhiteSpendableAsAnyColorWithoutRestriction()) {
+            ManaPool flagged = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            flagged.setWhiteSpendableAsAnyColorWithoutRestriction(true);
+            pool = flagged;
+        }
         if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId) && !pool.isAllManaSpendableAsAnyColor()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
@@ -375,9 +385,13 @@ public class GameActionAvailabilityService {
         boolean needsSpellCastTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
         Integer maxXValue = maxAnnounceableX(card, pool);
+        boolean externalXCanBeZero = maxXValue == null
+                && card.hasXScaledTargets()
+                && card.getEffectiveMinTargets(0) == 0;
         boolean allTargetsOptional = !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0
-                || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0);
+                || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0
+                || externalXCanBeZero);
         if (!targetsAlreadyDeclared && !allTargetsOptional && needsSpellCastTarget) {
             boolean hasValidTarget = validTargetService.hasValidTargetsForSpell(
                     gameData, card, playerId, maxXValue);
@@ -489,6 +503,13 @@ public class GameActionAvailabilityService {
         }
         ManaCost totalCost = new ManaCost(combinedManaCost);
         int kickerXValue = totalCost.hasX() ? totalCost.calculateMaxX(pool) : 0;
+        if (kicker.xUsesEachColorAtMostOnce() && kicker.hasXColorRestriction() && totalCost.hasX()) {
+            int maxByColor = totalCost.calculateMaxX(pool, kicker.xColorRestrictions(), 0);
+            int maxDistinct = (int) kicker.xColorRestrictions().stream()
+                    .filter(color -> pool.get(color) > 0)
+                    .count();
+            kickerXValue = Math.min(maxByColor, maxDistinct);
+        }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
         boolean powerstoneContext = isArtifact && pool.getPowerstoneOnlyColorless() > 0;
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
@@ -500,7 +521,7 @@ public class GameActionAvailabilityService {
                 ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
                 ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
-                || card.getKeywords().contains(Keyword.CHANGELING))
+                || card.hasKeyword(Keyword.CHANGELING))
                 ? EnumSet.allOf(CardSubtype.class) : subtypeCreatureContext
                 : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
@@ -508,6 +529,17 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
+        }
+        Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
+                new HashSet<>();
+        if (card.hasType(CardType.PLANESWALKER)) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells());
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
+                || (card.hasType(CardType.PLANESWALKER)
+                && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                    CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
         }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
@@ -527,6 +559,7 @@ public class GameActionAvailabilityService {
                 || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
                 || !subtypeSpellOnlyContext.isEmpty()
+                || !subtypeOrPlaneswalkerSpellContext.isEmpty()
                 || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
                 || !subtypeOrLegendaryCreatureContext.isEmpty()
                 || powerstoneContext;
@@ -534,7 +567,7 @@ public class GameActionAvailabilityService {
                 ? totalCost.canPay(paymentPool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
-                Set.of(), subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
                 subtypeSpellOnlyContext)
                 : totalCost.canPay(pool, kickerXValue);
     }
@@ -659,7 +692,7 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
                 ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
-                || card.getKeywords().contains(Keyword.CHANGELING))
+                || card.hasKeyword(Keyword.CHANGELING))
                 ? EnumSet.allOf(CardSubtype.class) : subtypeCreatureContext
                 : Set.of();
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
@@ -670,12 +703,16 @@ public class GameActionAvailabilityService {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
         }
         Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
-                subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
-                        || (card.hasType(CardType.PLANESWALKER)
-                        && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))
-                        ? Set.of(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
-                        CardSubtype.ELEMENTAL, CardSubtype.CHANDRA))
-                        : Set.of();
+                new HashSet<>();
+        if (card.hasType(CardType.PLANESWALKER)) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells());
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
+                || (card.hasType(CardType.PLANESWALKER)
+                && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
+            subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                    CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
@@ -918,7 +955,8 @@ public class GameActionAvailabilityService {
 
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty
                 || gameData.playersCantPlayLandsThisTurn.contains(playerId)
-                || castingPermissionService.isLandPlayRestricted(gameData, playerId)) {
+                || castingPermissionService.isLandPlayRestricted(gameData, playerId)
+                || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)) {
             return playable;
         }
 
@@ -1098,9 +1136,8 @@ public class GameActionAvailabilityService {
                 continue;
             }
 
-            boolean isInstantSpeed = castHalf.hasType(CardType.INSTANT);
-            boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
-            if (!canCastTiming) {
+            if (!castingPermissionService.canCastWithTiming(gameData, playerId, castHalf,
+                    isActivePlayer, isMainPhase, stackEmpty)) {
                 continue;
             }
 
@@ -1129,9 +1166,18 @@ public class GameActionAvailabilityService {
             }
             if (manaCostStr == null) {
                 // Flashback with no mana cost — e.g. Group Project's "tap three creatures" cost.
-                if (flashback.isPresent() && castingCostService.canPayFlashbackTapCost(gameData, playerId, flashback.get())) {
+                if (flashback.isPresent()
+                        && castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashback.get())
+                        && castingCostService.canPayFlashbackPermanentCosts(
+                        gameData, playerId, flashback.get())) {
+                // Flashback with no mana cost — e.g. Group Project's tap cost or Dread Return's
+                // sacrifice cost.
                     playable.add(i);
                 }
+                continue;
+            }
+            if (flashback.isPresent()
+                    && !castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashback.get())) {
                 continue;
             }
             ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -1152,6 +1198,11 @@ public class GameActionAvailabilityService {
                         .anyMatch(power -> cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost - power));
             }
             if (!canPayMana) {
+                continue;
+            }
+
+            if (flashback.isPresent() && !castingCostService.canPayFlashbackPermanentCosts(
+                    gameData, playerId, flashback.get())) {
                 continue;
             }
 

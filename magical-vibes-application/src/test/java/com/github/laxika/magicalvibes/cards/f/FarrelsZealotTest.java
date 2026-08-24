@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,28 +12,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FarrelsZealot.class, FarrelitePriest.class})
 class FarrelsZealotTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new FarrelsZealot());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new FarrelsZealot());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addDefenderCreature() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        return blocker;
+        return addCreatureReady(player2, new FarrelitePriest());
     }
 
     private void advanceToUnblockedMay() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
     }
@@ -58,6 +50,21 @@ class FarrelsZealotTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting: target creature may be controlled by the attacking player")
+    void acceptedAbilityCanTargetOwnCreature() {
+        Permanent attacker = addAttacker();
+        Permanent victim = addCreatureReady(player1, new FarrelitePriest());
+
+        advanceToUnblockedMay();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
     @DisplayName("Declining leaves the attacker able to deal combat damage")
     void declineDoesNothing() {
         Permanent attacker = addAttacker();
@@ -76,10 +83,7 @@ class FarrelsZealotTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent blocker = addDefenderCreature();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -89,5 +93,33 @@ class FarrelsZealotTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Accepting: lethal target damage removes the creature before combat damage")
+    void acceptedAbilityRemovesLethalTargetBeforeCombat() {
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Farrelite Priest");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Declining: the unblocked attacker deals its combat damage")
+    void declinedAbilityAllowsCombatDamage() {
+        addAttacker();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player2, 18);
     }
 }

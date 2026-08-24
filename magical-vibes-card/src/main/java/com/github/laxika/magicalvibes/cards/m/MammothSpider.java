@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "171")
 @CardRegistration(set = "M20", collectorNumber = "181")
+@CardRegistration(set = "RNA", collectorNumber = "132")
 public class MammothSpider extends Card {
 }

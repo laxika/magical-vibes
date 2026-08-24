@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -74,6 +75,8 @@ class StateBasedActionServiceTest {
     private GraveyardService graveyardService;
     @Mock
     private StateTriggerService stateTriggerService;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
     @Mock
     private LegendRuleService legendRuleService;
     @Mock

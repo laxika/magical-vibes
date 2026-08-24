@@ -20,10 +20,12 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnOtherNontokenCreaturesFaceDownOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -37,6 +39,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -106,6 +109,23 @@ public class AsEntersInteractionService {
                                                  List<String> repeatedAdditionalCosts,
                                                  List<UUID> convokeCreatureIds) {
         controllerId = resolveTokenControllerForEntry(gameData, controllerId, card);
+
+        boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
+        if (turnsOtherCreaturesFaceDown) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent == justEntered || permanent.isFaceDown() || permanent.getCard().isToken()
+                            || permanent.getOriginalCard().getBackFaceCard() != null
+                            || !gameQueryService.isCreature(gameData, permanent)) {
+                        continue;
+                    }
+                    permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+                }
+            }
+        }
+
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -227,6 +247,37 @@ public class AsEntersInteractionService {
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
                     subtypeChoice.allowedSubtypes());
             return;
+        }
+
+        MayReturnPermanentToHandAndEnterWithCountersEffect returnChoice =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(MayReturnPermanentToHandAndEnterWithCountersEffect.class::isInstance)
+                        .map(MayReturnPermanentToHandAndEnterWithCountersEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (returnChoice != null) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = battlefield.getLast();
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(card.getId())
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentId(justEntered.getId());
+            boolean hasValidChoice = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, returnChoice.filter(), filterContext));
+            if (hasValidChoice) {
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        card,
+                        controllerId,
+                        List.of(returnChoice),
+                        card.getName() + " — Return " + returnChoice.permanentDescription()
+                                + " you control to its owner's hand?",
+                        targetId,
+                        null,
+                        justEntered.getId()));
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
         }
 
         // Devour (CR 702.82a): "As this creature enters, you may sacrifice any number of creatures.

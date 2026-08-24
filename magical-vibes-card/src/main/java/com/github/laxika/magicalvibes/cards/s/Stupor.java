@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "158")
 @CardRegistration(set = "MIR", collectorNumber = "147")
+@CardRegistration(set = "TSB", collectorNumber = "48")
 public class Stupor extends Card {
 
     public Stupor() {

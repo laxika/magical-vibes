@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -62,7 +63,11 @@ public class GraveyardTargetingSupport {
     }
 
     private CardEffect unwrapMay(CardEffect effect) {
-        return effect instanceof MayEffect may ? may.wrapped() : effect;
+        return switch (effect) {
+            case MayEffect may -> may.wrapped();
+            case MayPayManaEffect mayPay -> mayPay.wrapped();
+            default -> effect;
+        };
     }
 
     private Target targetOf(CardEffect effect) {
@@ -70,10 +75,10 @@ public class GraveyardTargetingSupport {
             return findTarget(List.of(exileThen.thenEffect()));
         }
         if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect exile) {
-            return new Target(null, exile.graveyardScope(), "to exile", 1, 1);
+            return new Target(exile.filter(), exile.graveyardScope(), "to exile", 1, 1);
         }
         if (effect instanceof ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature) {
-            return new Target(exileCreature.filter(), GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
+            return new Target(exileCreature.filter(), exileCreature.graveyardScope(), "to exile", 1, 1);
         }
         if (effect instanceof ExileGraveyardCardsEffect exile) {
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);

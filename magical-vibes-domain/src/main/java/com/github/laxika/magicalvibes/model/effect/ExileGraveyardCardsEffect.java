@@ -25,38 +25,61 @@ import java.util.UUID;
  * @param filter           optional type restriction on the cards to exile (null = any card)
  * @param affectedPlayerId for OWN only: the player who must exile cards, baked in at trigger time
  *                         (e.g. the enchanted player for Curse of Oblivion); null = the controller
+ * @param fromBattlefieldThisTurn whether matching cards must have been put into their graveyard
+ *                                from the battlefield this turn
+ * @param eventValueFilter       optional filter whose matching exiled targets are recorded on the
+ *                                stack entry's event value
  */
 public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
-        boolean exactTargetCount, boolean trackWithSource) implements CardEffect {
+        boolean exactTargetCount, boolean trackWithSource, boolean fromBattlefieldThisTurn,
+        CardPredicate eventValueFilter) implements CardEffect {
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     UUID affectedPlayerId, boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn) {
+        this(count, scope, filter, affectedPlayerId, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, null);
+    }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope) {
-        this(count, scope, null, null, false, false);
+        this(count, scope, null, null, false, false, false, null);
     }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter) {
-        this(count, scope, filter, null, false, false);
+        this(count, scope, filter, null, false, false, false, null);
     }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope,
                                      CardPredicate filter, UUID affectedPlayerId) {
-        this(count, scope, filter, affectedPlayerId, false, false);
+        this(count, scope, filter, affectedPlayerId, false, false, false, null);
     }
 
     public ExileGraveyardCardsEffect(GraveyardExileScope scope) {
-        this(0, scope, null, null, false, false);
+        this(0, scope, null, null, false, false, false, null);
+    }
+
+    public static ExileGraveyardCardsEffect targetedFromAnyGraveyardWithEventValue(
+            int count, CardPredicate eventValueFilter) {
+        return new ExileGraveyardCardsEffect(count, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                null, null, false, false, false, eventValueFilter);
     }
 
     public static ExileGraveyardCardsEffect exactTargetedFromAnyGraveyard(int count,
                                                                            CardPredicate filter,
                                                                            boolean trackWithSource) {
         return new ExileGraveyardCardsEffect(count, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                filter, null, true, trackWithSource);
+                filter, null, true, trackWithSource, false, null);
     }
 
     public static ExileGraveyardCardsEffect ownAllMatchingUntilSourceLeaves(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(0, GraveyardExileScope.OWN_ALL_MATCHING,
-                filter, null, false, true);
+                filter, null, false, true, false, null);
+    }
+
+    public static ExileGraveyardCardsEffect allPlayersMatchingFromBattlefieldThisTurn(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_PLAYERS,
+                filter, null, false, false, true, null);
     }
 
     @Override

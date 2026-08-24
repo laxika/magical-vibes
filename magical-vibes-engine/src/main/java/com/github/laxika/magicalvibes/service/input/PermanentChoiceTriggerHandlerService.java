@@ -183,6 +183,26 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePlotTrigger(GameData gameData, UUID permanentId,
+                                  PermanentChoiceContext.PlotTriggerAnyTarget plotTrigger) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                plotTrigger.plottedCard(),
+                plotTrigger.controllerId(),
+                plotTrigger.plottedCard().getName() + "'s ability",
+                new ArrayList<>(plotTrigger.effects())
+        );
+        entry.setTargetId(permanentId);
+        pushTriggeredEntry(gameData, entry);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextPlotTrigger(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleCopyPermanentTargetedBySpell(GameData gameData, UUID permanentId) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry == null) {
@@ -1173,7 +1193,7 @@ public class PermanentChoiceTriggerHandlerService {
                     uct.sourceCard(),
                     uct.controllerId(),
                     uct.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new BecomeCopyOfTargetCreatureEffect())),
+                    new ArrayList<>(List.of(uct.effect())),
                     null,
                     uct.sourcePermanentId()
             );
@@ -1605,8 +1625,11 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setTriggeringPermanentId(etbTtt.triggeringPermanentId());
         if (etbTtt.sourcePermanentId() != null) {
-            entry.setSourcePermanentSnapshot(gameQueryService.findPermanentById(
-                    gameData, etbTtt.sourcePermanentId()));
+            Permanent sourcePermanent = gameQueryService.findPermanentById(
+                    gameData, etbTtt.sourcePermanentId());
+            if (sourcePermanent != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+            }
         }
         pushTriggeredEntry(gameData, entry);
 

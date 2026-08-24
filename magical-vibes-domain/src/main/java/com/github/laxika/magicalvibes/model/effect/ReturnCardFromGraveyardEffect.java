@@ -86,6 +86,9 @@ import java.util.Set;
  *                             {@code cardsPutIntoGraveyardFromBattlefieldThisTurn} tracking of the
  *                             graveyard's owner and is only meaningful when {@link #targetGraveyard} is
  *                             {@code true}
+ * @param targetNotPutIntoGraveyardThisCombat {@code true} to exclude targeted graveyard cards put into
+ *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
+ *                             only meaningful when {@link #targetGraveyard} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
  *                             permanent matching this predicate after entering the battlefield; the
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
@@ -179,6 +182,12 @@ import java.util.Set;
  *                             {@link #plusOneCounterCount} alone is an unconditional rider (e.g.
  *                             Miraculous Recovery — "Put a +1/+1 counter on it"); only meaningful for
  *                             {@code BATTLEFIELD}
+ * @param counterIfExiledCostCardHasSubtype counter type placed on the returned permanent when the
+ *                             additional-cost card has {@link #plusOneCountersIfExiledCostCardHasSubtype};
+ *                             pair with {@link #counterCountIfExiledCostCardHasSubtype}
+ * @param counterCountIfExiledCostCardHasSubtype number of
+ *                             {@link #counterIfExiledCostCardHasSubtype} counters to place when the
+ *                             exiled additional-cost card has the configured subtype
  * @param plusOneCountersIfCardType when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
  *                             the returned permanent only if it is currently that card type; use this for
  *                             riders such as Recommission's creature-only counter
@@ -242,6 +251,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean discardedOrCycledThisTurn,
         boolean discardedByOpponentThisTurn,
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
+        boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,
         boolean loseLifeEqualToManaValue,
@@ -276,6 +286,8 @@ public record ReturnCardFromGraveyardEffect(
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
         CardSubtype plusOneCountersIfExiledCostCardHasSubtype,
+        CounterType counterIfExiledCostCardHasSubtype,
+        int counterCountIfExiledCostCardHasSubtype,
         CardType plusOneCountersIfCardType,
         Condition plusOneCountersIfCondition,
         int plusOneCounterCount,

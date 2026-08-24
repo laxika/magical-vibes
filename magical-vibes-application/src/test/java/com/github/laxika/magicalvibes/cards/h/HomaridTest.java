@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Homarid.class)
 class HomaridTest extends BaseCardTest {
 
     @Test
@@ -54,6 +56,28 @@ class HomaridTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(homarid.getCounterCount(CounterType.TIDE)).isEqualTo(4);
 
+        harness.passBothPriorities();
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tide counter is added only during its controller's upkeep")
+    void tideCounterIsAddedOnlyDuringControllerUpkeep() {
+        Permanent homarid = addHomarid(player1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Five tide counters are all removed")
+    void fiveTideCountersAreRemoved() {
+        Permanent homarid = addHomarid(player1);
+        homarid.setCounterCount(CounterType.TIDE, 5);
+
+        harness.runStateBasedActions();
         harness.passBothPriorities();
 
         assertThat(homarid.getCounterCount(CounterType.TIDE)).isZero();

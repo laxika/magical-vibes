@@ -45,7 +45,7 @@ public class SearchTargetPlayerLibraryAndCastEffectHandler implements NormalEffe
         Set<CardType> castableTypes = effect.castableTypes();
 
         // Search prevented (e.g. Leonin Arbiter): the target still shuffles per rules.
-        if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId)) {
+        if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId, targetPlayerId, controllerId)) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
             return;

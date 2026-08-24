@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "106")
+@CardRegistration(set = "TOR", collectorNumber = "74")
 public class NantukoShade extends Card {
 
     public NantukoShade() {

@@ -32,8 +32,21 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean trackWithSource,
         boolean createForTargetController,
         CardColor colorOverride,
-        Set<Keyword> additionalKeywords
+        Set<Keyword> additionalKeywords,
+        boolean tapped
 ) implements CardEffect {
+
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes, Set<CardType> additionalTypes,
+            Integer powerOverride, Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters, boolean grantHaste,
+            boolean exileAtEndStep, boolean sacrificeAtEndStep, boolean tappedAndAttacking,
+            boolean trackWithSource, boolean createForTargetController,
+            CardColor colorOverride, Set<Keyword> additionalKeywords) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
+                trackWithSource, createForTargetController, colorOverride, additionalKeywords, false);
+    }
 
     public CreateTokenCopyOfTargetPermanentEffect() {
         this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
@@ -105,6 +118,12 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
                 true, true, null, Set.of());
+    }
+
+    public static CreateTokenCopyOfTargetPermanentEffect tappedTokenCopy() {
+        return new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
+                false, false, null, Set.of(), true);
     }
 
     @Override

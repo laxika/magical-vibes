@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -328,6 +329,26 @@ class DamageTriggerCollectorServiceTest {
     @Nested
     @DisplayName("ON_ENCHANTED_CREATURE_DEALT_DAMAGE — CreateTokenEffect")
     class CreateTokensOnEnchantedCreatureDamage {
+
+        @Test
+        @DisplayName("queues a generic effect and records damage")
+        void queuesGenericEffect() {
+            Permanent aura = createPermanent("Soul Link");
+            Permanent creature = createPermanent("Hill Giant");
+            GainLifeEffect effect = new GainLifeEffect(new EventValue());
+            var ctx = new TriggerContext.DamageToCreature(creature, 3, player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
 
         @Test
         @DisplayName("queues tokens for the enchanted creature's current controller and records damage")

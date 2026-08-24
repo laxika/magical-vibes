@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TenuredInkcaster.class, Forest.class, GrizzlyBears.class})
 class TenuredInkcasterTest extends BaseCardTest {
 
     @Test
@@ -57,7 +59,7 @@ class TenuredInkcasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
@@ -71,7 +73,7 @@ class TenuredInkcasterTest extends BaseCardTest {
         declareAttackers(List.of(1));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

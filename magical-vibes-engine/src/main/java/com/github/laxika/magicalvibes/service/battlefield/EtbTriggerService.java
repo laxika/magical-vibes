@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -26,9 +27,11 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEf
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.TriggeredAbilityCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -101,6 +104,11 @@ public class EtbTriggerService {
 
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
         triggerCollectionService.checkAllyTokenEntersTriggers(gameData, controllerId, count);
+    }
+
+    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId,
+                                              List<UUID> permanentIds) {
+        triggerCollectionService.checkAllyTokenEntersTriggers(gameData, controllerId, permanentIds);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
@@ -332,6 +340,7 @@ public class EtbTriggerService {
                 TargetSpec mayTargetSpec = may.targetSpec();
                 if (mayTargetSpec.admits(TargetPredicate.Kind.PERMANENT)
                         || mayTargetSpec.admits(TargetPredicate.Kind.PLAYER)
+                        || mayTargetSpec.admits(TargetPredicate.Kind.SPELL)
                         || mayTargetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                             List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
@@ -526,6 +535,11 @@ public class EtbTriggerService {
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack).toList();
 
+        List<Permanent> sourceBattlefield = gameData.playerBattlefields.get(controllerId);
+        boolean sourceWasCastForSpectacle = sourceBattlefield != null
+                && !sourceBattlefield.isEmpty()
+                && sourceBattlefield.getLast().isSpectacle();
+
         // Put non-special effects on the stack as before
         if (!otherEffects.isEmpty()) {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
@@ -648,7 +662,13 @@ public class EtbTriggerService {
                 if (modeTargetFilter != null) {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
+                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (sourcePermanent != null) {
+                    etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                }
+                etbEntry.setSpectacle(sourceWasCastForSpectacle);
                 gameData.stack.add(etbEntry);
+                queueTriggeredAbilityCounters(gameData, etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
                 // Naban: extra triggers for Wizard ETB
@@ -674,7 +694,12 @@ public class EtbTriggerService {
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
+                    if (sourcePermanent != null) {
+                        extraEtbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                    }
+                    extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);
                     gameData.stack.add(extraEtbEntry);
+                    queueTriggeredAbilityCounters(gameData, extraEtbEntry);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                     log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                 }
@@ -694,10 +719,14 @@ public class EtbTriggerService {
         }
 
         // Handle graveyard exile effects: targets must be chosen at trigger time
+        List<Permanent> enteredBattlefield = gameData.playerBattlefields.get(controllerId);
+        UUID graveyardSourcePermanentId = enteredBattlefield == null || enteredBattlefield.isEmpty()
+                ? null : enteredBattlefield.getLast().getId();
         for (CardEffect effect : graveyardExileEffects) {
             ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+                graveyardTargetingService.handleGraveyardExileETBTargeting(
+                        gameData, controllerId, card, mandatoryEffects, graveyardSourcePermanentId, exile);
             }
         }
 
@@ -833,6 +862,29 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof TriggeredAbilityCounterEffect counterEffect)) {
+                        continue;
+                    }
+                    StackEntry counterTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            permanent.getCard(),
+                            controllerId,
+                            permanent.getCard().getName() + "'s ability",
+                            List.of(new CounterUnlessPaysEffect(counterEffect.counterCost())),
+                            triggeredAbility.getCard().getId(),
+                            Zone.STACK,
+                            permanent.getId());
+                    gameData.stack.add(counterTrigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+                }
+            }
+        });
     }
 
     private List<UUID> targetsForActiveEtbGroups(Card card, List<CardEffect> effects, List<UUID> targetIds) {

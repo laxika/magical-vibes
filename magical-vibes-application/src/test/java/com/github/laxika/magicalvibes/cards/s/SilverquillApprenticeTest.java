@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SilverquillApprentice.class, BarkshellBlessing.class, GiantGrowth.class,
+        GrizzlyBears.class, HillGiant.class, Shock.class})
 class SilverquillApprenticeTest extends BaseCardTest {
 
     @Test
@@ -51,14 +54,16 @@ class SilverquillApprenticeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.getEffectivePower()).isEqualTo(6);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
     }
 
     @Test

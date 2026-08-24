@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -40,6 +41,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         ReorderTopCardsOfLibraryEffect reorder = (ReorderTopCardsOfLibraryEffect) effect;
 
         UUID controllerId = entry.getControllerId();
+        UUID decisionMakerId = resolveDecisionMaker(entry, reorder.decisionMaker(), controllerId);
         var source = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -50,11 +52,8 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
                 AmountContext.forStackEntry(entry, source)));
         UUID deckOwnerId = resolveDeckOwner(entry, reorder.owner(), controllerId);
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        // "their library" reads correctly only when the decider owns the deck; otherwise name the
-        // owner. Derived from the resolved ids rather than the owner axis, so targeting yourself
-        // ("target player" includes you) still reads as your own library.
-        boolean ownLibrary = deckOwnerId.equals(controllerId);
+        String decisionMakerName = gameData.playerIdToName.get(decisionMakerId);
+        boolean ownLibrary = deckOwnerId.equals(decisionMakerId);
         String libraryOf = ownLibrary ? "their library" : gameData.playerIdToName.get(deckOwnerId) + "'s library";
 
         count = Math.min(count, deck.size());
@@ -67,7 +66,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
 
         if (count == 1) {
             gameLogService.append(gameData,
-                    GameLog.text(controllerName + " looks at the top card of " + libraryOf + "."));
+                    GameLog.text(decisionMakerName + " looks at the top card of " + libraryOf + "."));
             return;
         }
 
@@ -75,18 +74,25 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         deck.subList(0, count).clear();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
-                controllerId, topCards, false, deckOwnerId,
-                "Put these cards back on top of " + (ownLibrary ? "your" : "the")
-                        + " library in any order (top to bottom)."));
+                decisionMakerId, topCards, false, deckOwnerId,
+                "Put these cards back on top of " + (ownLibrary ? "your" : libraryOf)
+                        + " in any order (top to bottom)."));
 
         gameLogService.append(gameData, GameLog.text(
-                controllerName + " looks at the top " + count + " cards of " + libraryOf + "."));
-        log.info("Game {} - {} reordering top {} cards of {}", gameData.id, controllerName, count, libraryOf);
+                decisionMakerName + " looks at the top " + count + " cards of " + libraryOf + "."));
+        log.info("Game {} - {} reordering top {} cards of {}", gameData.id, decisionMakerName, count, libraryOf);
     }
 
     /** Falls back to the controller when a target-player form resolves without a target. */
     private static UUID resolveDeckOwner(StackEntry entry, LibraryOwner owner, UUID controllerId) {
         if (owner != LibraryOwner.TARGET_PLAYER) return controllerId;
+        return entry.getTargetId() != null ? entry.getTargetId() : controllerId;
+    }
+
+    /** Falls back to the controller when a target-player decision resolves without a target. */
+    private static UUID resolveDecisionMaker(StackEntry entry, LibraryDecisionMaker decisionMaker,
+                                             UUID controllerId) {
+        if (decisionMaker != LibraryDecisionMaker.TARGET_PLAYER) return controllerId;
         return entry.getTargetId() != null ? entry.getTargetId() : controllerId;
     }
 }

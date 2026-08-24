@@ -47,6 +47,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast creature spells of the effect's printed subtype (The Seedcore). */
     SUBTYPE_CREATURE_SPELL,
 
+    /** Spendable only to cast planeswalker spells (Interplanar Beacon). */
+    PLANESWALKER_SPELLS,
+
     /** Spendable only to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
     CREATURE_SPELLS_OR_ABILITIES,
 
@@ -85,6 +88,9 @@ public enum ManaSpendRestriction {
      * permanents of that subtype (Smokebraider, Primal Beyond).
      */
     SUBTYPE_SPELL_OR_ABILITY,
+
+    /** Spendable only to cast Mount or Vehicle spells (Intrepid Stablemaster). */
+    MOUNT_OR_VEHICLE_SPELL,
 
     /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
     MANA_VALUE_AT_LEAST_FOUR,

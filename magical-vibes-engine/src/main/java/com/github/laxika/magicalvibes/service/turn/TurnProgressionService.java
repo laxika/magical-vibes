@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -140,12 +141,25 @@ public class TurnProgressionService {
         }
 
         TurnStep next = gameData.currentStep.next();
+        boolean nextUpkeepIsAdditional = false;
+
+        if (gameData.currentStep == TurnStep.UPKEEP && gameData.additionalUpkeepsRemaining > 0) {
+            next = TurnStep.UPKEEP;
+            gameData.additionalUpkeepsRemaining--;
+            nextUpkeepIsAdditional = true;
+        }
+
         boolean additionalCombatPhase = false;
 
-        if (gameData.currentStep == TurnStep.UNTAP
-                && next == TurnStep.UPKEEP
-                && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
-            next = TurnStep.PRECOMBAT_MAIN;
+        if (next == TurnStep.UPKEEP && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
+            if (nextUpkeepIsAdditional) {
+                while (gameData.additionalUpkeepsRemaining > 0) {
+                    gameData.additionalUpkeepsRemaining--;
+                }
+                next = TurnStep.DRAW;
+            } else if (gameData.currentStep == TurnStep.UNTAP) {
+                next = TurnStep.PRECOMBAT_MAIN;
+            }
             logSkippedPhase(gameData, "upkeep");
         }
 
@@ -189,6 +203,34 @@ public class TurnProgressionService {
             gameData.additionalCombatPhasesAfterMainReturnStep = null;
         }
 
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT
+                && gameData.additionalUpkeepStepsAfterCombat > 0) {
+            gameData.additionalUpkeepReturnStep = next;
+            if (stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
+                gameData.additionalUpkeepStepsAfterCombat = 0;
+                gameData.additionalUpkeepReturnStep = null;
+                logSkippedPhase(gameData, "additional upkeep steps");
+            } else {
+                next = TurnStep.UPKEEP;
+                gameData.additionalUpkeepStepsAfterCombat--;
+            }
+        } else if (gameData.currentStep == TurnStep.UPKEEP
+                && gameData.additionalUpkeepReturnStep != null) {
+            if (gameData.additionalUpkeepStepsAfterCombat > 0
+                    && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
+                gameData.additionalUpkeepStepsAfterCombat = 0;
+                next = gameData.additionalUpkeepReturnStep;
+                gameData.additionalUpkeepReturnStep = null;
+                logSkippedPhase(gameData, "remaining additional upkeep steps");
+            } else if (gameData.additionalUpkeepStepsAfterCombat > 0) {
+                next = TurnStep.UPKEEP;
+                gameData.additionalUpkeepStepsAfterCombat--;
+            } else {
+                next = gameData.additionalUpkeepReturnStep;
+                gameData.additionalUpkeepReturnStep = null;
+            }
+        }
+
         // Blinding Angel: the active player skips their next combat phase — jump straight from the
         // precombat main phase to the postcombat main phase.
         if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
@@ -210,6 +252,7 @@ public class TurnProgressionService {
 
         if (next != null) {
             gameData.currentStep = next;
+            gameData.currentUpkeepIsAdditional = next == TurnStep.UPKEEP && nextUpkeepIsAdditional;
             String logEntry = "Step: " + next.getDisplayName();
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - Step advanced to {}", gameData.id, next);
@@ -236,6 +279,7 @@ public class TurnProgressionService {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
                 gameData.combatPhasesThisTurn++;
+                gameData.cardsPutIntoGraveyardThisCombat.clear();
                 gameData.forEachPermanent((playerId, p) -> {
                     p.setAttackedThisCombat(false);
                     p.setBlockedThisCombat(false);
@@ -449,6 +493,8 @@ public class TurnProgressionService {
         gameData.turnNumber++;
         gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
         gameData.currentStep = TurnStep.first();
+        gameData.additionalUpkeepsRemaining = 0;
+        gameData.currentUpkeepIsAdditional = false;
         gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
@@ -459,6 +505,9 @@ public class TurnProgressionService {
                 gameData.permanentsEnteredBattlefieldLastTurn.put(playerId, new ArrayList<>(entered)));
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
+        gameData.crimeCandidatesThisTurn.clear();
+        gameData.clearSpellsCastFromHandThisTurn();
+        gameData.controllerNoncombatDamageBonusThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
@@ -512,7 +561,10 @@ public class TurnProgressionService {
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
         gameData.playersAttackedThisTurn.clear();
+        gameData.creaturesThatSaddledPermanentThisTurn.clear();
+        gameData.creaturesThatCrewedPermanentThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
+        gameData.clearDelayedActions(DelayedCombatDamageToken.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
@@ -544,6 +596,7 @@ public class TurnProgressionService {
         gameData.creaturesBlockedThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();
+        gameData.artifactDamageDealtToPlayersThisTurn.clear();
         gameData.noncombatDamageDealtToPlayersThisTurn.clear();
         gameData.lastRedSpellDamagerThisTurn.clear();
         gameData.untappedLandsAtTurnStart.clear();
@@ -571,6 +624,9 @@ public class TurnProgressionService {
         gameData.additionalCombatPhasesOnly = 0;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
+        gameData.additionalUpkeepStepsAfterCombat = 0;
+        gameData.additionalUpkeepReturnStep = null;
+        gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.clear();
         gameData.combatPhasesThisTurn = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
@@ -611,6 +667,7 @@ public class TurnProgressionService {
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);
         gameData.playersWithProtectionFromEverythingUntilNextTurn.remove(nextActive);

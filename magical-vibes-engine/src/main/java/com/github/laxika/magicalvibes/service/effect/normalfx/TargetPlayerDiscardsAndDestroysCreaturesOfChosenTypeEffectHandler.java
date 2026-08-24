@@ -106,7 +106,8 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
         for (Card card : matchingCards) {
             if (discardCausedByOpponent && hasEnterBattlefieldOnDiscardEffect(card)) {
                 Permanent permanent = new Permanent(card);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+                battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                        gameData, targetPlayerId, permanent);
                 gameLogService.append(gameData, GameLog.textCardText(
                         targetName + " discards ", card, " — it enters the battlefield instead."));
                 if (card.hasType(CardType.CREATURE)) {
@@ -135,7 +136,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
     private boolean isMatchingCreatureCard(Card card, CardSubtype chosenSubtype, Set<CardSubtype> grantedSubtypes) {
         return card.hasType(CardType.CREATURE)
                 && (card.getSubtypes().contains(chosenSubtype)
-                || card.getKeywords().contains(Keyword.CHANGELING)
+                || card.hasKeyword(Keyword.CHANGELING)
                 || grantedSubtypes.contains(chosenSubtype));
     }
 

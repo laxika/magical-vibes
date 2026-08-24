@@ -44,6 +44,8 @@ class SpellSatchelTest extends BaseCardTest {
         harness.castWithConspire(player1, 0, target.getId(),
                 List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveStack();
 
         assertThat(satchel.getCounterCount(CounterType.BOOK)).isEqualTo(2);
     }
@@ -87,5 +89,12 @@ class SpellSatchelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void resolveStack() {
+        int guard = 0;
+        while (!gd.stack.isEmpty() && guard++ < 10) {
+            harness.passBothPriorities();
+        }
     }
 }

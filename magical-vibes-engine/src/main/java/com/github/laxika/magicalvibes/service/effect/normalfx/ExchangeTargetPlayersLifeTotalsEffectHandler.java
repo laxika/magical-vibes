@@ -31,13 +31,21 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExchangeTargetPlayersLifeTotalsEffect exchange = (ExchangeTargetPlayersLifeTotalsEffect) effect;
         List<UUID> targets = entry.getTargetIds();
-        if (targets.size() != 2) return;
+        UUID playerA;
+        UUID playerB;
+        if (exchange.controllerAndTarget()) {
+            playerA = entry.getControllerId();
+            playerB = targets.size() == 1 ? targets.getFirst() : entry.getTargetId();
+            if (playerA == null || playerB == null) return;
+        } else {
+            if (targets.size() != 2) return;
+            playerA = targets.get(0);
+            playerB = targets.get(1);
+        }
 
-        UUID playerA = targets.get(0);
-        UUID playerB = targets.get(1);
-
-        // CR 118.7: If either player's life total can't change, the exchange doesn't occur
+        // If either player's life total can't change, the exchange doesn't occur.
         if (!gameQueryService.canPlayerLifeChange(gameData, playerA)) {
             String playerName = gameData.playerIdToName.get(playerA);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
@@ -59,14 +67,12 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
             return;
         }
 
-        // Per CR 119.7e: An exchange is implemented as each player gaining or losing life.
-        // If a player can't gain life, they can't move to a higher life total via exchange.
         boolean aWouldGain = lifeB > lifeA;
         boolean bWouldGain = lifeA > lifeB;
         boolean aCantGain = aWouldGain && !gameQueryService.canPlayerGainLife(gameData, playerA);
         boolean bCantGain = bWouldGain && !gameQueryService.canPlayerGainLife(gameData, playerB);
 
-        if (aCantGain && bCantGain) {
+        if (aCantGain || bCantGain) {
             String nameA = gameData.playerIdToName.get(playerA);
             String nameB = gameData.playerIdToName.get(playerB);
             gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB + " can't gain life. Exchange doesn't occur."));
@@ -76,15 +82,8 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         String nameA = gameData.playerIdToName.get(playerA);
         String nameB = gameData.playerIdToName.get(playerB);
 
-        int newLifeA = aCantGain ? lifeA : lifeB;
-        int newLifeB = bCantGain ? lifeB : lifeA;
-
-        if (aCantGain) {
-            gameLogService.append(gameData, GameLog.text(nameA + " can't gain life."));
-        }
-        if (bCantGain) {
-            gameLogService.append(gameData, GameLog.text(nameB + " can't gain life."));
-        }
+        int newLifeA = lifeB;
+        int newLifeB = lifeA;
 
         gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + newLifeA
                         + ", " + nameB + ": " + lifeB + " -> " + newLifeB + ")."));

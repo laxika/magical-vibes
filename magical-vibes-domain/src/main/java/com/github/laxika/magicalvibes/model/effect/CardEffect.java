@@ -23,6 +23,12 @@ public interface CardEffect {
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
 
     /**
+     * Returns {@code true} when an activated ability with this effect may target cards anywhere in
+     * exile rather than only cards exiled with its source permanent.
+     */
+    default boolean targetsAllExiledCardsInAbility() { return false; }
+
+    /**
      * Which players this effect may target, for the effects whose wording narrows the player half
      * of an otherwise shared {@link TargetSpec} — "target <em>opponent</em> or planeswalker" against
      * "target <em>player</em> or planeswalker", which declare the same

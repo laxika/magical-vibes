@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "85")
+@CardRegistration(set = "WAR", collectorNumber = "75")
 public class WallOfRunes extends Card {
 
     public WallOfRunes() {

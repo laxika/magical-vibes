@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.i.IcatianJavelineers;
-import com.github.laxika.magicalvibes.cards.m.MindstabThrull;
-import com.github.laxika.magicalvibes.cards.o.OrderOfLeitbur;
+import com.github.laxika.magicalvibes.cards.i.IcatianInfantry;
+import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,19 +14,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OrcishVeteran.class, OrderOfLeitbur.class, IcatianJavelineers.class, MindstabThrull.class})
+@CardUsed({OrcishVeteran.class, IcatianPhalanx.class, IcatianInfantry.class, Orgg.class})
 class OrcishVeteranTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can't block white creatures with power 2 or greater, but can block other creatures")
     void restrictsBlockingByColorAndPower() {
-        Permanent veteran = addCreatureReady(player1, new OrcishVeteran());
-        Permanent whiteTwoPower = new Permanent(new OrderOfLeitbur());
-        Permanent whiteOnePower = new Permanent(new IcatianJavelineers());
-        Permanent nonwhiteTwoPower = new Permanent(new MindstabThrull());
-        gd.playerBattlefields.get(player2.getId()).add(whiteTwoPower);
-        gd.playerBattlefields.get(player2.getId()).add(whiteOnePower);
-        gd.playerBattlefields.get(player2.getId()).add(nonwhiteTwoPower);
+        Permanent veteran = addVeteran();
+        Permanent whiteTwoPower = addCreatureReady(player2, new IcatianPhalanx());
+        Permanent whiteOnePower = addCreatureReady(player2, new IcatianInfantry());
+        Permanent nonwhiteTwoPower = addCreatureReady(player2, new Orgg());
 
         assertThat(bls.canBlockAttacker(gd, veteran, whiteTwoPower,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
@@ -34,6 +31,17 @@ class OrcishVeteranTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
         assertThat(bls.canBlockAttacker(gd, veteran, nonwhiteTwoPower,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Uses the effective power of a white creature for the blocking restriction")
+    void restrictsBlockingByEffectivePower() {
+        Permanent veteran = addVeteran();
+        Permanent whiteCreature = addCreatureReady(player2, new IcatianInfantry());
+        whiteCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(bls.canBlockAttacker(gd, veteran, whiteCreature,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 
     @Test
@@ -52,5 +60,8 @@ class OrcishVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.FIRST_STRIKE)).isFalse();
+    }
+    private Permanent addVeteran() {
+        return addCreatureReady(player1, new OrcishVeteran());
     }
 }

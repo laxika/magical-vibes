@@ -108,7 +108,7 @@ public class LandManaTypeSupport {
             } else if (effect instanceof AwardUncounterableGrantingManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof RemoveCountersForManaEffect mana) {
-                addIfNonNull(types, mana.color());
+                types.addAll(mana.colors());
             } else if (effect instanceof ManaProducingEffect mana) {
                 if (mana.estimatedCountsAllColors()) {
                     types.addAll(ManaColor.COLORS);

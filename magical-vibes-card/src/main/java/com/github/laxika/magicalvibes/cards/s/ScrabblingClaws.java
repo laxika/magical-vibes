@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGra
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "237")
+@CardRegistration(set = "RNA", collectorNumber = "238")
 public class ScrabblingClaws extends Card {
 
     public ScrabblingClaws() {

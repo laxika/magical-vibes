@@ -31,10 +31,14 @@ public class StackEntry {
     private final String description;
     private List<CardEffect> effectsToResolve;
     private final int xValue;
+    /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
+    @Setter private Integer modalModeCount;
     @Setter private int phyrexianManaPaidWithLife;
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
     @Setter private UUID targetId;
+    /** The opponent chosen before that opponent selected the spell's creature target. */
+    @Setter private UUID opponentChosenTargetPlayerId;
     private boolean targetIdOverriddenForEffectResolution;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
@@ -43,8 +47,12 @@ public class StackEntry {
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
+    /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
+    @Setter private int manaSpentToCast;
     private final Zone targetZone;
     @Setter private List<UUID> targetCardIds;
+    /** Target counts per independently optional graveyard target group, in group order. */
+    @Setter private List<Integer> targetCardGroupSizes = List.of();
     private Map<CardEffect, List<UUID>> targetCardIdsByEffect = Map.of();
     @Setter private TargetFilter targetFilter;
     @Setter private boolean copy;
@@ -54,6 +62,8 @@ public class StackEntry {
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
+    /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
+    @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
      * Whether a replacement effect applies to this spell: "if that spell would be put into a graveyard,
      * exile it instead" (The Dawning Archaic, Chancellor of the Spires). Unlike
@@ -123,6 +133,8 @@ public class StackEntry {
      * sacrifice at the next cleanup step when it is set.
      */
     @Setter private boolean castWhenSorceryCouldNotBeCast;
+    /** Whether this spell was cast during its controller's precombat or postcombat main phase. */
+    @Setter private boolean castDuringMainPhase;
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
     private Card bestowOriginalCard;
@@ -130,6 +142,8 @@ public class StackEntry {
     /** Whether this spell was cast for its prowl cost — carried to the entering permanent so its
      *  "if its prowl cost was paid" ETB trigger can gate on it (CR 702.75). */
     @Setter private boolean prowl;
+    /** Whether this spell was cast for its spectacle cost. */
+    @Setter private boolean spectacle;
     @Setter private boolean castForForetell;
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
@@ -139,6 +153,8 @@ public class StackEntry {
     /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
      *  reads "each", and per CR 702.96b the spell has no targets at all. */
     @Setter private boolean overloaded;
+    /** Whether the spell's controller controlled a Mount when the spell was finished being cast. */
+    @Setter private boolean controlledMountAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
@@ -155,6 +171,8 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
      */
     @Setter private int eventValue;
+    /** The mana type produced by the tap event that created this triggered ability. */
+    @Setter private ManaColor producedManaColor;
     @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
@@ -167,6 +185,8 @@ public class StackEntry {
      * Duplicates are meaningful: a player who lost three lands appears three times.
      */
     @Setter private List<UUID> eventPlayerIds = List.of();
+    /** Card ids of the permanents actually destroyed by the event that produced this entry. */
+    @Setter private List<UUID> eventCardIds = List.of();
     /**
      * The per-permanent mana value payload behind this entry, positionally aligned with
      * {@link #eventPlayerIds}. Stamped by {@code DestroyAllPermanentsEffectHandler} with the
@@ -514,16 +534,21 @@ public class StackEntry {
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.xValue = source.xValue;
+        this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
         this.etbMode = source.etbMode;
         this.targetId = source.targetId;
+        this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
         this.counters.putAll(source.counters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
+        this.manaSpentToCast = source.manaSpentToCast;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
+        this.targetCardGroupSizes = source.targetCardGroupSizes.isEmpty()
+                ? List.of() : new ArrayList<>(source.targetCardGroupSizes);
         this.targetCardIdsByEffect = copyTargetCardIdsByEffect(source.targetCardIdsByEffect);
         this.targetFilter = source.targetFilter;
         this.copy = source.copy;
@@ -531,6 +556,7 @@ public class StackEntry {
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
@@ -546,14 +572,17 @@ public class StackEntry {
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
+        this.castDuringMainPhase = source.castDuringMainPhase;
         this.evoked = source.evoked;
         this.bestowOriginalCard = source.bestowOriginalCard;
         this.physicalCard = source.physicalCard;
         this.prowl = source.prowl;
+        this.spectacle = source.spectacle;
         this.castForForetell = source.castForForetell;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
+        this.controlledMountAsCast = source.controlledMountAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
@@ -562,9 +591,11 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
+        this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
@@ -897,7 +928,8 @@ public class StackEntry {
             }
             int declared = g.getIndex() < targetGroupSizes.size()
                     ? targetGroupSizes.get(g.getIndex())
-                    : groups.size() == 1 ? targetIds.size() : g.getMaxTargets();
+                    : groups.size() == 1 ? targetIds.size()
+                    : isKicked() ? g.getKickedMaxTargets() : g.getMaxTargets();
             int size = Math.min(Math.max(declared, 0), targetIds.size() - consumed);
             if (g.getIndex() == group) {
                 List<UUID> legalTargets = new ArrayList<>(size);

@@ -23,8 +23,15 @@ public record CastTargetInstantOrSorceryFromGraveyardEffect(
         GraveyardSearchScope scope,
         boolean withoutPayingManaCost,
         boolean exileInsteadOfGraveyard,
-        CardPredicate filter
+        CardPredicate filter,
+        int copyCount
 ) implements CardEffect {
+
+    public CastTargetInstantOrSorceryFromGraveyardEffect(
+            GraveyardSearchScope scope, boolean withoutPayingManaCost,
+            boolean exileInsteadOfGraveyard, CardPredicate filter) {
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, filter, 0);
+    }
 
     public CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope scope, boolean withoutPayingManaCost) {
         this(scope, withoutPayingManaCost, false, null);

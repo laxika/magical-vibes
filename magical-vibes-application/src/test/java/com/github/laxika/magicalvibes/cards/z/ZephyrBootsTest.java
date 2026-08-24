@@ -83,7 +83,7 @@ class ZephyrBootsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     private Permanent addBootsReady(Player player) {

@@ -23,7 +23,7 @@ class SurrakElusiveHunterTest extends BaseCardTest {
     @DisplayName("Draws a card when an opponent spell targets a creature you control")
     void drawsWhenOpponentSpellTargetsCreature() {
         SurrakElusiveHunter surrak = new SurrakElusiveHunter();
-        harness.addToBattlefield(player1, surrak);
+        Permanent surrakPermanent = harness.addToBattlefieldAndReturn(player1, surrak);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.forceActivePlayer(player2);
@@ -32,7 +32,7 @@ class SurrakElusiveHunterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, surrak.getId());
+        harness.castInstant(player2, 0, surrakPermanent.getId());
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(surrak.getId());
@@ -72,7 +72,7 @@ class SurrakElusiveHunterTest extends BaseCardTest {
     @DisplayName("Draws a card when an opponent ability targets a creature you control")
     void drawsWhenOpponentAbilityTargetsCreature() {
         SurrakElusiveHunter surrak = new SurrakElusiveHunter();
-        harness.addToBattlefield(player1, surrak);
+        Permanent surrakPermanent = harness.addToBattlefieldAndReturn(player1, surrak);
 
         Permanent firecannon = new Permanent(new ElaborateFirecannon());
         firecannon.setSummoningSick(false);
@@ -80,7 +80,7 @@ class SurrakElusiveHunterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.activateAbility(player2, 0, null, surrak.getId());
+        harness.activateAbility(player2, 0, null, surrakPermanent.getId());
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(surrak.getId());
@@ -94,11 +94,11 @@ class SurrakElusiveHunterTest extends BaseCardTest {
     @DisplayName("Does not trigger when your own spell targets your creature")
     void doesNotTriggerOnYourOwnSpell() {
         SurrakElusiveHunter surrak = new SurrakElusiveHunter();
-        harness.addToBattlefield(player1, surrak);
+        Permanent surrakPermanent = harness.addToBattlefieldAndReturn(player1, surrak);
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, surrak.getId());
+        harness.castInstant(player1, 0, surrakPermanent.getId());
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -116,6 +116,7 @@ class SurrakElusiveHunterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, surrak.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

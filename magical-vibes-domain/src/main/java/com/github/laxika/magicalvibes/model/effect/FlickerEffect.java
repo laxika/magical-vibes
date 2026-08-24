@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
+import java.util.Set;
 
 /**
  * Exile permanent(s) and return them to the battlefield under their owner's control (CR 610.3) as
@@ -40,7 +44,27 @@ public record FlickerEffect(
         boolean grantHaste,
         boolean returnAtOwnerNextEndStep,
         boolean plusOnePlusOneCountersOnlyOnCreatures,
-        int loyaltyCountersOnPlaneswalkersOnReturn) implements CardEffect {
+        int loyaltyCountersOnPlaneswalkersOnReturn,
+        Set<Keyword> grantedKeywordsOnReturn) implements CardEffect {
+
+    public FlickerEffect {
+        grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
+                ? Set.of()
+                : Set.copyOf(grantedKeywordsOnReturn);
+    }
+
+    public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+                         TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+                         CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+                         boolean returnUnderController, boolean grantHaste,
+                         boolean returnAtOwnerNextEndStep,
+                         boolean plusOnePlusOneCountersOnlyOnCreatures,
+                         int loyaltyCountersOnPlaneswalkersOnReturn) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
+                returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkersOnReturn, Set.of());
+    }
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
                          TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
@@ -81,6 +105,13 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStepWithCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, counters, false, false);
+    }
+
+    /** Exile target permanent, returning it with +1/+1 counters only if it is a creature. */
+    public static FlickerEffect exileTargetReturnAtEndStepWithCreatureCounters(int counters) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, counters, false, false,
+                false, true, 0);
     }
 
     public static FlickerEffect exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(int counters) {
@@ -134,6 +165,12 @@ public record FlickerEffect(
                 TurnStep.END_STEP, false, null, null, 0, false, false);
     }
 
+    public static FlickerEffect controllersChooseAnyNumberCreaturesRepeatedByX() {
+        return new FlickerEffect(FlickerScope.CONTROLLERS_PERMANENTS,
+                new PermanentIsCreaturePredicate(), ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
     /**
      * Exile target permanent, immediately return it under the effect controller's control
      * (Restoration Angel — keeps a temporarily stolen creature permanently).
@@ -164,6 +201,13 @@ public record FlickerEffect(
                 TurnStep.END_STEP, false, bonusSubtype, null, counters, false, false);
     }
 
+    /** Immediate flicker that returns the permanent with the given keywords until end of turn. */
+    public static FlickerEffect flickerTargetWithKeywords(Set<Keyword> keywords) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, keywords);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         if (scope == FlickerScope.TARGET) {
@@ -171,6 +215,9 @@ public record FlickerEffect(
         }
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
             return TargetSpec.benign(TargetPredicates.player());
+        }
+        if (scope == FlickerScope.SELF) {
+            return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;
     }

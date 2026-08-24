@@ -53,6 +53,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> uncounterableGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent on a multicolored creature spell, it enters with an additional +1/+1 counter". */
     private final EnumMap<ManaColor, Integer> additionalCounterGrantingMana = new EnumMap<>(ManaColor.class);
+    /** Mana carrying the rider "if spent on a creature spell, it gains riot". */
+    private final EnumMap<ManaColor, Integer> riotGrantingMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
     /** Per-color mana spendable only to cast artifact spells or activate abilities of artifacts (Vedalken Engineer). */
     private final EnumMap<ManaColor, Integer> artifactOnlyMana = new EnumMap<>(ManaColor.class);
@@ -146,6 +148,8 @@ public class ManaPool {
      * {@link ManaCost#canPay}/{@code pay}, which rewrite the pool accordingly before paying.
      */
     private boolean whiteSpendableAsAnyColor;
+    /** Permission flag: white mana in this pool may additionally pay any colored requirement. */
+    private boolean whiteSpendableAsAnyColorWithoutRestriction;
     /** Permission flag: all mana in this pool may be spent as though it were mana of any color. */
     private boolean allManaSpendableAsAnyColor;
     /** Permission flag (not mana): while set, blue mana in this pool may additionally pay any
@@ -166,6 +170,7 @@ public class ManaPool {
             hasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
+            riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
@@ -193,6 +198,7 @@ public class ManaPool {
         hasteGrantingMana.putAll(source.hasteGrantingMana);
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         additionalCounterGrantingMana.putAll(source.additionalCounterGrantingMana);
+        riotGrantingMana.putAll(source.riotGrantingMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         artifactOnlyMana.putAll(source.artifactOnlyMana);
@@ -245,6 +251,7 @@ public class ManaPool {
         exiledSpellOnlyMana.putAll(source.exiledSpellOnlyMana);
         this.whiteSpendableAsRed = source.whiteSpendableAsRed;
         this.whiteSpendableAsAnyColor = source.whiteSpendableAsAnyColor;
+        this.whiteSpendableAsAnyColorWithoutRestriction = source.whiteSpendableAsAnyColorWithoutRestriction;
         this.allManaSpendableAsAnyColor = source.allManaSpendableAsAnyColor;
         this.snowManaSpendableAsAnyColor = source.snowManaSpendableAsAnyColor;
         this.blueSpendableAsAnyColorForActivatedAbilities = source.blueSpendableAsAnyColorForActivatedAbilities;
@@ -268,6 +275,14 @@ public class ManaPool {
     /** See {@link #whiteSpendableAsAnyColor}. */
     public void setWhiteSpendableAsAnyColor(boolean whiteSpendableAsAnyColor) {
         this.whiteSpendableAsAnyColor = whiteSpendableAsAnyColor;
+    }
+
+    public boolean isWhiteSpendableAsAnyColorWithoutRestriction() {
+        return whiteSpendableAsAnyColorWithoutRestriction;
+    }
+
+    public void setWhiteSpendableAsAnyColorWithoutRestriction(boolean enabled) {
+        this.whiteSpendableAsAnyColorWithoutRestriction = enabled;
     }
 
     public boolean isAllManaSpendableAsAnyColor() {
@@ -371,6 +386,7 @@ public class ManaPool {
             hasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
+            riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
@@ -649,6 +665,10 @@ public class ManaPool {
         if (additionalCounterGranting > 0) {
             additionalCounterGrantingMana.put(color, additionalCounterGranting - 1);
         }
+        int riotGranting = riotGrantingMana.getOrDefault(color, 0);
+        if (riotGranting > 0) {
+            riotGrantingMana.put(color, riotGranting - 1);
+        }
         // Clamp creature mana so it never exceeds total for this color
         int total = pool.getOrDefault(color, 0);
         int creature = creatureMana.getOrDefault(color, 0);
@@ -667,6 +687,9 @@ public class ManaPool {
         }
         if (additionalCounterGrantingMana.getOrDefault(color, 0) > total) {
             additionalCounterGrantingMana.put(color, total);
+        }
+        if (riotGrantingMana.getOrDefault(color, 0) > total) {
+            riotGrantingMana.put(color, total);
         }
     }
 
@@ -723,6 +746,20 @@ public class ManaPool {
     public int getAdditionalCounterGrantingManaTotal() {
         int total = 0;
         for (int value : additionalCounterGrantingMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Adds mana carrying the "spent on a creature spell -> it gains riot" rider. */
+    public void addRiotGrantingMana(ManaColor color, int amount) {
+        riotGrantingMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Total mana still carrying the riot rider, across all colors. */
+    public int getRiotGrantingManaTotal() {
+        int total = 0;
+        for (int value : riotGrantingMana.values()) {
             total += value;
         }
         return total;
@@ -1921,6 +1958,7 @@ public class ManaPool {
             moveTaggedManaToColorless(hasteGrantingMana, color, amount);
             moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
             moveTaggedManaToColorless(additionalCounterGrantingMana, color, amount);
+            moveTaggedManaToColorless(riotGrantingMana, color, amount);
         }
 
         artifactOnlyColorless += moveColoredManaToColorless(artifactOnlyMana);
@@ -2013,6 +2051,7 @@ public class ManaPool {
         clampColorTag(hasteGrantingMana, protectedColors);
         clampColorTag(uncounterableGrantingMana, protectedColors);
         clampColorTag(additionalCounterGrantingMana, protectedColors);
+        clampColorTag(riotGrantingMana, protectedColors);
         drainColorBucket(abilityOnlyMana, protectedColors);
         drainColorBucket(promotedAbilityOnlyMana, protectedColors);
         drainColorBucket(instantSorceryOnlyColored, protectedColors);

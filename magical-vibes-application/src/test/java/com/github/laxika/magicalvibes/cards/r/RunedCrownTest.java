@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +22,7 @@ class RunedCrownTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(rune));
 
         Permanent crown = castCrownAndAcceptSearch();
+        harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
 
         Permanent enteredRune = findPermanent(player1, "Rune of Sustenance");
         assertThat(enteredRune.getAttachedTo()).isEqualTo(crown.getId());
@@ -40,6 +40,7 @@ class RunedCrownTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
 
         Permanent crown = findPermanent(player1, "Runed Crown");
         Permanent enteredRune = findPermanent(player1, "Rune of Sustenance");
@@ -55,12 +56,12 @@ class RunedCrownTest extends BaseCardTest {
 
         Permanent crown = castCrownAndAcceptSearch();
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).containsExactly(rune);
+        assertThat(search.pool()).containsExactly(rune);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
 
         Permanent enteredRune = findPermanent(player1, "Rune of Sustenance");
         assertThat(enteredRune.getAttachedTo()).isEqualTo(crown.getId());

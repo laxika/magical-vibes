@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -41,7 +42,24 @@ public class PutCounterOnCombatOpponentEffectHandler implements NormalEffectHand
             return;
         }
 
-        permanentCounterSupport.placeCounterOnPermanent(
+        int placed = permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, target, counterEffect.counterType(), counterEffect.amount());
+        if (placed <= 0) {
+            return;
+        }
+        if (counterEffect.grantedStaticEffect() != null
+                && !target.getPersistentTriggeredEffects(EffectSlot.STATIC)
+                        .contains(counterEffect.grantedStaticEffect())) {
+            target.addPersistentTriggeredEffect(
+                    EffectSlot.STATIC,
+                    counterEffect.grantedStaticEffect());
+        }
+        if (counterEffect.grantedUpkeepEffect() != null
+                && !target.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED)
+                        .contains(counterEffect.grantedUpkeepEffect())) {
+            target.addPersistentTriggeredEffect(
+                    EffectSlot.UPKEEP_TRIGGERED,
+                    counterEffect.grantedUpkeepEffect());
+        }
     }
 }

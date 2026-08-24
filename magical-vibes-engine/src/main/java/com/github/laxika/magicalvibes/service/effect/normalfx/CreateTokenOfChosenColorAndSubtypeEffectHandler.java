@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -28,19 +29,28 @@ public class CreateTokenOfChosenColorAndSubtypeEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        CreateTokenOfChosenColorAndSubtypeEffect tokenEffect =
+                (CreateTokenOfChosenColorAndSubtypeEffect) effect;
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        if (source == null || source.getChosenColor() == null || source.getChosenSubtype() == null) {
+        if (source == null || source.getChosenColor() == null) {
             return;
         }
 
-        CardSubtype subtype = source.getChosenSubtype();
+        CardColor chosenColor = source.getChosenColor();
+        CardSubtype subtype = tokenEffect.subtypeByColor().get(chosenColor);
+        if (subtype == null) {
+            subtype = source.getChosenSubtype();
+        }
+        if (subtype == null) {
+            return;
+        }
         CreateTokenEffect token = new CreateTokenEffect(
-                subtype.getDisplayName(), 2, 2, source.getChosenColor(),
+                subtype.getDisplayName(), tokenEffect.power(), tokenEffect.toughness(), chosenColor,
                 List.of(subtype), Set.of(), Set.of());
         permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), token, 1,
                 entry.getCard().getSetCode());

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifactSpellsEffect;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermis
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
@@ -41,13 +43,18 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingTimingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
@@ -70,6 +77,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Single source of truth for whether a player may cast a given spell: per-turn spell limits,
@@ -107,6 +115,7 @@ public class CastingPermissionService {
      * restrictions: spell limit, type restrictions, forbidden names, silence, etc.
      */
     public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
+        if (isSplitSecondActive(gameData)) return false;
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         if (spellsCast >= maxSpells) return false;
@@ -121,6 +130,7 @@ public class CastingPermissionService {
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return false;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
+        if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
@@ -194,6 +204,8 @@ public class CastingPermissionService {
         Set<CardType> restricted = EnumSet.noneOf(CardType.class);
         // Moonhold / Abeyance etc.: per-turn "can't cast spells of these types" restriction on a player.
         restricted.addAll(gameData.playersCantCastSpellTypesThisTurn.getOrDefault(playerId, Set.of()));
+        gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.values()
+                .forEach(types -> restricted.addAll(types.keySet()));
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
             restricted.add(CardType.INSTANT);
@@ -389,7 +401,7 @@ public class CastingPermissionService {
      * Brisela, Voice of Nightmares: opponents of a source controller can't cast spells with mana
      * value ≤ the effect's {@code maxManaValue}. Playability overload (no chosen X): X-cost spells
      * are never blocked because a high enough X is always legal. Cast-time overload includes the
-     * chosen X in mana value (CR 202.3c).
+     * chosen X in mana value.
      */
     public boolean isOpponentsManaValueSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card) {
         return isOpponentsManaValueSpellCastRestricted(gameData, castingPlayerId, card, null);
@@ -397,6 +409,13 @@ public class CastingPermissionService {
 
     public boolean isOpponentsManaValueSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card,
                                                            Integer chosenX) {
+        ManaCost cost = card.getParsedManaCost();
+        boolean hasX = cost != null && cost.hasX();
+        int manaValue = card.getManaValue();
+        if (chosenX != null && hasX) {
+            manaValue += chosenX * Math.max(1, cost.getXSymbolCount());
+        }
+
         int tightestMax = Integer.MAX_VALUE;
         boolean restricted = false;
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -405,6 +424,15 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantCastSpellsWithManaValueGreaterThanEffect restriction
+                            && (restriction.spellFilter() == null
+                            || predicateEvaluationService.matchesCardPredicate(card,
+                            restriction.spellFilter(), null, gameData, castingPlayerId))) {
+                        int limit = amountEvaluationService.evaluate(gameData,
+                                restriction.manaValueLimit(),
+                                new AmountContext(castingPlayerId, perm, castingPlayerId, 0, 0));
+                        if (manaValue > limit) return true;
+                    }
                     if (effect instanceof OpponentsCantCastSpellsWithManaValueAtMostEffect restriction) {
                         restricted = true;
                         tightestMax = Math.min(tightestMax, restriction.maxManaValue());
@@ -414,16 +442,10 @@ public class CastingPermissionService {
         }
         if (!restricted) return false;
 
-        ManaCost cost = card.getParsedManaCost();
-        boolean hasX = cost != null && cost.hasX();
         if (chosenX == null) {
             // Playability: any {X} spell can pick X high enough to exceed the cap.
             if (hasX) return false;
             return card.getManaValue() <= tightestMax;
-        }
-        int manaValue = card.getManaValue();
-        if (hasX) {
-            manaValue += chosenX * Math.max(1, cost.getXSymbolCount());
         }
         return manaValue <= tightestMax;
     }
@@ -452,6 +474,29 @@ public class CastingPermissionService {
     }
 
     /**
+     * Static restrictions such as Llawan's apply to spells matching a card predicate, but only
+     * when the caster is an opponent of the permanent's controller.
+     */
+    public boolean isOpponentsSpellMatchingPredicateRestricted(GameData gameData, UUID castingPlayerId,
+                                                                 Card card) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(castingPlayerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
+                            && predicateEvaluationService.matchesCardPredicate(
+                            card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Ethersworn Canonist: "Each player who has cast a nonartifact spell this turn can't cast
      * additional nonartifact spells." Returns true if {@code card} is a nonartifact spell, some
      * permanent carries the effect, and {@code playerId} has already cast a nonartifact spell this
@@ -466,14 +511,13 @@ public class CastingPermissionService {
 
     public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card) {
         Card mostRecentSpell = gameData.getMostRecentSpellCastThisTurn();
-        if (mostRecentSpell == null) return false;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof SpellCastingRestrictionEffect restriction
-                            && restriction.preventsCasting(mostRecentSpell, card)) {
+                            && restriction.preventsCasting(perm, mostRecentSpell, card)) {
                         return true;
                     }
                 }
@@ -605,13 +649,21 @@ public class CastingPermissionService {
      */
     public boolean isSpellRestricted(GameData gameData, UUID playerId, Card card,
                                      Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
+        if (isSplitSecondActive(gameData)) return true;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return true;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
+        if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
+    }
+
+    public boolean isSplitSecondActive(GameData gameData) {
+        return gameData.stack.stream()
+                .anyMatch(entry -> entry.getCard() != null
+                        && entry.getCard().getKeywords().contains(Keyword.SPLIT_SECOND));
     }
 
     public boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
@@ -646,13 +698,44 @@ public class CastingPermissionService {
 
     public boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
+        if (isSorcerySpeedOnlyForPlayer(gameData, playerId)) {
+            return sorceryTimingAvailable(gameData, playerId);
+        }
+        boolean sorceryTiming = isActivePlayer && isMainPhase && stackEmpty;
+        if (gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, playerId)) {
+            return sorceryTiming;
+        }
+
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || card.getKeywords().contains(Keyword.FLASH)
                 || hasFlashGrantForCard(gameData, playerId, card)
                 || grantsItselfFlashTiming(card)
                 || hasMetFlashCastCondition(gameData, playerId, card)
                 || hasAvailableFlashAlternateCast(gameData, playerId, card);
-        return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+        return isInstantSpeed || sorceryTiming;
+    }
+
+    private boolean isSorcerySpeedOnlyForPlayer(GameData gameData, UUID playerId) {
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isFaceDown()) continue;
+                GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        || staticBonus.losesAllAbilities()
+                        || staticBonus.losesAllNonManaAbilities()) {
+                    continue;
+                }
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SpellCastingTimingRestrictionEffect restriction
+                            && restriction.appliesTo(sourceControllerId, playerId)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -805,6 +888,11 @@ public class CastingPermissionService {
                         card, filter, null, gameData, playerId))) {
             return true;
         }
+        if (gameData.cardTypeFlashGrantsUntilNextTurn.getOrDefault(playerId, Set.of()).stream()
+                .anyMatch(filter -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, null, gameData, playerId))) {
+            return true;
+        }
         // Quicken: an unconsumed grant for the next spell of a given type this turn.
         if (gameData.hasNextSpellFlashGrant(playerId, card)) return true;
         for (UUID ownerId : gameData.orderedPlayerIds) {
@@ -837,6 +925,29 @@ public class CastingPermissionService {
         return false;
     }
 
+    public boolean isLandPlayFromGraveyardRestricted(GameData gameData, UUID playerId) {
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
+                    continue;
+                }
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OpponentsCantPlayLandsFromGraveyardEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean canPlayLandsFromTopOfLibrary(GameData gameData, UUID playerId) {
         if (gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId)) {
             return true;
@@ -846,6 +957,24 @@ public class CastingPermissionService {
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PlayLandsFromTopOfLibraryEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true when the controller has permission to take the plot special action for a
+     * nonland card on top of their library.
+     */
+    public boolean canPlotNonlandCardsFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PlotNonlandCardsFromTopOfLibraryEffect) {
                     return true;
                 }
             }
@@ -1133,6 +1262,29 @@ public class CastingPermissionService {
                 || hasLibraryTopCardLifePlayPermission(gameData, playerId, card))) {
             return true;
         }
+        return canCastFromTopOfLibraryNormally(gameData, playerId, card)
+                || canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, card);
+    }
+
+    /** Returns whether a specific card may use the mana-value life alternative from the library top. */
+    public boolean canCastFromTopOfLibraryByPayingLifeEqualToManaValue(
+            GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Returns whether a specific card may be cast from the top by paying its normal cost. */
+    public boolean canCastFromTopOfLibraryNormally(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
@@ -1203,7 +1355,10 @@ public class CastingPermissionService {
             for (Permanent perm : battlefield) {
                 for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
                         perm.getId(), perm.getCard().getId())) {
-                    if (canAccessExiledEntry(perm, sourceControllerId, entry, playerId)) {
+                    if (activeExileCastPermissions(gameData, perm, sourceControllerId)
+                            .anyMatch(permission -> canAccessExiledEntry(
+                                    perm, sourceControllerId, permission, entry, playerId)
+                                    && applies(permission, gameData, playerId, perm, entry))) {
                         castableIds.add(entry.card().getId());
                     }
                 }
@@ -1237,11 +1392,10 @@ public class CastingPermissionService {
             for (Permanent perm : battlefield) {
                 for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
                         perm.getId(), perm.getCard().getId())) {
-                    boolean anyMana = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                            .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                            .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                    boolean anyMana = activeExileCastPermissions(gameData, perm, sourceControllerId)
                             .anyMatch(effect -> effect.anyManaType()
-                                    && canAccessExiledEntry(perm, sourceControllerId, effect, entry, playerId));
+                                    && canAccessExiledEntry(perm, sourceControllerId, effect, entry, playerId)
+                                    && applies(effect, gameData, playerId, perm, entry));
                     if (anyMana) {
                         anyManaIds.add(entry.card().getId());
                     }
@@ -1262,9 +1416,7 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
                 if (!perm.getId().equals(entry.sourcePermanentId())) continue;
-                if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                        .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                if (activeExileCastPermissions(gameData, perm, sourceControllerId)
                         .anyMatch(permission -> canAccessExiledEntry(
                                 perm, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, perm, entry))) return true;
@@ -1298,9 +1450,9 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
                 if (!perm.getId().equals(entry.sourcePermanentId())) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (!(effect instanceof AllowCastFromCardsExiledWithSourceEffect permission)
-                            || !permission.withoutPayingManaCost()
+                for (AllowCastFromCardsExiledWithSourceEffect permission :
+                        activeExileCastPermissions(gameData, perm, sourceControllerId).toList()) {
+                    if (!permission.withoutPayingManaCost()
                             || !canAccessExiledEntry(perm, sourceControllerId, permission, entry, playerId)
                             || !applies(permission, gameData, playerId, perm, entry)) continue;
                     if (consume && permission.oncePerTurn()) {
@@ -1359,15 +1511,11 @@ public class CastingPermissionService {
 
     private OptionalInt additionalCounterCostFromSource(GameData gameData, UUID playerId,
                                                         Permanent source, ExiledCardEntry entry) {
-        if (source.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+        if (activeExileCastPermissions(gameData, source, playerId)
                 .noneMatch(permission -> applies(permission, gameData, playerId, source, entry))) {
             return OptionalInt.empty();
         }
-        return source.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+        return activeExileCastPermissions(gameData, source, playerId)
                 .filter(permission -> applies(permission, gameData, playerId, source, entry))
                 .mapToInt(AllowCastFromCardsExiledWithSourceEffect::additionalCounterCost)
                 .min();
@@ -1394,6 +1542,26 @@ public class CastingPermissionService {
         return true;
     }
 
+    private Stream<AllowCastFromCardsExiledWithSourceEffect> activeExileCastPermissions(
+            GameData gameData, Permanent source, UUID sourceControllerId) {
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .flatMap(effect -> activeExileCastPermissions(
+                        gameData, source, sourceControllerId, effect));
+    }
+
+    private Stream<AllowCastFromCardsExiledWithSourceEffect> activeExileCastPermissions(
+            GameData gameData, Permanent source, UUID sourceControllerId, CardEffect effect) {
+        if (effect instanceof AllowCastFromCardsExiledWithSourceEffect permission) {
+            return Stream.of(permission);
+        }
+        if (effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, sourceControllerId))) {
+            return activeExileCastPermissions(gameData, source, sourceControllerId, conditional.wrapped());
+        }
+        return Stream.empty();
+    }
+
     private GameData.ExileCastPermission findTemporaryExileCastPermission(
             GameData gameData, UUID playerId, ExiledCardEntry entry, boolean freeOnly) {
         return gameData.exileCastPermissionsUntilEndOfTurn.stream()
@@ -1406,6 +1574,12 @@ public class CastingPermissionService {
     }
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
+        GameData.GraveyardCardCastPermission graveyardPermission =
+                gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(cardId);
+        if (graveyardPermission != null && graveyardPermission.anyManaType()
+                && playerId.equals(graveyardPermission.castingPlayerId())) {
+            return true;
+        }
         if (hasStashCounterPermission(gameData, playerId, cardId, true)) return true;
         // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
         if (gameData.exilePlayAnyManaType.contains(cardId)
@@ -1419,11 +1593,10 @@ public class CastingPermissionService {
                 for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
                         perm.getId(), perm.getCard().getId())) {
                     if (entry.card().getId().equals(cardId)
-                            && perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                            .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                            .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                            && activeExileCastPermissions(gameData, perm, sourceControllerId)
                             .anyMatch(effect -> effect.anyManaType()
-                                    && canAccessExiledEntry(perm, sourceControllerId, effect, entry, playerId))) {
+                                    && canAccessExiledEntry(perm, sourceControllerId, effect, entry, playerId)
+                                    && applies(effect, gameData, playerId, perm, entry))) {
                         return true;
                     }
                 }
@@ -1445,9 +1618,7 @@ public class CastingPermissionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         return battlefield.stream()
-                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                        .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                .anyMatch(source -> activeExileCastPermissions(gameData, source, playerId)
                         .anyMatch(permission -> permission.stashCounterOnly()
                                 && (!anyManaTypeRequired || permission.anyManaType())
                                 && applies(permission, gameData, playerId, source, entry)));
@@ -1467,14 +1638,6 @@ public class CastingPermissionService {
                         .filter(AllowCastFromCardsExiledWithIceCountersEffect.class::isInstance)
                         .map(AllowCastFromCardsExiledWithIceCountersEffect.class::cast)
                         .anyMatch(permission -> !anyManaTypeRequired || permission.anyManaType()));
-    }
-
-    private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,
-                                         ExiledCardEntry entry, UUID playerId) {
-        return source.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
-                .anyMatch(effect -> canAccessExiledEntry(source, sourceControllerId, effect, entry, playerId));
     }
 
     private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,

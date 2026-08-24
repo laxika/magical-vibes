@@ -34,7 +34,7 @@ class ZahurGlorysPastTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("times each turn");
+                .hasMessageContaining("only once each turn");
         assertThat(secondCreature).isIn(gd.playerBattlefields.get(player1.getId()));
     }
 

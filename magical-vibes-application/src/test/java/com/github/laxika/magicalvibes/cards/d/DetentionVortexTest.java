@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DetentionVortex.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
 class DetentionVortexTest extends BaseCardTest {
 
     @Test
@@ -63,7 +65,7 @@ class DetentionVortexTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be activated");
+                .hasMessageContaining("activated ability");
     }
 
     @Test

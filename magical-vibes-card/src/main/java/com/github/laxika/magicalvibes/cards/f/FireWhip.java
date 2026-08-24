@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WTH", collectorNumber = "100")
+@CardRegistration(set = "TSB", collectorNumber = "63")
 public class FireWhip extends Card {
 
     public FireWhip() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Replaces the former {@code TargetCreatureCantBlockThisTurnEffect} ({@code TARGET}),
  * {@code TargetPlayerCreaturesCantBlockThisTurnEffect} ({@code TARGET_PLAYERS_PERMANENTS}) and the
  * predicate-filtered mass {@code CantBlockThisTurnEffect(PermanentPredicate)} ({@code ALL_CREATURES}).
+ * The {@link TapUntapScope#ENCHANTED} form marks the permanent attached to the source Aura.
  *
  * <p>Not to be confused with the static {@code CantBlockEffect} ("this creature can't block",
  * read continuously by the combat services) or {@code CantBlockSourceEffect} ("can't block the

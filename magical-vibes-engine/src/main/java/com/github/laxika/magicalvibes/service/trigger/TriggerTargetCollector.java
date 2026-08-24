@@ -192,12 +192,12 @@ public class TriggerTargetCollector {
             PermanentPredicate effectPredicate = null;
             FilterContext effectFilterCtx = null;
             if (options.useEffectTargetPredicate()) {
-                effectPredicate = effects.stream()
+                List<CardEffect> targetingEffects = effects.stream()
                         .map(e -> unwrap(e, options))
-                        .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                && EffectResolution.targetPredicateOf(e) != null)
-                        .map(EffectResolution::targetPredicateOf)
-                        .findFirst().orElse(null);
+                        .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                        .toList();
+                effectPredicate = EffectResolution.declaredPermanentRestriction(targetingEffects)
+                        .orElse(null);
                 if (effectPredicate != null) {
                     effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null,
                             sourcePermanentSnapshot).withDefendingPlayerId(defendingPlayerId);

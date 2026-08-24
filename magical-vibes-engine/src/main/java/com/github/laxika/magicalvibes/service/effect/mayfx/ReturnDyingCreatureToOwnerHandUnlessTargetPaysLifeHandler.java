@@ -36,7 +36,7 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeHandler implement
 
         UUID playerId = ability.controllerId();
         if (accepted && effectHandler.canPay(gameData, playerId, effect.lifeCost())) {
-            lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
+            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
         } else {
             effectHandler.returnDyingCard(gameData, effect.dyingCardId(), ability.sourceCard());
         }

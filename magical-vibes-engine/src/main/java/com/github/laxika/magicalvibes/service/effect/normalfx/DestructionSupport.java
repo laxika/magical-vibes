@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -93,6 +94,7 @@ public class DestructionSupport {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final CreatureControlService creatureControlService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
     private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
@@ -257,6 +259,7 @@ public class DestructionSupport {
                 gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             endSimultaneousCreatureDeaths(gameData);
         }
@@ -419,6 +422,11 @@ public class DestructionSupport {
         effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                 gameData, playerId, effectiveDamage);
 
+        if (effectiveDamage > 0) {
+            gameData.recordDamageToPlayer(playerId, effectiveDamage,
+                    sourceCard.hasType(CardType.ARTIFACT) ? effectiveDamage : 0);
+        }
+
         if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
             if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
                 int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
@@ -439,8 +447,8 @@ public class DestructionSupport {
             return;
         }
 
-        int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+        gameData.playerLifeTotals.put(playerId,
+                gameQueryService.lifeAfterDamage(gameData, playerId, effectiveDamage));
 
         if (effectiveDamage > 0) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -801,8 +809,16 @@ public class DestructionSupport {
             } else if (elseEffect instanceof ReturnToHandEffect returnToHand) {
                 returnToHandEffectHandler.resolve(gameData, entry, returnToHand);
             } else {
-                log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
-                        gameData.id, elseEffect.getClass().getSimpleName());
+                var handler = effectHandlerRegistry.getHandler(elseEffect);
+                if (handler == null) {
+                    log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
+                            gameData.id, elseEffect.getClass().getSimpleName());
+                } else {
+                    handler.resolve(gameData, entry, elseEffect);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        return;
+                    }
+                }
             }
         }
     }

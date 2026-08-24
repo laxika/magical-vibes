@@ -241,7 +241,7 @@ public final class TextChangeTransformer {
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 yield keywords == boost.grantedKeywords() && filter == boost.filter() ? boost
                         : new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
-                        keywords, boost.scope(), filter);
+                        keywords, boost.scope(), filter, boost.scalingCounter(), boost.scalingCounterOnTarget());
             }
             case DynamicStaticBoostEffect boost -> {
                 PermanentPredicate filter = apply(boost.filter(), substitution);

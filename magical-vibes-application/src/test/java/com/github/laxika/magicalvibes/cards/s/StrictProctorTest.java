@@ -39,12 +39,14 @@ class StrictProctorTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
 
         harness.assertInHand(player2, "Forest");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();

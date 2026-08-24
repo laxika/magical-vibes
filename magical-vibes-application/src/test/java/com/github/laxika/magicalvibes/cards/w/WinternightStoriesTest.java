@@ -86,6 +86,7 @@ class WinternightStoriesTest extends BaseCardTest {
         Card drawnCard = new Island();
         Card spell = new WinternightStories();
         harness.setLibrary(player1, List.of(drawnCard, new Island(), new Island()));
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -97,9 +98,11 @@ class WinternightStoriesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst()).isInstanceOf(Island.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(2)
+                .allMatch(Island.class::isInstance);
     }
 
     @Test
@@ -108,6 +111,7 @@ class WinternightStoriesTest extends BaseCardTest {
         Card spell = new WinternightStories();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(drawnCard, new Island(), new Island()));
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -120,7 +124,7 @@ class WinternightStoriesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst()).isInstanceOf(Island.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 

@@ -129,6 +129,11 @@ public class AutoPassService {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextPlotTrigger(gameData);
+        }
+
         // Process any pending targeted controller-discard triggers (e.g. Zenith Seeker)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)) {
             triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
@@ -439,6 +444,12 @@ public class AutoPassService {
                 // Skip combat-only abilities when not in the combat phase
                 if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT
                         && !gameData.currentStep.isCombatPhase()) {
+                    continue;
+                }
+
+                // Skip end-of-combat-only abilities outside that step
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_END_OF_COMBAT
+                        && gameData.currentStep != TurnStep.END_OF_COMBAT) {
                     continue;
                 }
 

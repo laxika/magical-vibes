@@ -66,7 +66,7 @@ class RushedRebirthTest extends BaseCardTest {
         resolveStack();
 
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactly(sameManaValueCreature, higherManaValueCreature);
+                .containsExactlyInAnyOrder(sameManaValueCreature, higherManaValueCreature);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 

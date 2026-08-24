@@ -31,13 +31,16 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
+import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
@@ -53,7 +56,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.RiotEntryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -93,7 +95,6 @@ public class BattlefieldPlacementService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAllPermanentsAsEntersEffectHandler sacrificeAllPermanentsAsEntersEffectHandler;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
-    private RiotEntryService riotEntryService;
 
     public BattlefieldPlacementService(GameQueryService gameQueryService,
                                        GameLogService gameLogService,
@@ -130,11 +131,6 @@ public class BattlefieldPlacementService {
         this.sacrificeAllPermanentsAsEntersEffectHandler = handler;
     }
 
-    @Autowired
-    void setRiotEntryService(@Lazy RiotEntryService service) {
-        this.riotEntryService = service;
-    }
-
     public void place(GameData gameData, BattlefieldEntryRequest request) {
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
@@ -143,6 +139,7 @@ public class BattlefieldPlacementService {
         int xValue = request.xValue();
         boolean kicked = request.kicked();
         List<String> repeatedAdditionalCosts = request.repeatedAdditionalCosts();
+        EnterBattlefieldOnDiscardEffect discardReplacement = request.discardReplacement();
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
@@ -175,7 +172,9 @@ public class BattlefieldPlacementService {
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
-            applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
+            applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
+                    repeatedAdditionalCosts, request.enterWithCounters());
+            applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
             applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
@@ -234,9 +233,7 @@ public class BattlefieldPlacementService {
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent, conditionalRevealEffect);
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
-        if (riotEntryService != null) {
-            riotEntryService.applyIfPresent(gameData, controllerId, permanent);
-        }
+        applyRiot(gameData, controllerId, permanent, simultaneouslyEntered);
         if (simultaneouslyEntered.isEmpty()) {
             gameData.activeMysticReflectionsForEntryBatch.clear();
         }
@@ -282,6 +279,39 @@ public class BattlefieldPlacementService {
                 List.of(new UnleashEffect()),
                 permanent.getCard().getName() + " — Unleash: have it enter with a +1/+1 counter?"
                         + " (It can't block as long as it has one.)",
+                null,
+                null,
+                permanent.getId()));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void applyRiot(GameData gameData, UUID controllerId, Permanent permanent,
+                           List<Permanent> simultaneouslyEntered) {
+        boolean grantedRiot = gameData.spellsGrantedRiotOnEntry.remove(permanent.getCard().getId());
+        boolean creature = gameQueryService.isCreature(gameData, permanent);
+        boolean ownRiot = creature && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(RiotEffect.class::isInstance);
+        boolean battlefieldRiot = creature && !permanent.getCard().isToken()
+                && gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(source -> !source.getId().equals(permanent.getId()))
+                .filter(source -> simultaneouslyEntered.stream()
+                        .noneMatch(batchMember -> batchMember.getId().equals(source.getId())))
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(ControlledCreaturesHaveRiotEffect.class::isInstance);
+        if (!ownRiot && !grantedRiot && !battlefieldRiot) {
+            return;
+        }
+        if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            return;
+        }
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                permanent.getCard(),
+                controllerId,
+                List.of(new RiotEffect()),
+                permanent.getCard().getName() + " — Riot: have it enter with a +1/+1 counter?"
+                        + " (Otherwise it gains haste.)",
                 null,
                 null,
                 permanent.getId()));
@@ -883,7 +913,8 @@ public class BattlefieldPlacementService {
      * exclude it ("for each <em>other</em> [subtype] you control", e.g. Unbreathing Horde).</p>
      */
     private void applyEnterWithCounters(GameData gameData, UUID controllerId, Permanent permanent,
-                                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
+                                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                                        EnterWithCountersEffect additionalEnterWithCounters) {
         Card card = permanent.getCard();
         // Solemnity and Tatterkite/Melira's Keepers-style locks also replace "enters with N counters".
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
@@ -895,8 +926,9 @@ public class BattlefieldPlacementService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, false, false, false, false, permanent.getCastFromZone(), xValue,
-                        null, null, false, false, false, null, null, null, List.of(),
+                        card, kicked, false, permanent.isProwl(), false, false, false,
+                        permanent.getCastFromZone(), xValue, null, null, false,
+                        false, false, null, null, null, repeatedAdditionalCosts,
                         permanent.isAlternateCost(), 0);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
@@ -909,6 +941,11 @@ public class BattlefieldPlacementService {
             if (permanent.getChosenSubtype() == null && isChosenSubtypeDependent(enterWith)) continue;
             applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, xValue,
                     repeatedAdditionalCosts, card);
+        }
+
+        if (additionalEnterWithCounters != null) {
+            applyEnterWithCountersEffect(gameData, controllerId, permanent, additionalEnterWithCounters,
+                    xValue, repeatedAdditionalCosts, card);
         }
 
         applyGrantedBloodthirst(gameData, controllerId, permanent);
@@ -944,18 +981,35 @@ public class BattlefieldPlacementService {
         int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
                 new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
                         repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, sourceCard));
-        if (enterWith.type() == CounterType.MINUS_ONE_MINUS_ONE
+        applyEntryCounters(gameData, controllerId, permanent, enterWith.type(), count);
+    }
+
+    private void applyDiscardEntryCounters(GameData gameData, UUID controllerId, Permanent permanent,
+                                           EnterBattlefieldOnDiscardEffect discardReplacement) {
+        if (discardReplacement == null) {
+            return;
+        }
+        applyEntryCounters(gameData, controllerId, permanent,
+                discardReplacement.counterType(), discardReplacement.counterCount());
+    }
+
+    private void applyEntryCounters(GameData gameData, UUID controllerId, Permanent permanent,
+                                    CounterType counterType, int count) {
+        if (counterType == null || count <= 0) {
+            return;
+        }
+        if (counterType == CounterType.MINUS_ONE_MINUS_ONE
                 && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
             count = 0;
-        } else if (enterWith.type() == CounterType.PLUS_ONE_PLUS_ONE
+        } else if (counterType == CounterType.PLUS_ONE_PLUS_ONE
                 && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent, controllerId)) {
             count = 0;
         }
-        count = gameQueryService.replaceCounters(gameData, permanent, controllerId, enterWith.type(), count);
+        count = gameQueryService.replaceCounters(gameData, permanent, controllerId, counterType, count);
         if (count > 0) {
-            permanent.setCounterCount(enterWith.type(), permanent.getCounterCount(enterWith.type()) + count);
+            permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
             log.info("Game {} - {} enters with {} {} counter(s)",
-                    gameData.id, permanent.getCard().getName(), count, enterWith.type());
+                    gameData.id, permanent.getCard().getName(), count, counterType);
         }
     }
 
@@ -1108,7 +1162,7 @@ public class BattlefieldPlacementService {
         subtypes.addAll(entering.getCard().getSubtypes());
         subtypes.addAll(entering.getTransientSubtypes());
         subtypes.addAll(entering.getGrantedSubtypes());
-        boolean changeling = entering.getCard().getKeywords().contains(Keyword.CHANGELING);
+        boolean changeling = entering.getCard().hasKeyword(Keyword.CHANGELING);
 
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
         List<Permanent> snapshot = List.copyOf(bf);

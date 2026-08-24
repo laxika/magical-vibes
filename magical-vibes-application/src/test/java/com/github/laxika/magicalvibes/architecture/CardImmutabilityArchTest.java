@@ -40,12 +40,14 @@ class CardImmutabilityArchTest {
             "CardPrinting",            // stamps printing data on freshly constructed cards and their back faces
             "GameSetupService",        // stamps ownerId, then freezes
             "SpellCastingService",     // mutates the modal runtime copy it just created
+            "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
             "PermanentCopierService",  // assembles fresh clone-copy cards
             "CloneService",            // "except it has ..." on the fresh clone-copy card
             "CopySupport",             // assembles fresh spell-copy cards
             "CopyControllerCastSpellEffectHandler", // decorates the fresh spell-copy card
             "CopySpellEffectHandler",  // decorates the fresh spell-copy card
+            "CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler", // decorates the fresh drawn-card copy
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeCopyOfEnteringCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Unstable Shapeshifter)
@@ -65,8 +67,10 @@ class CardImmutabilityArchTest {
             "LivingWeaponEffectHandler",
             "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
             "ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler", // decorates freshly assembled Spirit token-copy cards
+            "ReturnDyingOpponentCreatureAsTreasureEffectHandler", // changes a fresh runtime copy into a Treasure card
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
             "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
+            "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

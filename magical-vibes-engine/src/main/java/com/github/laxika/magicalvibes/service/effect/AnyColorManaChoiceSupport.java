@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -124,9 +125,10 @@ public final class AnyColorManaChoiceSupport {
         if (allowedColors.size() == 1 && effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS) {
             UUID manaRecipientId = recipientPlayerId != null ? recipientPlayerId : playerId;
             ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
-            manaPool.add(allowedColors.get(0), amount);
+            ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId, allowedColors.get(0));
+            manaPool.add(effectiveColor, amount);
             if (fromCreature) {
-                manaPool.addCreatureMana(allowedColors.get(0), amount);
+                manaPool.addCreatureMana(effectiveColor, amount);
             }
             return false;
         }
@@ -150,9 +152,20 @@ public final class AnyColorManaChoiceSupport {
         if (effect.restriction() == ManaSpendRestriction.EXILED_SPELL_ONLY) {
             return new ChoiceContext.ExiledSpellManaColorChoice(playerId, fromCreature, amount);
         }
+        if (effect.differentColors()) {
+            ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.differentColors(
+                    playerId, fromCreature, amount, ManaColor.COLORS);
+            if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {
+                choice = choice.withPlaneswalkerSpellOnly();
+            }
+            return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
+        }
         if (effect.anyColorCombination()) {
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount, ManaColor.COLORS);
+            if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {
+                choice = choice.withPlaneswalkerSpellOnly();
+            }
             return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
         }
 
@@ -181,6 +194,11 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype());
             case CREATURE_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.creatureSpellOrAbilityOnly(playerId, amount);
+            case MOUNT_OR_VEHICLE_SPELL ->
+                    new ChoiceContext.ManaColorSpellChoice(
+                            playerId, amount, Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE));
+            case PLANESWALKER_SPELLS ->
+                    ChoiceContext.ManaColorChoice.planeswalkerSpellOnly(playerId, amount);
             case SUBTYPE_SPELL -> effect.spellOnlySubtypes().isEmpty()
                     ? new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype())
                     : new ChoiceContext.ManaColorSpellChoice(playerId, amount, effect.spellOnlySubtypes());
@@ -231,6 +249,7 @@ public final class AnyColorManaChoiceSupport {
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
+            case PLANESWALKER_SPELLS -> "Choose a color of mana to add (planeswalker spells only).";
             default -> "Choose a color of mana to add.";
         };
     }

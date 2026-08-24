@@ -54,7 +54,6 @@ class TheBearsOfLittjaraTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
@@ -76,6 +75,7 @@ class TheBearsOfLittjaraTest extends BaseCardTest {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheBearsOfLittjara());
         harness.addToBattlefield(player1, creature("Large Creature", 6, 6));
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, planeswalker(8));
+        planeswalker.setCounterCount(CounterType.LOYALTY, 8);
         saga.setCounterCount(CounterType.LORE, 2);
 
         advanceToNextChapter();

@@ -99,6 +99,7 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
 
         if (paid) {
             gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - effect.lifeCost());
+            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, effect.lifeCost());
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to keep drawn creature ({})",

@@ -1042,11 +1042,11 @@ class PermanentRemovalServiceTest {
         @Test
         @DisplayName("Redirects damage to a self-redirecting permanent when no aura is present")
         void redirectsDamageToSelfRedirectingPermanent() {
-            Permanent creature = addPermanent(player1Id, createCreature("Empyrial Archangel"));
+            Card card = createCreature("Empyrial Archangel");
+            card.addEffect(EffectSlot.STATIC, new RedirectPlayerDamageToSelfEffect());
+            Permanent creature = addPermanent(player1Id, card);
             when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1Id), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
                     .thenReturn(null);
-            when(gameQueryService.findControlledPermanentWithStaticEffect(eq(gd), eq(player1Id), eq(RedirectPlayerDamageToSelfEffect.class)))
-                    .thenReturn(creature);
             when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3, false)).thenReturn(3);
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(8);
 

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "200")
+@CardRegistration(set = "WAR", collectorNumber = "175")
 public class ReturnToNature extends Card {
 
     public ReturnToNature() {

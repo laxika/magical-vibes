@@ -14,8 +14,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/** Resolves Riot's choice of a +1/+1 counter or permanent haste as a creature enters. */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RiotHandler implements MayEffectHandlerBean {
@@ -34,27 +37,35 @@ public class RiotHandler implements MayEffectHandlerBean {
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Permanent source = ability.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-        if (source != null && accepted) {
-            if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
-                int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
-                if (placed > 0) {
-                    source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                            source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
-                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                            gameData, source);
-                    permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
-                            gameData, source, placed, player.getId());
-                }
+        boolean choseCounter = accepted && source != null
+                && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source);
+        boolean counterPlaced = false;
+        if (choseCounter) {
+            int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
+            if (placed > 0) {
+                source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                        source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, source, placed);
+                permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                        gameData, source, placed, player.getId());
+                counterPlaced = true;
             }
+        }
+        if (!counterPlaced && source != null) {
+            source.getGrantedKeywords().add(Keyword.HASTE);
+            source.getPersistentGrantedKeywords().add(Keyword.HASTE);
+        }
+
+        if (counterPlaced) {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " chooses a +1/+1 counter for ", ability.sourceCard(), "."));
-        } else if (source != null) {
-            if (!gameQueryService.cantHaveOrGainKeyword(gameData, source, Keyword.HASTE)) {
-                source.getPersistentGrantedKeywords().add(Keyword.HASTE);
-            }
+        } else {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " chooses haste for ", ability.sourceCard(), "."));
         }
+        log.info("Game {} - {} resolves Riot for {} as {}", gameData.id, player.getUsername(),
+                ability.sourceCard().getName(), counterPlaced ? "+1/+1 counter" : "haste");
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

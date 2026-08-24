@@ -68,4 +68,21 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
                 verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
                 verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
             }
+
+            @Test
+            @DisplayName("Controller-only mode leaves the other player's hand untouched")
+            void processesOnlyController() {
+                Card card = createCard("Whirlpool Drake");
+                gd.playerHands.get(player1Id).addAll(List.of(createCard("A"), createCard("B")));
+                gd.playerHands.get(player2Id).add(createCard("C"));
+
+                ShuffleHandIntoLibraryAndDrawEffect effect = new ShuffleHandIntoLibraryAndDrawEffect(false);
+                StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+                resolveEffect(gd, entry, effect);
+
+                verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
+                verify(drawService, never()).resolveDrawCard(gd, player2Id);
+                assertThat(gd.playerHands.get(player2Id)).hasSize(1);
+            }
 }

@@ -68,6 +68,10 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             case CONTROLLER -> resolveSinglePlayer(gameData, entry, e, entry.getControllerId(), creatureSingleSac);
             case TARGET_PLAYER -> {
                 UUID targetPlayerId = entry.getTargetId();
+                if (targetPlayerId == null) {
+                    List<UUID> effectTargets = entry.targetsForEffect(e);
+                    targetPlayerId = effectTargets.isEmpty() ? null : effectTargets.getFirst();
+                }
                 if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
                     return;
                 }
@@ -121,7 +125,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             UUID playerId, boolean creatureSingleSac) {
         if (isSacrificeProtected(gameData, entry, playerId)) {
-            if (e.recordSacrificedCount() && !creatureSingleSac) {
+            if (!creatureSingleSac && (e.recordSacrificedCount() || e.recordSacrificedPower())) {
                 entry.setEventValue(0);
             }
             return;
@@ -134,7 +138,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         int count = evaluateCount(gameData, entry, e, playerId);
         if (count <= 0) {
-            if (e.recordSacrificedCount()) {
+            if (e.recordSacrificedCount() || e.recordSacrificedPower()) {
                 entry.setEventValue(0);
             }
             // A dynamic count can evaluate to zero ("for each creature put into your graveyard this
@@ -144,7 +148,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || battlefield.isEmpty()) {
-            if (e.recordSacrificedCount()) {
+            if (e.recordSacrificedCount() || e.recordSacrificedPower()) {
                 entry.setEventValue(0);
             }
             String playerName = gameData.playerIdToName.get(playerId);
@@ -161,7 +165,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 .toList();
 
         if (matching.isEmpty()) {
-            if (e.recordSacrificedCount()) {
+            if (e.recordSacrificedCount() || e.recordSacrificedPower()) {
                 entry.setEventValue(0);
             }
             String playerName = gameData.playerIdToName.get(playerId);
@@ -169,6 +173,13 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
             return;
+        }
+
+        if (e.recordSacrificedPower()) {
+            entry.setEventValue(matching.stream()
+                    .mapToInt(p -> gameQueryService.getEffectivePower(gameData, p))
+                    .max()
+                    .orElse(0));
         }
 
         if (matching.size() <= count) {
@@ -183,7 +194,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             // More matching permanents than required — prompt player to choose
             List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
             playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,
-                    new MultiPermanentChoiceContext.ForcedSacrifice(playerId, List.of(), List.of()),
+                    new MultiPermanentChoiceContext.ForcedSacrifice(
+                            playerId, List.of(), List.of(), false, e.recordSacrificedCount()),
                     "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to sacrifice.");
         }
     }

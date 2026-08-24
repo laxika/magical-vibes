@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "95")
+@CardRegistration(set = "TSB", collectorNumber = "79")
 public class HailStorm extends Card {
 
     public HailStorm() {

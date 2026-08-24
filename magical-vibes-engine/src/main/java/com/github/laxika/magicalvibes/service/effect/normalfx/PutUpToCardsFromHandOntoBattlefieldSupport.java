@@ -31,7 +31,10 @@ public class PutUpToCardsFromHandOntoBattlefieldSupport {
     private final GameLogService gameLogService;
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
-                            int maxCount, UUID sourceCardId, String sourceCardName) {
+                            int maxCount, UUID sourceCardId, String sourceCardName, boolean tapped) {
+        if (maxCount <= 0) {
+            return;
+        }
         List<Card> hand = gameData.playerHands.get(playerId);
         List<UUID> validCardIds = new ArrayList<>();
         if (hand != null) {
@@ -49,13 +52,14 @@ public class PutUpToCardsFromHandOntoBattlefieldSupport {
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice(
-                        playerId, validCardIds, Math.min(maxCount, validCardIds.size()), sourceCardName));
+                        playerId, validCardIds, Math.min(maxCount, validCardIds.size()), sourceCardName, tapped));
         log.info("Game {} - Awaiting {} to put up to {} {} cards from hand onto the battlefield",
                 gameData.id, gameData.playerIdToName.get(playerId),
                 Math.min(maxCount, validCardIds.size()), label);
     }
 
-    public void applyPutChoice(GameData gameData, UUID playerId, List<UUID> chosenCardIds, String sourceCardName) {
+    public void applyPutChoice(GameData gameData, UUID playerId, List<UUID> chosenCardIds,
+                               String sourceCardName, boolean tapped) {
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || chosenCardIds.isEmpty()) {
             return;
@@ -76,6 +80,9 @@ public class PutUpToCardsFromHandOntoBattlefieldSupport {
         List<Permanent> alreadyEntered = new ArrayList<>();
         for (Card card : chosenCards) {
             Permanent permanent = new Permanent(card);
+            if (tapped) {
+                permanent.tap();
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent,
                     enterTappedTypes, List.copyOf(alreadyEntered));
             alreadyEntered.add(permanent);

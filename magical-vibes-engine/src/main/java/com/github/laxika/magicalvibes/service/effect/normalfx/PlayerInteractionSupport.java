@@ -246,6 +246,10 @@ public class PlayerInteractionSupport {
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
                                     DiscardFollowUp followUp, CardType stopAfterDiscardingType) {
 
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
+
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to discard.";
@@ -264,6 +268,9 @@ public class PlayerInteractionSupport {
 
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
                                     List<Integer> validIndices) {
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
         if (validIndices.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " has no eligible cards to discard."));
@@ -274,6 +281,10 @@ public class PlayerInteractionSupport {
     }
 
     public void resolveRandomDiscardCards(GameData gameData, UUID playerId, String sourceName, int amount) {
+
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
 
         List<Card> hand = gameData.playerHands.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -974,6 +985,10 @@ public class PlayerInteractionSupport {
             UUID nextPlayerId = remaining.remove(0);
             int amount = variableAmounts ? amounts.remove(0) : followUp.eachPlayerAmount();
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
+            if (gameData.discardCausedByOpponent
+                    && gameQueryService.isDiscardPrevented(gameData, nextPlayerId)) {
+                continue;
+            }
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
                 String logEntry = gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard.";

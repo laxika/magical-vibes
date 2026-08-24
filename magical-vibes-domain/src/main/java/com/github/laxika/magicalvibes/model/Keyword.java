@@ -10,6 +10,7 @@ public enum Keyword {
     DOUBLE_STRIKE,
     FIRST_STRIKE,
     FLASH,
+    SPLIT_SECOND,
     FADING,
     VIGILANCE,
     SHROUD,
@@ -69,6 +70,7 @@ public enum Keyword {
     MADNESS,
     ESCALATE,
     DECAYED,
+    AFTERLIFE,
     BLIGHT,
     SPLICE,
     DELIRIUM,
@@ -76,6 +78,7 @@ public enum Keyword {
     PHASING,
     BUYBACK,
     EVOLVE,
+    ADAPT,
     FUSE,
     OFFERING,
     DELVE,
@@ -94,7 +97,9 @@ public enum Keyword {
     MAYHEM,
     SUSPECT,
     CAMOUFLAGE,
-    DOUBLE;
+    DOUBLE,
+    PLOT,
+    AMASS;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

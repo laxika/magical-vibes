@@ -60,6 +60,8 @@ class StoneriseSpiritTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.FLYING)).isFalse();
     }

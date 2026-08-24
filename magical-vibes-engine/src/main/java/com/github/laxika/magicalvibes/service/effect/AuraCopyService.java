@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.AttachedCreatureIsCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -141,6 +142,25 @@ public class AuraCopyService {
                 chosen.getCard().getName(), source.getCard().getName());
     }
 
+    public void applyExiledCreatureCopy(GameData gameData, Permanent equipment, Permanent attached,
+                                         Card exiledCreature) {
+        String originalName = attached.getCard().getName();
+        if (!attached.isCopyWhileAttached()) {
+            attached.setWhileAttachedPreCopyCard(attached.getCard());
+        }
+        permanentCopierService.applyCloneCopy(attached, exiledCreature, null, null, java.util.Set.of());
+        attached.setCopyWhileAttached(true);
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), equipment.getCard().getName(), equipment.getId(),
+                gameQueryService.findPermanentController(gameData, equipment.getId()),
+                new AttachedCreatureIsCopyOfExiledCreatureEffect(), attached.getId(), null, null,
+                EffectDuration.WHILE_ATTACHED, 0));
+        gameLogService.append(gameData, GameLog.text(
+                originalName + " becomes a copy of " + exiledCreature.getName() + "."));
+        log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalName,
+                exiledCreature.getName(), equipment.getCard().getName());
+    }
+
     /**
      * Reverts every "while attached" copy carried by the given expired floating effects. Called
      * when an Aura leaves the battlefield or becomes unattached.
@@ -148,7 +168,8 @@ public class AuraCopyService {
     public void revertExpiredCopies(GameData gameData, List<FloatingContinuousEffect> expired) {
         for (FloatingContinuousEffect floating : expired) {
             if (!(floating.effect() instanceof EnchantedCreatureIsCopyOfChosenCreatureEffect
-                    || floating.effect() instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect)) {
+                    || floating.effect() instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect
+                    || floating.effect() instanceof AttachedCreatureIsCopyOfExiledCreatureEffect)) {
                 continue;
             }
             Permanent enchanted = gameQueryService.findPermanentById(gameData, floating.affectedPermanentId());
