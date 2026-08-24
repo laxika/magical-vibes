@@ -23,6 +23,10 @@ preview (`GameActionAvailabilityService.getPlayableCardIndices`) and the actual 
 handler registry — so a cost modifier applies identically in the preview and at resolution.
 Never re-add per-effect `instanceof` chains in `GameActionAvailabilityService` or `SpellCastingService`.
 
+`ReduceGraveyardSpellCastCostEffect(int)` is a battlefield reduction whose handler checks the
+`CostModificationContext.fromGraveyard()` flag. Graveyard cast paths must pass that flag to both
+playability previews and actual payment; ordinary hand casts are unaffected.
+
 ## Pattern
 
 1. **Package is `costmod`, under `service/cast/`.**
@@ -134,6 +138,8 @@ modifiers do not affect foretell.
   (`battlefieldHandlers`, `spellSelfHandlers`); `register(...)` routes by `onSpellItself()`.
 - `cast/costmod/ReduceOwnCastCostEffectHandler.java` — spell-self handler for
   `ReduceOwnCastCostEffect(DynamicAmount)`; evaluates via `AmountEvaluationService`.
+- `cast/costmod/ReduceGraveyardSpellCastCostEffectHandler.java` — battlefield handler for
+  `ReduceGraveyardSpellCastCostEffect(int)`; applies only to spells cast from a graveyard.
 - `cast/costmod/ReduceOwnColoredCastCostEffectHandler.java` — spell-self handler for
   `ReduceOwnColoredCastCostEffect(ManaColor, DynamicAmount)`; evaluates via
   `AmountEvaluationService` and returns a colored-only reduction.
@@ -183,7 +189,9 @@ modifiers do not affect foretell.
 - `cast/costmod/ConditionalBattlefieldCostModificationHandler.java` — battlefield handler for
   `ConditionalEffect`; evaluates the condition against the source permanent and delegates to the
   wrapped battlefield cost handler.
-- `cast/CostModificationContext.java` — `record(GameData gameData, UUID castingPlayerId, Card spell)`.
+- `cast/CostModificationContext.java` — `record(GameData gameData, UUID castingPlayerId, Card spell,
+  boolean flashbackCost, boolean fromGraveyard, int xValue)`; the zone flag lets graveyard-only
+  reductions distinguish graveyard casts from ordinary casts.
 - `cast/CostModificationSource.java` — `record(Permanent sourcePermanent, UUID controllerId)`
   with `SPELL_ITSELF` constant and `controlledBy(UUID)`.
 - `cast/CostModificationSupport.java` — `@Component`, shared queries (`sharesCardType`,

@@ -10,14 +10,24 @@ import java.util.UUID;
  * casting it, the card itself, and whether a flashback cost is being paid.
  */
 public record CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
-                                      boolean flashbackCost, int xValue) {
+                                      boolean flashbackCost, boolean fromGraveyard, int xValue) {
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell) {
-        this(gameData, castingPlayerId, spell, false, 0);
+        this(gameData, castingPlayerId, spell, false, false, 0);
     }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                    boolean flashbackCost) {
-        this(gameData, castingPlayerId, spell, flashbackCost, 0);
+        this(gameData, castingPlayerId, spell, flashbackCost, false, 0);
+    }
+
+    public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
+                                   boolean flashbackCost, int xValue) {
+        this(gameData, castingPlayerId, spell, flashbackCost, false, xValue);
+    }
+
+    public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
+                                   boolean flashbackCost, boolean fromGraveyard) {
+        this(gameData, castingPlayerId, spell, flashbackCost, fromGraveyard, 0);
     }
 }

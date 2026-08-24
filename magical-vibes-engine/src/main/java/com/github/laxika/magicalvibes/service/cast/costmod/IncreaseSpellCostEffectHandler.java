@@ -34,7 +34,10 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
         if (!applies) {
             return 0;
         }
-        if (!predicateEvaluationService.matchesCardPredicate(context.spell(), increase.predicate(), null)) {
+        if (!predicateEvaluationService.matchesCardPredicate(
+                context.spell(), increase.predicate(),
+                source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
+                context.gameData(), context.castingPlayerId())) {
             return 0;
         }
         var amountContext = AmountContext.forStaticEffect(source.sourcePermanent(),

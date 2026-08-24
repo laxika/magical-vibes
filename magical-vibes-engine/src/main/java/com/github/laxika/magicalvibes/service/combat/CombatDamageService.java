@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -352,6 +353,7 @@ public class CombatDamageService {
         // Tamiyo, Field Researcher's +1: "until your next turn, whenever either of those creatures
         // deals combat damage, you draw a card".
         processDelayedWatchedCreatureCombatDamageTriggers(gameData, state);
+        processDelayedNamedCreatureCombatDamageTriggers(gameData, state);
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
@@ -2014,6 +2016,37 @@ public class CombatDamageService {
         }
     }
 
+    private void processDelayedNamedCreatureCombatDamageTriggers(GameData gameData,
+                                                                  CombatDamageState state) {
+        if (state.combatDamageDealtToPlayer.isEmpty()
+                || !gameData.hasDelayedAction(DelayedNamedCreatureCombatDamage.class)) {
+            return;
+        }
+
+        for (DelayedNamedCreatureCombatDamage watch
+                : gameData.getDelayedActions(DelayedNamedCreatureCombatDamage.class)) {
+            for (var entry : state.combatDamageDealtToPlayer.entrySet()) {
+                Permanent creature = entry.getKey();
+                if (entry.getValue() <= 0
+                        || !watch.cardName().equals(gameQueryService.getEffectiveName(gameData, creature))) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watch.sourceCard(),
+                        watch.controllerId(),
+                        watch.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(watch.effects()),
+                        (UUID) null,
+                        (UUID) null);
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
+            }
+        }
+    }
+
     /**
      * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen) for
      * each source/target combat-damage pair. Each source creature that dealt damage to a creature
@@ -2107,7 +2140,9 @@ public class CombatDamageService {
         }
     }
 
-    private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId, int damageDealt, UUID sourceControllerId) {}
+    private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId, int damageDealt,
+                                          UUID sourceControllerId, List<CardEffect> dealtDamageEffects,
+                                          List<CardEffect> combatDamageReceivedEffects) {}
 
     private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
         List<DealtDamageTriggerData> triggers = new ArrayList<>();
@@ -2123,14 +2158,19 @@ public class CombatDamageService {
 
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
-                List<CardEffect> effects = target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
+                List<CardEffect> effects = new ArrayList<>(target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE));
+                effects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
+                effects.addAll(target.getPersistentTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
                 List<CardEffect> combatDamageReceivedEffects =
-                        target.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF);
+                        new ArrayList<>(target.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
+                combatDamageReceivedEffects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
+                combatDamageReceivedEffects.addAll(target.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
                 if (effects.isEmpty() && combatDamageReceivedEffects.isEmpty()) continue;
                 UUID controllerId = gameData.findControllerOf(target);
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
-                triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId, damageAmount, sourceControllerId));
+                triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId, damageAmount,
+                        sourceControllerId, effects, combatDamageReceivedEffects));
             }
         }
         return triggers;
@@ -2138,7 +2178,7 @@ public class CombatDamageService {
 
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
         for (DealtDamageTriggerData data : triggerData) {
-            for (CardEffect effect : data.card().getEffects(EffectSlot.ON_DEALT_DAMAGE)) {
+            for (CardEffect effect : data.dealtDamageEffects()) {
                 CardEffect effectToAdd = effect;
                 if (effect instanceof DamageSourceControllerAwareEffect aware) {
                     effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt());
@@ -2220,7 +2260,7 @@ public class CombatDamageService {
         for (DealtDamageTriggerData data : triggerData) {
             if (data.damageDealt() <= 0) continue;
 
-            for (CardEffect effect : data.card().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF)) {
+            for (CardEffect effect : data.combatDamageReceivedEffects()) {
                 if (effect.targetSpec().declaredTarget() != null) {
                     TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
                             ? data.card().getTargetFilter() : null;

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -151,6 +152,17 @@ public class EtbTriggerService {
                     subtypeChoice.allowedSubtypes(), true);
             return;
         }
+        ChooseBasicLandTypeOnEnterEffect basicLandTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseBasicLandTypeOnEnterEffect.class::isInstance)
+                .map(ChooseBasicLandTypeOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null
+                && basicLandTypeChoice != null) {
+            playerInputService.beginBasicLandTypeChoice(gameData, controllerId, enteringPermanent.getId(),
+                    false, basicLandTypeChoice.choicesRequired() > 1, basicLandTypeChoice.allowedTypes());
+            return;
+        }
         processCreatureETBEffects(gameData, controllerId, card, null, false);
     }
 
@@ -242,6 +254,7 @@ public class EtbTriggerService {
         }
         triggeredEffects = triggeredEffects.stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
+                .filter(e -> !(e instanceof ChooseBasicLandTypeOnEnterEffect))
                 // Primal Clay's shape choice is made while the new permanent enters, not as an ETB ability.
                 .filter(e -> !(e instanceof ChoosePrimalClayFormOnEnterEffect))
                 // "As enters, choose a creature type" is a replacement-style choice made during entry
@@ -277,10 +290,11 @@ public class EtbTriggerService {
             // Prowl gate (CR 603.4): read the just-entered permanent's prowl flag, stamped from the
             // spell's cast context at resolution time.
             boolean prowl = evokeBf != null && !evokeBf.isEmpty() && evokeBf.getLast().isProwl();
+            boolean alternateCost = enteringPermanent != null && enteringPermanent.isAlternateCost();
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
             EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
-                    kicked, evoked, prowl, enteringPermanent, repeatedAdditionalCosts);
+                    kicked, evoked, prowl, alternateCost, enteringPermanent, repeatedAdditionalCosts);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))

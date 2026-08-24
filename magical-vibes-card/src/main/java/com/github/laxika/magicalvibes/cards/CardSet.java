@@ -117,7 +117,8 @@ public enum CardSet {
     SET_DFT("DFT"),
     SET_PLS("PLS"),
     SET_STX("STX"),
-    SET_TDM("TDM");
+    SET_TDM("TDM"),
+    SET_SPM("SPM");
 
     @Getter
     private final String code;

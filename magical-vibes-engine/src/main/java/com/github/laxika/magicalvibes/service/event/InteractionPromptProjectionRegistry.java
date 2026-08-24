@@ -1147,6 +1147,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
                 || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
                 || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
+                || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
                 || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice;
     }
 

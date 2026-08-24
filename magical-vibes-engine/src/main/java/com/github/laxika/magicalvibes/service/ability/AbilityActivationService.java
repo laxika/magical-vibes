@@ -1272,6 +1272,35 @@ public class AbilityActivationService {
         return true;
     }
 
+    private boolean handleHandPermanentChoiceCost(GameData gameData, Player player, Card card,
+                                                   ActivatedAbility ability, int abilityIndex, int xValue,
+                                                   UUID targetId, PermanentChoiceCostHandler handler,
+                                                   int stackSizeBeforeCosts) {
+        int required = handler.requiredCount();
+        if (required <= 0) {
+            return false;
+        }
+        UUID playerId = player.getId();
+        if (handler.shouldAutoPayAll(gameData, playerId, required)) {
+            for (UUID id : handler.getValidChoiceIds(gameData, playerId)) {
+                Permanent chosen = gameQueryService.findPermanentById(gameData, id);
+                if (chosen != null) {
+                    handler.validateAndPay(gameData, player, chosen);
+                }
+            }
+            return false;
+        }
+
+        Zone targetZone = ability.isNeedsSpellTarget() ? Zone.STACK : null;
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.HandAbilityCostChoice(
+                playerId, card, ability, abilityIndex, xValue, targetId, targetZone,
+                handler.costEffect(), required, stackSizeBeforeCosts));
+        playerInputService.beginPermanentChoice(gameData, playerId, handler.getValidChoiceIds(gameData, playerId),
+                handler.getPromptMessage(required));
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        return true;
+    }
+
     private Integer trackedSacrificedManaValue(CardEffect costEffect, Permanent chosen) {
         if (costEffect instanceof SacrificeCreatureCost cost && cost.trackSacrificedManaValue()) {
             return chosen.getCard().getManaValue();
@@ -1341,6 +1370,64 @@ public class AbilityActivationService {
         }
 
         completeGraveyardAbilityActivation(gameData, player, card, ability, 0, null);
+    }
+
+    public void completeHandAbilityCostChoice(GameData gameData, Player player,
+                                               PermanentChoiceContext.HandAbilityCostChoice context,
+                                               UUID chosenPermanentId) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.stream().noneMatch(card -> card.getId().equals(context.handCard().getId()))) {
+            throw new IllegalStateException("Source card is no longer in hand");
+        }
+
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(
+                gameData, context.costEffect(), null, context.xValue() != null ? context.xValue() : 0,
+                context.chosenSoFar());
+        if (handler == null) {
+            throw new IllegalStateException("Unknown cost effect type");
+        }
+
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Invalid target permanent");
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || !battlefield.contains(chosen)) {
+            throw new IllegalStateException("Must choose a permanent you control");
+        }
+
+        handler.validateAndPay(gameData, player, chosen);
+        List<UUID> chosenSoFar = new ArrayList<>(context.chosenSoFar());
+        chosenSoFar.add(chosenPermanentId);
+        handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), null,
+                context.xValue() != null ? context.xValue() : 0, chosenSoFar);
+        int remaining = context.remaining() - handler.lastPaymentWeight();
+        if (remaining > 0) {
+            if (!handler.canPayRemaining(gameData, playerId, remaining)) {
+                throw new IllegalStateException("Not enough permanents remaining");
+            }
+            if (handler.shouldAutoPayAll(gameData, playerId, remaining)) {
+                for (UUID id : handler.getValidChoiceIds(gameData, playerId)) {
+                    Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
+                    if (autoPay != null) {
+                        handler.validateAndPay(gameData, player, autoPay);
+                    }
+                }
+            } else {
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.HandAbilityCostChoice(
+                        playerId, context.handCard(), context.ability(), context.abilityIndex(), context.xValue(),
+                        context.targetId(), context.targetZone(), context.costEffect(), remaining, chosenSoFar,
+                        context.stackSizeBeforeCosts()));
+                playerInputService.beginPermanentChoice(gameData, playerId,
+                        handler.getValidChoiceIds(gameData, playerId), handler.getPromptMessage(remaining));
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                return;
+            }
+        }
+
+        completeHandAbilityActivation(gameData, player, context.handCard(), context.ability(),
+                context.xValue() != null ? context.xValue() : 0, context.targetId(), context.stackSizeBeforeCosts());
     }
 
     private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card,
@@ -1500,6 +1587,18 @@ public class AbilityActivationService {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId);
         }
 
+        List<PermanentChoiceCostHandler> permanentChoiceCosts = ability.isSourceStaysInHand()
+                ? abilityEffects.stream()
+                .map(e -> toPermanentChoiceCostHandler(gameData, e, null, effectiveXValue))
+                .filter(Objects::nonNull)
+                .toList()
+                : List.of();
+        for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+            handler.validateCanPay(gameData, playerId);
+        }
+
+        int stackSizeBeforeCosts = gameData.stack.size();
+
         // Pay mana cost (throws before mutating the pool if it can't be afforded). A static effect
         // may replace a cycling ability's mana cost with {0} (New Perspectives, CR 118.9): the card
         // being cycled still counts toward the hand-size condition, so check the current hand size
@@ -1515,6 +1614,18 @@ public class AbilityActivationService {
                     : 0;
             payManaCostForSourceCard(gameData, playerId, card, abilityCost, effectiveXValue,
                     false, false, -cyclingReduction);
+        }
+
+        if (ability.isSourceStaysInHand()) {
+            for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+                if (handleHandPermanentChoiceCost(gameData, player, card, ability, idx, effectiveXValue,
+                        targetId, handler, stackSizeBeforeCosts)) {
+                    return;
+                }
+            }
+            completeHandAbilityActivation(gameData, player, card, ability, effectiveXValue, targetId,
+                    stackSizeBeforeCosts);
+            return;
         }
 
         // Pay the "discard this card" cost intrinsic to a hand-activated ability — or exile it
@@ -1581,6 +1692,44 @@ public class AbilityActivationService {
         }
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
+        log.info("Game {} - {} activates {}'s hand ability", gameData.id, player.getUsername(), card.getName());
+
+        gameData.priorityPassedBy.clear();
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    private void completeHandAbilityActivation(GameData gameData, Player player, Card card,
+                                               ActivatedAbility ability, int xValue, UUID targetId,
+                                               int stackSizeBeforeCosts) {
+        UUID playerId = player.getId();
+        List<CardEffect> snapshotEffects = new ArrayList<>(ability.getEffects().stream()
+                .filter(effect -> !(effect instanceof CostEffect))
+                .toList());
+        Zone targetZone = ability.isNeedsSpellTarget() ? Zone.STACK : null;
+        StackEntry stackEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s ability",
+                snapshotEffects,
+                xValue,
+                targetId,
+                null,
+                Map.of(),
+                targetZone,
+                List.of(),
+                List.of()
+        );
+        stackEntry.setTargetFilter(ability.getTargetFilter());
+        flushActivatedAbilityCostTriggers(gameData);
+        int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());
+        gameData.stack.add(insertionIndex, stackEntry);
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " activates ", card, "'s ability from their hand."));
         log.info("Game {} - {} activates {}'s hand ability", gameData.id, player.getUsername(), card.getName());
 
         gameData.priorityPassedBy.clear();

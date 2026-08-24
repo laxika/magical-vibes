@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -243,6 +244,8 @@ public class TurnCleanupService {
         gameData.pendingSourceDamageForReflection.clear();
         gameData.clearDelayedActions(DelayedWatchedCreaturesCombatDamage.class,
                 watch -> watch.untilEndOfTurn());
+        gameData.clearDelayedActions(DelayedNamedCreatureCombatDamage.class,
+                watch -> watch.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
@@ -256,6 +259,7 @@ public class TurnCleanupService {
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
         gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
+        gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
         gameData.allDamagePreventionPredicates.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
@@ -305,6 +309,7 @@ public class TurnCleanupService {
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
+        gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
@@ -330,6 +335,7 @@ public class TurnCleanupService {
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
+        gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();

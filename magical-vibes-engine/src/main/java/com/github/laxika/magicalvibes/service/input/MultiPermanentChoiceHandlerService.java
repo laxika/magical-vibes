@@ -179,6 +179,10 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
+        if (context instanceof MultiPermanentChoiceContext.SagaChapterTargetSelection sagaTarget
+                && permanentIds.size() < sagaTarget.minTargets()) {
+            throw new IllegalStateException("Too few targets selected");
+        }
         if ((context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice
@@ -514,6 +518,8 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.ExileAnyNumberUntilSourceLeaves ctx) {
             exileUntilSourceLeavesHandler.completeChoice(gameData, permanentIds, ctx.sourcePermanentId());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.SagaChapterTargetSelection ctx) {
+            handleSagaChapterTargetSelection(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SagaChapterCounterDistribution ctx) {
             handleSagaChapterCounterDistribution(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
@@ -559,6 +565,22 @@ public class MultiPermanentChoiceHandlerService {
                         permanentIds, java.util.Map.of(), context.total(), 0);
         playerInputService.beginSagaChapterCounterAssignmentChoice(
                 gameData, context.controllerId(), assignment);
+    }
+
+    private void handleSagaChapterTargetSelection(
+            GameData gameData, List<UUID> targetIds,
+            MultiPermanentChoiceContext.SagaChapterTargetSelection context) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s chapter " + context.chapterName() + " ability",
+                new ArrayList<>(context.effects()),
+                context.sourcePermanentId(),
+                new ArrayList<>(targetIds));
+        gameData.stack.add(entry);
+        triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleSacrificeSelfToDestroy(GameData gameData, UUID playerId, List<UUID> permanentIds,

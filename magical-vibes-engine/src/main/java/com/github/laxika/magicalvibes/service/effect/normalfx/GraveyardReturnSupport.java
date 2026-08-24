@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -422,7 +423,8 @@ public class GraveyardReturnSupport {
                 && (effect.grantKeywords() == null || effect.grantKeywords().isEmpty())
                 && !effect.grantHasteUntilNextTurn()
                 && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
-                && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
+                && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())
+                && (effect.battlefieldEffectGrants() == null || effect.battlefieldEffectGrants().isEmpty())) {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -476,6 +478,15 @@ public class GraveyardReturnSupport {
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
                 p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost()));
+            }
+            if (effect.battlefieldEffectGrants() != null) {
+                String sourceCardName = entry == null ? card.getName() : entry.getCard().getName();
+                UUID sourcePermanentId = entry == null ? null : entry.getSourcePermanentId();
+                for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
+                    gameData.addFloatingEffect(new FloatingContinuousEffect(
+                            UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId,
+                            grantedEffect, p.getId(), null, null, EffectDuration.PERMANENT, 0));
+                }
             }
             break;
         }

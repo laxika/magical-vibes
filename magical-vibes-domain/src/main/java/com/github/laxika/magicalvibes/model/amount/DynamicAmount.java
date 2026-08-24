@@ -42,6 +42,7 @@ public sealed interface DynamicAmount permits
         CountersOnLinkedPermanent,
         CountersOnGrantingPermanent,
         CountersOnSource,
+        CountersOnTargetPermanent,
         CountersOnStackEntryCard,
         CreatureDeathsThisTurn,
         NontokenCreatureDeathsThisTurn,
@@ -126,5 +127,6 @@ public sealed interface DynamicAmount permits
         TotalToughnessOfControlledCreatures,
         UnspentMana,
         UntappedLandsAtTurnStart,
+        WebSlingingReturnedCreatureManaValue,
         XValue {
 }

@@ -53,7 +53,19 @@ public sealed interface TriggerContext {
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
      * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
      */
-    record LandPlayed(UUID playingPlayerId, Card landCard) implements TriggerContext {}
+    record LandPlayed(UUID playingPlayerId, Card landCard, Zone playZone) implements TriggerContext {
+        public LandPlayed(UUID playingPlayerId, Card landCard) {
+            this(playingPlayerId, landCard, Zone.HAND);
+        }
+
+        public LandPlayed(UUID playingPlayerId, Card landCard, boolean fromExile) {
+            this(playingPlayerId, landCard, fromExile ? Zone.EXILE : Zone.HAND);
+        }
+
+        public boolean fromExile() {
+            return playZone == Zone.EXILE;
+        }
+    }
 
     /**
      * Context for discard triggers (ON_OPPONENT_DISCARDS).

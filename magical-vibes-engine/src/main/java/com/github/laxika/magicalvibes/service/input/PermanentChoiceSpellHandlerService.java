@@ -509,7 +509,8 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(), false);
+            triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
+                    hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             graveyardService.addCardToGraveyard(gameData, hct.controllerId(), hct.cardToCast());

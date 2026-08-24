@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfT
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentUntilCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
@@ -61,10 +62,13 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -1433,6 +1437,12 @@ public class LayerSystemService {
                     states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
                 }
             }
+            case SetCardTypesUntilYourNextTurnEffect setTypes -> {
+                if (instance.floating() == null) return;
+                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
+                }
+            }
             case BecomeEnchantmentUntilCreatureSpellCastEffect ignored -> {
                 if (instance.floating() == null) return;
                 for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
@@ -1492,6 +1502,16 @@ public class LayerSystemService {
                     }
                     record(board, instance, target, new L4Contribution(chosen, true, true, null, null));
                 }
+            }
+            case SourceBecomesChosenBasicLandTypeEffect ignored -> {
+                manage(board, instance);
+                PermanentSlot source = instance.source();
+                if (source == null) return;
+                CardSubtype chosen = source.permanent().getChosenSubtype();
+                CharacteristicState state = states.get(source.permanent().getId());
+                if (chosen == null || state == null || !state.hasCardType(CardType.LAND)) return;
+                setLandType(state, source.permanent().getId(), chosen, landTypeOverrides);
+                record(board, instance, source, new L4Contribution(chosen, true, true, null, null));
             }
             case EnchantedPermanentBecomesOnlyLandEffect ignored -> {
                 manage(board, instance);
@@ -2192,6 +2212,15 @@ public class LayerSystemService {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), grant.keywords(), Set.of(), false));
+                    }
+                    case SuspectedEffect ignored -> {
+                        state.addKeyword(Keyword.MENACE);
+                        CantBlockEffect cantBlock = new CantBlockEffect();
+                        state.addStaticEffect(cantBlock);
+                        board.recordProvenance(target.permanent().getId(),
+                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(Keyword.MENACE), Set.of(), false));
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), cantBlock);
                     }
                     case GrantActivatedAbilityEffect grant -> {
                         state.addActivatedAbility(grant.ability().withGrantSource(

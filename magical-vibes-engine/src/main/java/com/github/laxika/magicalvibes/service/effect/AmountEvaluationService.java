@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
@@ -108,6 +109,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldT
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
@@ -195,6 +197,9 @@ public class AmountEvaluationService {
                     targetPlayerControlsMoreLands(gameData, ctx) ? a.amount() : a.otherwise();
             case XValue ignored ->
                     ctx.xValue();
+            case WebSlingingReturnedCreatureManaValue ignored ->
+                    ctx.sourcePermanent() == null || ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue() == null
+                            ? 0 : ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue();
             case ManaSpentToCast ignored ->
                     ctx.xValue();
             case SnowManaSpentToCast ignored ->
@@ -286,6 +291,8 @@ public class AmountEvaluationService {
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
+            case CountersOnTargetPermanent c ->
+                    countCountersOnTargetPermanent(gameData, c, ctx);
             case CountersOnStackEntryCard c ->
                     countCountersOnStackEntryCard(gameData, c, ctx);
             case TimesSourceRegeneratedThisTurn ignored ->
@@ -924,6 +931,15 @@ public class AmountEvaluationService {
     private int countCountersOnLinkedPermanent(GameData gameData, CountersOnLinkedPermanent count) {
         Permanent linked = gameQueryService.findPermanentById(gameData, count.linkedPermanentId());
         return linked == null ? 0 : linked.getCounterCount(count.counterType());
+    }
+
+    private int countCountersOnTargetPermanent(GameData gameData, CountersOnTargetPermanent count,
+                                               AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) {
+            return 0;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        return target == null ? 0 : target.getCounterCount(count.counterType());
     }
 
     private int countCountersOnStackEntryCard(GameData gameData, CountersOnStackEntryCard amount,

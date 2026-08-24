@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
@@ -415,6 +416,25 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesCardPredicate(nonCreatureElf, new CardHasSourceChosenSubtypePredicate(false),
                     sourceCard.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(nonCreatureElf, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("CardHasSourceChosenCardTypePredicate uses the source permanent's choice")
+        void cardHasSourceChosenCardTypePredicateMatchesSourceChoice() {
+            Card sourceCard = createArtifact("Arachne");
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setChosenCardType(CardType.INSTANT);
+
+            Card instant = new Card();
+            instant.setType(CardType.INSTANT);
+            Card sorcery = new Card();
+            sorcery.setType(CardType.SORCERY);
+            CardHasSourceChosenCardTypePredicate predicate = new CardHasSourceChosenCardTypePredicate();
+
+            assertThat(evaluator.matchesCardPredicate(instant, predicate, sourceCard.getId(), gd, player1Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(sorcery, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
         }
 
@@ -1056,6 +1076,18 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(gd, p1Small, predicate)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(gd, p1Big, predicate)).isTrue();
             assertThat(evaluator.matchesPermanentPredicate(gd, p2Creature, predicate)).isTrue();
+        }
+
+        @Test
+        @DisplayName("greatest power predicate includes a creature that has left the battlefield")
+        void greatestPowerIncludesRemovedCreature() {
+            Permanent dyingCreature = new Permanent(createCreature("Hill Giant", 3, 3, CardColor.RED));
+            addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            PermanentHasGreatestPowerAmongControllerCreaturesPredicate predicate =
+                    new PermanentHasGreatestPowerAmongControllerCreaturesPredicate();
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player2Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(dyingCreature, predicate, context)).isTrue();
         }
 
         @Test

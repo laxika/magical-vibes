@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
@@ -98,9 +99,9 @@ public class EtbEffectResolver {
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
-                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false,
-                    sourceZone, 0, null, null, false, false, null, null, null,
-                    ctx.repeatedAdditionalCosts());
+                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false, false,
+                    sourceZone, 0, null, null, false, false, false, null, null, null,
+                    ctx.repeatedAdditionalCosts(), ctx.alternateCost(), 0);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
@@ -112,6 +113,7 @@ public class EtbEffectResolver {
                         ctx.repeatedAdditionalCosts().contains(paid.manaCost()) ? conditional.wrapped() : null;
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
+                case CastForAlternateCost ignored -> ctx.alternateCost() ? conditional.wrapped() : null;
                 // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.
                 case CastFromZone castFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)

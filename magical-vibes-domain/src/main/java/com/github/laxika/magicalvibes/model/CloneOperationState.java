@@ -32,4 +32,5 @@ public class CloneOperationState {
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
     public Map<EffectSlot, List<CardEffect>> additionalSlotEffects = Map.of();
     public int xValue;
+    public boolean graveyardCopyChoicePending;
 }

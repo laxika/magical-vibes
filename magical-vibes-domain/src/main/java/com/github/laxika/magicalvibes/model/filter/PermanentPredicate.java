@@ -87,6 +87,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsUnblockedAttackingPredicate,
         PermanentIsMonocoloredPredicate,
         PermanentIsMulticoloredPredicate,
+        PermanentIsModifiedPredicate,
         PermanentIsPlaneswalkerPredicate,
         PermanentIsRenownedPredicate,
         PermanentIsSourceCardPredicate,

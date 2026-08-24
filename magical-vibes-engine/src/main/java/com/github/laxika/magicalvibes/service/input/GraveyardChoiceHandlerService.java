@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,11 +22,13 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -34,6 +37,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileDragonApproachAndSearchSupport;
@@ -61,6 +65,7 @@ public class GraveyardChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CloneService cloneService;
     private final LegendRuleService legendRuleService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
@@ -79,6 +84,7 @@ public class GraveyardChoiceHandlerService {
             exileMatchingCardsSupport;
     private final DestructionSupport destructionSupport;
     private final ExileDragonApproachAndSearchSupport exileDragonApproachAndSearchSupport;
+    private final StateBasedActionService stateBasedActionService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -504,6 +510,39 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        if (gameData.cloneOperation.graveyardCopyChoicePending) {
+            Card selectedCard = gameQueryService.findCardInGraveyardById(gameData, cardIds.getFirst());
+            if (selectedCard == null || !selectedCard.hasType(CardType.CREATURE)) {
+                throw new IllegalStateException("Chosen creature card is no longer in a graveyard");
+            }
+
+            gameData.interaction.clearAwaitingInput();
+            cloneService.completeCloneEntryFromGraveyard(gameData, selectedCard);
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+                triggerCollectionService.processNextDeathTriggerTarget(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume = false;
@@ -622,6 +661,15 @@ public class GraveyardChoiceHandlerService {
         }
 
         List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
+        BattlefieldAndGraveyardCardChoosingEffect mixedZoneEffect = pendingEffects == null ? null
+                : pendingEffects.stream()
+                .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
+                .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (mixedZoneEffect != null) {
+            validateMixedZoneSelection(gameData, cardIds, mixedZoneEffect);
+        }
         CardEffect activeSpellGraveyardChoiceEffect =
                 gameData.graveyardTargetOperation.activeSpellGraveyardChoiceEffect;
         List<CardEffect> targetValidationEffects = activeSpellGraveyardChoiceEffect != null
@@ -915,6 +963,17 @@ public class GraveyardChoiceHandlerService {
         Map<CardEffect, List<UUID>> pendingTargetCardIdsByEffect = new IdentityHashMap<>(
                 gameData.graveyardTargetOperation.spellGraveyardCardIdsByEffect);
 
+        if (pendingCard != null
+                && pendingCard.getMultiTargetConstraint() == MultiTargetConstraint.DIFFERENT_NAMES) {
+            Set<String> names = new HashSet<>();
+            for (UUID cardId : cardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && !names.add(card.getName())) {
+                    throw new IllegalStateException("Chosen cards must have different names");
+                }
+            }
+        }
+
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
         gameData.graveyardTargetOperation.card = null;
@@ -1057,6 +1116,38 @@ public class GraveyardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void validateMixedZoneSelection(GameData gameData, List<UUID> cardIds,
+                                             BattlefieldAndGraveyardCardChoosingEffect effect) {
+        int battlefieldTargets = 0;
+        int graveyardTargets = 0;
+        for (UUID cardId : cardIds) {
+            if (findPermanentByCardId(gameData, cardId) != null) {
+                battlefieldTargets++;
+            } else if (gameQueryService.findCardInGraveyardById(gameData, cardId) != null) {
+                graveyardTargets++;
+            }
+        }
+        if (battlefieldTargets > effect.mixedZoneMaxBattlefieldTargets()) {
+            throw new IllegalStateException("Too many battlefield permanents selected");
+        }
+        if (graveyardTargets > effect.mixedZoneMaxGraveyardTargets()) {
+            throw new IllegalStateException("Too many graveyard cards selected");
+        }
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(cardId)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 
     private void handleCumulativeUpkeepPayment(GameData gameData, Player player, List<UUID> cardIds) {

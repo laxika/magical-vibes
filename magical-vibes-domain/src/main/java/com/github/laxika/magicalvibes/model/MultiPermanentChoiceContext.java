@@ -28,6 +28,16 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** The controller selected any number of player targets for a Saga chapter. */
+    record SagaChapterTargetSelection(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                      UUID sourcePermanentId, String chapterName, int minTargets)
+            implements MultiPermanentChoiceContext {
+
+        public SagaChapterTargetSelection {
+            effects = List.copyOf(effects);
+        }
+    }
+
     /** Exile a permanent the damaged player controls (combat damage trigger). */
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
     }

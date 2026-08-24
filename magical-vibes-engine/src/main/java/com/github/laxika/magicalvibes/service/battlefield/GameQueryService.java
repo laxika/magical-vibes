@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffec
 import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellsAndAbilitiesCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
@@ -4833,6 +4834,9 @@ public class GameQueryService {
      * a {@link ControllerSpellsCantBeCounteredEffect} protects spells controlled by the spell's controller.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
+        if (anyBattlefieldHasStaticEffect(gameData, SpellsAndAbilitiesCantBeCounteredEffect.class)) {
+            return true;
+        }
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantBeCounteredEffect cbc && isCantBeCounteredActive(gameData, card, cbc)) {
                 return true;

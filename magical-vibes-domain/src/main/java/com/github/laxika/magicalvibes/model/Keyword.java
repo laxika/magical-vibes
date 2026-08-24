@@ -21,6 +21,7 @@ public enum Keyword {
     IMPROVISE,
     HARMONIZE,
     HASTE,
+    RIOT,
     TRAMPLE,
     LIFELINK,
     FORESTWALK,
@@ -88,7 +89,12 @@ public enum Keyword {
     EPIC,
     TOXIC,
     COMPLEATED,
-    MOBILIZE;
+    MOBILIZE,
+    WEB_SLINGING,
+    MAYHEM,
+    SUSPECT,
+    CAMOUFLAGE,
+    DOUBLE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

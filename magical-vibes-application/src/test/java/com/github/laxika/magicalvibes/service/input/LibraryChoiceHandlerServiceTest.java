@@ -339,6 +339,41 @@ class LibraryChoiceHandlerServiceTest {
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
+    @Test
+    @DisplayName("Bounded face-down exile search takes two cards before bottoming the rest")
+    void boundedFaceDownExileSearchTakesTwoCards() {
+        Card first = createCard("First");
+        Card second = createCard("Second");
+        Card third = createCard("Third");
+        List<Card> sourceCards = new ArrayList<>(List.of(first, second, third));
+        UUID sourcePermanentId = UUID.randomUUID();
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, new ArrayList<>(sourceCards))
+                .canFailToFind(false)
+                .targetPlayerId(player2Id)
+                .remainingCount(2)
+                .sourceCards(sourceCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                .sourcePermanentId(sourcePermanentId)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose two", false));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(second, third);
+        assertThat(next.params().remainingCount()).isEqualTo(1);
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(exileService).exileCardFaceDown(gd, player2Id, first, sourcePermanentId);
+        verify(exileService).exileCardFaceDown(gd, player2Id, second, sourcePermanentId);
+        assertThat(gd.playerDecks.get(player2Id)).containsExactly(third);
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
     private static Card createBasicLand(String name) {
         Card card = createCard(name, CardType.LAND);
         card.setSupertypes(Set.of(CardSupertype.BASIC));

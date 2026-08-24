@@ -353,6 +353,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
+    public void playLandFromGraveyard(Player player, int cardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), true, null);
+    }
+
     public void castCreature(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);

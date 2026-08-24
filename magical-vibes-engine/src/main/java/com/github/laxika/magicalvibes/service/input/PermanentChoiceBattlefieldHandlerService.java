@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAtt
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
@@ -118,6 +119,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
+    private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
@@ -493,6 +495,19 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleSacrificeAnotherCreatureDrawAndMayPutPermanent(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        if (creature == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        sacrificeAnotherCreatureDrawAndMayPutPermanentHandler.resolveAfterChoice(
+                gameData, creature, context.effect());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleExileCombatOpponent(GameData gameData, UUID permanentId,
                                           PermanentChoiceContext.ExileCombatOpponent context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
@@ -710,6 +725,11 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleGraveyardAbilityCostChoice(GameData gameData, Player player, UUID permanentId, PermanentChoiceContext.GraveyardAbilityCostChoice graveyardCostChoice) {
         abilityActivationService.completeGraveyardAbilityCostChoice(gameData, player, graveyardCostChoice, permanentId);
+    }
+
+    public void handleHandAbilityCostChoice(GameData gameData, Player player, UUID permanentId,
+                                             PermanentChoiceContext.HandAbilityCostChoice handCostChoice) {
+        abilityActivationService.completeHandAbilityCostChoice(gameData, player, handCostChoice, permanentId);
     }
 
     public void handleMayAbilityTapCostChoice(GameData gameData, Player player, UUID permanentId,

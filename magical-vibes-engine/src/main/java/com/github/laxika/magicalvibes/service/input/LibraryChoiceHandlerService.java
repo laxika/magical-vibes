@@ -232,6 +232,7 @@ public class LibraryChoiceHandlerService {
                 }
                 chosenCard = searchCards.get(cardIndex);
                 if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                        || destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
                             librarySearch.sourcePermanentId());
@@ -316,6 +317,9 @@ public class LibraryChoiceHandlerService {
                 if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest on the bottom of the library in a random order.");
+                } else if (destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
+                    logEntry = GameLog.text(player.getUsername()
+                            + " exiles two cards face down and puts the rest on the bottom of the library in a random order.");
                 } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest into the graveyard.");
@@ -356,7 +360,28 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
-            if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
+            if (destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                    && chosenCard != null && remainingCount > 1 && !sourceCards.isEmpty()) {
+                String prompt = "Exile another card face down. Put the rest on the bottom of that library in a random order.";
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(sourceCards))
+                                .canFailToFind(false)
+                                .targetPlayerId(deckOwnerId)
+                                .remainingCount(remainingCount - 1)
+                                .sourceCards(new ArrayList<>(sourceCards))
+                                .reorderRemainingToBottom(true)
+                                .shuffleAfterSelection(false)
+                                .prompt(prompt)
+                                .destination(destination)
+                                .sourcePermanentId(librarySearch.sourcePermanentId())
+                                .build(),
+                        prompt,
+                        false));
+                return;
+            }
+
+            if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                    || destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
                 Collections.shuffle(sourceCards);
                 deck.addAll(sourceCards);
                 finishSearchAndResume(gameData);
@@ -1239,7 +1264,8 @@ public class LibraryChoiceHandlerService {
                 case HAND -> "into their hand";
                 case REVEAL_ONLY -> "back into their library";
                 case EXILE_IMPRINT -> "into exile (imprint)";
-                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
+                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+                        EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, EXILE_FOR_MAY_CAST -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");

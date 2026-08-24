@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePred
 import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
@@ -145,6 +146,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -207,6 +209,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
@@ -313,6 +316,15 @@ public class PredicateEvaluationService {
                 yield gameQueryService.cardHasSubtype(card, source.getChosenSubtype(), gameData, cardOwnerId)
                         || (gameQueryService.isCreatureSubtype(source.getChosenSubtype())
                         && card.getKeywords().contains(Keyword.CHANGELING));
+            }
+            case CardHasSourceChosenCardTypePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                CardType chosenType = source == null ? null : source.getChosenCardType();
+                yield chosenType != null
+                        && gameQueryService.cardHasType(card, chosenType, gameData, cardOwnerId);
             }
             case CardHasSourceChosenColorPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -583,6 +595,7 @@ public class PredicateEvaluationService {
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
             case PermanentIsEquippedPredicate ignored ->
                     gameData != null && gameQueryService.isEquipped(gameData, permanent);
+            case PermanentIsModifiedPredicate ignored -> isModified(gameData, permanent, filterContext);
             case PermanentAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.isAttached()) {
                     yield false;
@@ -1423,16 +1436,20 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (controllerId == null) {
+                    controllerId = sourceControllerId;
+                }
                 List<Permanent> controllerBattlefield = controllerId == null
                         ? null
                         : gameData.playerBattlefields.get(controllerId);
                 if (controllerBattlefield == null) {
                     yield false;
                 }
-                int maxPower = controllerBattlefield.stream()
+                int maxPower = Math.max(gameQueryService.getEffectivePower(gameData, permanent),
+                        controllerBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .mapToInt(p -> gameQueryService.getEffectivePower(gameData, p))
-                        .max().orElse(0);
+                        .max().orElse(0));
                 yield gameQueryService.getEffectivePower(gameData, permanent) == maxPower;
             }
             case PermanentHasLeastPowerAmongAllCreaturesPredicate ignored ->
@@ -1454,6 +1471,9 @@ public class PredicateEvaluationService {
     /** Whether a static amount filter needs the live board to evaluate permanent ownership. */
     public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
         if (predicate instanceof PermanentOwnedBySourceControllerPredicate) {
+            return true;
+        }
+        if (predicate instanceof PermanentIsModifiedPredicate) {
             return true;
         }
         if (predicate instanceof PermanentNotPredicate notPredicate) {
@@ -1606,6 +1626,8 @@ public class PredicateEvaluationService {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameQueryService.isEquipped(gameData, permanent);
             }
+            case PermanentIsModifiedPredicate ignored ->
+                    isModified(context == null ? null : context.gameData(), permanent, context);
             case PermanentIsFaceDownPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsKindredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -1714,6 +1736,35 @@ public class PredicateEvaluationService {
     public boolean matchesStaticLeaf(Permanent permanent, PermanentPredicate predicate) {
         return matchesPermanentPredicate(
                 LayerSystemService.activeStateFor(permanent.getId()), permanent, predicate, null);
+    }
+
+    private boolean isModified(GameData gameData, Permanent permanent, FilterContext filterContext) {
+        for (CounterType type : CounterType.values()) {
+            if (type != CounterType.ANY && type != CounterType.SILVER
+                    && permanent.getCounterCount(type) > 0) {
+                return true;
+            }
+        }
+        if (gameData == null) {
+            return false;
+        }
+        if (gameQueryService.isEquipped(gameData, permanent)) {
+            return true;
+        }
+
+        UUID controllerId = gameData.findControllerOf(permanent);
+        if (controllerId == null && filterContext != null) {
+            controllerId = filterContext.sourceControllerId();
+        }
+        if (controllerId == null) {
+            return false;
+        }
+        UUID effectiveControllerId = controllerId;
+        return gameData.anyPermanentMatches(aura ->
+                aura.getCard().isAura()
+                        && aura.isAttached()
+                        && aura.getAttachedTo().equals(permanent.getId())
+                        && effectiveControllerId.equals(gameData.findControllerOf(aura)));
     }
 
     /**
@@ -2243,6 +2294,7 @@ public class PredicateEvaluationService {
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
+            case StackEntryManaValueEqualsSourcePowerPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntrySharesColorOrManaValueWithImprintedCardPredicate ignored -> false;
             case StackEntryControlledByPredicate ignored -> false;

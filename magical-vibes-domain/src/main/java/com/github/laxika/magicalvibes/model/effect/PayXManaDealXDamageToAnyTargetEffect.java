@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 
 /**
  * "You may pay {@code manaCost} (which contains an {X}). If you do, it deals X damage to any
- * target." Models Flameblast Dragon's attack trigger. The any-target is chosen when the ability
+ * target." Models Flameblast Dragon's attack trigger. The default any-target may be narrowed by
+ * the target predicate supplied to the two-argument constructor. The target is chosen when the ability
  * is put on the stack (via the Attack targeting pipeline, since {@link #targetSpec()} includes
  * ANY_TARGET — creature/planeswalker/player only); the decision whether to pay, and the value of X,
  * are made during resolution — the handler prompts for X (capped by potential mana via
@@ -15,12 +16,19 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
  * {@code MayPayManaEffect("{X}…", …)} — it can't pay/plumb {X} at resolution.
  *
  * @param manaCost the payable cost including an {X} symbol, e.g. {@code "{X}{R}"}
+ * @param targetRestriction the target predicate; the one-argument constructor uses any target
  */
-public record PayXManaDealXDamageToAnyTargetEffect(String manaCost) implements DamageDealingEffect {
+public record PayXManaDealXDamageToAnyTargetEffect(String manaCost,
+                                                   TargetPredicate targetRestriction)
+        implements DamageDealingEffect {
+
+    public PayXManaDealXDamageToAnyTargetEffect(String manaCost) {
+        this(manaCost, TargetPredicates.anyTarget());
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.anyTarget());
+        return TargetSpec.harmful(targetRestriction);
     }
 
     @Override
@@ -30,11 +38,11 @@ public record PayXManaDealXDamageToAnyTargetEffect(String manaCost) implements D
 
     @Override
     public boolean canDamageCreatures() {
-        return true;
+        return targetRestriction.admits(TargetPredicate.Kind.PERMANENT);
     }
 
     @Override
     public boolean canDamagePlayers() {
-        return true;
+        return targetRestriction.admits(TargetPredicate.Kind.PLAYER);
     }
 }

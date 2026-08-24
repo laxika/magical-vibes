@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
+import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -400,6 +401,9 @@ public class GameViewProjectionFactory {
                     && freePlayCardId.equals(deck.getFirst().getId())) {
                 revealedPlayerIds.add(pid);
             }
+            if (pid.equals(viewerId) && data.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(pid)) {
+                revealedPlayerIds.add(pid);
+            }
 
             List<Permanent> bf = data.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -549,8 +553,12 @@ public class GameViewProjectionFactory {
 
         for (Card card : exiledCards) {
             ManaPool cardPool = pool;
+            if (pool.getExiledSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteExiledSpellOnlyMana();
+            }
             if (snowManaAsAnyColorIds.contains(card.getId())) {
-                cardPool = new ManaPool(pool);
+                cardPool = new ManaPool(cardPool);
                 cardPool.setSnowManaSpendableAsAnyColor(true);
             }
             if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
@@ -672,12 +680,13 @@ public class GameViewProjectionFactory {
 
         Card topCard = deck.getFirst();
         boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, topCard);
+        boolean lifeTopPlay = castingPermissionService.hasLibraryTopCardLifePlayPermission(gameData, playerId, topCard);
 
         if (topCard.hasType(CardType.LAND)) {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || canPlayLandFromTop)
+            if ((freeTopPlay || lifeTopPlay || canPlayLandFromTop)
                     && isActivePlayer
                     && isMainPhase
                     && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
@@ -687,7 +696,7 @@ public class GameViewProjectionFactory {
         }
 
         if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
-                || (!freeTopPlay && topCard.getManaCost() == null)) {
+                || (!freeTopPlay && !lifeTopPlay && topCard.getManaCost() == null)) {
             return playable;
         }
 
@@ -728,7 +737,9 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        if (freeTopPlay || castingCostService.hasAlternativeZeroCostFromBattlefield(
+        boolean canPayLifeAlternative = !lifeTopPlay || gameData.getLife(playerId) >= topCard.getManaValue();
+        if (freeTopPlay || (lifeTopPlay && canPayLifeAlternative)
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY)) {
             playable.add(cardViewFactory.create(topCard));
         } else {
@@ -753,8 +764,19 @@ public class GameViewProjectionFactory {
 
     private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {
         CardView view = cardViewFactory.create(card, grantedSubtypes);
-        if (view.hasAlternateCastingCost()
-                || !castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
+        if (view.hasAlternateCastingCost()) {
+            return view;
+        }
+        WebSlingingEffect webSlinging = castingCostService.findWebSlingingEffectFromBattlefield(
+                gameData, playerId, card);
+        if (webSlinging != null) {
+            return view.toBuilder()
+                    .hasAlternateCastingCost(true)
+                    .alternateCostReturnCount(1)
+                    .alternateCostManaCost(webSlinging.manaCost())
+                    .build();
+        }
+        if (!castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
             return view;
         }
         return view.toBuilder()

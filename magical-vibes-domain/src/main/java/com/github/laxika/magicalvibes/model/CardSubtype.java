@@ -45,9 +45,12 @@ public enum CardSubtype {
     DWARF("Dwarf"),
     RANGER("Ranger"),
     SPIDER("Spider"),
+    SYMBIOTE("Symbiote"),
+    VILLAIN("Villain"),
     SPIKE("Spike"),
     BEAST("Beast"),
     HUMAN("Human"),
+    HERO("Hero"),
     CLERIC("Cleric"),
     BIRD("Bird"),
     CAT("Cat"),
@@ -83,6 +86,7 @@ public enum CardSubtype {
     FISH("Fish"),
     FROG("Frog"),
     FUNGUS("Fungus"),
+    OTTER("Otter"),
     MERFOLK("Merfolk"),
     OCTOPUS("Octopus"),
     SQUID("Squid"),
@@ -108,6 +112,7 @@ public enum CardSubtype {
     RABBIT("Rabbit"),
     RACCOON("Raccoon"),
     RAT("Rat"),
+    MOUSE("Mouse"),
     DETECTIVE("Detective"),
     ILLUSION("Illusion"),
     DRAKE("Drake"),
@@ -249,7 +254,8 @@ public enum CardSubtype {
     ZUBERA("Zubera"),
     YANLING("Yanling"),
     MITE("Mite"),
-    OMEN("Omen");
+    OMEN("Omen"),
+    ROBOT("Robot");
 
     @Getter
     private final String displayName;

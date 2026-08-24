@@ -117,6 +117,8 @@ public class PermanentChoiceHandlerService {
             abilityActivationService.handleOpponentChosenTarget(gameData, player, permanentId, opponentTarget);
         } else if (context instanceof PermanentChoiceContext.GraveyardAbilityCostChoice graveyardCostChoice) {
             battlefieldHandler.handleGraveyardAbilityCostChoice(gameData, player, permanentId, graveyardCostChoice);
+        } else if (context instanceof PermanentChoiceContext.HandAbilityCostChoice handCostChoice) {
+            battlefieldHandler.handleHandAbilityCostChoice(gameData, player, permanentId, handCostChoice);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand choosePlayer) {
@@ -215,6 +217,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
         } else if (context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue kethek) {
             battlefieldHandler.handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(gameData, permanentId, kethek);
+        } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent venom) {
+            battlefieldHandler.handleSacrificeAnotherCreatureDrawAndMayPutPermanent(gameData, permanentId, venom);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower scsp) {
             battlefieldHandler.handleSacrificeCreatureCreateSizedTokenEqualToPower(gameData, permanentId, scsp);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensIfSubtype scts) {

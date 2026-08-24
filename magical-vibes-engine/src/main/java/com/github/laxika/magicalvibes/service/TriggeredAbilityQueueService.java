@@ -1143,6 +1143,20 @@ public class TriggeredAbilityQueueService {
             }
 
             gameData.interaction.setPermanentChoiceContext(pending);
+            if (group.filter() instanceof PlayerPredicateTargetFilter) {
+                int maxTargets = Math.min(group.maxTargets(), validTargets.size());
+                gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
+                playerInputService.beginMultiPermanentOrPlayerChoice(
+                        gameData, pending.controllerId(), List.of(), validTargets, maxTargets,
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext
+                                .SagaChapterTargetSelection(
+                                pending.sourceCard(), pending.controllerId(), pending.effects(),
+                                pending.sourcePermanentId(), pending.chapterName(), group.minTargets()),
+                        pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
+                                + " - Choose any number of target players.");
+                return;
+            }
+
             boolean canSkip = group.minTargets() == 0
                     || (pending.targetGroups().size() == 1
                     && pending.chosenTargetsSoFar().size() >= group.minTargets());
@@ -1576,6 +1590,19 @@ public class TriggeredAbilityQueueService {
                 .withSourceCardId(pending.sourceCard().getId())
                 .withSourceControllerId(pending.controllerId());
         List<UUID> validTargets = new ArrayList<>();
+        if (group.filter() instanceof PlayerPredicateTargetFilter playerFilter) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (pending.chosenTargetsSoFar().contains(playerId)) {
+                    continue;
+                }
+                if (targetLegalityService.matchesPlayerPredicate(
+                        gameData, pending.controllerId(), playerId, playerFilter.predicate())) {
+                    validTargets.add(playerId);
+                }
+            }
+            return validTargets;
+        }
+
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;

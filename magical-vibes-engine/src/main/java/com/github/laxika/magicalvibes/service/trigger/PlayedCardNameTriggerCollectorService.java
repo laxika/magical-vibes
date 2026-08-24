@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
@@ -56,6 +57,17 @@ public class PlayedCardNameTriggerCollectorService {
             PlayedCardNameMatchesCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return collect(match, lp.landCard());
+    }
+
+    @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    private boolean handleControllerPlaysLandFromExile(TriggerMatchContext match,
+            LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        if (!lp.fromExile()) {
+            return false;
+        }
+        return enqueueLandPlayTrigger(match, trigger.resolvedEffects());
     }
 
     @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
@@ -125,13 +137,17 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect) {
+        return enqueueLandPlayTrigger(match, List.of(effect));
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects) {
         Card sourceCard = match.permanent().getCard();
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                new ArrayList<>(effects),
                 null,
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

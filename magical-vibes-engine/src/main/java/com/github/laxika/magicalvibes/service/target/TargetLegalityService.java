@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -1450,6 +1451,22 @@ public class TargetLegalityService {
      */
     private void validateMultiTargetConstraint(GameData gameData, MultiTargetConstraint constraint, List<UUID> targetIds) {
         if (constraint == null) {
+            return;
+        }
+        if (constraint == MultiTargetConstraint.DIFFERENT_NAMES) {
+            Set<String> names = new HashSet<>();
+            for (UUID targetId : targetIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, targetId);
+                String name = card != null
+                        ? card.getName()
+                        : java.util.Optional.ofNullable(gameQueryService.findPermanentById(gameData, targetId))
+                        .map(Permanent::getCard)
+                        .map(Card::getName)
+                        .orElse(null);
+                if (name != null && !names.add(name)) {
+                    throw new IllegalStateException("Chosen targets must have different names");
+                }
+            }
             return;
         }
         if (constraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET) {
@@ -2845,6 +2862,13 @@ public class TargetLegalityService {
             }
             int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
             return manaValue == source.getCounterCount(equalsCounters.counterType());
+        }
+        if (predicate instanceof StackEntryManaValueEqualsSourcePowerPredicate) {
+            if (source == null) {
+                return false;
+            }
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            return manaValue == gameQueryService.getEffectivePower(gameData, source);
         }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());

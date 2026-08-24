@@ -87,7 +87,7 @@ public record LookAtTopCardsEffect(
         CardEffect effectIfNoCardChosen,
         boolean recordChosenCount,
         int loseLifePerSelectedCard
-) implements CardEffect {
+) implements CombatDamageAmountAwareEffect {
 
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
@@ -124,6 +124,11 @@ public record LookAtTopCardsEffect(
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
                 LibrarySearchDestination.HAND, false, false, null);
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return lookCount;
     }
 
     /** Canonical form without the optional chosen-card life-gain rider. */

@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
@@ -2056,6 +2057,35 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryMaxManaValuePredicate(4), player2Id))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("matches a spell whose mana value equals the source power")
+        void matchesManaValueEqualToSourcePower() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(2);
+            Card card = createCreature("Matching creature", CardColor.GREEN);
+            card.setManaCost("{2}");
+            StackEntry entry = new StackEntry(card, player1Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaValueEqualsSourcePowerPredicate(), player1Id, source))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("includes the chosen X when matching the source power")
+        void includesChosenXWhenMatchingSourcePower() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(2);
+            Card card = createCreature("X creature", CardColor.GREEN);
+            card.setManaCost("{1}{X}");
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card, player1Id,
+                    "X creature", List.of(), 1);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaValueEqualsSourcePowerPredicate(), player1Id, source))
+                    .isTrue();
         }
 
         @Test

@@ -578,10 +578,18 @@ public class PlayerInputService {
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .filter(label -> !ctx.chosenLabels().contains(label))
-                .toList();
-        String prompt = effect.choicesRequired() > 1
-                ? sourceCard.getName() + " - Choose " + effect.choicesRequired() + " modes."
-                : sourceCard.getName() + " - Choose one.";
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        if (effect.variableModeCount() && !ctx.chosenLabels().isEmpty()
+                && ctx.chosenLabels().size() < effect.choicesMax()) {
+            optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.NO_MODE_LABEL);
+        }
+        String prompt = effect.variableModeCount()
+                ? (ctx.chosenLabels().isEmpty()
+                        ? sourceCard.getName() + " - Choose one or more modes."
+                        : sourceCard.getName() + " - Choose another mode or finish.")
+                : effect.choicesRequired() > 1
+                        ? sourceCard.getName() + " - Choose " + effect.choicesRequired() + " modes."
+                        : sourceCard.getName() + " - Choose one.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 controllerId, null, null, ctx, optionLabels, prompt));
 
@@ -630,6 +638,11 @@ public class PlayerInputService {
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
             boolean modesResetEachTurn) {
+        if (effect.variableModeCount()) {
+            beginChooseModeChoice(gameData, controllerId, sourceCard, effect, true, sourcePermanentId,
+                    List.of());
+            return;
+        }
         ChoiceContext.TriggeredModalChoice ctx =
                 new ChoiceContext.TriggeredModalChoice(
                         sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn);
@@ -772,6 +785,28 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card type", gameData.id, playerName);
+    }
+
+    public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
+                                           List<CardType> excludedTypes) {
+        ChoiceContext.CardTypeOnEnterChoice choiceContext =
+                new ChoiceContext.CardTypeOnEnterChoice(card, playerId, excludedTypes);
+        List<String> cardTypes = Arrays.stream(CardType.values())
+                .filter(type -> !excludedTypes.contains(type))
+                .map(CardType::name)
+                .toList();
+        String excludedLabel = excludedTypes.stream()
+                .map(type -> type.getDisplayName().toLowerCase())
+                .reduce((first, second) -> first + "/" + second)
+                .orElse(null);
+        String prompt = excludedLabel == null
+                ? "Choose a card type."
+                : "Choose a card type other than " + excludedLabel + ".";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, cardTypes, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card type for {}", gameData.id, playerName, card.getName());
     }
 
     public void beginSpellColorChoice(GameData gameData, UUID playerId) {

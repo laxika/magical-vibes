@@ -16,6 +16,7 @@ public sealed interface CardPredicate permits
         CardHasForetellPredicate,
         CardHasFlashbackPredicate,
         CardHasSourceChosenColorPredicate,
+        CardHasSourceChosenCardTypePredicate,
         CardHasNoAbilitiesPredicate,
         CardHasSourceChosenSubtypePredicate,
         CardIsAuraEnchantCreaturePredicate,

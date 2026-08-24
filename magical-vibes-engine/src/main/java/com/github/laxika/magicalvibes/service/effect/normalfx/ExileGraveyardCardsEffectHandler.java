@@ -258,28 +258,33 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveTargetPlayerEntire(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetId();
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        List<UUID> targetPlayerIds = entry.getTargetIds().isEmpty()
+                ? entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId())
+                : entry.getTargetIds();
+        for (UUID targetPlayerId : targetPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
 
-        if (graveyard.isEmpty()) {
-            String logEntry = playerName + "'s graveyard is already empty.";
+            if (graveyard == null || graveyard.isEmpty()) {
+                String logEntry = playerName + "'s graveyard is already empty.";
+                gameLogService.append(gameData, GameLog.text(logEntry));
+                continue;
+            }
+
+            List<Card> toExile = new ArrayList<>(graveyard);
+            int count = toExile.size();
+            for (Card card : graveyard) {
+                gameData.addToExile(targetPlayerId, card);
+            }
+            graveyard.clear();
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
+
+            String logEntry = playerName + "'s graveyard is exiled (" + count + " card"
+                    + (count != 1 ? "s" : "") + ").";
             gameLogService.append(gameData, GameLog.text(logEntry));
-            return;
+
+            log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
         }
-
-        List<Card> toExile = new ArrayList<>(graveyard);
-        int count = toExile.size();
-        for (Card card : graveyard) {
-            gameData.addToExile(targetPlayerId, card);
-        }
-        graveyard.clear();
-        graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
-
-        String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-
-        log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
     }
 
     /**

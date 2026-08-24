@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
@@ -91,6 +92,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnL
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
@@ -548,6 +550,29 @@ public class DeathTriggerCollectorService {
                 null,
                 dyingPermanent.getId()
         ));
+        return true;
+    }
+
+    @CollectsTrigger(value = PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect.class,
+            slot = EffectSlot.ON_DEATH)
+    boolean handlePutSelfOnBottomAndReturnExiledCards(TriggerMatchContext match,
+            PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                dyingPermanent.getId()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(dyingPermanent));
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -2594,6 +2619,16 @@ public class DeathTriggerCollectorService {
         int amount = amountEvaluationService.evaluate(match.gameData(), effect.amount(), amountContext);
         GainLifeEffect frozen = new GainLifeEffect(new Fixed(amount), effect.recipient(), effect.targetsPlayer());
         return handleSelfLeavesDefault(match, frozen, ctx);
+    }
+
+    @CollectsTrigger(value = PutCounterOnTargetForEachLeavingSourceCounterEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handlePutCounterOnTargetForEachLeavingSourceCounter(TriggerMatchContext match,
+            PutCounterOnTargetForEachLeavingSourceCounterEffect effect, TriggerContext ctx) {
+        int count = match.permanent().getCounterCount(effect.counterType());
+        CardEffect baked = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
+                effect.counterType(), count, effect.targetPredicate());
+        return handleSelfLeavesDefault(match, baked, ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)

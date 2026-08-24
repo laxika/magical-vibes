@@ -28,20 +28,20 @@ import java.util.List;
  */
 public record EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                                boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
-                               boolean prowl, Permanent sourcePermanent,
+                               boolean prowl, boolean alternateCost, Permanent sourcePermanent,
                                List<String> repeatedAdditionalCosts) {
 
     public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                             boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                             boolean prowl) {
         this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
-                null, List.of());
+                false, null, List.of());
     }
 
     public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                             boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                             boolean prowl, Permanent sourcePermanent) {
         this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
-                sourcePermanent, List.of());
+                false, sourcePermanent, List.of());
     }
 }

@@ -587,9 +587,10 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
-                .filter(p -> !p.getId().equals(creature.getId()))
-                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(e -> e instanceof PreventDamageToOtherCreaturesAndAddPlusCountersEffect);
+                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::isInstance)
+                        .map(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::cast)
+                        .anyMatch(effect -> effect.includeSource() || !source.getId().equals(creature.getId())));
     }
 
     /**

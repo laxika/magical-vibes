@@ -21,6 +21,8 @@ public enum LibrarySearchDestination {
     EXILE_FACE_DOWN_PILE,
     /** Exile one card face down with a source while returning a preselected remainder to the bottom randomly. */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+    /** Exile two cards face down with a source while returning a preselected remainder to the bottom randomly. */
+    EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
     /** Exile one card face down with a source while putting a preselected remainder into the target player's graveyard. */
     EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
     EXILE_PLAYABLE,

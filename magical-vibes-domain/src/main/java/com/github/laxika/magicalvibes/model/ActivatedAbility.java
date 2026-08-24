@@ -157,6 +157,8 @@ public class ActivatedAbility {
      * {@link #withNinjutsu()}.
      */
     private boolean ninjutsuAbility;
+    /** Whether this hand-activated ability leaves its source card in hand as part of its cost. */
+    private boolean sourceStaysInHand;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -279,6 +281,7 @@ public class ActivatedAbility {
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
+        copy.sourceStaysInHand = this.sourceStaysInHand;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
@@ -347,6 +350,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withRevealsSourceFromHand() {
         this.revealsSourceFromHand = true;
+        return this;
+    }
+
+    /** Marks a hand-activated ability whose source card remains in hand after activation. */
+    public ActivatedAbility withSourceStaysInHand() {
+        this.sourceStaysInHand = true;
         return this;
     }
 

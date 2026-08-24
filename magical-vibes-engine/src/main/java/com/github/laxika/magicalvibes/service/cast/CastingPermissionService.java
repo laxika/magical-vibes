@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantMayhemToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalLandPlayRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCas
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -836,6 +838,9 @@ public class CastingPermissionService {
     }
 
     public boolean canPlayLandsFromTopOfLibrary(GameData gameData, UUID playerId) {
+        if (gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId)) {
+            return true;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
@@ -987,9 +992,15 @@ public class CastingPermissionService {
     }
 
     public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {
+        return isGraveyardCastAvailable(gameData, playerId, null, graveyardCast);
+    }
+
+    public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, Card card,
+                                            GraveyardCast graveyardCast) {
         if (graveyardCast.availabilityCondition() != null
                 && !conditionEvaluationService.isMet(gameData, graveyardCast.availabilityCondition(),
-                        ConditionContext.forCasting(playerId))) {
+                        card == null ? ConditionContext.forCasting(playerId)
+                                : ConditionContext.forCard(card, playerId))) {
             return false;
         }
         if (graveyardCast.controllerControlsPredicate() == null) {
@@ -1002,6 +1013,29 @@ public class CastingPermissionService {
         return battlefield.stream()
                 .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, graveyardCast.controllerControlsPredicate()));
+    }
+
+    /**
+     * Returns the mayhem casting option granted by a permanent the player controls, if any.
+     */
+    public Optional<GraveyardCast> findMayhemCastOption(GameData gameData, UUID playerId, Card card) {
+        if (!isCastableSpellCard(card)) {
+            return Optional.empty();
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return Optional.empty();
+        }
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GrantMayhemToGraveyardCardsEffect mayhem
+                        && predicateEvaluationService.matchesCardPredicate(card, mayhem.filter(), null)) {
+                    return Optional.of(new GraveyardCast(
+                            null, null, List.of(), new CardDiscardedThisTurn()));
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     public boolean hasEmblemGrantedFlashback(GameData gameData, UUID playerId, Card card) {
@@ -1084,9 +1118,19 @@ public class CastingPermissionService {
         return card.getId().equals(gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId));
     }
 
+    /** Returns whether the current top card may be played for life until end of turn. */
+    public boolean hasLibraryTopCardLifePlayPermission(GameData gameData, UUID playerId, Card card) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        return deck != null && !deck.isEmpty()
+                && deck.getFirst().getId().equals(card.getId())
+                && gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId);
+    }
+
     /** Returns whether a specific card may be cast from the top of the player's library. */
     public boolean canCastFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
-        if (!card.hasType(CardType.LAND) && hasLibraryTopCardFreePlayPermission(gameData, playerId, card)) {
+        if (!card.hasType(CardType.LAND)
+                && (hasLibraryTopCardFreePlayPermission(gameData, playerId, card)
+                || hasLibraryTopCardLifePlayPermission(gameData, playerId, card))) {
             return true;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

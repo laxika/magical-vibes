@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -269,6 +270,8 @@ public class StackResolutionService {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         }
         perm.setCastFromZone(entry.getSourceZone());
+        perm.setAlternateCost(entry.isAlternateCost());
+        perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
         perm.setCast(!entry.isCopy());
@@ -388,6 +391,21 @@ public class StackResolutionService {
                 gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards);
     }
 
+    private boolean beginChooseCardTypeOnEnter(GameData gameData, UUID controllerId, Card card) {
+        ChooseCardTypeOnEnterEffect effect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseCardTypeOnEnterEffect)
+                .map(e -> (ChooseCardTypeOnEnterEffect) e)
+                .findFirst().orElse(null);
+        if (effect == null) {
+            return false;
+        }
+        if (effect.lookAtOpponentHand()) {
+            cardRevealService.lookAtOpponentHand(gameData, controllerId);
+        }
+        playerInputService.beginCardTypeOnEnterChoice(gameData, controllerId, card, effect.excludedTypes());
+        return true;
+    }
+
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
@@ -399,7 +417,9 @@ public class StackResolutionService {
 
         // "As enters" card name choice (e.g. Meddling Mage) — name must be chosen BEFORE the
         // permanent enters the battlefield (MTG Rule 614.1c)
-        if (!entry.isCastFaceDown() && beginChooseCardNameOnEnter(gameData, controllerId, card)) {
+        if (!entry.isCastFaceDown()
+                && (beginChooseCardNameOnEnter(gameData, controllerId, card)
+                || beginChooseCardTypeOnEnter(gameData, controllerId, card))) {
             return;
         }
 
@@ -642,7 +662,8 @@ public class StackResolutionService {
         } else {
             // "As enters" card name choice (e.g. Nevermore) — name must be chosen
             // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
-            if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
+            if (beginChooseCardNameOnEnter(gameData, controllerId, card)
+                    || beginChooseCardTypeOnEnter(gameData, controllerId, card)) {
                 return;
             }
 

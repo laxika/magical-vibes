@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -98,6 +99,8 @@ public class GameData {
     public final Set<UUID> playersWithCityBlessing = ConcurrentHashMap.newKeySet();
     /** Players who played at least one card from exile this turn. */
     public final Set<UUID> playersWhoPlayedCardFromExileThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who played a land or cast a spell from somewhere other than their hand this turn. */
+    public final Set<UUID> playersWhoPlayedOrCastFromOutsideHandThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who investigated this turn. */
     public final Set<UUID> playersWhoInvestigatedThisTurn = ConcurrentHashMap.newKeySet();
     /** Counts permanents sacrificed by subtype and controller this turn. */
@@ -599,6 +602,7 @@ public class GameData {
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
     public PendingBoostSourceByDiscardedManaValue pendingBoostSourceByDiscardedManaValue;
+    public PendingConnive pendingConnive;
     public PendingUntapOnDiscardType pendingUntapOnDiscardType;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     /**
@@ -1065,6 +1069,9 @@ public class GameData {
             new ConcurrentHashMap<>();
     /** Pending one-shot "when you next cast a spell this turn, copy that spell" delayed triggers. */
     public final Map<UUID, Integer> pendingNextSpellCopyThisTurnCount = new ConcurrentHashMap<>();
+    /** Pending one-shot filtered spell-copy triggers for the current turn. */
+    public final Map<UUID, List<CopyNextSpellCastThisTurnEffect>> pendingNextFilteredSpellCopiesThisTurn =
+            new ConcurrentHashMap<>();
 
     /** Pending one-shot grants that make the next spell cast this turn uncounterable. */
     public final Map<UUID, Integer> pendingNextSpellUncounterableThisTurnCount = new ConcurrentHashMap<>();
@@ -1147,6 +1154,8 @@ public class GameData {
 
     /** Player UUID to card UUID for a temporary free-play permission on the current library top card. */
     public final Map<UUID, UUID> libraryTopCardFreePlayPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
+    /** Players who may play cards from the top of their library for life until end of turn. */
+    public final Set<UUID> libraryTopCardLifePlayPermissionsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
@@ -2820,6 +2829,22 @@ public class GameData {
         notifyCardsExiled();
     }
 
+    /** Associates an already-exiled card with a source permanent without creating a second exile event. */
+    public boolean associateExiledCardWithSource(UUID cardId, UUID sourcePermanentId) {
+        synchronized (exiledCards) {
+            for (int i = 0; i < exiledCards.size(); i++) {
+                ExiledCardEntry exiled = exiledCards.get(i);
+                if (exiled.card().getId().equals(cardId)) {
+                    exiledCards.set(i, new ExiledCardEntry(exiled.card(), exiled.ownerId(),
+                            sourcePermanentId, exiled.faceDown(), exiled.exilerId(),
+                            exiled.exiledTurnNumber()));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Adds a card to exile with a stash counter. Stash counters are independent of any source permanent. */
     public void addToExileWithStashCounter(UUID ownerId, Card card) {
         addToExile(ownerId, card);
@@ -3337,6 +3362,7 @@ public class GameData {
                 .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
+        copy.playersWhoPlayedOrCastFromOutsideHandThisTurn.addAll(this.playersWhoPlayedOrCastFromOutsideHandThisTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
@@ -3417,6 +3443,8 @@ public class GameData {
                 copy.pendingNextInstantSorceryCopyThisTurnMaxManaValues.put(
                         playerId, new ArrayList<>(maxManaValues)));
         copy.pendingNextSpellCopyThisTurnCount.putAll(this.pendingNextSpellCopyThisTurnCount);
+        this.pendingNextFilteredSpellCopiesThisTurn.forEach((playerId, effects) ->
+                copy.pendingNextFilteredSpellCopiesThisTurn.put(playerId, new ArrayList<>(effects)));
         this.notedMana.forEach((cardId, mana) -> copy.notedMana.put(cardId, new EnumMap<>(mana)));
         this.abilityActivationManaSpent.forEach((cardId, mana) ->
                 copy.abilityActivationManaSpent.put(cardId, new EnumMap<>(mana)));
@@ -3747,6 +3775,16 @@ public class GameData {
         copy.cloneOperation.additionalActivatedAbilities = this.cloneOperation.additionalActivatedAbilities;
         copy.cloneOperation.nameOverride = this.cloneOperation.nameOverride;
         copy.cloneOperation.additionalSupertypesOverride = this.cloneOperation.additionalSupertypesOverride;
+        copy.cloneOperation.embalmColorOverride = this.cloneOperation.embalmColorOverride;
+        copy.cloneOperation.embalmAddedSubtype = this.cloneOperation.embalmAddedSubtype;
+        copy.cloneOperation.embalmRemoveManaCost = this.cloneOperation.embalmRemoveManaCost;
+        copy.cloneOperation.additionalPlusOnePlusOneCounters = this.cloneOperation.additionalPlusOnePlusOneCounters;
+        copy.cloneOperation.additionalKeywordsOverride = this.cloneOperation.additionalKeywordsOverride;
+        copy.cloneOperation.additionalCreatureOnlyCharacteristics = this.cloneOperation.additionalCreatureOnlyCharacteristics;
+        copy.cloneOperation.additionalSubtypesOverride = this.cloneOperation.additionalSubtypesOverride;
+        copy.cloneOperation.additionalSlotEffects = this.cloneOperation.additionalSlotEffects;
+        copy.cloneOperation.xValue = this.cloneOperation.xValue;
+        copy.cloneOperation.graveyardCopyChoicePending = this.cloneOperation.graveyardCopyChoicePending;
 
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);
@@ -3861,6 +3899,7 @@ public class GameData {
                 copy.untapAttackedCreaturesEachCombatThisTurnSources.put(playerId, new ArrayList<>(cards)));
 
         copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
+        copy.libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll(this.libraryTopCardLifePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
@@ -3995,6 +4034,7 @@ public class GameData {
         copy.pendingReturnToHandOnDiscardType = this.pendingReturnToHandOnDiscardType;
         copy.pendingTransformOnCreatureDiscard = this.pendingTransformOnCreatureDiscard;
         copy.pendingBoostSourceByDiscardedManaValue = this.pendingBoostSourceByDiscardedManaValue;
+        copy.pendingConnive = this.pendingConnive;
         copy.pendingUntapOnDiscardType = this.pendingUntapOnDiscardType;
         copy.pendingSearchContext = this.pendingSearchContext;
 

@@ -38,7 +38,16 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantActivatedAbilityEffect) effect;
         int count = 0;
-        if (e.scope() == GrantScope.TARGET) {
+        if (e.scope() == GrantScope.SELF) {
+            UUID sourceId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId() : entry.getTargetId();
+            Permanent source = sourceId == null ? null
+                    : gameQueryService.findPermanentById(gameData, sourceId);
+            if (source != null) {
+                grantTo(gameData, entry, source, e);
+                count++;
+            }
+        } else if (e.scope() == GrantScope.TARGET) {
             // "Target creature gains '[ability]' until end of turn" (e.g. Banishing Knack).
             // Bound to a target group; falls back to the single-target id.
             List<UUID> ids = entry.targetsForEffect(effect);
@@ -107,7 +116,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             case PERMANENT, CONTINUOUS -> "indefinitely";
             default -> "until end of turn";
         };
-        String recipientText = e.scope() == GrantScope.OWN_LANDS ? "land(s)" :
+        String recipientText = e.scope() == GrantScope.SELF ? "permanent(s)" :
+                e.scope() == GrantScope.OWN_LANDS ? "land(s)" :
                 e.scope() == GrantScope.OWN_PERMANENTS ? "permanent(s)" : "creature(s)";
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants \"" + e.ability().getDescription() + "\" to " + count + " " + recipientText + " " + durationText + ".").build());

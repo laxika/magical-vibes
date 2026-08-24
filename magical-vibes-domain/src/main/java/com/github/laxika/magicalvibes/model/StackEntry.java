@@ -132,6 +132,8 @@ public class StackEntry {
     @Setter private boolean prowl;
     @Setter private boolean castForForetell;
     @Setter private boolean alternateCost;
+    /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
+    @Setter private Integer webSlingingReturnedCreatureManaValue;
     /** Whether this spell was cast for its madness cost. */
     @Setter private boolean madness;
     /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
@@ -550,6 +552,7 @@ public class StackEntry {
         this.prowl = source.prowl;
         this.castForForetell = source.castForForetell;
         this.alternateCost = source.alternateCost;
+        this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;

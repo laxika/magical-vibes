@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
@@ -294,6 +295,9 @@ public class TriggerCollectionService {
      */
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone) {
         var ctx = new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone);
+        if (castZone != Zone.HAND) {
+            gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(castingPlayerId);
+        }
 
         gameData.expireFloatingEffects(fe ->
                 fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
@@ -751,6 +755,59 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
                 log.info("Game {} - {} all-spell copy trigger(s) queued for {}",
                         gameData.id, pendingSpellCopies, spellCard.getName());
+            }
+        }
+
+        List<CopyNextSpellCastThisTurnEffect> pendingFilteredCopies =
+                gameData.pendingNextFilteredSpellCopiesThisTurn.get(castingPlayerId);
+        if (pendingFilteredCopies != null && !pendingFilteredCopies.isEmpty()) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                List<CopyNextSpellCastThisTurnEffect> matchingCopies = new ArrayList<>();
+                List<CopyNextSpellCastThisTurnEffect> remainingCopies = new ArrayList<>();
+                for (CopyNextSpellCastThisTurnEffect copyEffect : pendingFilteredCopies) {
+                    if (copyEffect.spellFilter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            spellCard, copyEffect.spellFilter(), null, gameData, castingPlayerId)) {
+                        matchingCopies.add(copyEffect);
+                    } else {
+                        remainingCopies.add(copyEffect);
+                    }
+                }
+                if (!matchingCopies.isEmpty()) {
+                    boolean permanentSpell = switch (spellEntry.getEntryType()) {
+                        case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+                        default -> false;
+                    };
+                    StackEntry snapshot = new StackEntry(spellEntry);
+                    List<CardEffect> copyEffects = new ArrayList<>(matchingCopies.size());
+                    for (CopyNextSpellCastThisTurnEffect copyEffect : matchingCopies) {
+                        copyEffects.add(new CopyControllerCastSpellEffect(
+                                snapshot, castingPlayerId, Set.of(), Set.of(),
+                                copyEffect.removedSupertypes(), permanentSpell, true));
+                    }
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            "Copy " + spellCard.getName(),
+                            copyEffects
+                    ));
+                    if (remainingCopies.isEmpty()) {
+                        gameData.pendingNextFilteredSpellCopiesThisTurn.remove(castingPlayerId);
+                    } else {
+                        gameData.pendingNextFilteredSpellCopiesThisTurn.put(castingPlayerId, remainingCopies);
+                    }
+                    gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
+                    log.info("Game {} - {} filtered spell-copy trigger(s) queued for {}",
+                            gameData.id, matchingCopies.size(), spellCard.getName());
+                }
             }
         }
 
@@ -3175,7 +3232,9 @@ public class TriggerCollectionService {
             checkEnchantedCreatureDealtDamageTriggers(gameData, damagedCreature, damageDealt);
         }
 
-        List<CardEffect> effects = damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
+        List<CardEffect> effects = new ArrayList<>(damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE));
+        effects.addAll(damagedCreature.getTemporaryTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
+        effects.addAll(damagedCreature.getPersistentTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
         if (effects.isEmpty()) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
@@ -6235,12 +6294,15 @@ public class TriggerCollectionService {
             if (perm.getId().equals(leavingId)) continue;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD)) {
+                CardEffect resolved = resolveTriggeringPermanentConditional(
+                        gameData, perm, controllerId, leavingPermanent, effect);
+                if (resolved == null) continue;
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         controllerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(List.of(resolved)),
                         null,
                         perm.getId()
                 ));
@@ -7353,7 +7415,21 @@ public class TriggerCollectionService {
      * effects (Juju Bubble) both resolve correctly.
      */
     public void checkControllerPlaysLandTriggers(GameData gameData, UUID playingPlayerId, Card landCard) {
-        var ctx = new TriggerContext.LandPlayed(playingPlayerId, landCard);
+        checkControllerPlaysLandTriggers(gameData, playingPlayerId, landCard, false);
+    }
+
+    public void checkControllerPlaysLandTriggers(GameData gameData, UUID playingPlayerId, Card landCard,
+                                                 boolean fromExile) {
+        checkControllerPlaysLandTriggers(gameData, playingPlayerId, landCard,
+                fromExile ? Zone.EXILE : Zone.HAND);
+    }
+
+    public void checkControllerPlaysLandTriggers(GameData gameData, UUID playingPlayerId, Card landCard,
+                                                 Zone playZone) {
+        var ctx = new TriggerContext.LandPlayed(playingPlayerId, landCard, playZone);
+        if (playZone != Zone.HAND) {
+            gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(playingPlayerId);
+        }
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(playingPlayerId)) {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_LAND, ctx);
@@ -7957,7 +8033,8 @@ public class TriggerCollectionService {
 
         boolean dispatched = dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect),
                 slot, toDispatch, ctx);
-        if (dispatched && toDispatch != conditionedEffect) {
+        if (dispatched && toDispatch != conditionedEffect
+                && !(conditionedEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance())) {
             gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
         }
         return dispatched;
@@ -8037,13 +8114,15 @@ public class TriggerCollectionService {
         }
         if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
             Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
-            boolean matches = watcher == null
-                    ? predicateEvaluationService.matchesPermanentPredicate(gameData, perm, conditional.predicate())
-                    : predicateEvaluationService.matchesPermanentPredicate(perm, conditional.predicate(),
-                            FilterContext.of(gameData)
-                                    .withSourceCardId(watcher.getOriginalCard().getId())
-                                    .withSourceControllerId(controllerId)
-                                    .withSourcePermanentSnapshot(watcher));
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceControllerId(controllerId);
+            if (watcher != null) {
+                filterContext = filterContext
+                        .withSourceCardId(watcher.getOriginalCard().getId())
+                        .withSourcePermanentSnapshot(watcher);
+            }
+            boolean matches = predicateEvaluationService.matchesPermanentPredicate(
+                    perm, conditional.predicate(), filterContext);
             if (!matches) {
                 return null;
             }

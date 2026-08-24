@@ -2,12 +2,18 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
  * Shared "two creatures fight" resolution (CR 701.14a): each of the two creatures deals damage
@@ -43,6 +49,26 @@ public class FightSupport {
             return;
         }
         int damage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
-        damageSupport.dealCreatureDamage(gameData, entry, recipient, damage, source);
+        int markedDamageBefore = recipient.getMarkedDamage();
+        int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, recipient, damage, source);
+        UUID recipientControllerId = gameQueryService.findPermanentController(gameData, recipient.getId());
+        if (recipientControllerId != null
+                && !recipientControllerId.equals(entry.getControllerId())
+                && referencesExcessDamage(entry)) {
+            boolean deathtouch = gameQueryService.sourceHasKeyword(
+                    gameData, entry, source, Keyword.DEATHTOUCH);
+            entry.setEventValue(damageSupport.computeExcessDamageToCreature(
+                    gameData, recipient, damageDealt, markedDamageBefore, deathtouch));
+        }
+    }
+
+    private boolean referencesExcessDamage(StackEntry entry) {
+        return entry.getEffectsToResolve().stream()
+                .anyMatch(this::referencesExcessDamage);
+    }
+
+    private boolean referencesExcessDamage(CardEffect effect) {
+        return effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof EventValueAtLeast;
     }
 }

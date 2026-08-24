@@ -651,8 +651,11 @@ public class PermanentChoiceTriggerHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+        boolean declined = mat.optionalTarget()
+                && isPlayerTarget
+                && mat.controllerId().equals(permanentId);
         StackEntry spellOnStack = null;
-        if (target == null && !isPlayerTarget) {
+        if (!declined && target == null && !isPlayerTarget) {
             for (StackEntry se : gameData.stack) {
                 if (se.getCard().getId().equals(permanentId)) {
                     spellOnStack = se;
@@ -661,7 +664,18 @@ public class PermanentChoiceTriggerHandlerService {
             }
         }
 
-        if (target != null || isPlayerTarget || spellOnStack != null) {
+        if (declined) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    mat.sourceCard(),
+                    mat.controllerId(),
+                    mat.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(mat.effects()));
+            entry.setEventValue(mat.eventValue());
+            pushTriggeredEntry(gameData, entry);
+            gameLogService.append(gameData, GameLog.builder().card(mat.sourceCard())
+                    .text("'s ability targets nothing.").build());
+        } else if (target != null || isPlayerTarget || spellOnStack != null) {
             StackEntry entry;
             if (spellOnStack != null) {
                 entry = new StackEntry(

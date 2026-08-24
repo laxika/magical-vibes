@@ -198,7 +198,8 @@ public class MayCastHandlerService {
 
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), cardToPlay);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay);
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay,
+                        Zone.LIBRARY);
             }
         } else {
             // Cast the spell without paying its mana cost
@@ -722,7 +723,8 @@ public class MayCastHandlerService {
 
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), cardToPlay);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay);
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay,
+                        Zone.GRAVEYARD);
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -838,7 +840,7 @@ public class MayCastHandlerService {
                     GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), cardToPlay);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay);
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay, true);
             }
             log.info("Game {} - {} plays imprinted land {} from exile", gameData.id, playerName, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1353,7 +1355,8 @@ public class MayCastHandlerService {
                 GameLog.textCardText(playerName + " casts ", card, costPhrase + "."));
         log.info("Game {} - {} casts {} from hand{}", gameData.id, playerName, card.getName(), costPhrase);
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId,
+                "madness".equals(costLabel) ? Zone.EXILE : Zone.HAND);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

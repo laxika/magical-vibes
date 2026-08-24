@@ -62,6 +62,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -520,6 +521,21 @@ class SpellCastingServiceTest {
             verify(triggerCollectionService).checkControllerPlaysLandTriggers(eq(gd), eq(player1Id), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("Land played from a graveyard is marked for graveyard-entry triggers")
+        void graveyardLandIsMarkedAsEnteringFromGraveyard() {
+            Card land = createLand("Test Plains");
+            gd.playerGraveyards.get(player1Id).add(land);
+            when(actionAvailabilityService.getPlayableGraveyardLandIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, null, null, null, null, null, true, null);
+
+            ArgumentCaptor<Permanent> permanentCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getEnteredFromGraveyardOwnerId()).isEqualTo(player1Id);
         }
     }
 

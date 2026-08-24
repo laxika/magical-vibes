@@ -2669,7 +2669,7 @@ public class StepTriggerService {
                 return;
             }
 
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     playerId,
@@ -2677,7 +2677,9 @@ public class StepTriggerService {
                     new ArrayList<>(triggering),
                     activePlayerId,
                     perm.getId()
-            ));
+            );
+            entry.setActivePlayerId(activePlayerId);
+            gameData.stack.add(entry);
 
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} each-precombat-main trigger pushed onto stack",

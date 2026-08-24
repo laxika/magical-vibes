@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetBasedCastCostIncreaseEf
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDiscardAlternativeCostEffect;
+import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -233,9 +234,21 @@ public class CastingCostService {
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   boolean flashbackCost, boolean fromGraveyard) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), flashbackCost, fromGraveyard, 0);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    boolean flashbackCost, int xValue) {
         return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
                 flashbackCost, xValue);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   boolean flashbackCost, boolean fromGraveyard, int xValue) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), flashbackCost, fromGraveyard, xValue);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
@@ -245,8 +258,14 @@ public class CastingCostService {
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, false, xValue);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, boolean flashbackCost,
+                                   boolean fromGraveyard, int xValue) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
-                flashbackCost, xValue);
+                flashbackCost, fromGraveyard, xValue);
         int delta = 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
@@ -1104,6 +1123,33 @@ public class CastingCostService {
             }
         }
         return null;
+    }
+
+    public WebSlingingEffect findWebSlingingEffectFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return null;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof WebSlingingEffect webSlinging
+                        && predicateEvaluationService.matchesCardPredicate(card, webSlinging.filter(), null)) {
+                    return webSlinging;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean canAffordWebSlingingCost(GameData gameData, UUID playerId, Card card,
+                                             ManaPool pool, int additionalCost) {
+        if (gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .noneMatch(permanent -> gameQueryService.isCreature(gameData, permanent) && permanent.isTapped())) {
+            return false;
+        }
+        WebSlingingEffect webSlinging = findWebSlingingEffectFromBattlefield(gameData, playerId, card);
+        if (webSlinging == null) return false;
+        ManaCost cost = applyColoredManaCostReductions(
+                gameData, playerId, card, new ManaCost(webSlinging.manaCost()));
+        return cost.canPay(pool, additionalCost);
     }
 
     /**

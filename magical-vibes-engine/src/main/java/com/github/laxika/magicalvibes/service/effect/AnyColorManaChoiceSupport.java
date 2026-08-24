@@ -147,6 +147,9 @@ public final class AnyColorManaChoiceSupport {
                                                boolean fromCreature,
                                                CardSubtype chosenSubtype,
                                                Card sourceCard) {
+        if (effect.restriction() == ManaSpendRestriction.EXILED_SPELL_ONLY) {
+            return new ChoiceContext.ExiledSpellManaColorChoice(playerId, fromCreature, amount);
+        }
         if (effect.anyColorCombination()) {
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount, ManaColor.COLORS);
@@ -169,6 +172,8 @@ public final class AnyColorManaChoiceSupport {
                     ChoiceContext.ManaColorChoice.artifactSpellOrAbilityOnly(playerId, amount);
             case FLASHBACK_ONLY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, null, true);
+            case EXILED_SPELL_ONLY ->
+                    new ChoiceContext.ExiledSpellManaColorChoice(playerId, fromCreature, amount);
             case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, amount);
             case CREATURE_OR_ENCHANTMENT_SPELL_ONLY ->
                     throw new IllegalArgumentException("Use the two-color mana effect for this restriction");
@@ -224,6 +229,7 @@ public final class AnyColorManaChoiceSupport {
             case ARTIFACT_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (artifact spells or artifact abilities only).";
             case CREATURE_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (creature spells or creature abilities only).";
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
+            case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
             default -> "Choose a color of mana to add.";
         };

@@ -56,6 +56,9 @@ import org.springframework.stereotype.Component;
  *       of the target player's library; the rest go into that player's graveyard (Dimir Charm).</li>
  *   <li>{@code EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD} puts the unchosen cards into the target
  *       player's graveyard after the face-down exile (Thief of Sanity).</li>
+ *   <li>{@code EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM} exiles two cards face down and puts the
+ *       unchosen cards on the bottom of the target player's library in a random order (Black Cat,
+ *       Cunning Thief).</li>
  * </ul>
  */
 @Slf4j
@@ -108,12 +111,15 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     deck, actual, controllerName, targetName, true, false);
             case EXILE_ONE -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName, false, false);
-            case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> resolveExileOneFaceDownWithPermission(
+            case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> resolveExileFaceDownWithPermission(
                     gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
-                    targetName, false);
-            case EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> resolveExileOneFaceDownWithPermission(
+                    targetName, false, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM);
+            case EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> resolveExileFaceDownWithPermission(
                     gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
-                    targetName, true);
+                    targetName, false, 2, LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM);
+            case EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> resolveExileFaceDownWithPermission(
+                    gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
+                    targetName, true, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD);
             case MAY_EXILE_ANY_NUMBER -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName, true, true);
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
@@ -208,28 +214,30 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
         log.info("Game {} - {} looks at top {} of {}'s library ({})", gameData.id, controllerName, actual, targetName, entry.getCard().getName());
     }
 
-    private void resolveExileOneFaceDownWithPermission(GameData gameData, StackEntry entry,
+    private void resolveExileFaceDownWithPermission(GameData gameData, StackEntry entry,
             UUID controllerId, UUID targetPlayerId, List<Card> deck, int actual,
-            String controllerName, String targetName, boolean restToGraveyard) {
+            String controllerName, String targetName, boolean restToGraveyard, int exileCount,
+            LibrarySearchDestination destination) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
         gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual)
                         + " of " + targetName + "'s library."));
         String prompt = restToGraveyard
                 ? "Exile one card face down. Put the rest into that player's graveyard."
-                : "Exile one card face down. Put the rest on the bottom of that library in a random order.";
+                : exileCount == 1
+                ? "Exile one card face down. Put the rest on the bottom of that library in a random order."
+                : "Exile two cards face down. Put the rest on the bottom of that library in a random order.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
                         .canFailToFind(false)
                         .targetPlayerId(targetPlayerId)
+                        .remainingCount(Math.min(exileCount, topCards.size()))
                         .sourceCards(new ArrayList<>(topCards))
                         .reorderRemainingToBottom(!restToGraveyard)
                         .restToGraveyard(restToGraveyard)
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
-                        .destination(restToGraveyard
-                                ? LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD
-                                : LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                        .destination(destination)
                         .sourcePermanentId(entry.getSourcePermanentId())
                         .build(),
                 prompt,

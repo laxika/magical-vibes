@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
+import com.github.laxika.magicalvibes.model.PendingConnive;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlaguecrafterState;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -316,6 +317,8 @@ public class CardChoiceHandlerService {
         // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
         checkPendingBoostSourceByDiscardedManaValue(gameData, card);
 
+        checkPendingConniveOnDiscard(gameData, card);
+
         DiscardFollowUp followUp = discardChoice.followUp();
         if (followUp.enteringPermanent() != null) {
             gameData.interaction.clearAwaitingInput();
@@ -431,6 +434,7 @@ public class CardChoiceHandlerService {
             checkPendingTransformOnCreatureDiscard(gameData, card);
             checkPendingUntapOnDiscardType(gameData, card);
             checkPendingBoostSourceByDiscardedManaValue(gameData, card);
+            checkPendingConniveOnDiscard(gameData, card);
         }
     }
 
@@ -1668,6 +1672,22 @@ public class CardChoiceHandlerService {
                 .text(String.format(" gets +%d/+0 until end of turn.", boost))
                 .build());
         log.info("Game {} - {} gets +{}/+0 (discarded card mana value)", gameData.id, source.getCard().getName(), boost);
+    }
+
+    private void checkPendingConniveOnDiscard(GameData gameData, Card discardedCard) {
+        PendingConnive pending = gameData.pendingConnive;
+        if (pending == null) {
+            return;
+        }
+        gameData.pendingConnive = null;
+        if (discardedCard.hasType(CardType.LAND)) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

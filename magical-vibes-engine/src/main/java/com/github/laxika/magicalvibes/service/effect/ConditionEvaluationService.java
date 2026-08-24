@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CanBeholdSubtype;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
@@ -88,6 +89,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTur
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerPlayedOrCastFromOutsideHandThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
@@ -134,6 +136,7 @@ import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GiantWizardOrSpellDealtDamageToTargetThisTurn;
@@ -224,6 +227,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceWasSecondSpellCastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
+import com.github.laxika.magicalvibes.model.condition.SourceIsHarnessed;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
@@ -314,6 +318,12 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isSummoningSick();
             }
+            case CardDiscardedThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && ctx.sourceCard() != null
+                            && gameData.cardsDiscardedOrCycledThisTurn
+                            .getOrDefault(ctx.controllerId(), Set.of())
+                            .contains(ctx.sourceCard().getId());
             case SourceEnteredThisTurn ignored ->
                     sourceEnteredThisTurn(gameData, ctx);
             case SourceEnteredBattlefieldThisTurn ignored -> {
@@ -564,6 +574,8 @@ public class ConditionEvaluationService {
                     gameData.currentStep != null && gameData.currentStep.isCombatPhase();
             case FirstCombatPhase ignored ->
                     gameData.combatPhasesThisTurn == 1;
+            case EventValueAtLeast c ->
+                    ctx.eventValue() >= c.minimum();
             case MinimumAttackers c ->
                     ctx.xValue() >= c.minimumAttackers();
             case MinimumMatchingAttackers c ->
@@ -765,6 +777,9 @@ public class ConditionEvaluationService {
             case ControllerOwnTurnCountAtMost c ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
                             && gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0) <= c.maxTurns();
+            case ControllerPlayedOrCastFromOutsideHandThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.contains(ctx.controllerId());
             case NotControllerTurn ignored ->
                     ctx.controllerId() != null && !ctx.controllerId().equals(gameData.activePlayerId);
             case TargetPermanentMatches c -> {
@@ -840,6 +855,10 @@ public class ConditionEvaluationService {
             case SourceIsMonstrous ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isMonstrous();
+            }
+            case SourceIsHarnessed ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isHarnessed();
             }
             case SourceIsSaddled ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

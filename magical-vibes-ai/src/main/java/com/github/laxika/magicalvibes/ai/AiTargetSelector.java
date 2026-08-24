@@ -702,6 +702,7 @@ class AiTargetSelector {
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
+                case DIFFERENT_NAMES -> !other.getCard().getName().equals(candidate.getCard().getName());
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS, AT_MOST_ONE_PER_CONTROLLER,
                      ONE_PER_CONTROLLER_IF_ABLE, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
                      AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above

@@ -131,6 +131,8 @@ public class ManaPool {
      * regular pool for the duration of the payment and returns whatever it didn't spend.
      */
     private final Map<UUID, EnumMap<ManaColor, Integer>> exiledCardOnlyMana = new HashMap<>();
+    /** Per-color mana that may only be spent to cast spells from exile. */
+    private final EnumMap<ManaColor, Integer> exiledSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /**
      * Permission flag (not mana): while set, white mana in this pool may additionally be spent to pay
      * red mana costs (Sunglasses of Urza — "you may spend white mana as though it were red mana"). Set
@@ -171,6 +173,7 @@ public class ManaPool {
             creatureSpellOrAbilityMana.put(color, 0);
             artifactOnlyMana.put(color, 0);
             partySpellOrAbilityMana.put(color, 0);
+            exiledSpellOnlyMana.put(color, 0);
         }
     }
 
@@ -239,6 +242,7 @@ public class ManaPool {
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.exiledCardOnlyMana.entrySet()) {
             exiledCardOnlyMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        exiledSpellOnlyMana.putAll(source.exiledSpellOnlyMana);
         this.whiteSpendableAsRed = source.whiteSpendableAsRed;
         this.whiteSpendableAsAnyColor = source.whiteSpendableAsAnyColor;
         this.allManaSpendableAsAnyColor = source.allManaSpendableAsAnyColor;
@@ -404,6 +408,7 @@ public class ManaPool {
         subtypeOrLegendaryCreatureMana.clear();
         partySpellOrAbilityMana.replaceAll((color, amount) -> 0);
         exiledCardOnlyMana.clear();
+        exiledSpellOnlyMana.replaceAll((color, amount) -> 0);
     }
 
     public int get(ManaColor color) {
@@ -506,6 +511,7 @@ public class ManaPool {
                 total += value;
             }
         }
+        total += getExiledSpellOnlyManaTotal();
         return total;
     }
 
@@ -554,6 +560,49 @@ public class ManaPool {
             }
             pool.merge(entry.getKey(), -amount, Integer::sum);
             addExiledCardOnlyMana(exiledCardId, entry.getKey(), amount);
+        }
+    }
+
+    /** Adds mana spendable only to cast a spell from exile. */
+    public void addExiledSpellOnlyMana(ManaColor color, int amount) {
+        exiledSpellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getExiledSpellOnlyMana(ManaColor color) {
+        return exiledSpellOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getExiledSpellOnlyManaTotal() {
+        int total = 0;
+        for (int value : exiledSpellOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Moves exile-only mana into the regular pool for a spell cast from exile. */
+    public EnumMap<ManaColor, Integer> promoteExiledSpellOnlyMana() {
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            int amount = exiledSpellOnlyMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                promoted.put(color, amount);
+                pool.merge(color, amount, Integer::sum);
+                exiledSpellOnlyMana.put(color, 0);
+            }
+        }
+        return promoted;
+    }
+
+    /** Returns unspent exile-only mana to its restricted bucket after an exile cast. */
+    public void returnExiledSpellOnlyMana(Map<ManaColor, Integer> amounts) {
+        for (Map.Entry<ManaColor, Integer> entry : amounts.entrySet()) {
+            int amount = entry.getValue();
+            if (amount <= 0) {
+                continue;
+            }
+            pool.merge(entry.getKey(), -amount, Integer::sum);
+            exiledSpellOnlyMana.merge(entry.getKey(), amount, Integer::sum);
         }
     }
 
@@ -1898,6 +1947,7 @@ public class ManaPool {
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : exiledCardOnlyMana.entrySet()) {
             moveColoredManaToColorless(entry.getValue());
         }
+        moveColoredManaToColorless(exiledSpellOnlyMana);
     }
 
     private static void moveTaggedManaToColorless(EnumMap<ManaColor, Integer> tags,
@@ -1983,6 +2033,7 @@ public class ManaPool {
         drainColorMap(subtypeCreatureSourceSpellOrAbilityMana, protectedColors);
         drainColorMap(subtypeOrPlaneswalkerSpellMana, protectedColors);
         drainColorMap(exiledCardOnlyMana, protectedColors);
+        drainColorBucket(exiledSpellOnlyMana, protectedColors);
 
         if (!protectedColors.contains(ManaColor.COLORLESS)) {
             artifactOnlyColorless = 0;
@@ -2092,6 +2143,7 @@ public class ManaPool {
             amount += creatureOrEnchantmentSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
+            amount += exiledSpellOnlyMana.getOrDefault(color, 0);
             map.put(color.getCode(), amount);
         }
         return map;
@@ -2147,6 +2199,7 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            amount += exiledSpellOnlyMana.getOrDefault(color, 0);
             totals.put(color, amount);
         }
         return totals;

@@ -259,6 +259,18 @@ public class ValidTargetService {
             } else {
                 validGraveyardCardIds.addAll(computeValidGraveyardTargets(gameData, card, spellEffects, controllerId, xValue));
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.DIFFERENT_NAMES
+                    && !excludeIds.isEmpty()) {
+                Set<String> selectedNames = excludeIds.stream()
+                        .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .map(Card::getName)
+                        .collect(Collectors.toSet());
+                validGraveyardCardIds.removeIf(id -> {
+                    Card candidate = gameQueryService.findCardInGraveyardById(gameData, id);
+                    return candidate != null && selectedNames.contains(candidate.getName());
+                });
+            }
         }
 
         String prompt = "Select a target for " + card.getName();
@@ -1122,10 +1134,21 @@ public class ValidTargetService {
                         && !isValidCreatureAndLandTarget(gameData, c, excludeIds)) {
                     continue;
                 }
+                if (constraint == MultiTargetConstraint.DIFFERENT_NAMES
+                        && !hasDifferentNameFromSelected(gameData, c, excludeIds)) {
+                    continue;
+                }
                 validIds.add(c.getId());
             }
         }
         return validIds;
+    }
+
+    private boolean hasDifferentNameFromSelected(GameData gameData, Card candidate, Set<UUID> excludeIds) {
+        return excludeIds.stream()
+                .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .noneMatch(selected -> selected.getName().equals(candidate.getName()));
     }
 
     private boolean isValidInstantAndSorceryTarget(GameData gameData, Card candidate, Set<UUID> excludeIds) {

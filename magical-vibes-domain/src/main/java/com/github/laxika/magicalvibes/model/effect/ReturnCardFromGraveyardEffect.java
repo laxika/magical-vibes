@@ -224,6 +224,7 @@ import java.util.Set;
  * @param unearth              {@code true} when the battlefield return is an unearth activation,
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
+ * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -289,7 +290,8 @@ public record ReturnCardFromGraveyardEffect(
         boolean shuffleGraveyardBeforeRandomSelection,
         DynamicAmount dynamicMaxManaValue,
         boolean unearth,
-        boolean exileAtNextUpkeep
+        boolean exileAtNextUpkeep,
+        List<CardEffect> battlefieldEffectGrants
 ) implements CombatDamageAmountAwareEffect {
 
     /**
@@ -303,6 +305,7 @@ public record ReturnCardFromGraveyardEffect(
         private Set<Keyword> grantKeywords = Set.of();
         private List<CardSubtype> grantSubtypes = List.of();
         private Set<CounterType> enterWithCounters = Set.of();
+        private List<CardEffect> battlefieldEffectGrants = List.of();
     }
 
     @Override

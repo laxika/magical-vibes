@@ -36,6 +36,9 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
+            implements ChoiceContext {}
+
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                            boolean creatureSourceSpellOrAbility,
@@ -314,6 +317,9 @@ public sealed interface ChoiceContext {
             this(card, controllerId, excludedTypes, false);
         }
     }
+
+    record CardTypeOnEnterChoice(Card card, UUID controllerId, List<CardType> excludedTypes)
+            implements ChoiceContext {}
 
     /**
      * "You and an opponent each choose a card name other than a basic land card name" as the source
@@ -698,6 +704,19 @@ public sealed interface ChoiceContext {
      * A matching card inserts the source sacrifice and three-card draw into the paused ability.
      */
     record ChooseCardNameRevealTopCardChoice(UUID controllerId) implements ChoiceContext {}
+
+    record ChooseCardNameForDelayedCreatureCombatDamageChoice(
+            UUID controllerId,
+            List<CardEffect> effects,
+            Card sourceCard,
+            boolean combatDamageToPlayerOnly,
+            boolean untilEndOfTurn
+    ) implements ChoiceContext {
+
+        public ChooseCardNameForDelayedCreatureCombatDamageChoice {
+            effects = List.copyOf(effects);
+        }
+    }
 
     /**
      * Cursed Scroll: the controller names a card, then reveals a card at random from their own hand.

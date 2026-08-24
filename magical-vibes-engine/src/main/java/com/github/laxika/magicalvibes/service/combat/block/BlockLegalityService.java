@@ -555,6 +555,20 @@ public class BlockLegalityService {
                 }
             }
         }
+        for (CardEffect effect : bonus.grantedEffects()) {
+            if (effect instanceof BlockingRestrictionEffect restriction) {
+                if (restriction.cantBlock()) {
+                    cantBlockStatic = true;
+                }
+                if (restriction.cantBlockCreaturesWithPowerAtLeastOwnToughness()) {
+                    cantBlockPowerAtLeastOwnToughnessStatic = true;
+                }
+                Integer threshold = restriction.cantBlockCreaturesWithPowerAtLeast();
+                if (threshold != null && (cantBlockPowerAtLeast == null || threshold < cantBlockPowerAtLeast)) {
+                    cantBlockPowerAtLeast = threshold;
+                }
+            }
+        }
         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> auraRestrictions =
                 gameQueryService.collectAuraEffects(gameData, blocker, CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
         if (!auraRestrictions.isEmpty()) {

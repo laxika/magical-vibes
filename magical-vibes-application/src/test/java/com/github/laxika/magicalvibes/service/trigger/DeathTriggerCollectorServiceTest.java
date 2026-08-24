@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffe
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -1401,6 +1402,41 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+        }
+
+        @Test
+        @DisplayName("Leaving-source counter trigger snapshots its count and queues target selection")
+        void leavingSourceCounterTriggerSnapshotsCount() {
+            Card card = createCreature("Counter Captain", 1, 1);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            var effect = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
+                    CounterType.PLUS_ONE_PLUS_ONE);
+            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
+
+            assertThat(svc.handlePutCounterOnTargetForEachLeavingSourceCounter(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+            var baked = (PutCounterOnTargetForEachLeavingSourceCounterEffect) pending.effects().getFirst();
+            assertThat(baked.count()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Leaving-source counter trigger is retained when the source has no counters")
+        void leavingSourceCounterTriggerRetainsZeroCount() {
+            Card card = createCreature("Counterless Captain", 1, 1);
+            Permanent perm = new Permanent(card);
+            var effect = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
+                    CounterType.PLUS_ONE_PLUS_ONE);
+            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
+
+            assertThat(svc.handlePutCounterOnTargetForEachLeavingSourceCounter(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+            var baked = (PutCounterOnTargetForEachLeavingSourceCounterEffect) pending.effects().getFirst();
+            assertThat(baked.count()).isZero();
         }
 
         @Test

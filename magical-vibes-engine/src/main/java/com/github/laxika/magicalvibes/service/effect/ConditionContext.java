@@ -34,7 +34,8 @@ public record ConditionContext(
         Integer triggeringPermanentPowerAtTrigger,
         Card sacrificedCard,
         List<String> repeatedAdditionalCosts,
-        boolean alternateCost
+        boolean alternateCost,
+        int eventValue
 ) {
     public ConditionContext {
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
@@ -53,7 +54,7 @@ public record ConditionContext(
         this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
-                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, false);
+                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, false, 0);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -128,13 +129,14 @@ public record ConditionContext(
                 entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
                 entry.isPutCounterCostPaid(), entry.isBeholdCostPaid(), entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard(),
-                entry.getRepeatedAdditionalCosts(), entry.isAlternateCost());
+                entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.getEventValue());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
                 permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(),
-                false, null, 0, null, null, false);
+                false, false, false, null, 0, null, null, false,
+                false, false, null, null, null, List.of(), permanent.isAlternateCost(), 0);
     }
 
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
@@ -155,34 +157,41 @@ public record ConditionContext(
 
     public ConditionContext withXValue(int newXValue) {
         return copy(newXValue, targetId, triggeringCard, triggeringPermanentId,
-                triggeringPermanentPowerAtTrigger);
+                triggeringPermanentPowerAtTrigger, eventValue);
     }
 
     public ConditionContext withTargetId(UUID newTargetId) {
         return copy(xValue, newTargetId, triggeringCard, triggeringPermanentId,
-                triggeringPermanentPowerAtTrigger);
+                triggeringPermanentPowerAtTrigger, eventValue);
     }
 
     public ConditionContext withTriggeringCard(Card card) {
         return copy(xValue, targetId, card, triggeringPermanentId,
-                triggeringPermanentPowerAtTrigger);
+                triggeringPermanentPowerAtTrigger, eventValue);
     }
 
     public ConditionContext withTriggeringPermanentId(UUID permanentId) {
         return copy(xValue, targetId, triggeringCard, permanentId,
-                triggeringPermanentPowerAtTrigger);
+                triggeringPermanentPowerAtTrigger, eventValue);
     }
 
     public ConditionContext withTriggeringPermanentPowerAtTrigger(Integer power) {
-        return copy(xValue, targetId, triggeringCard, triggeringPermanentId, power);
+        return copy(xValue, targetId, triggeringCard, triggeringPermanentId, power, eventValue);
     }
 
     private ConditionContext copy(int copiedXValue, UUID copiedTargetId, Card copiedTriggeringCard,
-                                  UUID copiedTriggeringPermanentId, Integer copiedTriggeringPower) {
+                                  UUID copiedTriggeringPermanentId, Integer copiedTriggeringPower,
+                                  int copiedEventValue) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
                 kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone,
                 copiedXValue, copiedTargetId, copiedTriggeringCard, staticEvaluation,
                 putCounterCostPaid, beholdCostPaid, copiedTriggeringPermanentId,
-                copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost);
+                copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
+                copiedEventValue);
+    }
+
+    public ConditionContext withEventValue(int newEventValue) {
+        return copy(xValue, targetId, triggeringCard, triggeringPermanentId,
+                triggeringPermanentPowerAtTrigger, newEventValue);
     }
 }

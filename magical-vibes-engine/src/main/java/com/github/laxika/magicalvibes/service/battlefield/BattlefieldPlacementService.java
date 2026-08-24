@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.RiotEntryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -92,6 +93,7 @@ public class BattlefieldPlacementService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAllPermanentsAsEntersEffectHandler sacrificeAllPermanentsAsEntersEffectHandler;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
+    private RiotEntryService riotEntryService;
 
     public BattlefieldPlacementService(GameQueryService gameQueryService,
                                        GameLogService gameLogService,
@@ -126,6 +128,11 @@ public class BattlefieldPlacementService {
     void setSacrificeAllPermanentsAsEntersEffectHandler(
             @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAllPermanentsAsEntersEffectHandler handler) {
         this.sacrificeAllPermanentsAsEntersEffectHandler = handler;
+    }
+
+    @Autowired
+    void setRiotEntryService(@Lazy RiotEntryService service) {
+        this.riotEntryService = service;
     }
 
     public void place(GameData gameData, BattlefieldEntryRequest request) {
@@ -227,6 +234,9 @@ public class BattlefieldPlacementService {
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent, conditionalRevealEffect);
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
+        if (riotEntryService != null) {
+            riotEntryService.applyIfPresent(gameData, controllerId, permanent);
+        }
         if (simultaneouslyEntered.isEmpty()) {
             gameData.activeMysticReflectionsForEntryBatch.clear();
         }
@@ -885,7 +895,9 @@ public class BattlefieldPlacementService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, false, false, permanent.getCastFromZone(), xValue, null, null, false);
+                        card, kicked, false, false, false, false, false, permanent.getCastFromZone(), xValue,
+                        null, null, false, false, false, null, null, null, List.of(),
+                        permanent.isAlternateCost(), 0);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
                 }

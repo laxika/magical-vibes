@@ -578,7 +578,9 @@ public class GameActionAvailabilityService {
         }
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
-            return castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+            return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+                    || castingCostService.canAffordWebSlingingCost(
+                    gameData, playerId, card, pool, additionalGenericCost))
                     && castingPermissionService.canCastWithTiming(gameData, playerId, card,
                             ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())
                     && !ctx.spellLimitReached() && !ctx.cantCastDueToAttack();
@@ -847,6 +849,9 @@ public class GameActionAvailabilityService {
         if (castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
             return true;
         }
+        if (castingCostService.canAffordWebSlingingCost(gameData, playerId, card, pool, additionalCost)) {
+            return true;
+        }
         return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
     }
 
@@ -888,10 +893,20 @@ public class GameActionAvailabilityService {
             return playable;
         }
 
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            return playable;
+        }
+
         boolean canPlayAnyLandsFromGraveyard = castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId);
         boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
                 .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
-        if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission) {
+        boolean hasMayhemLandPermission = graveyard.stream()
+                .anyMatch(card -> card.hasType(CardType.LAND)
+                        && card.getCastingOption(GraveyardCast.class)
+                        .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
+                        .orElse(false));
+        if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
             return playable;
         }
 
@@ -907,17 +922,16 @@ public class GameActionAvailabilityService {
             return playable;
         }
 
-        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        if (graveyard == null) {
-            return playable;
-        }
-
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
+            boolean hasMayhemPermission = card.getCastingOption(GraveyardCast.class)
+                    .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
+                    .orElse(false);
             if (card.hasType(CardType.LAND)
                     && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
                     && (canPlayAnyLandsFromGraveyard
-                    || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId))) {
+                    || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
+                    || hasMayhemPermission)) {
                 playable.add(i);
             }
         }
@@ -978,6 +992,9 @@ public class GameActionAvailabilityService {
             Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
             var harmonize = card.getCastingOption(HarmonizeCast.class);
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
+            if (graveyardCast.isEmpty()) {
+                graveyardCast = castingPermissionService.findMayhemCastOption(gameData, playerId, card);
+            }
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
             boolean grantedHarmonize = harmonize.isEmpty() && flashback.isEmpty() && !isDisturb
                     && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
@@ -1009,7 +1026,7 @@ public class GameActionAvailabilityService {
                     && !emblemFlashback
                     && !grantedGraveyardCardCast
                     && !isGrantedGraveyardPlay
-                    && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, graveyardCast.get());
+                    && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, graveyardCast.get());
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
@@ -1121,7 +1138,8 @@ public class GameActionAvailabilityService {
             boolean cardHasFlashback = flashback.isPresent() || grantedFlashback || emblemFlashback;
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, new ManaCost(manaCostStr), cardHasFlashback);
-            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, cardHasFlashback);
+            int additionalCost = castingCostService.getCastCostModifier(
+                    gameData, playerId, card, cardHasFlashback, true);
             // Flashback-only mana (e.g. Altar of the Lost) can be spent on any spell with flashback
             // cast from a graveyard, but not on GraveyardCast-only or Muldrotha-style non-flashback casts.
             boolean canPayMana = cardHasFlashback

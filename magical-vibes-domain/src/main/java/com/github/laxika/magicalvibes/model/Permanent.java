@@ -137,6 +137,7 @@ public class Permanent {
      *  (Null Chamber: the controller's pick → {@link #chosenName}, the opponent's → here). */
     @Setter private String secondChosenName;
     @Setter private CardSubtype chosenSubtype;
+    @Setter private CardType chosenCardType;
     /** Second basic land type chosen "as this enters" when the card chooses two types
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
     @Setter private CardSubtype secondChosenSubtype;
@@ -483,6 +484,10 @@ public class Permanent {
     @Setter private boolean evoked;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether this permanent was cast by paying an alternate cost. */
+    @Setter private boolean alternateCost;
+    /** Mana value of the creature returned to pay this permanent's web-slinging cost, when applicable. */
+    @Setter private Integer webSlingingReturnedCreatureManaValue;
     /** Whether the required tribute counters were placed on this permanent as it entered. */
     @Setter private boolean tributePaid;
     /** Whether this permanent is renowned (CR 702.111): set the first time a renown trigger resolves,
@@ -490,6 +495,8 @@ public class Permanent {
     @Setter private boolean renowned;
     /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean monstrous;
+    /** Whether this permanent is harnessed. Permanent state; never cleared by {@link #resetModifiers()}. */
+    @Setter private boolean harnessed;
     /** Whether this permanent is saddled until end of turn. */
     @Setter private boolean saddled;
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
@@ -642,6 +649,7 @@ public class Permanent {
         this.chosenName = source.chosenName;
         this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;
+        this.chosenCardType = source.chosenCardType;
         this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenNumber = source.chosenNumber;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
@@ -762,10 +770,13 @@ public class Permanent {
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
+        this.alternateCost = source.alternateCost;
+        this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
         this.cast = source.cast;
         this.monstrous = source.monstrous;
+        this.harnessed = source.harnessed;
         this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);

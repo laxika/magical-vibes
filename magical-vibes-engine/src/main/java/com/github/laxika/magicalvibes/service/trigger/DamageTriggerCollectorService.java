@@ -1092,7 +1092,8 @@ public class DamageTriggerCollectorService {
             ConditionContext conditionContext = match.permanent() != null
                     ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
                     : ConditionContext.forCard(sourceCard, match.controllerId());
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    conditionContext.withEventValue(sd.totalDamage()))) {
                 return false;
             }
         }

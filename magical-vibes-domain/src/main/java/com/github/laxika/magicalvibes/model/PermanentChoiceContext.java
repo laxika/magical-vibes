@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDrawAndMayPutPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -68,6 +69,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Kethek: the controller is choosing another creature to sacrifice before the library reveal. */
     record SacrificeOtherCreatureThenRevealUntilLowerManaValue(
             UUID controllerId, Card sourceCard, com.github.laxika.magicalvibes.model.filter.CardPredicate predicate)
+            implements PermanentChoiceContext {}
+
+    /** Eddie Brock: choose another creature to sacrifice before drawing and putting a permanent. */
+    record SacrificeAnotherCreatureDrawAndMayPutPermanent(
+            UUID controllerId, Card sourceCard, SacrificeAnotherCreatureDrawAndMayPutPermanentEffect effect)
             implements PermanentChoiceContext {}
 
     /** Torment of Hailfire: {@code playerId} sacrifices the chosen nonland permanent they control. */
@@ -280,7 +286,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, Permanent sourcePermanentSnapshot,
-                                   int eventValue, int xValue) implements PermanentChoiceContext {
+                                   int eventValue, int xValue, boolean optionalTarget) implements PermanentChoiceContext {
+
+        public MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                       UUID sourcePermanentId, Permanent sourcePermanentSnapshot,
+                                       int eventValue, int xValue) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, sourcePermanentSnapshot,
+                    eventValue, xValue, false);
+        }
         public MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        UUID sourcePermanentId, Permanent sourcePermanentSnapshot) {
             this(sourceCard, controllerId, effects, sourcePermanentId, sourcePermanentSnapshot, 0, 0);
@@ -976,6 +989,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public GraveyardAbilityCostChoice(UUID activatingPlayerId, Card graveyardCard, int graveyardCardIndex,
                                           Integer abilityIndex, CardEffect costEffect, int remaining) {
             this(activatingPlayerId, graveyardCard, graveyardCardIndex, abilityIndex, costEffect, remaining, List.of());
+        }
+    }
+
+    record HandAbilityCostChoice(UUID activatingPlayerId,
+                                 Card handCard,
+                                 ActivatedAbility ability,
+                                 Integer abilityIndex,
+                                 Integer xValue,
+                                 UUID targetId,
+                                 Zone targetZone,
+                                 CardEffect costEffect,
+                                 int remaining,
+                                 List<UUID> chosenSoFar,
+                                 int stackSizeBeforeCosts) implements PermanentChoiceContext {
+
+        public HandAbilityCostChoice(UUID activatingPlayerId, Card handCard, ActivatedAbility ability,
+                                     Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone,
+                                     CardEffect costEffect, int remaining, int stackSizeBeforeCosts) {
+            this(activatingPlayerId, handCard, ability, abilityIndex, xValue, targetId, targetZone,
+                    costEffect, remaining, List.of(), stackSizeBeforeCosts);
         }
     }
 

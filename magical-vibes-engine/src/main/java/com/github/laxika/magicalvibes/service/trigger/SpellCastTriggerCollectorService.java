@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.PossibilityStormExileAndCastE
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByCastSpellManaValueEffect;
@@ -755,6 +756,9 @@ public class SpellCastTriggerCollectorService {
         if (trigger.requiredCastZone() != null && sc.castZone() != trigger.requiredCastZone()) {
             return false;
         }
+        if (trigger.excludeHandCast() && sc.castZone() == Zone.HAND) {
+            return false;
+        }
 
         if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(),
                 match.permanent().getCard().getId(),
@@ -783,21 +787,25 @@ public class SpellCastTriggerCollectorService {
         }
 
         StackEntry snapshot = new StackEntry(spellEntry);
+        boolean markOnAcceptance = match.rawEffect() instanceof OncePerTurnTriggerEffect once
+                && once.markOnAcceptance();
         CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
-                        trigger.additionalTypes(), trigger.tokenCopy(), trigger.mayChooseNewTargets());
+                        trigger.additionalTypes(), trigger.tokenCopy(), trigger.mayChooseNewTargets(),
+                        trigger.grantHasteToPermanentSpell(), markOnAcceptance);
         if (trigger.intervening() != null) {
             copyEffect = new ConditionalEffect(trigger.intervening(), copyEffect);
         }
 
         // "you may copy that spell" with no cost (Swarm Intelligence) — offer an immediate optional
         // prompt; accepting puts the copy-creating ability on the stack.
-        if (trigger.tapCost() == null && trigger.manaCost() == null && match.rawEffect() instanceof MayEffect may) {
+        MayEffect optionalMay = optionalMayEffect(match.rawEffect());
+        if (trigger.tapCost() == null && trigger.manaCost() == null && optionalMay != null) {
             match.gameData().pendingMayAbilities.add(new PendingMayAbility(
                     match.permanent().getCard(),
                     match.controllerId(),
                     new ArrayList<>(List.of(copyEffect)),
-                    match.permanent().getCard().getName() + " — " + may.prompt(),
+                    match.permanent().getCard().getName() + " — " + optionalMay.prompt(),
                     null,
                     null,
                     match.permanent().getId()));
@@ -830,6 +838,17 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getId()
         ));
         return true;
+    }
+
+    private MayEffect optionalMayEffect(CardEffect rawEffect) {
+        if (rawEffect instanceof MayEffect may) {
+            return may;
+        }
+        if (rawEffect instanceof OncePerTurnTriggerEffect once
+                && once.wrapped() instanceof MayEffect may) {
+            return may;
+        }
+        return null;
     }
 
     @CollectsTrigger(value = CreateTokenCopyOfTargetedSpellPermanentEffect.class,
