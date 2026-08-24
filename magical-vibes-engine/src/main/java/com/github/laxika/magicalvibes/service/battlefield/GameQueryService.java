@@ -2837,6 +2837,10 @@ public class GameQueryService {
         return ptForStaticFilter(permanent, true);
     }
 
+    public int powerFromStaticBoard(Permanent permanent) {
+        return ptFromBoard(LayerSystemService.activePass(), permanent, true);
+    }
+
     /** The toughness counterpart of {@link #powerForStaticFilter(Permanent)}. */
     public int toughnessForStaticFilter(Permanent permanent) {
         return ptForStaticFilter(permanent, false);

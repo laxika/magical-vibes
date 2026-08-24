@@ -36,6 +36,7 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell, discarded);

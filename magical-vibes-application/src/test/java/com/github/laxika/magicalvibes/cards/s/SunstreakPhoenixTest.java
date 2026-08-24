@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,7 @@ class SunstreakPhoenixTest extends BaseCardTest {
         SunstreakPhoenix phoenix = new SunstreakPhoenix();
         harness.setGraveyard(player1, List.of(phoenix));
 
-        harness.addToBattlefield(player1, new SunstreakPhoenix());
+        harness.enterBattlefieldAndReturn(player1, new SunstreakPhoenix());
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(gd.pendingMayAbilities).isEmpty();
@@ -36,6 +35,7 @@ class SunstreakPhoenixTest extends BaseCardTest {
 
         makeItNight();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(phoenix.getId())
@@ -58,10 +58,7 @@ class SunstreakPhoenixTest extends BaseCardTest {
     }
 
     private void makeItNight() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(player1);
         harness.passBothPriorities();
     }
 }

@@ -39,8 +39,7 @@ class ChaplainOfAlmsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
-        assertThat(chaplain.getMarkedDamage()).isEqualTo(2);
-        harness.assertOnBattlefield(player1, "Chaplain of Alms");
+        harness.assertInGraveyard(player1, "Chaplain of Alms");
     }
 
     @Test

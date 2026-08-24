@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.a.ArrogantOutlaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrmendahlTheCorrupter;
+import com.github.laxika.magicalvibes.cards.u.UnrulyMob;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Jerren.class, OrmendahlTheCorrupter.class, ArrogantOutlaw.class, GrizzlyBears.class})
+@CardUsed({Jerren.class, OrmendahlTheCorrupter.class, ArrogantOutlaw.class, GrizzlyBears.class, UnrulyMob.class})
 class JerrenTest extends BaseCardTest {
 
     @Test
@@ -42,7 +43,7 @@ class JerrenTest extends BaseCardTest {
     void humanDeathTriggersAbility() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new Jerren());
-        Permanent human = harness.addToBattlefieldAndReturn(player1, new ArrogantOutlaw());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
 
         human.setMarkedDamage(10);
         harness.runStateBasedActions();
@@ -66,21 +67,21 @@ class JerrenTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(humanTokenCount(player1)).isZero();
 
-        harness.setHand(player1, List.of(new Jerren()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
+        human.setMarkedDamage(10);
+        harness.runStateBasedActions();
+        resolveAllStack();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
+        harness.setLife(player1, 20);
         token.setMarkedDamage(1);
         harness.runStateBasedActions();
         resolveAllStack();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(humanTokenCount(player1)).isZero();
     }
 
@@ -89,11 +90,10 @@ class JerrenTest extends BaseCardTest {
     void transformsAtExactlyThirteenLifeAfterPayment() {
         Permanent jerren = addReadyJerren();
         harness.setLife(player1, 13);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
         advanceToEndStep(player1);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(jerren.isTransformed()).isTrue();
@@ -118,7 +118,7 @@ class JerrenTest extends BaseCardTest {
     @DisplayName("The lifelink ability only targets a Human you control")
     void lifelinkAbilityRequiresHumanYouControl() {
         Permanent jerren = harness.addToBattlefieldAndReturn(player1, new Jerren());
-        Permanent human = harness.addToBattlefieldAndReturn(player1, new ArrogantOutlaw());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
         Permanent nonHuman = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

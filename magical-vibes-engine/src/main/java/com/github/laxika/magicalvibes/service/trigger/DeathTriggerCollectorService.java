@@ -2007,7 +2007,9 @@ public class DeathTriggerCollectorService {
                     match.permanent().getCard(),
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect))
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId()
             ));
         }
         logAnyCreatureDeath(match);

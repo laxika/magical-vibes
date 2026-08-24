@@ -293,6 +293,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -313,6 +314,8 @@ public class ConditionEvaluationService {
 
     private static final PermanentIsCreaturePredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
     private static final PermanentIsArtifactPredicate ARTIFACT_FILTER = new PermanentIsArtifactPredicate();
+    private static final ThreadLocal<Set<UUID>> COVEN_EVALUATION =
+            ThreadLocal.withInitial(HashSet::new);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -1462,7 +1465,28 @@ public class ConditionEvaluationService {
     /** Coven: three or more controlled creatures with different effective powers. */
     private boolean isCovenMet(GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null) return false;
-        return gameQueryService.isCovenMet(gameData, ctx.controllerId());
+        if (!GameQueryService.isStaticEvaluationActive()) {
+            return gameQueryService.isCovenMet(gameData, ctx.controllerId());
+        }
+        Set<UUID> evaluatingControllers = COVEN_EVALUATION.get();
+        if (!evaluatingControllers.add(ctx.controllerId())) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+            if (battlefield == null) return false;
+            return battlefield.stream()
+                    .filter(permanent -> predicateEvaluationService.matchesStaticLeaf(permanent, CREATURE_FILTER))
+                    .map(gameQueryService::powerFromStaticBoard)
+                    .distinct()
+                    .limit(3)
+                    .count() >= 3;
+        }
+        try {
+            return gameQueryService.isCovenMet(gameData, ctx.controllerId());
+        } finally {
+            evaluatingControllers.remove(ctx.controllerId());
+            if (evaluatingControllers.isEmpty()) {
+                COVEN_EVALUATION.remove();
+            }
+        }
     }
 
     /**

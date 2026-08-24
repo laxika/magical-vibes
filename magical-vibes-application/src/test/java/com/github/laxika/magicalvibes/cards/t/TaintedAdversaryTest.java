@@ -20,8 +20,8 @@ class TaintedAdversaryTest extends BaseCardTest {
     @Test
     void paysMultipleTimesAndCreatesTwiceAsManyDecayedZombies() {
         harness.setHand(player1, List.of(new TaintedAdversary()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -33,6 +33,7 @@ class TaintedAdversaryTest extends BaseCardTest {
         assertThat(choice.maxValue()).isEqualTo(2);
 
         harness.handleXValueChosen(player1, 2);
+        harness.passBothPriorities();
 
         Permanent adversary = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getCard().isToken())
@@ -53,8 +54,8 @@ class TaintedAdversaryTest extends BaseCardTest {
     @Test
     void mayDeclineWithoutAddingCountersOrCreatingTokens() {
         harness.setHand(player1, List.of(new TaintedAdversary()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

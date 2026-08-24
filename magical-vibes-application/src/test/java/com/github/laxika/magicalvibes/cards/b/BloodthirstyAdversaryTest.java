@@ -25,8 +25,8 @@ class BloodthirstyAdversaryTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(counsel, shock, bears));
         harness.setHand(player1, List.of(new BloodthirstyAdversary()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

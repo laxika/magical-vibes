@@ -30,7 +30,7 @@ class PrimalAdversaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new PrimalAdversary()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

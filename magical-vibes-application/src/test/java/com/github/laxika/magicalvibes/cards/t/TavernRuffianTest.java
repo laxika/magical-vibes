@@ -16,7 +16,7 @@ class TavernRuffianTest extends BaseCardTest {
     @Test
     void transformsToTavernSmasherWhenNoSpellsWereCastLastTurn() {
         gd.dayNight = DayNight.DAY;
-        Permanent ruffian = harness.addToBattlefieldAndReturn(player1, new TavernRuffian());
+        Permanent ruffian = harness.enterBattlefieldAndReturn(player1, new TavernRuffian());
         gd.spellsCastLastTurn.clear();
 
         advanceToUpkeepAndResolveTransform(player1);
@@ -29,7 +29,7 @@ class TavernRuffianTest extends BaseCardTest {
     @Test
     void transformsToTavernRuffianWhenTwoSpellsWereCastLastTurn() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent ruffian = harness.addToBattlefieldAndReturn(player1, new TavernRuffian());
+        Permanent ruffian = harness.enterBattlefieldAndReturn(player1, new TavernRuffian());
         gd.spellsCastLastTurn.put(player1.getId(), 2);
 
         advanceToUpkeepAndResolveTransform(player1);
@@ -42,22 +42,15 @@ class TavernRuffianTest extends BaseCardTest {
     @Test
     void doesNotTransformBackWhenOnlyOneSpellWasCastLastTurn() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent ruffian = harness.addToBattlefieldAndReturn(player1, new TavernRuffian());
+        Permanent ruffian = harness.enterBattlefieldAndReturn(player1, new TavernRuffian());
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(player1);
 
         assertThat(ruffian.isTransformed()).isTrue();
     }
 
     private void advanceToUpkeepAndResolveTransform(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

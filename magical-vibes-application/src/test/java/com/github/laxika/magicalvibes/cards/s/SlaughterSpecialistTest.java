@@ -30,6 +30,7 @@ class SlaughterSpecialistTest extends BaseCardTest {
     void gainsCounterWhenOpponentCreatureDies() {
         Permanent specialist = castSpecialist();
         Permanent human = findPermanent(player2, "Human");
+        human.tap();
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 1);

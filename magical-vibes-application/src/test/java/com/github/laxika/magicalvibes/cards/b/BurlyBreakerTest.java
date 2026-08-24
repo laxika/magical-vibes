@@ -22,7 +22,7 @@ class BurlyBreakerTest extends BaseCardTest {
     @Test
     void entersAsBurlyBreakerDuringTheDay() {
         gd.dayNight = DayNight.DAY;
-        Permanent breaker = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
+        Permanent breaker = harness.enterBattlefieldAndReturn(player1, new BurlyBreaker());
 
         assertThat(breaker.isTransformed()).isFalse();
         assertThat(breaker.getCard()).isInstanceOf(BurlyBreaker.class);
@@ -31,7 +31,7 @@ class BurlyBreakerTest extends BaseCardTest {
     @Test
     void entersAsDireStrainDemolisherDuringTheNight() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent breaker = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
+        Permanent breaker = harness.enterBattlefieldAndReturn(player1, new BurlyBreaker());
 
         assertThat(breaker.isTransformed()).isTrue();
         assertThat(breaker.getCard()).isInstanceOf(DireStrainDemolisher.class);
@@ -40,7 +40,7 @@ class BurlyBreakerTest extends BaseCardTest {
     @Test
     void dayNightTransformsBothFaces() {
         gd.dayNight = DayNight.DAY;
-        Permanent breaker = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
+        Permanent breaker = harness.enterBattlefieldAndReturn(player1, new BurlyBreaker());
 
         gd.spellsCastLastTurn.clear();
         advanceToUntap(player1);
@@ -78,7 +78,7 @@ class BurlyBreakerTest extends BaseCardTest {
 
     private Permanent addReadyBreaker(DayNight dayNight) {
         gd.dayNight = dayNight;
-        Permanent breaker = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
+        Permanent breaker = harness.enterBattlefieldAndReturn(player1, new BurlyBreaker());
         breaker.setSummoningSick(false);
         return breaker;
     }
@@ -94,9 +94,6 @@ class BurlyBreakerTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

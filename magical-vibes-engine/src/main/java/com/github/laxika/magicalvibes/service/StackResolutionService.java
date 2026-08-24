@@ -393,6 +393,11 @@ public class StackResolutionService {
      * none — in both cases the caller lets the permanent enter right away.
      */
     private boolean beginChooseCardNameOnEnter(GameData gameData, UUID controllerId, Card card) {
+        return beginChooseCardNameOnEnter(gameData, controllerId, card, null);
+    }
+
+    private boolean beginChooseCardNameOnEnter(
+            GameData gameData, UUID controllerId, Card card, UUID attachedTo) {
         ChooseCardNameOnEnterEffect effect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
                 .map(e -> (ChooseCardNameOnEnterEffect) e)
@@ -412,10 +417,12 @@ public class StackResolutionService {
                 effect.handAccess() == ChooseCardNameOnEnterEffect.HandAccess.REVEAL_OPPONENT_HAND;
         if (effect.nonbasicLandOnly()) {
             return playerInputService.beginCardNameChoice(
-                    gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards, true);
+                    gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
+                    true, attachedTo);
         }
         return playerInputService.beginCardNameChoice(
-                gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards);
+                gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
+                false, attachedTo);
     }
 
     private boolean beginChooseCardTypeOnEnter(GameData gameData, UUID controllerId, Card card) {
@@ -616,6 +623,8 @@ public class StackResolutionService {
                         .build());
                 disposeFizzledPermanentSpell(gameData, entry, card);
                 log.info("Game {} - {} fizzles, target player {} no longer in game", gameData.id, characteristics.getName(), targetPlayerId);
+            } else if (beginChooseCardNameOnEnter(gameData, controllerId, card, targetPlayerId)) {
+                return;
             } else {
                 Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
@@ -640,6 +649,8 @@ public class StackResolutionService {
                 disposeFizzledPermanentSpell(gameData, entry, card);
 
                 log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, characteristics.getName(), entry.getTargetId());
+            } else if (beginChooseCardNameOnEnter(gameData, controllerId, card, entry.getTargetId())) {
+                return;
             } else {
                 Permanent perm = createEnteringPermanent(
                         entry, card, characteristics, entry.getBestowOriginalCard() != null);

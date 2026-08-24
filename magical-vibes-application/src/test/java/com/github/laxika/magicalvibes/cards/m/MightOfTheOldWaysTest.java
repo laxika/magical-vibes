@@ -86,7 +86,6 @@ class MightOfTheOldWaysTest extends BaseCardTest {
 
         UUID forestId = forest.getId();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(forestId)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 }

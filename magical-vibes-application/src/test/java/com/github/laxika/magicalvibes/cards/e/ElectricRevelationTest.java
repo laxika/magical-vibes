@@ -55,7 +55,7 @@ class ElectricRevelationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castRetrace(player1, 0, 0);
+        harness.castFlashbackWithDiscard(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))

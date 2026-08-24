@@ -17,7 +17,7 @@ class TirelessHaulerTest extends BaseCardTest {
     @Test
     void transformsToDireStrainBrawlerWhenItBecomesNight() {
         gd.dayNight = DayNight.DAY;
-        Permanent hauler = harness.addToBattlefieldAndReturn(player1, new TirelessHauler());
+        Permanent hauler = harness.enterBattlefieldAndReturn(player1, new TirelessHauler());
 
         gd.spellsCastLastTurn.clear();
         advanceToUntap(player1);
@@ -29,7 +29,7 @@ class TirelessHaulerTest extends BaseCardTest {
     @Test
     void transformsToTirelessHaulerWhenItBecomesDay() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent brawler = harness.addToBattlefieldAndReturn(player1, new TirelessHauler());
+        Permanent brawler = harness.enterBattlefieldAndReturn(player1, new TirelessHauler());
 
         gd.spellsCastLastTurn.put(player1.getId(), 2);
         advanceToUntap(player1);
@@ -39,9 +39,6 @@ class TirelessHaulerTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

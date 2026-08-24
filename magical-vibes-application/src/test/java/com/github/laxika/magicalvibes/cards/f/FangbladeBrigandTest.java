@@ -83,9 +83,6 @@ class FangbladeBrigandTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

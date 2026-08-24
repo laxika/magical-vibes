@@ -28,8 +28,8 @@ class BriarbridgeTrackerTest extends BaseCardTest {
 
         Permanent tracker = findPermanent(player1, "Briarbridge Tracker");
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
-        assertThat(tracker.getEffectivePower()).isEqualTo(4);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
     }
 
     @Test
@@ -37,8 +37,8 @@ class BriarbridgeTrackerTest extends BaseCardTest {
     void noTokenMeansNoBoost() {
         Permanent tracker = harness.addToBattlefieldAndReturn(player1, new BriarbridgeTracker());
 
-        assertThat(tracker.getEffectivePower()).isEqualTo(2);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
     }
 
     @Test
@@ -61,7 +61,7 @@ class BriarbridgeTrackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Clue")).isEmpty();
-        assertThat(tracker.getEffectivePower()).isEqualTo(2);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
     }
 }

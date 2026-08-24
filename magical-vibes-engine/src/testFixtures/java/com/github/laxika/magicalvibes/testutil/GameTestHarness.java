@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.springframework.context.ApplicationContext;
@@ -90,6 +91,7 @@ public class GameTestHarness {
     private static com.github.laxika.magicalvibes.service.combat.block.CombatBlockService staticCombatBlockService;
     private static StateBasedActionService staticStateBasedActionService;
     private static LifeSupport staticLifeSupport;
+    private static UntapStepService staticUntapStepService;
     private static CardCatalog staticCardCatalog;
     private static RandomDeckGenerator staticRandomDeckGenerator;
 
@@ -126,6 +128,7 @@ public class GameTestHarness {
         staticCombatBlockService = context.getBean(com.github.laxika.magicalvibes.service.combat.block.CombatBlockService.class);
         staticStateBasedActionService = context.getBean(StateBasedActionService.class);
         staticLifeSupport = context.getBean(LifeSupport.class);
+        staticUntapStepService = context.getBean(UntapStepService.class);
         staticCardCatalog = context.getBean(CardCatalog.class);
         staticRandomDeckGenerator = context.getBean(RandomDeckGenerator.class);
     }
@@ -178,6 +181,7 @@ public class GameTestHarness {
     private final com.github.laxika.magicalvibes.service.combat.block.CombatBlockService combatBlockService;
     private final StateBasedActionService stateBasedActionService;
     private final LifeSupport lifeSupport;
+    private final UntapStepService untapStepService;
 
     public GameTestHarness() {
         initServices();
@@ -214,6 +218,7 @@ public class GameTestHarness {
         combatBlockService = staticCombatBlockService;
         stateBasedActionService = staticStateBasedActionService;
         lifeSupport = staticLifeSupport;
+        untapStepService = staticUntapStepService;
 
         // Create per-test state
         player1 = new Player(UUID.randomUUID(), "Alice");
@@ -307,6 +312,16 @@ public class GameTestHarness {
         Permanent perm = new Permanent(card);
         gameData.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    public Permanent enterBattlefieldAndReturn(Player player, Card card) {
+        Permanent permanent = new Permanent(card);
+        inMutationScope(() -> {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, player.getId(), permanent.getCard(), null, false);
+        });
+        return permanent;
     }
 
     /**
@@ -1319,6 +1334,13 @@ public class GameTestHarness {
                 discardHandCardIndices);
     }
 
+    public void castFlashbackWithDiscard(Player player, int graveyardCardIndex, int discardHandCardIndex) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(),
+                null, null, List.of(), null, null, List.of(), Map.of(), List.of(), List.of(),
+                List.of(discardHandCardIndex));
+    }
+
     public void castFlashback(Player player, int graveyardCardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetIds);
@@ -1793,6 +1815,11 @@ public class GameTestHarness {
 
     public void forceStep(TurnStep step) {
         gameData.currentStep = step;
+    }
+
+    public void performUntapStep(Player activePlayer) {
+        forceActivePlayer(activePlayer);
+        inMutationScope(() -> untapStepService.untapPermanents(gameData, activePlayer.getId()));
     }
 
     public void clearPriorityPassed() {

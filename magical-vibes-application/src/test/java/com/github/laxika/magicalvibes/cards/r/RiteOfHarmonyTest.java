@@ -39,7 +39,7 @@ class RiteOfHarmonyTest extends BaseCardTest {
         castRiteFromHand();
 
         harness.setHand(player1, List.of(new FurnaceOfRath()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();

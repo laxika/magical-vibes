@@ -67,6 +67,7 @@ class FlameChannelerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private int indexOf(Permanent permanent) {

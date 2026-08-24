@@ -50,12 +50,12 @@ class NecrosynthesisTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search.params().cards()).containsExactly(forest, mountain, island);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(forest, mountain, island);
 
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(mountain.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(mountain);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);

@@ -64,8 +64,9 @@ class CurseOfShakenFaithTest extends BaseCardTest {
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         Reverberate reverberate = new Reverberate();
         harness.setHand(player2, List.of(counsel, reverberate));
-        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);
 
         harness.castSorcery(player2, 0, 0);

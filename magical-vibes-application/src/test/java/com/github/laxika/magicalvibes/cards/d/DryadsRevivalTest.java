@@ -40,7 +40,7 @@ class DryadsRevivalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castFlashback(player1, 0, List.of(target.getId()), List.of());
+        harness.castFlashback(player1, 0, target.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Holy Day");

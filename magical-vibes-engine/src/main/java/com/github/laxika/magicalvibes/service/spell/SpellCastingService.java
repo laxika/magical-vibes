@@ -5214,7 +5214,7 @@ public class SpellCastingService {
                 || additionalCosts.blightCost() != null || additionalCosts.putCounterCost() != null
                 || additionalCosts.putCountersOrPayManaCost() != null
                 || additionalCosts.exileGraveyardCost() != null
-                || additionalCosts.exileXCardsCost() != null || additionalCosts.discardCost() != null
+                || additionalCosts.exileXCardsCost() != null
                 || additionalCosts.discardRandomCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
                 || additionalCosts.discardXCardsCost() != null
@@ -5241,6 +5241,23 @@ public class SpellCastingService {
             additionalSpellCostService.validateTapMultiplePermanentsCost(
                     gameData, player, castHalf, additionalCosts.tapMultipleCost(),
                     additionalCostSacrificePermanentIds, effectiveXValue);
+        }
+        if (additionalCosts.sacrificeAnyNumberCost() != null) {
+            additionalSpellCostService.validateSacrificeAnyNumberOfPermanentsCost(
+                    gameData, player, castHalf, additionalCosts.sacrificeAnyNumberCost(),
+                    additionalCostSacrificePermanentIds);
+        }
+        if (additionalCosts.discardCost() != null) {
+            if (additionalCosts.discardCost().count() == 1) {
+                Integer discardIndex = discardHandCardIndices.size() == 1
+                        ? discardHandCardIndices.getFirst() : null;
+                additionalSpellCostService.validateDiscardCost(
+                        gameData, player, castHalf, additionalCosts.discardCost(), discardIndex, -1);
+            } else {
+                additionalSpellCostService.validateDiscardCardsCost(
+                        gameData, player, castHalf, additionalCosts.discardCost(),
+                        discardHandCardIndices, -1);
+            }
         }
         AdditionalSpellCostService.CostSelection graveyardCostSelection = new AdditionalSpellCostService.CostSelection(
                 sacrificePermanentId, null, null, null, null, 0, -1, List.of(), null, null,
@@ -5340,6 +5357,15 @@ public class SpellCastingService {
                 gameData, player, card, graveyardCounterCost, additionalCostSacrificePermanentIds);
         payRemoveXCountersFromControlledPermanentsCost(
                 gameData, player, card, flashbackCounterCost, effectiveXValue, additionalCostSacrificePermanentIds);
+        if (additionalCosts.discardCost() != null) {
+            if (additionalCosts.discardCost().count() == 1) {
+                payDiscardCost(gameData, player, castHalf, additionalCosts.discardCost(),
+                        discardHandCardIndices.getFirst(), -1);
+            } else {
+                payDiscardCardsCost(gameData, player, castHalf, additionalCosts.discardCost(),
+                        discardHandCardIndices, -1);
+            }
+        }
         if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {
             effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
         }
@@ -5358,6 +5384,11 @@ public class SpellCastingService {
         // tracking flags on the back-face cost are found (parent split has no SPELL-slot costs).
         if (additionalCosts.sacrificeCreature() || additionalCosts.sacrificePermanentCost() != null) {
             payAllSacrificeCosts(gameData, player, castHalf, sacrificePermanentId, additionalCosts, effectiveXValue);
+        }
+        if (additionalCosts.sacrificeAnyNumberCost() != null) {
+            effectiveXValue = paySacrificeAnyNumberOfPermanentsCost(
+                    gameData, player, castHalf, additionalCosts.sacrificeAnyNumberCost(),
+                    additionalCostSacrificePermanentIds);
         }
 
         boolean grantedPermanentCast = grantedGraveyardCardCast
@@ -5544,6 +5575,41 @@ public class SpellCastingService {
             return;
         }
 
+        ExileCardsFromGraveyardEffect exileFromGraveyardEffect = spellEffects.stream()
+                .filter(ExileCardsFromGraveyardEffect.class::isInstance)
+                .map(ExileCardsFromGraveyardEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileFromGraveyardEffect != null) {
+            long matchingCount = gameData.orderedPlayerIds.stream()
+                    .flatMap(playerIdToSearch -> gameData.playerGraveyards
+                            .getOrDefault(playerIdToSearch, List.of()).stream())
+                    .filter(candidate -> exileFromGraveyardEffect.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            candidate, exileFromGraveyardEffect.filter(), card.getId()))
+                    .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(
+                            gameData, candidate, playerId))
+                    .count();
+            if (matchingCount > 0) {
+                gameData.graveyardTargetOperation.permanentTargetIds = new ArrayList<>(targetIds);
+                graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(
+                        gameData, playerId, card, entryType, exileFromGraveyardEffect.maxTargets(),
+                        exileFromGraveyardEffect.filter(), spellEffects);
+                gameData.graveyardTargetOperation.flashback = true;
+                return;
+            }
+            StackEntry noTargetStackEntry = new StackEntry(
+                    entryType, card, playerId, spellName,
+                    spellEffects, 0, null,
+                    null, Map.of(), null, List.of(), targetIds
+            );
+            noTargetStackEntry.setCastWithFlashback(true);
+            noTargetStackEntry.setSourceZone(Zone.GRAVEYARD);
+            gameData.stack.add(noTargetStackEntry);
+            finishSpellCast(gameData, playerId, player, graveyard, card, false);
+            return;
+        }
+
         StackEntry stackEntry;
         ReturnCardFromGraveyardEffect graveyardReturnEffect = spellEffects.stream()
                 .map(SpellCastingService::unwrapConditional)
@@ -5592,7 +5658,8 @@ public class SpellCastingService {
             stackEntry = new StackEntry(
                     entryType, card, playerId, spellName,
                     spellEffects, effectiveXValue, targetId,
-                    null, Map.of(), Zone.GRAVEYARD, List.of(), targetIds
+                    null, Map.of(), Zone.GRAVEYARD,
+                    targetId != null ? List.of(targetId) : List.of(), targetIds
             );
         } else if (dividedDamageEffect != null) {
             stackEntry = new StackEntry(
@@ -5649,7 +5716,8 @@ public class SpellCastingService {
                 stackEntry = new StackEntry(
                         entryType, card, playerId, spellName,
                         spellEffects, effectiveXValue, targetId, null,
-                        Map.of(), Zone.GRAVEYARD, List.of(), List.of()
+                        Map.of(), Zone.GRAVEYARD,
+                        targetId != null ? List.of(targetId) : List.of(), List.of()
                 );
             } else if (targetId != null && EffectResolution.needsTarget(castHalf)) {
                 targetLegalityService.validateSpellTargeting(gameData, castHalf, targetId, null, playerId, true);

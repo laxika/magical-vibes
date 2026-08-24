@@ -6439,8 +6439,10 @@ public class TriggerCollectionService {
 
     private void dispatchAnyCreatureDeathTriggersForWatcher(GameData gameData, UUID playerId, Permanent perm,
             Permanent dyingPermanent, UUID dyingCreatureControllerId, TriggerContext.CreatureDeath ctx) {
-        List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES);
-        if (effects == null || effects.isEmpty()) return;
+        List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES));
+        if (effects.isEmpty()) return;
 
         Card dyingCard = dyingPermanent.getCard();
         for (CardEffect effect : effects) {

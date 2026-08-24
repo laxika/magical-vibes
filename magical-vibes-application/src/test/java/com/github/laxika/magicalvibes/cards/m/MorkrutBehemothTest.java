@@ -34,7 +34,7 @@ class MorkrutBehemothTest extends BaseCardTest {
     @DisplayName("Pays {1}{B} instead of sacrificing")
     void paysManaInsteadOfSacrificing() {
         harness.setHand(player1, List.of(new MorkrutBehemoth()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

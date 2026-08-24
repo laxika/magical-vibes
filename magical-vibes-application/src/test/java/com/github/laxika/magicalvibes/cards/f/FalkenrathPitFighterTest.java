@@ -54,7 +54,7 @@ class FalkenrathPitFighterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 

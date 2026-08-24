@@ -21,6 +21,7 @@ class CurseOfLeechesTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -49,7 +50,7 @@ class CurseOfLeechesTest extends BaseCardTest {
         gd.dayNight = DayNight.NIGHT;
         gd.spellsCastLastTurn.put(player1.getId(), 2);
 
-        advanceToUpkeep(player1);
+        harness.performUntapStep(player1);
 
         assertThat(curse.getCard()).isInstanceOf(CurseOfLeeches.class);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

@@ -22,7 +22,7 @@ class DreadhoundTest extends BaseCardTest {
     void entersAndMillsThreeCards() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
-        harness.addToBattlefield(player1, new Dreadhound());
+        harness.enterBattlefieldAndReturn(player1, new Dreadhound());
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

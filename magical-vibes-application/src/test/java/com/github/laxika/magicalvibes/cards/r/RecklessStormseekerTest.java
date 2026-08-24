@@ -22,7 +22,7 @@ class RecklessStormseekerTest extends BaseCardTest {
     @DisplayName("Front face boosts a creature you control and grants haste at beginning of combat")
     void frontFaceBoostsAndGrantsHaste() {
         gd.dayNight = DayNight.DAY;
-        harness.addToBattlefield(player1, new RecklessStormseeker());
+        harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToCombat(player1);
@@ -37,7 +37,7 @@ class RecklessStormseekerTest extends BaseCardTest {
     @DisplayName("Back face boosts a creature you control and grants trample and haste at beginning of combat")
     void backFaceBoostsAndGrantsTrampleAndHaste() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new RecklessStormseeker());
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(source.isTransformed()).isTrue();
@@ -54,7 +54,7 @@ class RecklessStormseekerTest extends BaseCardTest {
     @DisplayName("The trigger cannot target a creature controlled by an opponent")
     void cannotTargetOpponentCreature() {
         gd.dayNight = DayNight.DAY;
-        harness.addToBattlefield(player1, new RecklessStormseeker());
+        harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToCombat(player1);
@@ -67,7 +67,7 @@ class RecklessStormseekerTest extends BaseCardTest {
     @DisplayName("The boost and haste wear off at end of turn")
     void frontFaceEffectsWearOffAtEndOfTurn() {
         gd.dayNight = DayNight.DAY;
-        harness.addToBattlefield(player1, new RecklessStormseeker());
+        harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToCombat(player1);

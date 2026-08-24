@@ -1121,6 +1121,9 @@ public class ChoiceHandlerService {
 
         Permanent perm = new Permanent(card);
         perm.setChosenName(cardName);
+        if (ctx.attachedTo() != null) {
+            perm.setAttachedTo(ctx.attachedTo());
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -1134,7 +1137,12 @@ public class ChoiceHandlerService {
 
         legendRuleService.checkLegendRule(gameData, controllerId);
 
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        battlefieldEntryService.processCreatureETBEffects(
+                gameData, controllerId, perm.getCard(), ctx.attachedTo(), true);
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private void handleCardTypeOnEnterChosen(GameData gameData, Player player, String typeName,

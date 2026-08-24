@@ -90,7 +90,7 @@ class ArlinnThePacksHopeTest extends BaseCardTest {
 
     @Test
     void dayAndNightTransformArlinn() {
-        Permanent arlinn = harness.addToBattlefieldAndReturn(player1, new ArlinnThePacksHope());
+        Permanent arlinn = harness.enterBattlefieldAndReturn(player1, new ArlinnThePacksHope());
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(arlinn.isTransformed()).isFalse();
@@ -135,9 +135,6 @@ class ArlinnThePacksHopeTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

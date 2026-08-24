@@ -565,6 +565,7 @@ public class EtbTriggerService {
             // from the cast is deliberately ignored — the engine never asked for it.
             boolean gateConditionalNeedsTarget = otherEffects.stream()
                     .anyMatch(e -> e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()
+                            && (!card.isAura() || card.getEffectTargetIndex(e) != 0)
                             && (ce.targetSpec().admits(TargetPredicate.Kind.PLAYER) || ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
             // MayPayManaEffect ETBs never take a cast-time target (see EffectResolution), so a

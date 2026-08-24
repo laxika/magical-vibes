@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.w.WingShredder;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ class BirdAdmirerTest extends BaseCardTest {
 
     @Test
     void becomesDayWhenItEntersWithoutADesignation() {
-        Permanent admirer = harness.addToBattlefieldAndReturn(player1, new BirdAdmirer());
+        Permanent admirer = harness.enterBattlefieldAndReturn(player1, new BirdAdmirer());
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(admirer.isTransformed()).isFalse();
@@ -26,7 +25,7 @@ class BirdAdmirerTest extends BaseCardTest {
     @Test
     void entersAsWingShredderDuringNight() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent admirer = harness.addToBattlefieldAndReturn(player1, new BirdAdmirer());
+        Permanent admirer = harness.enterBattlefieldAndReturn(player1, new BirdAdmirer());
 
         assertThat(admirer.isTransformed()).isTrue();
         assertThat(admirer.getCard()).isInstanceOf(WingShredder.class);
@@ -35,7 +34,7 @@ class BirdAdmirerTest extends BaseCardTest {
     @Test
     void transformsWithDayAndNight() {
         gd.dayNight = DayNight.DAY;
-        Permanent admirer = harness.addToBattlefieldAndReturn(player1, new BirdAdmirer());
+        Permanent admirer = harness.enterBattlefieldAndReturn(player1, new BirdAdmirer());
 
         gd.spellsCastLastTurn.clear();
         advanceToUntap(player1);
@@ -53,9 +52,6 @@ class BirdAdmirerTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

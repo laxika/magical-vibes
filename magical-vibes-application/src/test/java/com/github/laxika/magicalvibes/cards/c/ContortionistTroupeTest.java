@@ -68,7 +68,7 @@ class ContortionistTroupeTest extends BaseCardTest {
         advanceToEndStep();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(troupe.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(troupe.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
     }
 
     @Test
@@ -94,7 +94,7 @@ class ContortionistTroupeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(troupe.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(troupe.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
     }
 
     private void advanceToEndStep() {

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MercilessPredator;
+import com.github.laxika.magicalvibes.cards.r.RecklessWaif;
 import com.github.laxika.magicalvibes.cards.s.SnarlingWolf;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,8 +23,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         TovolarDireOverlord.class,
         TovolarTheMidnightScourge.class,
         SnarlingWolf.class,
-        TavernRuffian.class,
-        TavernSmasher.class,
+        RecklessWaif.class,
+        MercilessPredator.class,
         GrizzlyBears.class
 })
 class TovolarDireOverlordTest extends BaseCardTest {
@@ -49,8 +51,8 @@ class TovolarDireOverlordTest extends BaseCardTest {
         Permanent tovolar = addCreatureReady(player1, new TovolarDireOverlord());
         addCreatureReady(player1, new SnarlingWolf());
         addCreatureReady(player1, new SnarlingWolf());
-        Permanent chosenRuffian = addCreatureReady(player1, new TavernRuffian());
-        Permanent unchosenRuffian = addCreatureReady(player1, new TavernRuffian());
+        Permanent chosenWerewolf = addCreatureReady(player1, new RecklessWaif());
+        Permanent unchosenWerewolf = addCreatureReady(player1, new RecklessWaif());
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
         resolveTovolarUpkeepTrigger();
@@ -58,12 +60,12 @@ class TovolarDireOverlordTest extends BaseCardTest {
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(tovolar.isTransformed()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)
-                .validIds()).containsExactlyInAnyOrder(chosenRuffian.getId(), unchosenRuffian.getId());
+                .validIds()).containsExactlyInAnyOrder(chosenWerewolf.getId(), unchosenWerewolf.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosenRuffian.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosenWerewolf.getId()));
 
-        assertThat(chosenRuffian.isTransformed()).isTrue();
-        assertThat(unchosenRuffian.isTransformed()).isFalse();
+        assertThat(chosenWerewolf.isTransformed()).isTrue();
+        assertThat(unchosenWerewolf.isTransformed()).isFalse();
     }
 
     @Test
@@ -72,7 +74,7 @@ class TovolarDireOverlordTest extends BaseCardTest {
         Permanent tovolar = addCreatureReady(player1, new TovolarDireOverlord());
         addCreatureReady(player1, new SnarlingWolf());
         addCreatureReady(player1, new SnarlingWolf());
-        Permanent ruffian = addCreatureReady(player1, new TavernRuffian());
+        Permanent werewolf = addCreatureReady(player1, new RecklessWaif());
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
         resolveTovolarUpkeepTrigger();
@@ -80,7 +82,7 @@ class TovolarDireOverlordTest extends BaseCardTest {
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(tovolar.isTransformed()).isTrue();
-        assertThat(ruffian.isTransformed()).isFalse();
+        assertThat(werewolf.isTransformed()).isFalse();
     }
 
     @Test
@@ -91,6 +93,7 @@ class TovolarDireOverlordTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
         harness.forceActivePlayer(player1);
+        harness.performUntapStep(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -102,8 +105,7 @@ class TovolarDireOverlordTest extends BaseCardTest {
     @Test
     void backFaceAbilityBoostsControlledWolfAndGrantsTrample() {
         gd.dayNight = DayNight.NIGHT;
-        harness.addToBattlefield(player1, new TovolarDireOverlord());
-        Permanent tovolar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent tovolar = harness.enterBattlefieldAndReturn(player1, new TovolarDireOverlord());
         Permanent wolf = addCreatureReady(player1, new SnarlingWolf());
         int powerBefore = gqs.getEffectivePower(gd, wolf);
 
@@ -120,8 +122,7 @@ class TovolarDireOverlordTest extends BaseCardTest {
     @Test
     void backFaceAbilityCannotTargetNonWolfCreature() {
         gd.dayNight = DayNight.NIGHT;
-        harness.addToBattlefield(player1, new TovolarDireOverlord());
-        Permanent tovolar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent tovolar = harness.enterBattlefieldAndReturn(player1, new TovolarDireOverlord());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -132,7 +133,7 @@ class TovolarDireOverlordTest extends BaseCardTest {
     }
 
     private void resolveTovolarUpkeepTrigger() {
-        harness.forceActivePlayer(player1);
+        harness.performUntapStep(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

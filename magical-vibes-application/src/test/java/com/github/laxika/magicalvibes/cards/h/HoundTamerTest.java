@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -34,7 +33,7 @@ class HoundTamerTest extends BaseCardTest {
     @Test
     void untamedPupGivesOtherWolvesAndWerewolvesTrample() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent pup = harness.addToBattlefieldAndReturn(player1, new HoundTamer());
+        Permanent pup = harness.enterBattlefieldAndReturn(player1, new HoundTamer());
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new BoundingWolf());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
@@ -46,7 +45,7 @@ class HoundTamerTest extends BaseCardTest {
     @Test
     void dayNightTransformsBothFaces() {
         gd.dayNight = DayNight.DAY;
-        Permanent tamer = harness.addToBattlefieldAndReturn(player1, new HoundTamer());
+        Permanent tamer = harness.enterBattlefieldAndReturn(player1, new HoundTamer());
 
         gd.spellsCastLastTurn.clear();
         advanceToUntap(player1);
@@ -64,7 +63,7 @@ class HoundTamerTest extends BaseCardTest {
     @Test
     void untamedPupRetainsTheCounterAbility() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent pup = harness.addToBattlefieldAndReturn(player1, new HoundTamer());
+        Permanent pup = harness.enterBattlefieldAndReturn(player1, new HoundTamer());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BoundingWolf());
         addAbilityMana();
 
@@ -81,9 +80,6 @@ class HoundTamerTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

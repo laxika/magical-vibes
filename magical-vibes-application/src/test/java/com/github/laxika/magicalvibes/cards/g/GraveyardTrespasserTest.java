@@ -63,6 +63,7 @@ class GraveyardTrespasserTest extends BaseCardTest {
         harness.setGraveyard(player1, new ArrayList<>(List.of(ownBears)));
         harness.setGraveyard(player2, new ArrayList<>(List.of(opponentBears)));
         castTrespasser();
+        harness.passBothPriorities();
 
         Permanent glutton = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(glutton.isTransformed()).isTrue();
@@ -100,9 +101,6 @@ class GraveyardTrespasserTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

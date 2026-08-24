@@ -21,7 +21,7 @@ class VillageWatchTest extends BaseCardTest {
     @DisplayName("Night transforms Village Watch and grants haste to its controller's Wolves and Werewolves")
     void nightFaceGrantsHasteToOwnWolvesAndWerewolves() {
         gd.dayNight = DayNight.NIGHT;
-        Permanent watch = harness.addToBattlefieldAndReturn(player1, new VillageWatch());
+        Permanent watch = harness.enterBattlefieldAndReturn(player1, new VillageWatch());
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new WyluliWolf());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentWolf = harness.addToBattlefieldAndReturn(player2, new WyluliWolf());
@@ -37,7 +37,7 @@ class VillageWatchTest extends BaseCardTest {
     @DisplayName("Day and night transform Village Watch in both directions")
     void transformsWithDayAndNight() {
         gd.dayNight = DayNight.DAY;
-        Permanent watch = harness.addToBattlefieldAndReturn(player1, new VillageWatch());
+        Permanent watch = harness.enterBattlefieldAndReturn(player1, new VillageWatch());
 
         gd.spellsCastLastTurn.clear();
         advanceToUntap(player1);
@@ -51,9 +51,6 @@ class VillageWatchTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(activePlayer);
     }
 }

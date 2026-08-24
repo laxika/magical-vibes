@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -98,6 +99,8 @@ class DeathTriggerCollectorServiceTest {
 
     @Mock
     private GameLogService gameLogService;
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
 
     @Mock
     private com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
@@ -773,6 +776,7 @@ class DeathTriggerCollectorServiceTest {
                     LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false);
             Permanent perm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 3, 3);
+            when(amountEvaluationService.referencesEventValue(effect.lookCount())).thenReturn(true);
 
             svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -1267,7 +1271,7 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Default non-targeting adds to stack without sourcePermanentId")
+        @DisplayName("Default non-targeting adds to stack with sourcePermanentId")
         void defaultNonTargetingAddsToStack() {
             Card watcher = createCreature("Death Counter", 1, 1);
             var effect = new DrawCardEffect(1);
@@ -1277,7 +1281,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getSourcePermanentId()).isNull();
+            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
 
         @Test
