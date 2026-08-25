@@ -525,6 +525,8 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             PermanentChoiceContext.AttackTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             UUID choosingPlayerId = pending.choosingPlayerId();
+            Permanent sourcePermanent = pending.sourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
 
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
@@ -533,7 +535,7 @@ public class TriggeredAbilityQueueService {
                     pending.controllerId(),
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.ATTACK,
-                    null,
+                    sourcePermanent,
                     defendingPlayerId(gameData, pending.attackedTargetId()));
 
             if (result.validTargets().isEmpty()) {
@@ -706,7 +708,7 @@ public class TriggeredAbilityQueueService {
                         .toList();
                 if (remaining.isEmpty()) {
                     gameLogService.append(gameData,
-                            GameLog.cardThen(pending.sourceCard(), "'s discard trigger has no modes left to choose."));
+                            GameLog.cardThen(pending.sourceCard(), "'s trigger has no modes left to choose."));
                     continue;
                 }
                 effect = new ChooseOneEffect(remaining);

@@ -17,7 +17,8 @@ import java.util.List;
  * "choose two" is {@code (2, 2)}; "choose one or more" is {@code (1, options.size())}.
  */
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
-                              boolean allModesWhenOptionalCostPaid, Condition additionalModesCondition)
+                              boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
+                              Condition choicesMaxCondition)
         implements CombatDamageTriggerContextEffect {
 
     public static final String NO_MODE_LABEL = "Choose no modes";
@@ -35,6 +36,17 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         if (choicesMax < choicesRequired) {
             throw new IllegalArgumentException("choicesMax must be >= choicesRequired");
         }
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                           boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, modesMayRepeat, null);
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                           boolean allModesWhenOptionalCostPaid, Condition choicesMaxCondition) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, false,
+                choicesMaxCondition);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options) {
@@ -83,8 +95,14 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         return new ChooseOneEffect(options, false, 1, options.size(), false, null);
     }
 
-    public static ChooseOneEffect oneOrMoreWhen(List<ChooseOneOption> options, Condition condition) {
-        return new ChooseOneEffect(options, false, 1, options.size(), false, condition);
+    /** Modal with one required mode and additional modes available when the condition is met. */
+    public static ChooseOneEffect oneOrMoreWhen(List<ChooseOneOption> options, Condition choicesMaxCondition) {
+        return new ChooseOneEffect(options, false, 1, options.size(), false, false, choicesMaxCondition);
+    }
+
+    /** Modal with an exact number of selections where a mode may be selected repeatedly. */
+    public static ChooseOneEffect withRepeatedModes(List<ChooseOneOption> options, int choicesRequired) {
+        return new ChooseOneEffect(options, false, choicesRequired, choicesRequired, false, true);
     }
 
     /**
@@ -131,6 +149,24 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         if (xValue >= 0) {
             throw new IllegalStateException("Invalid mode bitmask: " + xValue);
         }
+        if (modesMayRepeat) {
+            long encoded = -(long) xValue;
+            int base = options.size() + 1;
+            List<Integer> chosen = new java.util.ArrayList<>(choicesRequired);
+            for (int i = 0; i < choicesRequired; i++) {
+                long digit = encoded % base;
+                if (digit < 1 || digit > options.size()) {
+                    throw new IllegalStateException("Invalid repeated mode encoding: " + xValue);
+                }
+                chosen.add((int) digit - 1);
+                encoded /= base;
+            }
+            if (encoded != 0) {
+                throw new IllegalStateException("Invalid repeated mode encoding: " + xValue);
+            }
+            java.util.Collections.reverse(chosen);
+            return chosen;
+        }
         int mask = -xValue;
         List<Integer> chosen = new java.util.ArrayList<>();
         for (int i = 0; i < options.size(); i++) {
@@ -146,8 +182,34 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         return chosen;
     }
 
+    /** Encodes repeated modal selections using a positional representation that preserves duplicates. */
+    public static int encodeRepeatedModeSelection(int optionCount, int... modeIndices) {
+        if (optionCount < 1) {
+            throw new IllegalArgumentException("optionCount must be >= 1");
+        }
+        if (modeIndices.length < 1) {
+            throw new IllegalArgumentException("At least one mode index is required");
+        }
+        int base = optionCount + 1;
+        long encoded = 0;
+        for (int modeIndex : modeIndices) {
+            if (modeIndex < 0 || modeIndex >= optionCount) {
+                throw new IllegalArgumentException("Invalid mode index: " + modeIndex);
+            }
+            encoded = encoded * base + modeIndex + 1L;
+            if (encoded > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("Mode selection does not fit in an integer");
+            }
+        }
+        return (int) -encoded;
+    }
+
+    public Condition additionalModesCondition() {
+        return choicesMaxCondition;
+    }
+
     public int effectiveChoicesMax(boolean additionalModesAllowed) {
-        return additionalModesCondition == null || additionalModesAllowed ? choicesMax : choicesRequired;
+        return choicesMaxCondition == null || additionalModesAllowed ? choicesMax : choicesRequired;
     }
 
     /** True when this modal allows a variable number of modes (e.g. "choose one or more"). */

@@ -47,11 +47,13 @@ public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
                 && gameData.getLife(opponentId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
-            triggerCollectionService.checkLifePaymentTriggers(gameData, opponentId, effect.lifeCost());
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, opponentId);
+            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - lifeLoss);
+            triggerCollectionService.checkLifePaymentTriggers(gameData, opponentId, lifeLoss);
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to avoid the {} exchange", gameData.id,
-                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                    player.getUsername(), lifeLoss, ability.sourceCard().getName());
         } else {
             // Declined (or can no longer pay) — perform the exchange.
             exchangeEffectHandler.performExchange(gameData, ability.sourceCard(), controllerId, opponentId);

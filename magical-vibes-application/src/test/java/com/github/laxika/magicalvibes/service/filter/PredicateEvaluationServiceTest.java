@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControl
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
@@ -1197,6 +1198,23 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(1))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentToughnessGreaterThanPowerPredicate matches only strict toughness superiority")
+        void toughnessGreaterThanPowerPredicateMatchesStrictly() {
+            Permanent greaterToughness = addPermanent(player1Id,
+                    createCreature("Giant Spider", 2, 4, CardColor.GREEN));
+            Permanent equalPowerToughness = addPermanent(player1Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent greaterPower = addPermanent(player1Id,
+                    createCreature("Goblin Piker", 2, 1, CardColor.RED));
+
+            PermanentToughnessGreaterThanPowerPredicate predicate =
+                    new PermanentToughnessGreaterThanPowerPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, greaterToughness, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, equalPowerToughness, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, greaterPower, predicate)).isFalse();
         }
 
         @Test

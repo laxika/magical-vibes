@@ -138,6 +138,7 @@ public class InteractionPromptProjectionRegistry {
                 this::projectGraveyardExileCostChoice);
         register(PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 this::projectActivatedAbilityGraveyardExileCostChoice);
+        register(PendingInteraction.CraftMaterialChoice.class, this::projectCraftMaterialChoice);
         register(PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice.class,
                 this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
@@ -901,6 +902,13 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.ActivatedAbilityGraveyardExileCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectCraftMaterialChoice(
+            GameData gameData, PendingInteraction.CraftMaterialChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.minimumCards(),
+                interaction.maximumCards(), interaction.prompt());
     }
 
     private InteractionPromptMessage projectActivatedAbilityGraveyardLibraryCostChoice(

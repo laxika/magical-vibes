@@ -77,8 +77,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                 if (gameQueryService.isCreature(gameData, permanent)
                         && (e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
                         || entry.getSourcePermanentId() == null
-                        || !permanent.getId().equals(entry.getSourcePermanentId()))) {
-                    applyEffect(gameData, entry, e, permanent);
+                        || !permanent.getId().equals(entry.getSourcePermanentId()))
+                        && applyEffect(gameData, entry, e, permanent)) {
                     count[0]++;
                 }
             });
@@ -87,34 +87,41 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID targetId = switch (e.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-            case TARGET -> entry.getTargetId();
-            default -> null;
-        };
-        if (targetId == null) {
+        List<UUID> targetIds;
+        if (e.scope() == GrantScope.SELF) {
+            UUID sourceId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId() : entry.getTargetId();
+            targetIds = sourceId == null ? List.of() : List.of(sourceId);
+        } else if (e.scope() == GrantScope.TARGET) {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
+        } else {
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
-            return;
-        }
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
 
-        if (!applyEffect(gameData, entry, e, target)) {
-            return;
-        }
+            if (!applyEffect(gameData, entry, e, target)) {
+                continue;
+            }
 
-        String durationText = switch (e.duration()) {
-            case CONTINUOUS, PERMANENT -> "indefinitely";
-            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS,
-                    WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_ATTACHED ->
-                    "for as long as its source remains on the battlefield";
-            default -> "until end of turn";
-        };
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " loses all abilities " + durationText + "."));
-        log.info("Game {} - {} loses all abilities {}", gameData.id, target.getCard().getName(), durationText);
+            String durationText = switch (e.duration()) {
+                case CONTINUOUS, PERMANENT -> "indefinitely";
+                case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS,
+                        WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_ATTACHED ->
+                        "for as long as its source remains on the battlefield";
+                default -> "until end of turn";
+            };
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " loses all abilities " + durationText + "."));
+            log.info("Game {} - {} loses all abilities {}", gameData.id, target.getCard().getName(), durationText);
+        }
     }
 
     private boolean applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {

@@ -401,11 +401,13 @@ public class CombatBlockService {
             combatAttackService.payGenericMana(gameData.playerManaPools.get(defenderId), blockTaxTotal);
         }
         if (blockLifeTaxTotal > 0) {
+            int lifeLoss = blockLifeTaxTotal
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, defenderId);
             int currentLife = gameData.playerLifeTotals.get(defenderId);
-            gameData.playerLifeTotals.put(defenderId, currentLife - blockLifeTaxTotal);
-            gameData.lifeLostThisTurn.merge(defenderId, blockLifeTaxTotal, Integer::sum);
+            gameData.playerLifeTotals.put(defenderId, currentLife - lifeLoss);
+            gameData.lifeLostThisTurn.merge(defenderId, lifeLoss, Integer::sum);
             gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " pays " + blockLifeTaxTotal + " life to declare blockers."));
+                    player.getUsername() + " pays " + lifeLoss + " life to declare blockers."));
         }
 
         combatTapCostService.payBlockCosts(gameData, defenderId, attackerBattlefield, declaredBlockers);

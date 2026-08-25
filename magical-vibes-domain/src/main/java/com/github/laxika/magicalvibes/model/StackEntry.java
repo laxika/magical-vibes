@@ -324,11 +324,20 @@ public class StackEntry {
      */
     private final List<UUID> playersDealtDamageThisResolution = new ArrayList<>();
 
+    /** Trigger effects already fired for the single noncombat damage event represented by this entry. */
+    private final Map<UUID, Set<CardEffect>> noncombatExcessDamageTriggerEffectsFired = new HashMap<>();
+
     /** Records that this entry dealt damage to {@code playerId}; duplicates are ignored. */
     public void recordPlayerDealtDamage(UUID playerId) {
         if (playerId != null && !playersDealtDamageThisResolution.contains(playerId)) {
             playersDealtDamageThisResolution.add(playerId);
         }
+    }
+
+    public boolean markNoncombatExcessDamageTriggerFired(UUID sourcePermanentId, CardEffect effect) {
+        return noncombatExcessDamageTriggerEffectsFired
+                .computeIfAbsent(sourcePermanentId, ignored -> new HashSet<>())
+                .add(effect);
     }
 
     /**
@@ -638,6 +647,8 @@ public class StackEntry {
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
+        source.noncombatExcessDamageTriggerEffectsFired.forEach((sourceId, effects) ->
+                this.noncombatExcessDamageTriggerEffectsFired.put(sourceId, new HashSet<>(effects)));
     }
 
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {

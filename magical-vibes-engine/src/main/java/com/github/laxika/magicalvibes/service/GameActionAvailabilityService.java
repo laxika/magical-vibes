@@ -107,7 +107,8 @@ public class GameActionAvailabilityService {
     public int getPotentialManaTotal(GameData gameData, UUID playerId) {
         int potential = potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal();
         ManaPool current = gameData.playerManaPools.get(playerId);
-        return potential + (current == null ? 0 : current.getAbilityOnlyManaTotal());
+        return potential + (current == null ? 0
+                : current.getAbilityOnlyManaTotal() + current.getLandAbilityOnlyManaTotal());
     }
 
     /**
@@ -155,10 +156,17 @@ public class GameActionAvailabilityService {
                     continue;
                 }
                 ManaPool pool = fullPool;
+                if (gameQueryService.isLand(gameData, perm)) {
+                    pool = new VirtualManaPool(fullPool);
+                    pool.promoteLandAbilityOnlyMana();
+                }
                 if (ability.isRequiresTap()) {
                     if (poolWithoutSource == null) {
                         poolWithoutSource = potentialManaService.buildVirtualManaPool(gameData, playerId, perm.getId());
                         poolWithoutSource.promoteAbilityOnlyMana();
+                        if (gameQueryService.isLand(gameData, perm)) {
+                            poolWithoutSource.promoteLandAbilityOnlyMana();
+                        }
                         if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
                             poolWithoutSource.setAllManaSpendableAsAnyColor(true);
                         }
@@ -314,6 +322,11 @@ public class GameActionAvailabilityService {
 
         if ((card.getCastingOption(OmenCast.class).isPresent()
                 || card.getCastingOption(AdventureCast.class).isPresent()) && card.getBackFaceCard() != null
+                && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
+                extraConvokeMana, additionalGenericCost, ctx)) {
+            return true;
+        }
+        if (card.getCastingOption(AdventureCast.class).isPresent() && card.getBackFaceCard() != null
                 && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
                 extraConvokeMana, additionalGenericCost, ctx)) {
             return true;

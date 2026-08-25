@@ -34,6 +34,7 @@ public sealed interface CardPredicate permits
         CardIsSelfPredicate,
         CardKeywordPredicate,
         CardNameInControllerGraveyardPredicate,
+        CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate,
         CardManaValueAtMostSourcePowerPredicate,
         CardManaValueLessThanSourceLoyaltyPredicate,
         CardMaxManaValuePredicate,

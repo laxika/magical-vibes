@@ -128,6 +128,7 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
@@ -256,6 +257,7 @@ export class TargetingChoiceService {
   modeChoicesRequired = 1;
   modeChoicesMax = 1;
   modeOptional = false;
+  modeModesMayRepeat = false;
   modeSelectedIndices: number[] = [];
   modeForAbility = false;
   modeAbilityPermanentIndex = -1;
@@ -645,6 +647,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -947,6 +950,15 @@ export class TargetingChoiceService {
       this.modeSelectedIndices = [optionIndex];
       return;
     }
+    if (this.modeModesMayRepeat) {
+      const count = this.modeSelectedIndices.filter(i => i === optionIndex).length;
+      this.modeSelectedIndices = this.modeSelectedIndices.length >= this.modeChoicesMax
+        ? count === 0
+          ? this.modeSelectedIndices
+          : this.modeSelectedIndices.filter(i => i !== optionIndex)
+        : [...this.modeSelectedIndices, optionIndex];
+      return;
+    }
     if (this.modeSelectedIndices.includes(optionIndex)) {
       this.modeSelectedIndices = this.modeSelectedIndices.filter(i => i !== optionIndex);
     } else if (this.modeSelectedIndices.length < this.modeChoicesMax) {
@@ -958,14 +970,26 @@ export class TargetingChoiceService {
     return this.modeSelectedIndices.includes(optionIndex);
   }
 
+  modeSelectionCount(optionIndex: number): number {
+    return this.modeSelectedIndices.filter(i => i === optionIndex).length;
+  }
+
   /**
    * Encodes the mode selection the same way the engine's ChooseOneEffect.encodeModeSelection
-   * does: exact choose-one uses the 0-based mode index; choose-two / one-or-more use a
-   * negative bitmask (including selecting a single mode of a one-or-more spell).
+   * does: exact choose-one uses the 0-based mode index; ordinary multi-mode spells use a
+   * negative bitmask, while repeatable modes use a positional encoding.
    */
   private encodeModeSelection(indices: number[]): number {
     if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       return indices[0];
+    }
+    if (this.modeModesMayRepeat) {
+      const base = this.modeOptions.length + 1;
+      let encoded = 0;
+      for (const i of indices) {
+        encoded = encoded * base + i + 1;
+      }
+      return -encoded;
     }
     let mask = 0;
     for (const i of indices) {
@@ -1077,6 +1101,7 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
     this.modeForAbility = false;
     this.modeAbilityPermanentIndex = -1;
@@ -1252,6 +1277,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -2849,6 +2875,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = ability.modalChoicesRequired ?? 1;
       this.modeChoicesMax = ability.modalChoicesMax ?? this.modeChoicesRequired;
       this.modeOptional = false;
+      this.modeModesMayRepeat = false;
       this.modeSelectedIndices = [];
       return;
     }

@@ -647,6 +647,13 @@ public class ValidTargetService {
                 prompt = "Select " + graveyardEffect.count() + " target cards from an opponent's graveyard";
                 break;
             }
+            if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
+                    && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+                minTargets = 0;
+                maxTargets = validGraveyardCardIds.size();
+                prompt = "Select any number of target cards from your graveyard";
+                break;
+            }
             // "Exile up to N target cards from a single graveyard" (Rag Dealer): "up to" allows zero
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
@@ -1394,6 +1401,19 @@ public class ValidTargetService {
                 }
                 break;
             }
+            if (effect instanceof ExileGraveyardCardsEffect ge
+                    && ge.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+                for (UUID playerId : List.of(controllerId)) {
+                    for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (!excludeIds.contains(c.getId())
+                                && matchesGraveyardEffectTypeFilter(
+                                gameData, effect, c, sourceCardId, controllerId, effectiveXValue, null)) {
+                            validIds.add(c.getId());
+                        }
+                    }
+                }
+                break;
+            }
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
             if (scope != null) {
                 List<UUID> searchPlayerIds = scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);
@@ -1459,7 +1479,9 @@ public class ValidTargetService {
         } else if (effect instanceof GrantTargetGraveyardCardCastEffect e) {
             return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileGraveyardCardsEffect e
-                && e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD && e.filter() != null) {
+                && (e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
+                || e.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD)
+                && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
             return e.cardTypes().stream().anyMatch(c::hasType);

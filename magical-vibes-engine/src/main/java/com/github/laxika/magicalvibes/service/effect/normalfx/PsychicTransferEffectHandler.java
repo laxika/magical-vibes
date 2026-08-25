@@ -76,6 +76,15 @@ public class PsychicTransferEffectHandler implements NormalEffectHandlerBean {
         int newControllerLife = controllerCantGain ? controllerLife : targetLife;
         int newTargetLife = targetCantGain ? targetLife : controllerLife;
 
+        if (newControllerLife < controllerLife) {
+            newControllerLife = controllerLife - (controllerLife - newControllerLife)
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, controller);
+        }
+        if (newTargetLife < targetLife) {
+            newTargetLife = targetLife - (targetLife - newTargetLife)
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, target);
+        }
+
         if (controllerCantGain) {
             gameLogService.append(gameData, GameLog.text(controllerName + " can't gain life."));
         }

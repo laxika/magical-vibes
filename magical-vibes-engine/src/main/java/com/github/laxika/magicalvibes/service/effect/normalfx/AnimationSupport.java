@@ -475,6 +475,21 @@ public class AnimationSupport {
         }
     }
 
+    public void animateChosen(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        if (entry.getChosenPermanentId() == null) {
+            return;
+        }
+        Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+        if (chosen == null) {
+            return;
+        }
+        AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        animatePermanently(gameData, chosen, effect, power, toughness,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+    }
+
     /**
      * TARGET-less PERMANENT-duration animation of an already-identified permanent, for effects that
      * animate permanents they just created rather than targeted — Nissa, Worldwaker's ultimate

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
@@ -82,6 +84,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
@@ -673,9 +677,11 @@ public class CombatAttackService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int lifeCost = payPhyrexianAttackTax(pool, phyrexianPayments, attackerIndices.size());
             if (lifeCost > 0) {
+                int lifeLoss = lifeCost
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
                 int currentLife = gameData.playerLifeTotals.get(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
-                gameData.lifeLostThisTurn.merge(playerId, lifeCost, Integer::sum);
+                gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+                gameData.lifeLostThisTurn.merge(playerId, lifeLoss, Integer::sum);
             }
         }
 
@@ -717,6 +723,16 @@ public class CombatAttackService {
                 Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
                 if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) {
                     gameData.permanentsThatAttackedBattlesThisTurn.add(attacker.getId());
+                }
+            }
+            if (attackTarget != null) {
+                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
+                if (gameData.playerIds.contains(attackTarget)
+                        || (targetPermanent != null && targetPermanent.getCard().hasType(CardType.PLANESWALKER))) {
+                    UUID attackedPlayerId = gameData.playerIds.contains(attackTarget)
+                            ? attackTarget
+                            : gameQueryService.findPermanentController(gameData, attackTarget);
+                    gameData.recordAttackAgainstPlayerOrPlaneswalker(playerId, attackedPlayerId);
                 }
             }
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)
@@ -835,6 +851,15 @@ public class CombatAttackService {
                         && ce.condition() instanceof ControlsPermanentCountAtMost
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
+
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && ce.condition() instanceof ControlsPermanentCount
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && ce.condition() instanceof ControlsPermanentCount ? ce.wrapped() : e);
 
                 // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
@@ -1259,6 +1284,22 @@ public class CombatAttackService {
                         && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
 
                 if (matchingEffects.isEmpty()) continue;
+
+                if (matchingEffects.size() == 1
+                        && matchingEffects.getFirst() instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
+                    int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
+                    try {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), playerId, new ChooseOneEffect(modal.options()), perm.getId(), true));
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                        log.info("Game {} - {} attack trigger queued for mode selection",
+                                gameData.id, perm.getCard().getName());
+                    } finally {
+                        gameData.restoreTriggeredAbilityCopies(previousCopies);
+                    }
+                    continue;
+                }
 
                 // Optional ("you may") per-creature attack triggers go on the stack as CR 603.5
                 // resolution-time may abilities: the source permanent is the *attacking* creature

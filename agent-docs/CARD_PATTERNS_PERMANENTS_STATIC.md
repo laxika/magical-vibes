@@ -177,6 +177,7 @@ All paths relative to `cards/`.
 | Tax opponents during your turn | `t/TitheTaker.java` | STATIC `ConditionalEffect(ControllerTurn, IncreaseSpellCostEffect(CardTruePredicate, 1, OPPONENT))` + `ConditionalEffect(ControllerTurn, IncreaseActivatedAbilityCostEffect.opponentNonMana(PermanentTruePredicate, 1))` — the second modifier excludes mana abilities |
 | Tax matching spells (all players) | `t/ThaliaGuardianOfThraben.java` | STATIC IncreaseSpellCostEffect(CardNotPredicate(CardTypePredicate(CREATURE)), 1, ALL) — symmetric, affects all players |
 | Enters tapped | `r/RootMaze.java` | STATIC EnterPermanentsOfTypesTappedEffect |
+| Controlled lands enter untapped | `s/Spelunking.java` | STATIC ControlledLandsEnterUntappedEffect |
 | Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, OWN_CREATURES) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
 | Opponent creatures + nonbasic lands enter tapped | `t/ThaliaHereticCathar.java` | STATIC `EnterPermanentsOfTypesTappedEffect.matching(creature OR (land AND NOT basic), opponentsOnly=true)` |
 | P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentIsLandPredicate, CONTROLLER) |
@@ -217,6 +218,7 @@ All paths relative to `cards/`.
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
 | Toughness as combat damage (controller) | `b/BelligerentBrontodon.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES) â€” all your creatures assign combat damage equal to toughness |
 | Toughness as combat damage (global) | `d/DoranTheSiegeTower.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_CREATURES) â€” every creature assigns combat damage equal to toughness |
+| Toughness as combat damage when greater than power | `b/BedrockTortoise.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES, PermanentToughnessGreaterThanPowerPredicate) â€” only your creatures with toughness greater than power use toughness |
 | Defending player assigns combat damage | `d/DefensiveFormation.java` | STATIC DefensiveFormationEffect() â€” the controller assigns combat damage dealt by creatures attacking them |
 | Toughness as combat damage (Aura, always) | `g/GauntletsOfLight.java` | STATIC AssignCombatDamageWithToughnessEffect(ENCHANTED_CREATURE, true) â€” enchanted creature assigns combat damage equal to toughness even when its power is greater |
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |

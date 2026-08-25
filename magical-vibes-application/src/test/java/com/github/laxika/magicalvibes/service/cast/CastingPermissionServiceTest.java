@@ -168,6 +168,22 @@ class CastingPermissionServiceTest {
         }
 
         @Test
+        @DisplayName("turn-scoped top-library permission allows spells and lands")
+        void allowsSpellsAndLandsFromTopOfLibrary() {
+            gd.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.add(player1Id);
+
+            Card instant = new Card();
+            instant.setType(CardType.INSTANT);
+            Card land = new Card();
+            land.setType(CardType.LAND);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, instant)).isTrue();
+            assertThat(svc.canPlayLandsFromTopOfLibrary(gd, player1Id)).isTrue();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player2Id, instant)).isFalse();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, land)).isFalse();
+        }
+
+        @Test
         @DisplayName("conditional top-library permission applies only when its condition is met")
         void conditionalTopLibraryPermission() {
             Card augur = new Card();

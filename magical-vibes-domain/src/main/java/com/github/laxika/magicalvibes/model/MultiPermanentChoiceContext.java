@@ -21,6 +21,19 @@ import java.util.UUID;
  */
 public sealed interface MultiPermanentChoiceContext {
 
+    /** The activating player chooses one or more other artifacts to exile as an ability cost. */
+    record ActivatedAbilityExileArtifactsCost(UUID playerId, UUID sourcePermanentId, int abilityIndex,
+                                               int xValue, UUID targetId, Zone targetZone,
+                                               List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+                                               ActivatedAbility ability, Permanent sourcePermanentSnapshot)
+            implements MultiPermanentChoiceContext {
+
+        public ActivatedAbilityExileArtifactsCost {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? Map.of() : Map.copyOf(damageAssignments);
+        }
+    }
+
     record SagaChapterCounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, String chapterName, CounterType counterType,
                                           int total) implements MultiPermanentChoiceContext {

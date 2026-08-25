@@ -69,7 +69,8 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     }
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+                int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                        gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
                 int totalAmount = e.amount() * tokenMultiplier;
                 for (int copy = 0; copy < totalAmount; copy++) {
                     // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)

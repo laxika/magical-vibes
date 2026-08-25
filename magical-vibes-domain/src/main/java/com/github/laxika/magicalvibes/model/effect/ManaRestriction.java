@@ -187,6 +187,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to activate abilities of land sources (Sunken Citadel). */
+    record LandAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addLandAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "land abilities only";
+        }
+    }
+
     /** Mana that can't be spent to cast nonartifact spells (Powerstone tokens). */
     record Powerstone() implements ManaRestriction {
         @Override

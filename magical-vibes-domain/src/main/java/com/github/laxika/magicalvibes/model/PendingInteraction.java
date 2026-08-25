@@ -85,6 +85,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.ActivatedAbilityGraveyardExileCostChoice,
+        PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
@@ -1925,6 +1926,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             // forced, as is anything explicitly marked mandatory.
             boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    && destination != GraveyardChoiceDestination.COPY_ON_ENTER
                     && !mandatory;
             return new InteractionOptions.GraveyardIndexPick(validIndices, declinable);
         }
@@ -2111,6 +2113,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Selects the artifact exiled as the material for a craft activation. */
+    record CraftMaterialChoice(UUID playerId, UUID sourcePermanentId, int abilityIndex, int xValue,
+                               UUID targetId, Zone targetZone, java.util.List<UUID> targetIds,
+                               java.util.Map<UUID, Integer> damageAssignments, java.util.List<Card> cards,
+                               int minimumCards, int maximumCards, String prompt) implements PendingInteraction {
+
+        public CraftMaterialChoice {
+            targetIds = targetIds == null ? java.util.List.of() : java.util.List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? java.util.Map.of() : java.util.Map.copyOf(damageAssignments);
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), minimumCards, maximumCards);
+        }
+    }
+
     /** Select cards to put on the bottom of the controller's library as an activation cost. */
     record ActivatedAbilityGraveyardLibraryCostChoice(UUID playerId, UUID sourcePermanentId,
                                                        int abilityIndex, int xValue,
@@ -2185,7 +2214,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean faceDown, int faceDownPower, int faceDownToughness,
                           java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
                           UUID returnSourcePermanentId, CounterType artifactCounterType,
-                          int artifactCounterCount, boolean returnToHandAtEndStep)
+                          int artifactCounterCount, boolean returnToHandAtEndStep,
+                          CardEffect thenEffect, CardPredicate thenCondition)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -2201,7 +2231,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
                     faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
-                    returnSourcePermanentId, artifactCounterType, artifactCounterCount, false);
+                    returnSourcePermanentId, artifactCounterType, artifactCounterCount, false, null, null);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,

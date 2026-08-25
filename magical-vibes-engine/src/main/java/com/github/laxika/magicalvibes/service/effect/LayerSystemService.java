@@ -1981,8 +1981,13 @@ public class LayerSystemService {
         }
         if (floating.scope() != null) {
             List<PermanentSlot> targets = new ArrayList<>();
+            PermanentSlot source = floating.sourcePermanentId() == null
+                    ? null : slotsById.get(floating.sourcePermanentId());
             for (PermanentSlot slot : slots) {
-                if (matchesL4Filter(slot, floating.scope(), board)) {
+                if (matchesL4Filter(slot, floating.scope(), board,
+                        source == null ? null : source.permanent(),
+                        source == null ? null : source.controllerId(),
+                        floating.sourcePermanentId())) {
                     targets.add(slot);
                 }
             }
@@ -2002,18 +2007,41 @@ public class LayerSystemService {
      */
     private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
                                     LayeredBoardState board) {
-        return matchesL4Filter(slot, filter, board, null, null, null);
+        return matchesL4Filter(slot, filter, board, null, null, null, null);
+    }
+
+    private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
+                                    LayeredBoardState board, Permanent sourcePermanent) {
+        return matchesL4Filter(slot, filter, board, sourcePermanent, null, null);
+    }
+
+    private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
+                                    LayeredBoardState board, Permanent sourcePermanent,
+                                    UUID sourceControllerId, UUID sourcePermanentId) {
+        return matchesL4Filter(slot, filter, board, null, sourcePermanent,
+                sourceControllerId, sourcePermanentId);
     }
 
     private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
                                     LayeredBoardState board, GameData gameData,
                                     Permanent sourcePermanent, UUID sourceControllerId) {
+        return matchesL4Filter(slot, filter, board, gameData, sourcePermanent,
+                sourceControllerId, sourcePermanent == null ? null : sourcePermanent.getId());
+    }
+
+    private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
+                                    LayeredBoardState board, GameData gameData,
+                                    Permanent sourcePermanent, UUID sourceControllerId,
+                                    UUID sourcePermanentId) {
         if (filter == null) return true;
+        FilterContext context = sourcePermanent == null ? null
+                : (gameData == null ? FilterContext.empty() : FilterContext.of(gameData))
+                .withSourceControllerId(sourceControllerId)
+                .withSourcePermanentSnapshot(sourcePermanent)
+                .withSourcePermanentId(sourcePermanentId);
         boolean matches = predicateEvaluationService.matchesPermanentPredicate(
                 board.states().get(slot.permanent().getId()), slot.permanent(), filter,
-                sourcePermanent == null ? null : FilterContext.of(gameData)
-                        .withSourcePermanentSnapshot(sourcePermanent)
-                        .withSourceControllerId(sourceControllerId));
+                context);
         board.l4FilterVerdicts()
                 .computeIfAbsent(filter, key -> new HashMap<>())
                 .put(slot.permanent().getId(), matches);

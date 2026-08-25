@@ -217,8 +217,17 @@ public class PermanentChoiceSpellHandlerService {
             log.info("Game {} - {} cast-from-library target no longer exists", gameData.id, lct.cardToCast().getName());
         }
 
+        checkDiscoverTriggers(gameData, lct);
+
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private void checkDiscoverTriggers(GameData gameData, PermanentChoiceContext.LibraryCastSpellTarget context) {
+        if (context.discoverValue() != null) {
+            triggerCollectionService.checkDiscoverTriggers(gameData, context.controllerId(),
+                    context.discoverValue());
         }
     }
 

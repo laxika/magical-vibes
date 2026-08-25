@@ -93,6 +93,9 @@ public sealed interface TriggerContext {
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
 
+    /** Context for controller-discover triggers. */
+    record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
+
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
      */
@@ -198,6 +201,8 @@ public sealed interface TriggerContext {
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
 
+    /** Context for a controller untapping one or more permanents during their untap step. */
+    record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
 
@@ -515,9 +520,14 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
      */
-    record SelfLeaves(UUID controllerId, Zone destination) implements TriggerContext {
+    record SelfLeaves(UUID controllerId, Zone destination, boolean exiledWhileActivatingCraftAbility)
+            implements TriggerContext {
         public SelfLeaves(UUID controllerId) {
-            this(controllerId, Zone.GRAVEYARD);
+            this(controllerId, Zone.GRAVEYARD, false);
+        }
+
+        public SelfLeaves(UUID controllerId, Zone destination) {
+            this(controllerId, destination, false);
         }
     }
 

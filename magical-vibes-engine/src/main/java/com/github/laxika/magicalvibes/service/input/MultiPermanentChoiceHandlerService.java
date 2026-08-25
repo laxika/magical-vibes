@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -149,6 +150,7 @@ public class MultiPermanentChoiceHandlerService {
             culturalExchangeSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final WormsOfTheEarthEffectHandler wormsOfTheEarthEffectHandler;
+    private final AbilityActivationService abilityActivationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
@@ -432,6 +434,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.isEmpty()) {
             throw new IllegalStateException("A creature target is required after accepting the sacrifice");
         }
+        if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
+            abilityActivationService.validateActivatedAbilityExileArtifactsChoice(
+                    gameData, exileArtifactsContext, permanentIds);
+        }
         if (context instanceof MultiPermanentChoiceContext.CounterDistribution
                 && permanentIds.isEmpty()) {
             throw new IllegalStateException("At least one target creature must be selected");
@@ -439,7 +445,10 @@ public class MultiPermanentChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
+        if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
+            abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
+                    gameData, player, exileArtifactsContext, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets ctx) {
             triggerHandler.handleUpkeepAnyNumberPlayerTargets(gameData, permanentIds, ctx);
@@ -2045,8 +2054,10 @@ public class MultiPermanentChoiceHandlerService {
                     } else if (!gameQueryService.canPlayerLifeChange(gameData, defendingPlayerId)) {
                         gameLogService.append(gameData, GameLog.text(defenderName + "'s life total can't change."));
                     } else {
+                        int lifeLoss = damage
+                                * gameQueryService.opponentLifeLossMultiplier(gameData, defendingPlayerId);
                         int currentLife = gameData.getLife(defendingPlayerId);
-                        gameData.playerLifeTotals.put(defendingPlayerId, currentLife - damage);
+                        gameData.playerLifeTotals.put(defendingPlayerId, currentLife - lifeLoss);
                         gameLogService.append(gameData, appendCardOrText(GameLog.builder(), sourceCard, sourceName)
                                 .text(" deals " + damage + " damage to " + defenderName + ".").build());
                     }

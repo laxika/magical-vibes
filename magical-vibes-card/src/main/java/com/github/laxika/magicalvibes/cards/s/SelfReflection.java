@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "163")
+@CardRegistration(set = "LCI", collectorNumber = "74")
 public class SelfReflection extends Card {
 
     public SelfReflection() {

@@ -124,6 +124,10 @@ public class ExampleCard extends Card {
   - TriggerMode is on the registration, not the effect — keeps effects pure and reusable
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
 
+- One trigger for several permanents tapped as one event:
+  - `addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, effect, TriggerMode.ONCE_PER_BATCH)`
+  - The tap-payment path brackets multi-permanent tap events so the registration fires once
+
 - Predicate-based targeting:
   - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
   - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`, `PermanentHasSupertypePredicate`
@@ -560,7 +564,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsPermanent(filter), wrapped)` | yes | yes | yes (attack) |
 | `EnchantedPermanentConditionalEffect` | yes | - | - |
-| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (upkeep, end step) |
+| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (attack, upkeep, end step) | attack-time count gates are checked when attackers are declared and the surviving effect is unwrapped |
 | `ConditionalEffect(new NoOtherPermanent(filter), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new AttachedPermanentControllerControlsNoOther(filter), wrapped)` | yes | yes | - | same as above but relative to the controller of the permanent the source Aura/Equipment is attached to, excluding that permanent (Predator's Gambit "as long as its controller controls no other creatures"); never met while the source is unattached |
 | `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |

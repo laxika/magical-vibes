@@ -477,7 +477,7 @@
             <button class="btn-side-prompt mode-option"
                     [class.mode-option-selected]="choice.targeting.isModeSelected($index)"
                     (click)="choice.targeting.toggleMode($index)">
-              {{ option.label }}@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
+              {{ option.label }}@if (choice.targeting.modeModesMayRepeat && choice.targeting.modeSelectionCount($index) > 1) { <span> (×{{ choice.targeting.modeSelectionCount($index) }})</span> }@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
             </button>
           }
           <button class="btn-side-prompt"

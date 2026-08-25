@@ -283,6 +283,8 @@ public class StateBasedActionService {
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
+                        gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
+                                gameQueryService.getEffectivePower(gameData, entry.permanent()));
                     }
                 }
             }
@@ -315,6 +317,7 @@ public class StateBasedActionService {
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPowers.clear();
         }
 
         if (!toDie.isEmpty()) {

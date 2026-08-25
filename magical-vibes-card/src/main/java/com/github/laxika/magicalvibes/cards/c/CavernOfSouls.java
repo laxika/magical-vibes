@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "226")
+@CardRegistration(set = "LCI", collectorNumber = "269")
 public class CavernOfSouls extends Card {
 
     public CavernOfSouls() {

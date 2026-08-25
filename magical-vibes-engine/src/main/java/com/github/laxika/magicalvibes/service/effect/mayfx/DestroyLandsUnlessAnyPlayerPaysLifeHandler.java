@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class DestroyLandsUnlessAnyPlayerPaysLifeHandler implements MayEffectHandlerBean {
 
     private final DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler effectHandler;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
@@ -38,10 +40,12 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeHandler implements MayEffectHand
 
         boolean paid = accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost());
         if (paid) {
-            gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - effect.lifeCost());
-            triggerCollectionService.checkLifeLossTriggers(gameData, player.getId(), effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
+            gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeLoss);
+            triggerCollectionService.checkLifeLossTriggers(gameData, player.getId(), lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life to prevent ",
+                    player.getUsername() + " pays " + lifeLoss + " life to prevent ",
                     ability.sourceCard(), "'s land from being destroyed."));
         }
 

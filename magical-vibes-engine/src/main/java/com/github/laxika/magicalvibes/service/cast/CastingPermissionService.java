@@ -228,7 +228,8 @@ public class CastingPermissionService {
         // Dosan the Falling Leaf: players can cast spells only during their own turns.
         if (gameQueryService.isLockedOutByOwnTurnOnlySpellRestriction(gameData, playerId)) return true;
 
-        if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
+        boolean playerAttackedThisTurn = gameData.playersDeclaredAttackersThisTurn.contains(playerId);
+        if (!playerAttackedThisTurn) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {
             if (pid.equals(playerId)) continue;
@@ -236,7 +237,10 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect) {
+                    if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect restriction
+                            && (!restriction.onlyIfAttackedControllerOrPlaneswalker()
+                            || gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn
+                            .getOrDefault(pid, Set.of()).contains(playerId))) {
                         return true;
                     }
                 }
@@ -1020,7 +1024,8 @@ public class CastingPermissionService {
     }
 
     public boolean canPlayLandsFromTopOfLibrary(GameData gameData, UUID playerId) {
-        if (gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId)) {
+        if (gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
+                || gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId)) {
             return true;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1201,12 +1206,26 @@ public class CastingPermissionService {
      * {@code card} from their graveyard. Lands are not spells, so they never qualify.
      */
     private boolean hasGraveyardCastFilterPermission(GameData gameData, Card card, UUID playerId) {
+        return findGraveyardCastFilterPermission(gameData, card, playerId).isPresent();
+    }
+
+    public Optional<GameData.GraveyardCastFilterPermission> findGraveyardCastFilterPermission(
+            GameData gameData, Card card, UUID playerId) {
         if (!isCastableSpellCard(card)) {
-            return false;
+            return Optional.empty();
         }
         return gameData.graveyardCastFilterPermissionsThisTurn.stream()
-                .anyMatch(permission -> permission.playerId().equals(playerId)
-                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null));
+                .filter(permission -> permission.playerId().equals(playerId)
+                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))
+                .sorted((first, second) -> Boolean.compare(first.singleUse(), second.singleUse()))
+                .findFirst();
+    }
+
+    public void consumeGraveyardCastFilterPermission(
+            GameData gameData, GameData.GraveyardCastFilterPermission permission) {
+        if (permission != null && permission.singleUse()) {
+            gameData.graveyardCastFilterPermissionsThisTurn.remove(permission);
+        }
     }
 
     public boolean graveyardCastFilterPermissionExiles(GameData gameData, Card card, UUID playerId) {
@@ -1330,6 +1349,10 @@ public class CastingPermissionService {
      */
     public Set<CardType> getCastableTypesFromTopOfLibrary(GameData gameData, UUID playerId) {
         Set<CardType> castableTypes = new HashSet<>();
+        if (gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)) {
+            castableTypes.addAll(EnumSet.allOf(CardType.class));
+            castableTypes.remove(CardType.LAND);
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return castableTypes;
         for (Permanent perm : battlefield) {
@@ -1365,6 +1388,10 @@ public class CastingPermissionService {
         if (!card.hasType(CardType.LAND)
                 && (hasLibraryTopCardFreePlayPermission(gameData, playerId, card)
                 || hasLibraryTopCardLifePlayPermission(gameData, playerId, card))) {
+            return true;
+        }
+        if (!card.hasType(CardType.LAND)
+                && gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)) {
             return true;
         }
         return canCastFromTopOfLibraryNormally(gameData, playerId, card)
@@ -1531,6 +1558,30 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /** Returns an entry counter granted by the source permission used for an exiled card cast. */
+    public Optional<CounterType> findEntryCounterTypeFromExiledWithSource(
+            GameData gameData, UUID playerId, UUID cardId) {
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null) return Optional.empty();
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (!perm.getId().equals(entry.sourcePermanentId())) continue;
+                Optional<CounterType> counterType = activeExileCastPermissions(
+                        gameData, perm, sourceControllerId)
+                        .filter(permission -> canAccessExiledEntry(
+                                perm, sourceControllerId, permission, entry, playerId))
+                        .filter(permission -> applies(permission, gameData, playerId, perm, entry))
+                        .map(AllowCastFromCardsExiledWithSourceEffect::entryCounterType)
+                        .filter(java.util.Objects::nonNull)
+                        .findFirst();
+                if (counterType.isPresent()) return counterType;
+            }
+        }
+        return Optional.empty();
     }
 
     public boolean hasFreeCastFromExiledWithSource(GameData gameData, UUID playerId, UUID cardId) {

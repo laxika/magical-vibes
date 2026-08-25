@@ -118,6 +118,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSo
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageFromSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
+import com.github.laxika.magicalvibes.model.effect.OjerAxonilDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
@@ -134,6 +135,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrifice
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -1000,6 +1002,28 @@ public class GameQueryService {
             }
         }
         return additional;
+    }
+
+    /**
+     * Returns the multiplier applied to life loss by an opponent of the active player. Multiple
+     * replacement effects stack multiplicatively.
+     */
+    public int opponentLifeLossMultiplier(GameData gameData, UUID playerId) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || activePlayerId.equals(playerId)) return 1;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return 1;
+
+        int multiplier = 1;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof OpponentLifeLossReplacementEffect replacement) {
+                    multiplier *= replacement.lifeLossMultiplier();
+                }
+            }
+        }
+        return multiplier;
     }
 
     /**
@@ -5250,6 +5274,35 @@ public class GameQueryService {
         return result[0];
     }
 
+    /** Applies Ojer Axonil's replacement to qualifying damage dealt to an opponent. */
+    public int applyOjerAxonilDamageReplacement(GameData gameData, int damage,
+                                                Set<CardColor> sourceColors,
+                                                UUID sourceControllerId, UUID recipientPlayerId) {
+        if (damage <= 0 || sourceControllerId == null || recipientPlayerId == null
+                || recipientPlayerId.equals(sourceControllerId)
+                || sourceColors == null || !sourceColors.contains(CardColor.RED)) {
+            return damage;
+        }
+        int[] result = {damage};
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            if (!sourceControllerId.equals(controllerId)) {
+                return;
+            }
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OjerAxonilDamageReplacementEffect
+                            && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                        int power = getEffectivePower(gameData, permanent);
+                        if (power > result[0]) {
+                            result[0] = power;
+                        }
+                    }
+                }
+            }
+        });
+        return result[0];
+    }
+
     /**
      * Returns {@code true} if the player controls a permanent with
      * {@link AllowExtraLoyaltyActivationEffect}, allowing planeswalker loyalty abilities
@@ -5508,13 +5561,14 @@ public class GameQueryService {
         if (battlefield == null) return 0;
 
         int count = 0;
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceControllerId(controllerId);
         for (Permanent staticSource : battlefield) {
             if (staticSource.getId().equals(triggeringPermanent.getId())
                     || staticSource.isLosesAllAbilitiesUntilEndOfTurn()) {
                 continue;
             }
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentSnapshot(staticSource);
             for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AdditionalTriggeredAbilityEffect additional
                         && (!additional.attackOnly() || attackTrigger)
@@ -5652,21 +5706,17 @@ public class GameQueryService {
      */
     public int getMaxBlockersAllowed(GameData gameData, Permanent attacker) {
         int maxBlockers = Integer.MAX_VALUE;
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
-                maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
-            }
-        }
+        UUID attackerControllerId = findPermanentController(gameData, attacker.getId());
+        maxBlockers = Math.min(maxBlockers,
+                maxBlockersFromStaticEffects(gameData, attacker, attackerControllerId));
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent aura : battlefield) {
                 if (!aura.isAttached() || !attacker.getId().equals(aura.getAttachedTo())) continue;
-                for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
-                        maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
-                    }
-                }
+                UUID auraControllerId = findPermanentController(gameData, aura.getId());
+                maxBlockers = Math.min(maxBlockers,
+                        maxBlockersFromStaticEffects(gameData, aura, auraControllerId));
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -5675,6 +5725,19 @@ public class GameQueryService {
                 if (floating.effect() instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
                     maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
                 }
+            }
+        }
+        return maxBlockers;
+    }
+
+    private int maxBlockersFromStaticEffects(GameData gameData, Permanent source, UUID sourceControllerId) {
+        int maxBlockers = Integer.MAX_VALUE;
+        for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            CardEffect activeEffect = sourceControllerId == null
+                    ? effect
+                    : staticEffectConditionResolver.resolve(gameData, source, sourceControllerId, effect);
+            if (activeEffect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
+                maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
             }
         }
         return maxBlockers;
@@ -6356,12 +6419,13 @@ public class GameQueryService {
         } else {
             return 0;
         }
+        Set<CardColor> effectiveSourceColors = sourceColors;
         int[] bonus = {0};
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SourceOpponentDamageBonusEffect additional
-                        && additional.appliesTo(sourceColors, artifactSource)) {
+                        && additional.appliesTo(effectiveSourceColors, artifactSource)) {
                     bonus[0] += additional.amount();
                 }
             }
@@ -6559,12 +6623,18 @@ public class GameQueryService {
      * Multiple instances stack multiplicatively (e.g. two Parallel Lives = 4x tokens).
      */
     public int getTokenMultiplier(GameData gameData, UUID controllerId) {
-        UUID effectiveControllerId = resolveTokenCreationController(gameData, controllerId, false);
+        return getTokenMultiplier(gameData, controllerId, false);
+    }
+
+    /** Returns the token creation multiplier, optionally restricting it to creature tokens. */
+    public int getTokenMultiplier(GameData gameData, UUID controllerId, boolean creatureToken) {
+        UUID effectiveControllerId = resolveTokenCreationController(gameData, controllerId, creatureToken);
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(effectiveControllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof MultiplyTokenCreationEffect mtce) {
+                if (effect instanceof MultiplyTokenCreationEffect mtce
+                        && (!mtce.creatureTokensOnly() || creatureToken)) {
                     multiplier[0] *= mtce.multiplier();
                 }
             }
