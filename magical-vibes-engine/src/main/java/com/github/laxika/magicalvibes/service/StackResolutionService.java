@@ -231,7 +231,8 @@ public class StackResolutionService {
             }
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class)) {
             triggerCollectionService.processNextDrawTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
@@ -1077,6 +1078,10 @@ public class StackResolutionService {
             gameData.playerDecks.get(ownerId).add(physicalCard);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+        } else if (entry.isCastWithAdventure()) {
+            gameData.addToExile(ownerId, physicalCard);
+            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with Adventure."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);

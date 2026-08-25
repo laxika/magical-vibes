@@ -101,16 +101,26 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        applyEffect(gameData, entry, e, target);
+        if (!applyEffect(gameData, entry, e, target)) {
+            return;
+        }
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities until end of turn."));
-        log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
+        String durationText = switch (e.duration()) {
+            case CONTINUOUS, PERMANENT -> "indefinitely";
+            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS,
+                    WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_ATTACHED ->
+                    "for as long as its source remains on the battlefield";
+            default -> "until end of turn";
+        };
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                " loses all abilities " + durationText + "."));
+        log.info("Game {} - {} loses all abilities {}", gameData.id, target.getCard().getName(), durationText);
     }
 
-    private void applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
+    private boolean applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
         if (e.duration() == EffectDuration.PERMANENT) {
             target.setLosesAllAbilitiesPermanently(true);
-        } else {
+        } else if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
             target.setLosesAllAbilitiesUntilEndOfTurn(true);
         }
 
@@ -119,12 +129,24 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
         // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
         // direct Permanent.hasKeyword/flag readers; the layered pass treats the flag as a
         // seed-time removal and then replays this effect at its real timestamp.
-        target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        boolean sourceLinked = e.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                || e.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                || e.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
+                || e.duration() == EffectDuration.WHILE_ATTACHED;
+        UUID sourcePermanentId = sourceLinked ? entry.getSourcePermanentId() : null;
+        if (sourceLinked) {
+            if (sourcePermanentId == null
+                    || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+                return false;
+            }
+        }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(), e,
+                entry.getCard().getName(), sourcePermanentId, entry.getControllerId(), e,
                 target.getId(), null, null,
-                e.duration() == EffectDuration.PERMANENT
-                        ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN,
+                e.duration() == EffectDuration.CONTINUOUS
+                        ? EffectDuration.PERMANENT : e.duration(),
                 0));
+        return true;
     }
 }

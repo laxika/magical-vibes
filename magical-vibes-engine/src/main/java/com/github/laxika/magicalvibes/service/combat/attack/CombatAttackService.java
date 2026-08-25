@@ -34,6 +34,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
@@ -1798,6 +1800,8 @@ public class CombatAttackService {
     private boolean isDefendingPlayerCondition(Condition condition) {
         return switch (condition) {
             case DefendingPlayerControlsPermanent ignored -> true;
+            case DefendingPlayerHasMoreCardsInHandThanController ignored -> true;
+            case DefendingPlayerHandAtMost ignored -> true;
             case DefendingPlayerPoisoned ignored -> true;
             case NotCondition not -> isDefendingPlayerCondition(not.inner());
             default -> false;

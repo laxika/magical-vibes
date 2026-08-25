@@ -272,6 +272,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers}.
      *  Used by Soulcipher Board. */
     ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a creature card enters any graveyard from a zone other than the battlefield. */
+    ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
     /** Triggers whenever a nontoken permanent card the controller owns is put into their graveyard
      *  from anywhere (battlefield, hand, library, stack, exile). Fires on permanents the graveyard
      *  owner controls. Checked in {@code GraveyardService.addCardToGraveyard} via
@@ -681,6 +683,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers whenever one or more counters are put on this permanent. */
+    ON_SELF_COUNTERS_PUT,
     /** Triggers whenever one or more +1/+1 counters are put on another non-Hydra creature the
      *  controller controls. Fired once per counter-placement event. */
     ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
@@ -752,6 +756,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CARDS_EXILED_DURING_TURN,
     /** Triggers whenever one or more creature cards leave the controller's graveyard. */
     ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers once for each creature card that leaves the controller's graveyard. */
+    ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more artifact and/or creature cards leave the controller's graveyard. */
     ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever a creature controlled by the same player explores.
@@ -1099,6 +1105,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever an opponent of this card's owner gains life while this card is in
      *  that owner's graveyard. */
     GRAVEYARD_ON_OPPONENT_GAINS_LIFE,
+    /** Triggers whenever this card's owner gains life while this card is in that owner's graveyard. */
+    GRAVEYARD_ON_CONTROLLER_GAINS_LIFE,
     ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_COMMITS_CRIME,
     GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME,

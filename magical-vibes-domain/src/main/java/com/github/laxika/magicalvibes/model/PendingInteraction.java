@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -74,6 +75,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AttachAurasChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
+        PendingInteraction.SpectersShriekChoice,
         PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
@@ -1671,6 +1673,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    record SpectersShriekChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction {
+
+        public SpectersShriekChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, true);
+        }
+    }
+
     /**
      * Struggle for Sanity's alternating hand exile: the {@code targetPlayerId} and the
      * {@code controllerId} take turns exiling one card from the target's revealed hand until it is
@@ -1759,7 +1780,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
                            UUID mayAbilitySourcePermanentId,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
-                           boolean enterTapped, boolean mandatory, String prompt)
+                           boolean enterTapped, CounterType enterWithCounter, int enterWithCounterCount,
+                           Set<CounterType> enterWithCounters, boolean mandatory, String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -1804,6 +1826,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private CardSubtype grantSourceHasteIfSubtype;
             private UUID grantSourceHasteSourcePermanentId;
             private boolean enterTapped;
+            private CounterType enterWithCounter;
+            private int enterWithCounterCount;
+            private Set<CounterType> enterWithCounters = Set.of();
             private boolean mandatory;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -1875,6 +1900,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder enterWithCounter(CounterType counterType, int count) {
+                this.enterWithCounter = counterType;
+                this.enterWithCounterCount = count;
+                return this;
+            }
+
+            public Builder enterWithCounters(Set<CounterType> counters) {
+                this.enterWithCounters = counters;
+                return this;
+            }
+
             public Builder mandatory(boolean mandatory) {
                 this.mandatory = mandatory;
                 return this;
@@ -1887,7 +1923,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
                         grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
-                        enterTapped, mandatory, prompt);
+                        enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters,
+                        mandatory, prompt);
             }
         }
     }

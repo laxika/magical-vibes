@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -82,6 +84,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
@@ -278,6 +281,16 @@ class PredicateEvaluationServiceTest {
     @Nested
     @DisplayName("matchesCardPredicate")
     class MatchesCardPredicate {
+
+        @Test
+        void matchesCardsWithAdventureCastingOption() {
+            Card adventure = new Card();
+            adventure.addCastingOption(new AdventureCast("{1}{G}"));
+            Card ordinary = new Card();
+
+            assertThat(evaluator.matchesCardPredicate(adventure, new CardHasAdventurePredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(ordinary, new CardHasAdventurePredicate(), null)).isFalse();
+        }
 
         @Test
         @DisplayName("null predicate returns true")
@@ -696,6 +709,27 @@ class PredicateEvaluationServiceTest {
 
             PermanentManaValueAtMostSourceControllerHandSizePredicate predicate =
                     new PermanentManaValueAtMostSourceControllerHandSizePredicate();
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(eligible, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(ineligible, predicate, context)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentManaValueAtMostControllerGraveyardCountPredicate uses the target's controller's graveyard")
+        void manaValueAtMostControllerGraveyardCountMatches() {
+            gd.playerGraveyards.get(player2Id).add(createArtifact("Graveyard Card One"));
+            gd.playerGraveyards.get(player2Id).add(createArtifact("Graveyard Card Two"));
+
+            Card eligibleCard = createArtifact("Eligible Artifact");
+            eligibleCard.setManaCost("{2}");
+            Permanent eligible = addPermanent(player2Id, eligibleCard);
+            Card ineligibleCard = createArtifact("Ineligible Artifact");
+            ineligibleCard.setManaCost("{3}");
+            Permanent ineligible = addPermanent(player2Id, ineligibleCard);
+
+            PermanentManaValueAtMostControllerGraveyardCountPredicate predicate =
+                    new PermanentManaValueAtMostControllerGraveyardCountPredicate();
             FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
 
             assertThat(evaluator.matchesPermanentPredicate(eligible, predicate, context)).isTrue();

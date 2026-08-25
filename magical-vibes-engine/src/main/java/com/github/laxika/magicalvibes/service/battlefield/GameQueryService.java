@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransfor
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerCanCastSpellsOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
@@ -101,6 +102,7 @@ import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffec
 import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCombatDamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
@@ -131,6 +133,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEff
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureDyingDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
@@ -140,8 +143,8 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEff
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -1274,6 +1277,24 @@ public class GameQueryService {
                 .anyMatch(SourceDamageCantBePreventedEffect.class::isInstance);
     }
 
+    /** Returns whether damage from the source can't be prevented for the current damage event. */
+    public boolean damageCantBePreventedFromSource(GameData gameData, Permanent source,
+                                                   boolean isCombatDamage) {
+        return damageCantBePreventedFromSource(gameData, source)
+                || (isCombatDamage && hasControlledCreatureCombatDamageCantBePrevented(gameData, source));
+    }
+
+    private boolean hasControlledCreatureCombatDamageCantBePrevented(GameData gameData, Permanent source) {
+        if (source == null) return false;
+        UUID controllerId = findPermanentController(gameData, source.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream().anyMatch(permanent ->
+                hasActiveStaticEffect(gameData, permanent,
+                        ControlledCreaturesCombatDamageCantBePreventedEffect.class));
+    }
+
     /** Returns whether this player's active turn-scoped source filters prevent damage from the source. */
     public boolean isDamageFromMatchingSourcePreventedForPlayer(GameData gameData, UUID playerId,
                                                                 Permanent source) {
@@ -1796,6 +1817,17 @@ public class GameQueryService {
         colors.addAll(permanent.getGrantedColors());
         colors.addAll(bonus.grantedColors());
         return colors;
+    }
+
+    /** Returns the permanent's current card types after continuous type-changing effects. */
+    public Set<CardType> getEffectiveCardTypes(GameData gameData, Permanent permanent) {
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (bonus.cardTypeOverriding()) {
+            return Set.copyOf(bonus.grantedCardTypes());
+        }
+        Set<CardType> cardTypes = baseCardTypes(permanent);
+        cardTypes.addAll(bonus.grantedCardTypes());
+        return cardTypes;
     }
 
     /** Returns the permanent's current name after continuous name-changing effects. */
@@ -5154,6 +5186,23 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given creature's death is prevented from causing triggered
+     * abilities by a static effect such as Hushbringer. Last-known permanents in a simultaneous
+     * death batch are included because one of them may be the source of the suppression.
+     */
+    public boolean areCreatureDeathTriggersSuppressed(GameData gameData, Permanent dyingPermanent) {
+        if (gameData == null || dyingPermanent == null || !isCreature(gameData, dyingPermanent)) {
+            return false;
+        }
+        if (anyBattlefieldHasStaticEffect(gameData, CreatureDyingDontCauseTriggersEffect.class)) {
+            return true;
+        }
+        return gameData.simultaneousDyingCreatures.values().stream()
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(CreatureDyingDontCauseTriggersEffect.class::isInstance));
+    }
+
+    /**
      * Returns whether entering permanents are prevented from causing triggered abilities of
      * permanents controlled by {@code abilityControllerId} to trigger by an opposing static
      * effect such as Elesh Norn, Mother of Machines.
@@ -6078,13 +6127,12 @@ public class GameQueryService {
         } else {
             return 0;
         }
-        if (!artifactSource && !sourceColors.contains(CardColor.RED)) return 0;
-
         int[] bonus = {0};
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect additional) {
+                if (effect instanceof SourceOpponentDamageBonusEffect additional
+                        && additional.appliesTo(sourceColors, artifactSource)) {
                     bonus[0] += additional.amount();
                 }
             }
@@ -6210,7 +6258,9 @@ public class GameQueryService {
     public boolean isLockedOutByOwnTurnOnlySpellRestriction(GameData gameData, UUID playerId) {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
-        return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastSpellsOnlyDuringOwnTurnEffect.class);
+        return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastSpellsOnlyDuringOwnTurnEffect.class)
+                || playerBattlefieldHasStaticEffect(gameData, playerId,
+                ControllerCanCastSpellsOnlyDuringOwnTurnEffect.class);
     }
 
     /**

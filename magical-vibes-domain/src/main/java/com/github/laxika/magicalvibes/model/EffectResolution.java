@@ -80,6 +80,32 @@ public final class EffectResolution {
     }
 
     /**
+     * Expands conditional branches when locating effects that contribute specialized cast-time
+     * targeting behavior. The actual condition is still evaluated only during resolution.
+     */
+    public static List<CardEffect> expandConditionalTargetingEffects(List<CardEffect> rawEffects) {
+        List<CardEffect> expanded = new ArrayList<>();
+        for (CardEffect effect : rawEffects) {
+            collectConditionalTargetingEffects(effect, expanded);
+        }
+        return List.copyOf(expanded);
+    }
+
+    private static void collectConditionalTargetingEffects(CardEffect effect, List<CardEffect> expanded) {
+        if (effect == null) {
+            return;
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            collectConditionalTargetingEffects(replacement.baseEffect(), expanded);
+            collectConditionalTargetingEffects(replacement.upgradedEffect(), expanded);
+        } else if (effect instanceof ConditionalEffect conditional) {
+            collectConditionalTargetingEffects(conditional.wrapped(), expanded);
+        } else {
+            expanded.add(effect);
+        }
+    }
+
+    /**
      * As {@link #resolveEffects(List, Boolean, Integer)}, but also unwraps the overload text change
      * (CR 702.96a): an {@code Overloaded} {@link ConditionalReplacementEffect} resolves to its
      * upgraded ("each") branch when the spell was cast for its overload cost and to the printed
@@ -424,8 +450,17 @@ public final class EffectResolution {
     public static boolean hasColorSpentCondition(Card card) {
         return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
                 .flatMap(slot -> card.getEffects(slot).stream())
-                .anyMatch(e -> e instanceof ConditionalEffect c
-                        && conditionUsesColorSpentMana(c.condition()));
+                .anyMatch(EffectResolution::usesColorSpentCondition);
+    }
+
+    private static boolean usesColorSpentCondition(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditionUsesColorSpentMana(conditional.condition());
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return conditionUsesColorSpentMana(replacement.condition());
+        }
+        return false;
     }
 
     private static boolean conditionUsesColorSpentMana(Condition condition) {

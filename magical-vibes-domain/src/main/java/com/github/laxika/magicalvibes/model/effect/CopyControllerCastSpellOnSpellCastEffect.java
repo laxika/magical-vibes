@@ -25,6 +25,7 @@ import java.util.Set;
  *                         an instant or sorcery spell from your library" (Melek, Izzet Paragon)
  * @param intervening       optional source condition checked when the spell is cast and again when
  *                          the copy trigger resolves
+ * @param requiredCastWithAdventure whether the spell must have been cast as an Adventure spell
  * @param additionalTypes  types added to the copied card, such as artifact for Tawnos, the Toymaker
  * @param tokenCopy        whether the copied creature spell becomes a token as it resolves
  */
@@ -36,6 +37,7 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         StackEntryPredicate castSpellTargetCondition,
         Set<Keyword> grantedKeywords,
         Condition intervening,
+        boolean requiredCastWithAdventure,
         Set<CardType> additionalTypes,
         boolean tokenCopy,
         boolean mayChooseNewTargets
@@ -48,22 +50,22 @@ public record CopyControllerCastSpellOnSpellCastEffect(
 
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, TapMultiplePermanentsCost tapCost,
             String manaCost) {
-        this(spellFilter, tapCost, manaCost, null, null, Set.of(), null, Set.of(), false, true);
+        this(spellFilter, tapCost, manaCost, null, null, Set.of(), null, false, Set.of(), false, true);
     }
 
     /** "you may tap N creatures. If you do, copy that spell" (Aziza, Mage Tower Captain). */
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, TapMultiplePermanentsCost tapCost) {
-        this(spellFilter, tapCost, null, null, null, Set.of(), null, Set.of(), false, true);
+        this(spellFilter, tapCost, null, null, null, Set.of(), null, false, Set.of(), false, true);
     }
 
     /** "you may pay {cost}. If you do, copy that spell" (Cloven Casting). */
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, String manaCost) {
-        this(spellFilter, null, manaCost, null, null, Set.of(), null, Set.of(), false, true);
+        this(spellFilter, null, manaCost, null, null, Set.of(), null, false, Set.of(), false, true);
     }
 
     /** "whenever you cast a [filter] spell from your library, copy it" (Melek, Izzet Paragon). */
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, Zone requiredCastZone) {
-        this(spellFilter, null, null, requiredCastZone, null, Set.of(), null, Set.of(), false, true);
+        this(spellFilter, null, null, requiredCastZone, null, Set.of(), null, false, Set.of(), false, true);
     }
 
     public static CopyControllerCastSpellOnSpellCastEffect withCastTargetCondition(
@@ -71,21 +73,27 @@ public record CopyControllerCastSpellOnSpellCastEffect(
             Set<Keyword> grantedKeywords) {
         return new CopyControllerCastSpellOnSpellCastEffect(
                 spellFilter, null, null, null, castSpellTargetCondition, grantedKeywords,
-                null, Set.of(), false, true);
+                null, false, Set.of(), false, true);
     }
 
     /** Free optional copy trigger with a source-relative intervening condition. */
     public static CopyControllerCastSpellOnSpellCastEffect withIntervening(
             CardPredicate spellFilter, Condition intervening) {
         return new CopyControllerCastSpellOnSpellCastEffect(
-                spellFilter, null, null, null, null, Set.of(), intervening, Set.of(), false, true);
+                spellFilter, null, null, null, null, Set.of(), intervening, false, Set.of(), false, true);
+    }
+
+    /** Mandatory copy of a spell cast as an Adventure. */
+    public static CopyControllerCastSpellOnSpellCastEffect adventureCopy(CardPredicate spellFilter) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                spellFilter, null, null, null, null, Set.of(), null, true, Set.of(), false, true);
     }
 
     /** "Whenever you cast a matching creature spell, you may copy it as an artifact token." */
     public static CopyControllerCastSpellOnSpellCastEffect asArtifactToken(CardPredicate spellFilter) {
         return new CopyControllerCastSpellOnSpellCastEffect(
                 spellFilter, null, null, null, null, Set.of(), null,
-                Set.of(CardType.ARTIFACT), true, true);
+                false, Set.of(CardType.ARTIFACT), true, true);
     }
 
     public CopyControllerCastSpellOnSpellCastEffect(
@@ -93,13 +101,22 @@ public record CopyControllerCastSpellOnSpellCastEffect(
             Zone requiredCastZone, StackEntryPredicate castSpellTargetCondition,
             Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy) {
         this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition,
-                grantedKeywords, null, additionalTypes, tokenCopy, true);
+                grantedKeywords, null, false, additionalTypes, tokenCopy, true);
+    }
+
+    public CopyControllerCastSpellOnSpellCastEffect(
+            CardPredicate spellFilter, TapMultiplePermanentsCost tapCost, String manaCost,
+            Zone requiredCastZone, StackEntryPredicate castSpellTargetCondition,
+            Set<Keyword> grantedKeywords, Condition intervening, Set<CardType> additionalTypes,
+            boolean tokenCopy, boolean mayChooseNewTargets) {
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition,
+                grantedKeywords, intervening, false, additionalTypes, tokenCopy, mayChooseNewTargets);
     }
 
     /** Optional mana-paid copy of a permanent spell that enters as a token without retargeting. */
     public static CopyControllerCastSpellOnSpellCastEffect tokenCopy(
             CardPredicate spellFilter, String manaCost, Condition intervening) {
         return new CopyControllerCastSpellOnSpellCastEffect(
-                spellFilter, null, manaCost, null, null, Set.of(), intervening, Set.of(), true, false);
+                spellFilter, null, manaCost, null, null, Set.of(), intervening, false, Set.of(), true, false);
     }
 }

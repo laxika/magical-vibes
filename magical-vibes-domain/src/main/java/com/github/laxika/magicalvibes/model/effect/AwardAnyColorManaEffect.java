@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,10 +40,30 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       boolean anyColorCombination,
                                       boolean grantsAdditionalPlusOneCounter,
                                       Set<CardSubtype> spellOnlySubtypes,
-                                      boolean differentColors) implements ManaProducingEffect {
+                                      boolean differentColors,
+                                      List<ManaColor> allowedColors) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect {
         spellOnlySubtypes = spellOnlySubtypes == null ? Set.of() : Set.copyOf(spellOnlySubtypes);
+        allowedColors = allowedColors == null || allowedColors.isEmpty()
+                ? ManaColor.COLORS : List.copyOf(allowedColors);
+    }
+
+    public AwardAnyColorManaEffect(DynamicAmount amount,
+                                   ManaSpendRestriction restriction,
+                                   CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn,
+                                   boolean targetsPlayer,
+                                   boolean manaRecipientIsTargetPlayer,
+                                   boolean markSourceAsHavingAddedManaThisTurn,
+                                   boolean anyColorCombination,
+                                   boolean grantsAdditionalPlusOneCounter,
+                                   Set<CardSubtype> spellOnlySubtypes,
+                                   boolean differentColors) {
+        this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
+                targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
+                anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
+                differentColors, ManaColor.COLORS);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount,
@@ -134,6 +156,13 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     /** "Add one mana of any color. Spend this mana only to cast a spell with one of these subtypes." */
     public static AwardAnyColorManaEffect forSpellSubtypes(int amount, Set<CardSubtype> subtypes) {
         return new AwardAnyColorManaEffect(amount, ManaSpendRestriction.SUBTYPE_SPELL, subtypes);
+    }
+
+    /** "Add one mana of one of these colors. Spend this mana only to cast a spell with one of these subtypes." */
+    public static AwardAnyColorManaEffect forSpellSubtypes(int amount, Set<CardSubtype> subtypes,
+                                                            List<ManaColor> allowedColors) {
+        return new AwardAnyColorManaEffect(new Fixed(amount), ManaSpendRestriction.SUBTYPE_SPELL, null,
+                false, false, false, false, false, false, subtypes, false, allowedColors);
     }
 
     @Override

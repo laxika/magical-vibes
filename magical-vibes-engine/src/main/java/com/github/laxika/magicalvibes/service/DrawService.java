@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
@@ -1282,6 +1283,22 @@ public class DrawService {
 
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} controller-draw any-target trigger queued",
+                            gameData.id, perm.getCard().getName());
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && perm.getCard().getEffectTargetIndex(effect) >= 0) {
+                    // A permanent-target draw trigger (Mantle of Tides): choose the target as the
+                    // ability is put on the stack, using the card's declared target filter.
+                    gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
+                            perm.getCard(),
+                            drawingPlayerId,
+                            new ArrayList<>(List.of(effect)),
+                            perm.getId(),
+                            perm.getCard().getTargetFilter()
+                    ));
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} controller-draw permanent-target trigger queued",
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else {

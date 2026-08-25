@@ -1163,4 +1163,41 @@ class MiscTriggerCollectorServiceTest {
             assertThat(gd.stack).isEmpty();
         }
     }
+
+    @Test
+    @DisplayName("queues a trigger for a creature card entering a graveyard from a non-battlefield zone")
+    void queuesNonBattlefieldCreatureCardGraveyardTrigger() {
+        Permanent perm = createPermanent("Syr Konrad, the Grim");
+        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(
+                createCard("Grizzly Bears"), player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("queues a trigger for each creature card leaving the controller's graveyard")
+    void queuesCreatureCardLeavesGraveyardTrigger() {
+        Permanent perm = createPermanent("Syr Konrad, the Grim");
+        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
 }

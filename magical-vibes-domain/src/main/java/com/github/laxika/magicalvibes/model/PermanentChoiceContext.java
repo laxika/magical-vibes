@@ -214,6 +214,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
             implements PermanentChoiceContext {}
 
+    /** Clackbridge Troll: the accepting opponent is picking which creature to sacrifice. */
+    record AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffect effect)
+            implements PermanentChoiceContext {}
+
     /** Argothian Wurm: the accepting player is picking which land to sacrifice. */
     record AnyPlayerMaySacrificeLandPutSourceOnTop(
             UUID sacrificingPlayerId, Card sourceCard,
@@ -886,6 +892,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  trigger carries an any-target effect (e.g. Niv-Mizzet, the Firemind); the controller chooses a
      *  creature or player before the triggered ability goes on the stack. */
     record DrawTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** A controller-draw trigger whose effect targets a permanent through the card's target filter. */
+    record DrawTriggerPermanentTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                      UUID sourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {}
 
     /** An enters-the-battlefield trigger that needs an "any target" choice and whose effect resolves
      *  against the permanent that just entered rather than the triggering permanent — e.g. "that creature

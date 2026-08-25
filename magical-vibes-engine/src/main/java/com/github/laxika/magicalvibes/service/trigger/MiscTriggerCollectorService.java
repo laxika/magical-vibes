@@ -1034,7 +1034,12 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
+    })
     private boolean handleCreatureCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1920,7 +1925,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD)
+    })
     boolean handleControllerCreatureCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(

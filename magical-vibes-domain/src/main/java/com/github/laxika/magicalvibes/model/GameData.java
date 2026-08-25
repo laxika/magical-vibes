@@ -884,6 +884,9 @@ public class GameData {
     /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
     public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Maximum total spells each player may cast this turn from resolution-time restrictions. */
+    public final Map<UUID, Integer> playersMaxSpellsThisTurn = new ConcurrentHashMap<>();
+
     /** Players who can't cast spells for the rest of the game because an Epic spell resolved. */
     public final Set<UUID> playersCantCastSpellsForRestOfGame = ConcurrentHashMap.newKeySet();
 
@@ -1250,6 +1253,8 @@ public class GameData {
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
     /** Owners whose graveyards had creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingCreatureOwners = ConcurrentHashMap.newKeySet();
+    /** Counts creature cards leaving each owner's graveyard during a suppressed batch. */
+    public final Map<UUID, Integer> graveyardLeaveNotificationPendingCreatureCardCounts = new ConcurrentHashMap<>();
     /** Owners whose graveyards had artifact or creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingArtifactOrCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Number of cards exiled from each owner's graveyard during a suppressed batch. */
@@ -1507,8 +1512,9 @@ public class GameData {
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
     public final Set<UUID> freeCastPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect}
-     *  this turn (e.g. Ghoulish Procession). Cleared at start of new turn. */
+    /** Tracks which source permanents or graveyard cards (by UUID) have already fired a
+     *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Procession). Cleared at start of
+     *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks source permanent IDs to creature IDs whose first counter-placement trigger has fired
@@ -2646,6 +2652,15 @@ public class GameData {
         return spellNameCastCountsThisGame.getOrDefault(playerId, Map.of()).getOrDefault(name, 0);
     }
 
+    /**
+     * Returns the total number of spells the given player has cast during this game.
+     */
+    public int getSpellsCastThisGameCount(UUID playerId) {
+        return spellNameCastCountsThisGame.getOrDefault(playerId, Map.of()).values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
     public void addSpellCastManaSpent(UUID spellCardId, int manaSpent) {
         if (manaSpent > 0) {
             spellCastManaSpent.merge(spellCardId, manaSpent, Integer::sum);
@@ -2754,6 +2769,12 @@ public class GameData {
      */
     public int getSpellsCastThisTurnCount(UUID playerId) {
         return spellsCastThisTurn.getOrDefault(playerId, List.of()).size();
+    }
+
+    /** Applies an absolute spell limit for the rest of this turn, keeping the most restrictive one. */
+    public void limitSpellsThisTurn(UUID playerId, int maxSpells) {
+        if (playerId == null) return;
+        playersMaxSpellsThisTurn.merge(playerId, maxSpells, Math::min);
     }
 
     /** Prevents {@code playerId} from casting any further spells this turn. */
@@ -4024,6 +4045,7 @@ public class GameData {
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
+        copy.playersMaxSpellsThisTurn.putAll(this.playersMaxSpellsThisTurn);
         copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
         this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
@@ -4093,6 +4115,7 @@ public class GameData {
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
+        copy.graveyardLeaveNotificationPendingCreatureCardCounts.putAll(this.graveyardLeaveNotificationPendingCreatureCardCounts);
         copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
         copy.graveyardExileNotificationPendingCounts.putAll(this.graveyardExileNotificationPendingCounts);
         copy.graveyardOrBattlefieldExileNotificationPending = this.graveyardOrBattlefieldExileNotificationPending;

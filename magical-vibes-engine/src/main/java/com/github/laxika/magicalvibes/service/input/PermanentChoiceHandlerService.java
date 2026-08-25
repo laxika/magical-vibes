@@ -216,6 +216,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
         } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter aosc) {
             battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndCounter(gameData, permanentId, aosc);
+        } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw aosc) {
+            battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(gameData, permanentId, aosc);
         } else if (context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop ams) {
             battlefieldHandler.handleAnyPlayerMaySacrificeLandPutSourceOnTop(gameData, permanentId, ams);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {
@@ -296,6 +298,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleLifeGainTrigger(gameData, permanentId, lgt);
         } else if (context instanceof PermanentChoiceContext.DrawTriggerAnyTarget dt) {
             triggerHandler.handleDrawTrigger(gameData, permanentId, dt);
+        } else if (context instanceof PermanentChoiceContext.DrawTriggerPermanentTarget dpt) {
+            triggerHandler.handleDrawTriggerPermanentTarget(gameData, permanentId, dpt);
         } else if (context instanceof PermanentChoiceContext.EnteringPermanentAnyTargetTrigger efg) {
             triggerHandler.handleEnteringPermanentAnyTarget(gameData, permanentId, efg);
         } else if (context instanceof PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {

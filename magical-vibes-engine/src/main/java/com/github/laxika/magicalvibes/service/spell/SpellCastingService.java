@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
@@ -1172,6 +1173,10 @@ public class SpellCastingService {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
         try {
+            if (attempted != null && attempted.getCastingOption(AdventureCast.class).isPresent()) {
+                playAdventureCardInternal(gameData, player, cardIndex, xValue, targetId, targetIds);
+                return;
+            }
             if (attempted != null && attempted.getCastingOption(OmenCast.class).isPresent()) {
                 playOmenCard(gameData, player, cardIndex, xValue, targetId, targetIds);
                 return;
@@ -1317,6 +1322,123 @@ public class SpellCastingService {
             entry = new StackEntry(entryType, physicalCard, playerId, omenCard.getName(), effects, effectiveXValue);
         }
         entry.setCastWithOmen(true);
+        entry.setSourceZone(Zone.HAND);
+        gameData.stack.add(entry);
+        finishSpellCast(gameData, playerId, player, hand, physicalCard);
+    }
+
+    public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, List<UUID> targetIds) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
+        try {
+            playAdventureCardInternal(gameData, player, cardIndex, xValue, targetId, targetIds);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
+            throw e;
+        }
+    }
+
+    private void playAdventureCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                           UUID targetId, List<UUID> targetIds) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalArgumentException("Invalid card index");
+        }
+
+        Card physicalCard = hand.get(cardIndex);
+        if (physicalCard.getCastingOption(AdventureCast.class).isEmpty()) {
+            throw new IllegalStateException("Card does not have Adventure");
+        }
+        Card adventureCard = physicalCard.getBackFaceCard();
+        if (adventureCard == null || (!adventureCard.hasType(CardType.SORCERY)
+                && !adventureCard.hasType(CardType.INSTANT))) {
+            throw new IllegalStateException("Card does not have a castable Adventure face");
+        }
+        if (castingPermissionService.isSpellCastingFromHandRestricted(gameData, playerId)
+                || !castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, adventureCard)) {
+            throw new IllegalStateException("Card is not playable");
+        }
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        if (!castingPermissionService.canCastWithTiming(
+                gameData, playerId, adventureCard, isActivePlayer, isMainPhase, gameData.stack.isEmpty())) {
+            throw new IllegalStateException("Card is not playable");
+        }
+
+        int effectiveXValue = xValue != null ? xValue : 0;
+        effectiveXValue = resolveCastTimeXValue(gameData, adventureCard, playerId, effectiveXValue);
+        validateXValueCap(gameData, adventureCard, playerId, effectiveXValue);
+        if (adventureCard.getParsedManaCost() != null && adventureCard.getParsedManaCost().hasX()
+                && effectiveXValue < 0) {
+            throw new IllegalStateException("X value cannot be negative");
+        }
+
+        List<UUID> declaredTargetIds = targetIds != null ? targetIds : List.of();
+        List<CardEffect> effects = adventureCard.getEffects(EffectSlot.SPELL);
+        boolean adventureNeedsGraveyardTargeting = effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        boolean adventureNeedsExileTargeting = effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+        boolean adventureNeedsCastTarget = EffectResolution.needsSpellCastTarget(
+                effects, adventureCard.isAura(), adventureCard.isEnchantPlayer());
+        if (!declaredTargetIds.isEmpty()) {
+            targetLegalityService.validateMultiSpellTargets(
+                    gameData, adventureCard, declaredTargetIds, playerId, effectiveXValue);
+        } else if (targetId != null) {
+            if (adventureNeedsExileTargeting) {
+                targetLegalityService.validateEffectTargetInZone(
+                        gameData, adventureCard, effects, targetId, Zone.EXILE, effectiveXValue, playerId);
+            } else if (adventureNeedsGraveyardTargeting) {
+                targetLegalityService.validateEffectTargetInZone(
+                        gameData, adventureCard, effects, targetId, Zone.GRAVEYARD, effectiveXValue, playerId);
+            } else if (EffectResolution.needsSpellTarget(effects)) {
+                targetLegalityService.validateSpellTargetOnStack(
+                        gameData, targetId, adventureCard.getTargetFilter(), playerId, effectiveXValue);
+            } else {
+                targetLegalityService.validateSpellTargeting(
+                        gameData, adventureCard, targetId, null, playerId, true, effectiveXValue);
+            }
+        }
+        if (!actionAvailabilityService.isCardPlayable(
+                gameData, playerId, adventureCard, gameData.playerManaPools.get(playerId), 0)) {
+            throw new IllegalStateException("Card is not playable");
+        }
+        if (targetId == null && declaredTargetIds.isEmpty()
+                && (adventureNeedsCastTarget || adventureCard.getMinTargets() > 0)) {
+            throw new IllegalStateException("Spell requires a target");
+        }
+
+        paySpellManaCost(gameData, playerId, adventureCard, effectiveXValue, List.of());
+        int manaSpent = gameData.getSpellCastManaSpent(adventureCard.getId());
+        gameData.clearSpellCastManaSpent(adventureCard.getId());
+        gameData.addSpellCastManaSpent(physicalCard.getId(), manaSpent);
+        hand.remove(cardIndex);
+
+        StackEntryType entryType = adventureCard.hasType(CardType.INSTANT)
+                ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+        Zone adventureTargetZone = adventureNeedsExileTargeting
+                ? Zone.EXILE
+                : adventureNeedsGraveyardTargeting
+                ? Zone.GRAVEYARD
+                : EffectResolution.needsSpellTarget(effects) ? Zone.STACK : null;
+        StackEntry entry;
+        if (!declaredTargetIds.isEmpty()) {
+            entry = new StackEntry(entryType, physicalCard, playerId, adventureCard.getName(), effects,
+                    effectiveXValue, declaredTargetIds);
+        } else if (targetId != null) {
+            entry = new StackEntry(entryType, physicalCard, playerId, adventureCard.getName(), effects,
+                    effectiveXValue, targetId, null, Map.of(), adventureTargetZone, List.of(), List.of());
+        } else {
+            entry = new StackEntry(entryType, physicalCard, playerId, adventureCard.getName(), effects,
+                    effectiveXValue);
+        }
+        entry.setCastWithAdventure(true);
         entry.setSourceZone(Zone.HAND);
         gameData.stack.add(entry);
         finishSpellCast(gameData, playerId, player, hand, physicalCard);
@@ -2084,7 +2206,8 @@ public class SpellCastingService {
 
         // For modal spells, graveyard-targeting is determined by the chosen mode's unwrapped effects
         // (the raw SPELL slot holds only the ChooseOneEffect, which reports no graveyard targeting).
-        List<CardEffect> graveyardTargetingSource = targetingSpellEffects;
+        List<CardEffect> graveyardTargetingSource = EffectResolution
+                .expandConditionalTargetingEffects(targetingSpellEffects);
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) graveyardTargetingSource.stream()
                 .map(SpellCastingService::unwrapConditional)
@@ -2863,7 +2986,8 @@ public class SpellCastingService {
                             .findFirst().orElse(null);
 
             IndependentlyTargetedGraveyardCardsEffect independentGraveyardTargets =
-                    (IndependentlyTargetedGraveyardCardsEffect) filteredSpellEffects.stream()
+                    (IndependentlyTargetedGraveyardCardsEffect) EffectResolution
+                            .expandConditionalTargetingEffects(filteredSpellEffects).stream()
                             .filter(IndependentlyTargetedGraveyardCardsEffect.class::isInstance)
                             .findFirst().orElse(null);
 
@@ -3209,6 +3333,7 @@ public class SpellCastingService {
                         null, null, null, List.of(), List.of()
                 ));
             } else if (returnToBattlefieldEffect != null && !returnToBattlefieldEffect.xScaled()) {
+                int targetXValue = resolvedXValue;
                 List<UUID> graveyardOwners = switch (returnToBattlefieldEffect.source()) {
                     case CONTROLLERS_GRAVEYARD -> List.of(playerId);
                     case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()
@@ -3216,18 +3341,25 @@ public class SpellCastingService {
                             .toList();
                     case ALL_GRAVEYARDS -> gameData.orderedPlayerIds;
                 };
+                int maxTargets = returnToBattlefieldEffect.dynamicMaxTargets() == null
+                        ? returnToBattlefieldEffect.maxTargets()
+                        : Math.max(0, amountEvaluationService.evaluate(gameData,
+                        returnToBattlefieldEffect.dynamicMaxTargets(),
+                        new com.github.laxika.magicalvibes.service.effect.AmountContext(
+                                playerId, null, null, resolvedXValue, 0)));
                 long matchingCount = graveyardOwners.stream()
                         .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
                                 .filter(c -> !returnToBattlefieldEffect.fromBattlefieldThisTurn()
                                         || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                                         .getOrDefault(ownerId, Set.of()).contains(c.getId())))
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(
-                                c, returnToBattlefieldEffect.filter(), card.getId()))
+                                c, returnToBattlefieldEffect.filter(), card.getId(), gameData,
+                                playerId, null, null, targetXValue))
                         .count();
-                if (matchingCount > 0) {
+                if (matchingCount > 0 && maxTargets > 0) {
                     graveyardTargetingService.handleUpToNGraveyardSpellTargeting(
                             gameData, playerId, card, entryType, returnToBattlefieldEffect,
-                            filteredSpellEffects);
+                            maxTargets, targetXValue, filteredSpellEffects);
                     return;
                 }
                 gameData.stack.add(new StackEntry(

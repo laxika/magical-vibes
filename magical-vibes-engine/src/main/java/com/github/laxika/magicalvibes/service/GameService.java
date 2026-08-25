@@ -905,6 +905,19 @@ public class GameService {
         }
     }
 
+    public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playAdventureCard(gameData, actionPlayer, cardIndex, xValue, targetId, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playAdventureCard(gameData, player, cardIndex, xValue, targetId,
+                    targetIds != null ? targetIds : List.of());
+        }
+    }
+
     public void playCardWithMorph(GameData gameData, Player player, int cardIndex, Integer xValue,
                                   UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
         playCardWithMorph(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, null);

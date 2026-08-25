@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileDragonApproachAndSearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -70,6 +72,7 @@ public class GraveyardChoiceHandlerService {
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
@@ -294,6 +297,19 @@ public class GraveyardChoiceHandlerService {
                         perm.tap();
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+
+                    if (graveyardChoice.enterWithCounter() != null
+                            && graveyardChoice.enterWithCounterCount() > 0) {
+                        permanentCounterSupport.placeCounterOnPermanent(
+                                gameData, gameData.pendingEffectResolutionEntry, perm,
+                                graveyardChoice.enterWithCounter(), graveyardChoice.enterWithCounterCount());
+                    }
+                    if (graveyardChoice.enterWithCounters() != null) {
+                        for (CounterType counterType : graveyardChoice.enterWithCounters()) {
+                            permanentCounterSupport.placeCounterOnPermanent(
+                                    gameData, gameData.pendingEffectResolutionEntry, perm, counterType, 1);
+                        }
+                    }
 
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " , card, " from a graveyard onto the battlefield."));
                     log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
@@ -720,7 +736,7 @@ public class GraveyardChoiceHandlerService {
 
         IndependentlyTargetedGraveyardCardsEffect independentTargetEffect = pendingEffects == null
                 ? null
-                : pendingEffects.stream()
+                : EffectResolution.expandConditionalTargetingEffects(pendingEffects).stream()
                 .filter(IndependentlyTargetedGraveyardCardsEffect.class::isInstance)
                 .map(IndependentlyTargetedGraveyardCardsEffect.class::cast)
                 .findFirst().orElse(null);

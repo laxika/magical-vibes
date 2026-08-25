@@ -294,6 +294,18 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("A selected permanent no longer exists");
             }
         }
+        if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse sacrificeCtx) {
+            if (!permanentIds.isEmpty() && permanentIds.size() != sacrificeCtx.requiredCount()) {
+                throw new IllegalStateException("Must select exactly " + sacrificeCtx.requiredCount()
+                        + " permanents or none to decline");
+            }
+            if (permanentIds.stream().anyMatch(id -> {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                return permanent == null || !playerId.equals(gameQueryService.findPermanentController(gameData, id));
+            })) {
+                throw new IllegalStateException("A selected permanent is no longer controlled by the chooser");
+            }
+        }
         if (context instanceof MultiPermanentChoiceContext.TapPermanentsForAmount tapCtx) {
             if (permanentIds.size() != tapCtx.requiredCount()) {
                 throw new IllegalStateException("Must select exactly " + tapCtx.requiredCount()
@@ -497,6 +509,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificePermanentsDrawPerSacrificed(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed ctx) {
             handleSacrificePermanentsAddManaPerSacrificed(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse ctx) {
+            handleSacrificePermanentsOrElse(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount ctx) {
             handleSacrificeAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource ctx) {
@@ -1332,6 +1346,30 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleSacrificePermanentsOrElse(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.SacrificePermanentsOrElse context) {
+        int sacrificed = 0;
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null && playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+                sacrificed++;
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No pending effect resolution for optional sacrifice");
+        }
+        CardEffect branch = sacrificed == context.requiredCount()
+                ? context.sacrificedEffect()
+                : context.elseEffect();
+        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private int totalEffectivePower(GameData gameData, List<UUID> permanentIds) {
         int total = 0;
         for (UUID permId : permanentIds) {
@@ -1752,11 +1790,14 @@ public class MultiPermanentChoiceHandlerService {
                     && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))) {
                 continue;
             }
+            int previousCount = permanent.getCounterCount(counterType);
             int placed = gameQueryService.replaceCounters(gameData, permanent, counterType, 1);
             if (placed <= 0) {
                 continue;
             }
             permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + placed);
+            permanentCounterSupport.notifySelfCountersPlaced(
+                    gameData, null, permanent, counterType, previousCount, placed);
             totalPlaced += placed;
             if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(

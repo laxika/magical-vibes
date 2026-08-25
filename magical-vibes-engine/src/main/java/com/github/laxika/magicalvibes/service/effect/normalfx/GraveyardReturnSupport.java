@@ -819,6 +819,8 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, matchingIndices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
+                .enterWithCounters(effect.enterWithCounters())
                 .mandatory(effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
@@ -883,6 +885,8 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, indices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
+                .enterWithCounters(effect.enterWithCounters())
                 .cardPool(cardPool);
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());

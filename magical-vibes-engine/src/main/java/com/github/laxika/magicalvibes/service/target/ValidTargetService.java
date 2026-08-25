@@ -1406,7 +1406,8 @@ public class ValidTargetService {
                     && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                             .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e && e.filter() != null) {
-            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId,
+                    gameData, controllerId, null, null, xValue);
         } else if (effect instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
@@ -1419,7 +1420,8 @@ public class ValidTargetService {
         } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
             return c.hasType(CardType.CREATURE) && c.getManaValue() == effectiveXValue;
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {
-            return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(),
+                    sourceCardId, gameData, controllerId, null, null, xValue);
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }

@@ -1417,7 +1417,40 @@ public class PermanentChoiceTriggerHandlerService {
         gameLogService.append(gameData, GameLog.builder().card(dt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
         log.info("Game {} - {} draw trigger targets {}", gameData.id, dt.sourceCard().getName(), targetName);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class)) {
+            triggerCollectionService.processNextDrawTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDrawTriggerPermanentTarget(GameData gameData, UUID targetId,
+            PermanentChoiceContext.DrawTriggerPermanentTarget dpt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                dpt.sourceCard(),
+                dpt.controllerId(),
+                dpt.sourceCard().getName() + "'s ability",
+                new ArrayList<>(dpt.effects()),
+                targetId,
+                dpt.sourcePermanentId()
+        );
+        pushTriggeredEntry(gameData, entry);
+
+        String targetName = getTargetDisplayName(gameData, targetId);
+        gameLogService.append(gameData, GameLog.builder().card(dpt.sourceCard())
+                .text("'s triggered ability targets " + targetName + ".").build());
+        log.info("Game {} - {} draw trigger targets {}", gameData.id, dpt.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class)) {
             triggerCollectionService.processNextDrawTriggerTarget(gameData);
             return;
         }

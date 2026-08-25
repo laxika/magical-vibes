@@ -61,6 +61,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardHasAdventurePredicate) {
+            return "card with Adventure";
+        }
         if (predicate instanceof CardIsHistoricPredicate) {
             return "historic card";
         }

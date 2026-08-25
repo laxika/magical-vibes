@@ -475,6 +475,11 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificePermanentsAddManaPerSacrificed(ManaColor color) implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */
+    record SacrificePermanentsOrElse(int requiredCount, CardEffect sacrificedEffect,
+                                     CardEffect elseEffect) implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Sacrifice the chosen permanents and record the number actually sacrificed on the resolving
      * stack entry for a following {@code EventValue} effect.

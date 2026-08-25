@@ -794,6 +794,22 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
+        StackEntry spellEntry = null;
+        for (StackEntry se : match.gameData().stack) {
+            if (se.getCard().getId().equals(sc.spellCard().getId())) {
+                spellEntry = se;
+                break;
+            }
+        }
+        if (spellEntry == null) return false;
+
+        if (trigger.requiredCastWithAdventure()
+                && (!spellEntry.isCastWithAdventure()
+                || (spellEntry.getEntryType() != StackEntryType.INSTANT_SPELL
+                && spellEntry.getEntryType() != StackEntryType.SORCERY_SPELL))) {
+            return false;
+        }
+
         if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(),
                 match.permanent().getCard().getId(),
                 match.gameData(), sc.castingPlayerId())) {
@@ -804,15 +820,6 @@ public class SpellCastTriggerCollectorService {
                 trigger.intervening(), ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
             return false;
         }
-
-        StackEntry spellEntry = null;
-        for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(sc.spellCard().getId())) {
-                spellEntry = se;
-                break;
-            }
-        }
-        if (spellEntry == null) return false;
 
         if (trigger.castSpellTargetCondition() != null
                 && !targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,

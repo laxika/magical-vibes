@@ -124,6 +124,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
+        register(PendingInteraction.SpectersShriekChoice.class, this::projectSpectersShriekChoice);
         register(PendingInteraction.RevealCardsDiscardChoice.class,
                 this::projectRevealCardsDiscardChoice);
         register(PendingInteraction.AlternatingHandExileChoice.class,
@@ -797,6 +798,14 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(),
                 interaction.prompt(),
                 interaction.optional());
+    }
+
+    private InteractionPromptMessage projectSpectersShriekChoice(
+            GameData gameData, PendingInteraction.SpectersShriekChoice interaction) {
+        List<CardView> cardViews =
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews, interaction.validIndices(), interaction.prompt(), true);
     }
 
     private InteractionPromptMessage projectAlternatingHandExileChoice(

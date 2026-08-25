@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect
 import com.github.laxika.magicalvibes.model.effect.SpellCastingTimingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -112,9 +113,7 @@ public class CastingPermissionService {
      * restrictions: spell limit, type restrictions, forbidden names, silence, etc.
      */
     public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
-        if (spellsCast >= maxSpells) return false;
+        if (isSpellLimitReached(gameData, playerId, card)) return false;
         if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
         if (isSpellTypeRestricted(gameData, playerId, card)) return false;
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
@@ -137,13 +136,14 @@ public class CastingPermissionService {
     }
 
     public int getMaxSpellsPerTurn(GameData gameData, UUID playerId) {
-        int limit = Integer.MAX_VALUE;
+        int limit = gameData.playersMaxSpellsThisTurn.getOrDefault(playerId, Integer.MAX_VALUE);
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
+                    if (spellLimit.spellFilter() != null) continue;
                     boolean applies = switch (spellLimit.scope()) {
                         // Rule of Law etc.: applies to every player globally.
                         case EACH_PLAYER -> true;
@@ -159,6 +159,48 @@ public class CastingPermissionService {
             }
         }
         return limit;
+    }
+
+    /**
+     * Returns whether a static spell limit already has enough matching spells cast this turn.
+     * Unfiltered limits count every spell; filtered limits count only matching spells.
+     */
+    public boolean isSpellLimitReached(GameData gameData, UUID playerId, Card card) {
+        Integer maxSpells = gameData.playersMaxSpellsThisTurn.get(playerId);
+        if (maxSpells != null && gameData.getSpellsCastThisTurnCount(playerId) >= maxSpells) {
+            return true;
+        }
+
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
+                    boolean applies = switch (spellLimit.scope()) {
+                        case EACH_PLAYER -> true;
+                        case CONTROLLER -> pid.equals(playerId);
+                        case ENCHANTED_PLAYER -> perm.isAttached() && playerId.equals(perm.getAttachedTo());
+                    };
+                    if (!applies) continue;
+
+                    CardPredicate filter = spellLimit.spellFilter();
+                    UUID sourceCardId = perm.getCard().getId();
+                    if (filter != null
+                            && !predicateEvaluationService.matchesCardPredicate(
+                            card, filter, sourceCardId, gameData, playerId)) {
+                        continue;
+                    }
+                    long matchingSpells = gameData.getSpellsCastThisTurn(playerId).stream()
+                            .filter(cast -> filter == null
+                                    || predicateEvaluationService.matchesCardPredicate(
+                                    cast, filter, sourceCardId, gameData, playerId))
+                            .count();
+                    if (matchingSpells >= spellLimit.maxSpells()) return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

@@ -85,6 +85,11 @@ public class PlayCardRequestDispatchService {
                     request.damageAssignments(), listOrEmpty(request.targetIds()), request.discardHandCardIndex());
             return;
         }
+        if (Boolean.TRUE.equals(request.adventure())) {
+            gameService.playAdventureCard(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), listOrEmpty(request.targetIds()));
+            return;
+        }
         if (isPlotAlternateCast(gameData, player, request)) {
             gameService.playCardWithAlternateCost(gameData, player, request.cardIndex(), request.xValue(),
                     request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));

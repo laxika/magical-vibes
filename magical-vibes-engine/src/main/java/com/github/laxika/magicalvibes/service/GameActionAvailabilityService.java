@@ -267,21 +267,18 @@ public class GameActionAvailabilityService {
 
     /** Per-player values shared by every card's playability check; computed once per hand scan. */
     private record SpellPlayabilityContext(boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
-                                           int landsPlayed, boolean spellLimitReached, boolean cantCastDueToAttack,
+                                           int landsPlayed, boolean cantCastDueToAttack,
                                            Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames,
                                            CastingCostService.CostModifierSnapshot costSnapshot,
                                            List<Permanent> battlefield) {
     }
 
     private SpellPlayabilityContext buildSpellPlayabilityContext(GameData gameData, UUID playerId) {
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
         return new SpellPlayabilityContext(
                 playerId.equals(gameData.activePlayerId),
                 gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
                 gameData.stack.isEmpty(),
                 gameData.landsPlayedThisTurn.getOrDefault(playerId, 0),
-                spellsCast >= maxSpells,
                 castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId),
                 castingPermissionService.getRestrictedSpellTypes(gameData, playerId),
                 castingPermissionService.getForbiddenCardNames(gameData, playerId),
@@ -312,7 +309,8 @@ public class GameActionAvailabilityService {
             pool.promoteForetellSpellOnlyMana();
         }
 
-        if (card.getCastingOption(OmenCast.class).isPresent() && card.getBackFaceCard() != null
+        if ((card.getCastingOption(OmenCast.class).isPresent()
+                || card.getCastingOption(AdventureCast.class).isPresent()) && card.getBackFaceCard() != null
                 && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
                 extraConvokeMana, additionalGenericCost, ctx)) {
             return true;
@@ -607,9 +605,11 @@ public class GameActionAvailabilityService {
             return castingCostService.canPayAlternateHandCast(gameData, playerId, card)
                     && castingPermissionService.canCastWithTiming(gameData, playerId, card,
                             ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())
-                    && !ctx.spellLimitReached() && !ctx.cantCastDueToAttack();
+                    && !castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                    && !ctx.cantCastDueToAttack();
         }
-        if (ctx.spellLimitReached() || ctx.cantCastDueToAttack()) {
+        if (castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                || ctx.cantCastDueToAttack()) {
             return false;
         }
         if (castingPermissionService.isSpellRestricted(gameData, playerId, card, ctx.restrictedSpellTypes(), ctx.forbiddenCardNames())) {
@@ -981,9 +981,6 @@ public class GameActionAvailabilityService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Optional<UUID> graveyardCastSourceId = castingPermissionService.findGraveyardCastSourcePermanentId(gameData, playerId);
         Set<CardType> typesCastFromGraveyard = graveyardCastSourceId
@@ -992,7 +989,7 @@ public class GameActionAvailabilityService {
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
-            if (spellLimitReached || cantCastDueToAttack) {
+            if (cantCastDueToAttack) {
                 continue;
             }
             if (!card.hasType(CardType.LAND)
@@ -1007,6 +1004,9 @@ public class GameActionAvailabilityService {
             }
             var disturb = card.getCastingOption(DisturbCast.class);
             Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
+            if (castingPermissionService.isSpellLimitReached(gameData, playerId, castHalf)) {
+                continue;
+            }
             var harmonize = card.getCastingOption(HarmonizeCast.class);
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();

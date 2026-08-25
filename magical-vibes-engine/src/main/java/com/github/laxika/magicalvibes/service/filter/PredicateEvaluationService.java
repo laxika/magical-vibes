@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
@@ -90,6 +92,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythin
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -155,6 +158,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
@@ -212,6 +216,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -368,6 +373,8 @@ public class PredicateEvaluationService {
                     isAuraEnchantingCreature(card);
             case CardHasFlashbackPredicate ignored ->
                     card.getCastingOption(FlashbackCast.class).isPresent();
+            case CardHasAdventurePredicate ignored ->
+                    card.getCastingOption(AdventureCast.class).isPresent();
             case CardHasCyclingPredicate ignored ->
                     card.getHandActivatedAbilities().stream()
                             .anyMatch(ActivatedAbility::isCyclingAbility);
@@ -587,6 +594,8 @@ public class PredicateEvaluationService {
                         ? permanent.hasKeyword(Keyword.CHANGELING)
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
             }
+            case PermanentHasAdventurePredicate ignored ->
+                    permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentHasNonManaActivatedAbilityPredicate hasNonManaAbilityPredicate ->
                     hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
             case PermanentHasManaAbilityPredicate ignored ->
@@ -902,6 +911,20 @@ public class PredicateEvaluationService {
                 List<Card> sourceControllerHand = gameData.playerHands.get(sourceControllerId);
                 int handSize = sourceControllerHand == null ? 0 : sourceControllerHand.size();
                 yield permanent.getCard().getManaValue() <= handSize;
+            }
+            case PermanentManaValueAtMostControllerGraveyardCountPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (controllerId == null) {
+                    yield false;
+                }
+                List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+                int graveyardSize = graveyard == null
+                        ? 0
+                        : (int) graveyard.stream().filter(card -> !card.isToken()).count();
+                yield permanent.getCard().getManaValue() <= graveyardSize;
             }
             case PermanentManaValueAtMostXPredicate ignored -> {
                 // Before X is known (target enumeration / static filters) treat every permanent as
@@ -1654,6 +1677,7 @@ public class PredicateEvaluationService {
             case PermanentCounterCountAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasAdventurePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSupertypePredicate p -> gameQueryService.hasEffectiveSupertype(
                     context == null ? null : context.gameData(), permanent, p.supertype());
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -2108,6 +2132,8 @@ public class PredicateEvaluationService {
                         ? permanent.hasKeyword(Keyword.CHANGELING)
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING))));
             }
+            case PermanentHasAdventurePredicate ignored ->
+                    permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentIsCreaturePredicate ignored ->
                     state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
             case PermanentIsArtifactPredicate ignored ->
@@ -2335,6 +2361,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
+            case StackEntryManaValueAtMostControllerGraveyardCountPredicate ignored -> false;
             case StackEntrySharesColorOrManaValueWithImprintedCardPredicate ignored -> false;
             case StackEntryControlledByPredicate ignored -> false;
             case StackEntryNotTargetedByNamedCreatureAbilityPredicate ignored -> false;

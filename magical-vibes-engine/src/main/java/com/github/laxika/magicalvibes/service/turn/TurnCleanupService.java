@@ -312,6 +312,7 @@ public class TurnCleanupService {
         gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        gameData.playersMaxSpellsThisTurn.clear();
         gameData.extraManaOnLandSubtypeTapThisTurn.clear();
         gameData.landSubtypeFixedManaColorThisTurn.clear();
         gameData.nonbasicLandsFixedManaColorThisTurn = null;
@@ -369,6 +370,7 @@ public class TurnCleanupService {
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardLeaveNotificationPendingOwners.clear();
         gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
+        gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
 

@@ -313,6 +313,24 @@ class CastingPermissionServiceTest {
         }
 
         @Test
+        @DisplayName("Rejects spell when a resolution-time spell cap is reached")
+        void rejectsWhenResolutionTimeSpellCapReached() {
+            gd.limitSpellsThisTurn(player1Id, 1);
+
+            Card dummy = new Card();
+            dummy.setName("Dummy");
+            dummy.setType(CardType.INSTANT);
+            gd.recordSpellCast(player1Id, dummy);
+
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+            bolt.setType(CardType.INSTANT);
+            bolt.setManaCost("{R}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, bolt)).isFalse();
+        }
+
+        @Test
         @DisplayName("Rejects spell of a restricted type")
         void rejectsRestrictedSpellType() {
             Card restrictor = new Card();

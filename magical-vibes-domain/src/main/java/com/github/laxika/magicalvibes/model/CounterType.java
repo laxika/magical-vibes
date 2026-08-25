@@ -57,6 +57,7 @@ public enum CounterType {
     INVITATION,
     JAVELIN,
     KI,
+    KNOWLEDGE,
     LANDMARK,
     LEVEL,
     LOYALTY,

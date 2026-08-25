@@ -138,6 +138,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffectHandler anyOpponentSacrificeForTapAndGainLifeAndDrawHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
@@ -705,6 +706,17 @@ public class PermanentChoiceBattlefieldHandlerService {
                                                                    PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter context) {
         anyOpponentSacrificeForTapAndCounterHandler.sacrifice(gameData, context.sacrificingPlayerId(), permanentId);
         anyOpponentSacrificeForTapAndCounterHandler.advance(
+                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Clackbridge Troll: the accepting opponent picked which creature to sacrifice. */
+    public void handleAnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(GameData gameData, UUID permanentId,
+                                                                            PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw context) {
+        anyOpponentSacrificeForTapAndGainLifeAndDrawHandler.sacrifice(
+                gameData, context.sacrificingPlayerId(), permanentId);
+        anyOpponentSacrificeForTapAndGainLifeAndDrawHandler.advance(
                 gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

@@ -184,7 +184,9 @@ public class AutoPassService {
         }
 
         // Process any pending draw targeted triggers (Niv-Mizzet, the Firemind)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+        if (!gameData.interaction.isAwaitingInput()
+                && (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class))) {
             triggerCollectionService.processNextDrawTriggerTarget(gameData);
         }
 

@@ -2405,7 +2405,7 @@ public class CombatDamageService {
                     Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceEntry.getKey());
                     int sourceDamage = sourceEntry.getValue();
                     if (damageSource == null
-                            || gameQueryService.damageCantBePreventedFromSource(gameData, damageSource)) {
+                            || gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, true)) {
                         sourceSpecificDamage += sourceDamage;
                     } else {
                         sourceSpecificDamage += damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
@@ -3028,7 +3028,7 @@ public class CombatDamageService {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
                     state.damageToDefendingPlayer += damage;
-                    if (gameQueryService.damageCantBePreventedFromSource(gameData, atk)) {
+                    if (gameQueryService.damageCantBePreventedFromSource(gameData, atk, true)) {
                         state.unpreventableDamageToDefendingPlayer += damage;
                     }
                 }
@@ -3066,7 +3066,7 @@ public class CombatDamageService {
      * (Malignus).
      */
     private boolean damagePreventableFrom(GameData gameData, boolean snapshotPreventable, Permanent source) {
-        return snapshotPreventable && !gameQueryService.damageCantBePreventedFromSource(gameData, source);
+        return snapshotPreventable && !gameQueryService.damageCantBePreventedFromSource(gameData, source, true);
     }
 
     /**
@@ -3076,7 +3076,7 @@ public class CombatDamageService {
      * prevention site needs to learn about the source.
      */
     private void withSourceUnpreventableDamage(GameData gameData, Permanent source, Runnable action) {
-        if (!gameQueryService.damageCantBePreventedFromSource(gameData, source)) {
+        if (!gameQueryService.damageCantBePreventedFromSource(gameData, source, true)) {
             action.run();
             return;
         }
@@ -3229,7 +3229,7 @@ public class CombatDamageService {
             damageTakenBySourceMap
                     .computeIfAbsent(targetIdx, ignored -> new HashMap<>())
                     .merge(source.getId(), damage, Integer::sum);
-            if (gameQueryService.damageCantBePreventedFromSource(gameData, source)) {
+            if (gameQueryService.damageCantBePreventedFromSource(gameData, source, true)) {
                 unpreventableDamageTakenMap.merge(targetIdx, damage, Integer::sum);
             }
             if (damage > 0 && sourceStats.deathtouch()) {

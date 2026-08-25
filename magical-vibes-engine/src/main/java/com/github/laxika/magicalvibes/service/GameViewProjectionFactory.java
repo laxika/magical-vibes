@@ -507,9 +507,6 @@ public class GameViewProjectionFactory {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttackExile = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
@@ -590,7 +587,9 @@ public class GameViewProjectionFactory {
                 continue;
             }
 
-            if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
+            if (card.getManaCost() == null
+                    || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                    || cantCastDueToAttackExile) continue;
             if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
@@ -709,14 +708,12 @@ public class GameViewProjectionFactory {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
-        if (spellLimitReached || cantCastDueToAttack) return playable;
+        if (castingPermissionService.isSpellLimitReached(gameData, playerId, topCard)
+                || cantCastDueToAttack) return playable;
         if (castingPermissionService.isSpellRestricted(gameData, playerId, topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return playable;

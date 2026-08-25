@@ -34,9 +34,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -921,6 +923,47 @@ public class TriggeredAbilityQueueService {
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s draw trigger - choose a target."));
             log.info("Game {} - {} draw trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    public void processNextDrawTriggerPermanentTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class)) {
+            PermanentChoiceContext.DrawTriggerPermanentTarget pending =
+                    gameData.peekPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class);
+            TargetFilter targetFilter = pending.targetFilter() != null
+                    ? pending.targetFilter() : pending.sourceCard().getTargetFilter();
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    targetFilter,
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.ATTACK);
+
+            if (result.validTargets().isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s draw trigger has no valid targets."));
+                log.info("Game {} - {} draw permanent-target trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class);
+            String targetDescription = targetFilter instanceof PermanentPredicateTargetFilter ppf
+                    ? ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "")
+                    : targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf
+                            ? cpf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "")
+                            : "target permanent";
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+
+            gameLogService.append(gameData,
+                    GameLog.cardThen(pending.sourceCard(), "'s draw trigger - choose " + targetDescription + "."));
+            log.info("Game {} - {} draw permanent-target trigger awaiting target selection",
+                    gameData.id, pending.sourceCard().getName());
             return;
         }
     }

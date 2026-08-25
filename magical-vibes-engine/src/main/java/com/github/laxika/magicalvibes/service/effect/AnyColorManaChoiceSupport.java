@@ -121,7 +121,7 @@ public final class AnyColorManaChoiceSupport {
         }
         List<ManaColor> allowedColors = effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 ? imprintedCardColors(gameData, sourceCard)
-                : ManaColor.COLORS;
+                : effect.allowedColors();
         if (allowedColors.size() == 1 && effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS) {
             UUID manaRecipientId = recipientPlayerId != null ? recipientPlayerId : playerId;
             ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
@@ -151,7 +151,7 @@ public final class AnyColorManaChoiceSupport {
                                                Card sourceCard) {
         if (effect.differentColors()) {
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.differentColors(
-                    playerId, fromCreature, amount, ManaColor.COLORS);
+                    playerId, fromCreature, amount, effect.allowedColors());
             if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {
                 choice = choice.withPlaneswalkerSpellOnly();
             }
@@ -159,7 +159,7 @@ public final class AnyColorManaChoiceSupport {
         }
         if (effect.anyColorCombination()) {
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
-                    playerId, fromCreature, amount, ManaColor.COLORS);
+                    playerId, fromCreature, amount, effect.allowedColors());
             if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {
                 choice = choice.withPlaneswalkerSpellOnly();
             }
