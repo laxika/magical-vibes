@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,9 +46,16 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
         // creatures don't see each other die and "whenever a creature dies" triggers under-count.
         List<Permanent> toDestroy = new ArrayList<>();
         Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
         for (UUID targetId : targets) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
+                continue;
+            }
+            if (destroy.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(target, destroy.filter(), filterContext)) {
                 continue;
             }
             toDestroy.add(target);

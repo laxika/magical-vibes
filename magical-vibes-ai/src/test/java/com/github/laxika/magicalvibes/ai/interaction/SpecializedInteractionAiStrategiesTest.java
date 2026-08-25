@@ -41,6 +41,7 @@ class SpecializedInteractionAiStrategiesTest {
         aiPlayerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "specialized-ai", aiPlayerId, "AI");
         gameData.playerHands.put(aiPlayerId, new ArrayList<>());
+        gameData.playerGraveyards.put(aiPlayerId, new ArrayList<>());
         gameData.playerDecks.put(aiPlayerId, new ArrayList<>());
         gameData.playerSideboards.put(aiPlayerId, new ArrayList<>());
         actions = mock(AiGameActions.class);
@@ -337,6 +338,59 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void handOrGraveyardChoiceChoosesTheHighestManaValueCard() throws Exception {
+        Card handCard = card("Hand card", "{2}");
+        Card graveyardCard = card("Graveyard card", "{5}");
+        gameData.playerHands.get(aiPlayerId).add(handCard);
+        gameData.playerGraveyards.get(aiPlayerId).add(graveyardCard);
+
+        new PutCardFromHandOrGraveyardChoiceAiStrategy().answer(
+                new PendingInteraction.PutCardFromHandOrGraveyardChoice(
+                        aiPlayerId, List.of(handCard.getId(), graveyardCard.getId()), "card", "Source"),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(graveyardCard.getId())));
+    }
+
+    @Test
+    void nivMizzetChoiceSelectsOneCardForEachColorPair() throws Exception {
+        Card cheapAzorius = card("Cheap Azorius", "{2}");
+        Card expensiveAzorius = card("Expensive Azorius", "{5}");
+        Card gruul = card("Gruul", "{3}");
+        when(context.gameQueryService().getEffectiveCardColors(gameData, cheapAzorius))
+                .thenReturn(Set.of(CardColor.WHITE, CardColor.BLUE));
+        when(context.gameQueryService().getEffectiveCardColors(gameData, expensiveAzorius))
+                .thenReturn(Set.of(CardColor.WHITE, CardColor.BLUE));
+        when(context.gameQueryService().getEffectiveCardColors(gameData, gruul))
+                .thenReturn(Set.of(CardColor.RED, CardColor.GREEN));
+
+        new NivMizzetColorPairChoiceAiStrategy().answer(
+                new PendingInteraction.NivMizzetColorPairChoice(
+                        aiPlayerId,
+                        List.of(cheapAzorius, expensiveAzorius, gruul),
+                        List.of(cheapAzorius.getId(), expensiveAzorius.getId(), gruul.getId()),
+                        2,
+                        "Choose cards"),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(
+                List.of(expensiveAzorius.getId(), gruul.getId())));
+    }
+
+    @Test
+    void faceUpExiledCardChoiceSelectsAnEligibleCard() throws Exception {
+        UUID first = UUID.randomUUID();
+
+        new FaceUpExiledCardChoiceAiStrategy().answer(
+                new PendingInteraction.FaceUpExiledCardChoice(aiPlayerId, aiPlayerId, List.of(first)),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first)));
+    }
+
+    @Test
     void allNewSpecializedTypesAreRegistered() {
         assertThat(AiInteractionStrategies.registeredTypes()).contains(
                 PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
@@ -351,7 +405,10 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.TargetHandSpellCopyChoice.class,
                 PendingInteraction.MagesContestBidChoice.class,
                 PendingInteraction.TargetLibraryDestinationChoice.class,
-                PendingInteraction.VividCardChoice.class);
+                PendingInteraction.VividCardChoice.class,
+                PendingInteraction.PutCardFromHandOrGraveyardChoice.class,
+                PendingInteraction.NivMizzetColorPairChoice.class,
+                PendingInteraction.FaceUpExiledCardChoice.class);
     }
 
     private InteractionAnswer capturedAnswer() throws Exception {

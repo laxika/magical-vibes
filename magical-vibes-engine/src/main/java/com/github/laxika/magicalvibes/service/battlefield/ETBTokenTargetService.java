@@ -249,7 +249,7 @@ public class ETBTokenTargetService {
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (pending.chosenTargetsSoFar().contains(pid)) continue;
+                    if (targetAlreadyChosen(pending, pid)) continue;
                     if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, group.getFilter())) {
                         validPlayerTargets.add(pid);
                     }
@@ -262,7 +262,7 @@ public class ETBTokenTargetService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
+                        if (targetAlreadyChosen(pending, p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
                                 pending.controllerId(), card, pending.sourcePermanentId())) {
                             validPermanentTargets.add(p.getId());
@@ -335,6 +335,18 @@ public class ETBTokenTargetService {
                     gameData.id, card.getName(), idx, chosenInGroup);
             return;
         }
+    }
+
+    private boolean targetAlreadyChosen(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                        UUID candidateId) {
+        List<UUID> chosenTargets = pending.chosenTargetsSoFar();
+        int currentGroupStart = pending.groupSizes().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        boolean chosenInCurrentGroup = chosenTargets.subList(currentGroupStart, chosenTargets.size())
+                .contains(candidateId);
+        return chosenInCurrentGroup
+                || (!pending.sourceCard().isAllowSharedTargets() && chosenTargets.contains(candidateId));
     }
 
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {

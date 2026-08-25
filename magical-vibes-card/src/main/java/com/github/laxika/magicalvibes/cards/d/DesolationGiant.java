@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "59")
+@CardRegistration(set = "TSB", collectorNumber = "57")
 public class DesolationGiant extends Card {
 
     public DesolationGiant() {

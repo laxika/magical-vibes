@@ -63,7 +63,7 @@ class PitOfOfferingsTest extends BaseCardTest {
         Card green = new ForestBear();
         Card blue = new IslandFishJasconius();
         Permanent pit = playPitAndChoose(green, blue);
-        pit.setSummoningSick(false);
+        pit.untap();
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -80,7 +80,7 @@ class PitOfOfferingsTest extends BaseCardTest {
     void producesNoManaWhenNoExiledCardHasAColor() {
         Card colorless = new PitOfOfferings();
         Permanent pit = playPitAndChoose(colorless);
-        pit.setSummoningSick(false);
+        pit.untap();
 
         harness.activateAbility(player1, 0, 1, null, null);
 

@@ -32,7 +32,10 @@ public final class AiInteractionStrategies {
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
+        register(new EyeOfTheStormCastChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
+        register(new AssimilationAegisCopyChoiceAiStrategy());
+        register(new LudevicCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new ExiledCardMayPlayChoiceAiStrategy());
         register(new ExileInstantOrSorcerySpellCostChoiceAiStrategy());
@@ -65,15 +68,18 @@ public final class AiInteractionStrategies {
         register(new AttachAurasChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
+        register(new ExiledCardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
         register(new RevealedHandChoiceAiStrategy());
         register(new RevealCardsDiscardChoiceAiStrategy());
         register(new AlternatingHandExileChoiceAiStrategy());
         register(new MasterOfPredicamentsCardChoiceAiStrategy());
         register(new StrongholdGambitCardChoiceAiStrategy());
+        register(new RetracedImageCardChoiceAiStrategy());
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
+        register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());
@@ -87,6 +93,9 @@ public final class AiInteractionStrategies {
         register(new TargetLibraryDestinationChoiceAiStrategy());
         register(new VividCardChoiceAiStrategy());
         register(new CombatDamageAssignmentAiStrategy());
+        register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
+        register(new NivMizzetColorPairChoiceAiStrategy());
+        register(new FaceUpExiledCardChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

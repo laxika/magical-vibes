@@ -62,6 +62,8 @@ class UntapStepServiceTest {
     private PhasingService phasingService;
     @Mock
     private PermanentRemovalService permanentRemovalService;
+    @Mock
+    private DayNightService dayNightService;
     @Spy
     private UntapPreventionSupport untapPreventionSupport =
             new UntapPreventionSupport(org.mockito.Mockito.mock(ConditionEvaluationService.class));

@@ -11,8 +11,4 @@ public record FlipUntilLoseEffect(CardEffect perWin) implements CardEffect {
         Objects.requireNonNull(perWin, "perWin");
     }
 
-    @Override
-    public TargetSpec targetSpec() {
-        return perWin.targetSpec();
-    }
 }

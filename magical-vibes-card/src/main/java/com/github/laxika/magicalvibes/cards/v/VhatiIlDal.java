@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "274")
 @CardRegistration(set = "TPR", collectorNumber = "214")
+@CardRegistration(set = "TSB", collectorNumber = "104")
 public class VhatiIlDal extends Card {
 
     public VhatiIlDal() {

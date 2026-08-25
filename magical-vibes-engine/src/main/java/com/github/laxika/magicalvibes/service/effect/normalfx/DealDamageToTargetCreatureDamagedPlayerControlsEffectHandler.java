@@ -41,7 +41,20 @@ public class DealDamageToTargetCreatureDamagedPlayerControlsEffectHandler
             return;
         }
 
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        UUID creatureControllerId = defenderId;
+        UUID chooserId = entry.getControllerId();
+        if (e.targetPlayerChooses()) {
+            if (!gameData.playerIds.contains(creatureControllerId)) {
+                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, creatureControllerId);
+                if (targetPermanent == null) {
+                    return;
+                }
+                creatureControllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+            }
+            chooserId = creatureControllerId;
+        }
+
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(creatureControllerId);
         List<UUID> validIds = defenderBattlefield == null
                 ? List.of()
                 : defenderBattlefield.stream()
@@ -51,7 +64,7 @@ public class DealDamageToTargetCreatureDamagedPlayerControlsEffectHandler
 
         if (validIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(
-                    "'s ability resolves, but " + gameData.playerIdToName.get(defenderId)
+                    "'s ability resolves, but " + gameData.playerIdToName.get(creatureControllerId)
                             + " has no valid creature targets.").build());
             return;
         }
@@ -59,9 +72,9 @@ public class DealDamageToTargetCreatureDamagedPlayerControlsEffectHandler
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, null));
 
-        playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), validIds, 1,
+        playerInputService.beginMultiPermanentChoice(gameData, chooserId, validIds, 1,
                 new MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls(entry, damage),
                 entry.getCard().getName() + "'s ability — Choose target creature "
-                        + gameData.playerIdToName.get(defenderId) + " controls.");
+                        + gameData.playerIdToName.get(creatureControllerId) + " controls.");
     }
 }

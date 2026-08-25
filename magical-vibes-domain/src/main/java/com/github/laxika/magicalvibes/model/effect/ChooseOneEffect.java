@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 
 import java.util.List;
 
@@ -22,6 +22,12 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         implements CombatDamageTriggerContextEffect {
 
     public static final String NO_MODE_LABEL = "Choose no modes";
+    public static final String FINISH_MODE_SELECTION = "Done";
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired,
+                           int choicesMax, boolean allModesWhenOptionalCostPaid) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, null);
+    }
 
     public ChooseOneEffect {
         if (choicesRequired < 1) {
@@ -33,29 +39,30 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
-                           boolean allModesWhenOptionalCostPaid) {
-        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, false);
-    }
-
-    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                            boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat) {
         this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, modesMayRepeat, null);
     }
 
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                           boolean allModesWhenOptionalCostPaid, Condition choicesMaxCondition) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, false,
+                choicesMaxCondition);
+    }
+
     public ChooseOneEffect(List<ChooseOneOption> options) {
-        this(options, false, 1, 1, false);
+        this(options, false, 1, 1, false, null);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional) {
-        this(options, optional, 1, 1, false);
+        this(options, optional, 1, 1, false, null);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, int choicesRequired) {
-        this(options, false, choicesRequired, choicesRequired, false);
+        this(options, false, choicesRequired, choicesRequired, false, null);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax) {
-        this(options, optional, choicesRequired, choicesMax, false);
+        this(options, optional, choicesRequired, choicesMax, false, null);
     }
 
     /**
@@ -85,7 +92,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
 
     /** "Choose one or more —" modal: at least one mode, up to every mode. */
     public static ChooseOneEffect oneOrMore(List<ChooseOneOption> options) {
-        return new ChooseOneEffect(options, false, 1, options.size(), false);
+        return new ChooseOneEffect(options, false, 1, options.size(), false, null);
     }
 
     /** Modal with one required mode and additional modes available when the condition is met. */
@@ -129,6 +136,10 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
 
     /** Returns the chosen mode indices in card-text order. */
     public List<Integer> decodeModeIndices(int xValue) {
+        return decodeModeIndices(xValue, choicesMax);
+    }
+
+    public List<Integer> decodeModeIndices(int xValue, int effectiveChoicesMax) {
         if (choicesRequired == 1 && choicesMax == 1) {
             if (xValue < 0 || xValue >= options.size()) {
                 throw new IllegalStateException("Invalid mode index: " + xValue);
@@ -163,9 +174,10 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                 chosen.add(i);
             }
         }
-        if (chosen.size() < choicesRequired || chosen.size() > choicesMax) {
+        if (chosen.size() < choicesRequired || chosen.size() > effectiveChoicesMax) {
             throw new IllegalStateException(
-                    "Expected between " + choicesRequired + " and " + choicesMax + " modes, got " + chosen.size());
+                    "Expected between " + choicesRequired + " and " + effectiveChoicesMax
+                            + " modes, got " + chosen.size());
         }
         return chosen;
     }
@@ -190,6 +202,14 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
             }
         }
         return (int) -encoded;
+    }
+
+    public Condition additionalModesCondition() {
+        return choicesMaxCondition;
+    }
+
+    public int effectiveChoicesMax(boolean additionalModesAllowed) {
+        return choicesMaxCondition == null || additionalModesAllowed ? choicesMax : choicesRequired;
     }
 
     /** True when this modal allows a variable number of modes (e.g. "choose one or more"). */

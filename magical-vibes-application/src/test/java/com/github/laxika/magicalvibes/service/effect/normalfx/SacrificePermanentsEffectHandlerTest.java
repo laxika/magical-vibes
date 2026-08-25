@@ -286,6 +286,24 @@ class SacrificePermanentsEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Carries recorded-count state through a prompted sacrifice")
+        void carriesRecordedCountThroughPromptedSacrifice() {
+            addPermanent(player1Id, "Forest", CardType.LAND);
+            addPermanent(player1Id, "Island", CardType.LAND);
+            stubCount(1);
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+            handler.resolve(gd, entry(player1Id, null), new SacrificePermanentsEffect(
+                    1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER)
+                    .withRecordedSacrificeCount());
+
+            verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id), any(), eq(1),
+                    argThat(context -> context instanceof MultiPermanentChoiceContext.ForcedSacrifice forced
+                            && forced.recordSacrificedCount()), anyString());
+        }
+
+        @Test
         @DisplayName("Logs when the target player has no permanents at all")
         void logsWhenNoPermanents() {
             stubCount(1);

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "161")
+@CardRegistration(set = "WAR", collectorNumber = "145")
 public class SpellgorgerWeird extends Card {
 
     public SpellgorgerWeird() {

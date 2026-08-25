@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,7 +36,8 @@ public class PutTargetPermanentIntoLibraryNFromTopEffectHandler implements Norma
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutTargetPermanentIntoLibraryNFromTopEffect) effect;
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID permanentId = e.self() ? entry.getSourcePermanentId() : entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) return;
 
         int position = amountEvaluationService.evaluate(gameData, e.position(),

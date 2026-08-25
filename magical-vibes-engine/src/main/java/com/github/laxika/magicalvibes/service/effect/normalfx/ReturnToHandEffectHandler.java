@@ -33,7 +33,8 @@ import org.springframework.stereotype.Component;
  * {@code TARGET_PLAYERS_PERMANENTS} (the target player's matching permanents),
  * {@code TARGET_PLAYERS_OWNED} (permanents the target player owns, any controller),
  * {@code TARGET_CHOSEN_CREATURE_TYPE} (the chosen target creatures matching the cast-time type),
- * {@code AURAS_ATTACHED_TO_TARGET}, and {@code ENCHANTED} (the permanent the source Aura is on).
+ * {@code AURAS_ATTACHED_TO_TARGET}, {@code ENCHANTED} (the permanent the source Aura is on), and
+ * {@code ENCHANTED_AND_AURAS} (that permanent and all its attached Auras).
  */
 @Slf4j
 @Component
@@ -67,6 +68,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
             case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry, e);
+            case ENCHANTED_AND_AURAS -> resolveEnchantedAndAuras(gameData, entry, e);
             case GRANTING_EQUIPMENT -> resolveGrantingEquipment(gameData, entry, e);
         }
     }
@@ -103,6 +105,32 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         bounceAll(gameData, entry, List.of(enchanted));
+    }
+
+    private void resolveEnchantedAndAuras(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        UUID hostId = e.enchantedPermanentId();
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (hostId == null) {
+            hostId = aura != null && aura.isAttached()
+                    ? aura.getAttachedTo()
+                    : entry.getSourcePermanentSnapshot() == null
+                            ? null
+                            : entry.getSourcePermanentSnapshot().getAttachedTo();
+        }
+        Permanent enchanted = hostId == null ? null : gameQueryService.findPermanentById(gameData, hostId);
+        if (enchanted == null) {
+            return;
+        }
+
+        List<Permanent> toReturn = new ArrayList<>();
+        UUID finalHostId = hostId;
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                toReturn.addAll(battlefield.stream()
+                        .filter(p -> p.getCard().isAura() && p.isAttached()
+                                && finalHostId.equals(p.getAttachedTo()))
+                        .toList()));
+        toReturn.add(enchanted);
+        bounceAll(gameData, entry, toReturn);
     }
 
     private void resolveTriggering(GameData gameData, StackEntry entry, ReturnToHandEffect e) {

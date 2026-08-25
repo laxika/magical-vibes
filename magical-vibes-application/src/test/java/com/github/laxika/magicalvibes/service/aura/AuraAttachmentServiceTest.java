@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -114,6 +116,23 @@ class AuraAttachmentServiceTest {
             assertThat(result.removals()).containsExactly(
                     new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id));
             verify(graveyardService).addCardToGraveyard(
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura);
+        }
+
+        @Test
+        @DisplayName("Unattached Aura awaiting a day/night attachment choice stays on the battlefield")
+        void dayNightAuraAwaitingAttachmentIsNotRemoved() {
+            Permanent aura = createAura("Curse of Leeches");
+            gd.playerBattlefields.get(player1Id).add(aura);
+            var context = new PermanentChoiceContext.DayNightTransformAttachment(aura.getId(), player1Id);
+            gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(
+                    player1Id, List.of(), List.of(player1Id, player2Id), context, "Choose a player"));
+
+            var result = service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(aura);
+            assertThat(result.anyChange()).isFalse();
+            verify(graveyardService, never()).addCardToGraveyard(
                     gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura);
         }
 

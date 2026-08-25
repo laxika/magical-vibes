@@ -17,12 +17,25 @@ public record GrantTargetGraveyardCardCastEffect(
         CardPredicate filter,
         GraveyardSearchScope scope,
         boolean exileInsteadOfGraveyard,
-        int additionalGenericCost
+        int additionalGenericCost,
+        boolean anyManaType
 ) implements CardEffect {
 
     public GrantTargetGraveyardCardCastEffect(
             CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard) {
-        this(filter, scope, exileInsteadOfGraveyard, 0);
+        this(filter, scope, exileInsteadOfGraveyard, 0, false);
+    }
+
+    public GrantTargetGraveyardCardCastEffect(
+            CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard,
+            int additionalGenericCost) {
+        this(filter, scope, exileInsteadOfGraveyard, additionalGenericCost, false);
+    }
+
+    public GrantTargetGraveyardCardCastEffect(
+            CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard,
+            boolean anyManaType) {
+        this(filter, scope, exileInsteadOfGraveyard, 0, anyManaType);
     }
 
     @Override public TargetSpec targetSpec() {

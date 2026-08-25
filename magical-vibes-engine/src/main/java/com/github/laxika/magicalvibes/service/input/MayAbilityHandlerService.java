@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
@@ -258,6 +259,10 @@ public class MayAbilityHandlerService {
         boolean isTargetedGraveyardEffect = ability.effects().stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean isTargetedEffect = isTargetedPermanentEffect || isTargetedPlayerEffect || isTargetedGraveyardEffect;
+
+        if (accepted) {
+            markOncePerTurnTriggerOnAcceptance(gameData, ability);
+        }
 
         // Pre-targeted may ability — target was already chosen (e.g. "You may tap or untap that creature", "you may have that player lose 1 life")
         if (accepted && isTargetedEffect && ability.targetCardId() != null) {
@@ -680,6 +685,7 @@ public class MayAbilityHandlerService {
                     }
                 }
             }
+            markOncePerTurnTriggerOnAcceptance(gameData, ability);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
             CardEffect innerEffect = extractInnerEffect(ability);
@@ -850,6 +856,19 @@ public class MayAbilityHandlerService {
         if (first instanceof MayEffect may) { return may.wrapped(); }
         if (first instanceof MayPayManaEffect mayPay) { return mayPay.wrapped(); }
         return first;
+    }
+
+    private void markOncePerTurnTriggerOnAcceptance(GameData gameData, PendingMayAbility ability) {
+        if (ability.sourcePermanentId() == null) {
+            return;
+        }
+        boolean marksOnAcceptance = ability.effects().stream()
+                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
+                .anyMatch(effect -> effect instanceof CopyControllerCastSpellEffect copy
+                        && copy.markSourceOncePerTurnOnAccept());
+        if (marksOnAcceptance) {
+            gameData.oncePerTurnTriggersFiredThisTurn.add(ability.sourcePermanentId());
+        }
     }
 
     private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,

@@ -55,7 +55,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
         // Leonin Arbiter: the search itself does not happen, but "then that player shuffles" is a
         // separate instruction that still does — and the library that shuffles is the one that was
         // to be searched, not the searcher's own.
-        if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId)) {
+        if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId, targetPlayerId, controllerId)) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
             return;

@@ -107,12 +107,14 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
     this.pendingBuybackSacrificePermanentId = null;
+    this.pendingBuybackSacrificePermanentIds = [];
     this.choosingBuybackDiscard = false;
     this.buybackDiscardCardIndex = -1;
     this.buybackDiscardSelectedIndices.set([]);
@@ -156,6 +158,7 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostIsPlot = false;
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostRevealsHandCard = false;
@@ -329,12 +332,14 @@ export class TargetingChoiceService {
   buybackCardName = '';
   buybackCost = '';
   buybackRequiresSacrifice = false;
+  buybackSacrificeCount = 0;
   buybackDiscardCount = 0;
   choosingBuybackSacrifice = false;
   buybackSacrificeCardIndex = -1;
   buybackSacrificeDescription = '';
-  buybackSacrificeSelectedId = signal<string | null>(null);
+  buybackSacrificeSelectedIds = signal<string[]>([]);
   private pendingBuybackSacrificePermanentId: string | null = null;
+  private pendingBuybackSacrificePermanentIds: string[] = [];
   choosingBuybackDiscard = false;
   buybackDiscardCardIndex = -1;
   buybackDiscardSelectedIndices = signal<number[]>([]);
@@ -368,6 +373,7 @@ export class TargetingChoiceService {
   alternateCostTapCount = 0;
   alternateCostReturnCount = 0;
   alternateCostManaCost = '';
+  alternateCostIsPlot = false;
   alternateCostExileHandCount = 0;
   alternateCostExileHandLabel = '';
   alternateCostRevealsHandCard = false;
@@ -573,6 +579,7 @@ export class TargetingChoiceService {
         this.alternateCostTapCount = card.alternateCostTapCount;
         this.alternateCostReturnCount = card.alternateCostReturnCount;
         this.alternateCostManaCost = card.alternateCostManaCost ?? '';
+        this.alternateCostIsPlot = card.keywords.includes('PLOT');
         this.alternateCostExileHandCount = card.alternateCostExileHandCount ?? 0;
         this.alternateCostExileHandLabel = card.alternateCostExileHandLabel ?? '';
         this.alternateCostRevealsHandCard = card.alternateCostRevealsHandCard ?? false;
@@ -607,6 +614,7 @@ export class TargetingChoiceService {
         this.buybackCardName = card.name;
         this.buybackCost = card.buybackCost;
         this.buybackRequiresSacrifice = card.buybackRequiresSacrifice ?? false;
+        this.buybackSacrificeCount = card.buybackSacrificeCount ?? 1;
         this.buybackDiscardCount = card.buybackDiscardCount ?? 0;
         return;
       }
@@ -794,8 +802,9 @@ export class TargetingChoiceService {
     this.pendingBuyback = true;
     const savedIndex = this.buybackCardIndex;
     const requiresSacrifice = this.buybackRequiresSacrifice;
+    const sacrificeCount = this.buybackSacrificeCount;
     const discardCount = this.buybackDiscardCount;
-    const sacrificeDescription = this.buybackCost;
+    const sacrificeDescription = this.buybackCost.replace(/^Sacrifice /, '');
     this.choosingBuyback = false;
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
@@ -804,7 +813,8 @@ export class TargetingChoiceService {
       this.choosingBuybackSacrifice = true;
       this.buybackSacrificeCardIndex = savedIndex;
       this.buybackSacrificeDescription = sacrificeDescription;
-      this.buybackSacrificeSelectedId.set(null);
+      this.buybackSacrificeCount = sacrificeCount;
+      this.buybackSacrificeSelectedIds.set([]);
       return;
     }
     if (discardCount > 0) {
@@ -824,6 +834,7 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.buybackDiscardSelectedIndices.set([]);
     this.pendingBuybackDiscardHandIndices = null;
@@ -836,6 +847,7 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.buybackDiscardSelectedIndices.set([]);
     this.pendingBuybackDiscardHandIndices = null;
@@ -844,20 +856,35 @@ export class TargetingChoiceService {
 
   toggleBuybackSacrifice(permanentId: string): void {
     if (!this.choosingBuybackSacrifice) return;
-    this.buybackSacrificeSelectedId.set(
-      this.buybackSacrificeSelectedId() === permanentId ? null : permanentId);
+    const selected = this.buybackSacrificeSelectedIds();
+    if (selected.includes(permanentId)) {
+      this.buybackSacrificeSelectedIds.set(selected.filter(id => id !== permanentId));
+    } else if (selected.length < this.buybackSacrificeCount) {
+      this.buybackSacrificeSelectedIds.set([...selected, permanentId]);
+    }
+  }
+
+  isBuybackSacrificeSelected(permanentId: string): boolean {
+    return this.choosingBuybackSacrifice && this.buybackSacrificeSelectedIds().includes(permanentId);
   }
 
   confirmBuybackSacrifice(): void {
-    const selectedId = this.buybackSacrificeSelectedId();
-    if (!this.choosingBuybackSacrifice || selectedId == null) return;
+    const selectedIds = this.buybackSacrificeSelectedIds();
+    if (!this.choosingBuybackSacrifice || selectedIds.length !== this.buybackSacrificeCount) return;
     const savedIndex = this.buybackSacrificeCardIndex;
-    this.pendingBuybackSacrificePermanentId = selectedId;
+    if (this.buybackSacrificeCount === 1) {
+      this.pendingBuybackSacrificePermanentId = selectedIds[0];
+      this.pendingBuybackSacrificePermanentIds = [];
+    } else {
+      this.pendingBuybackSacrificePermanentId = null;
+      this.pendingBuybackSacrificePermanentIds = [...selectedIds];
+    }
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.continuePlayCard(savedIndex);
   }
 
@@ -904,9 +931,11 @@ export class TargetingChoiceService {
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
+    this.buybackSacrificeCount = 0;
     this.pendingBuyback = false;
     this.pendingBuybackSacrificePermanentId = null;
+    this.pendingBuybackSacrificePermanentIds = [];
     this.choosingBuybackDiscard = false;
     this.buybackDiscardCardIndex = -1;
     this.buybackDiscardSelectedIndices.set([]);
@@ -1429,6 +1458,10 @@ export class TargetingChoiceService {
     if (this.pendingBuybackSacrificePermanentId != null) {
       msg.sacrificePermanentId = this.pendingBuybackSacrificePermanentId;
       this.pendingBuybackSacrificePermanentId = null;
+    }
+    if (this.pendingBuybackSacrificePermanentIds.length > 0) {
+      msg.additionalCostSacrificePermanentIds = this.pendingBuybackSacrificePermanentIds;
+      this.pendingBuybackSacrificePermanentIds = [];
     }
     if (extra) {
       Object.assign(msg, extra);
@@ -2478,7 +2511,7 @@ export class TargetingChoiceService {
       }
       return;
     }
-    // Free / condition-only alternate cost (no permanent or hand payment)
+    // Alternate cost with no permanent or hand payment
     this.websocketService.send({
       type: MessageType.PLAY_CARD,
       cardIndex: this.alternateCostCardIndex,
@@ -2590,6 +2623,7 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostIsPlot = false;
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostRevealsHandCard = false;

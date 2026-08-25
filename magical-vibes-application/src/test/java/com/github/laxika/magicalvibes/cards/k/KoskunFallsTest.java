@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,8 +39,10 @@ class KoskunFallsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KoskunFalls());
         Permanent bear = addCreature(player1, new GrizzlyBears());
         bear.tap();
-
-        advanceToUpkeep(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);

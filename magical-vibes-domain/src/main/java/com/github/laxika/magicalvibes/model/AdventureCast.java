@@ -2,16 +2,19 @@ package com.github.laxika.magicalvibes.model;
 
 import java.util.List;
 
-/** Marks a card whose back face can be cast as an Adventure spell from its owner's hand. */
-public record AdventureCast() implements CastingOption {
+/** Marks a double-faced card whose back face can be cast from its owner's hand as an Adventure. */
+public record AdventureCast(List<CastingCost> costs) implements CastingOption {
 
-    @Override
-    public Disposition disposition() {
-        return Disposition.GRAVEYARD;
+    public AdventureCast() {
+        this(List.of());
+    }
+
+    public AdventureCast(String manaCost) {
+        this(List.of(new ManaCastingCost(manaCost)));
     }
 
     @Override
-    public List<CastingCost> costs() {
-        return List.of();
+    public Disposition disposition() {
+        return Disposition.EXILE;
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 /**
  * Grants the controller one temporary permission to cast a matching card exiled with the source
@@ -12,6 +13,27 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
         CardPredicate filter,
-        boolean withoutPayingManaCost
+        boolean withoutPayingManaCost,
+        boolean targetSpecificCard,
+        boolean putOnBottomOfOwnersLibrary
 ) implements CardEffect {
+
+    public AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(CardPredicate filter,
+                                                               boolean withoutPayingManaCost) {
+        this(filter, withoutPayingManaCost, false, false);
+    }
+
+    public static AllowCastCardsExiledWithSourceUntilEndOfTurnEffect targeted(
+            CardPredicate filter, boolean withoutPayingManaCost, boolean putOnBottomOfOwnersLibrary) {
+        return new AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
+                filter, withoutPayingManaCost, true, putOnBottomOfOwnersLibrary);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return targetSpecificCard
+                ? TargetSpec.benign(TargetPredicates.exiledCards(
+                        filter == null ? new CardTruePredicate() : filter))
+                : TargetSpec.NONE;
+    }
 }

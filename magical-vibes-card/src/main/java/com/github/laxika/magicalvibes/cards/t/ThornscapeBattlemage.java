@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "94")
+@CardRegistration(set = "TSB", collectorNumber = "87")
 public class ThornscapeBattlemage extends Card {
 
     public ThornscapeBattlemage() {

@@ -25,7 +25,7 @@ class WaterloggedHulkTest extends BaseCardTest {
     @DisplayName("Tapping Waterlogged Hulk mills a card")
     void tapsToMill() {
         Card milled = new GrizzlyBears();
-        harness.addToBattlefieldAndReturn(player1, new WaterloggedHulk());
+        Permanent hulk = harness.addToBattlefieldAndReturn(player1, new WaterloggedHulk());
         harness.setLibrary(player1, List.of(milled));
 
         harness.activateAbility(player1, 0, 0, null, null);

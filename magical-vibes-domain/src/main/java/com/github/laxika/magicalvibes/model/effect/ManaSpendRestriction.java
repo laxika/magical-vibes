@@ -5,11 +5,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * on what the mana can be spent on, an additional effect on whatever it is spent on, or a delayed
  * triggered ability that fires when it is spent. None of these change the mana's type.
  *
- * <p>The constant also fixes <em>how</em> the colour is chosen. {@link #FLASHBACK_ONLY} and
- * {@link #SUBTYPE_SPELL_OR_ABILITY} are the "add N mana in any combination of colors" wordings, where
- * the controller picks a colour per mana; every other constant is "add N mana of any one color",
- * where a single pick colours the whole batch. That is why the axis is derived here rather than
- * carried as a separate component on the effect.
+ * <p>The constant also fixes <em>how</em> the colour is chosen. {@link #FLASHBACK_ONLY},
+ * {@link #EXILED_SPELL_ONLY}, and {@link #SUBTYPE_SPELL_OR_ABILITY} are the "add N mana in any
+ * combination of colors" wordings, where the controller picks a colour per mana; every other
+ * constant is "add N mana of any one color", where a single pick colours the whole batch. That is
+ * why the axis is derived here rather than carried as a separate component on the effect.
  */
 public enum ManaSpendRestriction {
 
@@ -24,6 +24,8 @@ public enum ManaSpendRestriction {
 
     /** Choose from the colors of cards exiled with the source permanent (Pit of Offerings). */
     EXILED_CARD_COLORS,
+    /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
+    SOURCE_PERMANENT_COLORS,
 
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it
@@ -40,12 +42,20 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast spells with flashback from a graveyard (Altar of the Lost). */
     FLASHBACK_ONLY,
 
+    /** Spendable only to cast spells from exile (Interdimensional Web Watch). */
+    EXILED_SPELL_ONLY,
+    /** Spendable only to cast spells from a graveyard (Rootcoil Creeper). */
+    GRAVEYARD_SPELL_ONLY,
+
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,
     CREATURE_OR_ENCHANTMENT_SPELL_ONLY,
 
     /** Spendable only to cast creature spells of the effect's printed subtype (The Seedcore). */
     SUBTYPE_CREATURE_SPELL,
+
+    /** Spendable only to cast planeswalker spells (Interplanar Beacon). */
+    PLANESWALKER_SPELLS,
 
     /** Spendable only to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
     CREATURE_SPELLS_OR_ABILITIES,
@@ -85,6 +95,9 @@ public enum ManaSpendRestriction {
      * permanents of that subtype (Smokebraider, Primal Beyond).
      */
     SUBTYPE_SPELL_OR_ABILITY,
+
+    /** Spendable only to cast Mount or Vehicle spells (Intrepid Stablemaster). */
+    MOUNT_OR_VEHICLE_SPELL,
 
     /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
     MANA_VALUE_AT_LEAST_FOUR,

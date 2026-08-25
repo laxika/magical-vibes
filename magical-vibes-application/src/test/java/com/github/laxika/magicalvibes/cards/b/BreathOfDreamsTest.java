@@ -139,8 +139,6 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.passBothPriorities();
-
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(merfolk);
         assertThat(merfolk.getCounterCount(CounterType.AGE)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();

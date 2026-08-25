@@ -38,19 +38,11 @@ public record LosesAllAbilitiesEffect(GrantScope scope, PermanentPredicate filte
 
     @Override
     public TargetSpec targetSpec() {
-        if (scope == GrantScope.TARGET_PLAYERS_CREATURES) {
-            return TargetSpec.benign(TargetPredicates.player());
-        }
-        if (scope == GrantScope.OWN_CREATURES) {
-            return TargetSpec.NONE;
-        }
-        if (scope == GrantScope.SELF) {
-            return new TargetSpec(null, false, null, true, 1);
-        }
-        return duration == EffectDuration.UNTIL_END_OF_TURN
-                || duration == EffectDuration.PERMANENT
-                || duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                || duration == EffectDuration.WHILE_SOURCE_REMAINS
-                ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
+        return switch (scope) {
+            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
+            case TARGET -> TargetSpec.benign(TargetPredicates.permanent(), filter);
+            case SELF -> new TargetSpec(null, false, null, true, 1);
+            default -> TargetSpec.NONE;
+        };
     }
 }

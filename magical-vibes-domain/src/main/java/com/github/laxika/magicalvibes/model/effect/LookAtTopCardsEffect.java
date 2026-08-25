@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                             finds or selects no card
  * @param recordChosenCount when true, records the number of selected cards as the stack entry's
  *                          event value for a following effect
+ * @param payLifePerSelectedCard life paid for each selected card, when non-zero
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -86,8 +87,20 @@ public record LookAtTopCardsEffect(
         DynamicAmount chooseManaValueAtMost,
         CardEffect effectIfNoCardChosen,
         boolean recordChosenCount,
-        int loseLifePerSelectedCard
-) implements CardEffect {
+        int loseLifePerSelectedCard,
+        int payLifePerSelectedCard
+) implements CombatDamageAmountAwareEffect {
+
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            CardEffect effectIfNoCardChosen, boolean recordChosenCount,
+            int loseLifePerSelectedCard) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, 0);
+    }
 
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
@@ -124,6 +137,11 @@ public record LookAtTopCardsEffect(
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
                 LibrarySearchDestination.HAND, false, false, null);
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return lookCount;
     }
 
     /** Canonical form without the optional chosen-card life-gain rider. */
@@ -171,6 +189,13 @@ public record LookAtTopCardsEffect(
                 LookDestination.EXILE, false);
     }
 
+    /** Exile one looked-at card face up with permission to play it this turn; rest go to the bottom randomly. */
+    public static LookAtTopCardsEffect chooseOneToExilePlayableRestOnBottomRandom(DynamicAmount lookCount) {
+        return new LookAtTopCardsEffect(lookCount, new Fixed(1), null,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, false);
+    }
+
     /** Up to {@code chooseCount} cards to hand, the rest into the graveyard. */
     public static LookAtTopCardsEffect chooseNToHandRestToGraveyard(int lookCount, int chooseCount) {
         return chooseNToHandRestToGraveyard(lookCount, chooseCount, null, false);
@@ -181,6 +206,14 @@ public record LookAtTopCardsEffect(
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), null,
                 LookDestination.GRAVEYARD, false, LibrarySearchDestination.HAND, true,
                 false, null, null, false, lifeLossPerSelectedCard);
+    }
+
+    /** You may put any number into your hand by paying life for each; the rest go to the graveyard. */
+    public static LookAtTopCardsEffect mayChooseAnyNumberToHandRestToGraveyardPayLife(
+            int lookCount, int lifePerSelectedCard) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), null,
+                LookDestination.GRAVEYARD, false, LibrarySearchDestination.HAND, true,
+                false, null, null, false, 0, lifePerSelectedCard);
     }
 
     /** Reveal the top cards, put one into hand, the rest into the graveyard, and gain life equal
@@ -327,5 +360,11 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect mayPutOneOnTopRestToGraveyard(int lookCount) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
                 LookDestination.GRAVEYARD, false, LibrarySearchDestination.TOP_OF_LIBRARY, true);
+    }
+
+    /** Put one of the looked-at cards into the graveyard and the rest back on top of the library. */
+    public static LookAtTopCardsEffect putOneIntoGraveyardRestOnTop(int lookCount) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+                LookDestination.TOP_OF_LIBRARY, false, LibrarySearchDestination.GRAVEYARD, false);
     }
 }

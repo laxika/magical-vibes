@@ -13,5 +13,7 @@ public enum EventStat {
     /** The destroyed creature's effective toughness (Death's Caress, Engulfing Slagwurm). */
     TOUGHNESS,
     /** The destroyed creature's effective power, clamped to at least 0 (Cinder Cloud). */
-    POWER
+    POWER,
+    /** The basic-land search count: two when a targeted land was actually destroyed, otherwise one (Dire-Strain Rampage). */
+    BASIC_LAND_SEARCH_COUNT
 }

@@ -189,6 +189,7 @@ public class PermanentViewFactory {
                 .alternateCostRevealsHandCard(false)
                 .graveyardActivatedAbilities(List.of())
                 .handActivatedAbilities(List.of())
+                .exileActivatedAbilities(List.of())
                 .transformable(false)
                 .kickerCost(null)
                 .kickerRequiresTap(false)

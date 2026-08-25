@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
@@ -254,6 +255,10 @@ public class PlayerInteractionSupport {
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
                                     DiscardFollowUp followUp, CardType stopAfterDiscardingType) {
 
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
+
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to discard.";
@@ -272,6 +277,9 @@ public class PlayerInteractionSupport {
 
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
                                     List<Integer> validIndices) {
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
         if (validIndices.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " has no eligible cards to discard."));
@@ -282,6 +290,10 @@ public class PlayerInteractionSupport {
     }
 
     public void resolveRandomDiscardCards(GameData gameData, UUID playerId, String sourceName, int amount) {
+
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
 
         List<Card> hand = gameData.playerHands.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -504,6 +516,15 @@ public class PlayerInteractionSupport {
                 grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax);
     }
 
+    public void resolveHandRevealAndChooseOrElse(GameData gameData, StackEntry entry,
+                                                  int count, List<CardType> excludedTypes,
+                                                  List<CardType> includedTypes, CardPredicate filter,
+                                                  CardEffect elseEffect, CardEffect currentEffect) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                true, false, null, true, false, 0, false, true, false,
+                false, false, 0, elseEffect, currentEffect);
+    }
+
     public void resolveHandLookAndChoose(GameData gameData, StackEntry entry,
             int count, List<CardType> excludedTypes, List<CardType> includedTypes,
             CardPredicate filter, boolean discardMode, boolean exileMode,
@@ -560,8 +581,24 @@ public class PlayerInteractionSupport {
                                              boolean revealHand, boolean shuffleIntoLibraryMode,
                                              boolean grantPlayPermission, boolean returnAtNextEndStep,
                                              int exilePlayOpponentTax) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, optional, exileAllCopiesOfChosenNames,
+                declineFallbackDiscardCount, imprintOnSource, revealHand, shuffleIntoLibraryMode,
+                grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, null, null);
+    }
 
-        boolean effectiveOptional = optional || declineFallbackDiscardCount > 0;
+    private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+                                             int count, List<CardType> excludedTypes, List<CardType> includedTypes,
+                                             CardPredicate filter, boolean discardMode, boolean exileMode,
+                                             UUID sourcePermanentId, boolean optional,
+                                             boolean exileAllCopiesOfChosenNames,
+                                             int declineFallbackDiscardCount, boolean imprintOnSource,
+                                             boolean revealHand, boolean shuffleIntoLibraryMode,
+                                             boolean grantPlayPermission, boolean returnAtNextEndStep,
+                                             int exilePlayOpponentTax, CardEffect declineEffect,
+                                             CardEffect currentEffect) {
+
+        boolean effectiveOptional = optional || declineFallbackDiscardCount > 0 || declineEffect != null;
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -576,6 +613,7 @@ public class PlayerInteractionSupport {
                     : casterName + " looks at " + targetName + "'s hand. It is empty.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            insertDeclineEffect(entry, currentEffect, declineEffect);
             return;
         }
 
@@ -614,6 +652,8 @@ public class PlayerInteractionSupport {
             // No legal choice means the caster doesn't choose one, so the fallback discard applies.
             if (declineFallbackDiscardCount > 0) {
                 resolveDiscardCards(gameData, targetPlayerId, declineFallbackDiscardCount);
+            } else {
+                insertDeclineEffect(entry, currentEffect, declineEffect);
             }
             return;
         }
@@ -637,16 +677,31 @@ public class PlayerInteractionSupport {
                     + actionVerb + ".";
         }
         // sourcePermanentId tracks exile-until-source-leaves effects or an imprint.
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+        PendingInteraction.RevealedHandChoice interaction = new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
                 null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
                 imprintOnSource, shuffleIntoLibraryMode, false, grantPlayPermission, returnAtNextEndStep,
-                exilePlayOpponentTax));
+                exilePlayOpponentTax);
+        interactionHandlerRegistry.begin(gameData, declineEffect == null
+                ? interaction : interaction.withDeclineEffect(declineEffect));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);
     
+    }
+
+    private void insertDeclineEffect(StackEntry entry, CardEffect currentEffect, CardEffect declineEffect) {
+        if (declineEffect == null || currentEffect == null) {
+            return;
+        }
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = 0; i < effects.size(); i++) {
+            if (effects.get(i) == currentEffect) {
+                entry.insertEffectsToResolve(i + 1, List.of(declineEffect));
+                return;
+            }
+        }
     }
 
     /**
@@ -982,6 +1037,10 @@ public class PlayerInteractionSupport {
             UUID nextPlayerId = remaining.remove(0);
             int amount = variableAmounts ? amounts.remove(0) : followUp.eachPlayerAmount();
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
+            if (gameData.discardCausedByOpponent
+                    && gameQueryService.isDiscardPrevented(gameData, nextPlayerId)) {
+                continue;
+            }
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
                 String logEntry = gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard.";

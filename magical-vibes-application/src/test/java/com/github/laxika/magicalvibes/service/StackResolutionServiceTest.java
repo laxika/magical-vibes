@@ -35,8 +35,9 @@ import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -89,6 +90,7 @@ class StackResolutionServiceTest {
     @Mock private ExileService exileService;
     @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private AuraCopyService auraCopyService;
+    @Mock private PermanentCounterSupport permanentCounterSupport;
 
     @InjectMocks
     private StackResolutionService svc;
@@ -415,7 +417,8 @@ class StackResolutionServiceTest {
         void cloneReplacementEffectSkipsCreatureResolution() {
             Card card = createCreature("Clone");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
-            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any(), anyInt())).thenReturn(true);
+            when(cloneService.prepareCloneReplacementEffect(
+                    any(), any(), any(), any(), anyInt(), any(), anyBoolean())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
@@ -696,11 +699,13 @@ class StackResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
-            when(playerInputService.beginCardNameChoice(gd, PLAYER1_ID, card, List.of(), false)).thenReturn(true);
+            when(playerInputService.beginCardNameChoice(
+                    gd, PLAYER1_ID, card, List.of(), false, false, null)).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
-            verify(playerInputService).beginCardNameChoice(gd, PLAYER1_ID, card, List.of(), false);
+            verify(playerInputService).beginCardNameChoice(
+                    gd, PLAYER1_ID, card, List.of(), false, false, null);
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
         }
     }

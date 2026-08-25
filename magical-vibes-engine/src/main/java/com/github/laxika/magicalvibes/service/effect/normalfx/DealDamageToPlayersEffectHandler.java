@@ -40,7 +40,6 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToPlayersEffect) effect;
-
         switch (e.recipient()) {
             case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER, TRIGGERING_PERMANENT_CONTROLLER,
                  TRIGGERING_PLAYER ->

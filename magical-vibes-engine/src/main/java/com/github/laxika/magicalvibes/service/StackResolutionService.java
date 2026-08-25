@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -32,6 +34,7 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -90,6 +93,7 @@ public class StackResolutionService {
     private final ExileService exileService;
     private final ParadigmService paradigmService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final GameMutationCoordinator mutationCoordinator;
     private final CardRevealService cardRevealService;
     private final AuraCopyService auraCopyService;
@@ -109,6 +113,7 @@ public class StackResolutionService {
                                   StateTriggerService stateTriggerService,
                                   ExileService exileService,
                                   GraveyardReturnSupport graveyardReturnSupport,
+                                  PermanentCounterSupport permanentCounterSupport,
                                   GameMutationCoordinator mutationCoordinator,
                                   CardRevealService cardRevealService,
                                   AuraCopyService auraCopyService,
@@ -128,6 +133,7 @@ public class StackResolutionService {
         this.stateTriggerService = stateTriggerService;
         this.exileService = exileService;
         this.graveyardReturnSupport = graveyardReturnSupport;
+        this.permanentCounterSupport = permanentCounterSupport;
         this.mutationCoordinator = mutationCoordinator;
         this.cardRevealService = cardRevealService;
         this.auraCopyService = auraCopyService;
@@ -161,14 +167,28 @@ public class StackResolutionService {
             gameData.currentlyResolvingControllerId = null;
         }
 
-        // If the ETB handler already set up a user interaction, skip post-resolution SBA until
-        // the choice resolves.
+        // Resolution-time may choices are part of the resolving ability, so present them before
+        // state-based actions can orphan an Aura that the choice may move.
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        // If the ETB handler or a resolution-time may choice already set up a user interaction,
+        // skip post-resolution SBA until the choice resolves.
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
 
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         stateBasedActionService.performStateBasedActions(gameData);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextPlotTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
@@ -212,7 +232,8 @@ public class StackResolutionService {
             }
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class)) {
             triggerCollectionService.processNextDrawTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
@@ -269,9 +290,13 @@ public class StackResolutionService {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         }
         perm.setCastFromZone(entry.getSourceZone());
+        perm.setAlternateCost(entry.isAlternateCost());
+        perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
+        perm.setEnteredFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
         perm.setCast(!entry.isCopy());
+        perm.setManaSpentToCast(entry.getManaSpentToCast());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
@@ -293,6 +318,11 @@ public class StackResolutionService {
             perm.setCard(characteristics);
             perm.setTransformed(true);
         }
+        if (entry.isCopy() && !perm.getCard().isToken()) {
+            Card tokenCard = perm.getCard().createRuntimeCopy();
+            tokenCard.setToken(true);
+            perm.setCard(tokenCard);
+        }
         return perm;
     }
 
@@ -302,12 +332,13 @@ public class StackResolutionService {
             permanent.tap();
         }
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
-        if (entry.getRepeatedAdditionalCosts().isEmpty()) {
+        if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());
         } else {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
-                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
+                    entry.getConvokeCreatureIds().size());
         }
     }
 
@@ -352,7 +383,9 @@ public class StackResolutionService {
         Card physicalCard = entry.getPhysicalCard();
         gameData.spellEntryCounters.remove(card.getId());
         gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
-        if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
+        if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+            gameData.playerDecks.get(ownerId).add(physicalCard);
+        } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
             graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
@@ -366,6 +399,11 @@ public class StackResolutionService {
      * none — in both cases the caller lets the permanent enter right away.
      */
     private boolean beginChooseCardNameOnEnter(GameData gameData, UUID controllerId, Card card) {
+        return beginChooseCardNameOnEnter(gameData, controllerId, card, null);
+    }
+
+    private boolean beginChooseCardNameOnEnter(
+            GameData gameData, UUID controllerId, Card card, UUID attachedTo) {
         ChooseCardNameOnEnterEffect effect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
                 .map(e -> (ChooseCardNameOnEnterEffect) e)
@@ -385,28 +423,49 @@ public class StackResolutionService {
                 effect.handAccess() == ChooseCardNameOnEnterEffect.HandAccess.REVEAL_OPPONENT_HAND;
         if (effect.nonbasicLandOnly()) {
             return playerInputService.beginCardNameChoice(
-                    gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards, true);
+                    gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
+                    true, attachedTo);
         }
         return playerInputService.beginCardNameChoice(
-                gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards);
+                gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
+                false, attachedTo);
+    }
+
+    private boolean beginChooseCardTypeOnEnter(GameData gameData, UUID controllerId, Card card) {
+        ChooseCardTypeOnEnterEffect effect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseCardTypeOnEnterEffect)
+                .map(e -> (ChooseCardTypeOnEnterEffect) e)
+                .findFirst().orElse(null);
+        if (effect == null) {
+            return false;
+        }
+        if (effect.lookAtOpponentHand()) {
+            cardRevealService.lookAtOpponentHand(gameData, controllerId);
+        }
+        playerInputService.beginCardTypeOnEnterChoice(gameData, controllerId, card, effect.excludedTypes());
+        return true;
     }
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
+        Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
 
-        if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
-                entry.getXValue())) {
+        if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(
+                gameData, controllerId, characteristics, entry.getTargetId(), entry.getXValue(),
+                entry.getPhysicalCard(), characteristics != card)) {
             return;
         }
 
         // "As enters" card name choice (e.g. Meddling Mage) — name must be chosen BEFORE the
         // permanent enters the battlefield (MTG Rule 614.1c)
-        if (!entry.isCastFaceDown() && beginChooseCardNameOnEnter(gameData, controllerId, card)) {
+        if (!entry.isCastFaceDown()
+                && (beginChooseCardNameOnEnter(gameData, controllerId, card)
+                || beginChooseCardTypeOnEnter(gameData, controllerId, card))) {
             return;
         }
 
-        Permanent perm = createEnteringPermanent(entry, card, disturbCharacteristics(entry, card));
+        Permanent perm = createEnteringPermanent(entry, card, characteristics);
         perm.setChosenSubtype(entry.getBeholdChosenSubtype());
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
         // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.
@@ -532,7 +591,7 @@ public class StackResolutionService {
                 .build());
         log.info("Game {} - {} reanimates {} for {}", gameData.id, card.getName(), creature.getCard().getName(), playerName);
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, card, creature.getId());
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, auraPerm, creature.getId());
     }
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
@@ -570,6 +629,8 @@ public class StackResolutionService {
                         .build());
                 disposeFizzledPermanentSpell(gameData, entry, card);
                 log.info("Game {} - {} fizzles, target player {} no longer in game", gameData.id, characteristics.getName(), targetPlayerId);
+            } else if (beginChooseCardNameOnEnter(gameData, controllerId, card, targetPlayerId)) {
+                return;
             } else {
                 Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
@@ -594,6 +655,8 @@ public class StackResolutionService {
                 disposeFizzledPermanentSpell(gameData, entry, card);
 
                 log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, characteristics.getName(), entry.getTargetId());
+            } else if (beginChooseCardNameOnEnter(gameData, controllerId, card, entry.getTargetId())) {
+                return;
             } else {
                 Permanent perm = createEnteringPermanent(
                         entry, card, characteristics, entry.getBestowOriginalCard() != null);
@@ -609,7 +672,7 @@ public class StackResolutionService {
                         .build());
                 log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, characteristics.getName(), target.getCard().getName(), playerName);
 
-                triggerCollectionService.checkAuraAttachedTriggers(gameData, characteristics, target.getId());
+                triggerCollectionService.checkAuraAttachedTriggers(gameData, perm, target.getId());
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
@@ -652,7 +715,8 @@ public class StackResolutionService {
         } else {
             // "As enters" card name choice (e.g. Nevermore) — name must be chosen
             // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
-            if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
+            if (beginChooseCardNameOnEnter(gameData, controllerId, card)
+                    || beginChooseCardTypeOnEnter(gameData, controllerId, card)) {
                 return;
             }
 
@@ -880,6 +944,8 @@ public class StackResolutionService {
         perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);
         perm.setSummoningSick(false);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+                gameData, controllerId, startingLoyalty);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
@@ -939,7 +1005,9 @@ public class StackResolutionService {
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
-                if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
+                if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+                    gameData.playerDecks.get(entry.getOwnerId()).add(entry.getPhysicalCard());
+                } else if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
                     gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
                 } else {
@@ -951,6 +1019,9 @@ public class StackResolutionService {
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
             countAbilityResolution(gameData, entry);
+            if (entry.isExileAndReturnToHandAtNextEndStep()) {
+                entry.setExileInsteadOfGraveyard(true);
+            }
             effectResolutionService.resolveEffects(gameData, entry);
 
             // A spell that pauses for input must remain undisposed until its effects finish.
@@ -1034,11 +1105,20 @@ public class StackResolutionService {
         // where entry.getOwnerId() carries the true owner so the card returns to their zones.
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
+        boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
 
-        // CR 702.33a: "If the flashback cost was paid, exile this card instead of
-        // putting it anywhere else any time it would leave the stack." This overrides
-        // return-to-hand, shuffle-into-library, and all other disposition effects.
-        if (entry.isCastWithFlashback()) {
+        // Feather's replacement is chosen first when it is available; otherwise flashback's
+        // replacement exiles the spell instead of letting it go anywhere else.
+        if (entry.isExileAndReturnToHandAtNextEndStep()
+                && !entry.isReturnToHandAfterResolving()
+                && entry.getPutIntoLibraryPositionAfterResolving() == null
+                && gameData.pendingReturnToHandOnDiscardType == null) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addToExile(ownerId, physicalCard);
+            gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
+                    physicalCard.getId(), ownerId));
+            gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
+        } else if (entry.isCastWithFlashback()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
@@ -1049,8 +1129,8 @@ public class StackResolutionService {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
         } else if (entry.isCastWithAdventure()) {
             gameData.addToExile(ownerId, physicalCard);
-            gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (Adventure)."));
+            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with Adventure."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
@@ -1102,10 +1182,22 @@ public class StackResolutionService {
             gameData.queueDelayedAction(new ReboundAtNextUpkeep(
                     entry.getControllerId(), ownerId, entry.getCard()));
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with rebound."));
+        } else if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.playerDecks.get(ownerId).add(physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(
+                    entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.isExileInsteadOfGraveyard()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
+        } else if (plotOnResolution) {
+            exileService.exileCard(gameData, ownerId, physicalCard);
+            gameData.plottedCardIds.add(physicalCard.getId());
+            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
+            gameData.exilePlayWithoutPayingManaCost.add(physicalCard.getId());
+            triggerCollectionService.checkPlotTriggers(gameData, ownerId, physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(physicalCard, " becomes plotted."));
         } else if (gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId())) {
             gameData.addToExile(ownerId, physicalCard);
             gameData.exiledCardDreamCounters.put(physicalCard.getId(), 1);

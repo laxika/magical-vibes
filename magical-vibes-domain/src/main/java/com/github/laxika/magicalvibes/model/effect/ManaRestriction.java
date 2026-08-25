@@ -57,6 +57,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells from a graveyard. */
+    record GraveyardSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addGraveyardOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "graveyard spells only";
+        }
+    }
+
     record ForetellOrInstantSorcery() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -70,6 +83,22 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "foretell or instant/sorcery spells only";
+        }
+    }
+
+    record DisturbOrInstantSorcery() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addDisturbOrInstantSorceryOnlyColorless(amount);
+            } else {
+                pool.addDisturbOrInstantSorceryOnlyColored(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "disturb or instant/sorcery spells only";
         }
     }
 
@@ -267,6 +296,11 @@ public sealed interface ManaRestriction {
     }
 
     record SubtypeOrPlaneswalkerSpells(CardSubtype spellSubtype, CardSubtype planeswalkerSubtype) implements ManaRestriction {
+        /** Mana spendable only to cast planeswalker spells. */
+        public SubtypeOrPlaneswalkerSpells() {
+            this(null, null);
+        }
+
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
             pool.addSubtypeOrPlaneswalkerSpellMana(this, color, amount);
@@ -274,6 +308,9 @@ public sealed interface ManaRestriction {
 
         @Override
         public String description() {
+            if (spellSubtype == null && planeswalkerSubtype == null) {
+                return "planeswalker spells only";
+            }
             return spellSubtype + " or " + planeswalkerSubtype + " planeswalker spells only";
         }
     }

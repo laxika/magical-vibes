@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -15,8 +16,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -124,8 +127,98 @@ public class MayCopyHandlerService {
                 player.getUsername() + " declines to copy a land card from a graveyard. ",
                 ability.sourceCard(), " It enters without copying."));
         log.info("Game {} - {} declines copy from a graveyard", gameData.id, player.getUsername());
-
         landCopyOnEnterService.complete(gameData, null);
+    }
+
+    public void handleCopyCreatureCardInGraveyardOnEnterChoice(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
+            CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
+        if (accepted) {
+            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
+                    .flatMap(List::stream)
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .toList();
+            if (!creatureCards.isEmpty()) {
+                playerInputService.beginMultiGraveyardChoice(
+                        gameData, ability.controllerId(), creatureCards, 1, 1,
+                        "Choose a creature card in a graveyard to copy.");
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " accepts — choosing a creature card in a graveyard to copy."));
+                return;
+            }
+        }
+
+        String message = accepted
+                ? player.getUsername() + " has no creature card to copy; it enters without copying."
+                : player.getUsername() + " declines to copy a creature card from a graveyard. ";
+        gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(), " enters without copying."));
+        finishCloneEntryWithoutFurtherChoice(gameData);
+    }
+
+    public void handleCopyCreatureCardFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                                           PendingMayAbility ability,
+                                                           CopyCreatureCardFromGraveyardOnEnterEffect copyEffect) {
+        if (accepted) {
+            List<Card> validCards = new ArrayList<>();
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                if (graveyard != null) {
+                    graveyard.stream()
+                            .filter(card -> card.hasType(CardType.CREATURE))
+                            .forEach(validCards::add);
+                }
+            }
+            if (validCards.isEmpty()) {
+                finishCloneEntryWithoutFurtherChoice(gameData);
+                return;
+            }
+            playerInputService.beginMultiGraveyardChoice(gameData, ability.controllerId(), validCards, 1,
+                    "Choose a creature card in a graveyard to copy.");
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " accepts — choosing a creature card in a graveyard to copy."));
+            log.info("Game {} - {} accepts graveyard copy", gameData.id, player.getUsername());
+            return;
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " declines to copy a creature card. ", ability.sourceCard(),
+                " enters without copying."));
+        log.info("Game {} - {} declines graveyard copy", gameData.id, player.getUsername());
+        finishCloneEntryWithoutFurtherChoice(gameData);
+    }
+
+    public void finishCloneEntryWithoutFurtherChoice(GameData gameData) {
+        cloneService.completeCloneEntry(gameData, null);
+        finishCloneEntry(gameData);
+    }
+
+    public void finishCloneEntryFromCard(GameData gameData, Card targetCard) {
+        cloneService.completeCloneEntryFromCard(gameData, targetCard);
+        finishCloneEntry(gameData);
+    }
+
+    private void finishCloneEntry(GameData gameData) {
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

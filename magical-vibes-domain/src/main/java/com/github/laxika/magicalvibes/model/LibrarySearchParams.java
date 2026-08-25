@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -33,6 +34,7 @@ public record LibrarySearchParams(
         String filterCardName,
         UUID attachToPlayerId,
         UUID attachToPermanentId,
+        UUID battlefieldControllerId,
         CardPredicate filterPredicate,
         UUID sourcePermanentId,
         LibrarySearchFollowUp followUp,
@@ -45,6 +47,7 @@ public record LibrarySearchParams(
         boolean returnToHandAtEndStep,
         AnimatePermanentsEffect animateFound,
         CounterType battlefieldCounter,
+        EnterWithCountersEffect enterWithCounters,
         boolean repeatUntilDecline,
         CreateTokenEffect tokenTemplate,
         String sourceSetCode,
@@ -52,7 +55,10 @@ public record LibrarySearchParams(
         CardSubtype battlefieldIfChosenBeholdType,
         Integer battlefieldIfManaValueAtMost,
         boolean placeBattlefieldCardsSimultaneously,
-        boolean allowCastFromLibraryWhileSearching
+        boolean allowCastFromLibraryWhileSearching,
+        boolean grantExilePlayPermission,
+        boolean allowAnyManaType,
+        boolean withoutPayingManaCost
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -75,11 +81,13 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                returnToHandAtEndStep, animateFound, battlefieldCounter, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
-                placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching);
+                placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
+                grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
     }
 
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
@@ -87,11 +95,13 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                returnToHandAtEndStep, animateFound, battlefieldCounter, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
-                placeBattlefieldCardsSimultaneously, allow);
+                placeBattlefieldCardsSimultaneously, allow,
+                grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
     }
 
     public static class Builder {
@@ -115,6 +125,7 @@ public record LibrarySearchParams(
         private String filterCardName;
         private UUID attachToPlayerId;
         private UUID attachToPermanentId;
+        private UUID battlefieldControllerId;
         private CardPredicate filterPredicate;
         private UUID sourcePermanentId;
         private LibrarySearchFollowUp followUp = LibrarySearchFollowUp.NONE;
@@ -127,6 +138,7 @@ public record LibrarySearchParams(
         private boolean returnToHandAtEndStep;
         private AnimatePermanentsEffect animateFound;
         private CounterType battlefieldCounter;
+        private EnterWithCountersEffect enterWithCounters;
         private boolean repeatUntilDecline;
         private CreateTokenEffect tokenTemplate;
         private String sourceSetCode;
@@ -135,6 +147,9 @@ public record LibrarySearchParams(
         private Integer battlefieldIfManaValueAtMost;
         private boolean placeBattlefieldCardsSimultaneously;
         private boolean allowCastFromLibraryWhileSearching;
+        private boolean grantExilePlayPermission = true;
+        private boolean allowAnyManaType = true;
+        private boolean withoutPayingManaCost;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -231,6 +246,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder battlefieldControllerId(UUID battlefieldControllerId) {
+            this.battlefieldControllerId = battlefieldControllerId;
+            return this;
+        }
+
         public Builder filterPredicate(CardPredicate filterPredicate) {
             this.filterPredicate = filterPredicate;
             return this;
@@ -287,6 +307,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder enterWithCounters(EnterWithCountersEffect enterWithCounters) {
+            this.enterWithCounters = enterWithCounters;
+            return this;
+        }
+
         public Builder repeatUntilDecline(boolean repeatUntilDecline) {
             this.repeatUntilDecline = repeatUntilDecline;
             return this;
@@ -328,16 +353,33 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder grantExilePlayPermission(boolean grantExilePlayPermission) {
+            this.grantExilePlayPermission = grantExilePlayPermission;
+            return this;
+        }
+
+        public Builder allowAnyManaType(boolean allowAnyManaType) {
+            this.allowAnyManaType = allowAnyManaType;
+            return this;
+        }
+
+        public Builder withoutPayingManaCost(boolean withoutPayingManaCost) {
+            this.withoutPayingManaCost = withoutPayingManaCost;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                    battlefieldControllerId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                    returnToHandAtEndStep, animateFound, battlefieldCounter, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                    returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
-                    placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching);
+                    placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
+                    grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
         }
     }
 }

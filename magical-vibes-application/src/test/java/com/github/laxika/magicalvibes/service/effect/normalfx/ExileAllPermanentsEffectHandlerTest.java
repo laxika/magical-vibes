@@ -42,6 +42,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
@@ -182,6 +183,7 @@ class ExileAllPermanentsEffectHandlerTest {
                 verify(permanentRemovalService).removePermanentToExile(gd, creature2);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Bear is exiled.")));
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Elk is exiled.")));
+                assertThat(entry.getEventValue()).isEqualTo(2);
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 

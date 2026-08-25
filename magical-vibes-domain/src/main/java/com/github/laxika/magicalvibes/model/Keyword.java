@@ -10,8 +10,10 @@ public enum Keyword {
     DOUBLE_STRIKE,
     FIRST_STRIKE,
     FLASH,
+    SPLIT_SECOND,
     FADING,
     VIGILANCE,
+    BACKUP,
     SHROUD,
     CHANGELING,
     FEAR,
@@ -21,6 +23,7 @@ public enum Keyword {
     IMPROVISE,
     HARMONIZE,
     HASTE,
+    RIOT,
     TRAMPLE,
     LIFELINK,
     FORESTWALK,
@@ -40,6 +43,8 @@ public enum Keyword {
     FLASHBACK,
     AFTERMATH,
     TRANSFORM,
+    DAYBOUND,
+    NIGHTBOUND,
     KICKER,
     CREW,
     EXPLORE,
@@ -80,6 +85,7 @@ public enum Keyword {
     FUSE,
     OFFERING,
     DELVE,
+    DREDGE,
     MODULAR,
     SUNBURST,
     PROTOTYPE,
@@ -90,7 +96,14 @@ public enum Keyword {
     EPIC,
     TOXIC,
     COMPLEATED,
-    MOBILIZE;
+    MOBILIZE,
+    WEB_SLINGING,
+    MAYHEM,
+    SUSPECT,
+    CAMOUFLAGE,
+    DOUBLE,
+    PLOT,
+    AMASS;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

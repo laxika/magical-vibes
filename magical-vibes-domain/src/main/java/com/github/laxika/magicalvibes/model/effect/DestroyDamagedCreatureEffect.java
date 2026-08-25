@@ -10,17 +10,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>Expanded at trigger-collection time into a {@link DestroyTargetPermanentEffect} stack entry
  * whose target is the damaged creature, so it is never resolved directly. An optional filter
- * restricts which damaged creatures qualify.
+ * restricts which damaged creatures qualify. The optional flags restrict the trigger to combat
+ * damage and prevent regeneration, respectively.
  */
-public record DestroyDamagedCreatureEffect(PermanentPredicate damagedCreatureFilter)
+public record DestroyDamagedCreatureEffect(PermanentPredicate damagedCreatureFilter,
+                                           boolean combatDamageOnly,
+                                           boolean cannotBeRegenerated)
         implements DamagedCreatureTriggerEffect {
 
     public DestroyDamagedCreatureEffect() {
-        this(null);
+        this(null, false, false);
+    }
+
+    public DestroyDamagedCreatureEffect(PermanentPredicate damagedCreatureFilter) {
+        this(damagedCreatureFilter, false, false);
+    }
+
+    public DestroyDamagedCreatureEffect(boolean combatDamageOnly, boolean cannotBeRegenerated) {
+        this(null, combatDamageOnly, cannotBeRegenerated);
     }
 
     @Override
     public CardEffect triggeredEffect() {
-        return new DestroyTargetPermanentEffect();
+        return new DestroyTargetPermanentEffect(cannotBeRegenerated);
     }
 }

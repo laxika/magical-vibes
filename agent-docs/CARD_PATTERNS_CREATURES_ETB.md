@@ -6,6 +6,10 @@ For an ETB that free-casts an instant from your graveyard, use
 `CastTargetInstantOrSorceryFromGraveyardEffect(CONTROLLERS_GRAVEYARD, true, true,
 CardTypePredicate(INSTANT))` as in `t/TorrentialGearhulk.java`.
 
+For an ETB that pays X and then offers a free cast of an instant or sorcery with mana value X
+from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
+`h/HaloForager.java`.
+
 Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; the registrar creates a one-shot echo trigger for the source permanent's current controller.
 
 ## Vanilla creatures (empty body, all from Scryfall)
@@ -39,8 +43,10 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| ETB mill and return-or-token | `p/PatientNaturalist.java` | ON_ENTER_BATTLEFIELD `MillControllerAndReturnMilledCardToHandOrCreateTokenEffect(3, CardTypePredicate(LAND), CreateTokenEffect.ofTreasureToken(1))` — choose a milled land for hand; if none was milled, create a Treasure |
 | ETB pump target creature | `b/BriarpackAlpha.java` | `target(CreaturePredicate).addEffect(ON_ENTER_BATTLEFIELD, BoostTargetCreatureEffect(P, T))` — any creature. See also `v/VulshokHeartstoker.java` (+2/+0). Flash is auto-loaded from Scryfall, no constructor code needed |
 | ETB pump target creature (own only, +keyword) | `i/ImperialAerosaur.java` | PermanentAllOfPredicate(IsCreature, ControlledBySourceController, NotSource) + BoostTargetCreatureEffect + GrantKeywordEffect(FLYING, TARGET) |
+| ETB doubles the power of other creatures you control + vigilance | `g/GodEternalRhonas.java` | ON_ENTER_BATTLEFIELD `DoubleOtherOwnCreaturesPowerEffect()` followed by `GrantKeywordEffect(VIGILANCE, OWN_CREATURES)`; the first effect snapshots each other creature's current power independently and both effects exclude the source |
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
 | ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillEffect(4, CONTROLLER) — controller mills N cards, no target |
@@ -58,10 +64,12 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB destroy all (predicate) + static hexproof | `w/WitchbaneOrb.java` | DestroyAllPermanentsEffect(AllOf(HasSubtype(CURSE), AttachedToSourceController)) + GrantControllerKeywordEffect(HEXPROOF) STATIC |
 | ETB set target player life total | `t/TorgaarFamineIncarnate.java` | STATIC SacrificeCreaturesForCostReductionEffect(2) + ON_ENTER_BATTLEFIELD SetLifeTotalEffect(GameData.STARTING_LIFE_TOTAL / 2, SetLifeTotalRecipient.TARGET_PLAYER) with `target(PlayerPredicateTargetFilter(ANY), 0, 1)` for "up to one target player". Sacrifice creatures as additional cost to reduce mana by 2 per creature |
 | ETB exile up to 3 across battlefield + graveyards, return to hands on leave | `a/AngelOfSerenity.java` | ExileTargetCreaturesUntilSourceLeavesEffect(3, true) — one mixed-zone selection (battlefield creatures + graveyard creature cards); "up to three" carries the "you may"; the leaves-battlefield return to owners' hands is implicit O-ring linkage |
+| ETB exile up to one nonland permanent and one nonland permanent card, then death bottom-and-return | `t/TheSpotLivingPortal.java` | ExileTargetNonlandPermanentAndCardWithSourceEffect() — one mixed-zone selection with one choice from each zone, tracked by the source; ON_DEATH PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect() moves the source first, then returns the tracked cards to hand |
 | ETB may exile target + all same name until leaves | `d/DetentionSphere.java` | MayEffect(ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect) + AllOf(Not(IsLand), Not(Named("Detention Sphere"))). Returns all non-token exiled cards when source leaves |
 | ETB exile a spell, free-cast it back on leave | `s/SpellQueller.java` | ExileTargetSpellUntilSourceLeavesEffect + StackEntryPredicateTargetFilter(StackEntryMaxManaValuePredicate(4)) on ON_ENTER_BATTLEFIELD, MayCastCardsExiledWithSourceEffect on ON_SELF_LEAVES_BATTLEFIELD. Exile ≠ counter; the free cast is offered to the exiled card's owner |
 | ETB counter up to one activated or triggered ability and remove its source's abilities while this creature remains | `t/TishanasTidebinder.java` | `target(StackEntryPredicateTargetFilter(AllOf(StackEntryTypeInPredicate(ACTIVATED_ABILITY, TRIGGERED_ABILITY), StackEntryCardTypeInPredicate(ARTIFACT, CREATURE, PLANESWALKER))), 0, 1)` + `CounterAbilityAndRemoveSourceAbilitiesEffect()`; the combined handler counters first, then checks the source's current types and records a source-linked `LosesAllAbilitiesEffect(WHILE_SOURCE_REMAINS)` |
 | ETB may exile until leaves (O-ring) | `l/LeoninRelicWarder.java` | MayEffect(ExileTargetPermanentUntilSourceLeavesEffect) + PermanentPredicateTargetFilter(AnyOf(artifact, enchantment)). Exiled card returns when source leaves battlefield |
+| ETB opponent chooses own permanent to exile until leaves | `w/WormfangCrab.java` | STATIC CantBeBlockedEffect + ON_ENTER_BATTLEFIELD OpponentChoosesPermanentToExileUntilSourceLeavesEffect(Not(IsSourcePermanent)) + ON_SELF_LEAVES_BATTLEFIELD ReturnAllCardsExiledWithSourceEffect. The opponent chooses among the source controller's permanents; the selected card returns under its owner's control |
 | ETB may exile + return at end step (flicker) | `s/SentinelOfThePearlTrident.java` | MayEffect(FlickerEffect.exileTargetReturnAtEndStep()) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, PermanentIsHistoricPredicate)). Flash creature that flickers own historic permanent |
 | ETB may immediate flicker under your control | `r/RestorationAngel.java` | MayEffect(FlickerEffect.flickerTargetUnderYourControl()) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, IsCreature, Not(HasSubtype(ANGEL)))). Flash Angel that flickers own non-Angel; returns under controller (keeps stolen creatures) |
 | Instant flicker (immediate return) + subtype bonus | `s/SirensRuse.java` | FlickerEffect.flickerTargetWithBonus(CardSubtype.PIRATE, DrawCardEffect(1)) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, IsCreature)). Instant that exiles own creature and immediately returns it; draws a card if it was a Pirate |
@@ -70,6 +78,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may discard matching → token | `p/PackGuardian.java` | MayEffect(DiscardCardThenEffect(CardTypePredicate(LAND), CreateTokenEffect(Wolf 2/2), "a land card")) — may discard a land; if you do, create a 2/2 green Wolf (Flash from Scryfall) |
 | ETB draw + random discard + conditional counters | `r/RowdyCrew.java` | DrawAndRandomDiscardWithSharedTypeCountersEffect(3, 2, 2) — draw N, discard M at random, +1/+1 counters if discards share a card type |
 | ETB filtered discard for counters | `m/MindMaggots.java` | DiscardCardsAndPutCountersOnSourceEffect(CardTypePredicate(CREATURE), 2, "creature cards") — choose any number of matching creature cards, then put two +1/+1 counters on the source per card discarded |
+| ETB may filtered discard for counters and draw | `n/NantukoCultivator.java` | MayEffect(DiscardCardsAndPutCountersOnSourceEffect(CardTypePredicate(LAND), 1, 1, "land cards")) — may discard any number of matching cards, then put one +1/+1 counter on and draw one card per card discarded |
 | ETB discard (targeted) | `r/RavenousRats.java` | DiscardEffect(1, TARGET_PLAYER) |
 | ETB discard (raid conditional) | `d/DeadeyeTormentor.java` | ConditionalEffect(new Raid(), DiscardEffect(1, TARGET_PLAYER)) + PlayerPredicateTargetFilter(OPPONENT). Raid = intervening-if checked at trigger and resolution time. Target is chosen at trigger time, never at cast (see TRIGGER_SLOT_TARGETING.md) |
 | ETB discard (each opponent) | `l/LilianasSpecter.java` | DiscardEffect(1, EACH_OPPONENT) — no targeting, all opponents discard |
@@ -90,6 +99,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB return targeted instant/sorcery/creature from GY + exile-instead-of-dying | `p/PossessedSkaab.java` | ON_ENTER_BATTLEFIELD `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardAnyOfPredicate(INSTANT, SORCERY, CREATURE)).targetGraveyard(true)` + STATIC `ExileInsteadOfGraveyardReplacementEffect(true)` (`dyingOnly` — a countered copy still goes to the graveyard) |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).build()) |
 | ETB return greatest-power creature from GY | `d/DesecratorHag.java` | ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).greatestPower(true).build() — mandatory; single card forced, ties chosen |
+| ETB return creature card chosen by an opponent | `m/MausoleumTurnkey.java` | `ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect(CardTypePredicate(CREATURE))` — the controller chooses which opponent makes the target choice; in a two-player game the sole opponent chooses directly through the trigger-time graveyard target flow |
 | ETB mandatory bounce own permanent (non-targeted) | `e/EmancipationAngel.java` | `BouncePermanentOnUpkeepEffect(SOURCE_CONTROLLER, Set.of(ControlledPermanentPredicateTargetFilter(PermanentTruePredicate)), prompt)` on `ON_ENTER_BATTLEFIELD` — "return a permanent you control to its owner's hand". The effect/handler is slot-agnostic despite the name (resolution-time `PermanentChoice`, source itself is a legal choice); use it for any "return a [type] you control" mandatory choice, not just upkeep |
 | ETB may bounce own historic | `g/GuardiansOfKoilos.java` | MayEffect(ReturnToHandEffect.target()) + PermanentPredicateTargetFilter(AllOf(AnyOf(artifact, legendary, Saga), controlled-by-source, not-source)) — "you may return another target historic permanent you control to its owner's hand" |
 | ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has ON_OPENING_HAND_REVEAL MayEffect(MillEffect(7, EACH_OPPONENT)) |
@@ -100,6 +110,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `ExploreTriggerTarget` queue for target selection |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
+| ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java` | CopyCreatureCardInGraveyardOnEnterEffect(name, power, toughness, additionalSubtypes) — the chosen card remains in its graveyard until the reflexive exile trigger resolves |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |
 | ETB copy with added subtype + granted trigger | `p/PhantasmalImage.java` | CopyPermanentOnEnterEffect(filter, typeLabel, Set.of(ILLUSION), Map.of(ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, List.of(new SacrificeSelfEffect()))) |
@@ -127,6 +138,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB drawback (exile unless discard) | `b/BodySnatcher.java` | ExileUnlessDiscardCardTypeEffect |
 | ETB drawback (discard at random) | `p/PillagingHorde.java` | SacrificeUnlessDiscardCardTypeEffect(null, true) — sacrifice unless you discard a card at random |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |
+| ETB drawback (bounce any permanent of a type) | `d/DrakeFamiliar.java` | SacrificeUnlessReturnPermanentTypeToHandEffect(ENCHANTMENT) — sacrifice unless return an enchantment to its owner's hand; any player's enchantment is legal |
 | ETB drawback (bounce another creature) | `f/FaerieImpostor.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CREATURE, true) — sacrifice unless return *another* creature you control; excludeSource keeps the source off the choice list, so a lone Impostor auto-sacrifices |
 | ETB drawback (sacrifice creatures with total power N) | `p/PhyrexianDreadnought.java` | SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffect(12) — sacrifice it unless you sacrifice any number of creatures with total power 12 or greater |
 | As-enters sacrifice sets P/T (total of sacrificed creatures) | `d/Dracoplasm.java` | SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect() — sacrifice any number of your other creatures as it enters; their total power/toughness becomes its base P/T (durable layer-7b override, no STATIC effect needed) |

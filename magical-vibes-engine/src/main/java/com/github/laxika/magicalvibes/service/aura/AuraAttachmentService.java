@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
@@ -88,6 +90,9 @@ public class AuraAttachmentService {
             while (it.hasNext()) {
                 Permanent p = it.next();
                 boolean isAura = p.getCard().getSubtypes().contains(CardSubtype.AURA);
+                if (isAura && !p.isAttached() && isAwaitingDayNightAttachment(gameData, p.getId())) {
+                    continue;
+                }
                 boolean attachmentIsMissing = p.isAttached()
                         && !gameData.playerIds.contains(p.getAttachedTo())
                         && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null;
@@ -132,6 +137,20 @@ public class AuraAttachmentService {
         }
         creatureControlService.reconcileControl(gameData);
         return new AttachmentSweepResult(removals, anyUnattached);
+    }
+
+    private boolean isAwaitingDayNightAttachment(GameData gameData, UUID permanentId) {
+        PendingInteraction.PermanentChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (active != null
+                && active.context() instanceof PermanentChoiceContext.DayNightTransformAttachment context
+                && context.permanentId().equals(permanentId)) {
+            return true;
+        }
+        return gameData.pendingInteractions.stream()
+                .filter(PermanentChoiceContext.DayNightTransformAttachment.class::isInstance)
+                .map(PermanentChoiceContext.DayNightTransformAttachment.class::cast)
+                .anyMatch(context -> context.permanentId().equals(permanentId));
     }
 
     /**

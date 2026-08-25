@@ -125,6 +125,16 @@ public class TargetValidationService {
             return;
         }
 
+        boolean exiledCardTarget = predicate.admits(TargetPredicate.Kind.EXILED_CARD)
+                && ctx.targetZone() == Zone.EXILE;
+        if (exiledCardTarget) {
+            requireTarget(ctx);
+            if (gameQueryService.findCardInExileById(ctx.gameData(), ctx.targetId()) == null) {
+                throw new IllegalStateException("Target card not found in exile");
+            }
+            return;
+        }
+
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
         if (restriction != null && demandsPermanentTarget(predicate, restriction, effect)) {
             requireTarget(ctx);
@@ -161,13 +171,17 @@ public class TargetValidationService {
         if (target == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
+        UUID controllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId() : findSourcePermanentController(ctx);
+        if (gameQueryService.isLandCardTargetRestricted(ctx.gameData(), target, controllerId)) {
+            throw new IllegalStateException(
+                    "Land cards in graveyards can't be the targets of spells or abilities opponents control");
+        }
 
         TargetPredicate.GraveyardCards restriction = (TargetPredicate.GraveyardCards)
                 predicate.leaf(TargetPredicate.Kind.GRAVEYARD_CARD).orElseThrow();
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(
                 ctx.gameData(), ctx.targetId());
-        UUID controllerId = ctx.sourceControllerId() != null
-                ? ctx.sourceControllerId() : findSourcePermanentController(ctx);
         if (controllerId != null && graveyardOwnerId != null
                 && !restriction.scope().graveyardOwners(
                         ctx.gameData().orderedPlayerIds, controllerId).contains(graveyardOwnerId)) {
@@ -175,7 +189,8 @@ public class TargetValidationService {
         }
         UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
         if (!predicateEvaluationService.matchesCardPredicate(
-                target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId)) {
+                target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
+                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
             throw new IllegalStateException("Target card does not match the required predicate");
         }
     }
@@ -283,6 +298,9 @@ public class TargetValidationService {
             if (ctx.sourcePermanentSnapshot() != null) {
                 filterContext = filterContext.withSourcePermanentSnapshot(ctx.sourcePermanentSnapshot());
             }
+        }
+        if (ctx.defendingPlayerId() != null) {
+            filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
         return filterContext;
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "204")
+@CardRegistration(set = "MID", collectorNumber = "144")
 public class Immolation extends Card {
 
     public Immolation() {

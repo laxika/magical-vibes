@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanen
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class PutCounterOnChosenOwnPermanentEffectHandler implements NormalEffect
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -38,6 +41,8 @@ public class PutCounterOnChosenOwnPermanentEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCounterOnChosenOwnPermanentEffect) effect;
         UUID controllerId = entry.getControllerId();
+        int count = amountEvaluationService.evaluate(gameData, e.amount(),
+                AmountContext.forStackEntry(entry, null));
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return;
@@ -67,7 +72,7 @@ public class PutCounterOnChosenOwnPermanentEffectHandler implements NormalEffect
             if (chosen != null) {
                 entry.setChosenPermanentId(chosen.getId());
                 int placed = permanentCounterSupport.placeCounterOnPermanent(gameData, entry, chosen,
-                        e.counterType(), e.count());
+                        e.counterType(), count);
                 if (e.recordPlacement() && placed > 0
                         && !entry.getCounteredPermanentIdsThisResolution().contains(chosen.getId())) {
                     entry.getCounteredPermanentIdsThisResolution().add(chosen.getId());
@@ -79,7 +84,7 @@ public class PutCounterOnChosenOwnPermanentEffectHandler implements NormalEffect
 
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, 1,
                 new MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference(
-                        e.counterType(), e.count(), e.recordPlacement()),
+                        e.counterType(), count, e.recordPlacement()),
                 "Choose a permanent to put counters on.");
     }
 }

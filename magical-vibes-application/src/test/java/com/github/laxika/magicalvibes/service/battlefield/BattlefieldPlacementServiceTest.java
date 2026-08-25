@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceE
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.NoteControllerLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -70,6 +72,7 @@ class BattlefieldPlacementServiceTest {
     @Mock private ETBTokenTargetService etbTokenTargetService;
     @Mock private com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     @Mock private PermanentRemovalService permanentRemovalService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler;
 
     private BattlefieldPlacementService service;
     private GameData gd;
@@ -88,6 +91,8 @@ class BattlefieldPlacementServiceTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         lenient().when(gameQueryService.replaceCounters(any(), any(), any(), any(), anyInt()))
                 .thenAnswer(invocation -> invocation.getArgument(4));
+        lenient().when(gameQueryService.computeStaticBonus(any(), any()))
+                .thenReturn(GameQueryService.StaticBonus.NONE);
     }
 
     private BattlefieldPlacementService createPlacementService(
@@ -100,7 +105,7 @@ class BattlefieldPlacementServiceTest {
         return new BattlefieldPlacementService(
                 queryService, gameLogService, playerInputService, permanentCopierService,
                 triggerCollectionService, amountService, conditionService, predicateService,
-                counterSupport, graveyardService, permanentRemovalService);
+                counterSupport, graveyardService, permanentRemovalService, becomeDayAsEntersEffectHandler);
     }
 
     private void putPermanentOntoBattlefield(
@@ -121,6 +126,24 @@ class BattlefieldPlacementServiceTest {
             Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered) {
         target.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 enterTappedTypes, simultaneouslyEntered, 0, false, List.of()));
+    }
+
+    @Test
+    @DisplayName("Notes the controller's life total as the permanent enters")
+    void notesControllerLifeTotalAsPermanentEnters() {
+        service.setNoteControllerLifeTotalEffectHandler(
+                new com.github.laxika.magicalvibes.service.effect.normalfx.NoteControllerLifeTotalEffectHandler());
+        gd.playerLifeTotals.put(player1Id, 17);
+
+        Card card = new Card();
+        card.setName("Life Note");
+        card.setType(CardType.ENCHANTMENT);
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new NoteControllerLifeTotalEffect());
+        Permanent entering = new Permanent(card);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(entering.getChosenNumber()).isEqualTo(17);
     }
 
     @Test
@@ -262,6 +285,35 @@ class BattlefieldPlacementServiceTest {
         putPermanentOntoBattlefield(service, gd, player1Id, entering);
 
         assertThat(entering.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Conditional battlefield entry counter effects apply when their condition is met")
+    void conditionalBattlefieldEntryCountersApply() {
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        gd.lifeLostThisTurn.put(opponentId, 1);
+        when(gameQueryService.doublePlusOnePlusOneCounters(any(), any(), any(), anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
+
+        Card sourceCard = new Card();
+        sourceCard.setName("Conditional Counter Source");
+        sourceCard.setType(CardType.CREATURE);
+        sourceCard.setSubtypes(List.of(CardSubtype.VAMPIRE));
+        sourceCard.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new OpponentLostLifeThisTurn(1),
+                new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.VAMPIRE, 1)));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+        Card enteringCard = new Card();
+        enteringCard.setName("Entering Vampire");
+        enteringCard.setType(CardType.CREATURE);
+        enteringCard.setSubtypes(List.of(CardSubtype.VAMPIRE));
+        Permanent entering = new Permanent(enteringCard);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     /**

@@ -42,9 +42,9 @@ class SmotheringTitheTest extends BaseCardTest {
     @DisplayName("Opponent pays {2} and no Treasure token is created")
     void payingPreventsTreasure() {
         harness.addToBattlefield(player1, new SmotheringTithe());
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         advanceToDraw(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player2, true);

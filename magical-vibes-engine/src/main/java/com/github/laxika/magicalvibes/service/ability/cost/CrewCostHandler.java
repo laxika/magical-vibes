@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantCrewEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
+import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -95,8 +96,13 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         lastTappedCreaturePower = Math.max(0,
                 gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, chosen));
         chosen.tap();
-        if (sourcePermanent != null) {
+        if (cost instanceof CrewCost && sourcePermanent != null) {
             sourcePermanent.recordCreatureThatCrewedThisTurn(chosen.getId());
+        }
+        if (cost instanceof CrewCost && sourcePermanentId != null) {
+            gameData.recordCreatureCrewingPermanent(sourcePermanentId, chosen.getId());
+        } else if (cost instanceof SaddleCost && sourcePermanentId != null) {
+            gameData.recordCreatureSaddlingPermanent(sourcePermanentId, chosen.getId());
         }
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         triggerCollectionService.checkCrewsVehicleTriggers(gameData, chosen, sourcePermanent);

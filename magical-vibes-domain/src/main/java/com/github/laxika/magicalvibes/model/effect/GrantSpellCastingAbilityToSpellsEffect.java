@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -14,8 +15,19 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Only abilities with engine support are accepted: a grant nothing consults would be silently
  * inert, so widening this set means wiring a new gate at the same time.
  */
-public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter)
+public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter,
+                                                     Zone sourceZone)
         implements SpellCastingAbilityGrantingEffect {
+
+    public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter) {
+        this(grantedAbility, filter, null);
+    }
+
+    public static GrantSpellCastingAbilityToSpellsEffect fromZone(Keyword grantedAbility,
+                                                                   CardPredicate filter,
+                                                                   Zone sourceZone) {
+        return new GrantSpellCastingAbilityToSpellsEffect(grantedAbility, filter, sourceZone);
+    }
 
     public GrantSpellCastingAbilityToSpellsEffect {
         if (grantedAbility != Keyword.CONSPIRE

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -74,6 +75,8 @@ class StateBasedActionServiceTest {
     private GraveyardService graveyardService;
     @Mock
     private StateTriggerService stateTriggerService;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
     @Mock
     private LegendRuleService legendRuleService;
     @Mock
@@ -663,6 +666,23 @@ class StateBasedActionServiceTest {
                     StackEntryType.TRIGGERED_ABILITY, card, player1Id,
                     "Chapter III", List.of(), null, perm.getId());
             gd.stack.add(chapterAbility);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
+        @DisplayName("Saga is not sacrificed while its chapter ability is parked for input")
+        void sagaNotSacrificedWhileChapterAbilityResolutionIsParked() {
+            Card card = createSagaCard("The Great Synthesis", 3);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            gd.pendingEffectResolutionEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                    "Chapter III", List.of(), null, perm.getId());
 
             sut.performStateBasedActions(gd);
 

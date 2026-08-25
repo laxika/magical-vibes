@@ -46,6 +46,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasNoAbilitiesPredicate) {
             return "card with no abilities";
         }
+        if (predicate instanceof CardHasManaAbilityPredicate) {
+            return "card with a mana ability";
+        }
         if (predicate instanceof CardIsAuraPredicate) {
             return "Aura card";
         }
@@ -55,11 +58,20 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsColorlessPredicate) {
             return "colorless card";
         }
+        if (predicate instanceof CardIsDoubleFacedPredicate) {
+            return "double-faced card";
+        }
         if (predicate instanceof CardIsPermanentPredicate) {
             return "permanent card";
         }
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
+        }
+        if (predicate instanceof CardHasAdventurePredicate) {
+            return "card with Adventure";
+        }
+        if (predicate instanceof CardHasDisturbPredicate) {
+            return "card with disturb";
         }
         if (predicate instanceof CardIsHistoricPredicate) {
             return "historic card";
@@ -73,6 +85,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";
         }
+        if (predicate instanceof CardHasExactlyTwoColorsPredicate) {
+            return "card that's exactly two colors";
+        }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
         }
@@ -84,6 +99,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";
+        }
+        if (predicate instanceof CardMaxManaValueXPredicate) {
+            return "card with mana value X or less";
         }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";

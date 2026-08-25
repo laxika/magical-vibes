@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,8 +29,7 @@ class NarcolepsyTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
         addAttachedAura(bears);
-
-        advanceToUpkeep(player1);
+        advanceToUpkeepWithoutUntapping(player1);
 
         assertThat(gd.stack).isEmpty();
         assertThat(bears.isTapped()).isTrue();
@@ -51,5 +51,12 @@ class NarcolepsyTest extends BaseCardTest {
         Permanent aura = new Permanent(new Narcolepsy());
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
+    }
+
+    private void advanceToUpkeepWithoutUntapping(com.github.laxika.magicalvibes.model.Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player, TurnStep.UPKEEP);
     }
 }

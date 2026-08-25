@@ -128,7 +128,8 @@ class PlayCardRequestDispatchServiceTest {
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playFlashbackSpell(eq(gameData), eq(player), eq(2), eq(1), eq(targetId),
-                eq(List.of()), eq(List.of(4)), eq(CardType.CREATURE), eq(List.of(tapPayment)), eq(3), isNull(), isNull());
+                eq(List.of()), eq(List.of(4)), eq(CardType.CREATURE), eq(List.of(tapPayment)), eq(3), isNull(),
+                eq(List.of()), isNull(), eq(List.of()), eq(List.of()), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -148,13 +149,20 @@ class PlayCardRequestDispatchServiceTest {
     @DisplayName("Cast from exile routes to playCardFromExile")
     void fromExileRoutes() {
         UUID exileCardId = UUID.randomUUID();
-        PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
-                null, null, exileCardId, null, null, null, null, null, null, null, null, null, null, null);
+        UUID convokeCreatureId = UUID.randomUUID();
+        PlayCardRequest request = new PlayCardRequest(
+                0, null, null, null,
+                null, List.of(convokeCreatureId), null, null,
+                null, exileCardId, null, null,
+                null, null, null, null,
+                null, null, null, null,
+                null);
 
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playCardFromExile(
-                eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(), eq(List.of()));
+                eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(), eq(List.of()),
+                eq(List.of(convokeCreatureId)));
         verifyNoMoreInteractions(gameService);
     }
 }
