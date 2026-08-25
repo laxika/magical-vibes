@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -540,7 +541,7 @@ class MiscTriggerCollectorServiceTest {
 
             var resolved = (GivePoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
             assertThat(resolved.affectedPlayerId()).isEqualTo(player2Id);
-            assertThat(resolved.amount()).isEqualTo(1);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(1));
         }
 
         @Test

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -704,6 +705,11 @@ public class CombatAttackService {
             // permanent's transient attacking state.
             if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
+            } else if (attackTarget != null) {
+                Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
+                if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) {
+                    gameData.permanentsThatAttackedBattlesThisTurn.add(attacker.getId());
+                }
             }
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)
                     && !gameQueryService.attackingDoesNotCauseTapping(gameData, attacker)) {
@@ -881,6 +887,14 @@ public class CombatAttackService {
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof MinimumAttackers
                         ? ce.wrapped() : e);
+
+                ConditionContext attackedTargetContext = ConditionContext.forPermanent(attacker, playerId)
+                        .withTargetId(attacker.getAttackTarget());
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetMatches
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetMatches ? ce.wrapped() : e);
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
@@ -1256,7 +1270,14 @@ public class CombatAttackService {
                         gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null, attacker.getId());
                     }
 
-                    if (!mandatoryEffects.isEmpty()) {
+                    boolean mandatoryNeedsTarget = mandatoryEffects.stream()
+                            .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                    || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                    if (mandatoryNeedsTarget) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), playerId, mandatoryEffects, perm.getId(), playerId,
+                                attacker.getAttackTarget()));
+                    } else if (!mandatoryEffects.isEmpty()) {
                         StackEntry attackTrigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),

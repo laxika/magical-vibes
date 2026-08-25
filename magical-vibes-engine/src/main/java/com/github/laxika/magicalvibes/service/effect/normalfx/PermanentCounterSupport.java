@@ -1011,13 +1011,8 @@ public class PermanentCounterSupport {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        if (controllerId != null) {
-            gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
-            if (gameQueryService.isCreature(gameData, target)) {
-                firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
-            }
-        }
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                gameData, target, controllerId, count);
     }
 
     public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
@@ -1028,11 +1023,45 @@ public class PermanentCounterSupport {
     public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
             GameData gameData, Permanent target, UUID controllerId, int count) {
         if (target != null && controllerId != null) {
+            boolean firstPlacementOnThisPermanent =
+                    gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.add(target.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
             firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count);
             if (gameQueryService.isCreature(gameData, target)) {
                 firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
             }
+            if (firstPlacementOnThisPermanent) {
+                fireFirstPlusOnePlusOneCounterPlacementOnAnotherPermanentTriggers(
+                        gameData, target, controllerId);
+            }
+        }
+    }
+
+    private void fireFirstPlusOnePlusOneCounterPlacementOnAnotherPermanentTriggers(
+            GameData gameData, Permanent target, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            if (source.getId().equals(target.getId())) {
+                continue;
+            }
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    controllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId()));
+            gameLogService.append(gameData, GameLog.cardThen(
+                    source.getCard(), "'s triggered ability triggers."));
         }
     }
 

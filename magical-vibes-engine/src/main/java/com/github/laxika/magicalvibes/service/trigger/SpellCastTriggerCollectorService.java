@@ -128,6 +128,7 @@ import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -1956,10 +1957,13 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
+        int interveningManaSpent = trigger.intervening() instanceof SpellCreatureManaSpentAtLeast
+                ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
+                : match.gameData().getSpellCastManaSpent(spellCard.getId());
         if (trigger.intervening() != null
                 && !conditionEvaluationService.isMet(match.gameData(), trigger.intervening(),
                 ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                        .withXValue(match.gameData().getSpellCastManaSpent(spellCard.getId())))) {
+                        .withXValue(interveningManaSpent))) {
             return false;
         }
 
@@ -2000,9 +2004,11 @@ public class SpellCastTriggerCollectorService {
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
         boolean countersTriggeringSpell = resolved.stream().anyMatch(CounterSpellingEffect.class::isInstance);
-        boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX);
-        int spellManaSpentX = needsSpellManaSpentX
-                ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
+        boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX)
+                || trigger.intervening() instanceof SpellCreatureManaSpentAtLeast;
+        int spellManaSpentX = trigger.intervening() instanceof SpellCreatureManaSpentAtLeast
+                ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
+                : needsSpellManaSpentX ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
         boolean carriesTriggeringSpellManaValue = resolved.stream()
                 .anyMatch(TriggeringSpellManaValueEffect.class::isInstance);
         int triggeringSpellManaValue = carriesTriggeringSpellManaValue

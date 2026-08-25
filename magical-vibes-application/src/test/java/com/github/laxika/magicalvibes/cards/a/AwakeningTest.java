@@ -20,7 +20,7 @@ class AwakeningTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
 
         creature.tap();
         land.tap();

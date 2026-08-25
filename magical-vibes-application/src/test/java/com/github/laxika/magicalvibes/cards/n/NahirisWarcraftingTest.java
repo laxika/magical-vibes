@@ -37,7 +37,7 @@ class NahirisWarcraftingTest extends BaseCardTest {
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).containsExactly(forest1, shock, forest2);
+        assertThat(search.params().cards()).containsExactly(forest1, shock);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 

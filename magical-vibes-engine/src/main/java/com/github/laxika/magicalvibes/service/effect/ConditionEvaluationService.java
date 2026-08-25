@@ -714,7 +714,8 @@ public class ConditionEvaluationService {
                                     >= Math.max(1, c.minimumAmount());
             case ControllerWasNotDealtCombatDamageSinceLastTurn ignored ->
                     ctx.controllerId() != null
-                            && !gameData.playersDealtCombatDamageLastTurn.contains(ctx.controllerId());
+                            && !gameData.playersDealtCombatDamageLastTurn.contains(ctx.controllerId())
+                            && !gameData.playersDealtCombatDamageSinceTheirLastTurn.contains(ctx.controllerId());
             case ControllerDealtDamageByAtLeastCreaturesThisTurn c ->
                     countCreatureDamageSourcesToPlayer(gameData, ctx.controllerId())
                             >= Math.max(1, c.minimumCreatures());
@@ -1016,7 +1017,11 @@ public class ConditionEvaluationService {
                     && gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId()) != null;
             case SourcePowerAtLeast c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && gameQueryService.getEffectivePower(gameData, source) >= c.threshold();
+                int power = source == null ? 0
+                        : GameQueryService.isStaticEvaluationActive()
+                        ? gameQueryService.powerForStaticFilter(source)
+                        : gameQueryService.getEffectivePower(gameData, source);
+                yield source != null && power >= c.threshold();
             }
             case SourceIsTapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -37,8 +38,8 @@ class SpiderVerseTest extends BaseCardTest {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new SpiderPunk());
         Permanent firstNonSpider = harness.addToBattlefieldAndReturn(player1, new SpiderPunk());
         Permanent secondNonSpider = harness.addToBattlefieldAndReturn(player1, new SpiderPunk());
-        firstNonSpider.getCard().setSubtypes(List.of());
-        secondNonSpider.getCard().setSubtypes(List.of());
+        TestCards.mutableCard(firstNonSpider).setSubtypes(List.of());
+        TestCards.mutableCard(secondNonSpider).setSubtypes(List.of());
 
         harness.runStateBasedActions();
 
@@ -66,6 +67,7 @@ class SpiderVerseTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.castFromGraveyard(player1, 0);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -84,6 +86,7 @@ class SpiderVerseTest extends BaseCardTest {
 
         harness.castFromGraveyard(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 

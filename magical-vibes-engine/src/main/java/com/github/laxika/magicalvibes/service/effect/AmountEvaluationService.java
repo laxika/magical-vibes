@@ -1213,6 +1213,7 @@ public class AmountEvaluationService {
                     ? FilterContext.empty()
                     : FilterContext.of(gameData))
                     .withSourceControllerId(ctx.controllerId())
+                    .withSourceCardId(ctx.sourceCard() == null ? null : ctx.sourceCard().getId())
                     .withSourcePermanentSnapshot(ctx.sourcePermanent())
                     .withSourcePermanentId(ctx.sourcePermanent() == null
                             ? null : ctx.sourcePermanent().getId());

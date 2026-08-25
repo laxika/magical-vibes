@@ -331,12 +331,13 @@ public class StackResolutionService {
             permanent.tap();
         }
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
-        if (entry.getRepeatedAdditionalCosts().isEmpty()) {
+        if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());
         } else {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
-                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
+                    entry.getConvokeCreatureIds().size());
         }
     }
 
@@ -379,7 +380,9 @@ public class StackResolutionService {
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
-        if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
+        if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+            gameData.playerDecks.get(ownerId).add(physicalCard);
+        } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
             graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
@@ -999,7 +1002,9 @@ public class StackResolutionService {
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
-                if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
+                if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+                    gameData.playerDecks.get(entry.getOwnerId()).add(entry.getPhysicalCard());
+                } else if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
                     gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
                 } else {
@@ -1167,6 +1172,11 @@ public class StackResolutionService {
             gameData.queueDelayedAction(new ReboundAtNextUpkeep(
                     entry.getControllerId(), ownerId, entry.getCard()));
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with rebound."));
+        } else if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.playerDecks.get(ownerId).add(physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(
+                    entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.isExileInsteadOfGraveyard()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);

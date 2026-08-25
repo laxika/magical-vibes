@@ -91,6 +91,8 @@ class BattlefieldPlacementServiceTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         lenient().when(gameQueryService.replaceCounters(any(), any(), any(), any(), anyInt()))
                 .thenAnswer(invocation -> invocation.getArgument(4));
+        lenient().when(gameQueryService.computeStaticBonus(any(), any()))
+                .thenReturn(GameQueryService.StaticBonus.NONE);
     }
 
     private BattlefieldPlacementService createPlacementService(

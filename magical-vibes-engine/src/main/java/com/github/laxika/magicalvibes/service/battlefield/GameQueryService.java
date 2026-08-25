@@ -146,6 +146,8 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEff
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageToPlayersAndBattlesBonusEffect;
+import com.github.laxika.magicalvibes.model.effect.NoncreatureSourceDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
@@ -1981,6 +1983,10 @@ public class GameQueryService {
                 .anyMatch(effectType::isInstance);
     }
 
+    public List<CardEffect> getGrantedEffects(GameData gameData, Permanent permanent) {
+        return List.copyOf(computeStaticBonus(gameData, permanent).grantedEffects());
+    }
+
     /** Returns whether a static effect prevents the permanent from having or gaining a keyword. */
     public boolean cantHaveOrGainKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
@@ -2951,6 +2957,10 @@ public class GameQueryService {
             int power = getEffectivePower(gameData, creature);
             int toughness = getEffectiveToughness(gameData, creature);
 
+            if (hasSelfToughnessAssignEffect(creature)) {
+                return Math.max(0, toughness);
+            }
+
             // Global-scoped: every creature uses toughness (e.g. Doran, the Siege Tower)
             if (hasGlobalToughnessAssignEffect(gameData)) {
                 return Math.max(0, toughness);
@@ -2978,6 +2988,15 @@ public class GameQueryService {
             // 0 or negative power assigns 0 combat damage.
             return Math.max(0, power);
         });
+    }
+
+    private boolean hasSelfToughnessAssignEffect(Permanent creature) {
+        List<CardEffect> effects = new ArrayList<>(creature.getCard().getEffects(EffectSlot.STATIC));
+        effects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        effects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.STATIC));
+        return effects.stream().anyMatch(effect ->
+                effect instanceof AssignCombatDamageWithToughnessEffect assign
+                        && assign.scope() == GrantScope.SELF);
     }
 
     /**
@@ -3783,7 +3802,9 @@ public class GameQueryService {
      * other permanents, and temporary protection grants.
      */
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
-        if (sourceColor == null) return false;
+        if (sourceColor == null) {
+            return target.isProtectionFromColorlessUntilEndOfTurn();
+        }
         StaticBonus bonus = computeStaticBonus(gameData, target);
         if (bonus == StaticBonus.NONE) {
             // No continuous effect touched the permanent: its own printed protection stands.
@@ -4251,7 +4272,8 @@ public class GameQueryService {
                 return true;
             }
         }
-        return hasProtectionFromSourceCardTypes(gameData, target, source)
+        return (target.isProtectionFromColorlessUntilEndOfTurn() && sourceColors.isEmpty())
+                || hasProtectionFromSourceCardTypes(gameData, target, source)
                 || hasProtectionFromSourceSubtypes(gameData, target, source)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, source)
                 || hasProtectionFromSourceManaValue(target, source.getCard());
@@ -4301,9 +4323,11 @@ public class GameQueryService {
         UUID protectionSourcePlayerId = sourceControllerId != null
                 ? sourceControllerId
                 : sourceCard.getOwnerId();
+        Set<CardColor> sourceColors = getEffectiveCardColors(gameData, sourceCard);
         return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
                 || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
-                || hasProtectionFrom(gameData, target, sourceCard.getColor())
+                || sourceColors.stream().anyMatch(color -> hasProtectionFrom(gameData, target, color))
+                || (target.isProtectionFromColorlessUntilEndOfTurn() && sourceColors.isEmpty())
                 || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
@@ -6582,6 +6606,57 @@ public class GameQueryService {
             }
         });
         return bonus[0];
+    }
+
+    public int getNoncreatureSourceDamageBonus(GameData gameData, StackEntry entry,
+                                                UUID recipientPlayerId, Permanent recipientPermanent) {
+        if (entry == null || entry.getControllerId() == null) {
+            return 0;
+        }
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : findPermanentById(gameData, entry.getSourcePermanentId());
+        boolean creatureSource = sourcePermanent != null
+                ? isCreature(gameData, sourcePermanent)
+                : entry.getEffectiveDamageSourceCard() != null
+                && entry.getEffectiveDamageSourceCard().hasType(CardType.CREATURE);
+        if (creatureSource) {
+            return 0;
+        }
+        boolean eligibleRecipient = recipientPermanent != null
+                ? isCreature(gameData, recipientPermanent) || isBattle(gameData, recipientPermanent)
+                : recipientPlayerId != null && !entry.getControllerId().equals(recipientPlayerId);
+        if (!eligibleRecipient) {
+            return 0;
+        }
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!controllerId.equals(entry.getControllerId())) {
+                return;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof NoncreatureSourceDamageBonusEffect damageBonus) {
+                    bonus[0] += damageBonus.amount();
+                }
+            }
+        });
+        return bonus[0];
+    }
+
+    public int getPlayersAndBattlesDamageBonus(GameData gameData, boolean playerRecipient,
+                                                Permanent recipientPermanent) {
+        if (!playerRecipient
+                && (recipientPermanent == null || !isBattle(gameData, recipientPermanent))) {
+            return 0;
+        }
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream()
+                    .map(FloatingContinuousEffect::effect)
+                    .filter(DamageToPlayersAndBattlesBonusEffect.class::isInstance)
+                    .map(DamageToPlayersAndBattlesBonusEffect.class::cast)
+                    .mapToInt(DamageToPlayersAndBattlesBonusEffect::amount)
+                    .sum();
+        }
     }
 
     /**

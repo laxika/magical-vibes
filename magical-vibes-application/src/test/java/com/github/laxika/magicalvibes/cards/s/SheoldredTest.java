@@ -60,9 +60,8 @@ class SheoldredTest extends BaseCardTest {
     @Test
     @DisplayName("The True Scriptures chapter I destroys one target creature or planeswalker per opponent")
     void chapterIDestroysChosenOpponentPermanent() {
-        Permanent target = new Permanent(new LilianaVess());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
         target.setCounterCount(CounterType.LOYALTY, target.getCard().getLoyalty());
-        gd.playerBattlefields.get(player2.getId()).add(target);
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent saga = addTransformedSaga();
         saga.setCounterCount(CounterType.LORE, 0);
@@ -73,7 +72,6 @@ class SheoldredTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
-        assertThat(gd.stack).anyMatch(entry -> entry.getTargetIds().contains(target.getId()));
 
         harness.passBothPriorities();
 

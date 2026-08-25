@@ -185,6 +185,7 @@ public class GraveyardChoiceHandlerService {
         CardSubtype grantSourceHasteIfSubtype = graveyardChoice.grantSourceHasteIfSubtype();
         UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
         boolean enterTapped = graveyardChoice.enterTapped();
+        boolean exileIfLeavesBattlefield = graveyardChoice.exileIfLeavesBattlefield();
         // May ability graveyard targeting context
         Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
         UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
@@ -285,6 +286,13 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 case BATTLEFIELD -> {
+                    if (gameData.pendingGraveyardReturnBatch != null) {
+                        gameData.pendingGraveyardReturnBatch = gameData.pendingGraveyardReturnBatch.add(
+                                card, cardGraveyardOwnerId);
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                player.getUsername() + " chooses ", card, " from a graveyard."));
+                        break;
+                    }
                     // Grafdigger's Cage etc.: a matching card (e.g. a creature card) can't enter the
                     // battlefield from a graveyard; it stays in the graveyard it was being returned from.
                     if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
@@ -296,6 +304,8 @@ public class GraveyardChoiceHandlerService {
                         break;
                     }
                     Permanent perm = new Permanent(card);
+                    perm.setEnteredFromGraveyardOwnerId(cardGraveyardOwnerId);
+                    perm.setExileIfLeavesBattlefield(exileIfLeavesBattlefield);
                     if (card.hasType(CardType.PLANESWALKER)) {
                         int startingLoyalty = card.getLoyalty() != null ? card.getLoyalty() : 0;
                         startingLoyalty = gameQueryService.replaceCounters(gameData, perm, playerId,
@@ -312,6 +322,10 @@ public class GraveyardChoiceHandlerService {
                         perm.tap();
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    if (cardGraveyardOwnerId != null && !cardGraveyardOwnerId.equals(playerId)) {
+                        graveyardReturnSupport.trackStolenCreature(
+                                gameData, perm.getId(), playerId, cardGraveyardOwnerId);
+                    }
 
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " , card, " from a graveyard onto the battlefield."));
                     log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
@@ -446,7 +460,14 @@ public class GraveyardChoiceHandlerService {
         // Check if there are more "each player returns" graveyard choices queued
         if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
-            return;
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        } else if (gameData.pendingGraveyardReturnBatch != null) {
+            graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
         }
 
         // Resume the paused spell/ability resolution that began this choice, so effects after
@@ -533,6 +554,22 @@ public class GraveyardChoiceHandlerService {
                         + ", greater than the maximum total mana value "
                         + multiGraveyardChoice.maxTotalManaValue());
             }
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeExileNCardsThenEffectResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileNCardsThenEffectChosenCardIds =
+                    List.copyOf(cardIds);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.milledCreatureReturn != null) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledCreatureReturn =
+                    new GraveyardTargetOperationState.MilledCreatureReturnContext(List.copyOf(cardIds));
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
         }
 
         if (gameData.cloneOperation.graveyardCopyChoicePending) {

@@ -77,6 +77,14 @@ public class EtbEffectResolver {
             if (coe.optional() && ctx.etbMode() < 0) {
                 return null;
             }
+            if (ctx.etbMode() < 0) {
+                CardEffect[] selectedEffects = coe.decodeModeIndices(ctx.etbMode()).stream()
+                        .flatMap(modeIndex -> coe.options().get(modeIndex).effects().stream())
+                        .toArray(CardEffect[]::new);
+                return selectedEffects.length == 1
+                        ? selectedEffects[0]
+                        : SequenceEffect.of(selectedEffects);
+            }
             if (ctx.etbMode() >= 0 && ctx.etbMode() < coe.options().size()) {
                 return selectedModeEffect(coe.options().get(ctx.etbMode()));
             }

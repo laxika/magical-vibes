@@ -42,19 +42,19 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).containsExactly(bear);
+        assertThat(search.pool()).containsExactly(bear);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardsChosen(List.of(bear.getId())));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).contains(human, expensive);
     }
 
     @Test
-    @DisplayName("The Siege takes the first eligible creature from the graveyard")
+    @DisplayName("The Siege lets its controller choose an eligible creature from the graveyard")
     void searchesGraveyardForEligibleCreature() {
         Card bear = new GrizzlyBears();
         Card human = new DoomedTraveler();
@@ -64,6 +64,12 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         castInvasion(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(search).isNotNull();
+        assertThat(search.pool()).containsExactly(bear);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardsChosen(List.of(bear.getId())));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Doomed Traveler");

@@ -599,6 +599,7 @@ public class TriggerCollectionService {
         }
 
         gameData.clearSpellCastManaSpent(spellCard.getId());
+        gameData.clearSpellCastCreatureManaSpent(spellCard.getId());
 
         // GRAVEYARD_ON_CONTROLLER_CASTS_SPELL — graveyard-resident spell-cast triggers
         // (e.g. Lingering Phantom: "Whenever you cast a historic spell, you may pay {B}. If you do, return ~ to hand.")
@@ -3429,6 +3430,8 @@ public class TriggerCollectionService {
         }
 
         List<CardEffect> effects = new ArrayList<>(damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE));
+        effects.addAll(damagedCreature.getTemporaryTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
+        effects.addAll(damagedCreature.getPersistentTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
         effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                 gameData, damagedCreature, EffectSlot.ON_DEALT_DAMAGE));
         if (effects.isEmpty()) return;

@@ -537,7 +537,7 @@ class CastingCostServiceTest {
                             CostModificationScope.ALL));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(inv -> {
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenAnswer(inv -> {
                 Card card = inv.getArgument(0);
                 CardTypePredicate pred = inv.getArgument(1);
                 return card.hasType(pred.cardType());
@@ -698,12 +698,6 @@ class CastingCostServiceTest {
                 CardTypePredicate pred = invocation.getArgument(1);
                 return card.hasType(pred.cardType());
             });
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(invocation -> {
-                Card card = invocation.getArgument(0);
-                CardTypePredicate pred = invocation.getArgument(1);
-                return card.hasType(pred.cardType());
-            });
-
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
             Card bolt = new Card();

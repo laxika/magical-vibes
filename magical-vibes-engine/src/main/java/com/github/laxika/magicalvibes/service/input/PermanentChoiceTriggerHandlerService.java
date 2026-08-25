@@ -2130,6 +2130,6 @@ public class PermanentChoiceTriggerHandlerService {
 
     private void pushTriggeredEntry(GameData gameData, StackEntry entry) {
         gameData.stack.add(entry);
-        triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
+        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
     }
 }

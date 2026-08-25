@@ -14,7 +14,7 @@ public record CreateXTokenWithXCountersEffect(
         CreateTokenEffect tokenTemplate,
         DynamicAmount counterAmount,
         CounterType counterType
-) implements CardEffect {
+) implements TriggeringSpellManaValueEffect {
 
     public CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness,
                                            CardColor color, Set<CardColor> colors,

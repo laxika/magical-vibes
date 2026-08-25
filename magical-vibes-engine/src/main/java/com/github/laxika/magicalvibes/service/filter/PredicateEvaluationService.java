@@ -1861,6 +1861,7 @@ public class PredicateEvaluationService {
             case PermanentIsRenownedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsTransformedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNameInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             // Recursion-safe: asking GameQueryService.hasProtectionFrom would re-enter the

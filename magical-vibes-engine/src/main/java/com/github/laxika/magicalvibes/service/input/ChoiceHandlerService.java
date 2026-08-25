@@ -866,6 +866,9 @@ public class ChoiceHandlerService {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount, ctx.grantsUncounterable());
         } else if (ctx.creatureSpellOnly()) {
             manaPool.addCreatureSpellOnlyMana(manaColor, amount);
+            if (ctx.fromCreature()) {
+                manaPool.addCreatureSourceCreatureSpellOnlyMana(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (creature spells only).";
@@ -1211,6 +1214,8 @@ public class ChoiceHandlerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1830,7 +1835,7 @@ public class ChoiceHandlerService {
         }
 
         List<String> chosenLabels = new ArrayList<>(ctx.chosenLabels());
-        if (ChooseOneEffect.NO_MODE_LABEL.equals(chosenLabel)) {
+        if (ChooseOneEffect.FINISH_MODE_SELECTION.equals(chosenLabel)) {
             if (!ctx.effect().variableModeCount() || chosenLabels.isEmpty()) {
                 throw new IllegalArgumentException("Invalid mode: " + chosenLabel);
             }
@@ -1851,7 +1856,7 @@ public class ChoiceHandlerService {
             return;
         }
         if (ctx.effect().variableModeCount() && chosenLabels.size() < ctx.effect().choicesMax()
-                && !ChooseOneEffect.NO_MODE_LABEL.equals(chosenLabel)) {
+                && !ChooseOneEffect.FINISH_MODE_SELECTION.equals(chosenLabel)) {
             gameData.interaction.clearAwaitingInput();
             playerInputService.beginChooseModeChoice(gameData, ctx.controllerId(), ctx.sourceCard(), ctx.effect(),
                     ctx.triggerTime(), ctx.sourcePermanentId(), chosenLabels);
@@ -1993,6 +1998,8 @@ public class ChoiceHandlerService {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2075,7 +2082,9 @@ public class ChoiceHandlerService {
         // Parse before touching interaction state, as the dispatcher's own fallback does: an
         // unparseable answer must leave the prompt standing, since clearing it first destroys the
         // only thing that would resume the entry parked in pendingEffectResolutionEntry.
-        CardColor chosenColor = "ARTIFACT".equals(chosenValue) ? null : CardColor.valueOf(chosenValue);
+        boolean artifactsChosen = "ARTIFACT".equals(chosenValue);
+        boolean colorlessChosen = "COLORLESS".equals(chosenValue);
+        CardColor chosenColor = artifactsChosen || colorlessChosen ? null : CardColor.valueOf(chosenValue);
 
         gameData.interaction.clearAwaitingInput();
 
@@ -2084,10 +2093,16 @@ public class ChoiceHandlerService {
             if (target == null) {
                 continue;
             }
-            if (chosenColor == null) {
+            if (artifactsChosen) {
                 target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from artifacts until end of turn."));
                 log.info("Game {} - {} gains protection from artifacts until end of turn", gameData.id, target.getCard().getName());
+            } else if (colorlessChosen) {
+                target.setProtectionFromColorlessUntilEndOfTurn(true);
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                        " gains protection from colorless until end of turn."));
+                log.info("Game {} - {} gains protection from colorless until end of turn",
+                        gameData.id, target.getCard().getName());
             } else {
                 CardColor color = chosenColor;
                 target.getProtectionFromColorsUntilEndOfTurn().add(color);

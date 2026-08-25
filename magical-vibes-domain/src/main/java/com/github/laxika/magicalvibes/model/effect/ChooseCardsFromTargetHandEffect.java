@@ -132,7 +132,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
             int count, List<CardType> excludedTypes, int exilePlayOpponentTax) {
         return new ChooseCardsFromTargetHandEffect(new Fixed(count), excludedTypes, List.of(),
                 HandChoiceDestination.EXILE, false, null,
-                0, false, false, false, true, true, false, exilePlayOpponentTax);
+                0, true, false, false, true, true, false, exilePlayOpponentTax);
     }
 
     /** "You may choose a card; if you don't, that player discards N cards." */

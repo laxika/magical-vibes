@@ -145,7 +145,8 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 stubNoDamageMultiplier();
                 when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
                 when(gameQueryService.findPermanentController(eq(gd), eq(battle.getId()))).thenReturn(player1Id);
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(battle), anyInt()))
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(battle), anyInt(), eq(false), nullable(Permanent.class)))
                         .thenAnswer(inv -> inv.getArgument(2));
                 stubNoKeywordsOnSource(entry);
 

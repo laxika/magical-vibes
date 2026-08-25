@@ -84,12 +84,12 @@ class FlittingGuerrillaTest extends BaseCardTest {
         target.setOwnerId(player2.getId());
         Card guerrilla = new FlittingGuerrilla();
         guerrilla.setOwnerId(player2.getId());
-        addCreatureReady(player1, guerrilla);
+        Permanent permanent = addCreatureReady(player1, guerrilla);
+        gd.stolenCreatures.put(permanent.getId(), player2.getId());
         harness.setGraveyard(player1, List.of(target));
         harness.setLibrary(player1, List.of(new Island()));
-        harness.setLibrary(player2, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
 
-        Permanent permanent = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, permanent));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

@@ -67,7 +67,7 @@ class OracleOfTragedyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The death shuffle mode chooses graveyard cards when the trigger resolves")
+    @DisplayName("The death shuffle mode chooses graveyard targets as the trigger goes on the stack")
     void deathShuffleModeTargetsGraveyardCardsAtResolution() {
         Card qualifyingCard = new HillGiant();
         Card lowManaCard = new GrizzlyBears();
@@ -78,12 +78,12 @@ class OracleOfTragedyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(qualifyingCard.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)

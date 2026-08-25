@@ -337,8 +337,6 @@ class SpellCastTriggerCollectorServiceTest {
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
-            when(amountEvaluationService.referencesEventValue(new EventValue())).thenReturn(true);
-
             registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);

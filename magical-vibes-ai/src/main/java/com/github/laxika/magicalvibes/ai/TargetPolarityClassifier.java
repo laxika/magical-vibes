@@ -418,6 +418,7 @@ public class TargetPolarityClassifier {
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToControllerEffect", TargetPolarity.HARMFUL),
+            entry("TargetCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetDealsPowerDamageToTargetEffect", TargetPolarity.HARMFUL),
             entry("EachTargetCreatureDealsPowerDamageToTargetCreatureEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RemoveUpToCountersFromTargetEffect", TargetPolarity.HARMFUL),
@@ -425,6 +426,8 @@ public class TargetPolarityClassifier {
             entry("UnattachEquipmentFromTargetPermanentsEffect", TargetPolarity.HARMFUL),
             entry("PayAnyAmountOfEnergyToBoostTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("PayEnergyToGainControlOfTargetEffect", TargetPolarity.HARMFUL),
+            entry("PutCounterOnEitherTargetPermanentEffect", TargetPolarity.HARMFUL),
+            entry("RemoveChosenCountersFromTargetPermanentEffect", TargetPolarity.HARMFUL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),
@@ -435,6 +438,7 @@ public class TargetPolarityClassifier {
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
+            entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             // Predator's Rapport: targets a creature you control and only reads its stats.
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
@@ -455,6 +459,7 @@ public class TargetPolarityClassifier {
             entry("GrantTargetingRestrictionToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
             entry("TapCombatOpponentsOfTargetAtEndOfCombatEffect", TargetPolarity.BENEFICIAL),
+            entry("TransformTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetFromChosenSourceEffect", TargetPolarity.BENEFICIAL),
@@ -496,7 +501,9 @@ public class TargetPolarityClassifier {
             entry("MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantBasicLandTypeToTargetEffect", TargetPolarity.NEUTRAL),
+            entry("GrantColorEffect", TargetPolarity.NEUTRAL),
             entry("GrantColorUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
+            entry("GrantSubtypeEffect", TargetPolarity.NEUTRAL),
             entry("MoveCounterFromTargetCreatureToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("RemoveAllCountersFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
@@ -508,6 +515,7 @@ public class TargetPolarityClassifier {
             entry("SetChosenColorForTargetCreaturesUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL),
+            entry("SuspectTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("TargetCreatureBecomesSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL)
     );
 

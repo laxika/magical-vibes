@@ -74,7 +74,6 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
                 .withSourcePermanentId(entry.getSourcePermanentId());
         for (Permanent creature : new ArrayList<>(candidates)) {
             if (!predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
-            if (!gameQueryService.isCreature(gameData, creature)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && (source != null
                     ? gameQueryService.hasProtectionFromDamageSource(gameData, creature, source)
                     : gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId()))) {

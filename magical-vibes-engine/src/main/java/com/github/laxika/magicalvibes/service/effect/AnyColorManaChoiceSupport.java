@@ -215,7 +215,7 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.ExiledSpellManaColorChoice(playerId, fromCreature, amount);
             case GRAVEYARD_SPELL_ONLY ->
                     new ChoiceContext.GraveyardManaColorChoice(playerId, fromCreature, amount);
-            case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, amount);
+            case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, fromCreature, amount);
             case CREATURE_OR_ENCHANTMENT_SPELL_ONLY ->
                     throw new IllegalArgumentException("Use the two-color mana effect for this restriction");
             case SUBTYPE_CREATURE_SPELL ->

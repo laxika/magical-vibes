@@ -110,6 +110,7 @@ class InvasionOfFioraTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
     }
 

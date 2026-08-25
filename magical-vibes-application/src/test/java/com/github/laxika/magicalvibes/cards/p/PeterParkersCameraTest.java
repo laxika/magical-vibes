@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.t.TrialOfZeal;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -23,7 +24,7 @@ class PeterParkersCameraTest extends BaseCardTest {
     @DisplayName("Copies a target activated ability")
     void copiesActivatedAbility() {
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new PeterParkersCamera());
+        addCameraWithFilmCounters();
         addReadyPyromancer(player1);
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -50,7 +51,7 @@ class PeterParkersCameraTest extends BaseCardTest {
     @DisplayName("Copies a target triggered ability")
     void copiesTriggeredAbility() {
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new PeterParkersCamera());
+        addCameraWithFilmCounters();
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new TrialOfZeal()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -93,5 +94,10 @@ class PeterParkersCameraTest extends BaseCardTest {
     private void addReadyPyromancer(Player player) {
         var permanent = harness.addToBattlefieldAndReturn(player, new ProdigalPyromancer());
         permanent.setSummoningSick(false);
+    }
+
+    private void addCameraWithFilmCounters() {
+        var camera = harness.addToBattlefieldAndReturn(player1, new PeterParkersCamera());
+        camera.setCounterCount(CounterType.FILM, 3);
     }
 }

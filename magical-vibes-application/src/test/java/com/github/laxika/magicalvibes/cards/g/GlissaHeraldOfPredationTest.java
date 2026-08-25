@@ -26,6 +26,7 @@ class GlissaHeraldOfPredationTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handleListChoice(player1, "Incubate 2 twice");
+        harness.passBothPriorities();
 
         List<Permanent> incubators = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Incubator"))
@@ -48,6 +49,7 @@ class GlissaHeraldOfPredationTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handleListChoice(player1, "Transform all Incubator tokens you control");
+        harness.passBothPriorities();
 
         assertThat(incubators).allSatisfy(incubator -> assertThat(incubator.isTransformed()).isTrue());
     }
@@ -62,6 +64,7 @@ class GlissaHeraldOfPredationTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handleListChoice(player1,
                 "Phyrexians you control gain first strike and deathtouch until end of turn");
+        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, glissa, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, glissa, Keyword.DEATHTOUCH)).isTrue();

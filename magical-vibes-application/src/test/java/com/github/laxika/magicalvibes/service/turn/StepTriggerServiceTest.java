@@ -1540,7 +1540,7 @@ class StepTriggerServiceTest {
                     .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, effect);
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            when(etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)).thenReturn(true);
+            when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
 
             sut.handleEndStepTriggers(gd);
 

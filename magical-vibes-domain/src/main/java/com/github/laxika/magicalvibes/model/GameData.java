@@ -130,6 +130,8 @@ public class GameData {
      * Populated during spell payment and consumed when spell-cast triggers fire.
      */
     public final Map<UUID, Integer> spellCastManaSpent = new ConcurrentHashMap<>();
+    /** Amount of mana produced by creatures and spent to cast each spell. */
+    public final Map<UUID, Integer> spellCastCreatureManaSpent = new ConcurrentHashMap<>();
     /**
      * Transient Converge value for a spell, keyed by spell card instance id.
      * Populated during spell payment and consumed when the spell resolves.
@@ -2753,6 +2755,18 @@ public class GameData {
         spellCastManaSpent.remove(spellCardId);
     }
 
+    public void setSpellCastCreatureManaSpent(UUID spellCardId, int manaSpent) {
+        spellCastCreatureManaSpent.put(spellCardId, manaSpent);
+    }
+
+    public int getSpellCastCreatureManaSpent(UUID spellCardId) {
+        return spellCastCreatureManaSpent.getOrDefault(spellCardId, 0);
+    }
+
+    public void clearSpellCastCreatureManaSpent(UUID spellCardId) {
+        spellCastCreatureManaSpent.remove(spellCardId);
+    }
+
     public void setSpellCastConvergeValue(UUID spellCardId, int convergeValue) {
         spellCastConvergeValue.put(spellCardId, convergeValue);
     }
@@ -3469,6 +3483,10 @@ public class GameData {
         copy.additionalUpkeepsRemaining = this.additionalUpkeepsRemaining;
         copy.currentUpkeepIsAdditional = this.currentUpkeepIsAdditional;
         copy.permanentWithOilCounterPutIntoGraveyardThisTurn = this.permanentWithOilCounterPutIntoGraveyardThisTurn;
+        copy.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn =
+                this.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
+        copy.permanentPutIntoGraveyardFromBattlefieldThisTurn =
+                this.permanentPutIntoGraveyardFromBattlefieldThisTurn;
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
@@ -3608,6 +3626,7 @@ public class GameData {
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.combatDamageFirstStrikeAssignmentPhase = this.combatDamageFirstStrikeAssignmentPhase;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
+        copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
@@ -3645,6 +3664,13 @@ public class GameData {
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
         copy.playersWhoPlayedOrCastFromOutsideHandThisTurn.addAll(this.playersWhoPlayedOrCastFromOutsideHandThisTurn);
+        copy.permanentsThatReceivedPlusOnePlusOneCountersThisTurn
+                .addAll(this.permanentsThatReceivedPlusOnePlusOneCountersThisTurn);
+        copy.permanentsThatAttackedBattlesThisTurn.addAll(this.permanentsThatAttackedBattlesThisTurn);
+        copy.playersWithHexproofThisTurn.addAll(this.playersWithHexproofThisTurn);
+        copy.playersWithShroudThisTurn.addAll(this.playersWithShroudThisTurn);
+        copy.playersDealtCombatDamageSinceTheirLastTurn.addAll(this.playersDealtCombatDamageSinceTheirLastTurn);
+        copy.playersDealtCombatDamageLastTurn.addAll(this.playersDealtCombatDamageLastTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
@@ -4312,6 +4338,7 @@ public class GameData {
 
         // --- Spell-cast payment tracking (X / converge / colors spent) ---
         copy.spellCastManaSpent.putAll(this.spellCastManaSpent);
+        copy.spellCastCreatureManaSpent.putAll(this.spellCastCreatureManaSpent);
         copy.spellCastConvergeValue.putAll(this.spellCastConvergeValue);
         this.spellCastColorsSpent.forEach((k, v) ->
                 copy.spellCastColorsSpent.put(k, java.util.EnumSet.copyOf(v)));

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -115,6 +116,12 @@ public class GraveyardTargetingSupport {
             int minTargets = returnTargets.xScaled() ? 1 : 0;
             return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                     "to the battlefield", maxTargets, minTargets);
+        }
+        if (effect instanceof TargetedGraveyardCardsEffect targetCards) {
+            int maxTargets = targetCards.maxTargets() == 0
+                    ? Integer.MAX_VALUE : targetCards.maxTargets();
+            return new Target(targetCards.filter(), targetCards.source(),
+                    "into its owner's library", maxTargets, 0);
         }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             String destination = switch (returnEffect.destination()) {

@@ -71,6 +71,8 @@ public class StackEntry {
      * into-library dispositions still win.
      */
     @Setter private boolean exileInsteadOfGraveyard;
+    /** Whether this spell goes to the bottom of its owner's library instead of a graveyard. */
+    @Setter private boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
@@ -558,6 +560,8 @@ public class StackEntry {
         this.castWithFlashback = source.castWithFlashback;
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
+        this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
+                source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
         this.castTransformed = source.castTransformed;
@@ -907,8 +911,7 @@ public class StackEntry {
                     ? List.of(targetIds.get(group)) : List.of();
         }
         int firstFlatGroup = 0;
-        if ((targeting.isAura() || primaryTargetStoredSeparately)
-                && !targetIdOverriddenForEffectResolution) {
+        if (targeting.isAura() || primaryTargetStoredSeparately) {
             if (group == 0) {
                 return targetId != null ? List.of(targetId) : List.of();
             }

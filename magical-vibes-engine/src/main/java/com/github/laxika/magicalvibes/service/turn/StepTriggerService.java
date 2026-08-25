@@ -723,13 +723,10 @@ public class StepTriggerService {
             grantedUpkeepEffectSupport.appendGrantedUpkeepEffects(gameData, perm, upkeepEffects);
             if (upkeepEffects.isEmpty()) continue;
 
-            // Intervening-if on a targeted upkeep ability: the condition is checked at trigger
-            // time, so a failed check must not even ask for a target. This also covers player-only
-            // targets such as Brink of Madness; the later target-routing code cannot safely queue
-            // a target before this check.
+            // An intervening-if condition is checked at trigger time, so a failed check must not
+            // put the ability on the stack or ask for any targets.
             upkeepEffects.removeIf(e -> e instanceof ConditionalEffect ce
                     && ce.interveningIf()
-                    && ce.targetSpec() != TargetSpec.NONE
                     && !conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, activePlayerId)));
             if (upkeepEffects.isEmpty()) continue;
@@ -4842,6 +4839,13 @@ public class StepTriggerService {
                                     GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                             log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
+                    } else if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect))));
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                        log.info("Game {} - {} controller end-step graveyard-target trigger queued",
+                                gameData.id, perm.getCard().getName());
                     } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         if (perm.getCard().getSpellTargets().size() > 1
                                 || etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
@@ -4989,6 +4993,11 @@ public class StepTriggerService {
                         gameData.id, perm.getCard().getName());
             }
         });
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+            return;
+        }
 
         // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid, Voltaic Servant)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
@@ -5288,9 +5297,17 @@ public class StepTriggerService {
                             && ge.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
                     .map(e -> (ExileGraveyardCardsEffect) e)
                     .findFirst()
-                    .orElseThrow();
-            graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
-                    gameData, controllerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
+                    .orElse(null);
+            if (exileEffect != null) {
+                graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
+                        gameData, controllerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
+            } else {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        perm.getCard(), controllerId, new ArrayList<>(mandatoryEffects)));
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} beginning-of-combat graveyard-target trigger queued",
+                        gameData.id, perm.getCard().getName());
+            }
         } else if (needsPermanentTarget
                 && (etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(perm.getCard())
                     || etbTokenTargetService.hasMultipleTargetGroups(perm.getCard()))) {

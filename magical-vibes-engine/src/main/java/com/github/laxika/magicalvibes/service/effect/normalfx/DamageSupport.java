@@ -221,22 +221,14 @@ public class DamageSupport {
                 ? entry == null ? null : entry.getEffectiveDamageSourceCard()
                 : sourcePermanentForBonus.getCard();
         if (rawDamage > 0) {
+            rawDamage += gameQueryService.getNoncreatureSourceDamageBonus(
+                    gameData, entry, null, target);
+            rawDamage += gameQueryService.getPlayersAndBattlesDamageBonus(
+                    gameData, false, target);
             rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
         }
-        UUID sourceControllerId = damageSource != null
-                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
-                : entry != null && entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId())
-                : entry == null ? null : entry.getControllerId();
-        if (rawDamage > 0) {
-            rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
-                    gameData, sourceControllerId, targetControllerId);
-            rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
-                    gameData, entry, targetControllerId);
-            rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
-                    gameData, sourceControllerId);
-        }
+        UUID sourceControllerId = bonusSourceControllerId;
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
         // combat counterpart lives in GameQueryService.applyCombatDamageMultiplier.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, targetControllerId,
@@ -390,7 +382,7 @@ public class DamageSupport {
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
                     sourceControllerId,
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage,
-                    null, targetControllerId);
+                    null, targetControllerId, target.getId());
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId);
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
                     gameData, sourceControllerId, target, damage);
@@ -593,7 +585,7 @@ public class DamageSupport {
         if (damage > 0) {
             accumulateSourceDamageForReflection(gameData, entry.getEffectiveDamageSourceCard(),
                     entry.getControllerId(), entry.getSourcePermanentId(), damage,
-                    null, gameQueryService.findPermanentController(gameData, target.getId()));
+                    null, gameQueryService.findPermanentController(gameData, target.getId()), target.getId());
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, entry.getControllerId());
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
                     gameData, sourceControllerId, target, damage);
@@ -857,7 +849,8 @@ public class DamageSupport {
                             gameData, sourcePermanent, entry.getControllerId(), targetPermanent.getId(),
                             loyaltyDamage, false, null);
                     accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(),
-                            entry.getSourcePermanentId(), loyaltyDamage, null, pwControllerId);
+                            entry.getSourcePermanentId(), loyaltyDamage, null, pwControllerId,
+                            targetPermanent.getId());
                     queueEnchantedCreatureDealsDamageTrigger(gameData, entry, sourcePermanent, loyaltyDamage);
                     gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), loyaltyDamage);
                     gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), targetPermanent.getId());
@@ -1013,6 +1006,10 @@ public class DamageSupport {
         // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId, sourceControllerId);
         if (rawDamage > 0) {
+            rawDamage += gameQueryService.getNoncreatureSourceDamageBonus(
+                    gameData, entry, playerId, null);
+            rawDamage += gameQueryService.getPlayersAndBattlesDamageBonus(
+                    gameData, true, null);
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
                     gameData, sourceControllerId, playerId);
             rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
@@ -1630,15 +1627,23 @@ public class DamageSupport {
     public void accumulateSourceDamageForReflection(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                     UUID sourcePermanentId, int damage, UUID damagedPlayerId,
                                                     UUID damagedPermanentControllerId) {
+        accumulateSourceDamageForReflection(gameData, sourceCard, sourceControllerId, sourcePermanentId,
+                damage, damagedPlayerId, damagedPermanentControllerId, null);
+    }
+
+    public void accumulateSourceDamageForReflection(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                                    UUID sourcePermanentId, int damage, UUID damagedPlayerId,
+                                                    UUID damagedPermanentControllerId, UUID damagedPermanentId) {
         if (damage <= 0 || sourceCard == null || sourceControllerId == null) return;
         PendingSourceDamage batch = gameData.pendingSourceDamageForReflection.get(sourceCard.getId());
         if (batch == null) {
             gameData.pendingSourceDamageForReflection.put(sourceCard.getId(),
                     new PendingSourceDamage(sourceCard, sourceControllerId, sourcePermanentId, damage,
                             damagedPlayerId, damagedPermanentControllerId,
+                            damagedPermanentId,
                             snapshotSelfDealsDamageEffects(gameData, sourceCard, sourcePermanentId)));
         } else {
-            batch.add(damage, damagedPlayerId, damagedPermanentControllerId);
+            batch.add(damage, damagedPlayerId, damagedPermanentControllerId, damagedPermanentId);
         }
     }
 
@@ -1655,11 +1660,22 @@ public class DamageSupport {
             triggerCollectionService.queueSourceDealsDamageReflections(gameData,
                     batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount(),
                     batch.getDamageToPlayers(), batch.getSelfDealsDamageEffects());
-            Set<UUID> damagedPlayers = new LinkedHashSet<>(batch.getDamageToPlayers().keySet());
-            damagedPlayers.addAll(batch.getDamageToPermanentControllers());
+            List<TriggerCollectionService.SourceDamageRecipient> damageRecipients = batch.getDamageRecipients()
+                    .stream()
+                    .map(recipient -> new TriggerCollectionService.SourceDamageRecipient(
+                            recipient.playerId(), recipient.permanentId()))
+                    .toList();
             triggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers(
                     gameData, batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(),
-                    damagedPlayers);
+                    damageRecipients);
+            boolean damagedOpponentOrBattle = damageRecipients.stream().anyMatch(recipient ->
+                    recipient.damagedPermanentId() == null
+                            ? !recipient.damagedPlayerId().equals(batch.getControllerId())
+                            : gameQueryService.findPermanentById(gameData, recipient.damagedPermanentId()) != null
+                                    && gameQueryService.findPermanentById(gameData, recipient.damagedPermanentId())
+                                            .getCard().hasType(CardType.BATTLE));
+            triggerCollectionService.checkInstantOrSorceryDamageToOpponentOrBattleTriggers(
+                    gameData, batch.getSourceCard(), batch.getControllerId(), damagedOpponentOrBattle);
         }
     }
 

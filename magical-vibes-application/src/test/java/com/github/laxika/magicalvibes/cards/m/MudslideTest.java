@@ -80,8 +80,10 @@ class MudslideTest extends BaseCardTest {
     void tappedFlierIsNotOfferedByUpkeepTrigger() {
         harness.addToBattlefield(player1, new Mudslide());
         Permanent hawk = addTapped(player1, new SuntailHawk());
-
-        advanceToUpkeep(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 

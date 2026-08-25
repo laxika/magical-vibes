@@ -23,18 +23,21 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 public class TheTrueScriptures extends Card {
 
     public TheTrueScriptures() {
-        target(new PermanentPredicateTargetFilter(
+        var chapterOneTarget = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsPlaneswalkerPredicate())),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                "Target must be a creature or planeswalker an opponent controls."), 0, 99)
+                "Target must be a creature or planeswalker an opponent controls.");
+        target(chapterOneTarget, 0, 99)
                 .addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyEachTargetPermanentEffect());
+        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(chapterOneTarget));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardEffect(3, DiscardRecipient.EACH_OPPONENT));

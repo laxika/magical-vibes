@@ -34,7 +34,7 @@ class DranaAndLinvalaTest extends BaseCardTest {
     void gainsOpponentsCreatureAbility() {
         Permanent dranaAndLinvala = addReady(player1, new DranaAndLinvala());
         addReady(player2, new DrudgeSkeletons());
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

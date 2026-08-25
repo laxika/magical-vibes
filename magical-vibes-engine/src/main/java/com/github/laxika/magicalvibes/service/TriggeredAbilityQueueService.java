@@ -715,6 +715,14 @@ public class TriggeredAbilityQueueService {
         List<CardEffect> effects = chosenModes.stream()
                 .flatMap(option -> option.effects().stream())
                 .toList();
+        boolean needsGraveyardTarget = effects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                        || graveyardTargetingSupport.findTarget(List.of(effect)) != null);
+        if (needsGraveyardTarget) {
+            gameData.queueInteractionFirst(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    sourceCard, controllerId, effects));
+            return;
+        }
         boolean needsTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
@@ -1758,7 +1766,7 @@ public class TriggeredAbilityQueueService {
                         .withSourceControllerId(pending.controllerId())
                 : null;
 
-        boolean creaturesOnly = targetPredicate == null;
+        boolean creaturesOnly = targetPredicate == null && !hasChapterFilters;
         List<UUID> validPermanentTargets = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
