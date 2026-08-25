@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesFro
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSB", collectorNumber = "16")
+@CardRegistration(set = "JUD", collectorNumber = "32")
 public class Valor extends Card {
 
     public Valor() {

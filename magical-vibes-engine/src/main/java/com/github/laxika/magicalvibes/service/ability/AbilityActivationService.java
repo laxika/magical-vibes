@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -107,6 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromSingleGraveyar
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
@@ -2479,6 +2481,65 @@ public class AbilityActivationService {
         );
     }
 
+    public void handleActivatedAbilityGraveyardLibraryCostChosen(
+            GameData gameData, Player player,
+            PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice choice,
+            List<UUID> cardIds) {
+        PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice activeChoice =
+                gameData.interaction.activeInteraction(
+                        PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice.class);
+        if (activeChoice == null || !activeChoice.equals(choice)) {
+            throw new IllegalStateException("Not awaiting activated ability graveyard library cost choice");
+        }
+        if (!player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        List<UUID> selectedIds = cardIds == null ? List.of() : List.copyOf(cardIds);
+        if (selectedIds.size() < choice.minimumCards() || selectedIds.size() > choice.maximumCards()
+                || new HashSet<>(selectedIds).size() != selectedIds.size()
+                || !choice.validCardIds().containsAll(selectedIds)) {
+            throw new IllegalStateException("Invalid graveyard card selection");
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, choice.sourcePermanentId());
+        if (source == null) {
+            clearPendingAbilityActivation(gameData);
+            throw new IllegalStateException("Source permanent is no longer on the battlefield");
+        }
+        ActivatedAbility ability = resolveAbility(gameData, source, choice.abilityIndex());
+        PutCardsFromGraveyardOnBottomOfLibraryCost cost = ability.getEffects().stream()
+                .filter(PutCardsFromGraveyardOnBottomOfLibraryCost.class::isInstance)
+                .map(PutCardsFromGraveyardOnBottomOfLibraryCost.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Activated ability no longer has the graveyard library cost"));
+        validatePutBottomLibraryCostSelection(gameData, player.getId(), cost, selectedIds);
+
+        gameData.interaction.clearAwaitingInput();
+        activateAbilityInternal(
+                gameData,
+                player,
+                -1,
+                choice.abilityIndex(),
+                choice.xValue(),
+                choice.targetId(),
+                choice.targetZone(),
+                null,
+                null,
+                null,
+                null,
+                source,
+                null,
+                null,
+                null,
+                false,
+                null,
+                null,
+                selectedIds
+        );
+    }
+
     public void handleActivatedAbilityExileInstantOrSorcerySpellCostChosen(
             GameData gameData, Player player,
             PendingInteraction.ExileInstantOrSorcerySpellCostChoice choice, UUID cardId) {
@@ -2631,6 +2692,20 @@ public class AbilityActivationService {
                                          List<UUID> exileAnyGraveyardCardIds,
                                          UUID exileInstantOrSorcerySpellCardId, boolean opponentTargetAlreadyChosen,
                                          List<UUID> revealedHandCardIds, UUID putExiledCardIntoGraveyardCardId) {
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
+                discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
+                exileXGraveyardCardIndices, exileAnyGraveyardCardIds, exileInstantOrSorcerySpellCardId,
+                opponentTargetAlreadyChosen, revealedHandCardIds, putExiledCardIntoGraveyardCardId, null);
+    }
+
+    private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
+                                         UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
+                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
+                                         List<Integer> exileXGraveyardCardIndices,
+                                         List<UUID> exileAnyGraveyardCardIds,
+                                         UUID exileInstantOrSorcerySpellCardId, boolean opponentTargetAlreadyChosen,
+                                         List<UUID> revealedHandCardIds, UUID putExiledCardIntoGraveyardCardId,
+                                         List<UUID> putBottomLibraryCardIds) {
         // Spell-only mana (e.g. tapped via Piracy) can't pay ability costs — hide it for the duration of
         // this activation (including the affordability check) so it is neither counted nor spent, then
         // restore it afterward. Re-entrant callbacks (discard/exile cost) call this method afresh, so each
@@ -2654,7 +2729,7 @@ public class AbilityActivationService {
                     discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
                     exileXGraveyardCardIndices, exileAnyGraveyardCardIds,
                     exileInstantOrSorcerySpellCardId, opponentTargetAlreadyChosen, revealedHandCardIds,
-                    putExiledCardIntoGraveyardCardId);
+                    putExiledCardIntoGraveyardCardId, putBottomLibraryCardIds);
         } finally {
             if (pool != null) {
                 pool.setBlueSpendableAsAnyColorForActivatedAbilities(previousBlueSpendPermission);
@@ -2675,7 +2750,8 @@ public class AbilityActivationService {
                                          List<UUID> exileAnyGraveyardCardIds,
                                          UUID exileInstantOrSorcerySpellCardId, boolean opponentTargetAlreadyChosen,
                                          List<UUID> revealedHandCardIds,
-                                         UUID putExiledCardIntoGraveyardCardId) {
+                                         UUID putExiledCardIntoGraveyardCardId,
+                                         List<UUID> putBottomLibraryCardIds) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
@@ -2852,7 +2928,10 @@ public class AbilityActivationService {
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         boolean targetsGraveyard = targetZone == Zone.GRAVEYARD && targetsGraveyardCards(ability);
-        if (targetsGraveyard && (ability.isMultiTarget() || (targetIds != null && !targetIds.isEmpty()))) {
+        boolean usesTargetCardGroups = activationEffects.stream()
+                .anyMatch(TargetCardGroupEffect.class::isInstance);
+        if (targetsGraveyard && !usesTargetCardGroups
+                && (ability.isMultiTarget() || (targetIds != null && !targetIds.isEmpty()))) {
             targetLegalityService.validateMultiTargetGraveyardAbility(
                     gameData, playerId, activationEffects,
                     targetIds != null ? targetIds : List.of(), permanent.getCard().getId(), effectiveXValue,
@@ -2902,6 +2981,33 @@ public class AbilityActivationService {
             }
             validateAnySingleGraveyardExileSelection(
                     gameData, exileNFromSingleGraveyardCost, exileAnyGraveyardCardIds);
+        }
+
+        PutCardsFromGraveyardOnBottomOfLibraryCost putBottomLibraryCost = abilityEffects.stream()
+                .filter(PutCardsFromGraveyardOnBottomOfLibraryCost.class::isInstance)
+                .map(PutCardsFromGraveyardOnBottomOfLibraryCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (putBottomLibraryCost != null && putBottomLibraryCardIds == null) {
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+            interactionHandlerRegistry.begin(gameData,
+                    new PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice(
+                            playerId,
+                            permanent.getId(),
+                            effectiveIndex,
+                            effectiveXValue,
+                            targetId,
+                            targetZone,
+                            graveyard,
+                            "Choose " + putBottomLibraryCost.count()
+                                    + " cards from your graveyard to put on the bottom of your library.",
+                            putBottomLibraryCost.count(),
+                            putBottomLibraryCost.count()));
+            return;
+        }
+        if (putBottomLibraryCost != null) {
+            validatePutBottomLibraryCostSelection(gameData, playerId, putBottomLibraryCost,
+                    putBottomLibraryCardIds);
         }
 
         if (ability.isExhaustAbility()) {
@@ -3201,6 +3307,16 @@ public class AbilityActivationService {
         if (exileNFromSingleGraveyardCostToPay != null) {
             payAnySingleGraveyardExileCost(
                     gameData, player, exileNFromSingleGraveyardCostToPay, exileAnyGraveyardCardIds);
+        }
+
+        PutCardsFromGraveyardOnBottomOfLibraryCost putBottomLibraryCostToPay = abilityEffects.stream()
+                .filter(PutCardsFromGraveyardOnBottomOfLibraryCost.class::isInstance)
+                .map(PutCardsFromGraveyardOnBottomOfLibraryCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (putBottomLibraryCostToPay != null) {
+            payPutCardsFromGraveyardOnBottomOfLibraryCost(
+                    gameData, player, putBottomLibraryCostToPay, putBottomLibraryCardIds);
         }
 
         // Pay exile-N-cards-from-graveyard cost by exiling the front N matching cards (Immortal Coil,
@@ -4335,6 +4451,18 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
                         + exileNGraveyardCost.count() + ")");
             }
+        }
+
+        PutCardsFromGraveyardOnBottomOfLibraryCost putBottomLibraryCost = abilityEffects.stream()
+                .filter(PutCardsFromGraveyardOnBottomOfLibraryCost.class::isInstance)
+                .map(PutCardsFromGraveyardOnBottomOfLibraryCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (putBottomLibraryCost != null
+                && gameData.playerGraveyards.getOrDefault(playerId, List.of()).size()
+                < putBottomLibraryCost.count()) {
+            throw new IllegalStateException("Not enough cards in graveyard to pay the library cost (need "
+                    + putBottomLibraryCost.count() + ")");
         }
 
         ExileNCardsFromSingleGraveyardCost exileSingleGraveyardCost = abilityEffects.stream()
@@ -5628,6 +5756,19 @@ public class AbilityActivationService {
         }
     }
 
+    private void validatePutBottomLibraryCostSelection(
+            GameData gameData, UUID playerId, PutCardsFromGraveyardOnBottomOfLibraryCost cost,
+            List<UUID> cardIds) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+        if (cardIds == null || cardIds.size() != cost.count()
+                || new HashSet<>(cardIds).size() != cardIds.size()
+                || cardIds.stream().anyMatch(cardId -> graveyard.stream()
+                .noneMatch(card -> card.getId().equals(cardId)))) {
+            throw new IllegalStateException("Must choose exactly " + cost.count()
+                    + " cards from your graveyard");
+        }
+    }
+
     private void payAnySingleGraveyardExileCost(
             GameData gameData, Player player, ExileNCardsFromSingleGraveyardCost cost, List<UUID> cardIds) {
         validateAnySingleGraveyardExileSelection(gameData, cost, cardIds);
@@ -5647,6 +5788,27 @@ public class AbilityActivationService {
         }
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles "
                 + toExile.size() + " creature cards from a single graveyard as an activation cost."));
+    }
+
+    private void payPutCardsFromGraveyardOnBottomOfLibraryCost(
+            GameData gameData, Player player, PutCardsFromGraveyardOnBottomOfLibraryCost cost,
+            List<UUID> cardIds) {
+        validatePutBottomLibraryCostSelection(gameData, player.getId(), cost, cardIds);
+
+        List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
+        List<Card> selectedCards = cardIds.stream()
+                .map(cardId -> graveyard.stream()
+                        .filter(card -> card.getId().equals(cardId))
+                        .findFirst()
+                        .orElseThrow())
+                .toList();
+        for (int i = 0; i < cardIds.size(); i++) {
+            Card card = selectedCards.get(i);
+            permanentRemovalService.removeCardFromGraveyardById(gameData, cardIds.get(i));
+            gameData.playerDecks.get(player.getId()).addLast(card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", card, " on the bottom of their library."));
+        }
     }
 
     private void payGraveyardExileNCost(GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, Card sourceCard) {

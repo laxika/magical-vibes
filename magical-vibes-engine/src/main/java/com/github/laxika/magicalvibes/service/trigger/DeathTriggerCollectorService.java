@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToLifeLostWhenEnteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -155,6 +156,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -2826,6 +2828,16 @@ public class DeathTriggerCollectorService {
         CardEffect baked = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
                 effect.counterType(), count, effect.targetPredicate());
         return handleSelfLeavesDefault(match, baked, ctx);
+    }
+
+    @CollectsTrigger(value = GainLifeEqualToLifeLostWhenEnteredEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfLeavesGainLifeEqualToLifeLostWhenEntered(TriggerMatchContext match,
+            GainLifeEqualToLifeLostWhenEnteredEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        int amount = Objects.equals(sl.controllerId(), match.permanent().getLifeLostWhenEnteredControllerId())
+                ? match.permanent().getLifeLostWhenEntered() : 0;
+        return handleSelfLeavesDefault(match, new GainLifeEffect(amount), ctx);
     }
 
     @CollectsTrigger(value = TargetPlayerGainsLifeEffect.class,

@@ -906,6 +906,10 @@ public sealed interface ChoiceContext {
                                                         Card sourceCard, int revealCount)
             implements ChoiceContext {}
 
+    /** The controller names a card; the target reveals their hand and discards matching cards. */
+    record ChooseNameRevealHandDiscardChoice(UUID controllerId, UUID targetPlayerId)
+            implements ChoiceContext {}
+
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),
      * then all cards of that type are returned from the controller's graveyard.

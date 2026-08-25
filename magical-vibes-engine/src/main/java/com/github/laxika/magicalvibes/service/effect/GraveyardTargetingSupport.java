@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -65,9 +66,13 @@ public class GraveyardTargetingSupport {
     }
 
     private CardEffect unwrapMay(CardEffect effect) {
+        if (effect == null) {
+            return null;
+        }
         return switch (effect) {
-            case MayEffect may -> may.wrapped();
-            case MayPayManaEffect mayPay -> mayPay.wrapped();
+            case ConditionalEffect conditional -> unwrapMay(conditional.wrapped());
+            case MayEffect may -> unwrapMay(may.wrapped());
+            case MayPayManaEffect mayPay -> unwrapMay(mayPay.wrapped());
             default -> effect;
         };
     }

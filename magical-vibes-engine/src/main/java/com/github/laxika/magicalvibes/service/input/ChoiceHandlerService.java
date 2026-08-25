@@ -149,6 +149,10 @@ public class ChoiceHandlerService {
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid restricted card name: " + colorName);
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
+                && !colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid card name: " + colorName);
+        }
 
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
             handleDevotionManaColorChosen(gameData, player, colorName, ctx);
@@ -465,6 +469,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice ctx) {
             handleChooseNameRevealRandomHandCardsDiscardChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
+            handleChooseNameRevealHandDiscardChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
@@ -3677,6 +3685,57 @@ public class ChoiceHandlerService {
             triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
         }
         triggerCollectionService.finishDiscardEvent(gameData);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseNameRevealHandDiscardChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
+        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+
+        if (hand == null || hand.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> toDiscard = hand.stream()
+                .filter(card -> card.getName().equals(cardName))
+                .toList();
+        if (toDiscard.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " has no cards named \""
+                    + cardName + "\" to discard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        hand.removeAll(toDiscard);
+        gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
+        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        for (Card card : toDiscard) {
+            graveyardService.discardCard(gameData, targetPlayerId, card);
+            gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+        }
+        triggerCollectionService.finishDiscardEvent(gameData);
+
+        gameLogService.append(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
+                + " card" + (toDiscard.size() == 1 ? "" : "s") + " named \"" + cardName + "\"."));
+        log.info("Game {} - {} discards {} card(s) named {}", gameData.id, targetName,
+                toDiscard.size(), cardName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);

@@ -82,6 +82,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.ActivatedAbilityGraveyardExileCostChoice,
+        PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
@@ -2023,6 +2024,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public ActivatedAbilityGraveyardExileCostChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), minimumCards, maximumCards);
+        }
+    }
+
+    /** Select cards to put on the bottom of the controller's library as an activation cost. */
+    record ActivatedAbilityGraveyardLibraryCostChoice(UUID playerId, UUID sourcePermanentId,
+                                                       int abilityIndex, int xValue,
+                                                       UUID targetId, Zone targetZone,
+                                                       java.util.List<Card> cards, String prompt,
+                                                       int minimumCards, int maximumCards)
+            implements PendingInteraction {
+
+        public ActivatedAbilityGraveyardLibraryCostChoice {
             cards = java.util.List.copyOf(cards);
         }
 

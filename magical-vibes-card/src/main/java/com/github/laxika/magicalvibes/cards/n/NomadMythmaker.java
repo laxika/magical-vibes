@@ -12,6 +12,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "30")
+@CardRegistration(set = "JUD", collectorNumber = "15")
 public class NomadMythmaker extends Card {
 
     public NomadMythmaker() {

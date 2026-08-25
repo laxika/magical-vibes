@@ -953,17 +953,22 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         List<Card> movedCards = new ArrayList<>();
 
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (UUID cardId : targetIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                UUID graveyardOwnerId = card == null
+                        ? null
+                        : gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                List<Card> graveyard = graveyardOwnerId == null
+                        ? null
+                        : gameData.playerGraveyards.get(graveyardOwnerId);
                 if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                     cardConsumer.accept(graveyard, card);
                     movedCards.add(card);
-                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId, card);
                 }
             }
         } finally {

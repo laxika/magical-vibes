@@ -179,6 +179,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedE
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -1146,12 +1147,34 @@ public class GameQueryService {
                         .anyMatch(e -> e.zones().contains(zone)));
     }
 
+    /** Returns whether the given player may cast spells from the given zone. */
+    public boolean canPlayerCastSpellsFromZone(GameData gameData, UUID playerId, Zone zone) {
+        return canPlayersCastSpellsFromZone(gameData, zone)
+                && (zone != Zone.GRAVEYARD
+                || !gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId));
+    }
+
     /**
      * Returns {@code true} if the given spell can be cast from {@code zone}. This includes global
      * zone locks and static effects that restrict only noncreature spells.
      */
     public boolean canCastSpellFromZone(GameData gameData, Card card, Zone zone) {
         if (!canPlayersCastSpellsFromZone(gameData, zone)) {
+            return false;
+        }
+        if (card.hasType(CardType.CREATURE)) {
+            return true;
+        }
+        return !gameData.anyPermanentMatches(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(NoncreatureSpellsCantBeCastFromZonesEffect.class::isInstance)
+                        .map(NoncreatureSpellsCantBeCastFromZonesEffect.class::cast)
+                        .anyMatch(e -> e.zones().contains(zone)));
+    }
+
+    /** Returns whether the given player may cast the given spell from the given zone. */
+    public boolean canCastSpellFromZone(GameData gameData, Card card, Zone zone, UUID playerId) {
+        if (!canPlayerCastSpellsFromZone(gameData, playerId, zone)) {
             return false;
         }
         if (card.hasType(CardType.CREATURE)) {
@@ -3279,7 +3302,7 @@ public class GameQueryService {
 
     /** A static-effect source with the CR 613.7 ordering key used by {@link #assembleStaticBonus}. */
     private record StaticSource(Permanent permanent, UUID controllerId, boolean sameBattlefieldAsTarget,
-                                long timestamp, int position) {
+                                long timestamp, int position, boolean fromGraveyard) {
     }
 
     /**
@@ -3381,7 +3404,18 @@ public class GameQueryService {
             boolean targetOnSameBattlefield = playerId.equals(resolvedTargetControllerId);
             for (Permanent source : bf) {
                 sources.add(new StaticSource(
-                        source, playerId, targetOnSameBattlefield, source.getTimestamp(), position++));
+                        source, playerId, targetOnSameBattlefield, source.getTimestamp(), position++, false));
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard != null) {
+                for (Card card : graveyard) {
+                    if (card.getEffects(EffectSlot.STATIC).stream()
+                            .noneMatch(GraveyardStaticEffect.class::isInstance)) {
+                        continue;
+                    }
+                    sources.add(new StaticSource(new Permanent(card), playerId,
+                            targetOnSameBattlefield, 0, position++, true));
+                }
             }
         }
         sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
@@ -3403,6 +3437,9 @@ public class GameQueryService {
                     source, target, sourceSlot.controllerId(), sourceSlot.sameBattlefieldAsTarget(), gameData);
             AccumulatorSnapshot beforeSource = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (sourceSlot.fromGraveyard() != (effect instanceof GraveyardStaticEffect)) {
+                    continue;
+                }
                 // Purely type-changing effects were applied by the layer-4 pass (with filters
                 // evaluated as of each effect's own application); replay its recorded decision
                 // instead of re-running the handler against the finished states, which would
@@ -3550,6 +3587,9 @@ public class GameQueryService {
         }
         AccumulatorSnapshot beforeSelf = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof GraveyardStaticEffect) {
+                continue;
+            }
             // A self-including scope (ALL_LANDS_INCLUDING_SELF, ALL_CREATURES_INCLUDING_SELF)
             // records a layer-4 contribution on its own source; the source-loop above skips
             // source == target, so the replay for those has to happen here.

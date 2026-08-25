@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
@@ -124,8 +125,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -1687,6 +1691,8 @@ public class ActivatedAbilityExecutionService {
                 effectivePermanentTargetIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
+        stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
+                ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         if (tracksSacrificedCard) {
             stackEntry.setSacrificedCardSnapshot(permanent.getChosenCard());
@@ -1711,5 +1717,40 @@ public class ActivatedAbilityExecutionService {
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
+
+    private Map<CardEffect, List<UUID>> targetCardIdsByEffect(ActivatedAbility ability,
+                                                               List<CardEffect> effects,
+                                                               List<UUID> targetIds,
+                                                               Zone targetZone) {
+        if (targetZone != Zone.GRAVEYARD || targetIds == null || targetIds.isEmpty()
+                || ability.getMultiTargetFilters().isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Integer, UUID> targetByGroup = new HashMap<>();
+        for (int i = 0; i < targetIds.size() && i < ability.getMultiTargetFilters().size(); i++) {
+            if (ability.getMultiTargetFilters().get(i) instanceof GraveyardCardPredicateTargetFilter) {
+                targetByGroup.put(i, targetIds.get(i));
+            }
+        }
+        if (targetByGroup.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<CardEffect, List<UUID>> result = new IdentityHashMap<>();
+        for (CardEffect effect : effects) {
+            if (effect instanceof TargetCardGroupEffect groupedEffect) {
+                List<UUID> effectTargetIds = groupedEffect.targetGroups().stream()
+                        .map(targetByGroup::get)
+                        .filter(Objects::nonNull)
+                        .toList();
+                if (!effectTargetIds.isEmpty()) {
+                    result.put(effect, effectTargetIds);
+                }
+            }
+        }
+        return result;
+    }
+
 }
 

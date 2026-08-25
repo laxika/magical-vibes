@@ -313,6 +313,11 @@ public record PreventDamageEffect(
                 PreventionScope.ALL_FROM_COLORS_TO_CONTROLLED_CREATURES, null, false, colors, null, null);
     }
 
+    /** "Prevent all damage that sources of the color of your choice would deal this turn" (Prismatic Strands). */
+    public static PreventDamageEffect fromChosenColor() {
+        return new PreventDamageEffect(PreventionScope.ALL_FROM_CHOSEN_COLOR, null, false, null, null, null);
+    }
+
     /** "Prevent all damage that would be dealt this turn by non-Human sources" (Repel the Abominable). */
     public static PreventDamageEffect fromNonHumanSources() {
         return new PreventDamageEffect(PreventionScope.ALL_FROM_NON_HUMAN_SOURCES, null, false, null, null, null);

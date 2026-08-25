@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEff
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
@@ -419,6 +420,8 @@ public final class LayerClassifier {
                 EnumSet.range(Layer.L4_TYPE, Layer.L7D_SWITCH_PT));
         map.put(ConditionalEffect.class, new Entry(anyWrappedLayer, (effect, fromOwnStaticSlot) ->
                 classify(((ConditionalEffect) effect).wrapped(), fromOwnStaticSlot)));
+        map.put(WrappedGraveyardStaticEffect.class, new Entry(anyWrappedLayer, (effect, fromOwnStaticSlot) ->
+                classify(((WrappedGraveyardStaticEffect) effect).wrapped(), fromOwnStaticSlot)));
         map.put(EnchantedPermanentConditionalEffect.class, new Entry(anyWrappedLayer,
                 (effect, fromOwnStaticSlot) -> {
                     EnchantedPermanentConditionalEffect conditional = (EnchantedPermanentConditionalEffect) effect;

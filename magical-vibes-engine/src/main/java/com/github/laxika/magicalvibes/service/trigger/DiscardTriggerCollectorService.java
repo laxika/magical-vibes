@@ -440,12 +440,13 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTriggers({
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    })
     private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, you may pay {N}. If you do, ..." Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. Queue it as a proper
-        // triggered ability so it uses the stack (and, when cycling, resolves above the cycling draw); its
-        // MayAbilityChoice pay prompt then comes up at resolution. (Drake Haven)
+        // Queue may-pay discard triggers as proper triggered abilities so they use the stack and the
+        // MayAbilityChoice payment prompt comes up at resolution. (Drake Haven, Spirit Cairn)
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -457,7 +458,7 @@ public class DiscardTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on cycle/discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
+        log.info("Game {} - {} triggers on discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
         return true;
     }
 

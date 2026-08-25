@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
@@ -798,6 +800,28 @@ class StepTriggerServiceTest {
             // MayPayManaEffect goes through queueMayAbility, which adds to stack
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Graveyard May Card");
+        }
+
+        @Test
+        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with targeted MayPayManaEffect queues graveyard target selection")
+        void graveyardUpkeepTargetedMayPayQueuesGraveyardTargetSelection() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Graveyard Target Card");
+            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+                    new MayPayManaEffect("{2}{G}",
+                            ReturnCardFromGraveyardEffect.builder()
+                                    .destination(GraveyardChoiceDestination.HAND)
+                                    .filter(new CardTypePredicate(CardType.CREATURE))
+                                    .targetGraveyard(true)
+                                    .build(),
+                            "Pay {2}{G} to return a creature card?"));
+            gd.playerGraveyards.get(player1Id).add(card);
+            gd.playerGraveyards.get(player1Id).add(creatureCard());
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

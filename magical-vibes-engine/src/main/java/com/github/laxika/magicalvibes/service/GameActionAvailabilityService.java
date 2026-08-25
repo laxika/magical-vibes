@@ -955,7 +955,6 @@ public class GameActionAvailabilityService {
         if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
             return playable;
         }
-
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
@@ -964,6 +963,7 @@ public class GameActionAvailabilityService {
 
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty
                 || gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                || gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)
                 || castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)) {
             return playable;
@@ -986,6 +986,33 @@ public class GameActionAvailabilityService {
         return playable;
     }
 
+    public boolean canPlayGraveyardLand(GameData gameData, UUID playerId, Card card, UUID graveyardOwnerId) {
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
+            return false;
+        }
+        if (!playerId.equals(gameQueryService.getPriorityPlayerId(gameData))) {
+            return false;
+        }
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)
+                || !gameData.stack.isEmpty()
+                || gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                || gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)
+                || castingPermissionService.isLandPlayRestricted(gameData, playerId)
+                || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)
+                || !card.hasType(CardType.LAND)
+                || castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
+            return false;
+        }
+        boolean hasPermission = playerId.equals(graveyardOwnerId)
+                ? castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId)
+                : false;
+        return hasPermission || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
+    }
+
     public List<Integer> getPlayableFlashbackIndices(GameData gameData, UUID playerId) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
@@ -999,6 +1026,9 @@ public class GameActionAvailabilityService {
 
         // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
         if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
+            return playable;
+        }
+        if (gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)) {
             return playable;
         }
 
@@ -1026,7 +1056,7 @@ public class GameActionAvailabilityService {
                 continue;
             }
             if (!card.hasType(CardType.LAND)
-                    && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD)) {
+                    && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD, playerId)) {
                 continue;
             }
 
@@ -1187,6 +1217,12 @@ public class GameActionAvailabilityService {
             }
             if (flashback.isPresent()
                     && !castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashback.get())) {
+                continue;
+            }
+            if (flashback.isPresent()
+                    && (!flashback.get().getCosts(SacrificePermanentsCost.class).isEmpty()
+                    || !flashback.get().getCosts(SacrificeXPermanentsCastingCost.class).isEmpty())
+                    && !castingCostService.canPayFlashbackSacrificeCost(gameData, playerId, flashback.get())) {
                 continue;
             }
             ManaPool pool = gameData.playerManaPools.get(playerId);

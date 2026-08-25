@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -789,9 +790,35 @@ public class TargetLegalityService {
             }
         }
 
+        validateTargetCardGroupConstraints(gameData, abilityEffects, targetIds);
         validateMultiTargetConstraint(gameData, ability.getMultiTargetConstraint(), targetIds);
         validateFlagbearerTargetChoiceForMultiAbility(gameData, playerId, ability, abilityEffects,
                 targetIds, sourceCard, xValue);
+    }
+
+    private void validateTargetCardGroupConstraints(GameData gameData, List<CardEffect> effects,
+                                                    List<UUID> targetIds) {
+        for (CardEffect effect : effects) {
+            if (!(effect instanceof TargetCardGroupEffect groupedEffect)
+                    || !groupedEffect.targetGroupsMustShareGraveyard()) {
+                continue;
+            }
+            UUID sharedGraveyardOwnerId = null;
+            for (int group : groupedEffect.targetGroups()) {
+                if (group < 0 || group >= targetIds.size()) {
+                    throw new IllegalStateException("Must select all targets for the effect");
+                }
+                UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetIds.get(group));
+                if (graveyardOwnerId == null) {
+                    throw new IllegalStateException("Target card not found in any graveyard");
+                }
+                if (sharedGraveyardOwnerId == null) {
+                    sharedGraveyardOwnerId = graveyardOwnerId;
+                } else if (!sharedGraveyardOwnerId.equals(graveyardOwnerId)) {
+                    throw new IllegalStateException("Those cards must be in the same graveyard");
+                }
+            }
+        }
     }
 
     public void validateActivatedAbilityTargeting(GameData gameData,

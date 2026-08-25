@@ -773,6 +773,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), true);
     }
 
+    public void playGraveyardLand(Player player, UUID graveyardCardId) {
+        ensurePriority(player);
+        gameService.playGraveyardLand(gameData, player, graveyardCardId);
+    }
+
     public void castPlaneswalker(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);

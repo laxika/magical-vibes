@@ -120,6 +120,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseOpponentForPermanentSacrifice(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesPermanentToSacrifice sacrificeChoice) {
             battlefieldHandler.handleOpponentChoosesPermanentToSacrifice(gameData, permanentId, sacrificeChoice);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentForPermanentExile chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentForPermanentExile(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.OpponentChoosesPermanentToExile exileChoice) {
+            battlefieldHandler.handleOpponentChoosesPermanentToExile(gameData, permanentId, exileChoice);
+        } else if (context instanceof PermanentChoiceContext.PermanentYouControlToExile exileChoice) {
+            battlefieldHandler.handlePermanentYouControlToExile(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.MurmursFromBeyondOpponentChoice murmursChoice) {
             murmursFromBeyondEffectHandler.completeOpponentChoice(gameData, permanentId, murmursChoice);
         } else if (context instanceof PermanentChoiceContext.GuidedPassageOpponentChoice guidedPassageChoice) {

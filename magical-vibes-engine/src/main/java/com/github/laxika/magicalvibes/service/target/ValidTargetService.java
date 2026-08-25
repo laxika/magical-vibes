@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -438,6 +439,8 @@ public class ValidTargetService {
                 validGraveyardCardIds.addAll(computeValidGraveyardTargetsForFilter(
                         gameData, sourceCard, graveyardFilter, controllerId, excludeIds,
                         ability.getMultiTargetConstraint(), xValue));
+                restrictToSharedGraveyard(gameData, ability, positionIndex, alreadySelectedIds,
+                        validGraveyardCardIds);
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
                         ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
@@ -458,6 +461,8 @@ public class ValidTargetService {
             } else if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                 validGraveyardCardIds.addAll(computeValidGraveyardTargetsForFilter(
                         gameData, sourceCard, graveyardFilter, controllerId, excludeIds));
+                restrictToSharedGraveyard(gameData, ability, positionIndex, alreadySelectedIds,
+                        validGraveyardCardIds);
             } else if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
                 // "Target player or planeswalker" position (Chandra, Pyromaster +1): players
                 // matching the filter's player predicate alongside permanents matching its
@@ -655,6 +660,32 @@ public class ValidTargetService {
 
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                 validExiledCardIds, minTargets, maxTargets, prompt);
+    }
+
+    private void restrictToSharedGraveyard(GameData gameData, ActivatedAbility ability, int positionIndex,
+                                           List<UUID> alreadySelectedIds, List<UUID> candidateIds) {
+        if (alreadySelectedIds == null || alreadySelectedIds.isEmpty()) {
+            return;
+        }
+        UUID requiredOwnerId = null;
+        for (CardEffect effect : ability.getEffects()) {
+            if (!(effect instanceof TargetCardGroupEffect groupedEffect)
+                    || !groupedEffect.targetGroupsMustShareGraveyard()
+                    || !groupedEffect.targetGroups().contains(positionIndex)) {
+                continue;
+            }
+            int firstGroup = groupedEffect.targetGroups().getFirst();
+            if (positionIndex > firstGroup && firstGroup < alreadySelectedIds.size()) {
+                requiredOwnerId = gameQueryService.findGraveyardOwnerById(
+                        gameData, alreadySelectedIds.get(firstGroup));
+            }
+            break;
+        }
+        UUID finalRequiredOwnerId = requiredOwnerId;
+        if (finalRequiredOwnerId != null) {
+            candidateIds.removeIf(id -> !finalRequiredOwnerId.equals(
+                    gameQueryService.findGraveyardOwnerById(gameData, id)));
+        }
     }
 
     private void enforceFlagbearerTargetChoice(GameData gameData, UUID controllerId,

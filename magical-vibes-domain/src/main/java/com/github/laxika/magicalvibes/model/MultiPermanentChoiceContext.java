@@ -206,6 +206,11 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /** The affected player chooses exactly the required number of permanents to untap. */
+    record UntapPermanentsForAmount(String sourceName, int requiredCount)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
     record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
     }

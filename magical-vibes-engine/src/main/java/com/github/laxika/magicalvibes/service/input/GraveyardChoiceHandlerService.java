@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileDragonApproachAndSearchSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayExileGraveyardCardsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +89,7 @@ public class GraveyardChoiceHandlerService {
     private final DestructionSupport destructionSupport;
     private final ExileDragonApproachAndSearchSupport exileDragonApproachAndSearchSupport;
     private final StateBasedActionService stateBasedActionService;
+    private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -600,7 +602,16 @@ public class GraveyardChoiceHandlerService {
                 playerInputService.processNextMayAbility(gameData);
                 return;
             }
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
 
+        if (gameData.eachPlayerMayExileGraveyardCards.active
+                && player.getId().equals(gameData.eachPlayerMayExileGraveyardCards.currentPlayerId)) {
+            gameData.interaction.clearAwaitingInput();
+            eachPlayerMayExileGraveyardCardsSupport.completeSelection(
+                    gameData, player.getId(), cardIds);
+            gameData.eachPlayerMayExileGraveyardCards.currentPlayerId = null;
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }

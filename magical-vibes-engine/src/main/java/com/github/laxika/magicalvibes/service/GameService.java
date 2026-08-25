@@ -889,6 +889,17 @@ public class GameService {
         }
     }
 
+    public void playGraveyardLand(GameData gameData, Player player, UUID graveyardCardId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playGraveyardLand(gameData, actionPlayer, graveyardCardId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playGraveyardLand(gameData, player, graveyardCardId, 0);
+        }
+    }
+
     public void playCardWithEvoke(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                   Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
         Player actionPlayer = player;

@@ -530,6 +530,9 @@ public class GameData {
     /** Progress state for each-player discard effects with an opponent life-loss fallback. */
     public final EachPlayerDiscardsOrLosesLifeState eachPlayerDiscardsOrLosesLife =
             new EachPlayerDiscardsOrLosesLifeState();
+    /** Progress state for each player's optional graveyard exile and remaining-card life loss. */
+    public final EachPlayerMayExileGraveyardCardsState eachPlayerMayExileGraveyardCards =
+            new EachPlayerMayExileGraveyardCardsState();
     /** Progress state for Creeping Dread's each-player discard comparison. */
     public final CreepingDreadState creepingDread = new CreepingDreadState();
     /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
@@ -1127,6 +1130,10 @@ public class GameData {
         }
     }
 
+    /** A turn-scoped grant letting {@code playerId} play matching cards from the named graveyards. */
+    public record GraveyardPlayFilterPermission(UUID playerId, GraveyardSearchScope scope,
+                                                CardPredicate filter) {}
+
     /** One source-linked, one-card cast grant created by a temporary activated ability. */
     public record ExileCastPermission(UUID grantId, UUID sourcePermanentId, UUID castingPlayerId,
                                       UUID cardId, boolean withoutPayingManaCost,
@@ -1313,6 +1320,11 @@ public class GameData {
             new CopyOnWriteArrayList<>();
     /** Players whose cards are exiled instead of entering their graveyards for the rest of the turn. */
     public final Set<UUID> playersExilingCardsInsteadOfGraveyardThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who can't play lands or cast spells from graveyards this turn. */
+    public final Set<UUID> playersCantPlayFromGraveyardsThisTurn = ConcurrentHashMap.newKeySet();
+    /** Turn-scoped blanket permissions to play matching cards from graveyards. */
+    public final List<GraveyardPlayFilterPermission> graveyardPlayFilterPermissionsThisTurn =
+            new CopyOnWriteArrayList<>();
     /** Depth counter for batching "cards leave graveyard" triggers (one trigger per batch). */
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
@@ -3535,6 +3547,9 @@ public class GameData {
         copy.eachPlayerDiscardsOrLosesLife.currentPlayerId = this.eachPlayerDiscardsOrLosesLife.currentPlayerId;
         copy.eachPlayerDiscardsOrLosesLife.discardPending = this.eachPlayerDiscardsOrLosesLife.discardPending;
         copy.eachPlayerDiscardsOrLosesLife.remaining.addAll(this.eachPlayerDiscardsOrLosesLife.remaining);
+        copy.eachPlayerMayExileGraveyardCards.active = this.eachPlayerMayExileGraveyardCards.active;
+        copy.eachPlayerMayExileGraveyardCards.currentPlayerId = this.eachPlayerMayExileGraveyardCards.currentPlayerId;
+        copy.eachPlayerMayExileGraveyardCards.remaining.addAll(this.eachPlayerMayExileGraveyardCards.remaining);
         copy.creepingDread.active = this.creepingDread.active;
         copy.creepingDread.controllerId = this.creepingDread.controllerId;
         copy.creepingDread.currentPlayerId = this.creepingDread.currentPlayerId;
@@ -4264,6 +4279,8 @@ public class GameData {
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
         copy.graveyardCardsEnterTapped.addAll(this.graveyardCardsEnterTapped);
         copy.graveyardCastFilterPermissionsThisTurn.addAll(this.graveyardCastFilterPermissionsThisTurn);
+        copy.playersCantPlayFromGraveyardsThisTurn.addAll(this.playersCantPlayFromGraveyardsThisTurn);
+        copy.graveyardPlayFilterPermissionsThisTurn.addAll(this.graveyardPlayFilterPermissionsThisTurn);
         copy.exileCastPermissionsUntilEndOfTurn.addAll(this.exileCastPermissionsUntilEndOfTurn);
         copy.playersExilingCardsInsteadOfGraveyardThisTurn.addAll(this.playersExilingCardsInsteadOfGraveyardThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;

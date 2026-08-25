@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExileXCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -41,6 +42,7 @@ import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.OmenCast;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
@@ -1720,37 +1722,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Card is not playable from graveyard");
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            Card graveyardCard = graveyard.get(cardIndex);
-            if (!graveyardCard.hasType(CardType.LAND)) {
-                throw new IllegalStateException("Only lands can be played from graveyard");
-            }
-            Card landFace = selectedModalDoubleFacedLandFace(graveyardCard, effectiveXValue);
-            boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
-            permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
-            gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
-            gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
-            Permanent permanent = new Permanent(graveyardCard);
-            permanent.setCard(landFace);
-            permanent.setEnteredFromGraveyardOwnerId(playerId);
-            if (entersTapped) {
-                permanent.tap();
-            }
-            gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-            gameLogService.append(gameData,
-                    GameLog.playerPlays(player.getUsername(), landFace, " from graveyard."));
-            log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), landFace.getName());
-            if (cloneService.prepareCloneReplacementEffect(gameData, playerId, landFace, null, effectiveXValue, true)) {
-                return;
-            }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
-
-            // Process ETB effects for lands (e.g. Glimmerpost)
-            battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
-            if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace,
-                        Zone.GRAVEYARD);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            playGraveyardLandFromLocation(gameData, player, graveyard, cardIndex, effectiveXValue);
             return;
         }
 
@@ -3437,11 +3409,16 @@ public class SpellCastingService {
                                     gameData, candidate, playerId))
                             .count();
                 }
-                if (matchingCount > 0) {
+                int graveyardMaxTargets = exileFromGraveyardEffect.xScaled()
+                        ? resolvedXValue : exileFromGraveyardEffect.maxTargets();
+                if (exileFromGraveyardEffect.exactTargets() && graveyardMaxTargets > 0 && matchingCount == 0) {
+                    throw new IllegalStateException("No legal graveyard cards to target");
+                }
+                if (matchingCount > 0 && graveyardMaxTargets > 0) {
                     gameData.graveyardTargetOperation.permanentTargetIds = new ArrayList<>(targetIds);
                     graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(gameData, playerId, card,
-                            entryType, exileFromGraveyardEffect.maxTargets(), exileFromGraveyardEffect.filter(),
-                            filteredSpellEffects);
+                            entryType, graveyardMaxTargets, exileFromGraveyardEffect.filter(), filteredSpellEffects,
+                            exileFromGraveyardEffect.exactTargets());
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No cards in any graveyard — put spell on stack with 0 targets (resolves doing nothing)
@@ -4849,6 +4826,179 @@ public class SpellCastingService {
         }
     }
 
+    private void validateFlashbackGraveyardExileCost(GameData gameData, Player player, Card card,
+                                                      List<Card> sourceGraveyard, int sourceGraveyardIndex,
+                                                      Optional<FlashbackCast> flashbackOpt, int xValue,
+                                                      List<Integer> exileGraveyardCardIndices) {
+        var cost = flashbackOpt.flatMap(flashback ->
+                flashback.getCost(ExileXCardsFromGraveyardCastingCost.class)).orElse(null);
+        if (cost == null) return;
+
+        List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
+        if (xValue < 0) {
+            throw new IllegalStateException("X must not be negative");
+        }
+        if (indices.size() != xValue) {
+            throw new IllegalStateException("Must exile exactly " + xValue + " cards from your graveyard to cast "
+                    + card.getName() + " with flashback");
+        }
+        if (indices.stream().distinct().count() != indices.size()) {
+            throw new IllegalStateException("Duplicate cards chosen for the flashback cost of " + card.getName());
+        }
+
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            throw new IllegalStateException("Your graveyard is unavailable");
+        }
+        boolean sourceIsCasterGraveyard = sourceGraveyard == graveyard;
+        for (int index : indices) {
+            if (index < 0 || index >= graveyard.size()) {
+                throw new IllegalStateException("Invalid graveyard card chosen for the flashback cost of "
+                        + card.getName());
+            }
+            if ((sourceIsCasterGraveyard && index == sourceGraveyardIndex)
+                    || graveyard.get(index).getId().equals(card.getId())) {
+                throw new IllegalStateException("A spell cannot exile itself for its flashback cost");
+            }
+            Card selected = graveyard.get(index);
+            if (cost.predicate() != null
+                    && !predicateEvaluationService.matchesCardPredicate(selected, cost.predicate(), selected.getId())) {
+                String label = cost.label() == null ? "a matching" : "a " + cost.label();
+                throw new IllegalStateException("Each card exiled for the flashback cost must be " + label);
+            }
+        }
+    }
+
+    private void validateFlashbackPermanentSacrificeCosts(
+            GameData gameData, Player player, Card card, Optional<FlashbackCast> flashbackOpt,
+            int xValue, UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds) {
+        if (flashbackOpt.isEmpty()) {
+            return;
+        }
+        List<SacrificePermanentsCost> sacrificeCosts = flashbackOpt.get().getCosts(SacrificePermanentsCost.class);
+        List<SacrificeXPermanentsCastingCost> xSacrificeCosts =
+                flashbackOpt.get().getCosts(SacrificeXPermanentsCastingCost.class);
+        if (sacrificeCosts.isEmpty() && xSacrificeCosts.isEmpty()) {
+            return;
+        }
+        if (xValue < 0) {
+            throw new IllegalStateException("X must not be negative");
+        }
+
+        List<UUID> selectedIds = new ArrayList<>();
+        if (sacrificePermanentId != null) {
+            selectedIds.add(sacrificePermanentId);
+        }
+        if (additionalCostSacrificePermanentIds != null) {
+            selectedIds.addAll(additionalCostSacrificePermanentIds);
+        }
+        int requiredCount = sacrificeCosts.stream().mapToInt(SacrificePermanentsCost::count).sum()
+                + xSacrificeCosts.size() * xValue;
+        if (selectedIds.size() != requiredCount) {
+            throw new IllegalStateException("Must sacrifice exactly " + requiredCount
+                    + " permanents for the flashback cost");
+        }
+        if (new HashSet<>(selectedIds).size() != selectedIds.size()) {
+            throw new IllegalStateException("Duplicate permanents cannot be sacrificed");
+        }
+
+        int selectedIndex = 0;
+        UUID playerId = player.getId();
+        for (CastingCost castingCost : flashbackOpt.get().costs()) {
+            int count;
+            PermanentPredicate filter;
+            if (castingCost instanceof SacrificePermanentsCost sacrificeCost) {
+                count = sacrificeCost.count();
+                filter = sacrificeCost.filter();
+            } else if (castingCost instanceof SacrificeXPermanentsCastingCost xSacrificeCost) {
+                count = xValue;
+                filter = xSacrificeCost.filter();
+            } else {
+                continue;
+            }
+            for (int i = 0; i < count; i++) {
+                UUID permanentId = selectedIds.get(selectedIndex++);
+                Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+                if (permanent == null || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                    throw new IllegalStateException("Sacrifice target is not on your battlefield");
+                }
+                if (!predicateEvaluationService.matchesPermanentPredicate(permanent,
+                        filter, FilterContext.of(gameData).withSourceControllerId(playerId))) {
+                    throw new IllegalStateException("Sacrifice target does not match the required filter");
+                }
+            }
+        }
+    }
+
+    private void payFlashbackPermanentSacrificeCosts(
+            GameData gameData, Player player, Card card, FlashbackCast flashback,
+            int xValue, List<UUID> sacrificePermanentIds) {
+        int selectedIndex = 0;
+        for (CastingCost castingCost : flashback.costs()) {
+            int count;
+            if (castingCost instanceof SacrificePermanentsCost sacrificeCost) {
+                count = sacrificeCost.count();
+            } else if (castingCost instanceof SacrificeXPermanentsCastingCost) {
+                count = xValue;
+            } else {
+                continue;
+            }
+            for (int i = 0; i < count; i++) {
+                Permanent permanent = gameQueryService.findPermanentById(
+                        gameData, sacrificePermanentIds.get(selectedIndex++));
+                if (permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " sacrifices ")
+                            .card(permanent.getCard())
+                            .text(" for ")
+                            .card(card)
+                            .text(".")
+                            .build());
+                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                            gameData, player.getId(), permanent.getCard());
+                }
+            }
+        }
+    }
+
+    private void payFlashbackGraveyardExileCost(GameData gameData, Player player, Card card,
+                                                 List<Card> sourceGraveyard, int sourceGraveyardIndex,
+                                                 Optional<FlashbackCast> flashbackOpt, int xValue,
+                                                 List<Integer> exileGraveyardCardIndices) {
+        var cost = flashbackOpt.flatMap(flashback ->
+                flashback.getCost(ExileXCardsFromGraveyardCastingCost.class)).orElse(null);
+        if (cost == null || xValue == 0) return;
+
+        validateFlashbackGraveyardExileCost(gameData, player, card, sourceGraveyard, sourceGraveyardIndex,
+                flashbackOpt, xValue, exileGraveyardCardIndices);
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Integer> sortedDescending = exileGraveyardCardIndices.stream()
+                .sorted(java.util.Comparator.reverseOrder()).toList();
+        List<Card> exiledCards = new ArrayList<>();
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (int index : sortedDescending) {
+                Card exiledCard = graveyard.remove(index);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
+                exiledCards.add(exiledCard);
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
+        }
+        for (Card exiledCard : exiledCards) {
+            gameData.addToExile(playerId, exiledCard);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " exiles ")
+                    .card(exiledCard)
+                    .text(" from graveyard for the flashback cost of ")
+                    .card(card)
+                    .text(".")
+                    .build());
+        }
+    }
+
     private void payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
                                List<Integer> exileGraveyardCardIndices) {
         if (cost == null) return;
@@ -5059,19 +5209,19 @@ public class SpellCastingService {
             throw new IllegalStateException("Game is not running");
         }
 
-        // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
-        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
+        UUID playerId = player.getId();
+        // Ashes of the Abhorrent and temporary graveyard restrictions stop this player's cast.
+        if (!gameQueryService.canPlayerCastSpellsFromZone(gameData, playerId, Zone.GRAVEYARD)) {
             throw new IllegalStateException("Spells can't be cast from graveyards");
         }
-
-        UUID playerId = player.getId();
         if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {
             throw new IllegalArgumentException("Invalid graveyard card index");
         }
 
         Card card = graveyard.get(graveyardCardIndex);
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (!card.hasType(CardType.LAND)
-                && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD)) {
+                && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD, playerId)) {
             throw new IllegalStateException("Card can't be cast from the graveyard");
         }
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
@@ -5258,6 +5408,10 @@ public class SpellCastingService {
                         discardHandCardIndices, -1);
             }
         }
+        validateFlashbackGraveyardExileCost(gameData, player, card, graveyard, graveyardCardIndex,
+                flashbackOpt, effectiveXValue, exileGraveyardCardIndices);
+        validateFlashbackPermanentSacrificeCosts(gameData, player, card, flashbackOpt, effectiveXValue,
+                sacrificePermanentId, additionalCostSacrificePermanentIds);
         AdditionalSpellCostService.CostSelection graveyardCostSelection = new AdditionalSpellCostService.CostSelection(
                 sacrificePermanentId, null, null, null, null, 0, -1, List.of(), null, null,
                 beholdPermanentIds, beholdHandCardIndices);
@@ -5346,11 +5500,13 @@ public class SpellCastingService {
                         && gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId())
                         .withoutPayingManaCost(),
                 effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex,
-                additionalCostSacrificePermanentIds, discardHandCardIndices);
+                sacrificePermanentId, additionalCostSacrificePermanentIds, discardHandCardIndices);
         if (additionalCosts.tapMultipleCost() != null) {
             payTapMultiplePermanentsCost(gameData, player, castHalf, additionalCosts.tapMultipleCost(),
                     additionalCostSacrificePermanentIds, effectiveXValue);
         }
+        payFlashbackGraveyardExileCost(gameData, player, card, graveyard, graveyardCardIndex,
+                flashbackOpt, effectiveXValue, exileGraveyardCardIndices);
         if (isGraveyardCast) {
             payGraveyardCastAdditionalCosts(gameData, player, card, graveyardCastOpt.orElseThrow(),
                     retraceDiscardHandCardIndex);
@@ -5433,6 +5589,7 @@ public class SpellCastingService {
             );
             stackEntry.setSourceZone(Zone.GRAVEYARD);
             stackEntry.setEntersTapped(gameData.graveyardCardsEnterTapped.remove(card.getId()));
+            preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
             gameData.stack.add(stackEntry);
             if (grantedGraveyardCardCast) {
                 consumeGraveyardCardCastPermission(gameData, playerId, card);
@@ -5465,6 +5622,7 @@ public class SpellCastingService {
             );
             stackEntry.setCastWithDisturb(true);
             stackEntry.setSourceZone(Zone.GRAVEYARD);
+            preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
             gameData.stack.add(stackEntry);
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
             return;
@@ -5520,6 +5678,7 @@ public class SpellCastingService {
                     stackEntry.setExileInsteadOfGraveyard(true);
                 }
             }
+            preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
             gameData.stack.add(stackEntry);
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
             return;
@@ -5558,6 +5717,7 @@ public class SpellCastingService {
             );
             stackEntry.setCastWithFlashback(true);
             stackEntry.setSourceZone(Zone.GRAVEYARD);
+            preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
             gameData.stack.add(stackEntry);
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
             return;
@@ -5613,7 +5773,7 @@ public class SpellCastingService {
                 gameData.graveyardTargetOperation.permanentTargetIds = new ArrayList<>(targetIds);
                 graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(
                         gameData, playerId, card, entryType, exileFromGraveyardEffect.maxTargets(),
-                        exileFromGraveyardEffect.filter(), spellEffects);
+                        exileFromGraveyardEffect.filter(), spellEffects, exileFromGraveyardEffect.exactTargets());
                 gameData.graveyardTargetOperation.flashback = true;
                 return;
             }
@@ -5765,9 +5925,78 @@ public class SpellCastingService {
             stackEntry.setCastWithFlashback(!isRetrace || isHarmonize);
         }
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
         gameData.stack.add(stackEntry);
 
         finishSpellCast(gameData, playerId, player, graveyard, card, false);
+    }
+
+    private void preserveGraveyardOwner(StackEntry stackEntry, UUID casterId, UUID graveyardOwnerId) {
+        if (graveyardOwnerId != null && !graveyardOwnerId.equals(casterId)) {
+            stackEntry.setOwnerIdOverride(graveyardOwnerId);
+        }
+    }
+
+    public void playGraveyardLand(GameData gameData, Player player, UUID graveyardCardId, Integer xValue) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+        UUID playerId = player.getId();
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, graveyardCardId);
+        List<Card> graveyard = graveyardOwnerId == null
+                ? null : gameData.playerGraveyards.get(graveyardOwnerId);
+        int cardIndex = -1;
+        if (graveyard != null) {
+            for (int i = 0; i < graveyard.size(); i++) {
+                if (graveyard.get(i).getId().equals(graveyardCardId)) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+        }
+        if (cardIndex < 0) {
+            throw new IllegalArgumentException("Invalid graveyard card id");
+        }
+        Card card = graveyard.get(cardIndex);
+        if (!actionAvailabilityService.canPlayGraveyardLand(gameData, playerId, card, graveyardOwnerId)) {
+            throw new IllegalStateException("Card is not playable from graveyard");
+        }
+        playGraveyardLandFromLocation(gameData, player, graveyard, cardIndex, xValue != null ? xValue : 0);
+    }
+
+    private void playGraveyardLandFromLocation(GameData gameData, Player player, List<Card> graveyard,
+                                               int cardIndex, int xValue) {
+        UUID playerId = player.getId();
+        if (graveyard == null || cardIndex < 0 || cardIndex >= graveyard.size()) {
+            throw new IllegalArgumentException("Invalid graveyard card index");
+        }
+        Card graveyardCard = graveyard.get(cardIndex);
+        if (!graveyardCard.hasType(CardType.LAND)) {
+            throw new IllegalStateException("Only lands can be played from graveyard");
+        }
+        Card landFace = selectedModalDoubleFacedLandFace(graveyardCard, xValue);
+        boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
+        permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
+        gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
+        gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
+        Permanent permanent = new Permanent(graveyardCard);
+        permanent.setCard(landFace);
+        if (entersTapped) {
+            permanent.tap();
+        }
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+        gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+
+        gameLogService.append(gameData,
+                GameLog.playerPlays(player.getUsername(), landFace, " from graveyard."));
+
+        log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), landFace.getName());
+
+        battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 
     // --- Play from exile ---
@@ -7983,7 +8212,8 @@ public class SpellCastingService {
                                                 boolean withoutPayingManaCost,
                                                 int effectiveXValue, int additionalCost,
                                                 List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
-                                                List<UUID> sacrificePermanentIds,
+                                                UUID sacrificePermanentId,
+                                                List<UUID> additionalCostSacrificePermanentIds,
                                                 List<Integer> discardHandCardIndices) {
         UUID playerId = player.getId();
         // GraveyardCast may override the normal mana cost with an alternate one ("by paying {W}{U}{B}{R}{G}
@@ -8157,8 +8387,18 @@ public class SpellCastingService {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + cost.amount() + " life for ", card, "."));
             });
-            if (flashback.getCost(SacrificePermanentsCost.class).isPresent()) {
-                payFlashbackSacrificeCosts(gameData, player, card, flashback, sacrificePermanentIds);
+            List<UUID> sacrificePermanentIds = new ArrayList<>();
+            if (sacrificePermanentId != null) {
+                sacrificePermanentIds.add(sacrificePermanentId);
+            }
+            if (additionalCostSacrificePermanentIds != null) {
+                sacrificePermanentIds.addAll(additionalCostSacrificePermanentIds);
+            }
+            boolean hasSacrificeCost = !flashback.getCosts(SacrificePermanentsCost.class).isEmpty()
+                    || !flashback.getCosts(SacrificeXPermanentsCastingCost.class).isEmpty();
+            if (hasSacrificeCost) {
+                payFlashbackPermanentSacrificeCosts(gameData, player, card, flashback,
+                        effectiveXValue, sacrificePermanentIds);
             }
             flashback.getCost(DiscardXCardsCastingCost.class).ifPresent(discardCost ->
                     payDiscardXCardsCost(gameData, player, card,
@@ -8166,7 +8406,7 @@ public class SpellCastingService {
                             discardHandCardIndices, -1));
             if (manaCostOpt.isEmpty() && tapCost.isEmpty()
                     && lifeCost.isEmpty()
-                    && flashback.getCost(SacrificePermanentsCost.class).isEmpty()
+                    && !hasSacrificeCost
                     && flashback.getCost(DiscardXCardsCastingCost.class).isEmpty()) {
                 throw new IllegalStateException("Flashback has no cost");
             }

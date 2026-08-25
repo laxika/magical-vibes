@@ -114,6 +114,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                                String sourceCardName, PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
+    /** The controller chooses the opponent who will choose a permanent to exile until the source leaves. */
+    record ChooseOpponentForPermanentExile(Card sourceCard, UUID sourcePermanentId,
+                                           UUID controllerId, PermanentPredicate filter)
+            implements PermanentChoiceContext {}
+
+    /** The chosen opponent chooses a matching permanent controlled by the source's controller to exile. */
+    record OpponentChoosesPermanentToExile(Card sourceCard, UUID sourcePermanentId,
+                                           UUID choosingPlayerId, UUID controllerId,
+                                           PermanentPredicate filter)
+            implements PermanentChoiceContext {}
+
+    /** The controller chooses one matching permanent they control to exile until the source leaves. */
+    record PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
+                                      PermanentPredicate filter) implements PermanentChoiceContext {}
+
     /** Godsend: choose one creature blocking or blocked by the equipped creature to exile. */
     record ExileCombatOpponent(UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {}
 
@@ -394,7 +409,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  stored as the redirect destination. */
     record RedirectPlayerDamageSourceChoice(UUID controllerId, UUID redirectTargetId) implements PermanentChoiceContext {}
 
-    record PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId) implements PermanentChoiceContext {}
+    record PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId,
+                                                 boolean allDamage) implements PermanentChoiceContext {
+        public PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId) {
+            this(controllerId, amount, targetId, false);
+        }
+    }
 
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage."
      *  Any-color source. When {@code gainLife} is true the controller also gains life equal to the

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -156,6 +159,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                         "All damage from " + colorNames + " sources will be prevented this turn."));
             }
             case ALL_FROM_COLORS_TO_CONTROLLED_CREATURES -> allFromColorsToControlledCreatures(gameData, entry, e);
+            case ALL_FROM_CHOSEN_COLOR -> allFromChosenColor(gameData, entry);
             case ALL_FROM_NON_HUMAN_SOURCES -> {
                 gameData.preventAllDamageFromNonHumanSources = true;
                 gameLogService.append(gameData, GameLog.text(
@@ -201,6 +205,22 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(
                 "All damage from " + colorNames + " sources that would be dealt to creatures "
                         + gameData.playerIdToName.get(controllerId) + " controls will be prevented this turn."));
+    }
+
+    private void allFromChosenColor(GameData gameData, StackEntry entry) {
+        if (gameData.chosenSpellColor == null) {
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            playerInputService.beginSpellColorChoice(gameData, entry.getControllerId());
+            return;
+        }
+
+        CardColor chosenColor = gameData.chosenSpellColor;
+        gameData.chosenSpellColor = null;
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        gameData.preventDamageFromColors.add(chosenColor);
+        gameLogService.append(gameData, GameLog.text(
+                "All damage from " + chosenColor.name().toLowerCase()
+                        + " sources will be prevented this turn."));
     }
 
     private void nextToAny(GameData gameData, StackEntry entry, PreventDamageEffect e) {

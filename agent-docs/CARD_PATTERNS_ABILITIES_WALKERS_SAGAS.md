@@ -17,6 +17,7 @@ All paths relative to `cards/`.
 | Mana + tap to damage | `r/RodOfRuin.java` | `(true, "{3}", DealDamageToAnyTargetEffect, true)` |
 | Damage + self-damage | `o/OrcishArtillery.java` | Two effects: damage target + DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER) |
 | Pump self | `f/FurnaceWhelp.java` | `(false, "{R}", BoostSelfEffect, false)` |
+| Discard at random, then any player may take damage instead of a self-pump | `b/BarbarianBully.java` | `DiscardRandomCardCost` + `AnyPlayerMayTakeDamageOrBoostSelfEffect(4, 2, 2)` with max activations per turn 1 |
 | Pump self + conditional sacrifice | `d/DragonWhelp.java` | BoostSelfEffect activated ability + END_STEP_TRIGGERED ConditionalEffect(new ActivationCount(threshold, abilityIndex), SacrificeSelfEffect) |
 | Self unblockable (Phyrexian mana) | `t/TrespassingSouleater.java` | `(false, "{U/P}", MakeCreatureUnblockableEffect(true), ...)` — Phyrexian mana activated, self-targeting unblockable |
 | Pump target | `g/GhostWarden.java` | `(true, null, BoostTargetCreatureEffect, true)` |

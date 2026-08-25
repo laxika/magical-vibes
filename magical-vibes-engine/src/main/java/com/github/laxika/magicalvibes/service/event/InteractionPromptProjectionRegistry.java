@@ -135,6 +135,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectGraveyardExileCostChoice);
         register(PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 this::projectActivatedAbilityGraveyardExileCostChoice);
+        register(PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice.class,
+                this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
         register(PendingInteraction.RetracedImageCardChoice.class,
@@ -879,6 +881,12 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
     }
 
+    private InteractionPromptMessage projectActivatedAbilityGraveyardLibraryCostChoice(
+            GameData gameData, PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
+    }
+
     private InteractionPromptMessage projectHandChoice(
             PendingInteraction.HandChoice interaction, boolean declinable) {
         return InteractionPromptMessage.cardIndexPick(
@@ -1245,6 +1253,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
                 || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
                 || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
+                || context instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
                 || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice;
     }
 

@@ -1135,6 +1135,14 @@ public class CastingPermissionService {
         if (hasGraveyardCastFilterPermission(gameData, card, playerId)) {
             return true;
         }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (graveyardOwnerId != null && gameData.graveyardPlayFilterPermissionsThisTurn.stream()
+                .anyMatch(permission -> permission.playerId().equals(playerId)
+                        && permission.scope().graveyardOwners(gameData.orderedPlayerIds, playerId)
+                        .contains(graveyardOwnerId)
+                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))) {
+            return true;
+        }
         return isCastableSpellCard(card) && gameData.emblems.stream()
                 .filter(emblem -> emblem.controllerId().equals(playerId))
                 .flatMap(emblem -> emblem.staticEffects().stream())

@@ -1292,7 +1292,14 @@ public class StepTriggerService {
                         }
                     }
 
-                    if (effect instanceof MayPayManaEffect mayPay) {
+                    if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                card, activePlayerId, new ArrayList<>(List.of(effect))));
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(card, "'s upkeep ability triggers."));
+                        log.info("Game {} - {} graveyard upkeep trigger queued for graveyard target selection",
+                                gameData.id, card.getName());
+                    } else if (effect instanceof MayPayManaEffect mayPay) {
                         gameData.queueMayAbility(card, activePlayerId, mayPay, null);
                     } else if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(card, activePlayerId, may);
@@ -5253,7 +5260,13 @@ public class StepTriggerService {
         }
 
         for (CardEffect effect : mayEffects) {
-            gameData.queueMayAbility(perm.getCard(), controllerId, (MayEffect) effect, null, perm.getId());
+            MayEffect may = (MayEffect) effect;
+            if (may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER) {
+                gameData.queueMayAbility(perm.getCard(), controllerId, may, null, perm.getId(),
+                        gameData.activePlayerId, new Permanent(perm));
+            } else {
+                gameData.queueMayAbility(perm.getCard(), controllerId, may, null, perm.getId());
+            }
         }
 
         for (ChooseOneEffect effect : modalEffects) {

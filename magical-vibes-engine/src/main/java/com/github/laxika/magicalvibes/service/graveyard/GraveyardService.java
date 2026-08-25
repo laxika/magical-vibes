@@ -1510,6 +1510,28 @@ public class GraveyardService {
     }
 
     /**
+     * Moves a batch of cards from a player's library to their graveyard and fires the aggregate
+     * library-to-graveyard creature trigger once for the batch.
+     *
+     * @return the cards that actually entered the graveyard after replacement effects
+     */
+    public List<Card> addCardsFromLibraryToGraveyard(GameData gameData, UUID ownerId,
+                                                     List<Card> cards) {
+        List<Card> entered = new ArrayList<>();
+        for (Card card : cards) {
+            if (addCardToGraveyard(gameData, ownerId, card, Zone.LIBRARY, true)) {
+                entered.add(card);
+            }
+        }
+        int creatureCardsEntered = (int) entered.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .count();
+        triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
+                gameData, ownerId, creatureCardsEntered);
+        return entered;
+    }
+
+    /**
      * Filtered sibling of {@link #takeGraveyardCardsForZoneChange(GameData, UUID)}: only the
      * non-token cards matching {@code filter} leave the graveyard, everything else stays put.
      * Used by partial shuffle-back effects such as Barishi's "shuffle all creature cards from your

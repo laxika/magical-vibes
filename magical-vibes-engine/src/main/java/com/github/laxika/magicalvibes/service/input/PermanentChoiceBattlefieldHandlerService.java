@@ -68,6 +68,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamag
 import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 
 import lombok.RequiredArgsConstructor;
@@ -145,6 +147,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
+    private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
+    private final ExilePermanentYouControlAndTrackWithSourceEffectHandler exilePermanentYouControlHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
@@ -623,6 +627,28 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleOpponentChoosesPermanentToSacrifice(GameData gameData, UUID permanentId,
             PermanentChoiceContext.OpponentChoosesPermanentToSacrifice context) {
         opponentChoosesPermanentToSacrificeEffectHandler.completePermanentChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChooseOpponentForPermanentExile(GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseOpponentForPermanentExile context) {
+        opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler.completeOpponentChoice(
+                gameData, playerId, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    public void handleOpponentChoosesPermanentToExile(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OpponentChoosesPermanentToExile context) {
+        opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler.completePermanentChoice(
+                gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handlePermanentYouControlToExile(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.PermanentYouControlToExile context) {
+        exilePermanentYouControlHandler.completePermanentChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1247,14 +1273,15 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handlePreventDamageToTargetFromSourceChoice(GameData gameData, UUID permanentId,
                                                              PermanentChoiceContext.PreventDamageToTargetFromSourceChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         UUID targetId = ctx.targetId();
-        gameData.targetSourceDamagePreventionShields.add(new TargetSourceDamagePreventionShield(
-                targetId, permanentId, ctx.amount()));
+        gameData.targetSourceDamagePreventionShields.add(ctx.allDamage()
+                ? TargetSourceDamagePreventionShield.allDamage(targetId, permanentId)
+                : new TargetSourceDamagePreventionShield(targetId, permanentId, ctx.amount()));
 
         // Determine target name for logging
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
@@ -1262,10 +1289,13 @@ public class PermanentChoiceBattlefieldHandlerService {
                 ? targetPerm.getCard().getName()
                 : gameData.playerIdToName.getOrDefault(targetId, "unknown");
 
-        
-        gameLogService.append(gameData, GameLog.builder().text("The next " + ctx.amount() + " damage ").card(chosenPermanent.getCard()).text(" would deal to " + targetName + " is prevented.").build());
-        log.info("Game {} - Chose {} as damage source, preventing up to {} damage to {}",
-                gameData.id, chosenPermanent.getCard().getName(), ctx.amount(), targetName);
+        String preventionText = ctx.allDamage()
+                ? "All damage "
+                : "The next " + ctx.amount() + " damage ";
+        gameLogService.append(gameData, GameLog.builder().text(preventionText).card(chosenSource)
+                .text(" would deal to " + targetName + " this turn is prevented.").build());
+        log.info("Game {} - Chose {} as damage source, preventing {} damage to {}",
+                gameData.id, chosenSource.getName(), ctx.allDamage() ? "all" : "up to " + ctx.amount(), targetName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

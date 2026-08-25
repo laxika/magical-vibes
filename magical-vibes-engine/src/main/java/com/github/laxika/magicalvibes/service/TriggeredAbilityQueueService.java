@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -1605,6 +1606,9 @@ public class TriggeredAbilityQueueService {
         }
         if (effect instanceof MayEffect may) {
             return targetedReturnEffect(may.wrapped());
+        }
+        if (effect instanceof MayPayManaEffect mayPay) {
+            return targetedReturnEffect(mayPay.wrapped());
         }
         if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
             return targetedReturnEffect(sacrificeThen.thenEffect());

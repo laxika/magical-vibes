@@ -1118,22 +1118,32 @@ public class GraveyardTargetingService {
     }
 
     /**
-     * "Exile up to N target cards from a single graveyard" (Scarab Feast). Pools every card in
-     * every graveyard that matches the effect's filter, and flags the choice {@code singleGraveyard} so
+     * "Exile up to N target cards from a single graveyard" (Scarab Feast), or exactly X target cards
+     * from a single graveyard (Rats' Feast). Pools every card in every graveyard that matches the
+     * effect's filter, and flags the choice {@code singleGraveyard} so
      * {@code GraveyardChoiceHandlerService} rejects a selection spanning more than one graveyard.
      */
     public void handleUpToNSingleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                          StackEntryType entryType, int maxTargetsCap,
                                                          com.github.laxika.magicalvibes.model.filter.CardPredicate filter,
-                                                         List<CardEffect> spellEffects) {
+                                                         List<CardEffect> spellEffects, boolean exactTargets) {
         List<Card> matchingCards = new ArrayList<>();
+        boolean hasEnoughCardsInOneGraveyard = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId, controllerId);
             if (graveyard == null) continue;
-            matchingCards.addAll(graveyard.stream()
+            List<Card> matchingGraveyardCards = graveyard.stream()
                     .filter(candidate -> filter == null
                             || predicateEvaluationService.matchesCardPredicate(candidate, filter, card.getId()))
-                    .toList());
+                    .toList();
+            matchingCards.addAll(matchingGraveyardCards);
+            if (matchingGraveyardCards.size() >= maxTargetsCap) {
+                hasEnoughCardsInOneGraveyard = true;
+            }
+        }
+
+        if (exactTargets && !hasEnoughCardsInOneGraveyard) {
+            throw new IllegalStateException("Not enough cards in a single graveyard");
         }
 
         int maxTargets = Math.min(maxTargetsCap, matchingCards.size());
@@ -1141,12 +1151,13 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
         gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = 0;
-        gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.xValue = exactTargets ? maxTargetsCap : 0;
+        gameData.graveyardTargetOperation.anyNumber = !exactTargets;
         gameData.graveyardTargetOperation.singleGraveyard = true;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                "Choose up to " + maxTargetsCap + " target card" + (maxTargetsCap != 1 ? "s" : "")
-                        + " from a single graveyard to exile.");
+                exactTargets ? maxTargets : 0,
+                (exactTargets ? "Choose exactly " : "Choose up to ") + maxTargetsCap + " target card"
+                        + (maxTargetsCap != 1 ? "s" : "") + " from a single graveyard to exile.");
     }
 
     public void handleUpToNAllGraveyardsSpellTargeting(GameData gameData, UUID controllerId, Card card,
