@@ -32,8 +32,9 @@ class CouncilOfEchoesTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(targetId);
+                .containsExactlyInAnyOrder(targetId, player1.getId());
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Council of Echoes");

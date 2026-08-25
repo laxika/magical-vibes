@@ -64,6 +64,9 @@ class AkalPakalFirstAmongEqualsTest extends BaseCardTest {
     }
 
     private void castWornPowerstone(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player, List.of(new WornPowerstone()));
         harness.addMana(player, ManaColor.COLORLESS, 3);
         harness.castArtifact(player, 0);

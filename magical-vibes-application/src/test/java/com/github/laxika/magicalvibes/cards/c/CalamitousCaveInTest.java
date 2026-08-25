@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CalamitousCaveIn.class, CavernOfSouls.class, GiantSpider.class, GrizzlyBears.class, ChandraNalaar.class})
+@CardUsed({CalamitousCaveIn.class, CavernousMaw.class, GiantSpider.class, GrizzlyBears.class, ChandraNalaar.class})
 class CalamitousCaveInTest extends BaseCardTest {
 
     @Test
@@ -22,14 +22,14 @@ class CalamitousCaveInTest extends BaseCardTest {
     void dealsDamageBasedOnCaves() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new CavernOfSouls());
-        harness.addToBattlefield(player2, new CavernOfSouls());
+        harness.addToBattlefield(player1, new CavernousMaw());
+        harness.addToBattlefield(player2, new CavernousMaw());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         Permanent chandra = new Permanent(new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, 5);
         gd.playerBattlefields.get(player2.getId()).add(chandra);
-        harness.setGraveyard(player1, List.of(new CavernOfSouls(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new CavernousMaw(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new CalamitousCaveIn()));
         harness.addMana(player1, ManaColor.RED, 1);

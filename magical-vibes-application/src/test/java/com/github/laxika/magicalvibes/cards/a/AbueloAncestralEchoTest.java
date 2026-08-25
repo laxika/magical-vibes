@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.l.LiquimetalCoating;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,11 @@ class AbueloAncestralEchoTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
 
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+
+        advanceToEndStep();
+
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(harness.getPermanentId(player1, "Grizzly Bears")).isNotEqualTo(bearsId);
@@ -49,6 +55,10 @@ class AbueloAncestralEchoTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, coatingId);
         harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Liquimetal Coating");
+
+        advanceToEndStep();
 
         harness.assertOnBattlefield(player1, "Liquimetal Coating");
         assertThat(harness.getPermanentId(player1, "Liquimetal Coating")).isNotEqualTo(coatingId);
@@ -83,5 +93,11 @@ class AbueloAncestralEchoTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void advanceToEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
     }
 }

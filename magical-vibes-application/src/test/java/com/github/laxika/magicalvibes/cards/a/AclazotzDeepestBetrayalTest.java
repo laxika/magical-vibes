@@ -36,6 +36,7 @@ class AclazotzDeepestBetrayalTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
         List<Permanent> bats = findPermanents(player1, "Bat");

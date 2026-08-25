@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -22,7 +22,7 @@ public class CouncilOfEchoes extends Card {
     public CouncilOfEchoes() {
         PermanentPredicate otherNonlandPermanent = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
         target(new PermanentPredicateTargetFilter(
                 otherNonlandPermanent,

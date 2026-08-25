@@ -58,10 +58,13 @@ class DeeprootPilgrimageTest extends BaseCardTest {
     void triggersOnceForSimultaneousTaps() {
         harness.addToBattlefield(player1, new DeeprootPilgrimage());
         Permanent gemguard = addReady(player1, new AdaptiveGemguard());
-        addReady(player1, new CoralMerfolk());
-        addReady(player1, new CoralMerfolk());
+        Permanent firstMerfolk = addReady(player1, new CoralMerfolk());
+        Permanent secondMerfolk = addReady(player1, new CoralMerfolk());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gemguard), null, null);
+        harness.handlePermanentChosen(player1, firstMerfolk.getId());
+        harness.handlePermanentChosen(player1, secondMerfolk.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Merfolk")).hasSize(1);

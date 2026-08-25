@@ -35,6 +35,8 @@ class BrasssTunnelGrinderTest extends BaseCardTest {
 
         resolveUntilInteraction();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        harness.handleXValueChosen(player1, 1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
@@ -53,8 +55,9 @@ class BrasssTunnelGrinderTest extends BaseCardTest {
         gd.playersWhoDescendedThisTurn.add(player1.getId());
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(permanent.isTransformed()).isTrue();

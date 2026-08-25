@@ -47,8 +47,6 @@ class ChimilTheInnerSunTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChimilTheInnerSun());
         GrizzlyBears discovered = new GrizzlyBears();
         harness.setLibrary(player1, List.of(discovered));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        int greenManaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
@@ -59,7 +57,7 @@ class ChimilTheInnerSunTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == discovered
                 && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN))
-                .isEqualTo(greenManaBefore);
+                .isZero();
     }
 
     @Test

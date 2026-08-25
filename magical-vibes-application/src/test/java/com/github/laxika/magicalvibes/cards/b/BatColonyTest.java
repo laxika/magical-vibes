@@ -67,7 +67,6 @@ class BatColonyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plains()));
 
         harness.playLand(player1, 0);
-        harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

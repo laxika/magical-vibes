@@ -62,5 +62,7 @@ class ArmoredKincallerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }

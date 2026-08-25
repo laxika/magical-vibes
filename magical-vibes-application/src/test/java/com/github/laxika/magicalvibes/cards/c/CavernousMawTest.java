@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CavernousMaw.class, CavernOfSouls.class})
+@CardUsed({CavernousMaw.class})
 class CavernousMawTest extends BaseCardTest {
 
     @Test
@@ -31,8 +31,8 @@ class CavernousMawTest extends BaseCardTest {
     @DisplayName("The animation ability counts other Caves and Cave cards in the graveyard")
     void animationCountsOtherCavesAndGraveyardCaves() {
         Permanent maw = harness.addToBattlefieldAndReturn(player1, new CavernousMaw());
-        harness.addToBattlefield(player1, new CavernOfSouls());
-        harness.setGraveyard(player1, List.of(new CavernOfSouls(), new CavernOfSouls()));
+        harness.addToBattlefield(player1, new CavernousMaw());
+        harness.setGraveyard(player1, List.of(new CavernousMaw(), new CavernousMaw()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -49,7 +49,7 @@ class CavernousMawTest extends BaseCardTest {
     @DisplayName("The source Cave is not counted as an other Cave")
     void sourceCaveIsNotCounted() {
         Permanent maw = harness.addToBattlefieldAndReturn(player1, new CavernousMaw());
-        harness.setGraveyard(player1, List.of(new CavernOfSouls(), new CavernOfSouls()));
+        harness.setGraveyard(player1, List.of(new CavernousMaw(), new CavernousMaw()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
@@ -63,8 +63,9 @@ class CavernousMawTest extends BaseCardTest {
     @DisplayName("The animation wears off at end of turn")
     void animationWearsOffAtEndOfTurn() {
         Permanent maw = harness.addToBattlefieldAndReturn(player1, new CavernousMaw());
-        harness.addToBattlefield(player1, new CavernOfSouls());
-        harness.addToBattlefield(player1, new CavernOfSouls());
+        harness.addToBattlefield(player1, new CavernousMaw());
+        harness.addToBattlefield(player1, new CavernousMaw());
+        harness.addToBattlefield(player1, new CavernousMaw());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);

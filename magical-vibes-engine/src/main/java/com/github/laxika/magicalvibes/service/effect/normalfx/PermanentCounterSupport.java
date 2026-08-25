@@ -110,6 +110,7 @@ public class PermanentCounterSupport {
             case STUDY -> self.setCounterCount(CounterType.STUDY, 0);
             case RITUAL -> self.setCounterCount(CounterType.RITUAL, 0);
             case WISH -> self.setCounterCount(CounterType.WISH, 0);
+            case BORE -> self.setCounterCount(CounterType.BORE, 0);
             case PLUS_ONE_PLUS_ONE -> self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
             case MINUS_ONE_MINUS_ONE -> self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);

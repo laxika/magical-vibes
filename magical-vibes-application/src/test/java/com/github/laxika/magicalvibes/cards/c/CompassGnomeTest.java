@@ -17,14 +17,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CompassGnome.class, CrypticCaves.class, Forest.class, GrizzlyBears.class})
+@CardUsed({CompassGnome.class, CavernousMaw.class, Forest.class, GrizzlyBears.class})
 class CompassGnomeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the ETB ability offers basic lands and Caves and puts the choice on top")
     void acceptsBasicLandOrCaveSearch() {
         Card basicLand = new Forest();
-        Card cave = new CrypticCaves();
+        Card cave = new CavernousMaw();
         Card nonmatching = new GrizzlyBears();
         castGnome(List.of(basicLand, cave, nonmatching));
 

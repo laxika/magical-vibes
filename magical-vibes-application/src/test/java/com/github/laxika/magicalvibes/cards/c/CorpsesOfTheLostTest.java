@@ -47,12 +47,12 @@ class CorpsesOfTheLostTest extends BaseCardTest {
         castCorpsesOfTheLost();
 
         Permanent token = findPermanent(player1, "Skeleton Pirate");
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.SKELETON, CardSubtype.PIRATE);
-        assertThat(token.getCard().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -62,6 +62,7 @@ class CorpsesOfTheLostTest extends BaseCardTest {
         descendThisTurn();
 
         advanceToEndStep(player1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -80,6 +81,7 @@ class CorpsesOfTheLostTest extends BaseCardTest {
         descendThisTurn();
 
         advanceToEndStep(player1);
+        harness.passBothPriorities();
         int lifeBefore = gd.getLife(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 
@@ -104,6 +106,7 @@ class CorpsesOfTheLostTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         return findPermanent(player1, "Corpses of the Lost");
     }
