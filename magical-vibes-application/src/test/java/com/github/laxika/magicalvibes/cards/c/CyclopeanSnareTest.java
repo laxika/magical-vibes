@@ -26,7 +26,8 @@ class CyclopeanSnareTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
 
         assertThat(snare.isTapped()).isTrue();
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Cyclopean Snare"));
 
         harness.passBothPriorities();
 

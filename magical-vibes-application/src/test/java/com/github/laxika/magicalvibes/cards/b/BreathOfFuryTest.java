@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,9 +40,7 @@ class BreathOfFuryTest extends BaseCardTest {
         nextAttacker.tap();
         Permanent aura = attachBreath(attacker);
 
-        declareAttackers(List.of(0));
-        resolveCombat();
-        harness.passBothPriorities();
+        dealCombatDamage();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker).contains(aura, nextAttacker);
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getName().equals("Grizzly Bears"));
@@ -55,15 +55,13 @@ class BreathOfFuryTest extends BaseCardTest {
         Permanent attacker = addReadyCreature(player1);
         Permanent aura = attachBreath(attacker);
 
-        declareAttackers(List.of(0));
-        resolveCombat();
-        harness.passBothPriorities();
+        dealCombatDamage();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker, aura);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"))
                 .anyMatch(card -> card.getName().equals("Breath of Fury"));
-        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
     }
 
     @Test
@@ -75,9 +73,7 @@ class BreathOfFuryTest extends BaseCardTest {
         Permanent opponentCreature = addReadyCreature(player2);
         Permanent aura = attachBreath(attacker);
 
-        declareAttackers(List.of(0));
-        resolveCombat();
-        harness.passBothPriorities();
+        dealCombatDamage();
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -85,11 +81,10 @@ class BreathOfFuryTest extends BaseCardTest {
         assertThat(choice.validIds()).doesNotContain(opponentCreature.getId(), attacker.getId());
 
         harness.handlePermanentChosen(player1, secondChoice.getId());
-        harness.passBothPriorities();
 
         assertThat(aura.getAttachedTo()).isEqualTo(secondChoice.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker).contains(aura);
-        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
     }
 
     private Permanent addReadyCreature(Player player) {
@@ -104,5 +99,17 @@ class BreathOfFuryTest extends BaseCardTest {
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
+    }
+
+    private void dealCombatDamage() {
+        gd.combatPhasesThisTurn = 1;
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.END_OF_COMBAT));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.END_OF_COMBAT));
+        declareAttackers(List.of(0));
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.BlockerDeclaration) {
+            gs.declareBlockers(gd, player2, List.of());
+        }
+        resolveCombat();
+        harness.passBothPriorities();
     }
 }

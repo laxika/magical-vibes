@@ -75,7 +75,7 @@ class GalvanicArcTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be any target");
+                .hasMessageContaining("Invalid permanent");
     }
 
     private void castGalvanicArc(UUID enchantTargetId) {

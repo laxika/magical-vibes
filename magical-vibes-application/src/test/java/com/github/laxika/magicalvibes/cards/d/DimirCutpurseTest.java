@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,6 +19,7 @@ class DimirCutpurseTest extends BaseCardTest {
 
     @Test
     void combatDamageMakesPlayerDiscardAndControllerDraw() {
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -39,6 +42,7 @@ class DimirCutpurseTest extends BaseCardTest {
 
     @Test
     void emptyHandStillAllowsControllerToDraw() {
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -54,6 +58,7 @@ class DimirCutpurseTest extends BaseCardTest {
 
     @Test
     void blockedCutpurseDoesNotTrigger() {
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Forest()));
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -63,7 +68,6 @@ class DimirCutpurseTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -72,6 +76,8 @@ class DimirCutpurseTest extends BaseCardTest {
     }
 
     private Permanent addAttackingCutpurse(com.github.laxika.magicalvibes.model.Player player) {
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.END_OF_COMBAT));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.END_OF_COMBAT));
         Permanent cutpurse = addCreatureReady(player, new DimirCutpurse());
         cutpurse.setAttacking(true);
         return cutpurse;

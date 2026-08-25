@@ -65,7 +65,5 @@ class FlameKinZealotTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 }

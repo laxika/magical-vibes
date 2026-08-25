@@ -55,6 +55,7 @@ class BorosGuildmageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
         harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
 

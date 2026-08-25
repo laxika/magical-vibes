@@ -35,7 +35,7 @@ class DimirGuildmageTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         prepareGuildmage(ManaColor.BLACK);
 
-        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 
@@ -46,7 +46,7 @@ class DimirGuildmageTest extends BaseCardTest {
     @Test
     void bothAbilitiesCanBeActivatedWithoutTapping() {
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>());
         Permanent guildmage = prepareGuildmage();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -54,7 +54,7 @@ class DimirGuildmageTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 

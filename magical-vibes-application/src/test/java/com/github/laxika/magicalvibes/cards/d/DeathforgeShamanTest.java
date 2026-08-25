@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeathforgeShaman.class, GrizzlyBears.class})
 class DeathforgeShamanTest extends BaseCardTest {
 
     @Test
@@ -42,7 +45,7 @@ class DeathforgeShamanTest extends BaseCardTest {
     @Test
     @DisplayName("The ETB trigger cannot target a creature")
     void cannotTargetCreature() {
-        var creature = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
+        var creature = new GrizzlyBears();
         harness.addToBattlefield(player2, creature);
         harness.setHand(player1, List.of(new DeathforgeShaman()));
         harness.addMana(player1, ManaColor.RED, 1);
