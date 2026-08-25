@@ -48,7 +48,7 @@ class EatenByPiranhasTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, target)).isEmpty();
-        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.THOPTER);
         assertThat(gqs.getEffectivePower(gd, target)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();

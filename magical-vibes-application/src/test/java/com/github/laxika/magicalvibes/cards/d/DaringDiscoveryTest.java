@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DaringDiscovery.class, GrizzlyBears.class, HillGiant.class, Plains.class})
+@CardUsed({DaringDiscovery.class, CrawWurm.class, GrizzlyBears.class, HillGiant.class, Plains.class})
 class DaringDiscoveryTest extends BaseCardTest {
 
     @Test
@@ -38,7 +39,7 @@ class DaringDiscoveryTest extends BaseCardTest {
     void canChooseNoCreaturesAndPutDiscoveredCardIntoHand() {
         GrizzlyBears discovered = new GrizzlyBears();
         Plains land = new Plains();
-        HillGiant tooExpensive = new HillGiant();
+        CrawWurm tooExpensive = new CrawWurm();
         harness.setLibrary(player1, List.of(land, tooExpensive, discovered));
         cast(List.of());
 
@@ -64,7 +65,7 @@ class DaringDiscoveryTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId(), List.of()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("Invalid target");
     }
 
     private void cast(List<java.util.UUID> targets) {

@@ -80,6 +80,7 @@ public final class AiInteractionStrategies {
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
+        register(new CraftMaterialChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());

@@ -162,6 +162,22 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void craftMaterialChoiceChoosesTheRequiredCards() throws Exception {
+        Card first = card("First", "{1}");
+        Card second = card("Second", "{2}");
+
+        new CraftMaterialChoiceAiStrategy().answer(
+                new PendingInteraction.CraftMaterialChoice(
+                        aiPlayerId, UUID.randomUUID(), 0, 0, null, null, List.of(),
+                        java.util.Map.of(), List.of(first, second), 1, 1,
+                        "Choose an artifact to exile."),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first.getId())));
+    }
+
+    @Test
     void graveyardExileCostChoosesAnAffordableCardWhenTheAbilityPaysItsManaCost() throws Exception {
         UUID sourceId = UUID.randomUUID();
         Permanent source = mock(Permanent.class);

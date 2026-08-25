@@ -84,6 +84,7 @@ class DeepfathomEchoTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, echo)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, echo)).isEqualTo(3);
 
+        harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -132,5 +133,8 @@ class DeepfathomEchoTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
     }
 }

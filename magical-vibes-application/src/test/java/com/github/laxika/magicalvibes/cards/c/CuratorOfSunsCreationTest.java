@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.PrimordialGnawer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CuratorOfSunsCreation.class, PrimordialGnawer.class, Shock.class, Forest.class,
-        GrizzlyBears.class, HillGiant.class})
+        GrizzlyBears.class, CentaurCourser.class})
 class CuratorOfSunsCreationTest extends BaseCardTest {
 
     @Test
@@ -26,7 +25,7 @@ class CuratorOfSunsCreationTest extends BaseCardTest {
         Permanent curator = harness.addToBattlefieldAndReturn(player1, new CuratorOfSunsCreation());
         Permanent gnawer = harness.addToBattlefieldAndReturn(player1, new PrimordialGnawer());
         GrizzlyBears firstDiscovered = new GrizzlyBears();
-        HillGiant secondDiscovered = new HillGiant();
+        CentaurCourser secondDiscovered = new CentaurCourser();
         harness.setLibrary(player1, List.of(new Forest(), firstDiscovered, new Forest(), secondDiscovered));
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
