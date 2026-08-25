@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -27,9 +29,11 @@ public class Sparkcaster extends Card {
                 "red or green creature"
         ));
 
-        target(new PermanentPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(),
-                "Target must be a player or planeswalker"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+        target(new AnyTargetPredicateTargetFilter(
+                new PermanentIsPlaneswalkerPredicate(),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player or planeswalker"
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
     }
 }

@@ -52,6 +52,7 @@ class LifeFromTheLoamTest extends BaseCardTest {
         List<Card> milled = List.of(new Forest(), new GrizzlyBears(), new Forest());
         harness.setGraveyard(player1, List.of(loam));
         harness.setLibrary(player1, milled);
+        harness.setHand(player1, List.of());
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 

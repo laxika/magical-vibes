@@ -420,7 +420,9 @@ public class GraveyardReturnSupport {
                 || card.hasType(effect.plusOneCountersIfCardType()))
                 && (effect.plusOneCountersIfCondition() == null
                 || conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
-                ConditionContext.forCasting(controllerId)));
+                entry == null
+                        ? ConditionContext.forCasting(controllerId)
+                        : ConditionContext.forStackEntry(entry)));
         boolean exiledCostCounter = exiledCostSubtypeMatches
                 && effect.counterIfExiledCostCardHasSubtype() != null
                 && effect.counterCountIfExiledCostCardHasSubtype() > 0;
@@ -965,6 +967,14 @@ public class GraveyardReturnSupport {
                 UUID graveyardOwnerId = card == null
                         ? null
                         : gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                if (card != null && graveyardOwnerId == null) {
+                    graveyardOwnerId = gameData.playerGraveyards.entrySet().stream()
+                            .filter(e -> e.getValue() != null && e.getValue().stream()
+                                    .anyMatch(c -> c.getId().equals(cardId)))
+                            .map(Map.Entry::getKey)
+                            .findFirst()
+                            .orElse(null);
+                }
                 List<Card> graveyard = graveyardOwnerId == null
                         ? null
                         : gameData.playerGraveyards.get(graveyardOwnerId);

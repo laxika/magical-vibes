@@ -32,7 +32,6 @@ class PerilousForaysTest extends BaseCardTest {
         setupLibrary();
 
         harness.activateAbility(player1, 1, 0, null, null);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

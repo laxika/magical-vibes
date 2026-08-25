@@ -24,7 +24,7 @@ class SewerdregTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(target));
         harness.addToBattlefield(player1, new Sewerdreg());
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Sewerdreg");
@@ -40,7 +40,7 @@ class SewerdregTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(target));
         harness.addToBattlefield(player1, new Sewerdreg());
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -54,9 +54,10 @@ class SewerdregTest extends BaseCardTest {
         harness.addToBattlefield(player2, target);
         harness.addToBattlefield(player1, new Sewerdreg());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("target");
+                .hasMessageContaining("graveyard");
     }
 
     private List<Card> exiledCards(Player player) {

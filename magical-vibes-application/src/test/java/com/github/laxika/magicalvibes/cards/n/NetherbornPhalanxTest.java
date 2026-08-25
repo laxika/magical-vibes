@@ -29,6 +29,7 @@ class NetherbornPhalanxTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);

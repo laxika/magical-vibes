@@ -84,8 +84,9 @@ class GleancrawlerTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

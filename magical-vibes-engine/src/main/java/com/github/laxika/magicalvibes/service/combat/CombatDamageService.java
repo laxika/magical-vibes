@@ -1508,6 +1508,16 @@ public class CombatDamageService {
                 }
 
                 if (!effects.isEmpty()) {
+                    boolean needsGraveyardTarget = effects.stream()
+                            .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+                    if (needsGraveyardTarget) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                perm.getCard(), ownerId, new ArrayList<>(effects), null));
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        return;
+                    }
+
                     UUID triggerTargetId = defenderId;
                     boolean targetsEnchantedCreatureController = effects.stream()
                             .anyMatch(effect -> effect instanceof CombatDamageTriggerContextEffect contextEffect
@@ -2667,8 +2677,12 @@ public class CombatDamageService {
             state.damageToDefendingPlayer = unpreventable;
             state.poisonDamageToDefendingPlayer = 0;
         }
-        state.damageToDefendingPlayer = Math.max(unpreventable,
-                damagePreventionService.applyCombatPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer));
+        int preventableDamage = state.damageToDefendingPlayer - unpreventable;
+        if (preventableDamage > 0) {
+            state.damageToDefendingPlayer = unpreventable
+                    + damagePreventionService.applyCombatPlayerPreventionShield(
+                            gameData, defenderId, preventableDamage);
+        }
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         unpreventable = Math.min(unpreventable, state.damageToDefendingPlayer);

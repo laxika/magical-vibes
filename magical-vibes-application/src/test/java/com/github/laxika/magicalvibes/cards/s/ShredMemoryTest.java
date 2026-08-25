@@ -45,7 +45,8 @@ class ShredMemoryTest extends BaseCardTest {
         Card chosen = new GrizzlyBears();
         Card remaining = new LlanowarElves();
         harness.setGraveyard(player1, List.of(chosen, remaining));
-        harness.setHand(player1, List.of(new ShredMemory()));
+        Card shredMemory = new ShredMemory();
+        harness.setHand(player1, List.of(shredMemory));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -53,7 +54,7 @@ class ShredMemoryTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining, shredMemory);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(chosen.getId());

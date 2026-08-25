@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -424,8 +425,16 @@ public final class EffectResolution {
     public static boolean hasColorSpentCondition(Card card) {
         return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
                 .flatMap(slot -> card.getEffects(slot).stream())
-                .anyMatch(e -> e instanceof ConditionalEffect c
-                        && conditionUsesColorSpentMana(c.condition()));
+                .anyMatch(EffectResolution::effectUsesColorSpentMana);
+    }
+
+    private static boolean effectUsesColorSpentMana(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditionUsesColorSpentMana(conditional.condition());
+        }
+        return effect instanceof ReturnCardFromGraveyardEffect graveyardReturn
+                && graveyardReturn.plusOneCountersIfCondition() != null
+                && conditionUsesColorSpentMana(graveyardReturn.plusOneCountersIfCondition());
     }
 
     private static boolean conditionUsesColorSpentMana(Condition condition) {

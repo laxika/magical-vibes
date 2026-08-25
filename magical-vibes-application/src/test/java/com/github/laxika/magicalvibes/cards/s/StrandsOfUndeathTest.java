@@ -64,11 +64,12 @@ class StrandsOfUndeathTest extends BaseCardTest {
     @DisplayName("The second target must be a player")
     void secondTargetMustBeAPlayer() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent invalidSecondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new StrandsOfUndeath()));
         addCastingMana();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
-                List.of(bears.getId(), bears.getId())))
+                List.of(bears.getId(), invalidSecondTarget.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a player");
     }

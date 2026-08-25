@@ -24,19 +24,20 @@ class VoyagerStaffTest extends BaseCardTest {
     @DisplayName("Sacrifices itself and exiles the target creature until the next end step")
     void sacrificesAndExilesTargetCreature() {
         harness.addToBattlefield(player1, new VoyagerStaff());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, bearsId);
+        UUID bearsPermanentId = bears.getId();
+        UUID bearsCardId = bears.getCard().getId();
+        harness.activateAbility(player1, 0, null, bearsPermanentId);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Voyager Staff");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getId().equals(bearsId));
+                .anyMatch(card -> card.getId().equals(bearsCardId));
         assertThat(gd.getDelayedActions(PendingExileReturn.class))
-                .anyMatch(action -> action.card().getId().equals(bearsId));
+                .anyMatch(action -> action.card().getId().equals(bearsCardId));
     }
 
     @Test

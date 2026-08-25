@@ -64,7 +64,7 @@ class TolsimirWolfbloodTest extends BaseCardTest {
         assertThat(voja.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(voja.getCard().getPower()).isEqualTo(2);
         assertThat(voja.getCard().getToughness()).isEqualTo(2);
-        assertThat(voja.getEffectivePower()).isEqualTo(4);
-        assertThat(voja.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, voja)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, voja)).isEqualTo(4);
     }
 }

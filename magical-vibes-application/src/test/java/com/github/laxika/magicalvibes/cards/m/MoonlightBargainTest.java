@@ -33,6 +33,8 @@ class MoonlightBargainTest extends BaseCardTest {
         setTopCards(List.of(card0, card1, card2, card3, card4));
 
         castMoonlightBargain();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card3.getId()));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
@@ -69,6 +71,8 @@ class MoonlightBargainTest extends BaseCardTest {
         harness.setLife(player1, 3);
 
         castMoonlightBargain();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
                 player1, List.of(card0.getId(), card1.getId())))
@@ -90,8 +94,6 @@ class MoonlightBargainTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
     }
 
     private void setTopCards(List<Card> cards) {

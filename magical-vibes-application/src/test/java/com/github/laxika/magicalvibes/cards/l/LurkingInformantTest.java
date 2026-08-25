@@ -21,7 +21,7 @@ class LurkingInformantTest extends BaseCardTest {
     void acceptsPuttingTopCardIntoGraveyard() {
         addReadyInformant();
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).add(topCard);
+        harness.setLibrary(player2, java.util.List.of(topCard));
 
         activate(player2.getId());
         harness.handleMayAbilityChosen(player1, true);
@@ -35,7 +35,7 @@ class LurkingInformantTest extends BaseCardTest {
     void declinesPuttingTopCardIntoGraveyard() {
         addReadyInformant();
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).add(topCard);
+        harness.setLibrary(player2, java.util.List.of(topCard));
 
         activate(player2.getId());
         harness.handleMayAbilityChosen(player1, false);
@@ -49,7 +49,7 @@ class LurkingInformantTest extends BaseCardTest {
     void targetsController() {
         addReadyInformant();
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).add(topCard);
+        harness.setLibrary(player1, java.util.List.of(topCard));
 
         activate(player1.getId());
         harness.handleMayAbilityChosen(player1, true);

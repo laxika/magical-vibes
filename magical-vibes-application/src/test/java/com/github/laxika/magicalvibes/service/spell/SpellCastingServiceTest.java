@@ -232,6 +232,12 @@ class SpellCastingServiceTest {
         lenient().when(gameQueryService.canCastSpellFromZone(
                         any(GameData.class), any(Card.class), any(Zone.class)))
                 .thenReturn(true);
+        lenient().when(gameQueryService.canCastSpellFromZone(
+                        any(GameData.class), any(Card.class), any(Zone.class), any(UUID.class)))
+                .thenReturn(true);
+        lenient().when(gameQueryService.canPlayerCastSpellsFromZone(
+                        any(GameData.class), any(UUID.class), any(Zone.class)))
+                .thenReturn(true);
         lenient().when(gameQueryService.canPlayersCastSpellsFromZone(
                         any(GameData.class), any(Zone.class)))
                 .thenReturn(true);

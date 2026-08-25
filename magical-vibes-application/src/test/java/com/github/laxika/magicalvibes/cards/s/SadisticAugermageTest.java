@@ -48,7 +48,7 @@ class SadisticAugermageTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player2, List.of(player2Card.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Card);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).startsWith(player1Card, player1OldTop);
         assertThat(gd.playerDecks.get(player2.getId())).startsWith(player2Card, player2OldTop);
@@ -73,6 +73,7 @@ class SadisticAugermageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castInstant(player1, 0, augermage.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

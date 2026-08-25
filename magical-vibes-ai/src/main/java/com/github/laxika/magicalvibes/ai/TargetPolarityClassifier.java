@@ -397,6 +397,7 @@ public class TargetPolarityClassifier {
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
             entry("DestroyAttachmentsOnTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("CantBlockTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.HARMFUL),
             entry("EnchantedCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("EnteringCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect", TargetPolarity.HARMFUL),
@@ -450,6 +451,7 @@ public class TargetPolarityClassifier {
             entry("TapTargetThenEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
@@ -473,6 +475,7 @@ public class TargetPolarityClassifier {
             entry("RedirectAllDamageToChosenCreatureUntilNextTurnEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectTargetCreatureDamageFromChosenSourceToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("UntapTargetAndSharingCreaturesEffect", TargetPolarity.BENEFICIAL),
 
             // Pack Hunt searches for cards named after the opposing creature it targets.
             entry("SearchLibraryForCardsWithTargetCreatureNameEffect", TargetPolarity.HARMFUL),

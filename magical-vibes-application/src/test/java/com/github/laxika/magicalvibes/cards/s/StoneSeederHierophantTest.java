@@ -50,7 +50,8 @@ class StoneSeederHierophantTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability untaps target land")
     void activatedAbilityUntapsTargetLand() {
-        harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        hierophant.setSummoningSick(false);
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         forest.tap();
 

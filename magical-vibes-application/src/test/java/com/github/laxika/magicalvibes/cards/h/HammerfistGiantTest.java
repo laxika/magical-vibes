@@ -26,11 +26,11 @@ class HammerfistGiantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Hammerfist Giant");
+        harness.assertNotOnBattlefield(player1, "Hammerfist Giant");
+        harness.assertInGraveyard(player1, "Hammerfist Giant");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(airElemental.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Air Elemental");
-        assertThat(giant.getMarkedDamage()).isEqualTo(4);
         harness.assertLife(player1, 16);
         harness.assertLife(player2, 16);
     }

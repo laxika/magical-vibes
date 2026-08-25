@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -89,9 +88,6 @@ class SistersOfStoneDeathTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of(exiledCreature.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(exiledCreature.getId()));

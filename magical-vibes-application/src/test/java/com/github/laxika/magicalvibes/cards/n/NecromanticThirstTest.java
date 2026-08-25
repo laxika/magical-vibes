@@ -25,6 +25,7 @@ class NecromanticThirstTest extends BaseCardTest {
         creature.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
@@ -39,6 +40,7 @@ class NecromanticThirstTest extends BaseCardTest {
         creature.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(deadCreature.getId()));
@@ -58,6 +60,7 @@ class NecromanticThirstTest extends BaseCardTest {
         creature.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
 
         harness.handleMultipleCardsChosen(player1, List.of());
 

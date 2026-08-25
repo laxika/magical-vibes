@@ -21,9 +21,11 @@ class SavraQueenOfTheGolgariTest extends BaseCardTest {
     void blackCreatureSacrificeTriggersOpponentSacrifice() {
         harness.setLife(player1, 20);
         Permanent opponentCreature = addCreature(player2, new GrizzlyBears());
-        addSavraAndDais(player1, new ScatheZombies());
+        Permanent sacrificed = addSavraAndDais(player1, new ScatheZombies());
 
         harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -38,9 +40,11 @@ class SavraQueenOfTheGolgariTest extends BaseCardTest {
     void decliningBlackCreaturePaymentDoesNothing() {
         harness.setLife(player1, 20);
         Permanent opponentCreature = addCreature(player2, new GrizzlyBears());
-        addSavraAndDais(player1, new ScatheZombies());
+        Permanent sacrificed = addSavraAndDais(player1, new ScatheZombies());
 
         harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -52,9 +56,11 @@ class SavraQueenOfTheGolgariTest extends BaseCardTest {
     @DisplayName("Sacrificing a green creature and accepting gains 2 life")
     void greenCreatureSacrificeGainsLife() {
         harness.setLife(player1, 20);
-        addSavraAndDais(player1, new GrizzlyBears());
+        Permanent sacrificed = addSavraAndDais(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -62,10 +68,10 @@ class SavraQueenOfTheGolgariTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
-    private void addSavraAndDais(Player player, Card sacrificedCard) {
+    private Permanent addSavraAndDais(Player player, Card sacrificedCard) {
         harness.addToBattlefield(player, new SavraQueenOfTheGolgari());
         harness.addToBattlefield(player, new CullingDais());
-        harness.addToBattlefield(player, sacrificedCard);
+        return harness.addToBattlefieldAndReturn(player, sacrificedCard);
     }
 
     private Permanent addCreature(Player player, Card card) {

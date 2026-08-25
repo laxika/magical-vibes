@@ -5223,7 +5223,7 @@ public class SpellCastingService {
         }
 
         Card card = graveyard.get(graveyardCardIndex);
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        UUID graveyardOwnerId = resolveGraveyardOwner(gameData, graveyard, card.getId());
         if (!card.hasType(CardType.LAND)
                 && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD, playerId)) {
             throw new IllegalStateException("Card can't be cast from the graveyard");
@@ -5978,7 +5978,7 @@ public class SpellCastingService {
         }
         Card landFace = selectedModalDoubleFacedLandFace(graveyardCard, xValue);
         boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, graveyardCard.getId());
+        UUID graveyardOwnerId = resolveGraveyardOwner(gameData, graveyard, graveyardCard.getId());
         permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
         gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
         gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
@@ -6002,6 +6002,20 @@ public class SpellCastingService {
                     gameData, playerId, landFace, Zone.GRAVEYARD);
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    private UUID resolveGraveyardOwner(GameData gameData, List<Card> graveyard, UUID cardId) {
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+        if (ownerId != null) {
+            return ownerId;
+        }
+        return gameData.playerGraveyards.entrySet().stream()
+                .filter(entry -> entry.getValue() == graveyard
+                        || entry.getValue() != null && entry.getValue().stream()
+                        .anyMatch(card -> card.getId().equals(cardId)))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
     }
 
     // --- Play from exile ---

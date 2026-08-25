@@ -24,6 +24,7 @@ class GraveShellScarabTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, -1);
 
         harness.assertNotOnBattlefield(player1, "Grave-Shell Scarab");
         harness.assertInGraveyard(player1, "Grave-Shell Scarab");
