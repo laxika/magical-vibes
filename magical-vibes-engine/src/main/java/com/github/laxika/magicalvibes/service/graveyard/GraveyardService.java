@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplac
 import com.github.laxika.magicalvibes.model.effect.ExileAndTakeExtraTurnReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -467,7 +469,7 @@ public class GraveyardService {
         gameData.playerGraveyards.get(ownerId).add(card);
         gameData.markGraveyardEntry(card);
         updateThisCombatGraveyardTracking(gameData, ownerId, card);
-        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
+        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone, battlefieldSnapshot);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
@@ -1099,7 +1101,13 @@ public class GraveyardService {
         }
     }
 
-    private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
+    private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card,
+                                                              Zone sourceZone) {
+        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone, null);
+    }
+
+    private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card,
+                                                              Zone sourceZone, Permanent battlefieldSnapshot) {
         if (sourceZone == Zone.BATTLEFIELD) {
             gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = true;
         }
@@ -1116,7 +1124,7 @@ public class GraveyardService {
             allTracked.add(card.getId());
             if (card.hasType(CardType.CREATURE)) {
                 tracked.add(card.getId());
-                triggerDamagedCreatureDiesAbilities(gameData, card, ownerId);
+                triggerDamagedCreatureDiesAbilities(gameData, card, ownerId, battlefieldSnapshot);
             } else {
                 tracked.remove(card.getId());
             }
@@ -1126,12 +1134,21 @@ public class GraveyardService {
         }
     }
 
-    private void triggerDamagedCreatureDiesAbilities(GameData gameData, Card dyingCreatureCard, UUID ownerId) {
+    private void triggerDamagedCreatureDiesAbilities(GameData gameData, Card dyingCreatureCard, UUID ownerId,
+                                                     Permanent battlefieldSnapshot) {
         if (dyingCreatureCard == null) {
             return;
         }
 
         UUID dyingCreatureCardId = dyingCreatureCard.getId();
+        Permanent dyingPermanent = battlefieldSnapshot;
+        if (dyingPermanent == null) {
+            dyingPermanent = gameData.simultaneousDyingCreatures.values().stream()
+                    .filter(permanent -> permanent.getCard() != null
+                            && dyingCreatureCardId.equals(permanent.getCard().getId()))
+                    .findFirst()
+                    .orElse(null);
+        }
         UUID dyingControllerId = findLastKnownController(gameData, dyingCreatureCardId, ownerId);
 
         for (Map.Entry<UUID, Set<UUID>> entry : gameData.creatureCardsDamagedThisTurnBySourcePermanent.entrySet()) {
@@ -1163,7 +1180,7 @@ public class GraveyardService {
             if (controllerId != null) {
                 // The damaging permanent's own ON_DAMAGED_CREATURE_DIES abilities (e.g. Seraph, Vein Drinker).
                 enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, source,
-                        controllerId, sourcePermanentId);
+                        controllerId, sourcePermanentId, dyingPermanent);
             }
 
             // Equipment attached to the damaging creature carries the ability keyed off the creature it
@@ -1182,7 +1199,7 @@ public class GraveyardService {
                         continue;
                     }
                     enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, equipment,
-                            playerId, equipment.getId());
+                            playerId, equipment.getId(), dyingPermanent);
                 }
             }
         }
@@ -1201,7 +1218,8 @@ public class GraveyardService {
      */
     private void enqueueDamagedCreatureDiesTriggers(GameData gameData, Card dyingCreatureCard,
                                                     UUID dyingControllerId, Permanent sourcePermanent,
-                                                    UUID controllerId, UUID sourcePermanentId) {
+                                                    UUID controllerId, UUID sourcePermanentId,
+                                                    Permanent dyingPermanent) {
         Card sourceCard = sourcePermanent.getCard();
         List<CardEffect> cardEffects = sourceCard.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES);
         List<CardEffect> effects = new ArrayList<>(cardEffects == null ? List.of() : cardEffects);
@@ -1213,6 +1231,19 @@ public class GraveyardService {
         }
         UUID dyingCreatureCardId = dyingCreatureCard.getId();
         for (CardEffect effect : effects) {
+            if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                if (dyingPermanent == null || !predicateEvaluationService.matchesPermanentPredicate(
+                        dyingPermanent,
+                        conditional.predicate(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(sourceCard.getId())
+                                .withSourceControllerId(controllerId)
+                                .withSourcePermanentId(sourcePermanentId)
+                                .withSourcePermanentSnapshot(sourcePermanent))) {
+                    continue;
+                }
+                effect = conditional.wrapped();
+            }
             CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard);
             if (materializedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || materializedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -1447,6 +1478,16 @@ public class GraveyardService {
     public void notifyCardLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCard);
         triggerCollectionService.checkCreatureCardLeavesOpponentGraveyardTriggers(gameData, ownerId, leavingCard);
+    }
+
+    /** Adds a card from a graveyard to a hand and fires the card's self-return trigger, if any. */
+    public void addCardToHandFromGraveyard(GameData gameData, UUID graveyardOwnerId, UUID handOwnerId,
+                                           Card card) {
+        gameData.addCardToHand(handOwnerId, card);
+        if (graveyardOwnerId != null && graveyardOwnerId.equals(handOwnerId)) {
+            triggerCollectionService.checkCardReturnedToHandFromGraveyardTriggers(
+                    gameData, graveyardOwnerId, card);
+        }
     }
 
     /**

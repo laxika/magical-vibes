@@ -86,9 +86,14 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
 
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 entry.getTargetCardIdsForEffect(effect),
-                (graveyard, card) -> gameData.addCardToHand(
-                        e.returnToOwnersHand() ? findGraveyardOwner(gameData, graveyard, card) : entry.getControllerId(),
-                        card),
+                (graveyard, card) -> {
+                    UUID graveyardOwnerId = findGraveyardOwner(gameData, graveyard, card);
+                    UUID handOwnerId = e.returnToOwnersHand()
+                            ? graveyardOwnerId
+                            : entry.getControllerId();
+                    graveyardReturnSupport.addCardToHandFromGraveyard(
+                            gameData, graveyardOwnerId, handOwnerId, card);
+                },
                 " returns ", " from graveyard to hand.");
     }
 

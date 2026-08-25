@@ -69,6 +69,7 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.NEXT_TO_ENCHANTED
                 || scope == PreventionScope.NEXT_TO_TARGET
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE
+                || scope == PreventionScope.NEXT_TO_TARGET_AND_SHARING_CREATURES
                 || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER
                 || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER;
         if (needsAmount && amount == null) {
@@ -96,8 +97,9 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS)) {
             throw new IllegalArgumentException(scope + " requires a victimPredicate");
         }
-        if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
-            throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
+        if (gainLife && scope != PreventionScope.NEXT_TO_TARGET && scope != PreventionScope.ALL_BY_CREATURES) {
+            throw new IllegalArgumentException(
+                    "gainLife is exactly the NEXT_TO_TARGET or ALL_BY_CREATURES parameter: " + scope);
         }
         boolean acceptsSourcePredicate = scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
                 || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES;
@@ -160,6 +162,13 @@ public record PreventDamageEffect(
     public static PreventDamageEffect nextToTargetCreature(int amount, PermanentPredicate victimPredicate) {
         return new PreventDamageEffect(
                 PreventionScope.NEXT_TO_TARGET_CREATURE, new Fixed(amount), false, null, null, victimPredicate);
+    }
+
+    /** "Prevent the next {@code amount} damage that would be dealt to target creature and each other creature that shares a color with it." */
+    public static PreventDamageEffect nextToTargetAndSharingCreatures(int amount) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_TARGET_AND_SHARING_CREATURES,
+                new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to target player or planeswalker" (Wandering Mage). */
@@ -238,6 +247,11 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt by creatures this turn" (Ethereal Haze). */
     public static PreventDamageEffect allByCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_BY_CREATURES, null, false, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt by creatures this turn; you gain life equal to damage prevented this way." */
+    public static PreventDamageEffect allByCreaturesAndGainLife() {
+        return new PreventDamageEffect(PreventionScope.ALL_BY_CREATURES, null, false, null, null, null, true);
     }
 
     /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1). */
@@ -341,7 +355,7 @@ public record PreventDamageEffect(
         return switch (scope) {
             case NEXT_TO_TARGET -> TargetSpec.benign(TargetPredicates.anyTarget());
             case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetPredicates.creature());
-            case NEXT_TO_TARGET_CREATURE -> TargetSpec.benign(victimPredicate == null
+            case NEXT_TO_TARGET_CREATURE, NEXT_TO_TARGET_AND_SHARING_CREATURES -> TargetSpec.benign(victimPredicate == null
                     ? TargetPredicates.creature()
                     : TargetPredicates.narrowPermanents(TargetPredicates.creature(), victimPredicate));
             case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());

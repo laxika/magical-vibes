@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -475,7 +476,8 @@ public class CombatAttackService {
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(
                 gameData.activePlayerId, prompt.attackableIndices(), prompt.mustAttackIndices(),
-                prompt.availableTargets(), prompt.taxPerCreature(), prompt.mustAttackWithAtLeastOne()));
+                prompt.availableTargets(), prompt.taxPerCreature(), prompt.mustAttackWithAtLeastOne(),
+                attackerDeclarationChooser(gameData, gameData.activePlayerId)));
     }
 
     /**
@@ -494,11 +496,15 @@ public class CombatAttackService {
         if (gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class) == null) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
-        if (!player.getId().equals(gameData.activePlayerId)) {
-            throw new IllegalStateException("Only the active player can declare attackers");
+        PendingInteraction.AttackerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (!player.getId().equals(pending.decidingPlayerId())) {
+            throw new IllegalStateException(pending.choosingForOpponent()
+                    ? "Only the player choosing attackers can declare attackers"
+                    : "Only the active player can declare attackers");
         }
 
-        UUID playerId = player.getId();
+        UUID playerId = gameData.activePlayerId;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Integer> attackable = getAttackableCreatureIndices(gameData, playerId);
 
@@ -1688,6 +1694,16 @@ public class CombatAttackService {
         attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, declaredAttackers);
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    /**
+     * Returns the player who declares this combat's attackers: the active player unless a
+     * "you choose which creatures attack this turn" effect is in force.
+     */
+    private UUID attackerDeclarationChooser(GameData gameData, UUID activePlayerId) {
+        List<DelayedAttackerDeclarationControl> controls =
+                gameData.getDelayedActions(DelayedAttackerDeclarationControl.class);
+        return controls.isEmpty() ? activePlayerId : controls.getLast().chooserId();
     }
 
     private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {

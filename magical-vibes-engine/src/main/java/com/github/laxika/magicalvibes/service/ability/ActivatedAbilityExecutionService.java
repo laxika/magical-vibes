@@ -664,11 +664,15 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
             } else if (effect instanceof AwardChosenColorManaEffect && permanent.getChosenColor() != null) {
                 snapshotEffects.add(new AwardManaEffect(ManaColor.valueOf(permanent.getChosenColor().name())));
-            } else if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ENCHANTED
+            } else if (effect instanceof ReturnToHandEffect bounce
+                    && (bounce.scope() == BounceScope.ENCHANTED
+                    || bounce.scope() == BounceScope.ENCHANTED_AND_AURAS)
                     && permanent.getAttachedTo() != null) {
                 // Bind the enchanted permanent now: the Aura may be gone by resolution (Phantom Wings
                 // sacrifices itself as a cost), and the ability still uses last known information.
-                snapshotEffects.add(ReturnToHandEffect.enchantedSnapshot(permanent.getAttachedTo()));
+                snapshotEffects.add(bounce.scope() == BounceScope.ENCHANTED
+                        ? ReturnToHandEffect.enchantedSnapshot(permanent.getAttachedTo())
+                        : ReturnToHandEffect.enchantedAndAurasSnapshot(permanent.getAttachedTo()));
             } else if (effect instanceof ReturnToHandEffect bounce
                     && bounce.scope() == BounceScope.GRANTING_EQUIPMENT) {
                 // Bind the granting Equipment before the ability resolves: the equipped creature is
@@ -917,7 +921,7 @@ public class ActivatedAbilityExecutionService {
                 PermanentChoiceContext.ManaAbilityAddToChosenPlayer context =
                         new PermanentChoiceContext.ManaAbilityAddToChosenPlayer(
                                 chosen.color(), chosen.amount() * manaMultiplier, isCreatureSource,
-                                permanent.getCard().getName());
+                                permanent.getCard().getName(), chosen.anyColor(), playerId);
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
                         playerId, List.of(), validPlayerIds, context, "Choose a player to add mana."));
                 log.info("Game {} - Awaiting {} to choose a player to receive mana", gameData.id, player.getUsername());

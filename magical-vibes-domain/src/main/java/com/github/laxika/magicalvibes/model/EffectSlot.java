@@ -114,6 +114,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (not effect type) in {@code StepTriggerService.handleDrawStep}, which offers the controller a
      *  may-ability to replace the draw. Used by Fasting and Island Sanctuary. */
     MAY_SKIP_DRAW_STEP_DRAW,
+    /** Replacement ability of a card in its owner's graveyard that may replace a card draw by
+     *  milling a fixed number of cards and returning that card to its owner's hand. */
+    GRAVEYARD_DRAW_REPLACEMENT,
     END_STEP_TRIGGERED,
     /** End-step trigger fired from a card sitting in its owner's graveyard ("At the beginning of the
      *  end step, if this card is in your graveyard …"). Fires at EVERY end step, not just the card
@@ -600,6 +603,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  graveyards of every opponent of the graveyard the card left. Non-targeting.
      *  Used by Erebos's Titan. */
     GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD,
+    /** Triggers when this card leaves its owner's graveyard and is put into its owner's hand. */
+    GRAVEYARD_ON_SELF_RETURNED_TO_HAND,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's command zone (Eminence — e.g. Edgar Markov). Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if

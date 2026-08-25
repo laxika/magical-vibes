@@ -52,6 +52,8 @@ public sealed interface ChoiceContext {
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
+    record ChosenPlayerManaColorChoice(UUID playerId, UUID sourceControllerId, UUID recipientPlayerId,
+                                       boolean fromCreature, int amount) implements ChoiceContext {}
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
@@ -813,6 +815,15 @@ public sealed interface ChoiceContext {
      * card matches the chosen name, the controller draws a card.
      */
     record NameCardMillDrawChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
+     * Tunnel Vision: the controller names a card, then the target player reveals until finding it.
+     * If found, the other revealed cards go to the graveyard and the named card returns to the top;
+     * otherwise the target player shuffles their library.
+     */
+    record ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(UUID controllerId,
+                                                                    UUID targetPlayerId)
+            implements ChoiceContext {}
 
     /**
      * The controller names a card, then exiles the top {@code topExileCount} cards of their library

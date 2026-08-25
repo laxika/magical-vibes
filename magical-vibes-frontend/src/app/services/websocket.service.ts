@@ -467,6 +467,8 @@ export interface AvailableAttackersNotification {
   availableTargets: AttackTarget[];
   taxPerCreature: number;
   mustAttackWithAtLeastOne: boolean;
+  /** True when the recipient chooses attackers for the active player's creatures. */
+  choosingForOpponent?: boolean;
 }
 
 export interface AvailableBlockersNotification {

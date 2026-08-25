@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "38")
+@CardRegistration(set = "RAV", collectorNumber = "50")
 public class FlowOfIdeas extends Card {
 
     public FlowOfIdeas() {

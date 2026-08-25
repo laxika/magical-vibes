@@ -85,6 +85,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
+    record TargetPlayerSacrificesCreatureThenDrawsPower(
+            UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
+
     /** Kethek: the controller is choosing another creature to sacrifice before the library reveal. */
     record SacrificeOtherCreatureThenRevealUntilLowerManaValue(
             UUID controllerId, Card sourceCard, com.github.laxika.magicalvibes.model.filter.CardPredicate predicate)
@@ -169,6 +172,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {
         public GuidedPassageOpponentChoice {
             library = List.copyOf(library);
+        }
+    }
+
+    /** Mausoleum Turnkey: the controller chooses which opponent chooses the graveyard target. */
+    record MausoleumTurnkeyOpponentChoice(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<Card> matchingCards)
+            implements PermanentChoiceContext {
+        public MausoleumTurnkeyOpponentChoice {
+            effects = List.copyOf(effects);
+            matchingCards = List.copyOf(matchingCards);
         }
     }
 
@@ -653,6 +666,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record BounceOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
 
+    record BouncePermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
+
     /** "Sacrifice this permanent unless you sacrifice a [permanent]." The chosen permanent is sacrificed. (Sacred Mesa.) */
     record SacrificeOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
 
@@ -953,6 +968,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
+
+    record ChooseEquipmentToAttachAsEnter(UUID equipmentPermanentId, UUID controllerId, Card card,
+                                          UUID targetId, boolean wasCastFromHand, int etbMode, int xValue,
+                                          boolean kicked, List<UUID> targetIds,
+                                          List<String> repeatedAdditionalCosts,
+                                          List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChooseEquipmentToAttachAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
 
     record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                     UUID sourcePermanentId, boolean creaturesOnly) implements PermanentChoiceContext {
@@ -1296,11 +1323,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TransformTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                   UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    /** Valleymaker's mana ability ("Choose a player. That player adds {G}{G}{G}."). The activating
-     *  player picks the recipient; {@code amount} mana of {@code color} is added to that player's pool
-     *  (tracking creature mana when {@code creatureSource}). Begun inline during mana-ability resolution. */
+    /** A mana ability where the activating player chooses the recipient. */
     record ManaAbilityAddToChosenPlayer(ManaColor color, int amount, boolean creatureSource,
-                                        String sourceCardName) implements PermanentChoiceContext {}
+                                        String sourceCardName, boolean anyColor, UUID controllerId)
+            implements PermanentChoiceContext {
+
+        public ManaAbilityAddToChosenPlayer(ManaColor color, int amount, boolean creatureSource,
+                                            String sourceCardName) {
+            this(color, amount, creatureSource, sourceCardName, false, null);
+        }
+    }
 
     /** Bend or Break: a player chooses which opponent will choose one of their land piles. */
     record BendOrBreakOpponentChoice(UUID playerId) implements PermanentChoiceContext {}

@@ -61,6 +61,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.EyeOfTheStormCastChoice.class,
+                this::projectEyeOfTheStormCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
         register(PendingInteraction.AssimilationAegisCopyChoice.class,
                 this::projectAssimilationAegisCopyChoice);
@@ -310,6 +312,15 @@ public class InteractionPromptProjectionRegistry {
                         + "their mana costs.");
     }
 
+    private InteractionPromptMessage projectEyeOfTheStormCastChoice(
+            GameData gameData, PendingInteraction.EyeOfTheStormCastChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCopyIds()),
+                exiledCardViews(gameData, interaction.validCopyIds()),
+                interaction.validCopyIds().size(),
+                "Choose any number of Eye of the Storm copies to cast without paying their mana costs.");
+    }
+
     private InteractionPromptMessage projectExiledSpellCopyChoice(
             GameData gameData, PendingInteraction.ExiledSpellCopyChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
@@ -536,7 +547,9 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.pool()),
                 interaction.maximumSelectionCount(),
                 interaction.requiredCount() < 0
-                        ? "Choose any number of " + interaction.cardLabel()
+                        ? "Choose " + (interaction.maximumSelectionCount() < interaction.pool().size()
+                                ? "up to " + interaction.maximumSelectionCount()
+                                : "any number of") + " " + interaction.cardLabel()
                                 + " cards to reveal and put on top of your library."
                         : "Choose " + interaction.minimumSelectionCount() + " cards to put on top of your library.");
     }
@@ -1130,7 +1143,8 @@ public class InteractionPromptProjectionRegistry {
                 interaction.mustAttackIndices(),
                 targets,
                 interaction.taxPerCreature(),
-                interaction.mustAttackWithAtLeastOne());
+                interaction.mustAttackWithAtLeastOne(),
+                interaction.choosingForOpponent());
     }
 
     private AvailableBlockersMessage projectBlockerDeclaration(

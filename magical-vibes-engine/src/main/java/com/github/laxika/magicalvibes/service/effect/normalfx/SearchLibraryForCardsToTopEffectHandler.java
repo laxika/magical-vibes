@@ -59,6 +59,7 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
                 ? -1
                 : Math.max(0, amountEvaluationService.evaluate(
                         gameData, count, AmountContext.forStackEntry(entry, null)));
+        int maxCount = searchEffect.maxCount();
         String description = CardPredicateUtils.describeFilter(filter);
         String label = description.replaceFirst("\\s+card$", "");
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -93,7 +94,8 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.SearchLibraryToTopChoice(
-                        controllerId, pool, label, requiredCount, searchEffect.revealCards()));
+                        controllerId, pool, label, requiredCount,
+                        Math.min(maxCount, pool.size()), searchEffect.revealCards()));
 
         log.info("Game {} - {} searches library for {} cards to put on top ({} matches)",
                 gameData.id, playerName, label, pool.size());

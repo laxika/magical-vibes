@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerAssignsCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
@@ -79,6 +80,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -124,6 +126,7 @@ public class CombatDamageService {
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
 
@@ -2555,10 +2558,12 @@ public class CombatDamageService {
                     }
                 }
             }
+            int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(
+                    gameData, perm, sourceSpecificDamage, true);
             int dmg = perm.isDamageCantBePreventedOrRedirectedThisTurn()
-                    ? entry.getValue()
-                    : Math.max(unpreventable,
-                    damagePreventionService.applyCreaturePreventionShield(gameData, perm, sourceSpecificDamage, true));
+                    || damagePreventionService.hasDamageToPlusOnePlusOneCounterReplacement(perm)
+                    ? effectiveDamage
+                    : Math.max(unpreventable, effectiveDamage);
             if (dmg > 0) {
                 recordCombatMarkedDamage(perm, dmg, bySource);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
@@ -2981,6 +2986,10 @@ public class CombatDamageService {
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, damage);
             damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, damage);
+            if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
+                damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage);
+                damage = 0;
+            }
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
             state.combatDamageDealtToPlaneswalker.merge(atk, damage, Integer::sum);
             if (pw.getCard().hasType(CardType.BATTLE) && damage > 0) {
@@ -3006,9 +3015,15 @@ public class CombatDamageService {
         // player, instead that player mills that many cards (e.g. Undead Alchemist).
         if (damage > 0 && redirectTarget == null) {
             UUID atkControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
-            if (atkControllerId != null && hasReplaceCombatDamageWithMill(gameData, atkControllerId, atk)) {
+            ReplaceCombatDamageWithMillEffect replacement = atkControllerId == null
+                    ? null : findCombatDamageMillReplacement(gameData, atkControllerId, atk);
+            if (replacement != null) {
                 gameLogService.append(gameData, GameLog.cardThen(atk.getCard(),
                         "'s " + damage + " combat damage is replaced with milling."));
+                if (replacement.counterType() != null) {
+                    permanentCounterSupport.placeCounterOnPermanent(
+                            gameData, null, atk, replacement.counterType(), damage);
+                }
                 graveyardService.resolveMillPlayer(gameData, defenderId, damage);
                 return;
             }
@@ -3191,6 +3206,10 @@ public class CombatDamageService {
                 damage -= damageSupport.applyDelayingShieldCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                         gameData, defenderId, damage);
+                if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
+                    damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage);
+                    damage = 0;
+                }
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
@@ -3265,10 +3284,22 @@ public class CombatDamageService {
                                            Map<Integer, Map<UUID, Integer>> damageTakenBySourceMap) {
         int replacedDamage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
         int pendingDamageBefore = state.pendingDralnuReplacementDamage.getOrDefault(target.getId(), 0);
+        if (!target.isDamageCantBePreventedOrRedirectedThisTurn()
+                && isGlobalCreaturePreventionLifeGain(gameData, source)) {
+            damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, replacedDamage);
+            return true;
+        }
         withSourceUnpreventableDamage(gameData, source, () -> applyCombatCreatureDamageInternal(
                 gameData, state, source, sourceStats, target, targetIdx, replacedDamage, damageTakenMap,
                 unpreventableDamageTakenMap, deathtouchDamagedSet, damageTakenBySourceMap));
         return state.pendingDralnuReplacementDamage.getOrDefault(target.getId(), 0) > pendingDamageBefore;
+    }
+
+    private boolean isGlobalCreaturePreventionLifeGain(GameData gameData, Permanent source) {
+        return gameData.preventAllDamageByCreatures
+                && !gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty()
+                && gameQueryService.isCreature(gameData, source)
+                && !gameQueryService.damageCantBePreventedFromSource(gameData, source);
     }
 
     private void applyCombatCreatureDamageInternal(GameData gameData, CombatDamageState state,
@@ -3462,21 +3493,28 @@ public class CombatDamageService {
     }
 
     /**
-     * Returns {@code true} if any permanent on the controller's battlefield has a
-     * {@link ReplaceCombatDamageWithMillEffect} whose predicate matches the attacker.
+     * Finds a combat-damage mill replacement on the controller's battlefield whose predicate
+     * matches the attacker.
      */
-    private boolean hasReplaceCombatDamageWithMill(GameData gameData, UUID controllerId, Permanent attacker) {
+    private ReplaceCombatDamageWithMillEffect findCombatDamageMillReplacement(
+            GameData gameData, UUID controllerId, Permanent attacker) {
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-        if (bf == null) return false;
+        if (bf == null) return null;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ReplaceCombatDamageWithMillEffect replacement
-                        && predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, replacement.attackerPredicate())) {
-                    return true;
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        attacker,
+                        replacement.attackerPredicate(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(perm.getOriginalCard().getId())
+                                .withSourceControllerId(controllerId)
+                                .withSourcePermanentId(perm.getId()))) {
+                    return replacement;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     private boolean assignsCombatDamageAsThoughUnblocked(GameData gameData, Permanent attacker) {

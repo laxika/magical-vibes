@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
@@ -364,6 +365,42 @@ public class MayPenaltyChoiceHandlerService {
             counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessDiscardsHandChoice(GameData gameData, Player player, boolean accepted,
+                                                       PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(CounterUnlessEffect.class::isInstance)
+                .map(CounterUnlessEffect.class::cast)
+                .filter(e -> e.ransomKind() == CounterUnlessEffect.RansomKind.DISCARD_HAND)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " discards their hand. ", targetEntry.getCard(), " is not countered."));
+            discardHandUnlessPaysLifeEffectHandler.discardTargetHand(
+                    gameData, controllerId, controllerId, ability.sourceCard());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1449,6 +1486,54 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeUnlessReturnPermanentChoice(GameData gameData, Player player, boolean accepted,
+                                                            PendingMayAbility ability) {
+        SacrificeUnlessReturnPermanentTypeToHandEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof SacrificeUnlessReturnPermanentTypeToHandEffect)
+                .map(SacrificeUnlessReturnPermanentTypeToHandEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        Permanent sourcePermanent = null;
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        if (controllerBattlefield != null) {
+            sourcePermanent = controllerBattlefield.stream()
+                    .filter(permanent -> permanent.getCard().getId().equals(sourceCard.getId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (accepted) {
+            List<Permanent> validPermanents = new ArrayList<>();
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getCard().hasType(effect.permanentType())) {
+                        validPermanents.add(permanent);
+                    }
+                }
+            }
+            if (!validPermanents.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.BouncePermanentOrSacrificeSelf(controllerId, sourceCard.getId()));
+                playerInputService.beginPermanentChoice(gameData, controllerId,
+                        validPermanents.stream().map(Permanent::getId).toList(),
+                        "Choose an " + effect.permanentType().name().toLowerCase()
+                                + " to return to its owner's hand.");
+                gameLogService.append(gameData, GameLog.text(player.getUsername()
+                        + " chooses to return an " + effect.permanentType().name().toLowerCase() + " to hand."));
+                return;
+            }
+        }
+
+        if (sourcePermanent != null) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

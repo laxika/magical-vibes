@@ -1840,6 +1840,8 @@ public class SpellCastingService {
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        boolean hasCreatureSpellAdditionalCountersCost = additionalSpellCostService
+                .hasCreatureSpellAdditionalCountersCost(gameData, playerId, card);
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.extractAndRemove(gameData, playerId, card, filteredSpellEffects);
         List<SpliceEffect> pendingSpliceCosts = resolveAndAppendSpliceEffects(
@@ -2764,6 +2766,8 @@ public class SpellCastingService {
             AdditionalCostPayment additionalCostPayment = payAdditionalCosts(
                     gameData, player, card, additionalCosts, paymentCostSelection, 0, preManaPaymentPool,
                     effectiveXValue);
+            addCreatureSpellAdditionalCounters(gameData, card, repeatedAdditionalCosts,
+                    hasCreatureSpellAdditionalCountersCost);
             BeheldCardPayment beholdPayment = payBeholdCost(
                     gameData, player, card, additionalCosts.beholdCost(), costSelection);
             payImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
@@ -8120,6 +8124,20 @@ public class SpellCastingService {
                 - additionalCounterGrantingManaAvailable(gameData, playerId);
         if (spent > 0) {
             gameData.spellAdditionalEnterCounters.merge(card.getId(), spent, Integer::sum);
+        }
+    }
+
+    private void addCreatureSpellAdditionalCounters(GameData gameData, Card card,
+                                                    List<String> repeatedAdditionalCosts,
+                                                    boolean applies) {
+        if (!applies || repeatedAdditionalCosts == null) {
+            return;
+        }
+        int counters = (int) repeatedAdditionalCosts.stream()
+                .filter("{1}"::equals)
+                .count();
+        if (counters > 0) {
+            gameData.spellAdditionalEnterCounters.merge(card.getId(), counters, Integer::sum);
         }
     }
 

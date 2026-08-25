@@ -141,6 +141,39 @@ public class CounterSupport {
         return true;
     }
 
+    public boolean counterSpellAndPutInHand(GameData gameData, StackEntry source, StackEntry target) {
+        gameData.stack.remove(target);
+
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        boolean isAbility = target.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || target.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+
+        if (!target.isCopy() && !isAbility) {
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return false;
+            }
+            if (target.isCastWithFlashback()) {
+                exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
+            } else {
+                gameData.addCardToHand(target.getOwnerId(), target.getPhysicalCard());
+            }
+        }
+
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
+
+        if (isAbility) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(target.getCard(), "'s ability is countered."));
+        } else {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(target.getCard(), " is countered and returned to its owner's hand."));
+        }
+        log.info("Game {} - {} countered {} into its owner's hand", gameData.id,
+                source.getCard().getName(), target.getCard().getName());
+        return true;
+    }
+
     public void counterSpellAndPutOnTopOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
         gameData.stack.remove(target);
 

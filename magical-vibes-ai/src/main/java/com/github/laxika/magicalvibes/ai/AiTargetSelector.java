@@ -1257,7 +1257,9 @@ class AiTargetSelector {
                 (e instanceof CreatureBoostEffect boost
                         && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
                         || e instanceof RegenerationEffect
-                        || (e instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.TARGET));
+                        || (e instanceof KeywordGrantingEffect grant
+                        && (grant.scope() == GrantScope.TARGET
+                        || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES)));
 
         if (canTargetPermanent) {
             if (isBeneficial) {

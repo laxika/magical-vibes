@@ -20,6 +20,10 @@ public enum PreventionScope {
      *  Resolves exactly like {@link #NEXT_TO_TARGET}; the separate scope exists so the effect can
      *  declare a creature-only {@code TargetSpec} and a player can never be chosen. */
     NEXT_TO_TARGET_CREATURE,
+    /** "Prevent the next N damage that would be dealt to target creature and each other creature
+     *  that shares a color with it this turn" (Wojek Apothecary). The affected creature set is
+     *  snapshotted when the ability resolves. */
+    NEXT_TO_TARGET_AND_SHARING_CREATURES,
     /** "Prevent the next N damage that would be dealt to target player or planeswalker this turn" (Wandering Mage).
      *  Resolves exactly like {@link #NEXT_TO_TARGET}; the separate scope exists so the effect can
      *  declare a player-or-planeswalker {@code TargetSpec} and a creature can never be chosen. */

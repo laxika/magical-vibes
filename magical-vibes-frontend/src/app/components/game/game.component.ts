@@ -93,6 +93,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.gameOverWinnerId.set(null);
     this.declaringAttackers.set(false);
     this.declaringBlockers.set(false);
+    this.choosingAttackersForOpponent.set(false);
     this.choosingBlocksForOpponent.set(false);
     this.attackTaxPerCreature.set(0);
     this.mustAttackWithAtLeastOne.set(false);
@@ -733,6 +734,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
   declaringAttackers = signal(false);
   declaringBlockers = signal(false);
+  /** True while this player is declaring attackers for the active player's creatures. */
+  choosingAttackersForOpponent = signal(false);
   /** True while this player is declaring blocks for creatures they do NOT control
       (Melee: "you choose which creatures block this combat"). Inverts which side of the
       board holds the blockers and which holds the attackers. */
@@ -761,6 +764,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
     this.declaringAttackers.set(true);
+    this.choosingAttackersForOpponent.set(msg.choosingForOpponent === true);
     this.availableAttackerIndices.set(new Set(msg.attackerIndices));
     this.mustAttackIndices.set(new Set(msg.mustAttackIndices));
     this.selectedAttackerIndices.set(new Set(msg.mustAttackIndices));
@@ -851,7 +855,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   canDeclareBand(): boolean {
-    return canFormAttackingBand(this.myBattlefield, this.selectedAttackerIndices());
+    return canFormAttackingBand(this.attackerSelectionBattlefield, this.selectedAttackerIndices());
   }
 
   /** Badge text for an attacker's band: "+ Band" when ungrouped, "Band A"/"Band B"/… when grouped. */
@@ -918,6 +922,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     this.websocketService.send(msg as unknown as WebSocketMessage);
     this.declaringAttackers.set(false);
+    this.choosingAttackersForOpponent.set(false);
     this.availableAttackerIndices.set(new Set());
     this.mustAttackIndices.set(new Set());
     this.availableAttackTargets.set([]);
@@ -942,12 +947,20 @@ export class GameComponent implements OnInit, OnDestroy {
     return !this.isBlockerSide(isMine);
   }
 
+  isAttackerSelectionSide(isMine: boolean): boolean {
+    return isMine !== this.choosingAttackersForOpponent();
+  }
+
   private get blockerSideBattlefield(): Permanent[] {
     return this.choosingBlocksForOpponent() ? this.opponentBattlefield : this.myBattlefield;
   }
 
   private get attackerSideBattlefield(): Permanent[] {
     return this.choosingBlocksForOpponent() ? this.myBattlefield : this.opponentBattlefield;
+  }
+
+  private get attackerSelectionBattlefield(): Permanent[] {
+    return this.choosingAttackersForOpponent() ? this.opponentBattlefield : this.myBattlefield;
   }
 
   isAssignedBlocker(index: number): boolean {
@@ -1402,6 +1415,7 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.declaringAttackers()) {
+      if (!this.isAttackerSelectionSide(true)) return;
       // CR 508.1i: allow tapping mana sources to pay attack tax
       if (this.attackTaxPerCreature() > 0 && perm && !this.canAttack(index) && this.canTapPermanentForMana(perm)) {
         this.tapPermanentForMana(index, perm);
@@ -1431,6 +1445,8 @@ export class GameComponent implements OnInit, OnDestroy {
       } else {
         this.assignBlock(index);
       }
+    } else if (this.declaringAttackers() && this.isAttackerSelectionSide(false)) {
+      this.toggleAttacker(index);
     }
   }
 

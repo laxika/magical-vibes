@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                             finds or selects no card
  * @param recordChosenCount when true, records the number of selected cards as the stack entry's
  *                          event value for a following effect
+ * @param payLifePerSelectedCard life paid for each selected card, when non-zero
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -86,8 +87,20 @@ public record LookAtTopCardsEffect(
         DynamicAmount chooseManaValueAtMost,
         CardEffect effectIfNoCardChosen,
         boolean recordChosenCount,
-        int loseLifePerSelectedCard
+        int loseLifePerSelectedCard,
+        int payLifePerSelectedCard
 ) implements CombatDamageAmountAwareEffect {
+
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            CardEffect effectIfNoCardChosen, boolean recordChosenCount,
+            int loseLifePerSelectedCard) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, 0);
+    }
 
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
@@ -193,6 +206,14 @@ public record LookAtTopCardsEffect(
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), null,
                 LookDestination.GRAVEYARD, false, LibrarySearchDestination.HAND, true,
                 false, null, null, false, lifeLossPerSelectedCard);
+    }
+
+    /** You may put any number into your hand by paying life for each; the rest go to the graveyard. */
+    public static LookAtTopCardsEffect mayChooseAnyNumberToHandRestToGraveyardPayLife(
+            int lookCount, int lifePerSelectedCard) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), null,
+                LookDestination.GRAVEYARD, false, LibrarySearchDestination.HAND, true,
+                false, null, null, false, 0, lifePerSelectedCard);
     }
 
     /** Reveal the top cards, put one into hand, the rest into the graveyard, and gain life equal

@@ -297,7 +297,9 @@ public class TargetPolarityClassifier {
             return TargetPolarity.BENEFICIAL;
         }
         if (effect instanceof KeywordGrantingEffect grant) {
-            return grant.scope() == GrantScope.TARGET || grant.scope() == GrantScope.ENCHANTED_CREATURE
+            return grant.scope() == GrantScope.TARGET
+                    || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES
+                    || grant.scope() == GrantScope.ENCHANTED_CREATURE
                     ? TargetPolarity.BENEFICIAL
                     : null;
         }

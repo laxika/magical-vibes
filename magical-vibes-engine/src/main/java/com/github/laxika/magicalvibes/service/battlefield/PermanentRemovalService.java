@@ -757,6 +757,11 @@ public class PermanentRemovalService {
         }
     }
 
+    public void addCardToHandFromGraveyard(GameData gameData, UUID graveyardOwnerId, UUID handOwnerId,
+                                           Card card) {
+        graveyardService.addCardToHandFromGraveyard(gameData, graveyardOwnerId, handOwnerId, card);
+    }
+
     /** Removes a card from a graveyard and records that this departure was an exile. */
     public void removeCardFromGraveyardByIdForExile(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {

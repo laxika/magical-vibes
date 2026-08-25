@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -321,6 +322,14 @@ public class EtbTriggerService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
+                if (may.wrapped() instanceof ExchangeControlOfTargetPermanentsEffect exchange
+                        && exchange.requireOpponentPowerNotGreater()) {
+                    for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.PucasMischiefOwnTarget(
+                                card, controllerId, List.of(may), triggerSourcePermanentId));
+                    }
+                    continue;
+                }
                 if (may.wrapped() instanceof SacrificePermanentThenEffect
                         && may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {

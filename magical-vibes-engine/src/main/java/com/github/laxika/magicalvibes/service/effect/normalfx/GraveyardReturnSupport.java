@@ -573,7 +573,8 @@ public class GraveyardReturnSupport {
                                 effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
                         applyBattlefieldReturnRiders(gameData, controllerId, card, effect);
                     } else {
-                        gameData.addCardToHand(controllerId, card);
+                        permanentRemovalService.addCardToHandFromGraveyard(
+                                gameData, controllerId, controllerId, card);
                     }
                 }
             } finally {
@@ -629,7 +630,8 @@ public class GraveyardReturnSupport {
                             || toOwnersLibrary || effect.underOwnersControl())
                             ? gyEntry.getKey() : controllerId;
                     if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                        gameData.addCardToHand(targetPlayerId, card);
+                        permanentRemovalService.addCardToHandFromGraveyard(
+                                gameData, gyEntry.getKey(), targetPlayerId, card);
                     } else if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
                         gameData.playerDecks.get(targetPlayerId).addFirst(card);
                     } else if (effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
@@ -748,7 +750,8 @@ public class GraveyardReturnSupport {
                 } else if (effect.battlefieldIfCreatureElseExile()) {
                     exileService.exileCard(gameData, controllerId, randomCard);
                 } else {
-                    gameData.addCardToHand(controllerId, randomCard);
+                    permanentRemovalService.addCardToHandFromGraveyard(
+                            gameData, controllerId, controllerId, randomCard);
                 }
                 returnedCards.add(randomCard);
             }
@@ -991,7 +994,7 @@ public class GraveyardReturnSupport {
                                        boolean enterTapped) {
         String playerName = gameData.playerIdToName.get(playerId);
         if (destination == GraveyardChoiceDestination.HAND) {
-            gameData.addCardToHand(playerId, card);
+            permanentRemovalService.addCardToHandFromGraveyard(gameData, playerId, playerId, card);
             
             gameLogService.append(gameData, GameLog.textCardText(playerName + " returns " , card, " from graveyard to hand."));
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
@@ -1005,6 +1008,11 @@ public class GraveyardReturnSupport {
         } else {
             putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype, enterTapped);
         }
+    }
+
+    public void addCardToHandFromGraveyard(GameData gameData, UUID graveyardOwnerId,
+                                           UUID handOwnerId, Card card) {
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, graveyardOwnerId, handOwnerId, card);
     }
 
     public void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card) {

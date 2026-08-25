@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileDragonApproachAndSearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayExileGraveyardCardsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,6 +91,7 @@ public class GraveyardChoiceHandlerService {
     private final ExileDragonApproachAndSearchSupport exileDragonApproachAndSearchSupport;
     private final StateBasedActionService stateBasedActionService;
     private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
+    private final DredgeSupport dredgeSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -119,6 +121,12 @@ public class GraveyardChoiceHandlerService {
             }
         } else if (!validIndices.contains(cardIndex)) {
             throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        if (destination == GraveyardChoiceDestination.DREDGE) {
+            gameData.interaction.clearAwaitingInput();
+            dredgeSupport.handleChoice(gameData, player, cardIndex);
+            return;
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -252,7 +260,8 @@ public class GraveyardChoiceHandlerService {
 
             switch (destination) {
                 case HAND -> {
-                    gameData.addCardToHand(playerId, card);
+                    permanentRemovalService.addCardToHandFromGraveyard(
+                            gameData, cardGraveyardOwnerId, playerId, card);
 
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " returns " , card, " from graveyard to hand."));
                     log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());

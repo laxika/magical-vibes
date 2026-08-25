@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfComb
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
@@ -185,6 +186,7 @@ public class CombatService {
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
         // Melee's two combat-scoped delayed abilities ("this combat") expire here.
+        gameData.clearDelayedActions(DelayedAttackerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class);
     }

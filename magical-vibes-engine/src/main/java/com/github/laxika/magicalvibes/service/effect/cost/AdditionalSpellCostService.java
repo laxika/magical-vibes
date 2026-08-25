@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
+import com.github.laxika.magicalvibes.model.effect.CreatureSpellAdditionalCountersCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
@@ -348,7 +349,16 @@ public class AdditionalSpellCostService {
         DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
-        RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
+        List<RepeatableAdditionalManaCost> repeatableManaCosts = effects.stream()
+                .filter(RepeatableAdditionalManaCost.class::isInstance)
+                .map(RepeatableAdditionalManaCost.class::cast)
+                .toList();
+        effects.removeIf(RepeatableAdditionalManaCost.class::isInstance);
+        RepeatableAdditionalManaCost repeatableManaCost = repeatableManaCosts.isEmpty()
+                ? null
+                : repeatableManaCosts.size() == 1
+                ? repeatableManaCosts.getFirst()
+                : RepeatableAdditionalManaCost.combine(repeatableManaCosts);
         ChooseXValueCost chooseXValueCost = removeFirst(effects, ChooseXValueCost.class);
         BeholdAndExileCost beholdCost = removeFirst(effects, BeholdAndExileCost.class);
         BeholdCost beholdSelectionCost = removeFirst(effects, BeholdCost.class);
@@ -376,7 +386,21 @@ public class AdditionalSpellCostService {
                 && gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.DELVE)) {
             effects.add(new DelveCost());
         }
+        if (hasCreatureSpellAdditionalCountersCost(gameData, playerId, card)) {
+            effects.add(new RepeatableAdditionalManaCost(List.of("{1}")));
+        }
         return extractAndRemove(effects);
+    }
+
+    /** Returns whether an active Chorus of the Conclave-style effect applies to this spell. */
+    public boolean hasCreatureSpellAdditionalCountersCost(GameData gameData, UUID playerId, Card card) {
+        if (!gameQueryService.cardHasType(card, CardType.CREATURE, gameData, playerId)) {
+            return false;
+        }
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, CreatureSpellAdditionalCountersCostEffect.class));
     }
 
     /**
@@ -1092,18 +1116,32 @@ public class AdditionalSpellCostService {
         if (cost == null) {
             throw new IllegalStateException(card.getName() + " has no repeatable additional cost to pay");
         }
-        Map<String, Integer> paymentCounts = new HashMap<>();
+        int[] paymentCounts = new int[cost.paymentOptions().size()];
         for (String payment : payments) {
-            if (!cost.manaCosts().contains(payment)) {
+            int optionIndex = -1;
+            int matchingOptionIndex = -1;
+            for (int i = 0; i < cost.paymentOptions().size(); i++) {
+                RepeatableAdditionalManaCost.PaymentOption option = cost.paymentOptions().get(i);
+                if (option.manaCost().equals(payment)) {
+                    matchingOptionIndex = i;
+                    if (paymentCounts[i] < option.maxPayments()) {
+                        optionIndex = i;
+                        break;
+                    }
+                }
+            }
+            if (optionIndex < 0) {
+                if (matchingOptionIndex >= 0
+                        && cost.paymentOptions().get(matchingOptionIndex).maxPayments() != Integer.MAX_VALUE) {
+                    throw new IllegalStateException("Additional cost payment " + payment
+                            + " may be paid at most "
+                            + cost.paymentOptions().get(matchingOptionIndex).maxPayments() + " time(s) for "
+                            + card.getName());
+                }
                 throw new IllegalStateException("Invalid additional cost payment " + payment
                         + " for " + card.getName());
             }
-            int count = paymentCounts.merge(payment, 1, Integer::sum);
-            if (count > cost.maxPaymentsPerCost()) {
-                throw new IllegalStateException("Additional cost payment " + payment
-                        + " may be paid at most " + cost.maxPaymentsPerCost() + " time(s) for "
-                        + card.getName());
-            }
+            paymentCounts[optionIndex]++;
         }
         return String.join("", payments);
     }

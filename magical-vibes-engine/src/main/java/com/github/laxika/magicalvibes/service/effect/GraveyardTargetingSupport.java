@@ -137,6 +137,7 @@ public class GraveyardTargetingSupport {
                 case BOTTOM_OF_OWNERS_LIBRARY -> "on the bottom of its owner's library";
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> "into its owner's library";
                 case EXILE -> "to exile";
+                case DREDGE -> "with dredge";
                 case MAY_ABILITY_TARGET -> "as chosen";
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,

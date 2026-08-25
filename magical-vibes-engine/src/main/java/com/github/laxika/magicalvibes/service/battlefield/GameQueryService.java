@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLo
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledSourceCreatureDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -6964,7 +6965,9 @@ public class GameQueryService {
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData)) return false;
-        if (isDamageByCreaturePrevented(gameData, creature)
+        boolean globalCreaturePrevention = isDamageByCreaturePrevented(gameData, creature)
+                && gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty();
+        if (globalCreaturePrevention
                 || hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
                 || hasAuraWithEffect(gameData, creature,
                 effect -> effect instanceof PreventAllDamageDealtByEnchantedCreatureEffect prevented
@@ -7017,7 +7020,8 @@ public class GameQueryService {
         return isDamagePreventable(gameData)
                 && gameData.preventAllDamageByCreatures
                 && source != null
-                && isCreature(gameData, source);
+                && isCreature(gameData, source)
+                && !damageCantBePreventedFromSource(gameData, source);
     }
 
     /** Returns whether this creature's damage to the target creature is covered by its own static prevention. */
@@ -7091,6 +7095,22 @@ public class GameQueryService {
 
     public boolean isAllDamageToControlledCreaturePrevented(GameData gameData, Permanent creature) {
         return getControlledCreatureDamageLimit(gameData, creature) == 0;
+    }
+
+    /** Returns whether damage from a player's source to that player's creature is prevented. */
+    public boolean isDamageFromControlledSourceToControlledCreaturePrevented(
+            GameData gameData, Permanent creature, UUID sourceControllerId) {
+        if (!isDamagePreventable(gameData) || creature == null || sourceControllerId == null
+                || !isCreature(gameData, creature)) return false;
+        UUID creatureControllerId = findPermanentController(gameData, creature.getId());
+        if (!sourceControllerId.equals(creatureControllerId)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .map(effect -> staticEffectConditionResolver.resolve(
+                                gameData, permanent, creatureControllerId, effect)))
+                .anyMatch(ControlledSourceCreatureDamagePreventionEffect.class::isInstance);
     }
 
     /**

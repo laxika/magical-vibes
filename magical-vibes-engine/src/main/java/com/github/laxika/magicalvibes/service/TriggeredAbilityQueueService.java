@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -73,6 +74,8 @@ public class TriggeredAbilityQueueService {
     private final PlayerInputService playerInputService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
+            returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SagaChapterCounterDistributionSupport
             sagaChapterCounterDistributionSupport;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
@@ -1445,6 +1448,18 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
+            ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect opponentChoiceEffect = pending.effects().stream()
+                    .map(this::opponentChoiceEffect)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+            if (opponentChoiceEffect != null) {
+                if (beginOpponentChosenGraveyardTarget(gameData, pending, opponentChoiceEffect)) {
+                    return;
+                }
+                continue;
+            }
+
             // Find the graveyard-targeting effect to extract its filter and search scope
             CardPredicate filter = null;
             boolean lifeGainedCap = false;
@@ -1624,6 +1639,82 @@ public class TriggeredAbilityQueueService {
                     .orElse(null);
         }
         return null;
+    }
+
+    private ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect opponentChoiceEffect(CardEffect effect) {
+        if (effect instanceof ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect opponentChoice) {
+            return opponentChoice;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return opponentChoiceEffect(conditional.wrapped());
+        }
+        if (effect instanceof MayEffect may) {
+            return opponentChoiceEffect(may.wrapped());
+        }
+        return null;
+    }
+
+    private boolean beginOpponentChosenGraveyardTarget(GameData gameData,
+                                                       PermanentChoiceContext.SpellGraveyardTargetTrigger pending,
+                                                       ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect effect) {
+        List<Card> matchingCards = new ArrayList<>();
+        if (gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
+            if (graveyard != null) {
+                for (Card graveyardCard : graveyard) {
+                    if (predicateEvaluationService.matchesCardPredicate(
+                            graveyardCard, effect.filter(), pending.sourceCard().getId(), gameData,
+                            pending.controllerId())) {
+                        matchingCards.add(graveyardCard);
+                    }
+                }
+            }
+        }
+
+        List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(pending.controllerId()))
+                .toList();
+        gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+
+        if (matchingCards.isEmpty() || opponents.isEmpty()) {
+            log.info("Game {} - {} opponent-chosen graveyard target skipped", gameData.id,
+                    pending.sourceCard().getName());
+            return false;
+        }
+
+        UUID sourcePermanentId = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(pending.controllerId());
+        if (battlefield != null) {
+            sourcePermanentId = battlefield.stream()
+                    .filter(permanent -> permanent.getCard().getId().equals(pending.sourceCard().getId()))
+                    .map(Permanent::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        gameData.graveyardTargetOperation.card = pending.sourceCard();
+        gameData.graveyardTargetOperation.controllerId = pending.controllerId();
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+        gameData.graveyardTargetOperation.xValue = pending.xValue();
+        gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+
+        if (opponents.size() == 1) {
+            returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler.beginCardChoice(
+                    gameData, opponents.getFirst(), matchingCards, pending.sourceCard().getName());
+        } else {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.MausoleumTurnkeyOpponentChoice(
+                            pending.sourceCard(), pending.controllerId(), pending.effects(), sourcePermanentId,
+                            matchingCards));
+            playerInputService.beginPlayerChoice(gameData, pending.controllerId(), opponents,
+                    pending.sourceCard().getName() + "'s ability — choose an opponent to choose a creature card.");
+        }
+
+        gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                "'s ability triggers — an opponent chooses a creature card from its controller's graveyard."));
+        log.info("Game {} - {} opponent-chosen graveyard target awaiting selection", gameData.id,
+                pending.sourceCard().getName());
+        return true;
     }
 
     public void processNextExploreTriggerTarget(GameData gameData) {

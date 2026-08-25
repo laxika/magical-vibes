@@ -39,6 +39,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.EyeOfTheStormCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
@@ -458,6 +459,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** Eye of the Storm: choose any number of generated copies and their casting order. */
+    record EyeOfTheStormCastChoice(UUID playerId, java.util.List<UUID> validCopyIds)
+            implements PendingInteraction {
+
+        public EyeOfTheStormCastChoice {
+            validCopyIds = java.util.List.copyOf(validCopyIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCopyIds, 0, validCopyIds.size());
         }
     }
 
@@ -1045,7 +1065,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * in any order. {@code cardLabel} is the display label of the searched-for cards.
      */
     record SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String cardLabel,
-                                    int requiredCount, boolean revealCards)
+                                    int requiredCount, int maxCount, boolean revealCards)
             implements PendingInteraction {
 
         public SearchLibraryToTopChoice {
@@ -1053,7 +1073,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
 
         public SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String cardLabel) {
-            this(playerId, pool, cardLabel, -1, true);
+            this(playerId, pool, cardLabel, -1, pool.size(), true);
+        }
+
+        public SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String cardLabel,
+                                        int requiredCount, boolean revealCards) {
+            this(playerId, pool, cardLabel, requiredCount, pool.size(), revealCards);
+        }
+
+        public SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String cardLabel,
+                                        int maxCount) {
+            this(playerId, pool, cardLabel, -1, maxCount, true);
         }
 
         /** The selectable card IDs, in begin-time pool order. */
@@ -1066,7 +1096,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
 
         public int maximumSelectionCount() {
-            return requiredCount < 0 ? pool.size() : Math.min(requiredCount, pool.size());
+            return requiredCount < 0
+                    ? Math.min(maxCount, pool.size())
+                    : Math.min(requiredCount, pool.size());
         }
 
         @Override
@@ -2676,7 +2708,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code prompt} means the begin site sent no choice message (the Karn Scion flows, which
      * prompt via the game-state broadcast alone) - nothing is sent on reconnect replay either,
      * matching begin. The boolean/punisher components drive the answer handling exactly as the
-     * legacy context did.
+     * legacy context did. {@code payLifePerSelection} marks a controller-paid hand selection
+     * whose remaining cards go to the graveyard.
      */
     record LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
@@ -2687,8 +2720,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean selectedToBattlefieldTapped, int minCount,
                                boolean gainLifeEqualToSelectedCardManaValue,
                                CardEffect effectIfNoCardChosen,
-                               boolean recordSelectedCount)
+                               boolean recordSelectedCount,
+                               boolean payLifePerSelection)
             implements PendingInteraction {
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, false);
+        }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                    java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
@@ -3042,22 +3091,40 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                java.util.List<Integer> mustAttackIndices,
                                java.util.List<CombatAttackTarget> availableTargets,
                                int taxPerCreature,
-                               boolean mustAttackWithAtLeastOne) implements PendingInteraction {
+                               boolean mustAttackWithAtLeastOne,
+                               UUID chooserId) implements PendingInteraction {
 
         public AttackerDeclaration {
+            if (chooserId == null) {
+                chooserId = activePlayerId;
+            }
             attackerIndices = java.util.List.copyOf(attackerIndices);
             mustAttackIndices = java.util.List.copyOf(mustAttackIndices);
             availableTargets = java.util.List.copyOf(availableTargets);
         }
 
+        public AttackerDeclaration(UUID activePlayerId,
+                                   java.util.List<Integer> attackerIndices,
+                                   java.util.List<Integer> mustAttackIndices,
+                                   java.util.List<CombatAttackTarget> availableTargets,
+                                   int taxPerCreature,
+                                   boolean mustAttackWithAtLeastOne) {
+            this(activePlayerId, attackerIndices, mustAttackIndices, availableTargets,
+                    taxPerCreature, mustAttackWithAtLeastOne, activePlayerId);
+        }
+
         public AttackerDeclaration(UUID activePlayerId) {
             this(activePlayerId, java.util.List.of(), java.util.List.of(),
-                    java.util.List.of(), 0, false);
+                    java.util.List.of(), 0, false, activePlayerId);
+        }
+
+        public boolean choosingForOpponent() {
+            return !chooserId.equals(activePlayerId);
         }
 
         @Override
         public UUID decidingPlayerId() {
-            return activePlayerId;
+            return chooserId;
         }
 
         @Override

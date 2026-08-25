@@ -6676,6 +6676,10 @@ public class TriggerCollectionService {
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD)) {
                 CardEffect resolved = effect;
+                if (effect instanceof TriggeringPermanentConditionalEffect) {
+                    resolved = resolveTriggeringPermanentConditional(gameData, perm, ownerId, leavingPermanent, effect);
+                    if (resolved == null) continue;
+                }
                 if (effect instanceof LeavingCreatureNameAwareEffect aware) {
                     if (leavingPermanent.getCard().isToken()) continue;
                     resolved = aware.boundToLeavingCreatureName(leavingPermanent.getCard().getName());
@@ -6921,6 +6925,27 @@ public class TriggerCollectionService {
                             gameData.id, card.getName(), leavingCard.getName());
                 }
             }
+        }
+    }
+
+    /** Fires graveyard abilities that trigger when the card itself returns to its owner's hand. */
+    public void checkCardReturnedToHandFromGraveyardTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                              Card returnedCard) {
+        if (graveyardOwnerId == null || returnedCard == null) {
+            return;
+        }
+
+        for (CardEffect effect : returnedCard.getEffects(EffectSlot.GRAVEYARD_ON_SELF_RETURNED_TO_HAND)) {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    returnedCard,
+                    graveyardOwnerId,
+                    returnedCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect))
+            ));
+            gameLogService.append(gameData, GameLog.abilityTriggers(returnedCard));
+            log.info("Game {} - {} triggers on returning from graveyard to hand",
+                    gameData.id, returnedCard.getName());
         }
     }
 

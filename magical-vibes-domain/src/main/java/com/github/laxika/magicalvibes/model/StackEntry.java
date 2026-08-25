@@ -106,7 +106,7 @@ public class StackEntry {
         return card.getEffects(EffectSlot.SPELL).stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
-                .anyMatch(RepeatableAdditionalManaCost::multikicker);
+                .anyMatch(cost -> cost.multikickerPaymentCount(repeatedAdditionalCosts) > 0);
     }
     /**
      * Whether this spell's buyback cost was paid (CR 702.27). Stamped by

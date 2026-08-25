@@ -410,9 +410,13 @@ public class GameViewProjectionFactory {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof PlayWithTopCardRevealedEffect) {
+                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all
-                        revealedPlayerIds.add(pid);
+                        if (topCardRevealed.allPlayers()) {
+                            revealedPlayerIds.addAll(data.orderedPlayerIds);
+                        } else {
+                            revealedPlayerIds.add(pid);
+                        }
                     } else if (pid.equals(viewerId) &&
                             (effect instanceof LookAtTopCardOfOwnLibraryEffect
                                     || effect instanceof AllowCastFromTopOfLibraryEffect

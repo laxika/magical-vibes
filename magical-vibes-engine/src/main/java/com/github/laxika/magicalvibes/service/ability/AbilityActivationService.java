@@ -476,6 +476,14 @@ public class AbilityActivationService {
      * revert would untap the source without draining what it produced.
      */
     static boolean isAwaitingOwnManaColorChoice(GameData gameData, UUID playerId) {
+        PendingInteraction.PermanentChoice playerChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (playerChoice != null && playerId.equals(playerChoice.playerId())
+                && playerChoice.context() instanceof PermanentChoiceContext.ManaAbilityAddToChosenPlayer chosen
+                && chosen.anyColor()) {
+            return true;
+        }
+
         PendingInteraction.ColorChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (choice == null || !playerId.equals(choice.playerId())) {

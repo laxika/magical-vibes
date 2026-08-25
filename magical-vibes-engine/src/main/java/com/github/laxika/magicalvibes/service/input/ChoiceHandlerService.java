@@ -179,6 +179,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.ChosenPlayerManaColorChoice ctx) {
+            handleChosenPlayerManaColorChosen(gameData, player, colorName, colorChoice, ctx);
+            return;
+        }
+
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx);
@@ -445,6 +450,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.NameCardMillDrawChoice ctx) {
             handleNameCardMillDrawChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice ctx) {
+            handleChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
@@ -971,6 +980,35 @@ public class ChoiceHandlerService {
             trigger.setProducedManaColor(manaColor);
             effectResolutionService.resolveEffects(gameData, trigger);
         }
+    }
+
+    private void handleChosenPlayerManaColorChosen(GameData gameData, Player player, String colorName,
+                                                   PendingInteraction.ColorChoice colorChoice,
+                                                   ChoiceContext.ChosenPlayerManaColorChoice ctx) {
+        if (!colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor chosenColor = ManaColor.valueOf(colorName);
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.sourceControllerId(), chosenColor);
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.recipientPlayerId());
+        manaPool.add(manaColor, ctx.amount());
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, ctx.amount());
+        }
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.sourceControllerId())) {
+            AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
+                + colorName.toLowerCase() + " mana."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleDifferentColorManaChosen(GameData gameData, Player player, String colorName,
@@ -3470,7 +3508,7 @@ public class ChoiceHandlerService {
                 for (Card card : toReturn) {
                     graveyard.remove(card);
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-                    gameData.addCardToHand(controllerId, card);
+                    graveyardService.addCardToHandFromGraveyard(gameData, controllerId, controllerId, card);
                 }
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);
@@ -3783,6 +3821,57 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} milled the named card {}, {} draws a card",
                     gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
                     matched.getName(), controllerName);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        if (deck == null || deck.isEmpty()) {
+            if (deck != null) {
+                Collections.shuffle(deck);
+            }
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is empty."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> revealed = new ArrayList<>();
+        Card found = null;
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            revealed.add(card);
+            if (card.getName().equals(cardName)) {
+                found = card;
+                break;
+            }
+        }
+
+        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        gameLogService.append(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
+
+        if (found == null) {
+            Collections.shuffle(revealed);
+            deck.addAll(revealed);
+            gameLogService.append(gameData, GameLog.text(
+                    targetName + " does not reveal a card named \"" + cardName + "\" and shuffles their library."));
+        } else {
+            revealed.remove(found);
+            for (Card card : revealed) {
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
+            }
+            deck.addFirst(found);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    targetName + " puts ", found, " on top of their library."));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

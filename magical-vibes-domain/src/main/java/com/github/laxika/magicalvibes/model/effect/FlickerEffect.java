@@ -46,7 +46,7 @@ public record FlickerEffect(
         boolean plusOnePlusOneCountersOnlyOnCreatures,
         int loyaltyCountersOnPlaneswalkersOnReturn,
         boolean addCounterIfReturnedUnderControllerOtherwiseTap,
-        Set<Keyword> grantedKeywordsOnReturn) implements CardEffect {
+        Set<Keyword> grantedKeywordsOnReturn) implements AttachedPermanentSelfTargetingEffect {
 
     public FlickerEffect {
         grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
@@ -149,6 +149,12 @@ public record FlickerEffect(
                 TurnStep.END_STEP, returnTapped, null, null, 0, false, false);
     }
 
+    /** Exile the enchanted creature and all Auras attached to it, returning them at the next end step. */
+    public static FlickerEffect exileEnchantedCreatureAndAurasReturnAtEndStep() {
+        return new FlickerEffect(FlickerScope.ENCHANTED_CREATURE_AND_AURAS, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
     /**
      * Exile this permanent, immediately return it under the effect controller's control
      * (Deadeye Navigator granted ability — "Exile this creature, then return it to the battlefield
@@ -239,7 +245,7 @@ public record FlickerEffect(
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
             return TargetSpec.benign(TargetPredicates.player());
         }
-        if (scope == FlickerScope.SELF) {
+        if (scope == FlickerScope.SELF || scope == FlickerScope.ENCHANTED_CREATURE_AND_AURAS) {
             return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;
