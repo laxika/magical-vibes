@@ -8,5 +8,6 @@ public enum GraveyardChoiceDestination {
     BOTTOM_OF_OWNERS_LIBRARY,
     SHUFFLE_INTO_OWNERS_LIBRARY,
     EXILE,
-    MAY_ABILITY_TARGET
+    MAY_ABILITY_TARGET,
+    COPY_ON_ENTER
 }

@@ -390,11 +390,15 @@ public class GameViewProjectionFactory {
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
         // Determine which players have their top card visible to the viewer.
         // PlayWithTopCardRevealedEffect = publicly revealed to all players.
-        // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect = private,
-        //   only visible to the controller.
+        // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect and temporary
+        // top-library permissions = private, only visible to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
+            if (pid.equals(viewerId)
+                    && data.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(pid)) {
+                revealedPlayerIds.add(pid);
+            }
             UUID freePlayCardId = data.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(pid);
             if (freePlayCardId != null && deck != null && !deck.isEmpty()
                     && freePlayCardId.equals(deck.getFirst().getId())) {
@@ -649,7 +653,7 @@ public class GameViewProjectionFactory {
 
     /**
      * Returns the top card of the player's library as a playable CardView if:
-     * - the player has a permanent with AllowCastFromTopOfLibraryEffect
+     * - the player has a permanent or temporary permission to cast from the top of their library
      * - the top card matches one of the castable types
      * - the player can afford and is allowed to cast it
      */

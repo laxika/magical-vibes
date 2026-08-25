@@ -278,6 +278,8 @@ public class TargetLegalityService {
             boolean zeroTargetsAllowed = effects.stream().anyMatch(effect ->
                     effect instanceof TargetedGraveyardCardsEffect
                             || effect instanceof ExileCardsFromGraveyardEffect
+                            || effect instanceof ExileGraveyardCardsEffect graveyardEffect
+                            && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD
                             || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
                             && returnEffect.minTargets() == 0)
                     || xValue != null && xValue == 0 && effects.stream()
@@ -361,6 +363,29 @@ public class TargetLegalityService {
                     UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
                     if (graveyardOwnerId != null && graveyardOwnerId.equals(playerId)) {
                         throw new IllegalStateException("Target must be in an opponent's graveyard");
+                    }
+                }
+                break;
+            }
+            if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
+                    && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+                if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+                    throw new IllegalStateException("Cannot target the same card twice");
+                }
+                for (UUID cardId : targetCardIds) {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                    if (card == null) {
+                        throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
+                        throw new IllegalStateException("Target must be in your graveyard");
+                    }
+                    if (graveyardEffect.filter() != null
+                            && !predicateEvaluationService.matchesCardPredicate(
+                            card, graveyardEffect.filter(), null)) {
+                        throw new IllegalStateException("Target card must be a "
+                                + CardPredicateUtils.describeFilter(graveyardEffect.filter()));
                     }
                 }
                 break;

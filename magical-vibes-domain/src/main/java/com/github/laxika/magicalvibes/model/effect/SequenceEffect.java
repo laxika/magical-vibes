@@ -85,6 +85,11 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     }
 
     @Override
+    public boolean hasAbilityResolutionCondition() {
+        return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
+    }
+
+    @Override
     public boolean onlyTriggersOnSacrifice() {
         return onlyIfSacrificed;
     }

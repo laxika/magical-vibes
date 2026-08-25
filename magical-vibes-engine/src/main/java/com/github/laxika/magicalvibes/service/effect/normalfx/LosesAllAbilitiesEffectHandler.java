@@ -70,30 +70,40 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID targetId = switch (e.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-            case TARGET -> entry.getTargetId();
-            default -> null;
-        };
-        if (targetId == null) {
+        List<UUID> targetIds;
+        if (e.scope() == GrantScope.SELF) {
+            UUID sourceId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId() : entry.getTargetId();
+            targetIds = sourceId == null ? List.of() : List.of(sourceId);
+        } else if (e.scope() == GrantScope.TARGET) {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
+        } else {
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
-            return;
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+
+            applyEffect(gameData, entry, e, target);
+
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " loses all abilities until end of turn."));
+            log.info("Game {} - {} loses all abilities until end of turn",
+                    gameData.id, target.getCard().getName());
         }
-
-        applyEffect(gameData, entry, e, target);
-
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities until end of turn."));
-        log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
     }
 
     private void applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
         if (e.duration() == EffectDuration.PERMANENT) {
             target.setLosesAllAbilitiesPermanently(true);
-        } else {
+            target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        } else if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
             target.setLosesAllAbilitiesUntilEndOfTurn(true);
         }
 
@@ -102,12 +112,10 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
         // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
         // direct Permanent.hasKeyword/flag readers; the layered pass treats the flag as a
         // seed-time removal and then replays this effect at its real timestamp.
-        target.setLosesAllAbilitiesUntilEndOfTurn(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(), e,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(), e,
                 target.getId(), null, null,
-                e.duration() == EffectDuration.PERMANENT
-                        ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN,
+                e.duration(),
                 0));
     }
 }

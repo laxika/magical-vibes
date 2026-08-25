@@ -216,6 +216,14 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
+        if (exile.trackWithSource()) {
+            gameData.graveyardTargetOperation.sourcePermanentId = gameData.playerBattlefields
+                    .getOrDefault(controllerId, List.of()).stream()
+                    .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                    .map(Permanent::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
         String zoneLabel = zoneLabel(scope);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 "Choose " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from " + zoneLabel + " to exile.");

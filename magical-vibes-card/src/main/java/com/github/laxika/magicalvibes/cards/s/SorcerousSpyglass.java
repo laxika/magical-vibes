@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "248")
+@CardRegistration(set = "LCI", collectorNumber = "261")
 public class SorcerousSpyglass extends Card {
 
     public SorcerousSpyglass() {

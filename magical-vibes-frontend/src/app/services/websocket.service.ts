@@ -206,6 +206,7 @@ export interface Card {
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;
+  modalModesMayRepeat?: boolean;
   modalOptions: ModalOptionView[] | null;
   /** Additional counters to remove when casting this card from exile. */
   exileCastCounterCost: number;

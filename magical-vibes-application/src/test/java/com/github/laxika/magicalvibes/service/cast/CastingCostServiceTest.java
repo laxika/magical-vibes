@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
@@ -1442,6 +1443,21 @@ class CastingCostServiceTest {
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
 
             gd.playerManaPools.get(player1Id).clear();
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("DiscardCardOrPayLifeCost — true with enough life or another hand card")
+        void discardCardOrPayLifeCost() {
+            Card spell = spellWith(new DiscardCardOrPayLifeCost(3));
+            gd.playerHands.get(player1Id).add(spell);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerLifeTotals.put(player1Id, 2);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
             gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }

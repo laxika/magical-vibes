@@ -272,12 +272,14 @@ public class DestructionSupport {
             if (controllerId == null) continue;
             gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
+            gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
         }
     }
 
     private void endSimultaneousCreatureDeaths(GameData gameData) {
         gameData.simultaneousDyingCreatures.clear();
         gameData.simultaneousDyingControllers.clear();
+        gameData.simultaneousDyingPowers.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {
@@ -447,7 +449,9 @@ public class DestructionSupport {
         }
 
         int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+        int lifeLoss = effectiveDamage
+                * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
 
         if (effectiveDamage > 0) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -924,10 +928,10 @@ public class DestructionSupport {
     public void createTokenForPlayer(GameData gameData, UUID controllerId,
                                       CreateTokenEffect token, int tokenCount,
                                       String sourceName, String sourceSetCode) {
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        boolean isCreature = token.primaryType() == CardType.CREATURE;
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, isCreature);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        boolean isCreature = token.primaryType() == CardType.CREATURE;
 
         for (int count = 0; count < tokenCount; count++) {
             for (int copy = 0; copy < tokenMultiplier; copy++) {

@@ -69,6 +69,18 @@ public interface CardEffect {
     default boolean resolvesWhenTargetIllegal() { return false; }
 
     /**
+     * Returns whether an enter-trigger collector should bind the entering permanent as the
+     * hidden reference used by this effect.
+     */
+    default boolean usesEnteringPermanentReference() { return false; }
+
+    /**
+     * Returns whether this effect or one of its nested effects branches on the source ability's
+     * resolution count for the current turn.
+     */
+    default boolean hasAbilityResolutionCondition() { return false; }
+
+    /**
      * Resolves a trigger-only condition that depends on the activated ability that caused the
      * trigger. Effects without such a condition remain unchanged.
      */

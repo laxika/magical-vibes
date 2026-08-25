@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -86,6 +87,7 @@ public class DamageTriggerCollectorService {
     private final PermanentRemovalService permanentRemovalService;
     private final CreatureControlService creatureControlService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final TapUntapSupport tapUntapSupport;
 
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)
@@ -266,6 +268,9 @@ public class DamageTriggerCollectorService {
         creatureControlService.applyControlEffect(gameData, sourceControllerId, match.permanent(),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                 EffectDuration.PERMANENT, null, match.permanent().getCard().getName());
+        if (controlEffect.untap()) {
+            tapUntapSupport.untapPermanent(gameData, match.permanent());
+        }
 
         log.info("Game {} - {} triggers, {} gains control of {}",
                 gameData.id, match.permanent().getCard().getName(),

@@ -465,6 +465,10 @@ public class GraveyardService {
 
         gameData.playerGraveyards.get(ownerId).add(card);
         gameData.markGraveyardEntry(card);
+        if (!card.isToken() && isPermanentCard(card)) {
+            gameData.playersWhoDescendedThisTurn.add(ownerId);
+            gameData.descentsThisTurn.merge(ownerId, 1, Integer::sum);
+        }
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);

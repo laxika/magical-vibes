@@ -201,12 +201,14 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
             } else {
+                int lifeLoss = e.lifeLoss()
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
                 int currentLife = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, currentLife - e.lifeLoss());
+                gameData.playerLifeTotals.put(controllerId, currentLife - lifeLoss);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
-                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + lifeLoss + " life (" , entry.getCard(), ")."));
+                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, lifeLoss, entry.getCard().getName());
             }
         }
     }

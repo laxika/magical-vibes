@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,41 @@ public class ExileAndReturnTransformedService {
         gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
                 " is exiled and returns transformed as ", backFace, "."));
         log.info("Game {} - {} exiled and returned transformed as {}",
+                gameData.id, originalCard.getName(), backFace.getName());
+        return true;
+    }
+
+    /** Returns a crafted source card from exile to its owner's battlefield transformed. */
+    public boolean returnTransformedFromExile(GameData gameData, UUID cardId, UUID oldSourcePermanentId) {
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled == null) {
+            return false;
+        }
+
+        Card originalCard = exiled.card();
+        Card backFace = originalCard.getBackFaceCard();
+        if (backFace == null) {
+            return false;
+        }
+
+        UUID ownerId = exiled.ownerId();
+        gameData.removeFromExile(cardId);
+
+        Permanent newPerm = new Permanent(originalCard);
+        newPerm.setCard(backFace);
+        newPerm.setTransformed(true);
+        newPerm.setSummoningSick(false);
+        gameData.transferCardsExiledByPermanent(oldSourcePermanentId, newPerm.getId());
+        if (backFace.hasType(CardType.PLANESWALKER) && backFace.getLoyalty() != null) {
+            int loyalty = gameQueryService.replaceCounters(gameData, newPerm, ownerId,
+                    CounterType.LOYALTY, backFace.getLoyalty(), ownerId);
+            newPerm.setCounterCount(CounterType.LOYALTY, loyalty);
+        }
+
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
+        gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
+                " returns transformed from exile as ", backFace, "."));
+        log.info("Game {} - {} returns transformed from exile as {}",
                 gameData.id, originalCard.getName(), backFace.getName());
         return true;
     }

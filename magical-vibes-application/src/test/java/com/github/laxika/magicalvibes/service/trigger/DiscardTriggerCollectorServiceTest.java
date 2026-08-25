@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -656,6 +657,31 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(mako.getId());
             assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — ExileTopCardsMayPlayUntilNextEndStepEffect")
+    class ControllerDiscardEventExileTopCard {
+
+        @Test
+        @DisplayName("queues one top-card exile trigger for the discard event")
+        void queuesTopCardExileTrigger() {
+            Permanent inti = createPermanent("Inti, Seneschal of the Sun");
+            var effect = new ExileTopCardsMayPlayUntilNextEndStepEffect(1);
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(inti, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(inti.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
         }
     }

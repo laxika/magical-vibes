@@ -9,6 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,6 +43,43 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantActivatedAbilityEffect) effect;
+        if (e.scope() == GrantScope.OWN_CREATURES
+                && e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                && entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) {
+                return;
+            }
+            PermanentPredicate scope = new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(),
+                    new PermanentControlledBySourceControllerPredicate(),
+                    new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
+            ));
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(),
+                    entry.getCard().getName(),
+                    entry.getSourcePermanentId(),
+                    entry.getControllerId(),
+                    new GrantActivatedAbilityEffect(
+                            e.ability().withGrantSource(entry.getSourcePermanentId()),
+                            GrantScope.TARGET,
+                            e.filter(),
+                            e.duration()),
+                    null,
+                    null,
+                    scope,
+                    e.duration(),
+                    0
+            ));
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(entry.getCard())
+                    .text(" grants \"" + e.ability().getDescription()
+                            + "\" to creatures you control for as long as it remains on the battlefield.")
+                    .build());
+            log.info("Game {} - {} grants activated ability to creatures you control while it remains",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
         int count = 0;
         if (e.scope() == GrantScope.TARGET) {
             // "Target creature gains '[ability]' until end of turn" (e.g. Banishing Knack).
@@ -103,7 +146,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
 
         String durationText = switch (e.duration()) {
             case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
-            case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as the source remains on the battlefield";
+            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS ->
+                    "for as long as the source remains on the battlefield";
             case PERMANENT, CONTINUOUS -> "indefinitely";
             default -> "until end of turn";
         };
@@ -119,6 +163,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                                 GrantActivatedAbilityEffect grant) {
         EffectDuration duration = grant.duration();
         if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || duration == EffectDuration.WHILE_SOURCE_REMAINS
                 || duration == EffectDuration.PERMANENT) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),

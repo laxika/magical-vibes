@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHan
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -639,8 +640,11 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
                 snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
-            } else if (effect instanceof AwardChosenColorManaEffect && permanent.getChosenColor() != null) {
-                snapshotEffects.add(new AwardManaEffect(ManaColor.valueOf(permanent.getChosenColor().name())));
+            } else if (effect instanceof AwardChosenColorManaEffect chosen && permanent.getChosenColor() != null) {
+                ManaColor chosenColor = ManaColor.valueOf(permanent.getChosenColor().name());
+                snapshotEffects.add(chosen.restriction() == null
+                        ? new AwardManaEffect(chosenColor)
+                        : new AwardRestrictedManaEffect(chosenColor, 1, chosen.restriction()));
             } else if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ENCHANTED
                     && permanent.getAttachedTo() != null) {
                 // Bind the enchanted permanent now: the Aura may be gone by resolution (Phantom Wings
@@ -691,6 +695,8 @@ public class ActivatedAbilityExecutionService {
     private void doResolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects, int xValue) {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
+        boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
 
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
@@ -705,7 +711,8 @@ public class ActivatedAbilityExecutionService {
                 && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
         if (chosenLandManaReplacement) {
             ChoiceContext.ManaColorChoice choiceContext =
-                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier);
+                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
+                            .withCaveSource(caveSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null, choiceContext, colors,
@@ -721,6 +728,9 @@ public class ActivatedAbilityExecutionService {
             if (totalMana >= 2) {
                 dampingReplacement = true;
                 gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
+                if (caveSource) {
+                    gameData.playerManaPools.get(playerId).addCaveManaTag(ManaColor.COLORLESS, 1);
+                }
                 
                 gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds {C} from ").card(permanent.getCard()).text(" (Damping Sphere replaces " + totalMana + " mana).").build());
             }
@@ -745,6 +755,9 @@ public class ActivatedAbilityExecutionService {
                     } else {
                         pool.add(effectiveColor, totalMana);
                     }
+                    if (caveSource) {
+                        pool.addCaveManaTag(effectiveColor, totalMana);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(effectiveColor, totalMana);
                     }
@@ -765,6 +778,9 @@ public class ActivatedAbilityExecutionService {
                                     twistedColors.iterator().next());
                             ManaPool pool = gameData.playerManaPools.get(playerId);
                             pool.add(color, totalMana);
+                            if (caveSource) {
+                                pool.addCaveManaTag(color, totalMana);
+                            }
                             if (isCreatureSource) {
                                 pool.addCreatureMana(color, totalMana);
                             }
@@ -836,6 +852,12 @@ public class ActivatedAbilityExecutionService {
                         pool.addSnowMana(effectiveColor, amount);
                     } else {
                         pool.add(effectiveColor, amount);
+                    }
+                    if (caveSource) {
+                        pool.addCaveManaTag(effectiveColor, amount);
+                    }
+                    if (award.tracksProducingSourceForSpellCastTriggers()) {
+                        pool.addSpellCastTriggerMana(permanent.getId(), effectiveColor, amount);
                     }
                     if (isCreatureSource) {
                         pool.addCreatureMana(effectiveColor, amount);
@@ -916,7 +938,7 @@ public class ActivatedAbilityExecutionService {
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
                         playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard(),
-                        permanent.getId(), null, snowSource);
+                        permanent.getId(), null, snowSource, caveSource);
                 if (prompted) {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
@@ -931,6 +953,9 @@ public class ActivatedAbilityExecutionService {
                             ofColors.colors().get(0));
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(manaColor, picks);
+                    if (caveSource) {
+                        pool.addCaveManaTag(manaColor, picks);
+                    }
                     if (ofColors.grantsRiot()) {
                         pool.addRiotGrantingMana(manaColor, picks);
                     }
@@ -941,7 +966,8 @@ public class ActivatedAbilityExecutionService {
                     // Each of the `picks` mana is chosen individually from the fixed color list; the
                     // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
-                            .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors());
+                            .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
+                            .withCaveSource(caveSource);
                     if (ofColors.grantsRiot()) {
                         choiceContext = choiceContext.withRiot();
                     }
@@ -956,6 +982,9 @@ public class ActivatedAbilityExecutionService {
                 if (amount > 0) {
                     arm.restriction().applyTo(gameData.playerManaPools.get(playerId), arm.color(), amount,
                             permanent.getChosenSubtype());
+                    if (caveSource) {
+                        gameData.playerManaPools.get(playerId).addCaveManaTag(arm.color(), amount);
+                    }
                 }
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 ahg.applyTo(gameData.playerManaPools.get(playerId));
@@ -972,6 +1001,9 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             ManaColor.valueOf(onlyColor.name()));
                     gameData.playerManaPools.get(playerId).add(manaColor);
+                    if (caveSource) {
+                        gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, 1);
+                    }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
@@ -1001,6 +1033,9 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             ManaColor.valueOf(color.name()));
                     pool.add(manaColor, manaMultiplier);
+                    if (caveSource) {
+                        pool.addCaveManaTag(manaColor, manaMultiplier);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, manaMultiplier);
                     }
@@ -1019,6 +1054,9 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             ManaColor.valueOf(onlyColor.name()));
                     gameData.playerManaPools.get(playerId).add(manaColor);
+                    if (caveSource) {
+                        gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, 1);
+                    }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
@@ -1136,8 +1174,10 @@ public class ActivatedAbilityExecutionService {
                     } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                     } else {
+                        int lifeLoss = effectiveDamage
+                                * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
                         int currentLife = gameData.getLife(playerId);
-                        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                        gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
                         if (effectiveDamage > 0) {
                             String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
                             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -1145,6 +1185,10 @@ public class ActivatedAbilityExecutionService {
                         }
                     }
                     if (effectiveDamage > 0) {
+                        gameData.recordRedSourceNoncombatDamage(playerId,
+                                gameQueryService.getDamageSourceColors(
+                                        gameData, gameQueryService.getEffectiveColors(gameData, permanent)),
+                                effectiveDamage);
                         gameData.recordDamageToPlayer(playerId, effectiveDamage,
                                 gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
                         gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
@@ -1261,6 +1305,10 @@ public class ActivatedAbilityExecutionService {
     private void dealManaAbilityRiderDamageToPlayer(GameData gameData, Permanent permanent, UUID playerId, int damage) {
         String cardName = permanent.getCard().getName();
         String playerName = gameData.playerIdToName.get(playerId);
+        damage = gameQueryService.applyOjerAxonilDamageReplacement(
+                gameData, damage,
+                gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, permanent)),
+                gameQueryService.findPermanentController(gameData, permanent.getId()), playerId);
         if (gameQueryService.isDamagePreventable(gameData)) {
             CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
             boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
@@ -1299,14 +1347,20 @@ public class ActivatedAbilityExecutionService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
                 int currentLife = gameData.getLife(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
                 if (effectiveDamage > 0) {
                     gameLogService.append(gameData, GameLog.text(playerName + " takes " + effectiveDamage + " damage from " + cardName + "."));
                     log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
                 }
             }
             if (effectiveDamage > 0) {
+                gameData.recordRedSourceNoncombatDamage(
+                        gameQueryService.findPermanentController(gameData, permanent.getId()),
+                        gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, permanent)),
+                        effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage,
                         gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
                 gameData.recordDamageRecipientBySource(permanent.getId(), playerId);

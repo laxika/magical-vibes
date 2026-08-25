@@ -27,6 +27,7 @@ public record LibrarySearchParams(
         boolean shuffleAfterSelection,
         String prompt,
         LibrarySearchDestination destination,
+        Integer discoverValue,
         Set<CardType> filterCardTypes,
         List<Card> accumulatedCards,
         String filterCardName,
@@ -72,7 +73,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withCards(List<Card> newCards) {
         return new LibrarySearchParams(playerId, newCards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
@@ -84,7 +85,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
         return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
@@ -108,6 +109,7 @@ public record LibrarySearchParams(
         private boolean shuffleAfterSelection = true;
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
+        private Integer discoverValue;
         private Set<CardType> filterCardTypes;
         private List<Card> accumulatedCards = List.of();
         private String filterCardName;
@@ -196,6 +198,11 @@ public record LibrarySearchParams(
 
         public Builder destination(LibrarySearchDestination destination) {
             this.destination = destination;
+            return this;
+        }
+
+        public Builder discoverValue(Integer discoverValue) {
+            this.discoverValue = discoverValue;
             return this;
         }
 
@@ -324,7 +331,7 @@ public record LibrarySearchParams(
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,

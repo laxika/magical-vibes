@@ -197,6 +197,7 @@ public class PermanentViewFactory {
                 .modalChoicesRequired(0)
                 .modalChoicesMax(0)
                 .modalOptional(false)
+                .modalModesMayRepeat(false)
                 .modalOptions(null)
                 .prepareSpell(null)
                 .build();

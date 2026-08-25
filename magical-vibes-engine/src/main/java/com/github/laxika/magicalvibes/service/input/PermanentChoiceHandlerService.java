@@ -147,6 +147,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
         } else if (context instanceof PermanentChoiceContext.PatternMatcherCreatureChoice patternMatcher) {
             battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
+        } else if (context instanceof PermanentChoiceContext.DeepfathomEchoCreatureChoice deepfathomEcho) {
+            battlefieldHandler.handleDeepfathomEchoCreatureChoice(gameData, permanentId, deepfathomEcho);
         } else if (context instanceof PermanentChoiceContext.PolymorphousRushCreatureChoice polymorphousRush) {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {

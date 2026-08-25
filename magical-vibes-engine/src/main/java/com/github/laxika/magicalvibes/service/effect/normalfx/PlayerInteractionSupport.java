@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -82,6 +83,13 @@ public class PlayerInteractionSupport {
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
+                null, null);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
+                                          int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
+                                          CardEffect thenEffect, CardPredicate thenCondition) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -130,14 +138,14 @@ public class PlayerInteractionSupport {
                     effect.drawAndRepeat(), repeats ? effect.predicate() : null,
                     repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
                     effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId, true);
+                    returnExiledSourceCardId, true, thenEffect, thenCondition);
         } else {
             playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
                     effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
                     effect.drawAndRepeat(), repeats ? effect.predicate() : null,
                     repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
                     effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId);
+                    returnExiledSourceCardId, false, thenEffect, thenCondition);
         }
 
     }
@@ -519,7 +527,7 @@ public class PlayerInteractionSupport {
                 false, false, null, false, false, 0, false, true, true, false, false);
     }
 
-    private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+    public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              CardPredicate filter, boolean discardMode, boolean exileMode, UUID sourcePermanentId,
                                              boolean optional, boolean exileAllCopiesOfChosenNames,

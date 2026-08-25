@@ -128,6 +128,8 @@ public class CardChoiceHandlerService {
         Integer sacrificeUnlessPayGenericReduction = null;
         CounterType artifactCounterType = null;
         int artifactCounterCount = 0;
+        CardEffect thenEffect = null;
+        CardPredicate thenCondition = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
@@ -152,6 +154,8 @@ public class CardChoiceHandlerService {
             returnSourcePermanentId = hc.returnSourcePermanentId();
             artifactCounterType = hc.artifactCounterType();
             artifactCounterCount = hc.artifactCounterCount();
+            thenEffect = hc.thenEffect();
+            thenCondition = hc.thenCondition();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -217,6 +221,17 @@ public class CardChoiceHandlerService {
                     if (pendingEntry != null) {
                         pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                                 List.of(ReturnToHandEffect.self()));
+                    }
+                }
+                if (thenEffect != null) {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    if (pendingEntry != null) {
+                        UUID sourceCardId = pendingEntry.getCard() == null ? null : pendingEntry.getCard().getId();
+                        if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
+                                card, thenCondition, sourceCardId, gameData, playerId)) {
+                            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                                    List.of(thenEffect));
+                        }
                     }
                 }
                 // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
@@ -654,18 +669,25 @@ public class CardChoiceHandlerService {
                         sourceCard.getName() + "'s effect",
                         List.of(thenEffect),
                         followUp.thenEffectTargetId(),
-                        (UUID) null);
+                        gameData.pendingEffectResolutionEntry == null
+                                ? null : gameData.pendingEffectResolutionEntry.getSourcePermanentId());
                 thenEntry.setNonTargeting(true);
+                copyDiscardFollowUpContext(gameData, thenEntry, discardedCard);
                 gameData.stack.add(thenEntry);
             } else {
+                UUID sourcePermanentId = gameData.pendingEffectResolutionEntry == null
+                        ? null : gameData.pendingEffectResolutionEntry.getSourcePermanentId();
                 StackEntry reflexiveEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
                         playerId,
                         sourceCard.getName() + "'s effect",
-                        List.of(thenEffect)
+                        List.of(thenEffect),
+                        null,
+                        sourcePermanentId
                 );
                 reflexiveEntry.setEventValue(followUp.eachPlayerNoDiscardCount());
+                copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard);
                 gameData.stack.add(reflexiveEntry);
             }
             log.info("Game {} - {} discard-then rider pushed for {}",
@@ -673,6 +695,18 @@ public class CardChoiceHandlerService {
         }
 
         resumeRemainingEffectsAfterDiscard(gameData);
+    }
+
+    private void copyDiscardFollowUpContext(GameData gameData, StackEntry entry, Card discardedCard) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            entry.setSourcePermanentSnapshot(pendingEntry.getSourcePermanentSnapshot());
+        }
+        if (discardedCard != null) {
+            entry.setTriggeringCardId(discardedCard.getId());
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    gameData.graveyardEntryVersion(discardedCard.getId()));
+        }
     }
 
     /**

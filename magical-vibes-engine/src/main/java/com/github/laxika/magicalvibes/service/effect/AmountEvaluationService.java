@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
+import com.github.laxika.magicalvibes.model.amount.ColorsAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
 import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesLeftBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockedBySource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
@@ -51,7 +53,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerT
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DescentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
@@ -126,6 +130,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
+import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -201,6 +206,8 @@ public class AmountEvaluationService {
                     ctx.xValue();
             case SnowManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId());
+            case CaveManaSpentToCast ignored ->
+                    ctx.sourceCard() == null ? 0 : gameData.getSpellCastCaveManaSpent(ctx.sourceCard().getId());
             case EventValue ignored ->
                     ctx.eventValue();
             case RepeatedAdditionalCostCount a ->
@@ -230,6 +237,8 @@ public class AmountEvaluationService {
                     sumPermanentManaValues(gameData, s, ctx);
             case AttachedPermanentColorCount ignored ->
                     attachedPermanentColorCount(gameData, ctx);
+            case ColorsAmongCardsExiledWithSource ignored ->
+                    colorsAmongCardsExiledWithSource(gameData, ctx);
             case TargetPermanentColorCount ignored ->
                     targetPermanentColorCount(gameData, ctx);
             case BasicLandTypesAmongControlledLands domainAmount ->
@@ -361,6 +370,8 @@ public class AmountEvaluationService {
                     countCreatureSubtypeDeathsThisTurn(gameData, c, ctx);
             case CreaturesEnteredBattlefieldThisTurn c ->
                     countCreaturesEnteredBattlefieldThisTurn(gameData, c, ctx);
+            case CreaturesLeftBattlefieldThisTurn c ->
+                    countCreaturesLeftBattlefieldThisTurn(gameData, c, ctx);
             case PermanentsEnteredBattlefieldThisTurn c ->
                     countPermanentsEnteredBattlefieldThisTurn(gameData, c, ctx);
             case LifeGainedThisTurn c ->
@@ -391,6 +402,8 @@ public class AmountEvaluationService {
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                                     .getOrDefault(ctx.targetPermanentId(), java.util.Set.of()).size();
+            case DescentsThisTurn ignored ->
+                    ctx.controllerId() == null ? 0 : gameData.descentsThisTurn.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToControllerThisTurn ignored ->
                     ctx.controllerId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.controllerId(), 0);
@@ -405,6 +418,8 @@ public class AmountEvaluationService {
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPermanentsThisTurn
                                     .getOrDefault(ctx.targetPermanentId(), 0);
+            case TotalManaValueOfCardsExiledWithSource ignored ->
+                    totalManaValueOfCardsExiledWithSource(gameData, ctx);
             case TotalPowerOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, true);
             case TotalPowerOfControlledCreatures ignored ->
@@ -584,11 +599,15 @@ public class AmountEvaluationService {
         return lastKnownPower == null ? 0 : Math.max(0, lastKnownPower);
     }
 
-    /** Mana value of the targeted spell on the stack (Refuse); 0 if it has already left. */
+    /** Mana value of the targeted or spell-cast-triggering spell on the stack; 0 if it has left. */
     private int targetSpellManaValue(GameData gameData, AmountContext ctx) {
-        if (ctx.targetPermanentId() == null) return 0;
+        UUID triggeringCardId = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringCardId();
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(ctx.targetPermanentId())) {
+            boolean isTargetedSpell = ctx.targetPermanentId() != null
+                    && se.getCard().getId().equals(ctx.targetPermanentId());
+            boolean isTriggeringSpell = triggeringCardId != null
+                    && se.getCard().getId().equals(triggeringCardId);
+            if (isTargetedSpell || isTriggeringSpell) {
                 return se.getCard().getManaValue() + se.getXValue();
             }
         }
@@ -1300,6 +1319,16 @@ public class AmountEvaluationService {
         return total;
     }
 
+    private int countCreaturesLeftBattlefieldThisTurn(
+            GameData gameData, CreaturesLeftBattlefieldThisTurn count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += gameData.creatureLeftBattlefieldCountThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
+    }
+
     private int countPermanentsEnteredBattlefieldThisTurn(
             GameData gameData, PermanentsEnteredBattlefieldThisTurn count, AmountContext ctx) {
         int total = 0;
@@ -1414,6 +1443,21 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int totalManaValueOfCardsExiledWithSource(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+        return gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
+                .mapToInt(Card::getManaValue)
+                .sum();
+    }
+
+    private int colorsAmongCardsExiledWithSource(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+        return (int) gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
+                .flatMap(card -> card.getColors().stream())
+                .distinct()
+                .count();
     }
 
     private int imprintedCardManaValue(GameData gameData, AmountContext ctx) {

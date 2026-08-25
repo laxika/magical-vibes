@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * With {@link EffectDuration#UNTIL_END_OF_TURN}: one-shot effect that sets a temporary flag
  * on the permanent, cleared by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
  * Used by cards like Merfolk Trickster. Resolved by {@code KeywordGrantResolutionService}.
+ * Source-linked durations create a floating layer effect that lasts while the source remains on
+ * the battlefield.
  *
  * @param scope    which permanents are affected (ENCHANTED_CREATURE, TARGET, etc.)
  * @param filter   optional additional permanent filter
@@ -45,7 +47,10 @@ public record LosesAllAbilitiesEffect(GrantScope scope, PermanentPredicate filte
         if (scope == GrantScope.SELF) {
             return new TargetSpec(null, false, null, true, 1);
         }
-        return duration == EffectDuration.UNTIL_END_OF_TURN || duration == EffectDuration.PERMANENT
+        return duration == EffectDuration.UNTIL_END_OF_TURN
+                || duration == EffectDuration.PERMANENT
+                || duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || duration == EffectDuration.WHILE_SOURCE_REMAINS
                 ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

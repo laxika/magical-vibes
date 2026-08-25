@@ -22,6 +22,9 @@ public enum ManaSpendRestriction {
     /** Choose from the colors of the source permanent's imprinted card (Chrome Mox). */
     IMPRINTED_CARD_COLORS,
 
+    /** Choose from the colors of cards exiled with the source permanent (Pit of Offerings). */
+    EXILED_CARD_COLORS,
+
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it
      * pays for (Primal Wellspring).

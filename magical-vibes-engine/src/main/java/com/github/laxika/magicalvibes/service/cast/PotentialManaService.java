@@ -93,6 +93,7 @@ public class PotentialManaService {
                 virtual.addSnowManaTag(color, current.getSnowMana(color));
                 virtual.addCreatureMana(color, current.getCreatureMana(color));
                 virtual.addAbilityOnlyMana(color, current.getAbilityOnlyMana(color));
+                virtual.addLandAbilityOnlyMana(color, current.getLandAbilityOnlyMana(color));
             }
         }
 
@@ -434,7 +435,8 @@ public class PotentialManaService {
                 }
             } else if (effect instanceof ManaProducingEffect mana && mana.estimatedCountsAllColors()) {
                 anyColorAmount += Math.max(1, mana.estimatedWildcardMana());
-            } else if (effect instanceof AwardChosenColorManaEffect
+            } else if (effect instanceof AwardChosenColorManaEffect chosen
+                    && chosen.restriction() == null
                     && permanent != null && permanent.getChosenColor() != null) {
                 fixed.merge(ManaColor.valueOf(permanent.getChosenColor().name()), 1, Integer::sum);
             }

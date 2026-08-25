@@ -39,6 +39,8 @@ public class Permanent {
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
     private boolean attackedThisCombat;
+    /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
+    private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
     /** Set when this creature is declared as an attacker; unlike {@link #attackedThisTurn} it survives
      *  the intervening opponent turns and is rolled into {@link #attackedDuringControllersLastTurn} at
      *  the start of its controller's next turn by {@link #rollOverAttackRecord()}. */
@@ -617,6 +619,7 @@ public class Permanent {
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
         this.attackedThisCombat = source.attackedThisCombat;
+        this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
         this.attackedDuringControllersLastTurn = source.attackedDuringControllersLastTurn;
         this.cantAttackNextTurn = source.cantAttackNextTurn;
@@ -891,6 +894,12 @@ public class Permanent {
             this.attackedThisTurn = true;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
+        }
+    }
+
+    public void recordCreatureThatCrewedThisTurn(UUID creatureId) {
+        if (creatureId != null) {
+            creaturesThatCrewedThisTurn.add(creatureId);
         }
     }
 
@@ -1385,6 +1394,7 @@ public class Permanent {
         this.mustBeBlockedThisTurn = false;
         this.mustBeBlockedByAllThisTurn = false;
         this.blockedWithoutBlockers = false;
+        this.creaturesThatCrewedThisTurn.clear();
         this.auraEffectsIgnoredThisTurn = false;
         this.dampingEngineEffectIgnoredThisTurn = false;
         this.cantRegenerateThisTurn = false;

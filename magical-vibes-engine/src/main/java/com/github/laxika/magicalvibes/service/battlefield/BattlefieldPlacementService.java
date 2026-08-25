@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTur
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledLandsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
@@ -172,7 +173,10 @@ public class BattlefieldPlacementService {
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
+            applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
+            applySpellEntryCounters(gameData, controllerId, permanent);
+            applySpellGrantedSubtypes(gameData, permanent);
             applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
@@ -636,6 +640,26 @@ public class BattlefieldPlacementService {
         }
     }
 
+    private void applyControlledLandsEnterUntapped(GameData gameData, UUID enteringControllerId,
+                                                   Permanent enteringPermanent) {
+        if (!enteringPermanent.getCard().hasType(CardType.LAND)) {
+            return;
+        }
+        gameData.forEachBattlefield((sourcePlayerId, battlefield) -> {
+            if (!sourcePlayerId.equals(enteringControllerId)) {
+                return;
+            }
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ControlledLandsEnterUntappedEffect) {
+                        enteringPermanent.untap();
+                        return;
+                    }
+                }
+            }
+        });
+    }
+
     private void applyOpponentOnlyEnterTappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
         gameData.forEachBattlefield((sourcePlayerId, battlefield) -> {
             if (sourcePlayerId.equals(enteringControllerId)) return;
@@ -1049,6 +1073,26 @@ public class BattlefieldPlacementService {
                 permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + granted);
         log.info("Game {} - {} enters with {} additional +1/+1 counter(s) granted to its spell",
                 gameData.id, permanent.getCard().getName(), granted);
+    }
+
+    private void applySpellEntryCounters(GameData gameData, UUID controllerId, Permanent permanent) {
+        Map<CounterType, Integer> granted = gameData.spellEntryCounters.remove(permanent.getCard().getId());
+        if (granted == null || granted.isEmpty()
+                || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
+            return;
+        }
+        granted.forEach((counterType, count) ->
+                applyEntryCounters(gameData, controllerId, permanent, counterType, count));
+    }
+
+    private void applySpellGrantedSubtypes(GameData gameData, Permanent permanent) {
+        Set<CardSubtype> granted = gameData.spellGrantedSubtypesOnEntry.remove(permanent.getCard().getId());
+        if (granted == null) return;
+        for (CardSubtype subtype : granted) {
+            if (!permanent.getGrantedSubtypes().contains(subtype)) {
+                permanent.getGrantedSubtypes().add(subtype);
+            }
+        }
     }
 
     /**

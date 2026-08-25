@@ -90,7 +90,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                 } else {
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
-                            e.upTo(), e.exileAllCopiesOfChosenNames(), e.imprintOnSource());
+                            e.upTo(), e.exileAllCopiesOfChosenNames(), 0, e.imprintOnSource(), e.revealHand());
                 }
             }
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);

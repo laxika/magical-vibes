@@ -215,7 +215,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -232,7 +232,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -310,7 +310,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -409,6 +409,7 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        etbEntry.setTriggeringCardId(pending.triggeringCardId());
         if (pending.sourcePermanentId() != null) {
             etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
             Permanent sourcePermanent = gameQueryService.findPermanentById(

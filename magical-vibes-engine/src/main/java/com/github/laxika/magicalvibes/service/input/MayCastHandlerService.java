@@ -743,7 +743,8 @@ public class MayCastHandlerService {
         boolean isPermanentSpell = cardToPlay.hasType(CardType.CREATURE)
                 || cardToPlay.hasType(CardType.ARTIFACT)
                 || cardToPlay.hasType(CardType.ENCHANTMENT)
-                || cardToPlay.hasType(CardType.PLANESWALKER);
+                || cardToPlay.hasType(CardType.PLANESWALKER)
+                || cardToPlay.hasType(CardType.BATTLE);
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
                 : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));

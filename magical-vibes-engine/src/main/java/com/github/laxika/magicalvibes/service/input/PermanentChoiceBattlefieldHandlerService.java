@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCrea
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
@@ -122,6 +123,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
+    private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
     private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
     private final PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler guardDogsHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
@@ -982,6 +984,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleDeepfathomEchoCreatureChoice(GameData gameData, UUID chosenPermanentId,
+                                                   PermanentChoiceContext.DeepfathomEchoCreatureChoice context) {
+        deepfathomEchoHandler.completeChoice(gameData, chosenPermanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handlePolymorphousRushCreatureChoice(GameData gameData, UUID chosenPermanentId,
                                                      PermanentChoiceContext.PolymorphousRushCreatureChoice context) {
         makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler.completeChoice(
@@ -1581,11 +1589,17 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
-        UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
-                .map(Permanent::getId)
-                .findFirst()
-                .orElse(null);
+        UUID sourcePermanentId = ctx.sourcePermanentId();
+        if (sourcePermanentId == null) {
+            sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
+                    .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
+                    .map(Permanent::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Permanent sourcePermanentSnapshot = sourcePermanent == null ? null : new Permanent(sourcePermanent);
 
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
@@ -1613,6 +1627,22 @@ public class PermanentChoiceBattlefieldHandlerService {
         // to any target"), choose the target as the reflexive trigger goes on the stack.
         if (ctx.thenEffect() != null) {
             List<CardEffect> thenEffects = new ArrayList<>(List.of(ctx.thenEffect()));
+            int targetGroupIndex = ctx.sourceCard().getEffectTargetIndex(ctx.thenEffect());
+            if (targetGroupIndex >= 0) {
+                List<Integer> precedingGroupSizes = new ArrayList<>();
+                for (int i = 0; i < targetGroupIndex; i++) {
+                    precedingGroupSizes.add(0);
+                }
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        ctx.sourceCard(), ctx.controllerId(), thenEffects, sourcePermanentId,
+                        List.of(), targetGroupIndex, 0, precedingGroupSizes, 0, List.of(), false));
+                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             var targetSpec = ctx.thenEffect().targetSpec();
             boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                     || targetSpec.admits(TargetPredicate.Kind.PLAYER);
@@ -1648,7 +1678,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                 } else {
                     gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                    ctx.sourceCard(), ctx.controllerId(), thenEffects));
+                                    ctx.sourceCard(), ctx.controllerId(), thenEffects,
+                                    sourcePermanentId, sourcePermanentSnapshot));
                     playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
                             validPermanentTargets, validPlayerTargets,
                             ctx.sourceCard().getName() + " — Choose any target.");

@@ -31,6 +31,7 @@ public sealed interface PermanentPredicate permits
         PermanentControllerControlsPermanentPredicate,
         PermanentControllerControlsPermanentCountAtMostPredicate,
         PermanentControllerPoisonCountersAtLeastPredicate,
+        PermanentCrewedBySourceThisTurnPredicate,
         PermanentCounterCountAtLeastPredicate,
         PermanentDealtDamageThisTurnPredicate,
         PermanentDealtDamageToAnythingThisTurnPredicate,
@@ -65,6 +66,8 @@ public sealed interface PermanentPredicate permits
         PermanentInCombatWithSourcePredicate,
         PermanentIsArtifactPredicate,
         PermanentIsAttackingPredicate,
+        PermanentAttacksPlayerWithMostLifePredicate,
+        PermanentAttacksWhileSourceControllerHasMostLifePredicate,
         PermanentIsAttackingOpponentOfSourceControllerPredicate,
         PermanentIsAttackingSourceControllerPredicate,
         PermanentIsAuraAttachedToCreaturePredicate,
@@ -117,6 +120,7 @@ public sealed interface PermanentPredicate permits
         PermanentPowerAtMostSourceCountersPredicate,
         PermanentPowerAtMostSourcePowerPredicate,
         PermanentPowerAtMostXPredicate,
+        PermanentPowerGreaterThanBasePowerPredicate,
         PermanentPowerLessThanXPredicate,
         PermanentPowerEqualsToughnessPredicate,
         PermanentPowerLessThanSourcePowerPredicate,
@@ -124,6 +128,7 @@ public sealed interface PermanentPredicate permits
         PermanentToughnessAtMostPredicate,
         PermanentToughnessAtMostControlledSubtypeCountPredicate,
         PermanentToughnessAtMostXWhenMadnessOtherwisePredicate,
+        PermanentToughnessGreaterThanPowerPredicate,
         PermanentToughnessLessThanSourcePowerPredicate,
         PermanentTruePredicate {
 }

@@ -1779,6 +1779,12 @@ public class SpellCastTriggerCollectorService {
 
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId) {
+        if (trigger.requiresManaProducedBySource()
+                && !match.gameData().spellCastUsedManaFromSource(
+                spellCard.getId(), match.permanent().getId())) {
+            return false;
+        }
+
         // "Whenever you cast a spell during an opponent's turn" — the source's controller must not be
         // the active player when the spell is cast (Glen Elendra Pranksters).
         if (trigger.onlyDuringOpponentTurn()
@@ -1894,7 +1900,7 @@ public class SpellCastTriggerCollectorService {
             if (multiTarget) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         sourceCard, match.controllerId(), queued, match.permanent().getId(),
-                        List.of(), 0, 0));
+                        List.of(), 0, 0, List.of(), 0, List.of(), false, spellCard.getId()));
             } else {
                 match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         sourceCard, match.controllerId(), queued, playerTargetOnly, trigger.targetFilter(),

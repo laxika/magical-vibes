@@ -37,6 +37,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Discover a qualifying card: cast it for free or put it into its controller's hand. */
+    DISCOVER,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the
     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
     EXILE_FOR_FREE_CAST,

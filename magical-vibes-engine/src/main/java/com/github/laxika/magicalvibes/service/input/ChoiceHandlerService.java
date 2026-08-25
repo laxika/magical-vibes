@@ -603,6 +603,9 @@ public class ChoiceHandlerService {
         if (ctx.creatureSpellOrAbilityOnly()) {
             // "Any combination of colors" means each mana gets its own color choice.
             manaPool.addCreatureSpellOrAbilityMana(manaColor, 1);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
                     + " mana (creature spells or creature abilities only).";
@@ -613,7 +616,9 @@ public class ChoiceHandlerService {
             int remaining = amount - 1;
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice
-                        .creatureSpellOrAbilityOnly(ctx.playerId(), remaining);
+                        .creatureSpellOrAbilityOnly(ctx.playerId(), remaining)
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors,
@@ -628,6 +633,9 @@ public class ChoiceHandlerService {
             if (ctx.creatureSourceSpellOrAbility()) {
                 manaPool.addSubtypeCreatureSourceSpellOrAbilityMana(
                         ctx.restrictedToCreatureSubtype(), manaColor, 1);
+                if (ctx.fromCaveSource()) {
+                    manaPool.addCaveManaTag(manaColor, 1);
+                }
                 subtypeLabel = ctx.restrictedToCreatureSubtype().getDisplayName();
                 restriction = "creature spells or creature-source abilities";
             } else {
@@ -636,6 +644,9 @@ public class ChoiceHandlerService {
                     restrictedSubtypes = Set.of(ctx.restrictedToCreatureSubtype());
                 }
                 manaPool.addSubtypeSpellOrAbilityMana(restrictedSubtypes, manaColor, 1);
+                if (ctx.fromCaveSource()) {
+                    manaPool.addCaveManaTag(manaColor, 1);
+                }
                 subtypeLabel = restrictedSubtypes.stream()
                         .map(CardSubtype::getDisplayName)
                         .toList()
@@ -655,6 +666,7 @@ public class ChoiceHandlerService {
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype())
                         : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype());
+                nextCtx = nextCtx.withSnowSource(ctx.fromSnowSource()).withCaveSource(ctx.fromCaveSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -664,6 +676,9 @@ public class ChoiceHandlerService {
         } else if (ctx.flashbackOnly()) {
             // "Any combination of colors" — add 1 mana of the chosen color per choice
             manaPool.addFlashbackOnlyMana(manaColor, 1);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana (flashback only).";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -672,7 +687,10 @@ public class ChoiceHandlerService {
             // If more mana to choose, prompt again for the next color
             int remaining = amount - 1;
             if (remaining > 0) {
-                ChoiceContext.ManaColorChoice nextCtx = new ChoiceContext.ManaColorChoice(ctx.playerId(), ctx.fromCreature(), remaining, null, true);
+                ChoiceContext.ManaColorChoice nextCtx = new ChoiceContext.ManaColorChoice(
+                        ctx.playerId(), ctx.fromCreature(), remaining, null, true)
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add (flashback only)."));
@@ -682,6 +700,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsRiot()) {
             manaPool.add(manaColor, 1);
             manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, 1);
             }
@@ -696,7 +717,9 @@ public class ChoiceHandlerService {
             int remaining = amount - 1;
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.riotColorCombination(
-                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions());
+                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -710,6 +733,9 @@ public class ChoiceHandlerService {
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, 1);
             }
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, 1);
             }
@@ -722,7 +748,8 @@ public class ChoiceHandlerService {
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.fixedColorCombination(
                         ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
-                        .withSnowSource(ctx.fromSnowSource());
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -731,6 +758,9 @@ public class ChoiceHandlerService {
             }
         } else if (ctx.manaValueAtLeastFour()) {
             manaPool.addManaValueAtLeastFourOnlyMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (spells with mana value 4 or greater only).";
@@ -739,8 +769,14 @@ public class ChoiceHandlerService {
                     gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount, ctx.grantsUncounterable());
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
         } else if (ctx.creatureSpellOnly()) {
             manaPool.addCreatureSpellOnlyMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (creature spells only).";
@@ -749,6 +785,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsAdditionalPlusOneCounter()) {
             manaPool.add(manaColor, amount);
             manaPool.addAdditionalCounterGrantingMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
             }
@@ -763,8 +802,14 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} counter-granting mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.instantSorceryOnly()) {
             manaPool.addInstantSorceryOnlyColored(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
         } else if (ctx.abilityOnly()) {
             manaPool.addAbilityOnlyMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (activated abilities only).";
@@ -773,6 +818,9 @@ public class ChoiceHandlerService {
                     player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.artifactSpellOrAbilityOnly()) {
             manaPool.addArtifactOnlyMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (artifact spells or abilities only).";
@@ -782,6 +830,9 @@ public class ChoiceHandlerService {
             manaPool.add(manaColor, amount);
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
+            }
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
             }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);

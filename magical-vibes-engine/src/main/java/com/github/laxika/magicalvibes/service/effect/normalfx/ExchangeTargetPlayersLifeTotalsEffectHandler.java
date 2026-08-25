@@ -79,6 +79,15 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         int newLifeA = aCantGain ? lifeA : lifeB;
         int newLifeB = bCantGain ? lifeB : lifeA;
 
+        if (newLifeA < lifeA) {
+            newLifeA = lifeA - (lifeA - newLifeA)
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerA);
+        }
+        if (newLifeB < lifeB) {
+            newLifeB = lifeB - (lifeB - newLifeB)
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerB);
+        }
+
         if (aCantGain) {
             gameLogService.append(gameData, GameLog.text(nameA + " can't gain life."));
         }

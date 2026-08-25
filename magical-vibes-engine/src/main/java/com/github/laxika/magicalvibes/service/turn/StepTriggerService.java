@@ -2858,6 +2858,7 @@ public class StepTriggerService {
                 case 1 -> EffectSlot.SAGA_CHAPTER_I;
                 case 2 -> EffectSlot.SAGA_CHAPTER_II;
                 case 3 -> EffectSlot.SAGA_CHAPTER_III;
+                case 4 -> EffectSlot.SAGA_CHAPTER_IV;
                 default -> null;
             };
             if (chapterSlot == null) continue;
@@ -2866,10 +2867,11 @@ public class StepTriggerService {
             if (chapterEffects.isEmpty()) continue;
 
             String chapterName = switch (newLoreCount) {
-                case 1 -> "I";
-                case 2 -> "II";
-                case 3 -> "III";
-                default -> String.valueOf(newLoreCount);
+                    case 1 -> "I";
+                    case 2 -> "II";
+                    case 3 -> "III";
+                    case 4 -> "IV";
+                    default -> String.valueOf(newLoreCount);
             };
 
             boolean needsPlayerTarget = chapterEffects.stream()

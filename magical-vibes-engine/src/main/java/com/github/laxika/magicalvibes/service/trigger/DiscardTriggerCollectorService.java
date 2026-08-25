@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -142,8 +143,10 @@ public class DiscardTriggerCollectorService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
                 int currentLife = gameData.getLife(discardingPlayerId);
-                gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
+                gameData.playerLifeTotals.put(discardingPlayerId, currentLife - lifeLoss);
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
@@ -505,6 +508,27 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ExileTopCardsMayPlayUntilNextEndStepEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleExileTopCardsMayPlayUntilNextEndStepOnDiscardEvent(
+            TriggerMatchContext match, ExileTopCardsMayPlayUntilNextEndStepEffect trigger,
+            TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (exile top card)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     /**
      * "Whenever an opponent discards a land card, add {B}{B}." Not a mana ability — it does not
      * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
@@ -561,8 +585,10 @@ public class DiscardTriggerCollectorService {
         if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
+            int lifeLoss = amount
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
             int currentLife = gameData.getLife(discardingPlayerId);
-            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - amount);
+            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - lifeLoss);
         }
 
         return true;

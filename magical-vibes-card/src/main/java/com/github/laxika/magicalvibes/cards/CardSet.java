@@ -120,7 +120,8 @@ public enum CardSet {
     SET_PLS("PLS"),
     SET_STX("STX"),
     SET_TDM("TDM"),
-    SET_APC("APC");
+    SET_APC("APC"),
+    SET_LCI("LCI");
 
     @Getter
     private final String code;

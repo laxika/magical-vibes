@@ -640,10 +640,12 @@ public class MayAbilityHandlerService {
                     boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, player.getId())
                             && gameData.getLife(player.getId()) >= ability.lifeCost();
                     if (canPayLife) {
-                        gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - ability.lifeCost());
-                        triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), ability.lifeCost());
+                        int lifeLoss = ability.lifeCost()
+                                * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
+                        gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeLoss);
+                        triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), lifeLoss);
                         gameLogService.append(gameData, GameLog.textCardText(
-                                player.getUsername() + " pays " + ability.lifeCost() + " life for ", ability.sourceCard(), "'s ability."));
+                                player.getUsername() + " pays " + lifeLoss + " life for ", ability.sourceCard(), "'s ability."));
                         paidWithLife = true;
                     }
                 }
@@ -666,12 +668,14 @@ public class MayAbilityHandlerService {
                 if (!paidWithLife) {
                     cost.pay(pool);
                     if (ability.additionalLifeCost() > 0) {
+                        int lifeLoss = ability.additionalLifeCost()
+                                * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
                         gameData.playerLifeTotals.put(player.getId(),
-                                gameData.getLife(player.getId()) - ability.additionalLifeCost());
+                                gameData.getLife(player.getId()) - lifeLoss);
                         triggerCollectionService.checkLifePaymentTriggers(
-                                gameData, player.getId(), ability.additionalLifeCost());
+                                gameData, player.getId(), lifeLoss);
                         gameLogService.append(gameData, GameLog.textCardText(
-                                player.getUsername() + " pays " + ability.additionalLifeCost() + " life for ",
+                                player.getUsername() + " pays " + lifeLoss + " life for ",
                                 ability.sourceCard(), "'s ability."));
                     }
                 }

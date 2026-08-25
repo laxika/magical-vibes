@@ -506,9 +506,11 @@ public class EnterTriggerCollectorService {
         }
         boolean usesEnteringTarget = may.wrapped() instanceof DiscardCardThenEffect discard
                 && discard.useEntryTarget();
-        UUID enteringPermanentId = (gainLifeEqualToEnteringPower || usesEnteringTarget)
+        UUID enteringPermanentId = (gainLifeEqualToEnteringPower
+                || may.wrapped().usesEnteringPermanentReference() || usesEnteringTarget)
                 ? findEnteringPermanentId(match, pe.enteringCard()) : null;
-        UUID mayTargetId = gainLifeEqualToEnteringPower || usesEnteringTarget
+        UUID mayTargetId = gainLifeEqualToEnteringPower
+                || may.wrapped().usesEnteringPermanentReference() || usesEnteringTarget
                 ? enteringPermanentId : pe.defaultTargetPlayerId();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,

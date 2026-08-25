@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -56,8 +57,9 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
             sourceCards.add(permanent.getCard());
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         for (Card sourceCard : sourceCards) {
+            int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                    gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 createTokenCopy(gameData, entry, sourceCard);
             }

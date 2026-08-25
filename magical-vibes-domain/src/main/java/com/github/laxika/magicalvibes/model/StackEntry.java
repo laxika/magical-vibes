@@ -64,6 +64,7 @@ public class StackEntry {
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
+    @Setter private boolean castWithAdventure;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -301,11 +302,20 @@ public class StackEntry {
      */
     private final List<UUID> playersDealtDamageThisResolution = new ArrayList<>();
 
+    /** Trigger effects already fired for the single noncombat damage event represented by this entry. */
+    private final Map<UUID, Set<CardEffect>> noncombatExcessDamageTriggerEffectsFired = new HashMap<>();
+
     /** Records that this entry dealt damage to {@code playerId}; duplicates are ignored. */
     public void recordPlayerDealtDamage(UUID playerId) {
         if (playerId != null && !playersDealtDamageThisResolution.contains(playerId)) {
             playersDealtDamageThisResolution.add(playerId);
         }
+    }
+
+    public boolean markNoncombatExcessDamageTriggerFired(UUID sourcePermanentId, CardEffect effect) {
+        return noncombatExcessDamageTriggerEffectsFired
+                .computeIfAbsent(sourcePermanentId, ignored -> new HashSet<>())
+                .add(effect);
     }
 
     /**
@@ -534,6 +544,7 @@ public class StackEntry {
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
+        this.castWithAdventure = source.castWithAdventure;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
@@ -601,6 +612,8 @@ public class StackEntry {
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
+        source.noncombatExcessDamageTriggerEffectsFired.forEach((sourceId, effects) ->
+                this.noncombatExcessDamageTriggerEffectsFired.put(sourceId, new HashSet<>(effects)));
     }
 
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
@@ -834,7 +847,7 @@ public class StackEntry {
         if (card == null) {
             return null;
         }
-        if (castWithOmen && card.getBackFaceCard() != null) {
+        if ((castWithOmen || castWithAdventure) && card.getBackFaceCard() != null) {
             return card.getBackFaceCard();
         }
         Card effectiveCard = getCard();
