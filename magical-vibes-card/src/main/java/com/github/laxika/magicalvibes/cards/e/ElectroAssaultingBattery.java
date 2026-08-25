@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "76")
+@CardRegistration(set = "SPM", collectorNumber = "260")
 public class ElectroAssaultingBattery extends Card {
 
     public ElectroAssaultingBattery() {

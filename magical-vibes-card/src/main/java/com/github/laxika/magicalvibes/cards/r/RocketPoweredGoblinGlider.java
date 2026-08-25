@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "172")
+@CardRegistration(set = "SPM", collectorNumber = "281")
 public class RocketPoweredGoblinGlider extends Card {
 
     public RocketPoweredGoblinGlider() {

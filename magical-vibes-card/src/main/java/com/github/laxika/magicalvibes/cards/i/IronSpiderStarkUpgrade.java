@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "166")
+@CardRegistration(set = "SPM", collectorNumber = "279")
 public class IronSpiderStarkUpgrade extends Card {
 
     public IronSpiderStarkUpgrade() {

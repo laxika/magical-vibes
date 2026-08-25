@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOn
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "155")
+@CardRegistration(set = "SPM", collectorNumber = "275")
 public class SuperiorSpiderMan extends Card {
 
     public SuperiorSpiderMan() {

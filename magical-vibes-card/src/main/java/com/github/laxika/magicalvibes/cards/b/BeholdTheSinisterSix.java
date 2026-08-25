@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "51")
+@CardRegistration(set = "SPM", collectorNumber = "221")
 public class BeholdTheSinisterSix extends Card {
 
     public BeholdTheSinisterSix() {

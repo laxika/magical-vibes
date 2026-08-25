@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "156")
+@CardRegistration(set = "SPM", collectorNumber = "217")
 public class SymbioteSpiderMan extends Card {
 
     public SymbioteSpiderMan() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "1")
+@CardRegistration(set = "SPM", collectorNumber = "244")
 public class AntiVenomHorrifyingHealer extends Card {
 
     public AntiVenomHorrifyingHealer() {

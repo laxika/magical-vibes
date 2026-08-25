@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "55")
+@CardRegistration(set = "SPM", collectorNumber = "224")
+@CardRegistration(set = "SPM", collectorNumber = "233")
 public class EddieBrock extends Card {
 
     public EddieBrock() {

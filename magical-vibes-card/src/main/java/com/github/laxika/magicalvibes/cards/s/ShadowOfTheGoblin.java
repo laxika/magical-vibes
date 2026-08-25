@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEff
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "87")
+@CardRegistration(set = "SPM", collectorNumber = "262")
 public class ShadowOfTheGoblin extends Card {
 
     public ShadowOfTheGoblin() {

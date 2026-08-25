@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "125")
+@CardRegistration(set = "SPM", collectorNumber = "227")
 public class CarnageCrimsonChaos extends Card {
 
     public CarnageCrimsonChaos() {
