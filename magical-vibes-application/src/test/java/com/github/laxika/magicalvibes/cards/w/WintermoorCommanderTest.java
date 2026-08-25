@@ -41,6 +41,7 @@ class WintermoorCommanderTest extends BaseCardTest {
         Permanent opposingKnight = addCreatureReady(player2, new KnightOfTheKeep());
 
         declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, knight.getId());
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -48,14 +49,15 @@ class WintermoorCommanderTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, nonKnight, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opposingKnight, Keyword.INDESTRUCTIBLE)).isFalse();
 
-        advanceToEndStep(player1);
+        gs.declareBlockers(gd, player2, List.of());
+        advanceToNextTurn(player1);
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    private void advanceToEndStep(Player activePlayer) {
+    private void advanceToNextTurn(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }

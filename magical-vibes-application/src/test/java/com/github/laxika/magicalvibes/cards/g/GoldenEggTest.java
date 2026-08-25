@@ -55,7 +55,7 @@ class GoldenEggTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLife(player1, 20);
 
-        harness.activateAbility(player1, 1, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);

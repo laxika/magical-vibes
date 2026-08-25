@@ -31,6 +31,7 @@ class TemptingWitchTest extends BaseCardTest {
     @DisplayName("Sacrificing Food makes target player lose 3 life")
     void sacrificingFoodMakesTargetPlayerLoseLife() {
         castTemptingWitch();
+        findPermanent(player1, "Tempting Witch").setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, player2.getId());

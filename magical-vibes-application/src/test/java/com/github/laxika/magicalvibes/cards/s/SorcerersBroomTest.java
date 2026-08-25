@@ -66,7 +66,7 @@ class SorcerersBroomTest extends BaseCardTest {
         addCreatureReady(player2, new DrossHopper());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.activateAbility(player2, 1, null, null);
+        harness.activateAbility(player2, 0, null, null);
         harness.handlePermanentChosen(player2, bears.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

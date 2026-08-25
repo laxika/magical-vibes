@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 
@@ -22,15 +21,12 @@ public class FlaxenIntruder extends Card {
         setBackFaceCard(new WelcomeHome());
         addCastingOption(new AdventureCast("{5}{G}{G}"));
 
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate()
-                )),
-                "Target must be an artifact or enchantment"))
-                .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
-                        new SacrificeSelfThenEffect(new DestroyTargetPermanentEffect()),
-                        "You may sacrifice this creature. If you do, destroy target artifact or enchantment."));
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
+                new SacrificeSelfThenEffect(new DestroyTargetPermanentEffect(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsEnchantmentPredicate())))),
+                "You may sacrifice this creature. If you do, destroy target artifact or enchantment."));
     }
 
     @Override

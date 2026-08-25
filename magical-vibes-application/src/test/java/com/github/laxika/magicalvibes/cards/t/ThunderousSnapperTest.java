@@ -54,6 +54,7 @@ class ThunderousSnapperTest extends BaseCardTest {
     void doesNotDrawForOpponentsSpell() {
         harness.addToBattlefield(player1, new ThunderousSnapper());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

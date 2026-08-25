@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.j.JoinTheDance;
+import com.github.laxika.magicalvibes.cards.s.SteadfastCathar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WildbornPreserver.class, GrizzlyBears.class, JoinTheDance.class})
+@CardUsed({WildbornPreserver.class, GrizzlyBears.class, SteadfastCathar.class})
 class WildbornPreserverTest extends BaseCardTest {
 
     @Test
@@ -58,10 +58,11 @@ class WildbornPreserverTest extends BaseCardTest {
     @DisplayName("Human creatures do not trigger Wildborn Preserver")
     void humanCreatureEnteringDoesNotTrigger() {
         harness.addToBattlefield(player1, new WildbornPreserver());
-        harness.setHand(player1, List.of(new JoinTheDance()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of(new SteadfastCathar()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         Permanent preserver = findPermanent(player1, "Wildborn Preserver");

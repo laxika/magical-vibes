@@ -3743,11 +3743,8 @@ public class SpellCastingService {
                         }
                     }
                 } else {
-                    DealDividedDamageEffect dividedEffect = filteredSpellEffects.stream()
-                            .filter(e -> e instanceof DealDividedDamageEffect d
-                                    && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments())
-                            .map(DealDividedDamageEffect.class::cast)
-                            .findFirst().orElse(null);
+                    DealDividedDamageEffect dividedEffect =
+                            findChosenDividedDamageEffect(filteredSpellEffects);
 
                     int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
 
@@ -7561,6 +7558,29 @@ public class SpellCastingService {
                     && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments()) {
                 return d;
             }
+            if (e instanceof ConditionalEffect conditional) {
+                DealDividedDamageEffect nested =
+                        findChosenDividedDamageEffect(List.of(conditional.wrapped()));
+                if (nested != null) {
+                    return nested;
+                }
+            }
+            if (e instanceof ConditionalReplacementEffect conditional) {
+                if (conditional.baseEffect() != null) {
+                    DealDividedDamageEffect nested =
+                            findChosenDividedDamageEffect(List.of(conditional.baseEffect()));
+                    if (nested != null) {
+                        return nested;
+                    }
+                }
+                if (conditional.upgradedEffect() != null) {
+                    DealDividedDamageEffect nested =
+                            findChosenDividedDamageEffect(List.of(conditional.upgradedEffect()));
+                    if (nested != null) {
+                        return nested;
+                    }
+                }
+            }
         }
         return null;
     }
@@ -9249,30 +9269,42 @@ public class SpellCastingService {
     }
 
     public void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card, boolean castFromHand) {
+        StackEntry castEntry = null;
+        if (!gameData.stack.isEmpty()) {
+            StackEntry latestEntry = gameData.stack.getLast();
+            if (latestEntry.getCard() != null && latestEntry.getCard().getId().equals(card.getId())) {
+                castEntry = latestEntry;
+            }
+        }
+        Card castCharacteristics = card;
+        if (castEntry != null && card.getBackFaceCard() != null
+                && (castEntry.isCastWithAdventure() || castEntry.isCastWithOmen()
+                || castEntry.isCastWithDisturb() || castEntry.isCastTransformed())) {
+            castCharacteristics = card.createRuntimeCopyWithFace(card.getBackFaceCard());
+            castCharacteristics.freeze();
+        }
+
         stampLatestCastDuringMainPhase(gameData, playerId, card);
-        gameData.recordSpellCast(playerId, card);
+        gameData.recordSpellCast(playerId, castCharacteristics);
         gameData.priorityPassedBy.clear();
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " casts ")
-                .card(card)
+                .card(castCharacteristics)
                 .text(".")
                 .build());
 
-        log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
+        log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), castCharacteristics.getName());
 
-        if (!gameData.stack.isEmpty()) {
-            StackEntry castEntry = gameData.stack.getLast();
-            if (castEntry.getCard() != null && castEntry.getCard().getId().equals(card.getId())) {
-                castEntry.setManaSpentToCast(gameData.getSpellCastManaSpent(card.getId()));
-                boolean controlledMount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                        .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
-                                .contains(CardSubtype.MOUNT));
-                castEntry.setControlledMountAsCast(controlledMount);
-                triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
-            }
+        if (castEntry != null) {
+            castEntry.setManaSpentToCast(gameData.getSpellCastManaSpent(card.getId()));
+            boolean controlledMount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
+                            .contains(CardSubtype.MOUNT));
+            castEntry.setControlledMountAsCast(controlledMount);
+            triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
         }
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, castFromHand);
+        triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, playerId, castFromHand);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         if (!gameData.pendingSpellCastCostTriggers.isEmpty()) {
             gameData.stack.addAll(gameData.pendingSpellCastCostTriggers);

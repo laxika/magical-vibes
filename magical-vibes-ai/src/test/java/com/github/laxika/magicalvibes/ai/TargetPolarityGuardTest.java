@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -88,6 +89,11 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
         assertThat(classifier.classify(gd,
                 new ReturnTargetCardOnDeathThisTurnEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new SacrificePermanentsOrElseEffect(null, 1,
+                        new BoostTargetCreatureEffect(5, 5),
+                        new BoostTargetCreatureEffect(3, 3), "permanent"), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
     }
 

@@ -134,13 +134,18 @@ public class CombatDamageService {
      * Resolves combat damage for the current combat phase.
      */
     public CombatResult resolveCombatDamage(GameData gameData) {
-        if (gameData.preventAllCombatDamage) {
+        UUID activeId = gameData.activePlayerId;
+        List<Permanent> attackingBattlefield = gameData.playerBattlefields.get(activeId);
+        boolean hasUnpreventableCombatDamage = hasUnpreventableCombatant(gameData, attackingBattlefield, true)
+                || gameData.playerBattlefields.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(activeId))
+                .anyMatch(entry -> hasUnpreventableCombatant(gameData, entry.getValue(), false));
+        if (gameData.preventAllCombatDamage && !hasUnpreventableCombatDamage) {
             String logEntry = "All combat damage is prevented.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             return CombatResult.ADVANCE_AND_AUTO_PASS;
         }
 
-        UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
 
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
@@ -1247,6 +1252,15 @@ public class CombatDamageService {
                 }
 
                 if (effect instanceof MayEffect may) {
+                    if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                creature.getCard(), attackerId, List.of(effect), creature.getId(),
+                                attackerId, defenderId));
+                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a target."));
+                        continue;
+                    }
                     MayEffect queuedMay = may;
                     if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect
                             || may.wrapped() instanceof TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect) {
@@ -2946,6 +2960,14 @@ public class CombatDamageService {
     private void accumulatePlayerDamage(GameData gameData, Permanent atk, CombatantStats atkStats,
                                          int damage, UUID defenderId, Permanent redirectTarget,
                                          CombatDamageState state) {
+        UUID attackTargetId = atk.getAttackTarget();
+        Permanent attackTarget = attackTargetId != null && !gameData.playerIds.contains(attackTargetId)
+                ? gameQueryService.findPermanentById(gameData, attackTargetId)
+                : redirectTarget;
+        if (isCombatDamagePreventedByGlobalEffect(gameData, atk, attackTarget)) {
+            state.combatDamageDealt.merge(atk, 0, Integer::sum);
+            return;
+        }
         withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
                 gameData, atk, atkStats, damage, defenderId, redirectTarget, state));
     }
@@ -3296,6 +3318,9 @@ public class CombatDamageService {
                                            Map<Integer, Integer> unpreventableDamageTakenMap,
                                            Set<Integer> deathtouchDamagedSet,
                                            Map<Integer, Map<UUID, Integer>> damageTakenBySourceMap) {
+        if (isCombatDamagePreventedByGlobalEffect(gameData, source, target)) {
+            return false;
+        }
         int replacedDamage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
         int pendingDamageBefore = state.pendingDralnuReplacementDamage.getOrDefault(target.getId(), 0);
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn()
@@ -3307,6 +3332,21 @@ public class CombatDamageService {
                 gameData, state, source, sourceStats, target, targetIdx, replacedDamage, damageTakenMap,
                 unpreventableDamageTakenMap, deathtouchDamagedSet, damageTakenBySourceMap));
         return state.pendingDralnuReplacementDamage.getOrDefault(target.getId(), 0) > pendingDamageBefore;
+    }
+
+    private boolean hasUnpreventableCombatant(GameData gameData, List<Permanent> battlefield,
+                                               boolean attacker) {
+        return battlefield != null && battlefield.stream()
+                .filter(permanent -> attacker ? permanent.isAttacking() : permanent.isBlocking())
+                .anyMatch(permanent -> permanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                        || gameQueryService.damageCantBePreventedFromSource(gameData, permanent, true));
+    }
+
+    private boolean isCombatDamagePreventedByGlobalEffect(GameData gameData, Permanent source,
+                                                           Permanent target) {
+        return gameData.preventAllCombatDamage
+                && (target == null || !target.isDamageCantBePreventedOrRedirectedThisTurn())
+                && !gameQueryService.damageCantBePreventedFromSource(gameData, source, true);
     }
 
     private boolean isGlobalCreaturePreventionLifeGain(GameData gameData, Permanent source) {

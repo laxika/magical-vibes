@@ -5002,6 +5002,10 @@ public class AbilityActivationService {
     private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability,
                                                      Card card) {
         validateHandSizeRestrictions(gameData, playerId, ability);
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
+                && !playerId.equals(gameData.activePlayerId)) {
+            throw new IllegalStateException("This ability can only be activated during your turn");
+        }
         if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
             if (!playerId.equals(gameData.activePlayerId)) {
                 throw new IllegalStateException("This ability can only be activated at sorcery speed");

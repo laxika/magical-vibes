@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatur
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -159,6 +160,11 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof TributeNotPaidEffect tributeNotPaid) {
             return classify(gameData, tributeNotPaid.wrapped(), aiPlayerId);
+        }
+        if (effect instanceof SacrificePermanentsOrElseEffect sacrificeOrElse) {
+            TargetPolarity sacrificed = classify(gameData, sacrificeOrElse.sacrificedEffect(), aiPlayerId);
+            TargetPolarity otherwise = classify(gameData, sacrificeOrElse.elseEffect(), aiPlayerId);
+            return higherPriority(sacrificed, otherwise);
         }
 
         // Removal: the target leaves the battlefield. removalKind() is non-null exactly for

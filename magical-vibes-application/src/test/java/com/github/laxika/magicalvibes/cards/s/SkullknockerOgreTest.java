@@ -60,7 +60,7 @@ class SkullknockerOgreTest extends BaseCardTest {
         resolveCombatAndTrigger();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player2, "Forest");
         assertThat(ogre.isAttacking()).isFalse();
     }
 
@@ -72,6 +72,5 @@ class SkullknockerOgreTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
     }
 }

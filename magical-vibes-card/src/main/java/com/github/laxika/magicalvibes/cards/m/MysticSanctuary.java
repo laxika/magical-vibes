@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -26,7 +26,7 @@ public class MysticSanctuary extends Card {
 
     public MysticSanctuary() {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
+                new ControlsPermanentCountAtMost(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 new EntersTappedEffect()));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));

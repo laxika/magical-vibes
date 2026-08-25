@@ -3542,8 +3542,10 @@ public class GameQueryService {
                     accumulator.addKeywords(boost.grantedKeywords());
                 } else if (effect instanceof GrantKeywordEffect grant
                         && (grant.scope() == GrantScope.OWN_PERMANENTS
-                        || grant.scope() == GrantScope.OWN_LANDS
-                        && isLandInStaticPass(board, target))
+                        || grant.scope() == GrantScope.OWN_LANDS && isLandInStaticPass(board, target)
+                        || (grant.scope() == GrantScope.OWN_CREATURES
+                        || grant.scope() == GrantScope.ALL_OWN_CREATURES)
+                        && isCreatureInStaticPass(board, target))
                         // Evaluate the filter with a null GameData so type predicates read the
                         // permanent's printed/granted types directly instead of re-entering
                         // computeStaticBonus for this same target (which would recurse forever).
@@ -6349,7 +6351,7 @@ public class GameQueryService {
             sourceColors = getDamageSourceColors(gameData, getEffectiveColors(gameData, sourcePermanent));
             artifactSource = isArtifact(gameData, sourcePermanent);
         } else if (sourceCard != null) {
-            sourceColors = getDamageSourceColors(gameData, new HashSet<>(sourceCard.getColors()));
+            sourceColors = getDamageSourceColors(gameData, getEffectiveCardColors(gameData, sourceCard));
             artifactSource = sourceCard.hasType(CardType.ARTIFACT);
         } else {
             return 0;

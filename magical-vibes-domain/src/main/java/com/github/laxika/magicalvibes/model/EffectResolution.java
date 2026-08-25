@@ -353,7 +353,9 @@ public final class EffectResolution {
     public static boolean distributesAmountsAmongTargets(CardEffect e) {
         return isChosenDivision(e)
                 || e instanceof PreventDividedDamageEffect
-                || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN);
+                || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN)
+                || (e instanceof ConditionalEffect conditional
+                && distributesAmountsAmongTargets(conditional.wrapped()));
     }
 
     private static boolean isChosenDivision(CardEffect e) {

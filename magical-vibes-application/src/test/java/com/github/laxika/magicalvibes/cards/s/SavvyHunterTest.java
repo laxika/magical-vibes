@@ -21,10 +21,9 @@ class SavvyHunterTest extends BaseCardTest {
     @Test
     @DisplayName("Creates a Food token when it attacks")
     void attackingCreatesFood() {
-        Permanent hunter = addReadyHunter(player1);
-        hunter.setAttacking(true);
+        addReadyHunter(player1);
 
-        resolveCombat();
+        declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Food")).isOne();

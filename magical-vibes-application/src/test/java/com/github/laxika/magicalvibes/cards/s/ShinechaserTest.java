@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.Crawlspace;
+import com.github.laxika.magicalvibes.cards.a.AjanisMantra;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Shinechaser.class, Spellbook.class, Crawlspace.class})
+@CardUsed({Shinechaser.class, Spellbook.class, AjanisMantra.class})
 class ShinechaserTest extends BaseCardTest {
 
     @Test
@@ -33,7 +33,7 @@ class ShinechaserTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 while its controller controls an enchantment")
     void enchantmentBoost() {
         Permanent shinechaser = addShinechaser();
-        harness.addToBattlefield(player1, new Crawlspace());
+        harness.addToBattlefield(player1, new AjanisMantra());
 
         assertStats(shinechaser, 2, 2);
     }
@@ -43,7 +43,7 @@ class ShinechaserTest extends BaseCardTest {
     void artifactAndEnchantmentBoost() {
         Permanent shinechaser = addShinechaser();
         harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new Crawlspace());
+        harness.addToBattlefield(player1, new AjanisMantra());
 
         assertStats(shinechaser, 3, 3);
     }
@@ -53,7 +53,7 @@ class ShinechaserTest extends BaseCardTest {
     void opponentPermanentsDoNotCount() {
         Permanent shinechaser = addShinechaser();
         harness.addToBattlefield(player2, new Spellbook());
-        harness.addToBattlefield(player2, new Crawlspace());
+        harness.addToBattlefield(player2, new AjanisMantra());
 
         assertStats(shinechaser, 1, 1);
     }
@@ -63,7 +63,7 @@ class ShinechaserTest extends BaseCardTest {
     void losesBonusesWhenPermanentsLeave() {
         Permanent shinechaser = addShinechaser();
         harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new Crawlspace());
+        harness.addToBattlefield(player1, new AjanisMantra());
 
         assertStats(shinechaser, 3, 3);
 
@@ -72,7 +72,7 @@ class ShinechaserTest extends BaseCardTest {
         assertStats(shinechaser, 2, 2);
 
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(permanent -> permanent.getCard().getName().equals("Crawlspace"));
+                .removeIf(permanent -> permanent.getCard().getName().equals("Ajani's Mantra"));
         assertStats(shinechaser, 1, 1);
     }
 
