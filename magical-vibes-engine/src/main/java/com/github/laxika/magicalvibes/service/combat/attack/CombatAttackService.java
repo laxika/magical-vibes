@@ -1271,8 +1271,8 @@ public class CombatAttackService {
                     }
 
                     boolean mandatoryNeedsTarget = mandatoryEffects.stream()
-                            .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                    || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                            .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                    || perm.getCard().getEffectTargetIndex(e) >= 0);
                     if (mandatoryNeedsTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), playerId, mandatoryEffects, perm.getId(), playerId,

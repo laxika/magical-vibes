@@ -227,6 +227,12 @@ public class DamageSupport {
                     gameData, false, target);
             rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
+            rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
+                    gameData, bonusSourceControllerId, targetControllerId);
+            rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
+                    gameData, entry, targetControllerId);
+            rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
+                    gameData, bonusSourceControllerId);
         }
         UUID sourceControllerId = bonusSourceControllerId;
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
