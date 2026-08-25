@@ -46,6 +46,7 @@ class MausoleumTurnkeyTest extends BaseCardTest {
                 .hasMessageContaining("Not your turn");
 
         harness.handleMultipleCardsChosen(player2, List.of(creature.getId()));
+        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Holy Day");

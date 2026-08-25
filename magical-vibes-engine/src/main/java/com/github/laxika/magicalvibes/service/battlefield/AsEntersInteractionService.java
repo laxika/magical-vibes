@@ -62,7 +62,7 @@ public class AsEntersInteractionService {
                                       PlayerInputService playerInputService,
                                       AmountEvaluationService amountEvaluationService,
                                       PredicateEvaluationService predicateEvaluationService,
-                                      EquipSupport equipSupport,
+                                      @Lazy EquipSupport equipSupport,
                                       @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
                                       @Lazy EtbTriggerService etbTriggerService) {
         this.gameQueryService = gameQueryService;

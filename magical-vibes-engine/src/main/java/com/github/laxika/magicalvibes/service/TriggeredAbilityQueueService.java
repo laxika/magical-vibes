@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -48,6 +49,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -74,12 +77,18 @@ public class TriggeredAbilityQueueService {
     private final PlayerInputService playerInputService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
+    private ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SagaChapterCounterDistributionSupport
             sagaChapterCounterDistributionSupport;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
+
+    @Autowired
+    void setReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler(
+            @Lazy ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler handler) {
+        this.returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler = handler;
+    }
 
     public void processNextDayNightTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTransformAttachment.class)) {
