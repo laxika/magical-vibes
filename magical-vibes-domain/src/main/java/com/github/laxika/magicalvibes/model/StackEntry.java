@@ -30,13 +30,15 @@ public class StackEntry {
     @Setter private UUID activePlayerId;
     private final String description;
     private List<CardEffect> effectsToResolve;
-    private final int xValue;
+    @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
     @Setter private int phyrexianManaPaidWithLife;
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
     @Setter private UUID targetId;
+    /** The opponent chosen before that opponent selected the spell's creature target. */
+    @Setter private UUID opponentChosenTargetPlayerId;
     private boolean targetIdOverriddenForEffectResolution;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
@@ -69,6 +71,8 @@ public class StackEntry {
      * into-library dispositions still win.
      */
     @Setter private boolean exileInsteadOfGraveyard;
+    /** Whether this spell goes to the bottom of its owner's library instead of a graveyard. */
+    @Setter private boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
@@ -103,7 +107,7 @@ public class StackEntry {
         return card.getEffects(EffectSlot.SPELL).stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
-                .anyMatch(RepeatableAdditionalManaCost::multikicker);
+                .anyMatch(cost -> cost.multikickerPaymentCount(repeatedAdditionalCosts) > 0);
     }
     /**
      * Whether this spell's buyback cost was paid (CR 702.27). Stamped by
@@ -132,6 +136,8 @@ public class StackEntry {
      * sacrifice at the next cleanup step when it is set.
      */
     @Setter private boolean castWhenSorceryCouldNotBeCast;
+    /** Whether this spell was cast during its controller's precombat or postcombat main phase. */
+    @Setter private boolean castDuringMainPhase;
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
     private Card bestowOriginalCard;
@@ -143,6 +149,8 @@ public class StackEntry {
     @Setter private boolean spectacle;
     @Setter private boolean castForForetell;
     @Setter private boolean alternateCost;
+    /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
+    @Setter private Integer webSlingingReturnedCreatureManaValue;
     /** Whether this spell was cast for its madness cost. */
     @Setter private boolean madness;
     /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
@@ -180,6 +188,8 @@ public class StackEntry {
      * Duplicates are meaningful: a player who lost three lands appears three times.
      */
     @Setter private List<UUID> eventPlayerIds = List.of();
+    /** Card ids of the permanents actually destroyed by the event that produced this entry. */
+    @Setter private List<UUID> eventCardIds = List.of();
     /**
      * The per-permanent mana value payload behind this entry, positionally aligned with
      * {@link #eventPlayerIds}. Stamped by {@code DestroyAllPermanentsEffectHandler} with the
@@ -531,6 +541,7 @@ public class StackEntry {
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
         this.etbMode = source.etbMode;
         this.targetId = source.targetId;
+        this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
         this.counters.putAll(source.counters);
@@ -550,6 +561,8 @@ public class StackEntry {
         this.castWithFlashback = source.castWithFlashback;
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
+        this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
+                source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
         this.castWithAdventure = source.castWithAdventure;
@@ -565,6 +578,7 @@ public class StackEntry {
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
+        this.castDuringMainPhase = source.castDuringMainPhase;
         this.evoked = source.evoked;
         this.bestowOriginalCard = source.bestowOriginalCard;
         this.physicalCard = source.physicalCard;
@@ -572,6 +586,7 @@ public class StackEntry {
         this.spectacle = source.spectacle;
         this.castForForetell = source.castForForetell;
         this.alternateCost = source.alternateCost;
+        this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
         this.controlledMountAsCast = source.controlledMountAsCast;
         this.beheldCard = source.beheldCard;
@@ -586,6 +601,7 @@ public class StackEntry {
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
+        this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
@@ -897,8 +913,7 @@ public class StackEntry {
                     ? List.of(targetIds.get(group)) : List.of();
         }
         int firstFlatGroup = 0;
-        if ((targeting.isAura() || primaryTargetStoredSeparately)
-                && !targetIdOverriddenForEffectResolution) {
+        if (targeting.isAura() || primaryTargetStoredSeparately) {
             if (group == 0) {
                 return targetId != null ? List.of(targetId) : List.of();
             }

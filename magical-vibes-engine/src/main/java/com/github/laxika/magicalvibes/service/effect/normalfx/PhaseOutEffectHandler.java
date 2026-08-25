@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import java.util.List;
@@ -36,16 +37,32 @@ public class PhaseOutEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PhaseOutEffect e = (PhaseOutEffect) effect;
 
-        Permanent subject = switch (e.subject()) {
-            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
-            case TARGET -> findPermanent(gameData, entry.getTargetId());
-            case ATTACHED -> findAttached(gameData, entry);
-        };
-        if (subject == null) {
+        List<UUID> targetIds = e.subject() == PhaseOutSubject.TARGET
+                ? entry.targetsForEffect(effect)
+                : List.of();
+        if (e.subject() == PhaseOutSubject.TARGET && targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+
+        if (e.subject() == PhaseOutSubject.TARGET) {
+            List<Permanent> subjects = targetIds.stream()
+                    .map(id -> findPermanent(gameData, id))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            if (!subjects.isEmpty()) {
+                phasingService.phaseOut(gameData, subjects);
+            }
             return;
         }
 
-        phasingService.phaseOut(gameData, List.of(subject));
+        Permanent subject = switch (e.subject()) {
+            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
+            case TARGET -> null;
+            case ATTACHED -> findAttached(gameData, entry);
+        };
+        if (subject != null) {
+            phasingService.phaseOut(gameData, List.of(subject));
+        }
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

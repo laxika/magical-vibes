@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "253")
+@CardRegistration(set = "TSB", collectorNumber = "83")
 public class Scragnoth extends Card {
 
     public Scragnoth() {

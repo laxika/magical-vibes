@@ -267,7 +267,7 @@ public class StaticBonusAccumulator {
      */
     public StaticBonus toStaticBonus(int finalPower, int finalToughness, boolean animated) {
         return new StaticBonus(
-                finalPower, finalToughness, keywords, protectionColors,
+                finalPower, finalToughness, keywords, protectionColors, Set.of(),
                 animated, grantedActivatedAbilities, grantedEffects,
                 grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding,
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,

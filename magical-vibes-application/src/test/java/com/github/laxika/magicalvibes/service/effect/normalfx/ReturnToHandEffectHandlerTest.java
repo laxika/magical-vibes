@@ -333,6 +333,45 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
         }
+
+        @Test
+        @DisplayName("Returns the enchanted permanent and every Aura attached to it")
+        void returnsEnchantedPermanentAndAttachedAuras() {
+            Card auraCard = createCard("Mark of Eviction");
+            Permanent sourceAura = createAura("Mark of Eviction", null);
+            Permanent host = createCreature("Grizzly Bears");
+            sourceAura.setAttachedTo(host.getId());
+            Permanent ownAura = createAura("Armor of Faith", host.getId());
+            Permanent opponentAura = createAura("Essence Flare", host.getId());
+            gd.playerBattlefields.get(player1Id).add(sourceAura);
+            gd.playerBattlefields.get(player1Id).add(ownAura);
+            gd.playerBattlefields.get(player2Id).add(host);
+            gd.playerBattlefields.get(player2Id).add(opponentAura);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.enchantedAndAuras();
+            StackEntry entry = entryWithSource(auraCard, player1Id, List.of(effect), sourceAura.getId());
+
+            when(gameQueryService.findPermanentById(gd, sourceAura.getId())).thenReturn(sourceAura);
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, sourceAura);
+            verify(permanentRemovalService).removePermanentToHand(gd, ownAura);
+            verify(permanentRemovalService).removePermanentToHand(gd, opponentAura);
+            verify(permanentRemovalService).removePermanentToHand(gd, host);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+        }
+
+        private Permanent createAura(String name, UUID attachedTo) {
+            Card card = createCard(name);
+            card.setType(CardType.ENCHANTMENT);
+            card.setSubtypes(List.of(CardSubtype.AURA));
+            Permanent permanent = new Permanent(card);
+            permanent.setAttachedTo(attachedTo);
+            return permanent;
+        }
     }
 
     @Nested

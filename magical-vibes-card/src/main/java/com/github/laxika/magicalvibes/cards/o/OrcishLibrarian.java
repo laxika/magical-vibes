@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsExileRandomRest
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "209")
+@CardRegistration(set = "TSB", collectorNumber = "66")
 public class OrcishLibrarian extends Card {
 
     public OrcishLibrarian() {

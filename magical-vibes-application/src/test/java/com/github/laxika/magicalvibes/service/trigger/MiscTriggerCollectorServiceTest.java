@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -178,6 +179,24 @@ class MiscTriggerCollectorServiceTest {
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("creature card from any library queues the triggered ability")
+    void creatureCardFromAnyLibraryQueuesTriggeredAbility() {
+        Permanent perm = createPermanent("Dreadhound");
+        var effect = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyardFromLibrary(
+                createCard("Grizzly Bears"), player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 
     @Test
@@ -522,7 +541,7 @@ class MiscTriggerCollectorServiceTest {
 
             var resolved = (GivePoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
             assertThat(resolved.affectedPlayerId()).isEqualTo(player2Id);
-            assertThat(resolved.amount()).isEqualTo(1);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(1));
         }
 
         @Test

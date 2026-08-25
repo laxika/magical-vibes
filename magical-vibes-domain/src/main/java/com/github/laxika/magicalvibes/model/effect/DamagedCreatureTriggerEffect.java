@@ -14,11 +14,11 @@ public interface DamagedCreatureTriggerEffect extends CardEffect {
         return null;
     }
 
-    default boolean equipmentScoped() {
+    default boolean combatDamageOnly() {
         return false;
     }
 
-    default boolean combatDamageOnly() {
+    default boolean equipmentScoped() {
         return false;
     }
 }

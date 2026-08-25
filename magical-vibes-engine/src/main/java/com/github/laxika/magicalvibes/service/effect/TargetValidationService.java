@@ -125,6 +125,16 @@ public class TargetValidationService {
             return;
         }
 
+        boolean exiledCardTarget = predicate.admits(TargetPredicate.Kind.EXILED_CARD)
+                && ctx.targetZone() == Zone.EXILE;
+        if (exiledCardTarget) {
+            requireTarget(ctx);
+            if (gameQueryService.findCardInExileById(ctx.gameData(), ctx.targetId()) == null) {
+                throw new IllegalStateException("Target card not found in exile");
+            }
+            return;
+        }
+
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
         if (restriction != null && demandsPermanentTarget(predicate, restriction, effect)) {
             requireTarget(ctx);
@@ -288,6 +298,9 @@ public class TargetValidationService {
             if (ctx.sourcePermanentSnapshot() != null) {
                 filterContext = filterContext.withSourcePermanentSnapshot(ctx.sourcePermanentSnapshot());
             }
+        }
+        if (ctx.defendingPlayerId() != null) {
+            filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
         return filterContext;
     }

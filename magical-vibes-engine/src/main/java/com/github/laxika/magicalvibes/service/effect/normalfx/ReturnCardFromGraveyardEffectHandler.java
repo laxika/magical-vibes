@@ -42,6 +42,15 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
             return;
         }
 
+        if (e.targetGraveyard() && e.targetGroup() >= 0) {
+            UUID targetCardId = entry.getTargetCardIdsForEffect(effect).stream().findFirst().orElse(null);
+            if (targetCardId == null) {
+                return;
+            }
+            graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, targetCardId);
+            return;
+        }
+
         // Case 1: Pre-targeted (from spell cast, activated ability, or multi-target spell)
         if (e.targetGraveyard() && entry.getTargetId() != null) {
             graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, entry.getTargetId());

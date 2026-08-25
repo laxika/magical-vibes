@@ -28,6 +28,8 @@ public enum ActivationTimingRestriction {
      */
     ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED,
     ONLY_DURING_COMBAT,
+    /** Activate only during the end of combat step (any player's turn). */
+    ONLY_DURING_END_OF_COMBAT,
     /**
      * Activate only during a step that precedes the end of combat step (any player's turn).
      * Dwarven Sea Clan's "Activate only before the end of combat step."

@@ -77,6 +77,9 @@ public class GraveyardTargetValidators {
         if (!effect.targetGraveyard()) {
             return; // Non-targeting effects choose at resolution time
         }
+        if (ctx.targetZone() != Zone.GRAVEYARD && effect.targetGroup() >= 0) {
+            return;
+        }
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Effect requires a graveyard target");
         }

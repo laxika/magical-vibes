@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -203,6 +205,8 @@ public class Card {
     private String morphCost;
     /** Optional card-reveal component of a morph face-up cost. */
     private RevealCardsFromHandCastingCost morphRevealCost;
+    /** Optional permanent-return component of a morph face-up cost. */
+    private ReturnPermanentsCost morphAdditionalCost;
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
     /**
@@ -331,6 +335,7 @@ public class Card {
         this.castingOptions = new ArrayList<>(source.castingOptions);
         this.morphCost = source.morphCost;
         this.morphRevealCost = source.morphRevealCost;
+        this.morphAdditionalCost = source.morphAdditionalCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
@@ -927,6 +932,7 @@ public class Card {
         assertMutable();
         this.morphCost = morphCost;
         this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -935,9 +941,19 @@ public class Card {
         assertMutable();
         this.morphCost = morphCost;
         this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(
                 new ManaCastingCost("{3}"),
                 new RevealCardsFromHandCastingCost(revealPredicate, revealLabel))));
+    }
+
+    /** Adds morph with a permanent-return component to its face-up cost. */
+    public void addMorph(String morphCost, ReturnPermanentsCost additionalCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphRevealCost = null;
+        this.morphAdditionalCost = additionalCost;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
     /** Adds morph whose face-up cost is revealing a matching card from hand. */
@@ -945,6 +961,7 @@ public class Card {
         assertMutable();
         this.morphCost = "{0}";
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
+        this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1198,7 +1215,10 @@ public class Card {
     }
 
     public boolean hasKeyword(Keyword keyword) {
-        return keywords.contains(keyword);
+        return keywords.contains(keyword)
+                || (keyword == Keyword.CHANGELING && getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
+                        && grant.scope() == GrantScope.SELF));
     }
 
     public boolean isAura() {

@@ -47,9 +47,12 @@ public enum CardSubtype {
     DWARF("Dwarf"),
     RANGER("Ranger"),
     SPIDER("Spider"),
+    SYMBIOTE("Symbiote"),
+    VILLAIN("Villain"),
     SPIKE("Spike"),
     BEAST("Beast"),
     HUMAN("Human"),
+    HERO("Hero"),
     CLERIC("Cleric"),
     BIRD("Bird"),
     CAT("Cat"),
@@ -69,6 +72,7 @@ public enum CardSubtype {
     NOMAD("Nomad"),
     ALLY("Ally"),
     KOR("Kor"),
+    KOBOLD("Kobold"),
     WIZARD("Wizard"),
     SORCERER("Sorcerer"),
     MUTANT("Mutant"),
@@ -85,6 +89,7 @@ public enum CardSubtype {
     FISH("Fish"),
     FROG("Frog"),
     FUNGUS("Fungus"),
+    OTTER("Otter"),
     MERFOLK("Merfolk"),
     OCTOPUS("Octopus"),
     SQUID("Squid"),
@@ -146,6 +151,7 @@ public enum CardSubtype {
     GOBLIN("Goblin"),
     GOAT("Goat"),
     GOD("God"),
+    DEMIGOD("Demigod"),
     KAVU("Kavu"),
     CYCLOPS("Cyclops"),
     HORROR("Horror"),
@@ -212,6 +218,7 @@ public enum CardSubtype {
     PEGASUS("Pegasus"),
     PEASANT("Peasant"),
     PENTAVITE("Pentavite"),
+    TRISKELAVITE("Triskelavite"),
     PINCHER("Pincher"),
     PEST("Pest"),
     PILOT("Pilot"),
@@ -255,7 +262,8 @@ public enum CardSubtype {
     YANLING("Yanling"),
     MITE("Mite"),
     OMEN("Omen"),
-    FLAGBEARER("Flagbearer");
+    FLAGBEARER("Flagbearer"),
+    ROBOT("Robot");
 
     @Getter
     private final String displayName;

@@ -62,6 +62,6 @@ class RobberOfTheRichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
-        assertThat(gd.playerLibraries.get(player2.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).contains(topCard);
     }
 }

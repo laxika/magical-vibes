@@ -673,6 +673,23 @@ class StateBasedActionServiceTest {
         }
 
         @Test
+        @DisplayName("Saga is not sacrificed while its chapter ability is parked for input")
+        void sagaNotSacrificedWhileChapterAbilityResolutionIsParked() {
+            Card card = createSagaCard("The Great Synthesis", 3);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            gd.pendingEffectResolutionEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                    "Chapter III", List.of(), null, perm.getId());
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
         @DisplayName("Saga is sacrificed when stack has unrelated triggered ability")
         void sagaSacrificedWhenStackHasUnrelatedAbility() {
             Card card = createSagaCard("The Mirari Conjecture", 3);

@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
@@ -124,8 +125,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -660,11 +664,15 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
             } else if (effect instanceof AwardChosenColorManaEffect && permanent.getChosenColor() != null) {
                 snapshotEffects.add(new AwardManaEffect(ManaColor.valueOf(permanent.getChosenColor().name())));
-            } else if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ENCHANTED
+            } else if (effect instanceof ReturnToHandEffect bounce
+                    && (bounce.scope() == BounceScope.ENCHANTED
+                    || bounce.scope() == BounceScope.ENCHANTED_AND_AURAS)
                     && permanent.getAttachedTo() != null) {
                 // Bind the enchanted permanent now: the Aura may be gone by resolution (Phantom Wings
                 // sacrifices itself as a cost), and the ability still uses last known information.
-                snapshotEffects.add(ReturnToHandEffect.enchantedSnapshot(permanent.getAttachedTo()));
+                snapshotEffects.add(bounce.scope() == BounceScope.ENCHANTED
+                        ? ReturnToHandEffect.enchantedSnapshot(permanent.getAttachedTo())
+                        : ReturnToHandEffect.enchantedAndAurasSnapshot(permanent.getAttachedTo()));
             } else if (effect instanceof ReturnToHandEffect bounce
                     && bounce.scope() == BounceScope.GRANTING_EQUIPMENT) {
                 // Bind the granting Equipment before the ability resolves: the equipped creature is
@@ -895,7 +903,7 @@ public class ActivatedAbilityExecutionService {
                 if (available > 0) {
                     ChoiceContext.RemoveCountersForManaChoice choiceContext =
                             new ChoiceContext.RemoveCountersForManaChoice(playerId, permanent.getId(),
-                                    rc.color(), rc.counterType(), isCreatureSource, manaMultiplier);
+                                    rc.colors(), rc.counterType(), isCreatureSource, manaMultiplier);
                     List<String> options = java.util.stream.IntStream.rangeClosed(0, available)
                             .mapToObj(Integer::toString)
                             .toList();
@@ -913,7 +921,7 @@ public class ActivatedAbilityExecutionService {
                 PermanentChoiceContext.ManaAbilityAddToChosenPlayer context =
                         new PermanentChoiceContext.ManaAbilityAddToChosenPlayer(
                                 chosen.color(), chosen.amount() * manaMultiplier, isCreatureSource,
-                                permanent.getCard().getName());
+                                permanent.getCard().getName(), chosen.anyColor(), playerId);
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
                         playerId, List.of(), validPlayerIds, context, "Choose a player to add mana."));
                 log.info("Game {} - Awaiting {} to choose a player to receive mana", gameData.id, player.getUsername());
@@ -935,7 +943,8 @@ public class ActivatedAbilityExecutionService {
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
                         playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard(),
-                        permanent.getId(), null, snowSource);
+                        permanent.getId(), null, snowSource,
+                        gameQueryService.getEffectiveColors(gameData, permanent));
                 if (prompted) {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
@@ -1155,8 +1164,8 @@ public class ActivatedAbilityExecutionService {
                     } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                     } else {
-                        int currentLife = gameData.getLife(playerId);
-                        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                        gameData.playerLifeTotals.put(playerId,
+                                gameQueryService.lifeAfterDamage(gameData, playerId, effectiveDamage));
                         if (effectiveDamage > 0) {
                             String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
                             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -1318,8 +1327,8 @@ public class ActivatedAbilityExecutionService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
-                int currentLife = gameData.getLife(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                gameData.playerLifeTotals.put(playerId,
+                        gameQueryService.lifeAfterDamage(gameData, playerId, effectiveDamage));
                 if (effectiveDamage > 0) {
                     gameLogService.append(gameData, GameLog.text(playerName + " takes " + effectiveDamage + " damage from " + cardName + "."));
                     log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
@@ -1686,6 +1695,8 @@ public class ActivatedAbilityExecutionService {
                 effectivePermanentTargetIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
+        stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
+                ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         if (tracksSacrificedCard) {
             stackEntry.setSacrificedCardSnapshot(permanent.getChosenCard());
@@ -1710,5 +1721,40 @@ public class ActivatedAbilityExecutionService {
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
+
+    private Map<CardEffect, List<UUID>> targetCardIdsByEffect(ActivatedAbility ability,
+                                                               List<CardEffect> effects,
+                                                               List<UUID> targetIds,
+                                                               Zone targetZone) {
+        if (targetZone != Zone.GRAVEYARD || targetIds == null || targetIds.isEmpty()
+                || ability.getMultiTargetFilters().isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Integer, UUID> targetByGroup = new HashMap<>();
+        for (int i = 0; i < targetIds.size() && i < ability.getMultiTargetFilters().size(); i++) {
+            if (ability.getMultiTargetFilters().get(i) instanceof GraveyardCardPredicateTargetFilter) {
+                targetByGroup.put(i, targetIds.get(i));
+            }
+        }
+        if (targetByGroup.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<CardEffect, List<UUID>> result = new IdentityHashMap<>();
+        for (CardEffect effect : effects) {
+            if (effect instanceof TargetCardGroupEffect groupedEffect) {
+                List<UUID> effectTargetIds = groupedEffect.targetGroups().stream()
+                        .map(targetByGroup::get)
+                        .filter(Objects::nonNull)
+                        .toList();
+                if (!effectTargetIds.isEmpty()) {
+                    result.put(effect, effectTargetIds);
+                }
+            }
+        }
+        return result;
+    }
+
 }
 

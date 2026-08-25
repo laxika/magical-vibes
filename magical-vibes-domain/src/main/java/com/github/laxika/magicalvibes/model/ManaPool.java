@@ -71,6 +71,7 @@ public class ManaPool {
     private int kickedOnlyGreen;
     private int instantSorceryOnlyColorless;
     private int foretellOrInstantSorceryOnlyColorless;
+    private int disturbOrInstantSorceryOnlyColorless;
     private int foretellSpellOnlyColorless;
     /** Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). */
     private int xCostOnlyColorless;
@@ -79,12 +80,15 @@ public class ManaPool {
     /** Colored mana that can only be spent to cast instant or sorcery spells (e.g. Abstract Paintmage). */
     private final EnumMap<ManaColor, Integer> instantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> foretellOrInstantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
+    private final EnumMap<ManaColor, Integer> disturbOrInstantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> foretellSpellOnlyColored = new EnumMap<>(ManaColor.class);
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeOrLegendaryCreatureMana = new HashMap<>();
     /** Colored mana spendable only to pay cumulative upkeep costs (Adarkar Unicorn). */
     private final EnumMap<ManaColor, Integer> cumulativeUpkeepOnlyColored = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with flashback from a graveyard (e.g. Altar of the Lost). */
     private final EnumMap<ManaColor, Integer> flashbackOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana that can only be spent to cast spells from a graveyard. */
+    private final EnumMap<ManaColor, Integer> graveyardOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeCreatureMana = new HashMap<>();
     /**
@@ -118,6 +122,8 @@ public class ManaPool {
      * creature subtype; this bucket pays for every creature spell.
      */
     private final EnumMap<ManaColor, Integer> creatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Creature-source mana within {@link #creatureSpellOnlyMana}; this is a provenance tag, not another bucket. */
+    private final EnumMap<ManaColor, Integer> creatureSourceCreatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast creature or enchantment spells. */
     private final EnumMap<ManaColor, Integer> creatureOrEnchantmentSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Temporary regular-pool tag used while paying a creature or enchantment spell. */
@@ -133,6 +139,8 @@ public class ManaPool {
      * regular pool for the duration of the payment and returns whatever it didn't spend.
      */
     private final Map<UUID, EnumMap<ManaColor, Integer>> exiledCardOnlyMana = new HashMap<>();
+    /** Per-color mana that may only be spent to cast spells from exile. */
+    private final EnumMap<ManaColor, Integer> exiledSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /**
      * Permission flag (not mana): while set, white mana in this pool may additionally be spent to pay
      * red mana costs (Sunglasses of Urza — "you may spend white mana as though it were red mana"). Set
@@ -153,6 +161,9 @@ public class ManaPool {
     /** Permission flag (not mana): while set, blue mana in this pool may additionally pay any
      * colored requirement of an activated ability of the current source creature. */
     private boolean blueSpendableAsAnyColorForActivatedAbilities;
+    /** Permission flag (not mana): while set, all mana in this pool may pay colored requirements
+     * of an activated ability of the current source creature. */
+    private boolean allManaSpendableAsAnyColorForActivatedAbilities;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -170,12 +181,16 @@ public class ManaPool {
             additionalCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
+            graveyardOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
+            disturbOrInstantSorceryOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
+            creatureSourceCreatureSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
             artifactOnlyMana.put(color, 0);
             partySpellOrAbilityMana.put(color, 0);
+            exiledSpellOnlyMana.put(color, 0);
         }
     }
 
@@ -197,6 +212,7 @@ public class ManaPool {
         additionalCounterGrantingMana.putAll(source.additionalCounterGrantingMana);
         riotGrantingMana.putAll(source.riotGrantingMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
+        graveyardOnlyMana.putAll(source.graveyardOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         artifactOnlyMana.putAll(source.artifactOnlyMana);
         this.artifactAbilityOnlyColorless = source.artifactAbilityOnlyColorless;
@@ -208,11 +224,13 @@ public class ManaPool {
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
         this.foretellOrInstantSorceryOnlyColorless = source.foretellOrInstantSorceryOnlyColorless;
+        this.disturbOrInstantSorceryOnlyColorless = source.disturbOrInstantSorceryOnlyColorless;
         this.foretellSpellOnlyColorless = source.foretellSpellOnlyColorless;
         this.xCostOnlyColorless = source.xCostOnlyColorless;
         this.cumulativeUpkeepOnlyColorless = source.cumulativeUpkeepOnlyColorless;
         instantSorceryOnlyColored.putAll(source.instantSorceryOnlyColored);
         foretellOrInstantSorceryOnlyColored.putAll(source.foretellOrInstantSorceryOnlyColored);
+        disturbOrInstantSorceryOnlyColored.putAll(source.disturbOrInstantSorceryOnlyColored);
         foretellSpellOnlyColored.putAll(source.foretellSpellOnlyColored);
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeOrLegendaryCreatureMana.entrySet()) {
             subtypeOrLegendaryCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
@@ -239,18 +257,21 @@ public class ManaPool {
         }
         partySpellOrAbilityMana.putAll(source.partySpellOrAbilityMana);
         creatureSpellOnlyMana.putAll(source.creatureSpellOnlyMana);
+        creatureSourceCreatureSpellOnlyMana.putAll(source.creatureSourceCreatureSpellOnlyMana);
         creatureOrEnchantmentSpellOnlyMana.putAll(source.creatureOrEnchantmentSpellOnlyMana);
         creatureSpellOrAbilityMana.putAll(source.creatureSpellOrAbilityMana);
         manaValueAtLeastFourOnlyMana.putAll(source.manaValueAtLeastFourOnlyMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.exiledCardOnlyMana.entrySet()) {
             exiledCardOnlyMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        exiledSpellOnlyMana.putAll(source.exiledSpellOnlyMana);
         this.whiteSpendableAsRed = source.whiteSpendableAsRed;
         this.whiteSpendableAsAnyColor = source.whiteSpendableAsAnyColor;
         this.whiteSpendableAsAnyColorWithoutRestriction = source.whiteSpendableAsAnyColorWithoutRestriction;
         this.allManaSpendableAsAnyColor = source.allManaSpendableAsAnyColor;
         this.snowManaSpendableAsAnyColor = source.snowManaSpendableAsAnyColor;
         this.blueSpendableAsAnyColorForActivatedAbilities = source.blueSpendableAsAnyColorForActivatedAbilities;
+        this.allManaSpendableAsAnyColorForActivatedAbilities = source.allManaSpendableAsAnyColorForActivatedAbilities;
     }
 
     /** See {@link #whiteSpendableAsRed}. */
@@ -303,6 +324,14 @@ public class ManaPool {
 
     public void setBlueSpendableAsAnyColorForActivatedAbilities(boolean enabled) {
         this.blueSpendableAsAnyColorForActivatedAbilities = enabled;
+    }
+
+    public boolean isAllManaSpendableAsAnyColorForActivatedAbilities() {
+        return allManaSpendableAsAnyColorForActivatedAbilities;
+    }
+
+    public void setAllManaSpendableAsAnyColorForActivatedAbilities(boolean enabled) {
+        this.allManaSpendableAsAnyColorForActivatedAbilities = enabled;
     }
 
     public void add(ManaColor color) {
@@ -384,6 +413,7 @@ public class ManaPool {
             additionalCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
+            graveyardOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
@@ -398,15 +428,18 @@ public class ManaPool {
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
         foretellOrInstantSorceryOnlyColorless = 0;
+        disturbOrInstantSorceryOnlyColorless = 0;
         foretellSpellOnlyColorless = 0;
         xCostOnlyColorless = 0;
         cumulativeUpkeepOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             instantSorceryOnlyColored.put(color, 0);
             foretellOrInstantSorceryOnlyColored.put(color, 0);
+            disturbOrInstantSorceryOnlyColored.put(color, 0);
             foretellSpellOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
+            creatureSourceCreatureSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
             manaValueAtLeastFourOnlyMana.put(color, 0);
         }
@@ -420,6 +453,7 @@ public class ManaPool {
         subtypeOrLegendaryCreatureMana.clear();
         partySpellOrAbilityMana.replaceAll((color, amount) -> 0);
         exiledCardOnlyMana.clear();
+        exiledSpellOnlyMana.replaceAll((color, amount) -> 0);
     }
 
     public int get(ManaColor color) {
@@ -473,13 +507,23 @@ public class ManaPool {
         total += kickedOnlyGreen;
         total += instantSorceryOnlyColorless;
         total += foretellOrInstantSorceryOnlyColorless;
+        total += disturbOrInstantSorceryOnlyColorless;
         total += foretellSpellOnlyColorless;
-        total += getInstantSorceryOnlyColoredTotal();
+        for (int value : instantSorceryOnlyColored.values()) {
+            total += value;
+        }
+        for (int value : foretellOrInstantSorceryOnlyColored.values()) {
+            total += value;
+        }
         total += getForetellSpellOnlyColoredTotal();
+        for (int value : disturbOrInstantSorceryOnlyColored.values()) {
+            total += value;
+        }
         total += xCostOnlyColorless;
         total += cumulativeUpkeepOnlyColorless;
         total += getCumulativeUpkeepOnlyColoredTotal();
         total += getFlashbackOnlyManaTotal();
+        total += getGraveyardOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
             for (int value : colorMap.values()) {
                 total += value;
@@ -522,6 +566,7 @@ public class ManaPool {
                 total += value;
             }
         }
+        total += getExiledSpellOnlyManaTotal();
         return total;
     }
 
@@ -570,6 +615,49 @@ public class ManaPool {
             }
             pool.merge(entry.getKey(), -amount, Integer::sum);
             addExiledCardOnlyMana(exiledCardId, entry.getKey(), amount);
+        }
+    }
+
+    /** Adds mana spendable only to cast a spell from exile. */
+    public void addExiledSpellOnlyMana(ManaColor color, int amount) {
+        exiledSpellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getExiledSpellOnlyMana(ManaColor color) {
+        return exiledSpellOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getExiledSpellOnlyManaTotal() {
+        int total = 0;
+        for (int value : exiledSpellOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Moves exile-only mana into the regular pool for a spell cast from exile. */
+    public EnumMap<ManaColor, Integer> promoteExiledSpellOnlyMana() {
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            int amount = exiledSpellOnlyMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                promoted.put(color, amount);
+                pool.merge(color, amount, Integer::sum);
+                exiledSpellOnlyMana.put(color, 0);
+            }
+        }
+        return promoted;
+    }
+
+    /** Returns unspent exile-only mana to its restricted bucket after an exile cast. */
+    public void returnExiledSpellOnlyMana(Map<ManaColor, Integer> amounts) {
+        for (Map.Entry<ManaColor, Integer> entry : amounts.entrySet()) {
+            int amount = entry.getValue();
+            if (amount <= 0) {
+                continue;
+            }
+            pool.merge(entry.getKey(), -amount, Integer::sum);
+            exiledSpellOnlyMana.merge(entry.getKey(), amount, Integer::sum);
         }
     }
 
@@ -1018,8 +1106,60 @@ public class ManaPool {
         flashbackOnlyMana.put(color, Math.max(0, current - amount));
     }
 
+    public void addGraveyardOnlyMana(ManaColor color, int amount) {
+        graveyardOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getGraveyardOnlyMana(ManaColor color) {
+        return graveyardOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getGraveyardOnlyManaTotal() {
+        return graveyardOnlyMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public void removeGraveyardOnlyMana(ManaColor color, int amount) {
+        int current = graveyardOnlyMana.getOrDefault(color, 0);
+        graveyardOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
+    /** Temporarily exposes graveyard-only mana to the ordinary spell-payment algorithm. */
+    public GraveyardOnlyManaState promoteGraveyardOnlyMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, get(color));
+            int amount = getGraveyardOnlyMana(color);
+            promoted.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                graveyardOnlyMana.put(color, 0);
+            }
+        }
+        return new GraveyardOnlyManaState(regularBefore, promoted);
+    }
+
+    /** Restores unspent graveyard-only mana after a spell payment. */
+    public void restorePromotedGraveyardOnlyMana(GraveyardOnlyManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promoted = state.promoted().getOrDefault(color, 0);
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promoted - get(color));
+            int remaining = Math.max(0, promoted - spent);
+            if (remaining > 0) {
+                pool.merge(color, -remaining, Integer::sum);
+                graveyardOnlyMana.merge(color, remaining, Integer::sum);
+            }
+        }
+    }
+
+    public record GraveyardOnlyManaState(Map<ManaColor, Integer> regularBefore,
+                                         Map<ManaColor, Integer> promoted) {
+    }
+
     public int getInstantSorceryOnlyColorless() {
-        return instantSorceryOnlyColorless + foretellOrInstantSorceryOnlyColorless;
+        return instantSorceryOnlyColorless + foretellOrInstantSorceryOnlyColorless
+                + disturbOrInstantSorceryOnlyColorless;
     }
 
     public void addForetellOrInstantSorceryOnlyColorless(int amount) {
@@ -1034,11 +1174,26 @@ public class ManaPool {
         foretellOrInstantSorceryOnlyColorless = Math.max(0, foretellOrInstantSorceryOnlyColorless - amount);
     }
 
+    public void addDisturbOrInstantSorceryOnlyColorless(int amount) {
+        disturbOrInstantSorceryOnlyColorless += amount;
+    }
+
+    public int getDisturbOrInstantSorceryOnlyColorless() {
+        return disturbOrInstantSorceryOnlyColorless;
+    }
+
+    public void removeDisturbOrInstantSorceryOnlyColorless(int amount) {
+        disturbOrInstantSorceryOnlyColorless = Math.max(0, disturbOrInstantSorceryOnlyColorless - amount);
+    }
+
     public void addInstantSorceryOnlyColorless(int amount) {
         instantSorceryOnlyColorless += amount;
     }
 
     public void removeInstantSorceryOnlyColorless(int amount) {
+        int fromDisturb = Math.min(amount, disturbOrInstantSorceryOnlyColorless);
+        disturbOrInstantSorceryOnlyColorless -= fromDisturb;
+        amount -= fromDisturb;
         int fromForetell = Math.min(amount, foretellOrInstantSorceryOnlyColorless);
         foretellOrInstantSorceryOnlyColorless -= fromForetell;
         amount -= fromForetell;
@@ -1143,6 +1298,25 @@ public class ManaPool {
         }
         copy.foretellOrInstantSorceryOnlyColorless = 0;
         copy.foretellOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
+        copy.disturbOrInstantSorceryOnlyColorless = 0;
+        copy.disturbOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
+        copy.foretellSpellOnlyColorless = 0;
+        copy.foretellSpellOnlyColored.replaceAll((color, amount) -> 0);
+        return copy;
+    }
+
+    /** Returns a copy in which only disturb-or-instant/sorcery mana is exposed as instant/sorcery mana. */
+    public ManaPool copyForDisturbPayment() {
+        ManaPool copy = new ManaPool(this);
+        copy.instantSorceryOnlyColorless = copy.disturbOrInstantSorceryOnlyColorless;
+        for (ManaColor color : ManaColor.values()) {
+            copy.instantSorceryOnlyColored.put(color,
+                    copy.disturbOrInstantSorceryOnlyColored.getOrDefault(color, 0));
+        }
+        copy.disturbOrInstantSorceryOnlyColorless = 0;
+        copy.disturbOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
+        copy.foretellOrInstantSorceryOnlyColorless = 0;
+        copy.foretellOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
         copy.foretellSpellOnlyColorless = 0;
         copy.foretellSpellOnlyColored.replaceAll((color, amount) -> 0);
         return copy;
@@ -1153,6 +1327,7 @@ public class ManaPool {
         ForetellPaymentState state = new ForetellPaymentState(
                 instantSorceryOnlyColorless, new EnumMap<>(instantSorceryOnlyColored),
                 foretellOrInstantSorceryOnlyColorless, new EnumMap<>(foretellOrInstantSorceryOnlyColored),
+                disturbOrInstantSorceryOnlyColorless, new EnumMap<>(disturbOrInstantSorceryOnlyColored),
                 foretellSpellOnlyColorless, new EnumMap<>(foretellSpellOnlyColored));
         instantSorceryOnlyColorless = foretellOrInstantSorceryOnlyColorless + foretellSpellOnlyColorless;
         for (ManaColor color : ManaColor.values()) {
@@ -1162,6 +1337,8 @@ public class ManaPool {
         }
         foretellOrInstantSorceryOnlyColorless = 0;
         foretellOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
+        disturbOrInstantSorceryOnlyColorless = 0;
+        disturbOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
         foretellSpellOnlyColorless = 0;
         foretellSpellOnlyColored.replaceAll((color, amount) -> 0);
         return state;
@@ -1184,14 +1361,65 @@ public class ManaPool {
             foretellSpellOnlyColored.put(color,
                     remainingColored.getOrDefault(color, 0) - oldRemaining);
         }
+        disturbOrInstantSorceryOnlyColorless = state.disturbOrInstantSorceryOnlyColorless();
+        disturbOrInstantSorceryOnlyColored.putAll(state.disturbOrInstantSorceryOnlyColored());
     }
 
     public record ForetellPaymentState(int instantSorceryOnlyColorless,
                                        Map<ManaColor, Integer> instantSorceryOnlyColored,
                                        int foretellOrInstantSorceryOnlyColorless,
                                        Map<ManaColor, Integer> foretellOrInstantSorceryOnlyColored,
+                                       int disturbOrInstantSorceryOnlyColorless,
+                                       Map<ManaColor, Integer> disturbOrInstantSorceryOnlyColored,
                                        int foretellSpellOnlyColorless,
                                        Map<ManaColor, Integer> foretellSpellOnlyColored) {
+    }
+
+    /** Temporarily exposes disturb-or-instant/sorcery mana for an actual disturb payment. */
+    public DisturbPaymentState beginDisturbPayment() {
+        DisturbPaymentState state = new DisturbPaymentState(
+                instantSorceryOnlyColorless, new EnumMap<>(instantSorceryOnlyColored),
+                disturbOrInstantSorceryOnlyColorless, new EnumMap<>(disturbOrInstantSorceryOnlyColored),
+                foretellOrInstantSorceryOnlyColorless, new EnumMap<>(foretellOrInstantSorceryOnlyColored),
+                foretellSpellOnlyColorless, new EnumMap<>(foretellSpellOnlyColored));
+        instantSorceryOnlyColorless = disturbOrInstantSorceryOnlyColorless;
+        instantSorceryOnlyColored.putAll(disturbOrInstantSorceryOnlyColored);
+        disturbOrInstantSorceryOnlyColorless = 0;
+        disturbOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
+        foretellOrInstantSorceryOnlyColorless = 0;
+        foretellOrInstantSorceryOnlyColored.replaceAll((color, amount) -> 0);
+        foretellSpellOnlyColorless = 0;
+        foretellSpellOnlyColored.replaceAll((color, amount) -> 0);
+        return state;
+    }
+
+    /** Restores ordinary instant/sorcery mana after a disturb payment and preserves leftovers. */
+    public void endDisturbPayment(DisturbPaymentState state) {
+        int remainingColorless = instantSorceryOnlyColorless;
+        EnumMap<ManaColor, Integer> remainingColored = new EnumMap<>(instantSorceryOnlyColored);
+        instantSorceryOnlyColorless = state.instantSorceryOnlyColorless();
+        instantSorceryOnlyColored.putAll(state.instantSorceryOnlyColored());
+        disturbOrInstantSorceryOnlyColorless = Math.min(
+                state.disturbOrInstantSorceryOnlyColorless(), remainingColorless);
+        for (ManaColor color : ManaColor.values()) {
+            disturbOrInstantSorceryOnlyColored.put(color, Math.min(
+                    state.disturbOrInstantSorceryOnlyColored().getOrDefault(color, 0),
+                    remainingColored.getOrDefault(color, 0)));
+        }
+        foretellOrInstantSorceryOnlyColorless = state.foretellOrInstantSorceryOnlyColorless();
+        foretellOrInstantSorceryOnlyColored.putAll(state.foretellOrInstantSorceryOnlyColored());
+        foretellSpellOnlyColorless = state.foretellSpellOnlyColorless();
+        foretellSpellOnlyColored.putAll(state.foretellSpellOnlyColored());
+    }
+
+    public record DisturbPaymentState(int instantSorceryOnlyColorless,
+                                      Map<ManaColor, Integer> instantSorceryOnlyColored,
+                                      int disturbOrInstantSorceryOnlyColorless,
+                                      Map<ManaColor, Integer> disturbOrInstantSorceryOnlyColored,
+                                      int foretellOrInstantSorceryOnlyColorless,
+                                      Map<ManaColor, Integer> foretellOrInstantSorceryOnlyColored,
+                                      int foretellSpellOnlyColorless,
+                                      Map<ManaColor, Integer> foretellSpellOnlyColored) {
     }
 
     public int getXCostOnlyColorless() {
@@ -1241,7 +1469,8 @@ public class ManaPool {
 
     public int getInstantSorceryOnlyColored(ManaColor color) {
         return instantSorceryOnlyColored.getOrDefault(color, 0)
-                + foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0);
+                + foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0)
+                + disturbOrInstantSorceryOnlyColored.getOrDefault(color, 0);
     }
 
     public int getInstantSorceryOnlyColoredTotal() {
@@ -1257,6 +1486,11 @@ public class ManaPool {
     }
 
     public void removeInstantSorceryOnlyColored(ManaColor color, int amount) {
+        int fromDisturb = Math.min(amount, disturbOrInstantSorceryOnlyColored.getOrDefault(color, 0));
+        if (fromDisturb > 0) {
+            removeDisturbOrInstantSorceryOnlyColored(color, fromDisturb);
+            amount -= fromDisturb;
+        }
         int fromForetell = Math.min(amount, foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0));
         if (fromForetell > 0) {
             removeForetellOrInstantSorceryOnlyColored(color, fromForetell);
@@ -1285,6 +1519,27 @@ public class ManaPool {
     public void removeForetellOrInstantSorceryOnlyColored(ManaColor color, int amount) {
         int current = foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0);
         foretellOrInstantSorceryOnlyColored.put(color, Math.max(0, current - amount));
+    }
+
+    public int getDisturbOrInstantSorceryOnlyColored(ManaColor color) {
+        return disturbOrInstantSorceryOnlyColored.getOrDefault(color, 0);
+    }
+
+    public int getDisturbOrInstantSorceryOnlyColoredTotal() {
+        int total = 0;
+        for (int value : disturbOrInstantSorceryOnlyColored.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void addDisturbOrInstantSorceryOnlyColored(ManaColor color, int amount) {
+        disturbOrInstantSorceryOnlyColored.merge(color, amount, Integer::sum);
+    }
+
+    public void removeDisturbOrInstantSorceryOnlyColored(ManaColor color, int amount) {
+        int current = disturbOrInstantSorceryOnlyColored.getOrDefault(color, 0);
+        disturbOrInstantSorceryOnlyColored.put(color, Math.max(0, current - amount));
     }
 
     public void addSubtypeCreatureMana(CardSubtype subtype, ManaColor color, int amount) {
@@ -1632,6 +1887,10 @@ public class ManaPool {
         creatureSpellOnlyMana.merge(color, amount, Integer::sum);
     }
 
+    public void addCreatureSourceCreatureSpellOnlyMana(ManaColor color, int amount) {
+        creatureSourceCreatureSpellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
     public int getCreatureSpellOnlyMana(ManaColor color) {
         return creatureSpellOnlyMana.getOrDefault(color, 0);
     }
@@ -1646,7 +1905,14 @@ public class ManaPool {
 
     public void removeCreatureSpellOnlyMana(ManaColor color, int amount) {
         int current = creatureSpellOnlyMana.getOrDefault(color, 0);
-        creatureSpellOnlyMana.put(color, Math.max(0, current - amount));
+        int removed = Math.min(current, amount);
+        creatureSpellOnlyMana.put(color, current - removed);
+        int creatureSource = creatureSourceCreatureSpellOnlyMana.getOrDefault(color, 0);
+        creatureSourceCreatureSpellOnlyMana.put(color, Math.max(0, creatureSource - removed));
+    }
+
+    public int getCreatureSourceCreatureSpellOnlyManaTotal() {
+        return creatureSourceCreatureSpellOnlyMana.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     public void addCreatureOrEnchantmentSpellOnlyMana(ManaColor color, int amount) {
@@ -1918,9 +2184,11 @@ public class ManaPool {
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless += moveColoredManaToColorless(instantSorceryOnlyColored);
         foretellOrInstantSorceryOnlyColorless += moveColoredManaToColorless(foretellOrInstantSorceryOnlyColored);
+        disturbOrInstantSorceryOnlyColorless += moveColoredManaToColorless(disturbOrInstantSorceryOnlyColored);
         foretellSpellOnlyColorless += moveColoredManaToColorless(foretellSpellOnlyColored);
         cumulativeUpkeepOnlyColorless += moveColoredManaToColorless(cumulativeUpkeepOnlyColored);
         moveColoredManaToColorless(flashbackOnlyMana);
+        moveColoredManaToColorless(graveyardOnlyMana);
         moveColoredManaToColorless(abilityOnlyMana);
         moveColoredManaToColorlessBuckets(subtypeCreatureMana);
         moveColoredManaToColorlessBuckets(subtypeOrLegendaryCreatureMana);
@@ -1931,10 +2199,132 @@ public class ManaPool {
         moveColoredManaToColorlessBuckets(subtypeOrPlaneswalkerSpellMana);
         moveColoredManaToColorless(partySpellOrAbilityMana);
         moveColoredManaToColorless(creatureSpellOnlyMana);
+        moveColoredManaToColorless(creatureSourceCreatureSpellOnlyMana);
         moveColoredManaToColorless(creatureOrEnchantmentSpellOnlyMana);
         moveColoredManaToColorless(manaValueAtLeastFourOnlyMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : exiledCardOnlyMana.entrySet()) {
             moveColoredManaToColorless(entry.getValue());
+        }
+        moveColoredManaToColorless(exiledSpellOnlyMana);
+    }
+
+    /** Changes all mana that would drain at the next boundary to the requested color. */
+    public void convertNonPersistentManaTo(ManaColor replacementColor) {
+        if (replacementColor == ManaColor.COLORLESS) {
+            convertNonPersistentManaToColorless();
+            return;
+        }
+
+        for (ManaColor color : ManaColor.values()) {
+            if (color == replacementColor) {
+                continue;
+            }
+            int current = pool.getOrDefault(color, 0);
+            int persistent = persistentMana.getOrDefault(color, 0);
+            int amount = Math.max(0, current - persistent);
+            if (amount == 0) {
+                continue;
+            }
+            pool.put(color, current - amount);
+            pool.merge(replacementColor, amount, Integer::sum);
+            moveTaggedMana(snowMana, color, replacementColor, amount);
+            moveTaggedMana(creatureMana, color, replacementColor, amount);
+            moveTaggedMana(spellOnlyMana, color, replacementColor, amount);
+            moveTaggedMana(promotedAbilityOnlyMana, color, replacementColor, amount);
+            moveTaggedMana(hasteGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(additionalCounterGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(riotGrantingMana, color, replacementColor, amount);
+        }
+
+        moveManaToPool(replacementColor, artifactOnlyColorless);
+        artifactOnlyColorless = 0;
+        moveManaToPool(replacementColor, artifactAbilityOnlyColorless);
+        artifactAbilityOnlyColorless = 0;
+        moveManaToPool(replacementColor, powerstoneOnlyColorless);
+        powerstoneOnlyColorless = 0;
+        moveManaToPool(replacementColor, myrOnlyColorless);
+        myrOnlyColorless = 0;
+        moveManaToPool(replacementColor, legendarySpellOnlyColorless);
+        legendarySpellOnlyColorless = 0;
+        moveManaToPool(replacementColor, instantSorceryOnlyColorless);
+        instantSorceryOnlyColorless = 0;
+        moveManaToPool(replacementColor, foretellOrInstantSorceryOnlyColorless);
+        foretellOrInstantSorceryOnlyColorless = 0;
+        moveManaToPool(replacementColor, foretellSpellOnlyColorless);
+        foretellSpellOnlyColorless = 0;
+        moveManaToPool(replacementColor, xCostOnlyColorless);
+        xCostOnlyColorless = 0;
+        moveManaToPool(replacementColor, cumulativeUpkeepOnlyColorless);
+        cumulativeUpkeepOnlyColorless = 0;
+        moveManaToPool(replacementColor, restrictedRed);
+        restrictedRed = 0;
+        moveManaToPool(replacementColor, kickedOnlyGreen);
+        kickedOnlyGreen = 0;
+        int colorlessSubtypeMana = colorlessSubtypeSpellOrAbilityMana.values().stream()
+                .mapToInt(Integer::intValue).sum();
+        moveManaToPool(replacementColor, colorlessSubtypeMana);
+        colorlessSubtypeSpellOrAbilityMana.clear();
+
+        moveManaTo(replacementColor, artifactOnlyMana);
+        moveManaTo(replacementColor, artifactSpellOrAbilityOnlyMana);
+        moveManaTo(replacementColor, promotedArtifactSpellOrAbilityOnlyMana);
+        moveManaTo(replacementColor, instantSorceryOnlyColored);
+        moveManaTo(replacementColor, foretellOrInstantSorceryOnlyColored);
+        moveManaTo(replacementColor, foretellSpellOnlyColored);
+        moveManaTo(replacementColor, cumulativeUpkeepOnlyColored);
+        moveManaTo(replacementColor, flashbackOnlyMana);
+        moveManaTo(replacementColor, abilityOnlyMana);
+        moveManaToBuckets(replacementColor, subtypeCreatureMana);
+        moveManaToBuckets(replacementColor, subtypeOrLegendaryCreatureMana);
+        moveManaToBuckets(replacementColor, uncounterableSubtypeCreatureMana);
+        moveManaToBuckets(replacementColor, subtypeSpellOrAbilityMana);
+        moveManaToBuckets(replacementColor, subtypeSpellOnlyMana);
+        moveManaToBuckets(replacementColor, subtypeCreatureSourceSpellOrAbilityMana);
+        moveManaToBuckets(replacementColor, subtypeOrPlaneswalkerSpellMana);
+        moveManaTo(replacementColor, partySpellOrAbilityMana);
+        moveManaTo(replacementColor, creatureSpellOnlyMana);
+        moveManaTo(replacementColor, creatureSourceCreatureSpellOnlyMana);
+        moveManaTo(replacementColor, creatureOrEnchantmentSpellOnlyMana);
+        moveManaTo(replacementColor, creatureSpellOrAbilityMana);
+        moveManaTo(replacementColor, manaValueAtLeastFourOnlyMana);
+        for (EnumMap<ManaColor, Integer> bucket : exiledCardOnlyMana.values()) {
+            moveManaTo(replacementColor, bucket);
+        }
+    }
+
+    private void moveManaToPool(ManaColor replacementColor, int amount) {
+        if (amount > 0) {
+            pool.merge(replacementColor, amount, Integer::sum);
+        }
+    }
+
+    private static void moveTaggedMana(EnumMap<ManaColor, Integer> bucket,
+                                       ManaColor from, ManaColor to, int amount) {
+        int tagged = Math.min(amount, bucket.getOrDefault(from, 0));
+        if (tagged > 0) {
+            bucket.put(from, bucket.get(from) - tagged);
+            bucket.merge(to, tagged, Integer::sum);
+        }
+    }
+
+    private static void moveManaTo(ManaColor replacementColor, Map<ManaColor, Integer> bucket) {
+        for (ManaColor color : ManaColor.values()) {
+            if (color == replacementColor) {
+                continue;
+            }
+            int amount = bucket.getOrDefault(color, 0);
+            if (amount > 0) {
+                bucket.put(color, 0);
+                bucket.merge(replacementColor, amount, Integer::sum);
+            }
+        }
+    }
+
+    private static void moveManaToBuckets(ManaColor replacementColor,
+                                          Map<?, EnumMap<ManaColor, Integer>> buckets) {
+        for (EnumMap<ManaColor, Integer> bucket : buckets.values()) {
+            moveManaTo(replacementColor, bucket);
         }
     }
 
@@ -2005,13 +2395,18 @@ public class ManaPool {
         drainColorBucket(abilityOnlyMana, protectedColors);
         drainColorBucket(promotedAbilityOnlyMana, protectedColors);
         drainColorBucket(instantSorceryOnlyColored, protectedColors);
+        drainColorBucket(foretellOrInstantSorceryOnlyColored, protectedColors);
+        drainColorBucket(disturbOrInstantSorceryOnlyColored, protectedColors);
+        drainColorBucket(foretellSpellOnlyColored, protectedColors);
         drainColorBucket(cumulativeUpkeepOnlyColored, protectedColors);
         drainColorBucket(flashbackOnlyMana, protectedColors);
+        drainColorBucket(graveyardOnlyMana, protectedColors);
         drainColorBucket(artifactOnlyMana, protectedColors);
         drainColorBucket(artifactSpellOrAbilityOnlyMana, protectedColors);
         drainColorBucket(promotedArtifactSpellOrAbilityOnlyMana, protectedColors);
         drainColorBucket(partySpellOrAbilityMana, protectedColors);
         drainColorBucket(creatureSpellOnlyMana, protectedColors);
+        drainColorBucket(creatureSourceCreatureSpellOnlyMana, protectedColors);
         drainColorBucket(creatureSpellOrAbilityMana, protectedColors);
         drainColorBucket(manaValueAtLeastFourOnlyMana, protectedColors);
 
@@ -2022,6 +2417,7 @@ public class ManaPool {
         drainColorMap(subtypeCreatureSourceSpellOrAbilityMana, protectedColors);
         drainColorMap(subtypeOrPlaneswalkerSpellMana, protectedColors);
         drainColorMap(exiledCardOnlyMana, protectedColors);
+        drainColorBucket(exiledSpellOnlyMana, protectedColors);
 
         if (!protectedColors.contains(ManaColor.COLORLESS)) {
             artifactOnlyColorless = 0;
@@ -2031,6 +2427,9 @@ public class ManaPool {
             colorlessSubtypeSpellOrAbilityMana.clear();
             legendarySpellOnlyColorless = 0;
             instantSorceryOnlyColorless = 0;
+            foretellOrInstantSorceryOnlyColorless = 0;
+            disturbOrInstantSorceryOnlyColorless = 0;
+            foretellSpellOnlyColorless = 0;
             xCostOnlyColorless = 0;
             cumulativeUpkeepOnlyColorless = 0;
         }
@@ -2091,7 +2490,9 @@ public class ManaPool {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
                 amount += artifactOnlyColorless + artifactAbilityOnlyColorless + myrOnlyColorless
-                        + powerstoneOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless + xCostOnlyColorless
+                        + powerstoneOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless
+                        + foretellOrInstantSorceryOnlyColorless + disturbOrInstantSorceryOnlyColorless
+                        + foretellSpellOnlyColorless + xCostOnlyColorless
                         + colorlessSubtypeSpellOrAbilityMana.values().stream().mapToInt(Integer::intValue).sum()
                         + cumulativeUpkeepOnlyColorless;
             }
@@ -2107,6 +2508,7 @@ public class ManaPool {
             amount += getForetellSpellOnlyColored(color);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
+            amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
@@ -2131,6 +2533,7 @@ public class ManaPool {
             amount += creatureOrEnchantmentSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
+            amount += exiledSpellOnlyMana.getOrDefault(color, 0);
             map.put(color.getCode(), amount);
         }
         return map;
@@ -2151,6 +2554,7 @@ public class ManaPool {
             amount += getForetellSpellOnlyColored(color);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
+            amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);
             if (color == ManaColor.RED) {
                 amount += restrictedRed;
@@ -2186,6 +2590,7 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            amount += exiledSpellOnlyMana.getOrDefault(color, 0);
             totals.put(color, amount);
         }
         return totals;

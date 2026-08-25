@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicat
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "105")
+@CardRegistration(set = "JUD", collectorNumber = "50")
 public class Scalpelexis extends Card {
 
     public Scalpelexis() {

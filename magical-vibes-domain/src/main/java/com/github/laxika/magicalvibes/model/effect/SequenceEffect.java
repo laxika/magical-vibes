@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Resolves several {@link CardEffect} steps in order, as if they were consecutive effects on the
@@ -43,7 +44,7 @@ import java.util.List;
  * "that player".</p>
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
-        implements CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect, EndStepPlayerTargetedEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -130,5 +131,14 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
             }
         }
         return result;
+    }
+
+    @Override
+    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
+        return new SequenceEffect(steps.stream()
+                .map(step -> step instanceof CombatDamageDealerAwareEffect aware
+                        ? aware.withCombatDamageDealerIds(dealerIds)
+                        : step)
+                .toList(), controllerDrawCount, onlyIfSacrificed);
     }
 }

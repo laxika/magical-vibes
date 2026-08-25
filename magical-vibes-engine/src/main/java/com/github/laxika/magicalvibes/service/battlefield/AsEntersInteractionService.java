@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -25,12 +26,15 @@ import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffe
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnOtherNontokenCreaturesFaceDownOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -38,6 +42,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -48,8 +53,26 @@ public class AsEntersInteractionService {
     private final PlayerInputService playerInputService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final EquipSupport equipSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final EtbTriggerService etbTriggerService;
+
+    @Autowired
+    public AsEntersInteractionService(GameQueryService gameQueryService,
+                                      PlayerInputService playerInputService,
+                                      AmountEvaluationService amountEvaluationService,
+                                      PredicateEvaluationService predicateEvaluationService,
+                                      @Lazy EquipSupport equipSupport,
+                                      @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
+                                      @Lazy EtbTriggerService etbTriggerService) {
+        this.gameQueryService = gameQueryService;
+        this.playerInputService = playerInputService;
+        this.amountEvaluationService = amountEvaluationService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.equipSupport = equipSupport;
+        this.permanentCounterSupport = permanentCounterSupport;
+        this.etbTriggerService = etbTriggerService;
+    }
 
     public AsEntersInteractionService(GameQueryService gameQueryService,
                                       PlayerInputService playerInputService,
@@ -57,12 +80,8 @@ public class AsEntersInteractionService {
                                       PredicateEvaluationService predicateEvaluationService,
                                       @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
                                       @Lazy EtbTriggerService etbTriggerService) {
-        this.gameQueryService = gameQueryService;
-        this.playerInputService = playerInputService;
-        this.amountEvaluationService = amountEvaluationService;
-        this.predicateEvaluationService = predicateEvaluationService;
-        this.permanentCounterSupport = permanentCounterSupport;
-        this.etbTriggerService = etbTriggerService;
+        this(gameQueryService, playerInputService, amountEvaluationService, predicateEvaluationService,
+                null, permanentCounterSupport, etbTriggerService);
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
@@ -107,6 +126,23 @@ public class AsEntersInteractionService {
                                                  List<String> repeatedAdditionalCosts,
                                                  List<UUID> convokeCreatureIds) {
         controllerId = resolveTokenControllerForEntry(gameData, controllerId, card);
+
+        boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
+        if (turnsOtherCreaturesFaceDown) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent == justEntered || permanent.isFaceDown() || permanent.getCard().isToken()
+                            || permanent.getOriginalCard().getBackFaceCard() != null
+                            || !gameQueryService.isCreature(gameData, permanent)) {
+                        continue;
+                    }
+                    permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+                }
+            }
+        }
+
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -142,6 +178,29 @@ public class AsEntersInteractionService {
                         opponentId,
                         null));
                 playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+        }
+
+        ChooseEquipmentAttachmentOnEnterEffect equipmentAttachment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseEquipmentAttachmentOnEnterEffect.class::isInstance)
+                .map(ChooseEquipmentAttachmentOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (equipmentAttachment != null && equipSupport != null) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validIds = gameData.playerBattlefields.get(controllerId).stream()
+                    .filter(permanent -> permanent != justEntered)
+                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .filter(permanent -> equipSupport.canAttachEquipment(gameData, justEntered, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!validIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseEquipmentToAttachAsEnter(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode,
+                                xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds));
+                playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                        "Choose a creature you control to attach it to.");
                 return;
             }
         }

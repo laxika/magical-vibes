@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -78,6 +79,14 @@ public class EtbEffectResolver {
             if (coe.optional() && ctx.etbMode() < 0) {
                 return null;
             }
+            if (ctx.etbMode() < 0) {
+                CardEffect[] selectedEffects = coe.decodeModeIndices(ctx.etbMode()).stream()
+                        .flatMap(modeIndex -> coe.options().get(modeIndex).effects().stream())
+                        .toArray(CardEffect[]::new);
+                return selectedEffects.length == 1
+                        ? selectedEffects[0]
+                        : SequenceEffect.of(selectedEffects);
+            }
             if (ctx.etbMode() >= 0 && ctx.etbMode() < coe.options().size()) {
                 return selectedModeEffect(coe.options().get(ctx.etbMode()));
             }
@@ -103,9 +112,11 @@ public class EtbEffectResolver {
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
-                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false,
-                    sourceZone, 0, null, null, false, false, null, null, null,
-                    ctx.repeatedAdditionalCosts());
+                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false, false,
+                    sourceZone, 0, null, null, false, false, false, null, null, null,
+                    ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
+                    ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
+                    false, false, 0);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
@@ -117,6 +128,7 @@ public class EtbEffectResolver {
                         ctx.repeatedAdditionalCosts().contains(paid.manaCost()) ? conditional.wrapped() : null;
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
+                case CastForAlternateCost ignored -> ctx.alternateCost() ? conditional.wrapped() : null;
                 // Spectacle branch selection is fixed when the permanent enters.
                 case CastForSpectacleCost ignored ->
                         ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle()

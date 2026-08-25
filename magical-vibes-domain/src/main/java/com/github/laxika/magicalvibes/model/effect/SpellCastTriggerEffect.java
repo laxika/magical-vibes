@@ -134,6 +134,12 @@ public record SpellCastTriggerEffect(
                 false, false, null, spellNumber, 0, false);
     }
 
+    public static SpellCastTriggerEffect nth(int spellNumber, CardPredicate spellFilter,
+                                             List<CardEffect> resolvedEffects, TargetFilter targetFilter) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, targetFilter, null,
+                false, false, null, spellNumber, 0, false);
+    }
+
     public static SpellCastTriggerEffect atLeast(int spellNumber, CardPredicate spellFilter,
                                                   List<CardEffect> resolvedEffects) {
         return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,

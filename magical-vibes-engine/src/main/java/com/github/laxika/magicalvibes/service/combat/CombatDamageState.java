@@ -62,12 +62,15 @@ class CombatDamageState {
     final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlaneswalker = new HashMap<>();
+    final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToBattles = new HashMap<>();
     final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToPlaneswalkers = new HashMap<>();
     final Map<Permanent, Set<UUID>> combatDamageRecipientControllers = new HashMap<>();
     final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
+    final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrBattleEffects = new HashMap<>();
+    final Map<Permanent, List<CardEffect>> selfDealsDamageEffects = new HashMap<>();
     final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
     final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();
     final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();
@@ -82,6 +85,9 @@ class CombatDamageState {
     // (ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE) can find it after the creature dies. Key: damaged
     // creature ID, Value: its controller ID at damage time.
     final Map<UUID, UUID> combatDamageTargetControllers = new HashMap<>();
+
+    final Map<UUID, Permanent> pendingDralnuReplacementTargets = new LinkedHashMap<>();
+    final Map<UUID, Integer> pendingDralnuReplacementDamage = new LinkedHashMap<>();
 
     // CR 510.1 — Snapshot of whether defender's damage should be dealt as infect (Phyrexian Unlife),
     // captured before lifelink is processed so simultaneous combat damage uses pre-damage life total.

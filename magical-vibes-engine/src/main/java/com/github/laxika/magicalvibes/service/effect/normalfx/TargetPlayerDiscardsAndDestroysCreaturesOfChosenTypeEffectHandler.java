@@ -136,7 +136,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
     private boolean isMatchingCreatureCard(Card card, CardSubtype chosenSubtype, Set<CardSubtype> grantedSubtypes) {
         return card.hasType(CardType.CREATURE)
                 && (card.getSubtypes().contains(chosenSubtype)
-                || card.getKeywords().contains(Keyword.CHANGELING)
+                || card.hasKeyword(Keyword.CHANGELING)
                 || grantedSubtypes.contains(chosenSubtype));
     }
 

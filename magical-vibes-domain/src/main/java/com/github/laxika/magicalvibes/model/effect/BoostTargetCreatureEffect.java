@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * predicate. Trigger pipelines that read {@code targetSpec().predicate()} (such as the
  * cycle/discard controller-trigger target collector) use it to build the legal-target list.
  *
+ * <p>{@code targetGroup} is an activated-ability target-group index, or {@code -1} when the
+ * effect uses the card's target binding or the entry's ordinary target list.
+ *
  * <p>{@code duration} is {@link GrantDuration#END_OF_TURN} for the overwhelming majority of pumps;
  * {@link GrantDuration#UNTIL_YOUR_NEXT_TURN} routes the modifier into the permanent's
  * until-next-turn bucket instead, so it survives end-of-turn cleanup (Jace, Telepath Unbound's +1).
@@ -26,7 +29,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                         PermanentPredicate filter,
-                                        GrantDuration duration) implements CreatureBoostEffect, CombatOpponentReferencingEffect {
+                                        GrantDuration duration,
+                                        int targetGroup) implements CreatureBoostEffect, CombatOpponentReferencingEffect {
+
+    private static final int UNBOUND_TARGET_GROUP = -1;
+
+    public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                     PermanentPredicate filter, GrantDuration duration) {
+        this(powerBoost, toughnessBoost, filter, duration, UNBOUND_TARGET_GROUP);
+    }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                      PermanentPredicate filter) {
@@ -35,6 +46,10 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
         this(powerBoost, toughnessBoost, null);
+    }
+
+    public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost, int targetGroup) {
+        this(powerBoost, toughnessBoost, null, GrantDuration.END_OF_TURN, targetGroup);
     }
 
     /** Convenience for plain fixed boosts ("gets +2/+2 until end of turn"). */
@@ -50,6 +65,12 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     /** Convenience for fixed boosts with a non-default duration ("gets -2/-0 until your next turn"). */
     public BoostTargetCreatureEffect(int powerBoost, int toughnessBoost, GrantDuration duration) {
         this(new Fixed(powerBoost), new Fixed(toughnessBoost), null, duration);
+    }
+
+    /** Convenience for an activated ability's positional target group. */
+    public static BoostTargetCreatureEffect forTargetGroup(int powerBoost, int toughnessBoost, int targetGroup) {
+        return new BoostTargetCreatureEffect(new Fixed(powerBoost), new Fixed(toughnessBoost), null,
+                GrantDuration.END_OF_TURN, targetGroup);
     }
 
     @Override

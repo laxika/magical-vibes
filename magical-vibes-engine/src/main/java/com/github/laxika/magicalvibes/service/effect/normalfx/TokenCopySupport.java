@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -54,7 +55,7 @@ public class TokenCopySupport {
         List<Permanent> tokens = new ArrayList<>();
         for (Card sourceCard : sourceCards) {
             for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = buildTokenCopyCard(sourceCard, effect);
+                Card tokenCard = buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
                 tokens.add(new Permanent(tokenCard));
@@ -108,9 +109,17 @@ public class TokenCopySupport {
             }
             simultaneouslyEntered.add(tokenPermanent);
         }
+
+        battlefieldEntryService.checkAllyTokenEntersTriggers(
+                gameData, tokenControllerId, tokens.stream().map(Permanent::getId).toList());
     }
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
+        return buildTokenCopyCard(sourceCard, effect, null);
+    }
+
+    private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
+                                           Predicate<CardSubtype> isCreatureSubtype) {
         boolean hasPTOverride = effect.powerOverride() != null || effect.toughnessOverride() != null;
 
         Card tokenCard = new Card();
@@ -132,13 +141,31 @@ public class TokenCopySupport {
         tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
         List<CardSubtype> subtypes = new ArrayList<>();
-        if (sourceCard.getSubtypes() != null) {
-            subtypes.addAll(sourceCard.getSubtypes());
-        }
-        if (effect.additionalSubtypes() != null) {
-            for (CardSubtype subtype : effect.additionalSubtypes()) {
+        if (effect.creatureSubtypeOverride() != null && !effect.creatureSubtypeOverride().isEmpty()) {
+            if (isCreatureSubtype == null) {
+                throw new IllegalStateException("Creature subtype override requires subtype classification");
+            }
+            if (sourceCard.getSubtypes() != null) {
+                for (CardSubtype subtype : sourceCard.getSubtypes()) {
+                    if (!isCreatureSubtype.test(subtype)) {
+                        subtypes.add(subtype);
+                    }
+                }
+            }
+            for (CardSubtype subtype : effect.creatureSubtypeOverride()) {
                 if (!subtypes.contains(subtype)) {
                     subtypes.add(subtype);
+                }
+            }
+        } else {
+            if (sourceCard.getSubtypes() != null) {
+                subtypes.addAll(sourceCard.getSubtypes());
+            }
+            if (effect.additionalSubtypes() != null) {
+                for (CardSubtype subtype : effect.additionalSubtypes()) {
+                    if (!subtypes.contains(subtype)) {
+                        subtypes.add(subtype);
+                    }
                 }
             }
         }

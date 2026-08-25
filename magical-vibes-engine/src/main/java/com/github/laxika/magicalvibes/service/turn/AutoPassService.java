@@ -105,6 +105,11 @@ public class AutoPassService {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            stepTriggerService.processNextPucasMischiefTarget(gameData);
+        }
+
         // Process any pending spell-target triggers (e.g. Livewire Lash)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
@@ -152,6 +157,11 @@ public class AutoPassService {
         // Process any pending targeted enter triggers (e.g. Reaper King's "destroy target permanent")
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        }
+
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class)) {
+            triggerCollectionService.processNextDayNightTriggerTarget(gameData);
         }
 
         // Process any pending targeted death triggers before auto-passing
@@ -446,6 +456,12 @@ public class AutoPassService {
                 // Skip combat-only abilities when not in the combat phase
                 if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT
                         && !gameData.currentStep.isCombatPhase()) {
+                    continue;
+                }
+
+                // Skip end-of-combat-only abilities outside that step
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_END_OF_COMBAT
+                        && gameData.currentStep != TurnStep.END_OF_COMBAT) {
                     continue;
                 }
 

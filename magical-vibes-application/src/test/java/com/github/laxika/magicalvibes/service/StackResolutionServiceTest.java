@@ -417,7 +417,8 @@ class StackResolutionServiceTest {
         void cloneReplacementEffectSkipsCreatureResolution() {
             Card card = createCreature("Clone");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
-            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any(), anyInt())).thenReturn(true);
+            when(cloneService.prepareCloneReplacementEffect(
+                    any(), any(), any(), any(), anyInt(), any(), anyBoolean())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
@@ -698,11 +699,13 @@ class StackResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
-            when(playerInputService.beginCardNameChoice(gd, PLAYER1_ID, card, List.of(), false)).thenReturn(true);
+            when(playerInputService.beginCardNameChoice(
+                    gd, PLAYER1_ID, card, List.of(), false, false, null)).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
-            verify(playerInputService).beginCardNameChoice(gd, PLAYER1_ID, card, List.of(), false);
+            verify(playerInputService).beginCardNameChoice(
+                    gd, PLAYER1_ID, card, List.of(), false, false, null);
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
         }
     }

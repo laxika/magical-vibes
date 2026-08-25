@@ -147,6 +147,10 @@ public class ActivatedAbility {
      * triggers fire. Set via {@link #withExilesSourceFromHand()}.
      */
     private boolean exilesSourceFromHand;
+    /** Whether this hand-activated ability suspends the source card with the configured counters. */
+    private boolean suspendsSourceFromHand;
+    /** Number of time counters placed when this ability suspends its source card. */
+    private int suspendTimeCounters;
     /** Whether this hand-activated ability reveals the source card without moving it out of hand. */
     private boolean revealsSourceFromHand;
     /**
@@ -157,6 +161,10 @@ public class ActivatedAbility {
      * {@link #withNinjutsu()}.
      */
     private boolean ninjutsuAbility;
+    /** Whether this hand-activated ability leaves its source card in hand as part of its cost. */
+    private boolean sourceStaysInHand;
+    /** Whether this ability can be activated only while its source card is in exile. */
+    private boolean exileOnly;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -279,6 +287,9 @@ public class ActivatedAbility {
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
+        copy.sourceStaysInHand = this.sourceStaysInHand;
+        copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
+        copy.suspendTimeCounters = this.suspendTimeCounters;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
@@ -288,6 +299,7 @@ public class ActivatedAbility {
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
+        copy.exileOnly = this.exileOnly;
         return copy;
     }
 
@@ -341,6 +353,16 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks this hand-activated ability as suspending its source card with {@code timeCounters}. */
+    public ActivatedAbility withSuspendsSourceFromHand(int timeCounters) {
+        if (timeCounters < 1) {
+            throw new IllegalArgumentException("Suspend requires at least one time counter");
+        }
+        this.suspendsSourceFromHand = true;
+        this.suspendTimeCounters = timeCounters;
+        return this;
+    }
+
     /**
      * Fluent setter marking a hand-activated ability whose intrinsic cost reveals the source card
      * while leaving it in its owner's hand.
@@ -350,12 +372,24 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks a hand-activated ability whose source card remains in hand after activation. */
+    public ActivatedAbility withSourceStaysInHand() {
+        this.sourceStaysInHand = true;
+        return this;
+    }
+
     /**
      * Fluent setter marking this hand-activated ability as ninjutsu (CR 702.49a). Returns this
      * ability for chaining.
      */
     public ActivatedAbility withNinjutsu() {
         this.ninjutsuAbility = true;
+        return this;
+    }
+
+    /** Marks this ability as activatable only while its source card is in exile. */
+    public ActivatedAbility withExileOnly() {
+        this.exileOnly = true;
         return this;
     }
 

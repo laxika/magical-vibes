@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ class RamblingPossumTest extends BaseCardTest {
         Permanent unrelated = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, saddler.getId());
         harness.passBothPriorities();
         assertThat(possum.isSaddled()).isTrue();
         assertThat(saddler.isTapped()).isTrue();
@@ -46,9 +48,7 @@ class RamblingPossumTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(possum, unrelated);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(saddler.getCard().getId()));
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
         assertThat(gqs.getEffectivePower(gd, possum)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, possum)).isEqualTo(3);
@@ -80,7 +80,7 @@ class RamblingPossumTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, possum)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, possum)).isEqualTo(3);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saddler);
     }
 

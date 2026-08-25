@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PregameBattlefieldChoiceEffect;
+import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -274,13 +275,24 @@ public class MulliganService {
         // Leyline mechanic (CR 103.6): if a card with the leyline ability is in a player's
         // opening hand, the player may begin the game with it on the battlefield.
         // Per CR 103.6, the starting player takes all such actions first, then each other player.
+        List<UUID> pregameActionOrder = new ArrayList<>();
+        if (gameData.startingPlayerId != null && gameData.orderedPlayerIds.contains(gameData.startingPlayerId)) {
+            pregameActionOrder.add(gameData.startingPlayerId);
+        }
         for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!pregameActionOrder.contains(playerId)) {
+                pregameActionOrder.add(playerId);
+            }
+        }
+        for (UUID playerId : pregameActionOrder) {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null) continue;
             for (Card card : hand) {
                 for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
                     if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof LeylineStartOnBattlefieldEffect) {
+                            && may.wrapped() instanceof PregameBattlefieldChoiceEffect pregame
+                            && (!pregame.onlyForNonStartingPlayer()
+                            || !playerId.equals(gameData.startingPlayerId))) {
                         // Leyline is a pregame action (CR 103.6), not a triggered ability —
                         // bypasses the stack, so add directly to pendingMayAbilities.
                         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -299,6 +311,18 @@ public class MulliganService {
         }
 
         continueStartGame(gameData);
+    }
+
+    public void completeGemstoneCavernsExile(GameData gameData, UUID playerId) {
+        PendingGemstoneCavernsChoice pending = gameData.pendingGemstoneCavernsChoice;
+        if (pending == null || !pending.controllerId().equals(playerId)) {
+            return;
+        }
+        gameData.pendingGemstoneCavernsChoice = null;
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            continueStartGame(gameData);
+        }
     }
 
     /**

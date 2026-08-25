@@ -447,8 +447,8 @@ public class DestructionSupport {
             return;
         }
 
-        int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+        gameData.playerLifeTotals.put(playerId,
+                gameQueryService.lifeAfterDamage(gameData, playerId, effectiveDamage));
 
         if (effectiveDamage > 0) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -750,10 +750,11 @@ public class DestructionSupport {
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             } else if (elseEffect instanceof GivePoisonCountersEffect poison
-                    && poison.recipient() == PoisonRecipient.CONTROLLER) {
+                    && poison.recipient() == PoisonRecipient.CONTROLLER
+                    && poison.amount() instanceof Fixed poisonAmount) {
                 // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the
                 // entry controller is the player who owes the payment.
-                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poison.amount(),
+                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poisonAmount.value(),
                         entry.getCard().getName(), entry.getControllerId());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof ControllerLosesGameEffect) {

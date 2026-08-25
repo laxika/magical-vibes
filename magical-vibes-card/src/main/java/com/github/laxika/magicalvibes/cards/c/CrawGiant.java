@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "285")
 @CardRegistration(set = "CHR", collectorNumber = "61")
+@CardRegistration(set = "TSB", collectorNumber = "76")
 public class CrawGiant extends Card {
 
     public CrawGiant() {

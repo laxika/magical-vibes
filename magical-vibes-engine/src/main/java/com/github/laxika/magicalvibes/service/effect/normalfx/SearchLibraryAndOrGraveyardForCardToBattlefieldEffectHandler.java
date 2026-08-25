@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
@@ -30,6 +33,7 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
     private final LibrarySearchSupport librarySearchSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,16 +51,22 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
         String playerName = gameData.playerIdToName.get(controllerId);
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
         int xValue = entry.getXValue();
+        ManaValueBound manaValueBound = effect.manaValueBound();
+        Integer boundValue = manaValueBound == null ? null
+                : amountEvaluationService.evaluate(gameData, manaValueBound.amount(),
+                        AmountContext.forStackEntry(entry, null)) + manaValueBound.offset();
         boolean librarySearchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
 
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
         List<Card> graveyardMatches = graveyard.stream()
-                .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue))
+                .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue,
+                        boundValue, manaValueBound))
                 .toList();
 
         List<Card> handMatches = effect.includeHand()
                 ? gameData.playerHands.getOrDefault(controllerId, List.of()).stream()
-                        .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue))
+                        .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue,
+                                boundValue, manaValueBound))
                         .toList()
                 : List.of();
 
@@ -66,11 +76,17 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
             int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
             libraryMatches = deck.stream()
                     .limit(Math.min(topLimit, deck.size()))
-                    .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue))
+                    .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue,
+                            boundValue, manaValueBound))
                     .toList();
         }
 
         String description = CardPredicateUtils.describeFilter(effect.filter());
+        if (boundValue != null) {
+            description += manaValueBound.exact()
+                    ? " with mana value " + boundValue
+                    : " with mana value " + boundValue + " or less";
+        }
         if (libraryMatches.isEmpty() && graveyardMatches.isEmpty() && handMatches.isEmpty()) {
             if (librarySearchAllowed) {
                 LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
@@ -98,8 +114,11 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
 
     private boolean matches(Card card, SearchLibraryAndOrGraveyardForCardToBattlefieldEffect effect,
                             UUID sourceCardId, GameData gameData,
-                            UUID controllerId, int xValue) {
+                            UUID controllerId, int xValue, Integer boundValue, ManaValueBound bound) {
         return predicateEvaluationService.matchesCardPredicate(
-                card, effect.filter(), sourceCardId, gameData, controllerId, null, null, xValue);
+                card, effect.filter(), sourceCardId, gameData, controllerId, null, null, xValue)
+                && (bound == null || (bound.exact()
+                ? card.getManaValue() == boundValue
+                : card.getManaValue() <= boundValue));
     }
 }

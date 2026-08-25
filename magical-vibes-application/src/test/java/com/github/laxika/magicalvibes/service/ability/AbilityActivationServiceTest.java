@@ -1465,7 +1465,7 @@ class AbilityActivationServiceTest {
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("no more than 1 times each turn");
+                    .hasMessageContaining("only once each turn");
         }
 
         @Test

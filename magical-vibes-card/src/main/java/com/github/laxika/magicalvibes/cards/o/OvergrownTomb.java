@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "GRN", collectorNumber = "253")
 @CardRegistration(set = "ECL", collectorNumber = "266")
 @CardRegistration(set = "ECL", collectorNumber = "350")
+@CardRegistration(set = "RAV", collectorNumber = "279")
 public class OvergrownTomb extends Card {
 
     public OvergrownTomb() {

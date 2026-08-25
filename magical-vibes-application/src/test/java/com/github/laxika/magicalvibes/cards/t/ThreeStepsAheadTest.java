@@ -69,7 +69,7 @@ class ThreeStepsAheadTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2)
                 .contains(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -83,8 +83,9 @@ class ThreeStepsAheadTest extends BaseCardTest {
 
     private void cast(int[] modes, List<java.util.UUID> targets, int totalMana) {
         harness.setHand(player1, List.of(new ThreeStepsAhead()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, totalMana - 1);
+        int blueMana = modes.length == 1 && modes[0] == 0 ? 2 : 1;
+        harness.addMana(player1, ManaColor.BLUE, blueMana);
+        harness.addMana(player1, ManaColor.COLORLESS, totalMana - blueMana);
         harness.castModalInstantWithModes(player1, 0, 1, 2, modes, targets);
         harness.passBothPriorities();
     }

@@ -13,6 +13,8 @@ public enum CounteredSpellDestination {
     EXILE,
     /** The countered card is put on top of its owner's library instead of the graveyard (Memory Lapse). */
     LIBRARY_TOP,
+    /** The countered card is put into its owner's hand instead of the graveyard (Remand). */
+    HAND,
     /**
      * The countered card is put on the top or the bottom of its owner's library — the counter's
      * controller chooses as the counter resolves (Hinder).

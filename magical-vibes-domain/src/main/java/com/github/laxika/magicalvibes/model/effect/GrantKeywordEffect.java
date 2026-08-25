@@ -57,13 +57,13 @@ public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Perman
 
     @Override
     public boolean referencesCombatOpponent() {
-        return scope == GrantScope.TARGET;
+        return scope == GrantScope.TARGET || scope == GrantScope.TARGET_AND_SHARING_CREATURES;
     }
 
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetPredicates.permanent(), filter);
+            case TARGET, TARGET_AND_SHARING_CREATURES -> TargetSpec.benign(TargetPredicates.permanent(), filter);
             case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
             case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;

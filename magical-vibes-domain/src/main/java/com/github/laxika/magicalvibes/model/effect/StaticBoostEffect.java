@@ -11,6 +11,8 @@ import java.util.Set;
  * {@code powerBoost}/{@code toughnessBoost} is multiplied by the number of counters of that type on
  * the source permanent ("All creatures get +1/+0 for each time counter on this artifact" — Infinite
  * Hourglass). A {@code null} value applies the flat boost.
+ * When {@code scalingCounterOnTarget} is true, the counter count is read from each affected
+ * permanent instead of the source (Thelon of Havenwood).
  */
 public record StaticBoostEffect(
         int powerBoost,
@@ -18,27 +20,39 @@ public record StaticBoostEffect(
         Set<Keyword> grantedKeywords,
         GrantScope scope,
         PermanentPredicate filter,
-        CounterType scalingCounter
+        CounterType scalingCounter,
+        boolean scalingCounterOnTarget
 ) implements StaticCreatureBoostEffect {
 
     public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope) {
-        this(powerBoost, toughnessBoost, grantedKeywords, scope, null, null);
+        this(powerBoost, toughnessBoost, grantedKeywords, scope, null, null, false);
     }
 
     public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope,
                              PermanentPredicate filter) {
-        this(powerBoost, toughnessBoost, grantedKeywords, scope, filter, null);
+        this(powerBoost, toughnessBoost, grantedKeywords, scope, filter, null, false);
     }
 
     public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope, PermanentPredicate filter) {
-        this(powerBoost, toughnessBoost, Set.of(), scope, filter, null);
+        this(powerBoost, toughnessBoost, Set.of(), scope, filter, null, false);
+    }
+
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords,
+                             GrantScope scope, PermanentPredicate filter, CounterType scalingCounter) {
+        this(powerBoost, toughnessBoost, grantedKeywords, scope, filter, scalingCounter, false);
     }
 
     public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope) {
-        this(powerBoost, toughnessBoost, Set.of(), scope, null, null);
+        this(powerBoost, toughnessBoost, Set.of(), scope, null, null, false);
     }
 
     public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope, CounterType scalingCounter) {
-        this(powerBoost, toughnessBoost, Set.of(), scope, null, scalingCounter);
+        this(powerBoost, toughnessBoost, Set.of(), scope, null, scalingCounter, false);
+    }
+
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope,
+                             PermanentPredicate filter, CounterType scalingCounter,
+                             boolean scalingCounterOnTarget) {
+        this(powerBoost, toughnessBoost, Set.of(), scope, filter, scalingCounter, scalingCounterOnTarget);
     }
 }

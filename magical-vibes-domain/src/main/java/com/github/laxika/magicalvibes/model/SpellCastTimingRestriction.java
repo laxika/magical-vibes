@@ -12,6 +12,12 @@ public enum SpellCastTimingRestriction {
     DECLARE_ATTACKERS,
 
     /**
+     * "Cast this spell only before attackers are declared," limited to the first combat phase of
+     * the turn. Master Warcraft.
+     */
+    BEFORE_ATTACKERS_DECLARED,
+
+    /**
      * "Cast this spell only during the declare attackers step and only if you've been attacked
      * this step." Defiant Stand.
      */

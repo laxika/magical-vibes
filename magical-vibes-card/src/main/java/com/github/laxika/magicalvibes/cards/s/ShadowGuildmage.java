@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "140")
+@CardRegistration(set = "TSB", collectorNumber = "46")
 public class ShadowGuildmage extends Card {
 
     public ShadowGuildmage() {

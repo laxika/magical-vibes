@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -80,8 +79,8 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 copy,
                 entry.getControllerId(),
-                List.of(new MayCastCopyWithoutPayingManaCostEffect()),
-                "Cast the copy of " + copy.getName() + " without paying its mana cost?",
+                List.of(copyEffect),
+                "Cast the copy of " + copy.getName() + "?",
                 copy.getId()));
     }
 }

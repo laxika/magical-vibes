@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "EXO", collectorNumber = "93")
 @CardRegistration(set = "TPR", collectorNumber = "149")
+@CardRegistration(set = "TSB", collectorNumber = "68")
 public class Pandemonium extends Card {
 
     public Pandemonium() {

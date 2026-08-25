@@ -56,6 +56,8 @@ public class CharacteristicState {
     private final Set<Keyword> seededKeywords = new HashSet<>();
     /** Protection-from-color abilities (own printed protection plus layer-6 grants). */
     private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
+    /** Colors from which protection has been removed by a later layer-6 effect. */
+    private final Set<CardColor> removedProtectionColors = EnumSet.noneOf(CardColor.class);
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedStaticEffects = new ArrayList<>();
     @Setter private int basePower;
@@ -170,6 +172,7 @@ public class CharacteristicState {
         this.blockedKeywords.addAll(source.blockedKeywords);
         this.seededKeywords.addAll(source.seededKeywords);
         this.protectionColors.addAll(source.protectionColors);
+        this.removedProtectionColors.addAll(source.removedProtectionColors);
         this.grantedActivatedAbilities.addAll(source.grantedActivatedAbilities);
         this.grantedStaticEffects.addAll(source.grantedStaticEffects);
         this.basePower = source.basePower;
@@ -298,7 +301,13 @@ public class CharacteristicState {
     }
 
     public void addProtectionColors(Collection<CardColor> colors) {
+        removedProtectionColors.removeAll(colors);
         protectionColors.addAll(colors);
+    }
+
+    public void removeProtectionColors(Collection<CardColor> colors) {
+        protectionColors.removeAll(colors);
+        removedProtectionColors.addAll(colors);
     }
 
     /** Whether the layer-6 state so far gives this permanent protection from the given color. */

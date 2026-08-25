@@ -27,4 +27,8 @@ public record CostModificationContext(GameData gameData, UUID castingPlayerId, C
                                    boolean flashbackCost, int xValue) {
         this(gameData, castingPlayerId, spell, flashbackCost, xValue, false, null);
     }
+
+    public boolean fromGraveyard() {
+        return sourceZone == Zone.GRAVEYARD;
+    }
 }

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -27,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySource
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
@@ -46,6 +49,7 @@ import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 /**
  * Handles removing permanents from the battlefield and moving them to their destination zones
@@ -72,6 +76,7 @@ public class PermanentRemovalService {
     private final AuraCopyService auraCopyService;
     private final CreatureControlService creatureControlService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final PlayerInputService playerInputService;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -84,7 +89,8 @@ public class PermanentRemovalService {
                                    UntapLockReleaseService untapLockReleaseService,
                                    @Lazy AuraCopyService auraCopyService,
                                    @Lazy CreatureControlService creatureControlService,
-                                   UnattachTriggerSupport unattachTriggerSupport) {
+                                   UnattachTriggerSupport unattachTriggerSupport,
+                                   @Lazy PlayerInputService playerInputService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -97,6 +103,7 @@ public class PermanentRemovalService {
         this.auraCopyService = auraCopyService;
         this.creatureControlService = creatureControlService;
         this.unattachTriggerSupport = unattachTriggerSupport;
+        this.playerInputService = playerInputService;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -125,11 +132,26 @@ public class PermanentRemovalService {
         return removePermanentToGraveyard(gameData, target, true);
     }
 
+    public boolean removePermanentToGraveyardAfterDecliningLibraryReplacement(GameData gameData,
+                                                                                Permanent target) {
+        return removePermanentToGraveyard(gameData, target, false, true);
+    }
+
     private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
                                                boolean destroyedBySpellOrAbility) {
+        return removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility, false);
+    }
+
+    private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
+                                               boolean destroyedBySpellOrAbility,
+                                               boolean ignoreMayLibraryReplacement) {
         // Replacement effect: exile instead of going to graveyard (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, true, "going to the graveyard")) {
             return true;
+        }
+
+        if (!ignoreMayLibraryReplacement && offerMayLibraryReplacement(gameData, target)) {
+            return false;
         }
 
         // Capture unattach-sacrifice info before removal
@@ -742,6 +764,11 @@ public class PermanentRemovalService {
         }
     }
 
+    public void addCardToHandFromGraveyard(GameData gameData, UUID graveyardOwnerId, UUID handOwnerId,
+                                           Card card) {
+        graveyardService.addCardToHandFromGraveyard(gameData, graveyardOwnerId, handOwnerId, card);
+    }
+
     /** Removes a card from a graveyard and records that this departure was an exile. */
     public void removeCardFromGraveyardByIdForExile(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -862,6 +889,7 @@ public class PermanentRemovalService {
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
         if (!target.isExileIfLeavesBattlefield()
                 && !target.isExileIfLeavesBattlefieldUntilEndOfTurn()
+                && !(checkExileInsteadOfDie && target.isExileIfDying())
                 && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
                 && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
                 && !permanentGraveyardReplacement) {
@@ -1078,7 +1106,12 @@ public class PermanentRemovalService {
                 || (wasCreature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty());
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
-                exileService.exileCard(gameData, ownerId, leaving);
+                if (opponentExileReplacement != null && opponentExileReplacement.effect().trackWithSource()) {
+                    exileService.exileCard(gameData, ownerId, leaving,
+                            opponentExileReplacement.sourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, ownerId, leaving);
+                }
                 if (opponentExileReplacement != null && opponentExileReplacement.effect().addIceCounter()) {
                     gameData.exiledCardsWithIceCounters.add(leaving.getId());
                 }
@@ -1115,7 +1148,7 @@ public class PermanentRemovalService {
             }
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target,
-                        grantedDeathEffects);
+                        grantedDeathEffects, dyingPowerAtDeath);
             }
             // Any permanent an opponent controls is put into a graveyard (Prince of Thralls).
             if (!creatureDeathTriggersSuppressed) {
@@ -1157,7 +1190,8 @@ public class PermanentRemovalService {
                     triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                     triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
                     triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId, target);
-                    triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
+                    triggerCollectionService.checkEquippedCreatureDeathTriggers(
+                            gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath);
                     triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                     collectUndyingTrigger(gameData, target, ownerId, hadUndying);
                     collectPersistTrigger(gameData, target, ownerId, hadPersist);
@@ -1198,6 +1232,52 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
             }
         }
+    }
+
+    private boolean offerMayLibraryReplacement(GameData gameData, Permanent target) {
+        DyingCreatureLibraryReplacementEffect replacement = target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
+                .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
+                .findFirst()
+                .orElseGet(() -> {
+                    var bonus = gameQueryService.computeStaticBonus(gameData, target);
+                    if (bonus == null) {
+                        return null;
+                    }
+                    return bonus.grantedEffects().stream()
+                            .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
+                            .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                            .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
+                            .findFirst()
+                            .orElse(null);
+                });
+        if (replacement == null) {
+            return false;
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        if (gameData.pendingMayAbilities.stream()
+                .anyMatch(ability -> target.getId().equals(ability.sourcePermanentId())
+                        && ability.effects().stream().anyMatch(PutOnTopOfLibraryInsteadOfDyingEffect.class::isInstance))) {
+            return true;
+        }
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                target.getCard(),
+                controllerId,
+                List.of(replacement),
+                target.getCard().getName()
+                        + " — Put it on top of its owner's library instead of putting it into a graveyard?",
+                target.getId(),
+                null,
+                target.getId()));
+        if (!gameData.interaction.isAwaitingInput()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
+        return true;
     }
 
     private boolean selfGraveyardTriggerSuppressed(GameData gameData, Permanent target) {

@@ -313,6 +313,34 @@ class LibraryChoiceHandlerServiceTest {
     }
 
     @Test
+    @DisplayName("Puts one qualifying card into hand and the other revealed cards on the library bottom")
+    void putsOneCardIntoHandAndBottomsTheRest() {
+        Card chosen = createCard("Chosen");
+        Card rest = createCard("Rest");
+        Card land = createCard("Land", CardType.LAND);
+        List<Card> sourceCards = new ArrayList<>(List.of(chosen, rest, land));
+        gd.addToExile(player1Id, chosen);
+        gd.addToExile(player1Id, rest);
+        gd.addToExile(player1Id, land);
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(player1Id, List.of(chosen, rest))
+                        .reveals(true)
+                        .sourceCards(sourceCards)
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .destination(LibrarySearchDestination.PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM)
+                        .build(),
+                "Choose one", false));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(land);
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).containsExactly(rest);
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
+    @Test
     @DisplayName("Face-down exile search puts the unchosen cards into the target player's graveyard")
     void faceDownExileSearchPutsRestIntoTargetGraveyard() {
         Card first = createCard("First");
@@ -337,6 +365,40 @@ class LibraryChoiceHandlerServiceTest {
         verify(graveyardService).addCardToGraveyard(gd, player2Id, third, Zone.LIBRARY);
         assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
+    @Test
+    @DisplayName("Bounded face-down exile search takes two cards before bottoming the rest")
+    void boundedFaceDownExileSearchTakesTwoCards() {
+        Card first = createCard("First");
+        Card second = createCard("Second");
+        Card third = createCard("Third");
+        List<Card> sourceCards = new ArrayList<>(List.of(first, second, third));
+        UUID sourcePermanentId = UUID.randomUUID();
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, new ArrayList<>(sourceCards))
+                .canFailToFind(false)
+                .targetPlayerId(player2Id)
+                .remainingCount(2)
+                .sourceCards(sourceCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                .sourcePermanentId(sourcePermanentId)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose two", false));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(second, third);
+        assertThat(next.params().remainingCount()).isEqualTo(1);
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(exileService).exileCardFaceDown(gd, player2Id, first, sourcePermanentId);
+        verify(exileService).exileCardFaceDown(gd, player2Id, second, sourcePermanentId);
+        assertThat(gd.playerDecks.get(player2Id)).containsExactly(third);
     }
 
     @Test

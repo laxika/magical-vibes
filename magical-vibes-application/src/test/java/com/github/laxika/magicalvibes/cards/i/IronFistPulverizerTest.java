@@ -22,6 +22,7 @@ class IronFistPulverizerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IronFistPulverizer(), new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new IronFistPulverizer()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         int lifeBefore = gd.getLife(player2.getId());
 
@@ -50,7 +51,8 @@ class IronFistPulverizerTest extends BaseCardTest {
     void firstSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new IronFistPulverizer());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBefore = gd.getLife(player2.getId());
 
         harness.castCreature(player1, 0);

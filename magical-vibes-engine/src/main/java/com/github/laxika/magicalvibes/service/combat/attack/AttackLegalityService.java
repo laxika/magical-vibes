@@ -420,13 +420,16 @@ public class AttackLegalityService {
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
 
-        if (gameQueryService.computeStaticBonus(gameData, creature).grantedEffects().stream()
-                .anyMatch(MustAttackPlayerEffect.class::isInstance)) {
+        List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, creature).grantedEffects();
+        if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)) {
             UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, creatureControllerId);
             if (defendingPlayerId != null && canAttackDefender(gameData, creature, defendingPlayerId)) {
                 count[0]++;
             }
         }
+        count[0] += (int) grantedEffects.stream()
+                .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null)
+                .count();
 
         // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
         // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement

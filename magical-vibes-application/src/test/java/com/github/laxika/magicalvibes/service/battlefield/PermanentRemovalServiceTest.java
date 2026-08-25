@@ -387,6 +387,20 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Permanent with exileIfDying is exiled instead of going to graveyard")
+        void exileReplacementExileIfDying() {
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            bears.setExileIfDying(true);
+
+            boolean result = prs.removePermanentToGraveyard(gd, bears);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
+            verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
+        }
+
+        @Test
         @DisplayName("Permanent with exileInsteadOfDieThisTurn is exiled instead of going to graveyard")
         void exileReplacementExileInsteadOfDie() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
@@ -465,10 +479,11 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, bears);
 
             verify(triggerCollectionService).collectDeathTrigger(
-                    eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears), eq(List.of()));
+                    eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears), eq(List.of()), eq(0));
             verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears, 0);
             verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears);
-            verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(gd, bears.getId(), player1Id, bears.getCard());
+            verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(
+                    gd, bears.getId(), player1Id, bears.getCard(), 0);
         }
 
         @Test

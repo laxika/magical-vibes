@@ -43,41 +43,19 @@ public class PlayCardRequestDispatchService {
         if (Boolean.TRUE.equals(request.flashback())) {
             CardType chosenGraveyardType = request.chosenGraveyardType() != null
                     ? CardType.valueOf(request.chosenGraveyardType()) : null;
-            if (!listOrEmpty(request.beholdPermanentIds()).isEmpty()
-                    || !listOrEmpty(request.beholdHandCardIndices()).isEmpty()) {
-                if (listOrEmpty(request.additionalCostSacrificePermanentIds()).isEmpty()) {
-                    gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                            listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
-                            listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                            request.sacrificePermanentId(), listOrEmpty(request.beholdPermanentIds()),
-                            listOrEmpty(request.beholdHandCardIndices()));
-                    return;
-                }
-                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                        listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
-                        listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                        request.sacrificePermanentId(), listOrEmpty(request.additionalCostSacrificePermanentIds()),
-                        listOrEmpty(request.beholdPermanentIds()),
-                        listOrEmpty(request.beholdHandCardIndices()));
-                return;
-            }
-            if (listOrEmpty(request.additionalCostSacrificePermanentIds()).isEmpty()) {
-                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                        listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
-                        listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                        request.sacrificePermanentId(), request.damageAssignments());
-            } else {
-                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                        listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
-                        listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                        request.sacrificePermanentId(), listOrEmpty(request.additionalCostSacrificePermanentIds()),
-                        request.damageAssignments());
-            }
+            gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                    listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
+                    listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
+                    request.sacrificePermanentId(), listOrEmpty(request.additionalCostSacrificePermanentIds()),
+                    request.damageAssignments(), listOrEmpty(request.beholdPermanentIds()),
+                    listOrEmpty(request.beholdHandCardIndices()),
+                    nullIfEmpty(request.discardHandCardIndices()));
             return;
         }
         if (request.fromExileCardId() != null) {
             gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()));
+                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                    listOrEmpty(request.convokeCreatureIds()));
             return;
         }
         if (Boolean.TRUE.equals(request.morph())) {

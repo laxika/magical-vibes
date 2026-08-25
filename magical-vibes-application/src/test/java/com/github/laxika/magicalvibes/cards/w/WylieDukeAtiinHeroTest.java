@@ -21,13 +21,14 @@ class WylieDukeAtiinHeroTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
 
         tap(wylie);
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     @Test

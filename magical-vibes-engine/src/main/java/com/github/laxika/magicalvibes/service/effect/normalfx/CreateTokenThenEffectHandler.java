@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
 
     private final CreateTokenEffectHandler createTokenEffectHandler;
+    private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final PlayerInputService playerInputService;
 
@@ -48,6 +50,12 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        if (graveyardTargetingSupport.findTarget(List.of(thenEffect)) != null) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    entry.getCard(), entry.getControllerId(), List.of(thenEffect)));
+            return;
+        }
+
         TargetSpec targetSpec = thenEffect.targetSpec();
         TargetPredicate targetPredicate = targetSpec.targetPredicate();
         List<UUID> validPermanentTargets = new ArrayList<>();

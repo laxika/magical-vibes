@@ -35,7 +35,7 @@ public record ReduceCastCostForMatchingSpellsEffect(
 ) implements CardEffect {
 
     public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, DynamicAmount amount,
-                                                 CostModificationScope scope) {
+                                                  CostModificationScope scope) {
         this(predicate, amount, scope, Set.of(), false);
     }
 
@@ -55,5 +55,11 @@ public record ReduceCastCostForMatchingSpellsEffect(
                                                  CostModificationScope scope, Set<Zone> sourceZones,
                                                  boolean plotFromHandOnly) {
         this(predicate, new Fixed(amount), scope, sourceZones, plotFromHandOnly);
+    }
+
+    /** Convenience for a flat reduction restricted to spells cast from one zone. */
+    public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, int amount,
+                                                  CostModificationScope scope, Zone sourceZone) {
+        this(predicate, new Fixed(amount), scope, Set.of(sourceZone), false);
     }
 }

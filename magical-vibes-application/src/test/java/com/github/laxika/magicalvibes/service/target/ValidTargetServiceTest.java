@@ -137,6 +137,20 @@ class ValidTargetServiceTest {
                 .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
         // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
+        lenient().when(predicateEvaluationService.matchesCardPredicate(
+                        any(Card.class), any(CardPredicate.class), any(), eq(gameData), any(UUID.class),
+                        any(), any(), any()))
+                .thenAnswer(invocation -> new PredicateEvaluationService(gameQueryService)
+                        .matchesCardPredicate(
+                                invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2),
+                                invocation.getArgument(3), invocation.getArgument(4), invocation.getArgument(5),
+                                invocation.getArgument(6), invocation.getArgument(7)));
+        lenient().when(gameQueryService.isArtifact(eq(gameData), any(Permanent.class)))
+                .thenAnswer(invocation -> invocation.<Permanent>getArgument(1).getCard().hasType(CardType.ARTIFACT));
+        lenient().when(gameQueryService.isLand(eq(gameData), any(Permanent.class)))
+                .thenAnswer(invocation -> invocation.<Permanent>getArgument(1).getCard().hasType(CardType.LAND));
+        lenient().when(gameQueryService.cardHasType(any(Card.class), any(CardType.class), eq(gameData), any(UUID.class)))
+                .thenAnswer(invocation -> invocation.<Card>getArgument(0).hasType(invocation.getArgument(1)));
     }
 
     private static Set<CardColor> effectiveColors(Card card) {
@@ -1375,17 +1389,13 @@ class ValidTargetServiceTest {
         @DisplayName("multi-target ability keeps candidates that fit independent artifact, creature, and land slots")
         void multiTarget_filtersArtifactCreatureAndLandAssignments() {
             Card sourceCard = createCreatureCard();
-            Permanent artifact = addPermanentToBattlefield(player2Id, createCard());
-            artifact.getCard().setType(CardType.ARTIFACT);
+            Card artifactCard = createCard();
+            artifactCard.setType(CardType.ARTIFACT);
+            Permanent artifact = addPermanentToBattlefield(player2Id, artifactCard);
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
-            Permanent land = addPermanentToBattlefield(player2Id, createCard());
-            land.getCard().setType(CardType.LAND);
-            when(gameQueryService.findPermanentById(gameData, artifact.getId())).thenReturn(artifact);
-            when(gameQueryService.findPermanentById(gameData, creature.getId())).thenReturn(creature);
-            when(gameQueryService.findPermanentById(gameData, land.getId())).thenReturn(land);
-            when(gameQueryService.isArtifact(gameData, artifact)).thenReturn(true);
-            when(gameQueryService.isLand(gameData, land)).thenReturn(true);
-
+            Card landCard = createCard();
+            landCard.setType(CardType.LAND);
+            Permanent land = addPermanentToBattlefield(player2Id, landCard);
             ActivatedAbility ability = new ActivatedAbility(true, "{1}",
                     List.of(new DestroyTargetPermanentEffect()),
                     "Destroy up to three targets", List.of(), 0, 3)

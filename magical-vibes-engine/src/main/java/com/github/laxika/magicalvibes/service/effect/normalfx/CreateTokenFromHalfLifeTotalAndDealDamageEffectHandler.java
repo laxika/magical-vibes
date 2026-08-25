@@ -78,12 +78,14 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
                         String playerName = gameData.playerIdToName.get(controllerId);
                         gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
                     } else {
-                        int life = gameData.getLife(controllerId);
-                        gameData.playerLifeTotals.put(controllerId, life - x);
+                        int lifeBeforeDamage = gameData.getLife(controllerId);
+                        int lifeAfterDamage = gameQueryService.lifeAfterDamage(gameData, controllerId, x);
+                        gameData.playerLifeTotals.put(controllerId, lifeAfterDamage);
                         String dmgLog = e.tokenName() + " deals " + x + " damage to " + gameData.playerIdToName.get(controllerId) + ".";
                         gameLogService.append(gameData, GameLog.text(dmgLog));
                         log.info("Game {} - {} deals {} damage to controller {}", gameData.id, e.tokenName(), x, controllerId);
-                        triggerCollectionService.checkLifeLossTriggers(gameData, controllerId, x);
+                        triggerCollectionService.checkLifeLossTriggers(
+                                gameData, controllerId, lifeBeforeDamage - lifeAfterDamage);
                     }
                 }
     

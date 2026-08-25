@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "241")
+@CardRegistration(set = "TSB", collectorNumber = "91")
 public class CoalitionVictory extends Card {
 
     public CoalitionVictory() {

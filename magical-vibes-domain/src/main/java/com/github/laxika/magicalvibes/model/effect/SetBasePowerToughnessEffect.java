@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param scope     which permanents are affected ({@code TARGET} for the one-shot until-EOT usage,
  *                  {@code ENCHANTED_CREATURE}/{@code EQUIPPED_CREATURE}/etc. for continuous static)
  * @param duration  how long a one-shot target or self setter remains active
- * @param filter    optional permanent filter for continuous static scopes
+ * @param filter    optional permanent predicate for continuous static scopes
  */
 public record SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
                                            EffectDuration duration, PermanentPredicate filter) implements CardEffect {
@@ -37,14 +37,15 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
         this(power, toughness, scope, EffectDuration.UNTIL_END_OF_TURN, null);
     }
 
-    public SetBasePowerToughnessEffect(int power, int toughness, GrantScope scope,
-                                       PermanentPredicate filter) {
-        this(power, toughness, scope, EffectDuration.UNTIL_END_OF_TURN, filter);
-    }
-
     public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
                                        EffectDuration duration) {
         this(power, toughness, scope, duration, null);
+    }
+
+    /** Convenience constructor for a filtered continuous static setter. */
+    public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
+                                       PermanentPredicate filter) {
+        this(power, toughness, scope, EffectDuration.CONTINUOUS, filter);
     }
 
     /**

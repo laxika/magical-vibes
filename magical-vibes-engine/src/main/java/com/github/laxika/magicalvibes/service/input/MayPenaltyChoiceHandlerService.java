@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
@@ -51,6 +52,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -64,6 +67,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
@@ -167,6 +171,7 @@ public class MayPenaltyChoiceHandlerService {
         int lifeCost = effect.lifeCost();
         boolean exileIfCountered = effect.exileIfCountered();
         List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
+        List<CardEffect> onPaidEffects = effect.onPaidEffects();
         UUID targetCardId = ability.targetCardId();
         String manaCost = effect.manaCost() != null ? effect.manaCost() : "{" + amount + "}";
         String costText = manaCost.equals("{0}") && lifeCost > 0
@@ -215,6 +220,8 @@ public class MayPenaltyChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
+                counterSupport.resolvePaidRider(gameData, ability.sourceCard(), ability.sourceControllerId(),
+                        onPaidEffects);
             } else {
                 counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
             }
@@ -315,6 +322,84 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — counter the spell/ability
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessExilesGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                                         PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(CounterUnlessExilesGraveyardEffect.class::isInstance)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            UUID controllerId = targetEntry.getControllerId();
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            if (graveyard != null && !graveyard.isEmpty()) {
+                List<Card> toExile = new ArrayList<>(graveyard);
+                graveyard.clear();
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, toExile);
+                for (Card card : toExile) {
+                    exileService.exileCard(gameData, controllerId, card);
+                }
+            }
+
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles all cards from their graveyard. ",
+                    targetEntry.getCard(), " is not countered."));
+        } else {
+            counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessDiscardsHandChoice(GameData gameData, Player player, boolean accepted,
+                                                       PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(CounterUnlessEffect.class::isInstance)
+                .map(CounterUnlessEffect.class::cast)
+                .filter(e -> e.ransomKind() == CounterUnlessEffect.RansomKind.DISCARD_HAND)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " discards their hand. ", targetEntry.getCard(), " is not countered."));
+            discardHandUnlessPaysLifeEffectHandler.discardTargetHand(
+                    gameData, controllerId, controllerId, ability.sourceCard());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -1404,6 +1489,54 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleSacrificeUnlessReturnPermanentChoice(GameData gameData, Player player, boolean accepted,
+                                                            PendingMayAbility ability) {
+        SacrificeUnlessReturnPermanentTypeToHandEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof SacrificeUnlessReturnPermanentTypeToHandEffect)
+                .map(SacrificeUnlessReturnPermanentTypeToHandEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        Permanent sourcePermanent = null;
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        if (controllerBattlefield != null) {
+            sourcePermanent = controllerBattlefield.stream()
+                    .filter(permanent -> permanent.getCard().getId().equals(sourceCard.getId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (accepted) {
+            List<Permanent> validPermanents = new ArrayList<>();
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getCard().hasType(effect.permanentType())) {
+                        validPermanents.add(permanent);
+                    }
+                }
+            }
+            if (!validPermanents.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.BouncePermanentOrSacrificeSelf(controllerId, sourceCard.getId()));
+                playerInputService.beginPermanentChoice(gameData, controllerId,
+                        validPermanents.stream().map(Permanent::getId).toList(),
+                        "Choose an " + effect.permanentType().name().toLowerCase()
+                                + " to return to its owner's hand.");
+                gameLogService.append(gameData, GameLog.text(player.getUsername()
+                        + " chooses to return an " + effect.permanentType().name().toLowerCase() + " to hand."));
+                return;
+            }
+        }
+
+        if (sourcePermanent != null) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     /**
      * Sacred Mesa: the controller may sacrifice a permanent matching the effect's filter instead of
      * sacrificing the source. Declining — or having nothing left to sacrifice — sacrifices the source.
@@ -1597,6 +1730,12 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && forcedCostOrElseEffectHandler.beginCumulativeUpkeepGraveyardPayment(
+                gameData, ability, sourceControllerId)) {
+            return;
+        }
+
+        if (accepted && effect.forcedCost() instanceof PutCardsFromGraveyardOnBottomOfLibraryCost
+                && forcedCostOrElseEffectHandler.beginControllerGraveyardPayment(
                 gameData, ability, sourceControllerId)) {
             return;
         }
@@ -1817,6 +1956,18 @@ public class MayPenaltyChoiceHandlerService {
                 return;
             }
             // Accepted but the graveyard no longer holds a matching card — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof PutCardFromGraveyardOnBottomOfLibraryCost) {
+            List<Card> graveyard = gameData.playerGraveyards.get(sourceControllerId);
+            if (graveyard != null && !graveyard.isEmpty()) {
+                gameData.pendingEffectResolutionEntry = null;
+                gameData.pendingEffectResolutionIndex = 0;
+                clearAnyPlayerPayState(gameData);
+                forcedCostOrElseEffectHandler.beginGraveyardBottomChoice(gameData, sourceControllerId);
+                return;
+            }
+            // Accepted but the graveyard is empty — fall through to the penalty.
         }
 
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
