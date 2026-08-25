@@ -5462,8 +5462,6 @@ public class SpellCastingService {
             validateHarmonizeTapCost(gameData, player, tapPermanentIds);
         }
         if (flashbackOpt.isPresent()) {
-            validateFlashbackSacrificeCosts(gameData, player, card, flashbackOpt.get(),
-                    additionalCostSacrificePermanentIds);
             validateFlashbackDiscardCost(gameData, player, card, flashbackOpt.get(), effectiveXValue,
                     discardHandCardIndices);
         }
@@ -5980,11 +5978,13 @@ public class SpellCastingService {
         }
         Card landFace = selectedModalDoubleFacedLandFace(graveyardCard, xValue);
         boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, graveyardCard.getId());
         permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
         gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
         gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
         Permanent permanent = new Permanent(graveyardCard);
         permanent.setCard(landFace);
+        permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
         if (entersTapped) {
             permanent.tap();
         }
@@ -5998,7 +5998,8 @@ public class SpellCastingService {
 
         battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace);
+            triggerCollectionService.checkControllerPlaysLandTriggers(
+                    gameData, playerId, landFace, Zone.GRAVEYARD);
             turnProgressionService.resolveAutoPass(gameData);
         }
     }
@@ -8552,46 +8553,6 @@ public class SpellCastingService {
         }
     }
 
-    private void validateFlashbackSacrificeCosts(
-            GameData gameData, Player player, Card card, FlashbackCast flashback,
-            List<UUID> sacrificePermanentIds) {
-        List<SacrificePermanentsCost> sacrificeCosts = flashback.costs().stream()
-                .filter(SacrificePermanentsCost.class::isInstance)
-                .map(SacrificePermanentsCost.class::cast)
-                .toList();
-        if (sacrificeCosts.isEmpty()) {
-            return;
-        }
-
-        List<UUID> selectedIds = sacrificePermanentIds == null ? List.of() : sacrificePermanentIds;
-        int requiredCount = sacrificeCosts.stream().mapToInt(SacrificePermanentsCost::count).sum();
-        if (selectedIds.size() != requiredCount) {
-            throw new IllegalStateException("Must sacrifice exactly " + requiredCount + " permanents for flashback");
-        }
-        if (new HashSet<>(selectedIds).size() != selectedIds.size()) {
-            throw new IllegalStateException("Duplicate permanents cannot be sacrificed for flashback");
-        }
-
-        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
-        int selectedIndex = 0;
-        for (SacrificePermanentsCost sacrificeCost : sacrificeCosts) {
-            for (int i = 0; i < sacrificeCost.count(); i++) {
-                UUID permanentId = selectedIds.get(selectedIndex++);
-                Permanent permanent = battlefield.stream()
-                        .filter(p -> p.getId().equals(permanentId))
-                        .findFirst()
-                        .orElse(null);
-                if (permanent == null) {
-                    throw new IllegalStateException("Sacrifice target is not on your battlefield");
-                }
-                if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
-                        sacrificeCost.filter())) {
-                    throw new IllegalStateException("Sacrifice target does not match the required filter");
-                }
-            }
-        }
-    }
-
     private void validateFlashbackDiscardCost(GameData gameData, Player player, Card card,
                                               FlashbackCast flashback, int xValue,
                                               List<Integer> discardHandCardIndices) {
@@ -8600,32 +8561,6 @@ public class SpellCastingService {
                         gameData, player, card,
                         new DiscardXCardsCost(discardCost.predicate(), discardCost.label(), false, false), xValue,
                         discardHandCardIndices, -1));
-    }
-
-    private void payFlashbackSacrificeCosts(
-            GameData gameData, Player player, Card card, FlashbackCast flashback,
-            List<UUID> sacrificePermanentIds) {
-        int selectedIndex = 0;
-        for (CastingCost cost : flashback.costs()) {
-            if (!(cost instanceof SacrificePermanentsCost sacrificeCost)) {
-                continue;
-            }
-            for (int i = 0; i < sacrificeCost.count(); i++) {
-                Permanent permanent = gameQueryService.findPermanentById(
-                        gameData, sacrificePermanentIds.get(selectedIndex++));
-                if (permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " sacrifices ")
-                            .card(permanent.getCard())
-                            .text(" for ")
-                            .card(card)
-                            .text("'s flashback cost.")
-                            .build());
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                            gameData, player.getId(), permanent.getCard());
-                }
-            }
-        }
     }
 
     private void payGraveyardCastPermanentSacrificeCosts(

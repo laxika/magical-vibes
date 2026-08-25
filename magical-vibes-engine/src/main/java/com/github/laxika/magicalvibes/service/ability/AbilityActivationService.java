@@ -2937,7 +2937,8 @@ public class AbilityActivationService {
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         boolean targetsGraveyard = targetZone == Zone.GRAVEYARD && targetsGraveyardCards(ability);
         boolean usesTargetCardGroups = activationEffects.stream()
-                .anyMatch(TargetCardGroupEffect.class::isInstance);
+                .anyMatch(effect -> effect instanceof TargetCardGroupEffect groupedEffect
+                        && !groupedEffect.targetGroups().isEmpty());
         if (targetsGraveyard && !usesTargetCardGroups
                 && (ability.isMultiTarget() || (targetIds != null && !targetIds.isEmpty()))) {
             targetLegalityService.validateMultiTargetGraveyardAbility(

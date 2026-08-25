@@ -734,6 +734,18 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("throws when any-target effect has a permanent-only target filter")
+        void throwsWhenAnyTargetEffectHasPermanentOnlyFilter() {
+            Card spell = createTargetingSpell("Filtered Burn", CardColor.RED);
+            spell.target(new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature"));
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("This spell cannot target players");
+        }
+
+        @Test
         @DisplayName("passes when modal spell with permanent-targeting mode targets a permanent")
         void passesWhenModalSpellWithPermanentModeTargetsPermanent() {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));

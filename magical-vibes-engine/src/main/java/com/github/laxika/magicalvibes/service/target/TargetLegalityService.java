@@ -1067,6 +1067,11 @@ public class TargetLegalityService {
                     ? playerFilter.errorMessage()
                     : "This spell can only target players");
         }
+        if (target == null && gameData.playerIds.contains(targetId)
+                && effectiveTargetFilter != null
+                && !targetFilterAllowsPlayer(effectiveTargetFilter)) {
+            return Optional.of("This spell cannot target players");
+        }
         if (needsTarget) {
             // Skip target-type validation for modal spells: their modes have already been
             // unwrapped by SpellCastingService and the mode-specific effects/filters handle
