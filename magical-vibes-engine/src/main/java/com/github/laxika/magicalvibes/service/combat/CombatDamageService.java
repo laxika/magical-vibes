@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEff
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -1073,6 +1074,11 @@ public class CombatDamageService {
     private void recordCombatDamageBySource(GameData gameData, CombatDamageState state) {
         for (var entry : state.combatDamageDealt.entrySet()) {
             gameData.recordDamageDealtBySource(entry.getKey().getId(), entry.getValue());
+            UUID sourceControllerId = state.combatDamageDealerControllers.get(entry.getKey());
+            if (sourceControllerId == null) {
+                sourceControllerId = gameQueryService.findPermanentController(gameData, entry.getKey().getId());
+            }
+            gameData.recordDamageSourceControlledBy(entry.getKey().getId(), sourceControllerId);
         }
     }
 
@@ -1463,7 +1469,8 @@ public class CombatDamageService {
                     boolean targetsEnchantedCreatureController = effects.stream()
                             .anyMatch(effect -> effect instanceof CombatDamageTriggerContextEffect contextEffect
                                     && contextEffect.combatDamageTriggerContext()
-                                    == CombatDamageTriggerContextEffect.TriggerContext.ENCHANTED_CREATURE_CONTROLLER);
+                                    == CombatDamageTriggerContextEffect.TriggerContext.ENCHANTED_CREATURE_CONTROLLER
+                                    || effect instanceof CreateTokenForTriggeringPlayerEffect);
                     if (targetsEnchantedCreatureController) {
                         triggerTargetId = gameData.findControllerOf(creature);
                     }

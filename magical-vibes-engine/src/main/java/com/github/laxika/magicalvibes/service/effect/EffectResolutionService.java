@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -53,6 +56,7 @@ public class EffectResolutionService {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
     private final GameOutcomeService gameOutcomeService;
     // ObjectProvider breaks the construction-time cycle StateBasedActionService -> LegendRuleService
     // -> PlayerInputService -> (interaction handlers) -> EffectResolutionService.
@@ -139,7 +143,8 @@ public class EffectResolutionService {
                         && (conditional.condition() instanceof ColorSpentToCast
                         || conditional.condition() instanceof SnowManaSpentToCast);
                 if (!evaluatedWhenEtbTriggered
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                        entry.getEventValue())) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
                                     + conditional.conditionNotMetReason() + ")."));
@@ -235,7 +240,8 @@ public class EffectResolutionService {
             // after the re-entry branches above have unwrapped it. Apply the same condition logic
             // here before dispatching the now-unwrapped effect.
             if (effectToResolve != effect && effectToResolve instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                        entry.getEventValue())) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
                                     + conditional.conditionNotMetReason() + ")."));
@@ -267,11 +273,28 @@ public class EffectResolutionService {
                 }
             }
 
-            EffectHandler handler = registry.getHandler(effectToResolve);
-            if (handler != null) {
-                handler.resolve(gameData, entry, effectToResolve);
-            } else {
-                log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
+            boolean skipEffect = false;
+            if (effectToResolve instanceof MayEffect may
+                    && may.choicePlayer() == MayChoicePlayer.TARGET_PLAYER
+                    && may.wrapped() instanceof SacrificePermanentsEffect sacrifice
+                    && sacrifice.recipient() == SacrificeRecipient.TARGET_PLAYER
+                    && entry.getTargetId() != null
+                    && !sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
+                    gameData, entry, sacrifice, entry.getTargetId())) {
+                if (may.elseEffect() == null) {
+                    skipEffect = true;
+                } else {
+                    effectToResolve = may.elseEffect();
+                }
+            }
+
+            if (!skipEffect) {
+                EffectHandler handler = registry.getHandler(effectToResolve);
+                if (handler != null) {
+                    handler.resolve(gameData, entry, effectToResolve);
+                } else {
+                    log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
+                }
             }
 
             // Restore original targetId after multi-target override

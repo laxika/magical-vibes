@@ -58,10 +58,12 @@ public class PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffectHandler
                     new ChooseOneEffect.ChooseOneOption(
                             "Put it on top",
                             new PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffect(
+                                    e.permanentPredicate(), e.spellPredicate(),
                                     PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffect.Destination.TOP)),
                     new ChooseOneEffect.ChooseOneOption(
                             "Put it on the bottom",
                             new PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffect(
+                                    e.permanentPredicate(), e.spellPredicate(),
                                     PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffect.Destination.BOTTOM))
             )));
             return;

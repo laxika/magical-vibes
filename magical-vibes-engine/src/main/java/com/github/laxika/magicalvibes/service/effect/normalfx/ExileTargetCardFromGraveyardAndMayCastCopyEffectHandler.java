@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /** Resolves a targeted graveyard exile and free copy-cast offer. */
@@ -68,6 +69,13 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
                 .contains(graveyardOwnerId)) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target is outside the required graveyard)."));
+            return;
+        }
+        if (copyEffect.targetPutIntoGraveyardFromAnywhereThisTurn()
+                && !gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of()).contains(targetCardId)) {
+            gameLogService.append(gameData,
+                    GameLog.text(entry.getDescription() + " fizzles (target was not put into a graveyard this turn)."));
             return;
         }
 

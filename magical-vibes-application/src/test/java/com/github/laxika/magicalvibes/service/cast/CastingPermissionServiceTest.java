@@ -166,6 +166,30 @@ class CastingPermissionServiceTest {
         }
 
         @Test
+        @DisplayName("consumes a once-each-turn filtered library permission after use")
+        void consumesOnceEachTurnFilteredPermission() {
+            Card assemble = new Card();
+            CardSubtypePredicate filter = new CardSubtypePredicate(CardSubtype.GOBLIN);
+            assemble.addEffect(EffectSlot.STATIC,
+                    new AllowCastFromTopOfLibraryEffect(filter, true));
+            Permanent source = new Permanent(assemble);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            Card goblin = new Card();
+            goblin.setType(CardType.CREATURE);
+            when(predicateEvaluationService.matchesCardPredicate(
+                    eq(goblin), eq(filter), any(UUID.class), eq(gd), eq(player1Id)))
+                    .thenReturn(true);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isTrue();
+
+            svc.markOncePerTurnLibraryCastPermissionUsed(gd, player1Id, goblin);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isFalse();
+            assertThat(gd.oncePerTurnLibraryCastPermissionsUsedThisTurn).contains(source.getId());
+        }
+
+        @Test
         @DisplayName("allows nonland spells through the mana-value life alternative")
         void allowsManaValueLifeAlternative() {
             Card citadel = new Card();

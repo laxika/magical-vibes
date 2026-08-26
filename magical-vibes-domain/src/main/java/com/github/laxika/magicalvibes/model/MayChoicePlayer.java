@@ -4,6 +4,7 @@ package com.github.laxika.magicalvibes.model;
 public enum MayChoicePlayer {
     CONTROLLER,
     ACTIVE_PLAYER,
+    TARGET_PLAYER,
     TARGET_PERMANENT_CONTROLLER,
     TARGET_SPELL_CONTROLLER,
     TRIGGERING_PERMANENT_CONTROLLER

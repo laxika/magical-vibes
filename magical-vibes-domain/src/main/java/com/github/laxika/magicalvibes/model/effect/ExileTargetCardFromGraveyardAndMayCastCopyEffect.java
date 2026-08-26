@@ -7,12 +7,18 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record ExileTargetCardFromGraveyardAndMayCastCopyEffect(
         CardPredicate filter,
         GraveyardSearchScope scope,
-        int lifeLossOnCast
+        int lifeLossOnCast,
+        boolean targetPutIntoGraveyardFromAnywhereThisTurn
 ) implements CardEffect {
 
     public ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-            CardPredicate filter, GraveyardSearchScope scope) {
-        this(filter, scope, 0);
+        CardPredicate filter, GraveyardSearchScope scope) {
+        this(filter, scope, 0, false);
+    }
+
+    public ExileTargetCardFromGraveyardAndMayCastCopyEffect(
+            CardPredicate filter, GraveyardSearchScope scope, int lifeLossOnCast) {
+        this(filter, scope, lifeLossOnCast, false);
     }
 
     @Override

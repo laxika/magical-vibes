@@ -702,6 +702,7 @@ class TurnProgressionServiceTest {
             gd.playersSilencedThisTurn.add(player1Id);
             gd.activatedAbilityUsesThisTurn.put(player1Id, new HashMap<>());
             gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(player1Id, new HashSet<>());
+            gd.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.put(player1Id, new HashSet<>());
             gd.creatureDeathCountThisTurn.put(player1Id, 2);
             gd.cardsDrawnThisTurn.put(player1Id, 3);
             gd.lifeGainedThisTurn.put(player1Id, 4);
@@ -724,6 +725,7 @@ class TurnProgressionServiceTest {
             assertThat(gd.playersSilencedThisTurn).isEmpty();
             assertThat(gd.activatedAbilityUsesThisTurn).isEmpty();
             assertThat(gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn).isEmpty();
+            assertThat(gd.creatureCardsPutIntoGraveyardFromAnywhereThisTurn).isEmpty();
             assertThat(gd.creatureDeathCountThisTurn).isEmpty();
             assertThat(gd.cardsDrawnThisTurn).isEmpty();
             assertThat(gd.lifeGainedThisTurn).isEmpty();

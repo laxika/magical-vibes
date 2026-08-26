@@ -371,7 +371,9 @@ public class StackResolutionService {
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
-        if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
+        if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+            gameData.playerDecks.get(ownerId).add(physicalCard);
+        } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
             graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
@@ -438,6 +440,7 @@ public class StackResolutionService {
 
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
+        perm.setCollectEvidenceCostPaid(entry.isCollectEvidenceCostPaid());
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
@@ -960,7 +963,9 @@ public class StackResolutionService {
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
-                if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
+                if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+                    gameData.playerDecks.get(entry.getOwnerId()).add(entry.getPhysicalCard());
+                } else if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
                     gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
                 } else {
@@ -1077,6 +1082,12 @@ public class StackResolutionService {
             gameData.playerDecks.get(ownerId).add(physicalCard);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+        } else if (entry.isCastWithAdventure()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addToExile(ownerId, physicalCard);
+            gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
+            gameLogService.append(gameData, GameLog.cardThen(physicalCard,
+                    " is exiled with permission to cast its creature face."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
@@ -1128,6 +1139,11 @@ public class StackResolutionService {
             gameData.queueDelayedAction(new ReboundAtNextUpkeep(
                     entry.getControllerId(), ownerId, entry.getCard()));
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with rebound."));
+        } else if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.playerDecks.get(ownerId).add(physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " is put on the bottom of its owner's library."));
         } else if (entry.isExileInsteadOfGraveyard()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);

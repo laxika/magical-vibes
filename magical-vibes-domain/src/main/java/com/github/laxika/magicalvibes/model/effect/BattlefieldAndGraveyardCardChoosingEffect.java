@@ -17,4 +17,9 @@ public interface BattlefieldAndGraveyardCardChoosingEffect extends CardEffect {
 
     /** The maximum number of cards the controller may choose across both zones ("up to N"). */
     int mixedZoneMaxTargets();
+
+    /** Maximum number for a choice whose cap is the announced X value. */
+    default int mixedZoneMaxTargets(int xValue) {
+        return mixedZoneMaxTargets();
+    }
 }

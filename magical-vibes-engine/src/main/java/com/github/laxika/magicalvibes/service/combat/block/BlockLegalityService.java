@@ -143,6 +143,7 @@ public class BlockLegalityService {
                 || (creature.isTapped() && !canBlockAsThoughUntapped(context, creature))
                 || creature.isCantBlockThisTurn()
                 || creature.isCantBlockThisCombat()
+                || gameQueryService.hasSuspectedAbilities(context.gameData, creature)
                 || isOutsideChosenBlockers(context.gameData, creature)) {
             return false;
         }
@@ -290,6 +291,9 @@ public class BlockLegalityService {
             return BlockDenial.CANT_BLOCK_THIS_TURN;
         }
         if (blocker.isCantBlockThisCombat()) {
+            return BlockDenial.CANT_BLOCK;
+        }
+        if (gameQueryService.hasSuspectedAbilities(gameData, blocker)) {
             return BlockDenial.CANT_BLOCK;
         }
         if (gameQueryService.isLockedFromBlocking(gameData, blocker.getId())) {

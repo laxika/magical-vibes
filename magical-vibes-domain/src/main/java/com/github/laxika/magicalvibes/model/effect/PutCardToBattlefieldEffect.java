@@ -37,6 +37,8 @@ import java.util.Set;
  *                                repeats until they decline or have no matching cards (Cultivator Colossus)
  * @param putAnyNumber            if {@code true}, after putting a card the process re-offers until decline / no matches
  *                                without drawing (Wrenn and Seven)
+ * @param cloaked                 if {@code true}, the chosen card enters the battlefield cloaked and the hand-card
+ *                                choice is mandatory
  * @param returnToHandAtEndStep   if {@code true}, the chosen permanent is returned to its owner's hand at the
  *                                beginning of the next end step, if it is still on the battlefield (Surprise Deployment)
  */
@@ -47,6 +49,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean drawAndRepeat, boolean putAnyNumber,
                                          boolean faceDown, int faceDownPower, int faceDownToughness,
                                          Set<CardType> faceDownCardTypes,
+                                         boolean cloaked,
                                          boolean returnExiledSourceIfSacrificed,
                                          boolean returnToHandAtEndStep) implements CardEffect {
 
@@ -63,7 +66,19 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                       Set<CardType> faceDownCardTypes) {
         this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
                 attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
-                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, false, false);
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, false, false, false);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                      boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep,
+                                      boolean attachSourceEquipment, boolean enterAttacking,
+                                      boolean drawAndRepeat, boolean putAnyNumber,
+                                      boolean faceDown, int faceDownPower, int faceDownToughness,
+                                      Set<CardType> faceDownCardTypes, boolean cloaked) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
+                attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked, false, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
@@ -150,11 +165,18 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 true, power, toughness, cardTypes);
     }
 
+    /** Puts a card from hand onto the battlefield cloaked; the card selection is mandatory. */
+    public static PutCardToBattlefieldEffect cloakedFromHand() {
+        return new PutCardToBattlefieldEffect(new CardTruePredicate(), "card",
+                false, false, false, false, false, false, false, false,
+                true, 2, 2, Set.of(CardType.CREATURE), true, false, false);
+    }
+
     /** Shifty Doppelganger: return its exiled source card if the entered creature is sacrificed. */
     public PutCardToBattlefieldEffect returningExiledSourceIfSacrificed() {
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
-                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, true,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked, true,
                 returnToHandAtEndStep);
     }
 
@@ -163,6 +185,6 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                returnExiledSourceIfSacrificed, true);
+                cloaked, returnExiledSourceIfSacrificed, true);
     }
 }

@@ -14,6 +14,9 @@ public class GraveyardTargetOperationState {
     public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
     public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
     public boolean resolutionTimeExileThenMayBecomeCopyResume;
+    public boolean resolutionTimeKayaSpiritsJusticeResume;
+    /** Whether a resolution-time collect-evidence choice is awaiting completion. */
+    public boolean resolutionTimeCollectEvidenceResume;
 
     public Card card;
     public UUID controllerId;
@@ -164,6 +167,12 @@ public class GraveyardTargetOperationState {
 
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {
     }
+
+    public record DeadlyCoverUpContext(UUID chosenCardId) {
+    }
+
+    /** Resolution-time choice state for Deadly Cover-Up's non-targeting graveyard exile. */
+    public DeadlyCoverUpContext resolutionTimeDeadlyCoverUp;
 
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {

@@ -1166,6 +1166,7 @@ public class ActivatedAbilityExecutionService {
                     if (effectiveDamage > 0) {
                         gameData.recordDamageToPlayer(playerId, effectiveDamage,
                                 gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
+                        gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
                         gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                         triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
@@ -1328,6 +1329,7 @@ public class ActivatedAbilityExecutionService {
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(playerId, effectiveDamage,
                         gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
+                gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
                 gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);

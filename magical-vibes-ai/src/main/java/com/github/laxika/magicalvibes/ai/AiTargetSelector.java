@@ -678,6 +678,11 @@ class AiTargetSelector {
             trial.add(candidate.getId());
             return targetLegalityService.fitsAtMostOneArtifactOneCreatureAndOneLand(gameData, trial);
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER) {
+            List<UUID> trial = new ArrayList<>(chosenSoFar);
+            trial.add(candidate.getId());
+            return targetLegalityService.fitsAtMostOneArtifactCreatureEnchantmentAndPlaneswalker(gameData, trial);
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
             UUID candidateControllerId = gameQueryService.findPermanentController(gameData, candidate.getId());
@@ -709,6 +714,7 @@ class AiTargetSelector {
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
+                     AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                      ONE_PER_CONTROLLER_IF_ABLE, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
                      AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->

@@ -99,11 +99,13 @@ public class EtbEffectResolver {
             Zone sourceZone = ctx.sourcePermanent() == null
                     ? (ctx.wasCastFromHand() ? Zone.HAND : null)
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
+            boolean collectEvidenceCostPaid = ctx.sourcePermanent() != null
+                    && ctx.sourcePermanent().isCollectEvidenceCostPaid();
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
-                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false,
-                    sourceZone, 0, null, null, false, false, null, null, null,
-                    ctx.repeatedAdditionalCosts());
+                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false, false,
+                    sourceZone, 0, null, null, false, false, false, null, null, null,
+                    ctx.repeatedAdditionalCosts(), false, false, false, collectEvidenceCostPaid);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;

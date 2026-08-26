@@ -1868,7 +1868,8 @@ public class SpellCastTriggerCollectorService {
                     spellCard.getId()));
         } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    match.permanent().getCard(), match.controllerId(), chooseOneEffect, match.permanent().getId()));
+                    match.permanent().getCard(), match.controllerId(), chooseOneEffect, match.permanent().getId(),
+                    spellCard.getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         } else if (needsGraveyardTarget) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(

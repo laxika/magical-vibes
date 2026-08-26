@@ -247,6 +247,19 @@ public class PermanentChoiceSpellHandlerService {
         boolean isGraveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
 
         if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
+            if (ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+                try {
+                    spellCastingService.playCardFromExileAsResolutionCast(gameData,
+                            new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
+                            ect.cardToCast().getId(), 0, permanentId, false, true);
+                } catch (IllegalStateException ex) {
+                    gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                    log.info("Game {} - normal-cost exile cast of {} could not be completed",
+                            gameData.id, ect.cardToCast().getName());
+                }
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             if (ect.genericCostReduction() > 0) {
                 try {
                     spellCastingService.playCardFromExileAsResolutionCast(gameData,
@@ -301,7 +314,7 @@ public class PermanentChoiceSpellHandlerService {
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId());
-            if (ect.genericCostReduction() > 0) {
+            if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
                 gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
                         "'s target is no longer valid and it stays exiled."));
@@ -341,7 +354,7 @@ public class PermanentChoiceSpellHandlerService {
                 // remaining slot's targets vanished mid-selection. The spell can't be legally cast:
                 // a copy ceases to exist (CR 707.10a), a real card goes to its owner's graveyard.
                 gameData.spellsGrantedHasteOnEntry.remove(card.getId());
-                if (ect.genericCostReduction() > 0) {
+                if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.exilePlayCostModifiers.remove(card.getId());
                 } else if (!ect.copy()) {
                     graveyardService.addCardToGraveyard(gameData, ect.controllerId(), card);
@@ -355,7 +368,8 @@ public class PermanentChoiceSpellHandlerService {
 
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
-                    ect.genericCostReduction()));
+                    ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
+                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
@@ -363,6 +377,19 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         // Every target slot is filled — put the spell on the stack preserving the declared order.
+        if (ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+            try {
+                spellCastingService.playCardFromExileAsResolutionCast(gameData,
+                        new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
+                        card.getId(), 0, chosen, false, true);
+            } catch (IllegalStateException ex) {
+                gameData.exilePlayCostModifiers.remove(card.getId());
+                log.info("Game {} - normal-cost multi-target exile cast of {} could not be completed",
+                        gameData.id, card.getName());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (ect.genericCostReduction() > 0) {
             try {
                 spellCastingService.playCardFromExileAsResolutionCast(gameData,

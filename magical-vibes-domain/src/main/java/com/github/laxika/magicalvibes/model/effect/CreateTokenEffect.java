@@ -370,6 +370,11 @@ public record CreateTokenEffect(
 
     /** Clue token: colorless artifact with "{2}, Sacrifice this token: Draw a card." */
     public static CreateTokenEffect ofClueToken(int amount) {
+        return ofClueToken(new Fixed(amount));
+    }
+
+    /** Clue tokens with a dynamically computed count. */
+    public static CreateTokenEffect ofClueToken(DynamicAmount amount) {
         return ofArtifactToken(amount, "Clue", List.of(CardSubtype.CLUE),
                 List.of(new ActivatedAbility(
                         false, "{2}",

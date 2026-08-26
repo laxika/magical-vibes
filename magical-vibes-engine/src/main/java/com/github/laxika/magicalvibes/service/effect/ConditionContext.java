@@ -36,7 +36,8 @@ public record ConditionContext(
         List<String> repeatedAdditionalCosts,
         boolean alternateCost,
         boolean spectacle,
-        boolean controlledMountAsCast
+        boolean controlledMountAsCast,
+        boolean collectEvidenceCostPaid
 ) {
     public ConditionContext {
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
@@ -57,7 +58,7 @@ public record ConditionContext(
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, spectacle, false);
+                alternateCost, spectacle, false, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -163,26 +164,34 @@ public record ConditionContext(
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard() != null
                         ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot(),
                 entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.isSpectacle(),
-                entry.isControlledMountAsCast());
+                entry.isControlledMountAsCast(), entry.isCollectEvidenceCostPaid());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
                 permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), false, false, false,
                 null, 0, null, null, false, false, false, null, null, null,
-                permanent.getRepeatedAdditionalCosts(), false, permanent.isSpectacle());
+                permanent.getRepeatedAdditionalCosts(), false, permanent.isSpectacle(), false,
+                permanent.isCollectEvidenceCostPaid());
     }
 
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
         return new ConditionContext(controllerId, source.getId(), source,
                 source.getCard(), source.isKicked(), false, source.isProwl(), false, false, false,
                 null, 0, null, null, true, false, false, null, null, null,
-                source.getRepeatedAdditionalCosts(), false, source.isSpectacle());
+                source.getRepeatedAdditionalCosts(), false, source.isSpectacle(), false,
+                source.isCollectEvidenceCostPaid());
     }
 
     public static ConditionContext forCasting(UUID castingPlayerId) {
+        return forCasting(castingPlayerId, false);
+    }
+
+    public static ConditionContext forCasting(UUID castingPlayerId, boolean collectEvidenceCostPaid) {
         return new ConditionContext(castingPlayerId, null, null, null,
-                false, false, false, false, null, 0, null, null, false);
+                false, false, false, false, false, false, null, 0, null, null, false,
+                false, false, null, null, null, List.of(), false, false, false,
+                collectEvidenceCostPaid);
     }
 
     public static ConditionContext forCard(Card card, UUID controllerId) {
@@ -221,6 +230,6 @@ public record ConditionContext(
                 copiedXValue, copiedTargetId, copiedTriggeringCard, staticEvaluation,
                 putCounterCostPaid, beholdCostPaid, copiedTriggeringPermanentId,
                 copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
-                spectacle, controlledMountAsCast);
+                spectacle, controlledMountAsCast, collectEvidenceCostPaid);
     }
 }

@@ -214,9 +214,9 @@ public class EtbTriggerService {
             return;
         }
 
-        // Torpor Orb: "Creatures entering don't cause abilities to trigger."
-        if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
-            log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
+        if (gameQueryService.areArtifactOrCreatureETBTriggersSuppressed(gameData, card)) {
+            log.info("Game {} - {} ETB triggers suppressed (entering permanent triggers disabled)",
+                    gameData.id, card.getName());
             return;
         }
 
@@ -520,6 +520,9 @@ public class EtbTriggerService {
         boolean sourceWasCastForSpectacle = sourceBattlefield != null
                 && !sourceBattlefield.isEmpty()
                 && sourceBattlefield.getLast().isSpectacle();
+        boolean collectEvidenceCostPaid = sourceBattlefield != null
+                && !sourceBattlefield.isEmpty()
+                && sourceBattlefield.getLast().isCollectEvidenceCostPaid();
 
         // Put non-special effects on the stack as before
         if (!otherEffects.isEmpty()) {
@@ -648,6 +651,7 @@ public class EtbTriggerService {
                     etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 }
                 etbEntry.setSpectacle(sourceWasCastForSpectacle);
+                etbEntry.setCollectEvidenceCostPaid(collectEvidenceCostPaid);
                 gameData.stack.add(etbEntry);
                 queueTriggeredAbilityCounters(gameData, etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
@@ -679,6 +683,7 @@ public class EtbTriggerService {
                         extraEtbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                     }
                     extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);
+                    extraEtbEntry.setCollectEvidenceCostPaid(collectEvidenceCostPaid);
                     gameData.stack.add(extraEtbEntry);
                     queueTriggeredAbilityCounters(gameData, extraEtbEntry);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));

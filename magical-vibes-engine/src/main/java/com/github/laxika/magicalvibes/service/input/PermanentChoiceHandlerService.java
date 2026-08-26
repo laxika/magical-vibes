@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SuspectChosenOtherCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +36,9 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
     private final GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler grantChosenCreatureKeywordEffectHandler;
+    private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
     private final MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+    private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
     private final InputCompletionService inputCompletionService;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
@@ -178,6 +182,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDeathTrigger(gameData, permanentId, dtt);
         } else if (context instanceof PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentId, slt);
+        } else if (context instanceof PermanentChoiceContext.KayaSpiritsJusticeTokenChoice kaya) {
+            triggerHandler.handleKayaSpiritsJusticeTokenChoice(gameData, permanentId, kaya);
         } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.GuardDogsPermanentChoice) {
@@ -349,6 +355,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCuratorOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.ChooseOwnCreatureGrantKeyword grantKeyword) {
             grantChosenCreatureKeywordEffectHandler.completeChoice(gameData, permanentId, grantKeyword);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.SuspectChosenOtherCreature) {
+            suspectChosenOtherCreatureEffectHandler.completeChoice(gameData, permanentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.TurnOwnCreatureFaceUp) {
+            turnOwnCreatureFaceUpEffectHandler.completeChoice(gameData, permanentId);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);

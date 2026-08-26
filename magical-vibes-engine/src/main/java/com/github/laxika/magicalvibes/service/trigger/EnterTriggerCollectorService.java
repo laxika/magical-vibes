@@ -480,6 +480,9 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
+        if (!mayInterveningIfIsMet(match, may)) {
+            return false;
+        }
         boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
         // "You may gain life equal to that creature's toughness" (e.g. Orchard Warden): read the
         // entering creature's toughness now, since the wrapped effect loses that context once queued.
@@ -519,6 +522,31 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} triggers for {} entering (may effect)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
+    }
+
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    private boolean handleTokenEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        if (!mayInterveningIfIsMet(match, may)) {
+            return false;
+        }
+
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    null, match.permanent().getId());
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for tokens entering (may effect)",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    private boolean mayInterveningIfIsMet(TriggerMatchContext match, MayEffect may) {
+        return !(may.wrapped() instanceof ConditionalEffect conditional)
+                || !conditional.interveningIf()
+                || conditionEvaluationService.isInterveningIfMet(
+                match.gameData(), conditional, match.permanent(), match.controllerId());
     }
 
     @CollectsTrigger(value = MayEffect.class,

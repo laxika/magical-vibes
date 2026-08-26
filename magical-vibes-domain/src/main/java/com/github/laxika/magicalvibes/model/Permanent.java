@@ -168,6 +168,9 @@ public class Permanent {
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantBlockThisCombat;
+    /** True while this permanent has the suspected designation. Cleared only by a leave-and-return
+     *  event or an effect that specifically makes it no longer suspected. */
+    @Setter private boolean suspected;
     /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
      *  effect (e.g. Act of Heroism). Stacks on top of any static "can block an additional creature"
      *  grants counted in {@code CombatBlockService}. Cleared at end of turn by {@link #resetModifiers()}. */
@@ -267,6 +270,7 @@ public class Permanent {
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
     private boolean faceDown;
+    private boolean cloaked;
     private int faceDownPower;
     private int faceDownToughness;
     private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
@@ -489,6 +493,8 @@ public class Permanent {
     @Setter private boolean prowl;
     /** Whether this permanent was cast for its spectacle cost. */
     @Setter private boolean spectacle;
+    /** Whether this permanent's optional collect-evidence additional cost was paid. */
+    @Setter private boolean collectEvidenceCostPaid;
     /** Repeatable additional mana payments made to cast this permanent's spell. */
     private List<String> repeatedAdditionalCosts = List.of();
     /** Whether the required tribute counters were placed on this permanent as it entered. */
@@ -498,6 +504,8 @@ public class Permanent {
     @Setter private boolean renowned;
     /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean monstrous;
+    /** Whether this permanent's Case has been solved. Permanent state; never cleared by {@link #resetModifiers()}. */
+    @Setter private boolean solved;
     /** Whether this permanent is saddled until end of turn. */
     @Setter private boolean saddled;
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
@@ -675,6 +683,7 @@ public class Permanent {
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantBlockThisCombat = source.cantBlockThisCombat;
+        this.suspected = source.suspected;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
         this.mustAttackThisCombat = source.mustAttackThisCombat;
@@ -712,6 +721,7 @@ public class Permanent {
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
         this.faceDown = source.faceDown;
+        this.cloaked = source.cloaked;
         this.faceDownPower = source.faceDownPower;
         this.faceDownToughness = source.faceDownToughness;
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
@@ -785,6 +795,7 @@ public class Permanent {
         this.evoked = source.evoked;
         this.prowl = source.prowl;
         this.spectacle = source.spectacle;
+        this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
@@ -792,6 +803,7 @@ public class Permanent {
         this.cast = source.cast;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
+        this.solved = source.solved;
         this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);
@@ -823,14 +835,21 @@ public class Permanent {
 
     public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {
         this.faceDown = true;
+        this.cloaked = false;
         this.faceDownPower = power;
         this.faceDownToughness = toughness;
         this.faceDownCardTypes.clear();
         this.faceDownCardTypes.addAll(cardTypes);
     }
 
+    public void setFaceDownAsCloaked() {
+        setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        this.cloaked = true;
+    }
+
     public void turnFaceUp() {
         this.faceDown = false;
+        this.cloaked = false;
         this.faceDownPower = 0;
         this.faceDownToughness = 0;
         this.faceDownCardTypes.clear();
@@ -1277,7 +1296,8 @@ public class Permanent {
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
             default -> null;
         };
-        return (!faceDown && card.getKeywords().contains(keyword)) || grantedKeywords.contains(keyword)
+        return (keyword == Keyword.MENACE && suspected)
+                || (!faceDown && card.getKeywords().contains(keyword)) || grantedKeywords.contains(keyword)
                 || persistentGrantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword)
                 || (keywordCounter != null && getCounterCount(keywordCounter) > 0);

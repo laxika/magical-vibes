@@ -92,7 +92,9 @@ public enum Keyword {
     COMPLEATED,
     MOBILIZE,
     PLOT,
-    AMASS;
+    AMASS,
+    SUSPECT,
+    DISGUISE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

@@ -163,6 +163,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.PersistentManaColorChoice ctx) {
+            handlePersistentManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx);
@@ -300,6 +305,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
             handleSubtypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SourceSubtypeChoice ctx) {
+            handleSourceSubtypeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellCreatureTypeChoice) {
@@ -1079,7 +1088,8 @@ public class ChoiceHandlerService {
         chosenModes.add(chosen);
         if (chosenModes.size() < ctx.effect().choicesRequired()) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
-                    ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), chosenModes);
+                    ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), chosenModes,
+                    ctx.triggeringCardId());
             return;
         }
         if (ctx.modesResetEachTurn()) {
@@ -1091,7 +1101,7 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosenModes);
+                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
@@ -2564,6 +2574,46 @@ public class ChoiceHandlerService {
             }
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSourceSubtypeChoice(GameData gameData, Player player, String subtypeName,
+                                           ChoiceContext.SourceSubtypeChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(subtypeName)) {
+            throw new IllegalArgumentException("Invalid creature type choice: " + subtypeName);
+        }
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (source != null) {
+            source.setChosenSubtype(subtype);
+            log.info("Game {} - {} secretly chooses creature type {} for {}", gameData.id,
+                    player.getUsername(), subtype, source.getCard().getName());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePersistentManaColorChosen(GameData gameData, Player player, String colorName,
+                                                 List<String> options,
+                                                 ChoiceContext.PersistentManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.addPersistentMana(manaColor, ctx.amount());
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

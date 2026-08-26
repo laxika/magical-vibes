@@ -44,10 +44,12 @@ import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawIfEmptyLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
@@ -122,7 +124,7 @@ public class DrawService {
             return;
         }
 
-        if (isDrawSkipped(gameData)) {
+        if (isDrawSkipped(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
             log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
@@ -367,7 +369,7 @@ public class DrawService {
             return;
         }
 
-        if (isDrawSkipped(gameData)) {
+        if (isDrawSkipped(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
             log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
@@ -422,13 +424,18 @@ public class DrawService {
         return false;
     }
 
-    private boolean isDrawSkipped(GameData gameData) {
+    private boolean isDrawSkipped(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        boolean libraryEmpty = library == null || library.isEmpty();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(effect -> effect instanceof SkipDrawReplacementEffect);
+                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effect ->
+                        effect instanceof SkipDrawReplacementEffect
+                                || (libraryEmpty
+                                && pid.equals(playerId)
+                                && effect instanceof SkipDrawIfEmptyLibraryReplacementEffect));
                 if (skips) return true;
             }
         }
@@ -1270,9 +1277,10 @@ public class DrawService {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
-                    // Any-target draw trigger (Niv-Mizzet, the Firemind): the controller must choose a
-                    // target before the ability goes on the stack.
+                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    // Targeted draw trigger: the controller must choose a target before the ability
+                    // goes on the stack.
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
                             perm.getCard(),
                             drawingPlayerId,

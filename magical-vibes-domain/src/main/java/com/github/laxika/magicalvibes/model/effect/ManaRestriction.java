@@ -322,4 +322,17 @@ public sealed interface ManaRestriction {
             return "cumulative upkeep costs only";
         }
     }
+
+    /** Mana spendable only to cast face-down spells or turn creatures face up. */
+    record FaceDownSpellsOrTurnFaceUp() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addFaceDownSpellsOrTurnFaceUpMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "face-down spells or turning creatures face up only";
+        }
+    }
 }

@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
@@ -596,6 +597,23 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createLand("Forest"));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsCreaturePredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsSuspectedPredicate matches only suspected permanents")
+        void suspectedPredicateMatchesOnlySuspectedPermanents() {
+            Permanent suspected = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Skeleton", 2, 1, CardColor.BLACK,
+                            List.of(CardSubtype.SKELETON)));
+            Permanent unsuspected = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Skeleton", 2, 1, CardColor.BLACK,
+                            List.of(CardSubtype.SKELETON)));
+            suspected.setSuspected(true);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, suspected,
+                    new PermanentIsSuspectedPredicate())).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, unsuspected,
+                    new PermanentIsSuspectedPredicate())).isFalse();
         }
 
         @Test
@@ -1760,6 +1778,21 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesStaticFilter(stolen, ownedPredicate, sourceContext)).isFalse();
             assertThat(evaluator.matchesStaticFilter(stolen,
                     new PermanentNotPredicate(ownedPredicate), sourceContext)).isTrue();
+        }
+
+        @Test
+        @DisplayName("controller predicate accounts for current permanent control")
+        void controllerPredicateAccountsForCurrentControl() {
+            Permanent controlled = addPermanent(player1Id,
+                    createCreature("Controlled Creature", 2, 2, CardColor.GREEN));
+            Permanent opponentControlled = addPermanent(player2Id,
+                    createCreature("Opponent Controlled Creature", 2, 2, CardColor.GREEN));
+            FilterContext sourceContext = ctx().withSourceControllerId(player1Id);
+
+            PermanentControlledBySourceControllerPredicate controllerPredicate =
+                    new PermanentControlledBySourceControllerPredicate();
+            assertThat(evaluator.matchesStaticFilter(controlled, controllerPredicate, sourceContext)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(opponentControlled, controllerPredicate, sourceContext)).isFalse();
         }
 
         @Test

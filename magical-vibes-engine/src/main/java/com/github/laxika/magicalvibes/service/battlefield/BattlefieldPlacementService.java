@@ -224,6 +224,11 @@ public class BattlefieldPlacementService {
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());
+        if (permanent.isFaceDown() && permanent.getFaceDownCardTypes().contains(CardType.CREATURE)) {
+            gameData.faceDownCreaturesEnteredBattlefieldThisTurn
+                    .computeIfAbsent(controllerId, k -> new ArrayList<>())
+                    .add(permanent.getCard());
+        }
         // Delayed "sacrifice this token at the beginning of the next end step" (Choreographed Sparks).
         if (permanent.getCard().isSacrificeAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));

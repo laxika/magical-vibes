@@ -51,6 +51,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         // Clear the last-discarded snapshot so a trailing LastDiscardedCardManaValue on the same
         // spell reads this discard only, and stays 0 when nothing is discarded (empty hand).
         gameData.lastDiscardedCardManaValue = 0;
+        gameData.greatestDiscardedCardManaValue = 0;
 
         // Source-relative amounts (e.g. CountersOnSource for Shrine of Limitless Power) use the
         // live source permanent when still on the battlefield, else the last-known snapshot

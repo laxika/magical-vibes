@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -975,6 +976,51 @@ class DamageTriggerCollectorServiceTest {
         verify(conditionEvaluationService).isMet(eq(gd), eq(condition), contextCaptor.capture());
         assertThat(contextCaptor.getValue().sourcePermanent()).isNull();
         assertThat(contextCaptor.getValue().sourceCard()).isSameAs(source.getCard());
+    }
+
+    @Nested
+    @DisplayName("ON_DEALT_DAMAGE — ConditionalEffect")
+    class DealtDamageConditional {
+
+        @Test
+        @DisplayName("queues the trigger when the damage event meets the threshold")
+        void queuesWhenDamageMeetsThreshold() {
+            Permanent damagedCreature = createPermanent("Innocent Bystander");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition, new DrawCardEffect());
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(3)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect), EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("does not queue the trigger when the damage event is below the threshold")
+        void skipsWhenDamageIsBelowThreshold() {
+            Permanent damagedCreature = createPermanent("Innocent Bystander");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition, new DrawCardEffect());
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(2)))
+                    .thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect), EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     // ===== ON_DEALT_DAMAGE — default handler =====

@@ -119,7 +119,9 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return false;
             }
-            if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+            if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+                gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+            } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
             } else {
                 graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getPhysicalCard());

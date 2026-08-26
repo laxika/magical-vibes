@@ -1250,6 +1250,12 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(gd.pendingInteractions)
                     .filteredOn(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
                     .hasSize(1);
+            var pending = gd.pendingInteractions.stream()
+                    .filter(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                    .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
         }
 
         @Test

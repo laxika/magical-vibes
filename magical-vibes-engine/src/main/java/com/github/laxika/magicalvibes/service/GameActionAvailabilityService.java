@@ -317,6 +317,11 @@ public class GameActionAvailabilityService {
                 extraConvokeMana, additionalGenericCost, ctx)) {
             return true;
         }
+        if (card.getCastingOption(AdventureCast.class).isPresent() && card.getBackFaceCard() != null
+                && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
+                extraConvokeMana, additionalGenericCost, ctx)) {
+            return true;
+        }
         // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
         // mutating the caller's pool. Only copy when the player actually has the permission (rare).
         if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {
@@ -604,7 +609,8 @@ public class GameActionAvailabilityService {
         }
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
-            return castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+            return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+                    || castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card))
                     && castingPermissionService.canCastWithTiming(gameData, playerId, card,
                             ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())
                     && !ctx.spellLimitReached() && !ctx.cantCastDueToAttack();
@@ -640,6 +646,10 @@ public class GameActionAvailabilityService {
             return true;
         }
 
+        if (castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)) {
+            return true;
+        }
+
         if (castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
             return true;
         }
@@ -647,7 +657,9 @@ public class GameActionAvailabilityService {
         // A split card with fuse offers several mutually exclusive costs (each half, plus the fused
         // total) — it is castable if any one of them is payable, so every candidate is tried below.
         List<ManaCost> candidateCosts = castableCosts(card);
-        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
+        boolean collectEvidenceCostPaid = castingCostService.canPayCollectEvidenceCost(gameData, playerId, card);
+        int additionalCost = castingCostService.getCastCostModifier(
+                gameData, playerId, card, ctx.costSnapshot(), 0, collectEvidenceCostPaid)
                 + additionalGenericCost;
         if (castingCostService.hasTargetBasedCostIncrease(card)) {
             ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
@@ -876,6 +888,9 @@ public class GameActionAvailabilityService {
         // Check non-zero alternative cost from battlefield (e.g. Jodah)
         if (castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
             return true;
+        }
+        if (card.getCastingOption(AdventureCast.class).isPresent()) {
+            return false;
         }
         return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
     }

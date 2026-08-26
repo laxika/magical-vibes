@@ -70,6 +70,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsKindredPredicate` | `()` | kindred permanents, including continuous card-type changes |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
+| `PermanentIsSuspectedPredicate` | `()` | permanents that have the suspected designation |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsAttackingOpponentOfSourceControllerPredicate` | `()` | creatures attacking one of the source controller's opponents directly; attacks against planeswalkers and battles do not match; needs a `FilterContext` with source controller (Oviya, Automech Artisan) |
 | `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal). Also usable as a static `StaticBoostEffect`/`GrantKeywordEffect` filter — `matchesStaticFilter` reads the source controller off the context (Boarded Window and Watchdog, "creatures attacking you get -1/-0") |

@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffec
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
@@ -130,6 +132,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ArtifactOrCreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
@@ -169,6 +172,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedE
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -455,6 +459,29 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns whether a permanent controlled by an opponent of the active player can't be turned
+     * face up because the active player controls a matching static restriction.
+     */
+    public boolean isTurnFaceUpPrevented(GameData gameData, Permanent permanent) {
+        UUID permanentControllerId = findPermanentController(gameData, permanent.getId());
+        UUID activePlayerId = gameData.activePlayerId;
+        if (permanentControllerId == null || activePlayerId == null
+                || activePlayerId.equals(permanentControllerId)) {
+            return false;
+        }
+        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (activeBattlefield == null) {
+            return false;
+        }
+        return activeBattlefield.stream()
+                .filter(source -> !source.isFaceDown())
+                .filter(source -> !source.isLosesAllAbilitiesUntilEndOfTurn()
+                        && !computeStaticBonus(gameData, source).losesAllAbilities())
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(OpponentsPermanentsCantBeTurnedFaceUpEffect.class::isInstance);
     }
 
     /**
@@ -1720,6 +1747,18 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given player has cast at least four spells matching
+     * {@code filter} this turn.
+     */
+    public boolean hasControllerCastFourOrMoreSpellsThisTurn(
+            GameData gameData, UUID controllerId, CardPredicate filter) {
+        return gameData.getSpellsCastThisTurn(controllerId).stream()
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId()))
+                .limit(4)
+                .count() == 4;
+    }
+
+    /**
      * Returns {@code true} if the permanent is an artifact, either by its natural card type,
      * a transient granted card type (until end of turn), or a persistent granted card type (permanent).
      */
@@ -1896,6 +1935,16 @@ public class GameQueryService {
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(effect -> effect instanceof CantHaveOrGainKeywordEffect restriction
                         && restriction.keyword() == keyword);
+    }
+
+    /** Returns whether a static effect prevents the permanent from becoming suspected. */
+    public boolean cantBecomeSuspected(GameData gameData, Permanent permanent) {
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBecomeSuspectedEffect.class::isInstance)) {
+            return true;
+        }
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(CantBecomeSuspectedEffect.class::isInstance);
     }
 
     /**
@@ -3274,7 +3323,6 @@ public class GameQueryService {
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         for (StaticSource sourceSlot : sources) {
             Permanent source = sourceSlot.permanent();
-            if (source == target) continue;
             // CR 613.8a(1)/CR 305.7: a source whose abilities are gone — "loses all abilities"
             // applied in layer 6, or a land whose type was set (removing its printed abilities
             // in layer 4) — contributes nothing in layer 7 either: a lose-all'd lord grants
@@ -3285,6 +3333,10 @@ public class GameQueryService {
             boolean sourceAbilitiesGone = sourceState != null
                     && (sourceState.isLosesAllAbilities() || sourceState.isLosesAllNonManaAbilities()
                     || sourceState.isPrintedAbilitiesRemoved());
+            if (!sourceAbilitiesGone && !source.isAttached()) {
+                applyFloatingStaticGrantsFromSource(gameData, sourceSlot, target, accumulator, globalWordChange);
+            }
+            if (source == target) continue;
             StaticEffectContext context = new StaticEffectContext(
                     source, target, sourceSlot.controllerId(), sourceSlot.sameBattlefieldAsTarget(), gameData);
             AccumulatorSnapshot beforeSource = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
@@ -3627,6 +3679,30 @@ public class GameQueryService {
                 accumulator.getBasePowerOverride() != null ? accumulator.getBasePowerOverride() : 0,
                 accumulator.getBaseToughnessOverride() != null ? accumulator.getBaseToughnessOverride() : 0,
                 losesAllAbilities, losesAllNonManaAbilities, ptSwitched, accumulator.getName());
+    }
+
+    private void applyFloatingStaticGrantsFromSource(GameData gameData, StaticSource sourceSlot,
+                                                       Permanent target, StaticBonusAccumulator accumulator,
+                                                       List<TextReplacement> globalWordChange) {
+        Permanent source = sourceSlot.permanent();
+        StaticEffectContext context = new StaticEffectContext(
+                source, target, sourceSlot.controllerId(), sourceSlot.sameBattlefieldAsTarget(), gameData);
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!(floating.effect() instanceof GrantStaticEffectToSourceEffect grant)
+                        || !source.getId().equals(floating.sourcePermanentId())
+                        || !source.getId().equals(floating.affectedPermanentId())) {
+                    continue;
+                }
+                StaticEffectHandler handler = staticEffectRegistry.getHandler(grant.staticEffect());
+                if (handler != null) {
+                    handler.apply(context,
+                            TextChangeTransformer.transform(grant.staticEffect(), source.getTextReplacements(),
+                                    globalWordChange),
+                            accumulator);
+                }
+            }
+        }
     }
 
     // --- Protection & evasion ---
@@ -5150,7 +5226,20 @@ public class GameQueryService {
         if (!hasCardType(enteringCard, CardType.CREATURE)) {
             return false;
         }
-        return anyBattlefieldHasStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class);
+        return anyBattlefieldHasStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class)
+                || anyBattlefieldHasStaticEffect(gameData, ArtifactOrCreatureEnteringDontCauseTriggersEffect.class);
+    }
+
+    /**
+     * Returns whether an entering artifact or creature is prevented from causing triggered abilities.
+     */
+    public boolean areArtifactOrCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
+        if (!hasCardType(enteringCard, CardType.ARTIFACT)
+                && !hasCardType(enteringCard, CardType.CREATURE)) {
+            return false;
+        }
+        return anyBattlefieldHasStaticEffect(gameData, ArtifactOrCreatureEnteringDontCauseTriggersEffect.class)
+                || areCreatureETBTriggersSuppressed(gameData, enteringCard);
     }
 
     /**
@@ -6990,6 +7079,15 @@ public class GameQueryService {
     public boolean hasLostAllAbilities(GameData gameData, Permanent permanent) {
         return permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 || computeStaticBonus(gameData, permanent).losesAllAbilities();
+    }
+
+    /** Whether a suspected permanent still has the menace and can't-block abilities. */
+    public boolean hasSuspectedAbilities(GameData gameData, Permanent permanent) {
+        if (!permanent.isSuspected() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return false;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        return !bonus.losesAllAbilities() && !bonus.losesAllNonManaAbilities();
     }
 
     /**

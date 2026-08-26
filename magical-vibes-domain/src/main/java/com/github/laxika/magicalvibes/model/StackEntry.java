@@ -69,9 +69,13 @@ public class StackEntry {
      * into-library dispositions still win.
      */
     @Setter private boolean exileInsteadOfGraveyard;
+    /** Whether this spell goes to the bottom of its owner's library instead of the graveyard. */
+    @Setter private boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
+    /** Whether this spell was cast via Adventure; after resolving, its physical card is exiled with permission to cast the front face. */
+    @Setter private boolean castWithAdventure;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -114,6 +118,8 @@ public class StackEntry {
     @Setter private boolean buyback;
     /** Whether this spell's put-counter additional cost was paid. */
     @Setter private boolean putCounterCostPaid;
+    /** Whether this spell's optional collect-evidence additional cost was paid. */
+    @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
     /**
@@ -549,8 +555,10 @@ public class StackEntry {
         this.castWithFlashback = source.castWithFlashback;
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
+        this.putOnBottomOfOwnersLibraryInsteadOfGraveyard = source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
+        this.castWithAdventure = source.castWithAdventure;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
@@ -559,6 +567,7 @@ public class StackEntry {
         this.kicked = source.kicked;
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
+        this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
@@ -853,7 +862,7 @@ public class StackEntry {
         if (card == null) {
             return null;
         }
-        if (castWithOmen && card.getBackFaceCard() != null) {
+        if ((castWithOmen || castWithAdventure) && card.getBackFaceCard() != null) {
             return card.getBackFaceCard();
         }
         Card effectiveCard = getCard();

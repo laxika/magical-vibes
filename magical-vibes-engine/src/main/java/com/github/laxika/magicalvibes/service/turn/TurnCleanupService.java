@@ -333,6 +333,7 @@ public class TurnCleanupService {
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
+        gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
@@ -370,6 +371,8 @@ public class TurnCleanupService {
         gameData.graveyardLeaveNotificationPendingOwners.clear();
         gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
+        gameData.kayaExileNotificationPendingCreatureCards.clear();
+        gameData.kayaExileNotificationPendingCounts.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)

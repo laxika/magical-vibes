@@ -184,6 +184,10 @@ public sealed interface MultiPermanentChoiceContext {
                             int remainingIterations) implements MultiPermanentChoiceContext {
     }
 
+    /** Exile the selected face-up creatures with disguise and cloak them. */
+    record RecloakDisguisedCreatures(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    }
+
     /** Choose up to one creature that saddled the source this turn, then flicker the source and it. */
     record ExileSelfAndSaddledCreature(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
     }
@@ -476,10 +480,16 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * Sacrifice the chosen permanents and record the number actually sacrificed on the resolving
-     * stack entry for a following {@code EventValue} effect.
+     * Sacrifice the chosen permanents and record their count, and optionally their total power, on
+     * the resolving stack entry for a following effect.
      */
-    record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry,
+                                            boolean recordSacrificedPower)
+            implements MultiPermanentChoiceContext {
+
+        public SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) {
+            this(resolvingEntry, false);
+        }
     }
 
     /** The controller chose distinct artifact and/or creature tokens to copy. */
@@ -653,6 +663,18 @@ public sealed interface MultiPermanentChoiceContext {
         public WinnowingChoice {
             playerIds = List.copyOf(playerIds);
             chosenByPlayer = Map.copyOf(chosenByPlayer);
+        }
+    }
+
+    /** Krenko's Buzzcrusher: the controller chooses up to one nonbasic land for each player. */
+    record DestroyUpToOneNonbasicLandPerPlayerChoice(UUID controllerId, List<UUID> playerIds,
+                                                     int playerIndex, List<UUID> selectedIds,
+                                                     String sourceName)
+            implements MultiPermanentChoiceContext {
+
+        public DestroyUpToOneNonbasicLandPerPlayerChoice {
+            playerIds = List.copyOf(playerIds);
+            selectedIds = List.copyOf(selectedIds);
         }
     }
 

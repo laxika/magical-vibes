@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -1978,6 +1979,7 @@ public class GraveyardReturnSupport {
         }
 
         if (state.disposition() == CardPileDisposition.HAND
+                || state.disposition() == CardPileDisposition.HAND_AND_THOPTER
                 || state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
             // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.
             boolean chosenPileIsFaceDown = state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE
@@ -1996,12 +1998,23 @@ public class GraveyardReturnSupport {
                     }
                 }
             }
+            int cardsPutIntoGraveyard = 0;
             for (UUID cardId : otherPileCardIds) {
                 Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
                 if (card != null) {
                     gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+                    cardsPutIntoGraveyard++;
                     gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their graveyard."));
                 }
+            }
+            if (state.disposition() == CardPileDisposition.HAND_AND_THOPTER
+                    && gameData.pendingEffectResolutionEntry != null) {
+                createTokenEffectHandler.resolve(gameData, gameData.pendingEffectResolutionEntry,
+                        new CreateTokenEffect(
+                                CardType.CREATURE, 1, "Thopter", 0, 0, null, Set.of(),
+                                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
+                                false, false, Map.of(), List.of(), false, false, false,
+                                cardsPutIntoGraveyard, Set.of(), Set.of()));
             }
             return;
         }

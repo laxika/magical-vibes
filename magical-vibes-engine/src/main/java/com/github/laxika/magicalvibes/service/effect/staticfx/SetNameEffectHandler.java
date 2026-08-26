@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -21,7 +22,9 @@ public class SetNameEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var setName = (SetNameEffect) effect;
-        if (support.matchesCreatureScope(context, setName.scope(), null)) {
+        if ((setName.scope() == GrantScope.SELF
+                && context.target().getId().equals(context.source().getId()))
+                || support.matchesCreatureScope(context, setName.scope(), null)) {
             accumulator.setName(setName.name());
         }
     }

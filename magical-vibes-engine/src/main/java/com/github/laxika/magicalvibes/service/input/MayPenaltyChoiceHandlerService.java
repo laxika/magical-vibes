@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
@@ -315,6 +316,56 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — counter the spell/ability
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessCollectsEvidenceChoice(GameData gameData, Player player,
+                                                           boolean accepted, PendingMayAbility ability) {
+        CounterUnlessCollectsEvidenceEffect effect = ability.effects().stream()
+                .filter(CounterUnlessCollectsEvidenceEffect.class::isInstance)
+                .map(CounterUnlessCollectsEvidenceEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            int totalManaValue = graveyard == null
+                    ? 0
+                    : graveyard.stream().mapToInt(Card::getManaValue).sum();
+            if (totalManaValue >= effect.minimumManaValue()) {
+                gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume = true;
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginMultiGraveyardChoiceWithMinimumManaValue(
+                        gameData, controllerId, new ArrayList<>(graveyard), graveyard.size(),
+                        effect.minimumManaValue(),
+                        "Choose cards from your graveyard to collect evidence "
+                                + effect.minimumManaValue() + ".");
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " accepts — choosing cards to collect evidence. ",
+                        ability.sourceCard(), ""));
+                return;
+            }
+        }
+
         counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
