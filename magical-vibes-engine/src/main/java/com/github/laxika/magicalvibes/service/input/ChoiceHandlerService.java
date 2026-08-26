@@ -475,6 +475,10 @@ public class ChoiceHandlerService {
             handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice ctx) {
+            handleSpellsAndLandsCantBePlayedUntilNextTurnChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.NameCardMillDrawChoice ctx) {
             handleNameCardMillDrawChoice(gameData, player, colorName, ctx);
             return;
@@ -4183,6 +4187,26 @@ public class ChoiceHandlerService {
                 player.getUsername() + " chooses \"" + cardName + "\". Opponents can't cast spells named "
                         + cardName + " until " + gameData.playerIdToName.get(controllerId) + "'s next turn."));
         log.info("Game {} - {} chooses card name \"{}\" (opponents can't cast until next turn)",
+                gameData.id, player.getUsername(), cardName);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSpellsAndLandsCantBePlayedUntilNextTurnChoice(GameData gameData, Player player,
+                                                                       String cardName,
+                                                                       ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn
+                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
+                .add(cardName);
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + cardName
+                        + "\". Spells and lands named " + cardName + " can't be cast or played until "
+                        + gameData.playerIdToName.get(controllerId) + "'s next turn."));
+        log.info("Game {} - {} chooses card name \"{}\" (spells and lands can't be played until next turn)",
                 gameData.id, player.getUsername(), cardName);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

@@ -2372,7 +2372,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           UUID returnSourcePermanentId, CounterType artifactCounterType,
                           int artifactCounterCount, boolean returnToHandAtEndStep,
                           boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
-                          CardPredicate enterTappedAndAttackingIf)
+                          CardPredicate enterTappedAndAttackingIf,
+                          UUID blockingAttackerId)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -2389,7 +2390,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
                     faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
                     returnSourcePermanentId, artifactCounterType, artifactCounterCount,
-                    false, false, null, null, null);
+                    false, false, null, null, null, null);
+        }
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                              boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                              String drawAndRepeatLabel, boolean putAnyNumber,
+                              boolean faceDown, int faceDownPower, int faceDownToughness,
+                              java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                              UUID returnSourcePermanentId, CounterType artifactCounterType,
+                              int artifactCounterCount, boolean returnToHandAtEndStep) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                    attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
+                    drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
+                    faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
+                    returnSourcePermanentId, artifactCounterType, artifactCounterCount,
+                    returnToHandAtEndStep, false, null, null, null, null);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,

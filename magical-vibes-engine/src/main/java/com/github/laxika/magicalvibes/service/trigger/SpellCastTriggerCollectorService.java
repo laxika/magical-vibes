@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -566,6 +567,30 @@ public class SpellCastTriggerCollectorService {
         CopySpellForEachOtherControlledCreatureEffect resolutionEffect =
                 new CopySpellForEachOtherControlledCreatureEffect(
                         snapshot, sc.castingPlayerId(), singleTargetId, trigger.chooseOne());
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolutionEffect))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CopySpellForEachOtherCreatureEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCopySpellForEachOtherCreature(TriggerMatchContext match,
+            CopySpellForEachOtherCreatureEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellSnapshot() != null) return false;
+
+        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
+        UUID singleTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
+        if (singleTargetId == null || !singleTargetId.equals(match.permanent().getId())) return false;
+
+        StackEntry snapshot = new StackEntry(spellEntry);
+        CopySpellForEachOtherCreatureEffect resolutionEffect =
+                new CopySpellForEachOtherCreatureEffect(snapshot, sc.castingPlayerId(), singleTargetId);
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

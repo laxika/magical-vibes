@@ -79,6 +79,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Nightbound", Keyword.NIGHTBOUND);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
+        KEYWORD_MAP.put("Haunt", Keyword.HAUNT);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
         KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
@@ -89,6 +90,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Shadow", Keyword.SHADOW);
         KEYWORD_MAP.put("Flanking", Keyword.FLANKING);
         KEYWORD_MAP.put("Conspire", Keyword.CONSPIRE);
+        KEYWORD_MAP.put("Replicate", Keyword.REPLICATE);
         KEYWORD_MAP.put("Retrace", Keyword.RETRACE);
         KEYWORD_MAP.put("Jump", Keyword.JUMP);
         KEYWORD_MAP.put("Jump-start", Keyword.JUMP_START);

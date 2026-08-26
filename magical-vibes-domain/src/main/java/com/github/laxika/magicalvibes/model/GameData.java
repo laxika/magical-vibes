@@ -372,6 +372,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
+    /** Exiled haunting card UUID -> the permanent UUID it haunts. */
+    public final Map<UUID, UUID> hauntingCardToPermanentId = new ConcurrentHashMap<>();
     /** Exiled Cosima card UUID → voyage counters accumulated while it remains exiled. */
     public final Map<UUID, Integer> exiledVoyageCounters = new ConcurrentHashMap<>();
     /** Exiled Cosima card UUID → controller of the ability that exiled it. */
@@ -981,6 +983,10 @@ public class GameData {
      * that controller's next turn (survives end-of-turn cleanup).
      */
     public final Map<UUID, Set<String>> opponentsCantCastNamedSpellsUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
+    /** Card names no player may cast or play until the key player's next turn. */
+    public final Map<UUID, Set<String>> spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
     /** Players who can't cast noncreature spells until the key player's next turn. */
@@ -3444,6 +3450,7 @@ public class GameData {
     public boolean removeFromExile(UUID cardId) {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
+            hauntingCardToPermanentId.remove(cardId);
             foretoldCardIds.remove(cardId);
             foretoldCardCosts.remove(cardId);
             exilePlayPermissionSourceCards.entrySet().removeIf(entry -> cardId.equals(entry.getValue()));
@@ -4187,6 +4194,7 @@ public class GameData {
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         copy.exiledCards.addAll(this.exiledCards);
+        copy.hauntingCardToPermanentId.putAll(this.hauntingCardToPermanentId);
         copy.antedCardIds.addAll(this.antedCardIds);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardTimeCounters.putAll(this.exiledCardTimeCounters);
@@ -4523,6 +4531,8 @@ public class GameData {
         copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
         this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.forEach((k, v) ->
+                copy.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->

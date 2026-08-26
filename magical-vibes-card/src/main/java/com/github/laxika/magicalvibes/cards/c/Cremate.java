@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 
 @CardRegistration(set = "RTR", collectorNumber = "59")
 @CardRegistration(set = "INV", collectorNumber = "96")
+@CardRegistration(set = "GPT", collectorNumber = "45")
 public class Cremate extends Card {
 
     public Cremate() {

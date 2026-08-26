@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentIdAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -85,6 +86,8 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpel
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.HauntEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
@@ -124,6 +127,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
@@ -192,6 +196,7 @@ public class TriggerCollectionService {
     private final GameLogService gameLogService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
+    private final GraveyardTargetingSupport graveyardTargetingSupport;
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
@@ -1000,7 +1005,18 @@ public class TriggerCollectionService {
         // Infusion copy cycle) needs a snapshot of the spell entry; any other effect (e.g. Demigod of
         // Revenge's graveyard return) is queued as a plain triggered ability under the caster.
         List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
-        for (CardEffect effect : spellCard.getEffects(EffectSlot.ON_SELF_CAST)) {
+        List<CardEffect> selfCastEffects = new ArrayList<>();
+        if (spellCard.getManaCost() != null
+                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))
+                && gameQueryService.hasSpellCastingAbilityGrant(
+                        gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone)
+                && spellCard.getEffects(EffectSlot.ON_SELF_CAST).stream()
+                .noneMatch(effect -> effect instanceof ReplicateEffect replicate
+                        && spellCard.getManaCost().equals(replicate.manaCost()))) {
+            selfCastEffects.add(new ReplicateEffect(spellCard.getManaCost()));
+        }
+        selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
+        for (CardEffect effect : selfCastEffects) {
             if (effect instanceof CopyThisSpellIfConditionEffect trigger) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
@@ -1045,6 +1061,31 @@ public class TriggerCollectionService {
                                 new StackEntry(spellEntry), castingPlayerId, copies, false)))
                 ));
                 log.info("Game {} - {} self-cast trigger queued ({} copies) for {}",
+                        gameData.id, spellCard.getName(), copies, castingPlayerId);
+            } else if (effect instanceof ReplicateEffect replicate) {
+                StackEntry spellEntry = null;
+                for (StackEntry se : gameData.stack) {
+                    if (se.getCard().getId().equals(spellCard.getId())) {
+                        spellEntry = se;
+                        break;
+                    }
+                }
+                if (spellEntry == null) continue;
+
+                int copies = (int) spellEntry.getRepeatedAdditionalCosts().stream()
+                        .filter(replicate.manaCost()::equals)
+                        .count();
+                if (copies <= 0) continue;
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        spellCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(new StormCopyEffect(
+                                new StackEntry(spellEntry), castingPlayerId, copies, false)))
+                ));
+                log.info("Game {} - {} replicate trigger queued ({} copies) for {}",
                         gameData.id, spellCard.getName(), copies, castingPlayerId);
             } else if (effect instanceof StormEffect storm) {
                 StackEntry spellEntry = null;
@@ -5971,6 +6012,77 @@ public class TriggerCollectionService {
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
         collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, null);
+    }
+
+    public void collectSpellHauntTrigger(GameData gameData, Card spell, UUID controllerId) {
+        List<CardEffect> hauntEffects = spell.getEffects(EffectSlot.ON_DEATH).stream()
+                .filter(HauntEffect.class::isInstance)
+                .toList();
+        if (!hauntEffects.isEmpty()) {
+            gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    spell, controllerId, hauntEffects));
+        }
+    }
+
+    public void checkHauntedCreatureDeathTriggers(GameData gameData, Permanent dyingPermanent) {
+        UUID dyingPermanentId = dyingPermanent.getId();
+        List<UUID> hauntingCardIds = gameData.hauntingCardToPermanentId.entrySet().stream()
+                .filter(entry -> dyingPermanentId.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
+
+        for (UUID hauntingCardId : hauntingCardIds) {
+            if (!gameData.hauntingCardToPermanentId.remove(hauntingCardId, dyingPermanentId)) {
+                continue;
+            }
+            ExiledCardEntry exiled = gameData.findExiledCard(hauntingCardId);
+            if (exiled == null) {
+                continue;
+            }
+
+            Card hauntingCard = exiled.card();
+            List<CardEffect> effects = hauntingCard.getEffects(EffectSlot.ON_HAUNTED_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) {
+                continue;
+            }
+
+            List<CardEffect> targetedEffects = new ArrayList<>();
+            List<CardEffect> nonTargetedEffects = new ArrayList<>();
+            List<TriggeredModalEffect> triggeredModalEffects = new ArrayList<>();
+            for (CardEffect effect : effects) {
+                if (effect instanceof TriggeredModalEffect triggeredModalEffect) {
+                    triggeredModalEffects.add(triggeredModalEffect);
+                    continue;
+                }
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                        || graveyardTargetingSupport.findTarget(List.of(effect)) != null) {
+                    targetedEffects.add(effect);
+                } else {
+                    nonTargetedEffects.add(effect);
+                }
+            }
+            if (!targetedEffects.isEmpty()) {
+                gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                        hauntingCard, exiled.ownerId(), targetedEffects));
+            }
+            if (!nonTargetedEffects.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        hauntingCard,
+                        exiled.ownerId(),
+                        hauntingCard.getName() + "'s ability",
+                        nonTargetedEffects,
+                        null));
+                gameLogService.append(gameData, GameLog.abilityTriggers(hauntingCard));
+            }
+            for (TriggeredModalEffect triggeredModalEffect : triggeredModalEffects) {
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        hauntingCard, exiled.ownerId(), triggeredModalEffect.choice(), null));
+                gameLogService.append(gameData, GameLog.abilityTriggers(hauntingCard));
+            }
+        }
     }
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature, Permanent dyingPermanent) {

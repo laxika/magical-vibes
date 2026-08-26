@@ -677,6 +677,8 @@ public class CastingPermissionService {
             }
             forbidden.addAll(e.getValue());
         }
+        gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.values()
+                .forEach(forbidden::addAll);
         return forbidden;
     }
 
@@ -707,6 +709,10 @@ public class CastingPermissionService {
                     }
                 }
             }
+        }
+        if (gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.values().stream()
+                .anyMatch(names -> names.contains(card.getName()))) {
+            return true;
         }
         return false;
     }

@@ -82,6 +82,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_PLAYS_LAND,
     ON_OPPONENT_CASTS_SPELL,
     ON_DEATH,
+    ON_HAUNTED_CREATURE_DIES,
     ON_ALLY_CREATURE_DIES,
     /**
      * A permanent that was a creature on the battlefield is put into this permanent's

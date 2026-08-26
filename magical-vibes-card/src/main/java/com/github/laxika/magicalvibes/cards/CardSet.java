@@ -71,6 +71,7 @@ public enum CardSet {
     SET_RTR("RTR"),
     SET_RNA("RNA"),
     SET_GTC("GTC"),
+    SET_GPT("GPT"),
     SET_DGM("DGM"),
     SET_MKM("MKM"),
     SET_INR("INR"),

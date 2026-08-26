@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySource
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureReturnToHandReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
@@ -154,6 +155,10 @@ public class PermanentRemovalService {
             return true;
         }
 
+        if (tryApplyEnchantedCreatureReturnToHandReplacement(gameData, target)) {
+            return true;
+        }
+
         if (!ignoreMayLibraryReplacement && offerMayLibraryReplacement(gameData, target)) {
             return false;
         }
@@ -204,6 +209,27 @@ public class PermanentRemovalService {
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
+    }
+
+    private boolean tryApplyEnchantedCreatureReturnToHandReplacement(GameData gameData, Permanent target) {
+        if (!gameQueryService.isCreature(gameData, target)
+                || !gameQueryService.isEnchanted(gameData, target)) {
+            return false;
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) {
+            return false;
+        }
+
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        if (controllerBattlefield == null || controllerBattlefield.stream()
+                .noneMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(DyingCreatureReturnToHandReplacementEffect.class::isInstance))) {
+            return false;
+        }
+
+        return removePermanentToHand(gameData, target);
     }
 
     /**
@@ -1225,6 +1251,7 @@ public class PermanentRemovalService {
                 gameData, exiledFromBattlefield, controllerId,
                 wasCreature && exiledFromBattlefield > 0, exiledCreatureCards);
         if (wentToGraveyard) {
+            triggerCollectionService.checkHauntedCreatureDeathTriggers(gameData, target);
             if (target.getCounterCount(CounterType.OIL) > 0) {
                 gameData.recordPermanentWithOilCounterPutIntoGraveyard();
             }
