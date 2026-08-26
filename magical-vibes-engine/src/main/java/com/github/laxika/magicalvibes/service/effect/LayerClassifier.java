@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffe
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
@@ -256,7 +257,24 @@ public final class LayerClassifier {
         // the same split AllLandsAreCreaturesEffect and EnchantedPermanentBecomesCreatureEffect
         // use. Outside a STATIC slot this effect is a one-shot resolution (manlands, Crew) that
         // registers its own floating 7b entry and never reaches classification.
-        map.put(AnimatePermanentsEffect.class, fixed(Layer.L4_TYPE));
+        map.put(AnimatePermanentsEffect.class,
+                new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L6_ABILITIES, Layer.L7B_SET_PT),
+                        (effect, fromOwnStaticSlot) -> {
+                            AnimatePermanentsEffect animate = (AnimatePermanentsEffect) effect;
+                            if (animate.scope() != GrantScope.ALL_PERMANENTS) {
+                                return new LayerClassification(Set.of(Layer.L4_TYPE), false, false);
+                            }
+                            EnumSet<Layer> layers = EnumSet.of(Layer.L4_TYPE, Layer.L7B_SET_PT);
+                            boolean colorSetting = animate.animatedColor() != null
+                                    || !animate.animatedColors().isEmpty();
+                            if (colorSetting) {
+                                layers.add(Layer.L5_COLOR);
+                            }
+                            if (!animate.grantedKeywords().isEmpty()) {
+                                layers.add(Layer.L6_ABILITIES);
+                            }
+                            return new LayerClassification(Set.copyOf(layers), false, colorSetting);
+                        }));
         map.put(SetCardTypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(BecomeEnchantmentUntilCreatureSpellCastEffect.class,
                 fixed(Layer.L4_TYPE, Layer.L6_ABILITIES));

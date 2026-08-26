@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
@@ -191,6 +192,18 @@ public class AsEntersInteractionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginPrimalClayFormChoice(gameData, controllerId, justEntered.getId());
+            return;
+        }
+
+        PowerToughnessFormChoiceEffect powerToughnessChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(PowerToughnessFormChoiceEffect.class::isInstance)
+                .map(PowerToughnessFormChoiceEffect.class::cast)
+                .findFirst().orElse(null);
+        if (powerToughnessChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginPowerToughnessFormChoice(gameData, controllerId, justEntered.getId(),
+                    powerToughnessChoice.forms(), false);
             return;
         }
 

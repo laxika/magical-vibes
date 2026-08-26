@@ -1551,6 +1551,10 @@ public class AbilityActivationService {
         ActivatedAbility ability = abilities.get(idx);
         List<CardEffect> abilityEffects = ability.getEffects();
         int effectiveXValue = xValue != null ? xValue : 0;
+        if (ability.isSuspendsSourceFromHand() && ability.isSuspendTimeCountersFromX()
+                && effectiveXValue < 1) {
+            throw new IllegalStateException("Suspend X requires X to be at least 1");
+        }
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
@@ -1605,7 +1609,10 @@ public class AbilityActivationService {
         if (ability.isSuspendsSourceFromHand()) {
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
-            gameData.exiledCardTimeCounters.put(card.getId(), ability.getSuspendTimeCounters());
+            int suspendTimeCounters = ability.isSuspendTimeCountersFromX()
+                    ? effectiveXValue
+                    : ability.getSuspendTimeCounters();
+            gameData.exiledCardTimeCounters.put(card.getId(), suspendTimeCounters);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " suspends ", card, "."));
             log.info("Game {} - {} suspends {} from hand", gameData.id,

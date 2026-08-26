@@ -23,6 +23,7 @@ public class GrantActivatedAbilityEffectHandler implements StaticEffectHandlerBe
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityEffect) effect;
         boolean scopeMatch = switch (grant.scope()) {
+            case ALL_PERMANENTS -> support.matchesStaticFilter(context, context.target(), grant.filter());
             case OWN_PERMANENTS -> context.targetOnSameBattlefield()
                     && support.matchesStaticFilter(context, context.target(), grant.filter());
             case OWN_LANDS, OPPONENT_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF ->

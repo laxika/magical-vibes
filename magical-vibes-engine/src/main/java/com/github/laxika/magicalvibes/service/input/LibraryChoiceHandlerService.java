@@ -223,6 +223,12 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY) {
+                handleCastWithoutPayingAndShuffleLibraryChoice(gameData, player, cardIndex,
+                        canFailToFind, searchCards, sourceCards, deck, deckOwnerId);
+                return;
+            }
+
             if (destination == LibrarySearchDestination.EXILE_AND_MAY_CAST_WITHOUT_PAYING) {
                 handleExileAndMayCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
                         searchCards, sourceCards, deck, deckOwnerId);
@@ -1297,6 +1303,8 @@ public class LibraryChoiceHandlerService {
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
                 case CAST_WITHOUT_PAYING -> throw new IllegalStateException("CAST_WITHOUT_PAYING should be handled earlier");
+                case CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY -> throw new IllegalStateException(
+                        "CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY should be handled earlier");
                 case EXILE_AND_MAY_CAST_WITHOUT_PAYING -> throw new IllegalStateException(
                         "EXILE_AND_MAY_CAST_WITHOUT_PAYING should be handled earlier");
                 case EXILE_FOR_FREE_CAST -> throw new IllegalStateException("EXILE_FOR_FREE_CAST should be handled earlier");
@@ -1569,6 +1577,10 @@ public class LibraryChoiceHandlerService {
 
         if (cards.size() == 1 && permanents.size() == 1 && gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanents.getFirst().getId());
+        }
+        if (!permanents.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setSearchedPermanentIds(
+                    permanents.stream().map(Permanent::getId).toList());
         }
 
         if (anyBlocked) {
@@ -2669,6 +2681,41 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    private void handleCastWithoutPayingAndShuffleLibraryChoice(
+            GameData gameData, Player player, int cardIndex, boolean canFailToFind,
+            List<Card> searchCards, List<Card> sourceCards, List<Card> deck, UUID deckOwnerId) {
+        Card chosenCard = null;
+        if (cardIndex == -1) {
+            if (!canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+        } else {
+            if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+                throw new IllegalStateException("Invalid card index: " + cardIndex);
+            }
+            Card picked = searchCards.get(cardIndex);
+            if (canCastWithoutPaying(gameData, player.getId(), picked)) {
+                chosenCard = picked;
+                UUID chosenCardId = chosenCard.getId();
+                sourceCards.removeIf(card -> card.getId().equals(chosenCardId));
+            } else {
+                gameLogService.append(gameData, GameLog.cardThen(picked,
+                        " has no legal targets, so it can't be cast and stays in the library."));
+            }
+        }
+
+        if (!sourceCards.isEmpty()) {
+            deck.addAll(sourceCards);
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+
+        if (chosenCard == null) {
+            finishSearchAndResume(gameData);
+            return;
+        }
         castCardWithoutPaying(gameData, player, chosenCard);
     }
 

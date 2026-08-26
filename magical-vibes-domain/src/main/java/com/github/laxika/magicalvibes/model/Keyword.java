@@ -12,6 +12,7 @@ public enum Keyword {
     FLASH,
     SPLIT_SECOND,
     FADING,
+    VANISHING,
     VIGILANCE,
     SHROUD,
     CHANGELING,

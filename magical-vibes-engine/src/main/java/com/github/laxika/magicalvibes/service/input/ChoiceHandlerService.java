@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -124,6 +126,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedistributePlayerLifeTotalsSupport redistributePlayerLifeTotalsSupport;
     private final TriggerTargetCollector triggerTargetCollector;
+    private final TurnFaceUpCopyService turnFaceUpCopyService;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -362,6 +365,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
             handlePrimalClayFormChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.PowerToughnessFormChoice ctx) {
+            handlePowerToughnessFormChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice ctx) {
@@ -2581,7 +2588,7 @@ public class ChoiceHandlerService {
     }
 
     /**
-     * Forgotten Lore: the controller chose whether to pay {G} and repeat the process. Record the
+     * Forgotten Lore or Shrouded Lore: the controller chose whether to pay and repeat the process. Record the
      * choice on {@link GameData#forgottenLore} and resume so {@code ForgottenLoreEffectHandler}
      * either charges the mana and prompts the opponent again, or ends the loop.
      */
@@ -2589,7 +2596,9 @@ public class ChoiceHandlerService {
             ChoiceContext.ForgottenLorePaymentChoice ctx) {
         PendingInteraction.ColorChoice active =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (active == null || !active.options().contains(chosen)) {
+        if (active == null || !active.options().contains(chosen)
+                || (!ChoiceContext.ForgottenLorePaymentChoice.payOption(ctx.repeatManaCost()).equals(chosen)
+                && !ChoiceContext.ForgottenLorePaymentChoice.DECLINE.equals(chosen))) {
             throw new IllegalArgumentException("Invalid Forgotten Lore choice: " + chosen);
         }
 
@@ -3150,6 +3159,38 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePowerToughnessFormChoice(GameData gameData, Player player, String formLabel,
+                                                 ChoiceContext.PowerToughnessFormChoice ctx) {
+        PowerToughnessForm form = ctx.forms().stream()
+                .filter(candidate -> candidate.label().equals(formLabel))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid power/toughness form: " + formLabel));
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setBasePowerOverriddenPermanently(true);
+            perm.setPermanentBasePowerOverride(form.power());
+            perm.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
+            perm.setBaseToughnessOverriddenPermanently(true);
+            perm.setPermanentBaseToughnessOverride(form.toughness());
+            perm.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+            perm.getPersistentGrantedKeywords().addAll(form.keywords());
+
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses a "
+                    + form.label() + " form for ", perm.getCard(), "."));
+            log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), form.label(),
+                    perm.getCard().getName());
+        }
+
+        if (ctx.turnFaceUp() && perm != null) {
+            turnFaceUpCopyService.finishTurnFaceUp(gameData, player.getId(), perm.getId());
+        } else {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private void handleBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.BasicLandTypeChoice ctx) {

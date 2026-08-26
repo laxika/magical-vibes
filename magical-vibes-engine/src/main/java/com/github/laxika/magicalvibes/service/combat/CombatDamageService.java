@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCrea
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -419,7 +420,7 @@ public class CombatDamageService {
 
         // Process ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (e.g. Justice). combatDamageDealt is
         // already summed per source for this step, matching the "add up all the damage" ruling.
-        processSourceDealsDamageReflectionTriggers(gameData, state);
+        processSourceDealsDamageReflectionTriggers(gameData, state, defenderId);
 
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeDamageTriggers, activeId);
 
@@ -429,6 +430,11 @@ public class CombatDamageService {
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
+        }
+
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
         }
 
         if (gameData.interaction.isAwaitingInput()) {
@@ -1096,7 +1102,8 @@ public class CombatDamageService {
         }
     }
 
-    private void processSourceDealsDamageReflectionTriggers(GameData gameData, CombatDamageState state) {
+    private void processSourceDealsDamageReflectionTriggers(GameData gameData, CombatDamageState state,
+                                                             UUID defenderId) {
         for (var entry : state.combatDamageDealt.entrySet()) {
             Permanent source = entry.getKey();
             int damageDealt = entry.getValue();
@@ -1106,8 +1113,10 @@ public class CombatDamageService {
             UUID controllerId = state.combatDamageDealerControllers.get(source);
             if (controllerId == null) controllerId = gameData.findControllerOf(source);
             if (controllerId == null) continue;
+            int damageToDefender = state.combatDamageDealtToPlayer.getOrDefault(source, 0);
             triggerCollectionService.queueSourceDealsDamageReflections(
-                    gameData, source.getCard(), controllerId, source.getId(), damageDealt, Map.of(),
+                    gameData, source.getCard(), controllerId, source.getId(), damageDealt,
+                    damageToDefender > 0 ? Map.of(defenderId, damageToDefender) : Map.of(),
                     state.selfDealsDamageEffects.get(source));
         }
     }
@@ -1402,10 +1411,16 @@ public class CombatDamageService {
 
                 if ((effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                        && !(effect instanceof CombatDamageTriggerContextEffect)
+                        && (!(effect instanceof CombatDamageTriggerContextEffect)
+                        || effect instanceof MayPayManaEffect)
                         && !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent())) {
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId));
+                    if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0));
+                    } else {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId));
+                    }
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                             "'s combat damage trigger goes on the stack — choose a target."));
                     continue;

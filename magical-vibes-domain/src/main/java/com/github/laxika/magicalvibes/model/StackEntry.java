@@ -207,6 +207,8 @@ public class StackEntry {
      * that permanent's power as the ability resolves.
      */
     @Setter private UUID chosenPermanentId;
+    /** Permanents placed onto the battlefield by the preceding library search. */
+    @Setter private List<UUID> searchedPermanentIds = List.of();
     /**
      * Last-known card id of the event that produced this triggered ability, when an effect needs to
      * act on "that card" rather than a chosen target — e.g. the creature that died for Seraph's
@@ -597,6 +599,8 @@ public class StackEntry {
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.searchedPermanentIds);
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()

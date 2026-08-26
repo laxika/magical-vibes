@@ -37,6 +37,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
+import com.github.laxika.magicalvibes.model.RetetherAuraChoiceRequest;
+import com.github.laxika.magicalvibes.model.RetetherAuraPlacement;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -48,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -500,6 +503,12 @@ public class GraveyardReturnSupport {
 
     public void resolveReturnAll(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                   UUID controllerId, UUID sourceCardId) {
+        if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
+                && effect.attachmentTarget() != null) {
+            resolveReturnAllWithAttachments(gameData, entry, effect, controllerId, sourceCardId);
+            return;
+        }
+
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         
 
@@ -655,6 +664,183 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, builder.build());
         log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 returnedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse(""), destName);
+    }
+
+    private void resolveReturnAllWithAttachments(GameData gameData, StackEntry entry,
+                                                  ReturnCardFromGraveyardEffect effect,
+                                                  UUID controllerId, UUID sourceCardId) {
+        Map<UUID, List<Card>> graveyardsToSearch = new LinkedHashMap<>();
+        if (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS) {
+            for (Map.Entry<UUID, List<Card>> gyEntry : gameData.playerGraveyards.entrySet()) {
+                if (gyEntry.getValue() != null && !gyEntry.getValue().isEmpty()) {
+                    graveyardsToSearch.put(gyEntry.getKey(), gyEntry.getValue());
+                }
+            }
+        } else {
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            if (graveyard != null && !graveyard.isEmpty()) {
+                graveyardsToSearch.put(controllerId, graveyard);
+            }
+        }
+
+        if (graveyardsToSearch.isEmpty()) {
+            return;
+        }
+
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (Map.Entry<UUID, List<Card>> gyEntry : graveyardsToSearch.entrySet()) {
+                UUID graveyardOwnerId = gyEntry.getKey();
+                List<Card> graveyard = gyEntry.getValue();
+                for (Card card : new ArrayList<>(graveyard)) {
+                    if (!matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
+                        continue;
+                    }
+
+                    UUID battlefieldControllerId = effect.underOwnersControl()
+                            ? graveyardOwnerId : controllerId;
+                    List<UUID> attachmentTargetIds = findMassAuraAttachmentTargets(
+                            gameData, card, battlefieldControllerId, effect.attachmentTarget());
+                    if (attachmentTargetIds.isEmpty()
+                            || isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                        continue;
+                    }
+
+                    graveyard.remove(card);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId, card);
+
+                    if (attachmentTargetIds.size() == 1) {
+                        gameData.retetherOperation.pendingPlacements.add(new RetetherAuraPlacement(
+                                battlefieldControllerId, graveyardOwnerId, card, attachmentTargetIds.getFirst()));
+                    } else {
+                        gameData.retetherOperation.pendingAuraChoices.add(new RetetherAuraChoiceRequest(
+                                battlefieldControllerId, graveyardOwnerId, card, attachmentTargetIds));
+                    }
+                }
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
+        }
+
+        if (!gameData.retetherOperation.pendingAuraChoices.isEmpty()) {
+            beginNextRetetherAuraChoice(gameData);
+        } else {
+            placePendingRetetherAuras(gameData, controllerId);
+        }
+    }
+
+    private List<UUID> findMassAuraAttachmentTargets(GameData gameData, Card auraCard, UUID auraControllerId,
+                                                      PermanentPredicate attachmentTarget) {
+        if (!auraCard.isAura() || auraCard.isEnchantPlayer()) {
+            return List.of();
+        }
+
+        List<UUID> result = new ArrayList<>();
+        gameData.forEachPermanent((ignored, candidate) -> {
+            if (!gameQueryService.isCreature(gameData, candidate)
+                    || !predicateEvaluationService.matchesPermanentPredicate(gameData, candidate, attachmentTarget)
+                    || !canEnchant(gameData, auraCard, auraControllerId, candidate)) {
+                return;
+            }
+
+            Permanent auraSnapshot = new Permanent(auraCard);
+            if (gameQueryService.hasProtectionFromSource(gameData, candidate, auraSnapshot)
+                    || gameQueryService.cantBeEnchantedByOtherAuras(gameData, candidate)) {
+                return;
+            }
+            result.add(candidate.getId());
+        });
+        return result;
+    }
+
+    private void beginNextRetetherAuraChoice(GameData gameData) {
+        RetetherAuraChoiceRequest request = gameData.retetherOperation.pendingAuraChoices.pollFirst();
+        if (request == null) {
+            placePendingRetetherAuras(gameData, null);
+            return;
+        }
+
+        gameData.retetherOperation.activeChoice = request;
+        gameData.interaction.setPendingAuraCard(request.auraCard());
+        playerInputService.beginPermanentChoice(gameData, request.controllerId(), request.validTargetIds(),
+                "Choose a creature for " + request.auraCard().getName() + " to enchant.");
+    }
+
+    public boolean completeRetetherAuraChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        RetetherAuraChoiceRequest request = gameData.retetherOperation.activeChoice;
+        if (request == null || !request.controllerId().equals(playerId)
+                || !request.validTargetIds().contains(permanentId)) {
+            throw new IllegalStateException("Invalid Retether Aura choice");
+        }
+        if (gameQueryService.findPermanentById(gameData, permanentId) == null) {
+            throw new IllegalStateException("Target permanent no longer exists");
+        }
+
+        Card auraCard = gameData.interaction.consumePendingAuraCard();
+        if (auraCard == null) {
+            throw new IllegalStateException("No pending Retether Aura");
+        }
+        gameData.retetherOperation.pendingPlacements.add(new RetetherAuraPlacement(
+                request.controllerId(), request.graveyardOwnerId(), auraCard, permanentId));
+        gameData.retetherOperation.activeChoice = null;
+
+        if (!gameData.retetherOperation.pendingAuraChoices.isEmpty()) {
+            beginNextRetetherAuraChoice(gameData);
+            return false;
+        }
+
+        placePendingRetetherAuras(gameData, playerId);
+        return true;
+    }
+
+    private void placePendingRetetherAuras(GameData gameData, UUID logControllerId) {
+        if (gameData.retetherOperation.pendingPlacements.isEmpty()) {
+            gameData.retetherOperation.activeChoice = null;
+            return;
+        }
+
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<ReturnedPermanent> enteredPermanents = new ArrayList<>();
+        List<Card> enteredCards = new ArrayList<>();
+
+        for (RetetherAuraPlacement placement : gameData.retetherOperation.pendingPlacements) {
+            Permanent attachmentTarget = gameQueryService.findPermanentById(gameData, placement.attachmentTargetId());
+            if (attachmentTarget == null
+                    || isCardBlockedFromEnteringFromZone(gameData, placement.auraCard(), Zone.GRAVEYARD)) {
+                gameData.playerGraveyards.computeIfAbsent(placement.graveyardOwnerId(), ignored -> new ArrayList<>())
+                        .add(placement.auraCard());
+                continue;
+            }
+
+            Permanent permanent = new Permanent(placement.auraCard());
+            permanent.setAttachedTo(attachmentTarget.getId());
+            permanent.setEnteredFromGraveyardOwnerId(placement.graveyardOwnerId());
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, placement.controllerId(), permanent,
+                    enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(permanent);
+            enteredPermanents.add(new ReturnedPermanent(placement.controllerId(), permanent, placement.auraCard()));
+            enteredCards.add(placement.auraCard());
+        }
+
+        for (ReturnedPermanent returned : enteredPermanents) {
+            handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
+        }
+
+        if (!enteredCards.isEmpty()) {
+            UUID controllerId = logControllerId != null ? logControllerId :
+                    gameData.retetherOperation.pendingPlacements.getFirst().controllerId();
+            String playerName = gameData.playerIdToName.get(controllerId);
+            GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
+            appendCardList(builder, enteredCards);
+            builder.text(" onto the battlefield from the graveyard.");
+            gameLogService.append(gameData, builder.build());
+            log.info("Game {} - {} returns {} Aura card(s) from graveyard attached to creatures",
+                    gameData.id, playerName, enteredCards.size());
+        }
+
+        gameData.retetherOperation.pendingPlacements.clear();
+        gameData.retetherOperation.activeChoice = null;
     }
 
     public void resolveReturnAtRandom(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,

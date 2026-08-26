@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFrom
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -64,6 +65,7 @@ public class GraveyardChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CloneService cloneService;
     private final LegendRuleService legendRuleService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
@@ -517,6 +519,14 @@ public class GraveyardChoiceHandlerService {
                         + ", greater than the maximum total mana value "
                         + multiGraveyardChoice.maxTotalManaValue());
             }
+        }
+
+        if (gameData.cloneOperation.copyCardFilter != null) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.interaction.clearPermanentChoiceContext();
+            cloneService.completeCloneEntryFromGraveyard(gameData, cardIds.getFirst());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
         }
 
         if (gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume) {

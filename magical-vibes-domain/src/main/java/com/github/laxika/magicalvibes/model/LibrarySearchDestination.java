@@ -39,6 +39,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Cast the chosen revealed card without paying, then shuffle the rest into the library. */
+    CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY,
     /** Exile one chosen card, then offer it for casting without paying its mana cost. */
     EXILE_AND_MAY_CAST_WITHOUT_PAYING,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the

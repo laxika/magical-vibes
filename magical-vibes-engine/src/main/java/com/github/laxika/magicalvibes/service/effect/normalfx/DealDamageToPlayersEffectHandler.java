@@ -40,18 +40,24 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToPlayersEffect) effect;
-        switch (e.recipient()) {
-            case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER, TRIGGERING_PERMANENT_CONTROLLER,
-                 TRIGGERING_PLAYER ->
-                    resolveSingleTargetPlayer(gameData, entry, e);
-            case CONTROLLER -> resolveController(gameData, entry, e);
-            case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
-            case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
-            case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
-            case TARGET_SPELL_CONTROLLER -> resolveTargetSpellController(gameData, entry, e);
-        }
+        boolean previousUnpreventable = gameData.unpreventableDamageInProgress;
+        gameData.unpreventableDamageInProgress = previousUnpreventable || e.unpreventable();
+        try {
+            switch (e.recipient()) {
+                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER, TRIGGERING_PERMANENT_CONTROLLER,
+                     TRIGGERING_PLAYER ->
+                        resolveSingleTargetPlayer(gameData, entry, e);
+                case CONTROLLER -> resolveController(gameData, entry, e);
+                case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
+                case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
+                case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
+                case TARGET_SPELL_CONTROLLER -> resolveTargetSpellController(gameData, entry, e);
+            }
 
-        gameOutcomeService.checkWinCondition(gameData);
+            gameOutcomeService.checkWinCondition(gameData);
+        } finally {
+            gameData.unpreventableDamageInProgress = previousUnpreventable;
+        }
     }
 
     /** TARGET_PLAYER / ENCHANTED_PLAYER / ENCHANTED_PERMANENT_CONTROLLER / TRIGGERING_PERMANENT_CONTROLLER / TRIGGERING_PLAYER: victim = the stack entry's target player. */

@@ -267,6 +267,11 @@ public class PermanentRemovalService {
         }
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        UUID controllerIdBeforeRemoval = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID ownerIdBeforeRemoval = gameData.stolenCreatures.getOrDefault(
+                target.getId(), controllerIdBeforeRemoval);
+        triggerCollectionService.checkControllerCreatureReturnedToHandTriggers(
+                gameData, target, wasCreature, ownerIdBeforeRemoval);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;

@@ -188,6 +188,9 @@ public sealed interface TriggerContext {
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
 
+    /** Context for removing a time counter from a suspended card in exile. */
+    record TimeCounterRemovedFromExile(int remainingCounters) implements TriggerContext {}
+
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
 

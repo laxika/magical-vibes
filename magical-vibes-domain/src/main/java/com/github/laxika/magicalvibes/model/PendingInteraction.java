@@ -77,6 +77,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AttachAurasChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
+        PendingInteraction.TargetedHandBattlefieldChoice,
         PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
@@ -1715,6 +1716,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, optional);
+        }
+    }
+
+    /** Choose one matching card from a target player's revealed hand to put onto the battlefield. */
+    record TargetedHandBattlefieldChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                         java.util.List<Integer> validIndices, String prompt,
+                                         boolean grantHaste, boolean sacrificeAtEndStep)
+            implements PendingInteraction {
+
+        public TargetedHandBattlefieldChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, true);
         }
     }
 

@@ -151,6 +151,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
@@ -266,6 +268,7 @@ public class StepTriggerService {
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final AmountEvaluationService amountEvaluationService;
 
     public StepTriggerService(DrawService drawService,
                               GameQueryService gameQueryService,
@@ -287,7 +290,8 @@ public class StepTriggerService {
                               CreatureControlService creatureControlService,
                               GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                               GrantedUpkeepEffectSupport grantedUpkeepEffectSupport,
-                              @Lazy ETBTokenTargetService etbTokenTargetService) {
+                              @Lazy ETBTokenTargetService etbTokenTargetService,
+                              AmountEvaluationService amountEvaluationService) {
         this.drawService = drawService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -309,6 +313,7 @@ public class StepTriggerService {
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.grantedUpkeepEffectSupport = grantedUpkeepEffectSupport;
         this.etbTokenTargetService = etbTokenTargetService;
+        this.amountEvaluationService = amountEvaluationService;
     }
 
     private record GrantedUpkeepSacrifice(AllPermanentsUpkeepSacrificeUnlessPayEffect effect,
@@ -492,8 +497,15 @@ public class StepTriggerService {
                     continue;
                 }
 
+                String echoCost = action.manaCost();
+                if (action.dynamicManaCost() != null) {
+                    Permanent source = gameQueryService.findPermanentById(gameData, action.permanentId());
+                    int amount = amountEvaluationService.evaluate(gameData, action.dynamicManaCost(),
+                            new AmountContext(controllerId, source, null, 0, 0));
+                    echoCost = "{" + Math.max(0, amount) + "}";
+                }
                 ForcedCostOrElseEffect payEchoOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayEchoCost(action.manaCost()),
+                        new PayEchoCost(echoCost),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true);
                 StackEntry entry = new StackEntry(

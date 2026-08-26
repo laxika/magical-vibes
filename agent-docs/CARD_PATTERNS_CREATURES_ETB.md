@@ -6,7 +6,7 @@ For an ETB that free-casts an instant from your graveyard, use
 `CastTargetInstantOrSorceryFromGraveyardEffect(CONTROLLERS_GRAVEYARD, true, true,
 CardTypePredicate(INSTANT))` as in `t/TorrentialGearhulk.java`.
 
-Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; the registrar creates a one-shot echo trigger for the source permanent's current controller.
+Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep. The registrar creates a one-shot echo trigger for the source permanent's current controller.
 
 ## Vanilla creatures (empty body, all from Scryfall)
 

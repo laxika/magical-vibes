@@ -90,9 +90,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TormentSacrifice(UUID playerId) implements PermanentChoiceContext {}
 
     /** The chosen creature is destroyed, or exiled instead when {@code exile} is true (Doomfall). */
-    record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) implements PermanentChoiceContext {
+    record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
+                                 boolean cannotBeRegenerated) implements PermanentChoiceContext {
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) {
-            this(choosingPlayerId, sourceCardName, false);
+            this(choosingPlayerId, sourceCardName, false, false);
+        }
+
+        public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) {
+            this(choosingPlayerId, sourceCardName, exile, false);
         }
     }
 
@@ -219,6 +224,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AnyPlayerMaySacrificeLandPutSourceOnTop(
             UUID sacrificingPlayerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeLandPutSourceOnTopEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Brain Gorgers: the accepting player is picking which creature to sacrifice. */
+    record AnyPlayerMaySacrificeCreatureToCounterSpell(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreatureToCounterSpellEffect effect)
             implements PermanentChoiceContext {}
 
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,

@@ -1135,6 +1135,52 @@ public class CardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    /** Answers a choice to put one card from a target player's revealed hand onto the battlefield. */
+    public void handleTargetedHandBattlefieldCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.TargetedHandBattlefieldChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.TargetedHandBattlefieldChoice.class);
+        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (cardIndex == -1) {
+            gameData.interaction.clearAwaitingInput();
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> targetHand = gameData.playerHands.get(choice.targetPlayerId());
+        if (targetHand == null || cardIndex >= targetHand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Card chosenCard = targetHand.remove(cardIndex);
+        UUID originalOwnerId = chosenCard.getOwnerId() != null
+                ? chosenCard.getOwnerId() : choice.targetPlayerId();
+        Permanent permanent = new Permanent(chosenCard);
+        if (choice.grantHaste()) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+        }
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
+        if (!player.getId().equals(originalOwnerId)) {
+            graveyardReturnSupport.trackStolenCreature(
+                    gameData, permanent.getId(), player.getId(), originalOwnerId);
+        }
+        battlefieldEntryService.handleCreatureEnteredBattlefield(
+                gameData, player.getId(), chosenCard, null, false);
+        if (choice.sacrificeAtEndStep()) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        }
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " puts ", chosenCard, " onto the battlefield under their control."));
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     /**
      * Exiles every card sharing a name with one of {@code chosenCards} from the target's hand,
      * graveyard, and library, then shuffles that library (Reap Intellect's follow-up search).

@@ -125,6 +125,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
+        register(PendingInteraction.TargetedHandBattlefieldChoice.class,
+                this::projectTargetedHandBattlefieldChoice);
         register(PendingInteraction.RevealCardsDiscardChoice.class,
                 this::projectRevealCardsDiscardChoice);
         register(PendingInteraction.AlternatingHandExileChoice.class,
@@ -812,6 +814,14 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(),
                 interaction.prompt(),
                 interaction.optional());
+    }
+
+    private InteractionPromptMessage projectTargetedHandBattlefieldChoice(
+            GameData gameData, PendingInteraction.TargetedHandBattlefieldChoice interaction) {
+        List<CardView> cardViews =
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews, interaction.validIndices(), interaction.prompt(), true);
     }
 
     private InteractionPromptMessage projectAlternatingHandExileChoice(
