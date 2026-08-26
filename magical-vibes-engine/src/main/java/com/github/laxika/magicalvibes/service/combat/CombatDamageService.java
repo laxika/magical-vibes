@@ -58,7 +58,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCrea
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -1444,8 +1443,8 @@ public class CombatDamageService {
 
                 if ((effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                        && (!(effect instanceof CombatDamageTriggerContextEffect)
-                        || effect instanceof MayPayManaEffect)
+                        && (!(effect instanceof CombatDamageTriggerContextEffect contextEffect)
+                        || contextEffect.combatDamageTriggerContext() == null)
                         && !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent())) {
                     if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(

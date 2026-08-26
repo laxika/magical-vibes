@@ -39,6 +39,7 @@ public final class AiInteractionStrategies {
         register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
+        register(new TargetedHandBattlefieldChoiceAiStrategy());
         register(new ExiledCardMayPlayChoiceAiStrategy());
         register(new ExileInstantOrSorcerySpellCostChoiceAiStrategy());
         register(new PutCardExiledWithSourceIntoGraveyardCostChoiceAiStrategy());

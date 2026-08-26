@@ -44,11 +44,12 @@ class TheMycotyrantTest extends BaseCardTest {
     void createsTokensForEachDescent() {
         harness.addToBattlefield(player1, new TheMycotyrant());
         harness.addToBattlefield(player1, new ZuranOrb());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new ZuranOrb());
         harness.addToBattlefield(player1, new Forest());
 
         harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, firstLand.getId());
         harness.passBothPriorities();
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();

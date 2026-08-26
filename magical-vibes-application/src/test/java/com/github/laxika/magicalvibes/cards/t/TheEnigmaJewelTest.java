@@ -92,8 +92,9 @@ class TheEnigmaJewelTest extends BaseCardTest {
         assertThat(locus.getToughnessModifier()).isEqualTo(4);
 
         harness.clearPriorityPassed();
-        assertThatThrownBy(() -> harness.activateAbility(player1, locusIndex, 0, null, null))
+        int updatedLocusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(locus);
+        assertThatThrownBy(() -> harness.activateAbility(player1, updatedLocusIndex, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no more than 1");
+                .hasMessageContaining("only once each turn");
     }
 }
