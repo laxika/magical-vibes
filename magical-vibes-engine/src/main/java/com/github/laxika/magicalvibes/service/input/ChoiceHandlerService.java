@@ -3025,6 +3025,9 @@ public class ChoiceHandlerService {
             source.setChosenSubtype(subtype);
             log.info("Game {} - {} secretly chooses creature type {} for {}", gameData.id,
                     player.getUsername(), subtype, source.getCard().getName());
+            battlefieldEntryService.applyDeferredEnterWithCounters(gameData, player.getId(), source);
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, player.getId(), source.getCard(), null, true);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

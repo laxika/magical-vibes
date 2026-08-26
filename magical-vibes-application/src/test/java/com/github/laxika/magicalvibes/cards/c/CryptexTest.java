@@ -57,7 +57,8 @@ class CryptexTest extends BaseCardTest {
         Card firstDraw = new GrizzlyBears();
         Card secondDraw = new GrizzlyBears();
         Card thirdDraw = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(surveilled, kept, firstDraw, secondDraw, thirdDraw));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(surveilled, firstDraw, secondDraw, thirdDraw, kept));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -69,6 +70,7 @@ class CryptexTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cryptex);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw, thirdDraw);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(kept);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(surveilled);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(cryptex.getCard(), surveilled);
     }
 }

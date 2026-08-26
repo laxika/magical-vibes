@@ -2330,7 +2330,7 @@ public class SpellCastingService {
                 : mixedSpellOrPermanentTarget
                 ? targetLegalityService.isSpellOnStack(gameData, targetId)
                 : mixedSpellAndPermanentTargets
-                ? false
+                ? true
                 : unwrappedNeedsSpellTarget;
         if (mixedSpellOrPermanentTarget && targetId == null) {
             throw new IllegalStateException("Spell requires a target");
@@ -3888,6 +3888,7 @@ public class SpellCastingService {
                 }
                 if (matchingCount > 0 && graveyardMaxTargets > 0) {
                     gameData.graveyardTargetOperation.permanentTargetIds = new ArrayList<>(targetIds);
+                    gameData.graveyardTargetOperation.targetPlayerId = targetId;
                     graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardMaxTargets, exileFromGraveyardEffect.filter(), filteredSpellEffects,
                             exileFromGraveyardEffect.exactTargets());

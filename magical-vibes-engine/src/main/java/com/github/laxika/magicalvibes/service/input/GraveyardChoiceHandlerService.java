@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -97,6 +98,7 @@ public class GraveyardChoiceHandlerService {
             exileMatchingCardsSupport;
     private final DestructionSupport destructionSupport;
     private final ExileDragonApproachAndSearchSupport exileDragonApproachAndSearchSupport;
+    private final TargetLegalityService targetLegalityService;
     private final CollectEvidenceEffectHandler collectEvidenceEffectHandler;
     private final LandCopyOnEnterService landCopyOnEnterService;
     private final StateBasedActionService stateBasedActionService;
@@ -926,6 +928,15 @@ public class GraveyardChoiceHandlerService {
         }
 
         List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
+        if (pendingEffects != null) {
+            targetLegalityService.validateMultiTargetGraveyardAbility(
+                    gameData,
+                    gameData.graveyardTargetOperation.controllerId,
+                    pendingEffects,
+                    cardIds,
+                    gameData.graveyardTargetOperation.card == null
+                            ? null : gameData.graveyardTargetOperation.card.getId());
+        }
         BattlefieldAndGraveyardCardChoosingEffect mixedZoneEffect = pendingEffects == null ? null
                 : pendingEffects.stream()
                 .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)

@@ -51,7 +51,7 @@ class ExposeTheCulpritTest extends BaseCardTest {
         faceDown.setFaceDownAsCloaked();
         Permanent disguised = harness.addToBattlefieldAndReturn(player1, new ExitSpecialist());
 
-        castExpose(0, 1, new int[]{0, 1}, List.of(faceDown.getId()));
+        castExpose(1, 2, new int[]{0, 1}, List.of(faceDown.getId()));
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -72,9 +72,13 @@ class ExposeTheCulpritTest extends BaseCardTest {
                             List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new ExposeTheCulprit()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castModalInstantWithModes(
                 player1, 0, choicesRequired, choicesMax, modeIndices, targetIds);
         harness.passBothPriorities();
+        if (!targetIds.isEmpty()) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
     }
 }
