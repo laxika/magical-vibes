@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "122")
+@CardRegistration(set = "LCI", collectorNumber = "370")
 public class StalactiteStalker extends Card {
 
     public StalactiteStalker() {

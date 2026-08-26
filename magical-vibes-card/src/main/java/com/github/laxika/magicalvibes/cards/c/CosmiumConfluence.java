@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "181")
+@CardRegistration(set = "LCI", collectorNumber = "379")
 public class CosmiumConfluence extends Card {
 
     public CosmiumConfluence() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "127")
+@CardRegistration(set = "LCI", collectorNumber = "372")
 public class TerrorTide extends Card {
 
     public TerrorTide() {

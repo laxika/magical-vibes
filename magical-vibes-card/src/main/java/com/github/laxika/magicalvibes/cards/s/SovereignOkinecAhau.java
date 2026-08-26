@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreaturesByPowerAboveBasePowerEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "240")
+@CardRegistration(set = "LCI", collectorNumber = "309")
 public class SovereignOkinecAhau extends Card {
 
     public SovereignOkinecAhau() {

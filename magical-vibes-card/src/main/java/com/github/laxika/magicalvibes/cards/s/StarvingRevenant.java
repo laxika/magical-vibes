@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "123")
+@CardRegistration(set = "LCI", collectorNumber = "338")
 public class StarvingRevenant extends Card {
 
     public StarvingRevenant() {

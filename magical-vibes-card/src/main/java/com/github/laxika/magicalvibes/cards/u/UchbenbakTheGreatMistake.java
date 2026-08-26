@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "242")
+@CardRegistration(set = "LCI", collectorNumber = "310")
 public class UchbenbakTheGreatMistake extends Card {
 
     public UchbenbakTheGreatMistake() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "258")
+@CardRegistration(set = "LCI", collectorNumber = "344")
 public class RoamingThrone extends Card {
 
     public RoamingThrone() {

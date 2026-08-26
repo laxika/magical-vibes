@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "244")
+@CardRegistration(set = "LCI", collectorNumber = "343")
 public class WailOfTheForgotten extends Card {
 
     public WailOfTheForgotten() {

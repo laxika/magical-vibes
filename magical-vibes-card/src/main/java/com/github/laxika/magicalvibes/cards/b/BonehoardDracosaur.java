@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "134")
+@CardRegistration(set = "LCI", collectorNumber = "321")
 public class BonehoardDracosaur extends Card {
 
     public BonehoardDracosaur() {

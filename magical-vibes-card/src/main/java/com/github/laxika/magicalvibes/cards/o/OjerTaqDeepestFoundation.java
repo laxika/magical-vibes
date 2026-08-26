@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "26")
+@CardRegistration(set = "LCI", collectorNumber = "314")
 public class OjerTaqDeepestFoundation extends Card {
 
     public OjerTaqDeepestFoundation() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGr
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "67")
+@CardRegistration(set = "LCI", collectorNumber = "315")
 public class OjerPakpatiq extends Card {
 
     public OjerPakpatiq() {

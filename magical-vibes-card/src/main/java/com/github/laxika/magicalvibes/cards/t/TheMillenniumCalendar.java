@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastP
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "257")
+@CardRegistration(set = "LCI", collectorNumber = "388")
 public class TheMillenniumCalendar extends Card {
 
     public TheMillenniumCalendar() {

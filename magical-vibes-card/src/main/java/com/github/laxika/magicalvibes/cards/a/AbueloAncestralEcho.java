@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "219")
+@CardRegistration(set = "LCI", collectorNumber = "297")
 public class AbueloAncestralEcho extends Card {
 
     public AbueloAncestralEcho() {

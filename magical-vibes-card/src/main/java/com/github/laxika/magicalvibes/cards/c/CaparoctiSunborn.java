@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "226")
+@CardRegistration(set = "LCI", collectorNumber = "302")
 public class CaparoctiSunborn extends Card {
 
     public CaparoctiSunborn() {

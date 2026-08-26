@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "145")
+@CardRegistration(set = "LCI", collectorNumber = "374")
 public class DireFlail extends Card {
 
     public DireFlail() {

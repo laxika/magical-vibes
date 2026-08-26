@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransfor
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "266")
+@CardRegistration(set = "LCI", collectorNumber = "313")
 public class ThroneOfTheGrimCaptain extends Card {
 
     public ThroneOfTheGrimCaptain() {

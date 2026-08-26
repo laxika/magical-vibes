@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "102")
+@CardRegistration(set = "LCI", collectorNumber = "406")
 public class DeepCavernBat extends Card {
 
     public DeepCavernBat() {

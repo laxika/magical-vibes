@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "285")
+@CardRegistration(set = "LCI", collectorNumber = "392")
 public class SunkenCitadel extends Card {
 
     public SunkenCitadel() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "52")
+@CardRegistration(set = "LCI", collectorNumber = "361")
 public class DeeprootPilgrimage extends Card {
 
     public DeeprootPilgrimage() {

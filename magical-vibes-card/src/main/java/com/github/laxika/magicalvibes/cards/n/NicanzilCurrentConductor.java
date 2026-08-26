@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "236")
+@CardRegistration(set = "LCI", collectorNumber = "306")
 public class NicanzilCurrentConductor extends Card {
 
     public NicanzilCurrentConductor() {

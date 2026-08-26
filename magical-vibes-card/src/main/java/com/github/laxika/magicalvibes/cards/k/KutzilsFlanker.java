@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "20")
+@CardRegistration(set = "LCI", collectorNumber = "355")
 public class KutzilsFlanker extends Card {
 
     public KutzilsFlanker() {

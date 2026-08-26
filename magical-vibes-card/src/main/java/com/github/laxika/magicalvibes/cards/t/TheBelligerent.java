@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "225")
+@CardRegistration(set = "LCI", collectorNumber = "384")
 public class TheBelligerent extends Card {
 
     public TheBelligerent() {
