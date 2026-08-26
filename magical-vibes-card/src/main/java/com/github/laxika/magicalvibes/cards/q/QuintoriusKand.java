@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "238")
+@CardRegistration(set = "LCI", collectorNumber = "307")
+@CardRegistration(set = "LCI", collectorNumber = "352")
 public class QuintoriusKand extends Card {
 
     public QuintoriusKand() {

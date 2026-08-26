@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "243")
+@CardRegistration(set = "LCI", collectorNumber = "311")
 public class VitoFanaticOfAclazotz extends Card {
 
     public VitoFanaticOfAclazotz() {

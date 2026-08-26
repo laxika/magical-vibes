@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "235")
+@CardRegistration(set = "LCI", collectorNumber = "305")
 public class TheMycotyrant extends Card {
 
     public TheMycotyrant() {

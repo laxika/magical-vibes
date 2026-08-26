@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "161")
+@CardRegistration(set = "LCI", collectorNumber = "377")
 public class PoeticIngenuity extends Card {
 
     public PoeticIngenuity() {

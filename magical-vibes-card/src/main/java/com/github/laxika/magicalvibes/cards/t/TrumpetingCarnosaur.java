@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "171")
+@CardRegistration(set = "LCI", collectorNumber = "324")
 public class TrumpetingCarnosaur extends Card {
 
     public TrumpetingCarnosaur() {

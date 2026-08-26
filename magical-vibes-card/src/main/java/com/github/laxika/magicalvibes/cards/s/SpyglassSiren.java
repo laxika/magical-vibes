@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "78")
+@CardRegistration(set = "LCI", collectorNumber = "405")
 public class SpyglassSiren extends Card {
 
     public SpyglassSiren() {

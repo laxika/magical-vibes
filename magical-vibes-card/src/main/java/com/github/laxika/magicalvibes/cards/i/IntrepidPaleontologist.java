@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "193")
+@CardRegistration(set = "LCI", collectorNumber = "381")
 public class IntrepidPaleontologist extends Card {
 
     public IntrepidPaleontologist() {

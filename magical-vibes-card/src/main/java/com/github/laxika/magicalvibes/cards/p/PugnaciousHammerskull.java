@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "208")
+@CardRegistration(set = "LCI", collectorNumber = "328")
 public class PugnaciousHammerskull extends Card {
 
     public PugnaciousHammerskull() {

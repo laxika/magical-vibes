@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "56")
+@CardRegistration(set = "LCI", collectorNumber = "363")
 public class TheEverflowingWell extends Card {
 
     public TheEverflowingWell() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "211")
+@CardRegistration(set = "LCI", collectorNumber = "383")
 public class SentinelOfTheNamelessCity extends Card {
 
     public SentinelOfTheNamelessCity() {

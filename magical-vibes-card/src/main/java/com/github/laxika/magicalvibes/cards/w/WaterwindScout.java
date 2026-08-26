@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "84")
+@CardRegistration(set = "LCI", collectorNumber = "411")
 public class WaterwindScout extends Card {
 
     public WaterwindScout() {

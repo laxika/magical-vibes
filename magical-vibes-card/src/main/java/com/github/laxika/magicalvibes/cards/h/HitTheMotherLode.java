@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "153")
+@CardRegistration(set = "LCI", collectorNumber = "375")
+@CardRegistration(set = "LCI", collectorNumber = "404")
 public class HitTheMotherLode extends Card {
 
     public HitTheMotherLode() {

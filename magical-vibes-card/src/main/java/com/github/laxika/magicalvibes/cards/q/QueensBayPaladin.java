@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "115")
+@CardRegistration(set = "LCI", collectorNumber = "368")
 public class QueensBayPaladin extends Card {
 
     public QueensBayPaladin() {

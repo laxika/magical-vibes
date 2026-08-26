@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "47")
+@CardRegistration(set = "LCI", collectorNumber = "360")
 public class BraidedNet extends Card {
 
     public BraidedNet() {

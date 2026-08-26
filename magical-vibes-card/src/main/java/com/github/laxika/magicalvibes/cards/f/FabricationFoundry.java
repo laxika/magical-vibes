@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "12")
+@CardRegistration(set = "LCI", collectorNumber = "354")
 public class FabricationFoundry extends Card {
 
     public FabricationFoundry() {

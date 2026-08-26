@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "241")
+@CardRegistration(set = "LCI", collectorNumber = "386")
 public class SquirmingEmergence extends Card {
 
     public SquirmingEmergence() {

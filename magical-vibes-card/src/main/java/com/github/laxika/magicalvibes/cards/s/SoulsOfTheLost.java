@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "121")
+@CardRegistration(set = "LCI", collectorNumber = "369")
 public class SoulsOfTheLost extends Card {
 
     public SoulsOfTheLost() {

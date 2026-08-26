@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "137")
+@CardRegistration(set = "LCI", collectorNumber = "294")
 public class BreechesEagerPillager extends Card {
 
     public BreechesEagerPillager() {

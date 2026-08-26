@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "256")
+@CardRegistration(set = "LCI", collectorNumber = "387")
 public class MatzalantliTheGreatDoor extends Card {
 
     public MatzalantliTheGreatDoor() {

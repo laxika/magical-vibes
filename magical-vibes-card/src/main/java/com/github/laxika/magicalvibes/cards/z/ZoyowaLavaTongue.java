@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrSacrificePermanentEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "245")
+@CardRegistration(set = "LCI", collectorNumber = "312")
 public class ZoyowaLavaTongue extends Card {
 
     public ZoyowaLavaTongue() {

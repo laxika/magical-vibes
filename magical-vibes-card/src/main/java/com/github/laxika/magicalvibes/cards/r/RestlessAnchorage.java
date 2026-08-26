@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "280")
+@CardRegistration(set = "LCI", collectorNumber = "347")
 public class RestlessAnchorage extends Card {
 
     public RestlessAnchorage() {

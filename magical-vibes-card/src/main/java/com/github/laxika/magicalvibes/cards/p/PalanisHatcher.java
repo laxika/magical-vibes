@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "237")
+@CardRegistration(set = "LCI", collectorNumber = "332")
 public class PalanisHatcher extends Card {
 
     public PalanisHatcher() {

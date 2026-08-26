@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "44")
+@CardRegistration(set = "LCI", collectorNumber = "292")
 public class AkalPakalFirstAmongEquals extends Card {
 
     public AkalPakalFirstAmongEquals() {
