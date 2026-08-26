@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -438,6 +439,8 @@ public class ValidTargetService {
                 validGraveyardCardIds.addAll(computeValidGraveyardTargetsForFilter(
                         gameData, sourceCard, graveyardFilter, controllerId, excludeIds,
                         ability.getMultiTargetConstraint(), xValue));
+                restrictToSharedGraveyard(gameData, ability, positionIndex, alreadySelectedIds,
+                        validGraveyardCardIds);
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
                         ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
@@ -458,6 +461,8 @@ public class ValidTargetService {
             } else if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                 validGraveyardCardIds.addAll(computeValidGraveyardTargetsForFilter(
                         gameData, sourceCard, graveyardFilter, controllerId, excludeIds));
+                restrictToSharedGraveyard(gameData, ability, positionIndex, alreadySelectedIds,
+                        validGraveyardCardIds);
             } else if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
                 // "Target player or planeswalker" position (Chandra, Pyromaster +1): players
                 // matching the filter's player predicate alongside permanents matching its
@@ -642,6 +647,13 @@ public class ValidTargetService {
                 prompt = "Select " + graveyardEffect.count() + " target cards from an opponent's graveyard";
                 break;
             }
+            if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
+                    && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+                minTargets = 0;
+                maxTargets = validGraveyardCardIds.size();
+                prompt = "Select any number of target cards from your graveyard";
+                break;
+            }
             // "Exile up to N target cards from a single graveyard" (Rag Dealer): "up to" allows zero
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
@@ -655,6 +667,32 @@ public class ValidTargetService {
 
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                 validExiledCardIds, minTargets, maxTargets, prompt);
+    }
+
+    private void restrictToSharedGraveyard(GameData gameData, ActivatedAbility ability, int positionIndex,
+                                           List<UUID> alreadySelectedIds, List<UUID> candidateIds) {
+        if (alreadySelectedIds == null || alreadySelectedIds.isEmpty()) {
+            return;
+        }
+        UUID requiredOwnerId = null;
+        for (CardEffect effect : ability.getEffects()) {
+            if (!(effect instanceof TargetCardGroupEffect groupedEffect)
+                    || !groupedEffect.targetGroupsMustShareGraveyard()
+                    || !groupedEffect.targetGroups().contains(positionIndex)) {
+                continue;
+            }
+            int firstGroup = groupedEffect.targetGroups().getFirst();
+            if (positionIndex > firstGroup && firstGroup < alreadySelectedIds.size()) {
+                requiredOwnerId = gameQueryService.findGraveyardOwnerById(
+                        gameData, alreadySelectedIds.get(firstGroup));
+            }
+            break;
+        }
+        UUID finalRequiredOwnerId = requiredOwnerId;
+        if (finalRequiredOwnerId != null) {
+            candidateIds.removeIf(id -> !finalRequiredOwnerId.equals(
+                    gameQueryService.findGraveyardOwnerById(gameData, id)));
+        }
     }
 
     private void enforceFlagbearerTargetChoice(GameData gameData, UUID controllerId,
@@ -1363,6 +1401,19 @@ public class ValidTargetService {
                 }
                 break;
             }
+            if (effect instanceof ExileGraveyardCardsEffect ge
+                    && ge.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+                for (UUID playerId : List.of(controllerId)) {
+                    for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (!excludeIds.contains(c.getId())
+                                && matchesGraveyardEffectTypeFilter(
+                                gameData, effect, c, sourceCardId, controllerId, effectiveXValue, null)) {
+                            validIds.add(c.getId());
+                        }
+                    }
+                }
+                break;
+            }
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
             if (scope != null) {
                 List<UUID> searchPlayerIds = scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);
@@ -1428,7 +1479,9 @@ public class ValidTargetService {
         } else if (effect instanceof GrantTargetGraveyardCardCastEffect e) {
             return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileGraveyardCardsEffect e
-                && e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD && e.filter() != null) {
+                && (e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
+                || e.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD)
+                && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
             return e.cardTypes().stream().anyMatch(c::hasType);
@@ -1452,7 +1505,8 @@ public class ValidTargetService {
                     && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                             .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e && e.filter() != null) {
-            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId,
+                    gameData, controllerId, null, null, xValue);
         } else if (effect instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
@@ -1465,7 +1519,8 @@ public class ValidTargetService {
         } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
             return c.hasType(CardType.CREATURE) && c.getManaValue() == effectiveXValue;
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {
-            return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(),
+                    sourceCardId, gameData, controllerId, null, null, xValue);
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }

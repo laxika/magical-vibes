@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurn
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -178,6 +179,11 @@ public class LayerSystemService {
     @Autowired
     @Lazy
     private GameQueryService gameQueryService;
+
+    /** Evaluates dynamic amounts on floating continuous effects during the layered pass. */
+    @Autowired
+    @Lazy
+    private AmountEvaluationService amountEvaluationService;
 
     /**
      * Evaluates the conditions of the conditional wrappers admitted to the layer-4 pass (see
@@ -1992,8 +1998,15 @@ public class LayerSystemService {
         }
         if (floating.scope() != null) {
             List<PermanentSlot> targets = new ArrayList<>();
+            PermanentSlot source = floating.sourcePermanentId() == null
+                    ? null : slotsById.get(floating.sourcePermanentId());
+            Pass activePass = ACTIVE_PASS.get();
+            GameData gameData = activePass == null ? null : activePass.gameData;
             for (PermanentSlot slot : slots) {
-                if (matchesL4Filter(slot, floating.scope(), board)) {
+                if (matchesL4Filter(slot, floating.scope(), board, gameData,
+                        source == null ? null : source.permanent(),
+                        source == null ? floating.controllerId() : source.controllerId(),
+                        floating.sourcePermanentId())) {
                     targets.add(slot);
                 }
             }
@@ -2013,18 +2026,41 @@ public class LayerSystemService {
      */
     private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
                                     LayeredBoardState board) {
-        return matchesL4Filter(slot, filter, board, null, null, null);
+        return matchesL4Filter(slot, filter, board, null, null, null, null);
+    }
+
+    private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
+                                    LayeredBoardState board, Permanent sourcePermanent) {
+        return matchesL4Filter(slot, filter, board, sourcePermanent, null, null);
+    }
+
+    private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
+                                    LayeredBoardState board, Permanent sourcePermanent,
+                                    UUID sourceControllerId, UUID sourcePermanentId) {
+        return matchesL4Filter(slot, filter, board, null, sourcePermanent,
+                sourceControllerId, sourcePermanentId);
     }
 
     private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
                                     LayeredBoardState board, GameData gameData,
                                     Permanent sourcePermanent, UUID sourceControllerId) {
+        return matchesL4Filter(slot, filter, board, gameData, sourcePermanent,
+                sourceControllerId, sourcePermanent == null ? null : sourcePermanent.getId());
+    }
+
+    private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
+                                    LayeredBoardState board, GameData gameData,
+                                    Permanent sourcePermanent, UUID sourceControllerId,
+                                    UUID sourcePermanentId) {
         if (filter == null) return true;
+        FilterContext context = sourcePermanent == null ? null
+                : (gameData == null ? FilterContext.empty() : FilterContext.of(gameData))
+                .withSourceControllerId(sourceControllerId)
+                .withSourcePermanentSnapshot(sourcePermanent)
+                .withSourcePermanentId(sourcePermanentId);
         boolean matches = predicateEvaluationService.matchesPermanentPredicate(
                 board.states().get(slot.permanent().getId()), slot.permanent(), filter,
-                sourcePermanent == null ? null : FilterContext.of(gameData)
-                        .withSourcePermanentSnapshot(sourcePermanent)
-                        .withSourceControllerId(sourceControllerId));
+                context);
         board.l4FilterVerdicts()
                 .computeIfAbsent(filter, key -> new HashMap<>())
                 .put(slot.permanent().getId(), matches);
@@ -2518,6 +2554,19 @@ public class LayerSystemService {
                 continue;
             }
             switch (instance.effect()) {
+                case SetPowerToughnessToAmountEffect setPt -> {
+                    if (instance.floating() != null && instance.source() != null) {
+                        PermanentSlot source = instance.source();
+                        AmountContext context = AmountContext.forStaticEffect(source.permanent(),
+                                instance.floating().controllerId());
+                        int power = amountEvaluationService.evaluate(gameData, setPt.power(), context);
+                        int toughness = amountEvaluationService.evaluate(gameData, setPt.toughness(), context);
+                        for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                            entries.add(new BasePtEntry(target.permanent().getId(), power, toughness,
+                                    instance.timestamp(), instance.position(), provenanceSourceName(instance)));
+                        }
+                    }
+                }
                 case SetBasePowerToughnessEffect setPt -> {
                     if (instance.floating() != null) {
                         for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {

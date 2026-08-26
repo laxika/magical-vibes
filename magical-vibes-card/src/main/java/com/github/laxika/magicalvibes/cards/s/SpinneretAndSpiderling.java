@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "94")
+@CardRegistration(set = "SPM", collectorNumber = "264")
 public class SpinneretAndSpiderling extends Card {
 
     public SpinneretAndSpiderling() {

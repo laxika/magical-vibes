@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "32")
+@CardRegistration(set = "SPM", collectorNumber = "249")
 public class HideOnTheCeiling extends Card {
 
     public HideOnTheCeiling() {

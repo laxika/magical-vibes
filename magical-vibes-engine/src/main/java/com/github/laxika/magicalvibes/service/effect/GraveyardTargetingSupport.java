@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -67,9 +68,13 @@ public class GraveyardTargetingSupport {
     }
 
     private CardEffect unwrapMay(CardEffect effect) {
+        if (effect == null) {
+            return null;
+        }
         return switch (effect) {
-            case MayEffect may -> may.wrapped();
-            case MayPayManaEffect mayPay -> mayPay.wrapped();
+            case ConditionalEffect conditional -> unwrapMay(conditional.wrapped());
+            case MayEffect may -> unwrapMay(may.wrapped());
+            case MayPayManaEffect mayPay -> unwrapMay(mayPay.wrapped());
             default -> effect;
         };
     }
@@ -91,8 +96,12 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileGraveyardCardsEffect exile) {
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
             if (scope != null) {
-                int minTargets = exile.exactTargetCount() ? exile.count() : Math.min(1, exile.count());
-                return new Target(exile.filter(), scope, "to exile", exile.count(), minTargets);
+                boolean anyNumber = exile.scope()
+                        == com.github.laxika.magicalvibes.model.effect.GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD;
+                int minTargets = anyNumber ? 0
+                        : exile.exactTargetCount() ? exile.count() : Math.min(1, exile.count());
+                int maxTargets = anyNumber ? Integer.MAX_VALUE : exile.count();
+                return new Target(exile.filter(), scope, "to exile", maxTargets, minTargets);
             }
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
@@ -140,7 +149,8 @@ public class GraveyardTargetingSupport {
                 case BOTTOM_OF_OWNERS_LIBRARY -> "on the bottom of its owner's library";
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> "into its owner's library";
                 case EXILE -> "to exile";
-                case MAY_ABILITY_TARGET -> "as chosen";
+                case DREDGE -> "with dredge";
+                case MAY_ABILITY_TARGET, COPY_ON_ENTER -> "as chosen";
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,
                     returnEffect.upTo() ? 0 : 1);

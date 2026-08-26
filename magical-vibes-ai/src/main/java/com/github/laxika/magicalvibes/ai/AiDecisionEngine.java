@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -2623,6 +2624,11 @@ public abstract class AiDecisionEngine {
                 continue;
             }
             // "Sacrifice a creature" — pick the weakest (lowest effective power + toughness).
+            if (effect instanceof DiscardCardOrSacrificePermanentCost
+                    && !castingCostService.validDiscardCostIndices(
+                    gameData, aiPlayer.getId(), card).isEmpty()) {
+                continue;
+            }
             if (cost.sacrificesChosenCreature()) {
                 return battlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -69,6 +70,13 @@ public class PermanentCounterSupport {
         }
     }
 
+    public void notifySelfCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
+                                         CounterType counterType, int previousCount, int amount) {
+        if (target != null && amount > 0) {
+            fireSelfCountersPutTriggers(gameData, target, counterType, previousCount);
+        }
+    }
+
     private final ConditionEvaluationService conditionEvaluationService;
 
     @Autowired
@@ -102,6 +110,7 @@ public class PermanentCounterSupport {
             case STUDY -> self.setCounterCount(CounterType.STUDY, 0);
             case RITUAL -> self.setCounterCount(CounterType.RITUAL, 0);
             case WISH -> self.setCounterCount(CounterType.WISH, 0);
+            case BORE -> self.setCounterCount(CounterType.BORE, 0);
             case PLUS_ONE_PLUS_ONE -> self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
             case MINUS_ONE_MINUS_ONE -> self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
@@ -137,6 +146,7 @@ public class PermanentCounterSupport {
         if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
             return;
         }
+        int previousCount = target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         counters = gameQueryService.replaceCounters(gameData, target, CounterType.PLUS_ONE_PLUS_ONE,
                 counters, placingPlayerId(gameData, entry, target));
         if (counters <= 0) {
@@ -144,6 +154,7 @@ public class PermanentCounterSupport {
         }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
         notifyCountersPlaced(gameData, entry, target, counters);
+        notifySelfCountersPlaced(gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, previousCount, counters);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
         recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, counters);
 
@@ -159,6 +170,7 @@ public class PermanentCounterSupport {
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !gameQueryService.cantHaveCounters(gameData, perm)) {
+                int previousCount = perm.getCounterCount(counterType);
                 int placed = gameQueryService.replaceCounters(gameData, perm, counterType, 1,
                         placingPlayerId(gameData, entry, perm));
                 if (placed <= 0) {
@@ -167,6 +179,7 @@ public class PermanentCounterSupport {
                 switch (counterType) {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
+                    case HOUR -> perm.setCounterCount(CounterType.HOUR, perm.getCounterCount(CounterType.HOUR) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
                     case RITUAL -> perm.setCounterCount(CounterType.RITUAL, perm.getCounterCount(CounterType.RITUAL) + placed);
                     case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
@@ -178,6 +191,7 @@ public class PermanentCounterSupport {
                 }
                 recordCounterPlacedOnCreature(gameData, perm, placingPlayerId(gameData, entry, perm));
                 notifyCountersPlaced(gameData, entry, perm, placed);
+                notifySelfCountersPlaced(gameData, entry, perm, counterType, previousCount, placed);
                 fireCounterPutOnControlledCreatureTriggers(gameData, perm, placed);
                 affectedCards.add(perm.getCard());
             }
@@ -242,6 +256,7 @@ public class PermanentCounterSupport {
                                        CounterType counterType, int count) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
+        int previousCount = target.getCounterCount(counterType);
         count = gameQueryService.replaceCounters(gameData, target, counterType, count,
                 placingPlayerId(gameData, entry, target));
 
@@ -433,6 +448,7 @@ public class PermanentCounterSupport {
         if (counterName == null || count <= 0) return 0;
 
         notifyCountersPlaced(gameData, entry, target, count);
+        notifySelfCountersPlaced(gameData, entry, target, counterType, previousCount, count);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
             recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target, count);
@@ -548,6 +564,7 @@ public class PermanentCounterSupport {
             case 1 -> EffectSlot.SAGA_CHAPTER_I;
             case 2 -> EffectSlot.SAGA_CHAPTER_II;
             case 3 -> EffectSlot.SAGA_CHAPTER_III;
+            case 4 -> EffectSlot.SAGA_CHAPTER_IV;
             default -> null;
         };
         if (chapterSlot == null) return;
@@ -559,6 +576,7 @@ public class PermanentCounterSupport {
             case 1 -> "I";
             case 2 -> "II";
             case 3 -> "III";
+            case 4 -> "IV";
             default -> String.valueOf(loreCount);
         };
 
@@ -931,6 +949,62 @@ public class PermanentCounterSupport {
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         }
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
+    }
+
+    private void fireSelfCountersPutTriggers(GameData gameData, Permanent target,
+                                              CounterType counterType, int previousCount) {
+        Card card = target.getCard();
+        List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_COUNTERS_PUT);
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        UUID controllerId = controllerOf(gameData, target);
+        if (controllerId == null) {
+            return;
+        }
+
+        int currentCount = target.getCounterCount(counterType);
+        List<CardEffect> effectsToResolve = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            if (effect instanceof ConditionalEffect conditional) {
+                if (conditional.condition() instanceof SourceCounterThreshold threshold) {
+                    if (conditional.interveningIf()
+                            && (threshold.counterType() != counterType
+                            || previousCount >= threshold.threshold()
+                            || currentCount < threshold.threshold())) {
+                        continue;
+                    }
+                } else if (conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(target, controllerId))) {
+                    continue;
+                }
+            }
+            effectsToResolve.add(effect);
+        }
+        if (effectsToResolve.isEmpty()) {
+            return;
+        }
+
+        boolean needsTarget = effectsToResolve.stream()
+                .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    card, controllerId, effectsToResolve,
+                    "counter placement", target.getId()));
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s triggered ability",
+                    effectsToResolve,
+                    null,
+                    target.getId()));
+        }
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        log.info("Game {} - {} self-counter trigger fires", gameData.id, card.getName());
     }
 
     /**

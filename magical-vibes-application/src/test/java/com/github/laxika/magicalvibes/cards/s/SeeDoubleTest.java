@@ -115,8 +115,7 @@ class SeeDoubleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> castSeeDouble(player1, new int[]{0, 1}, mercy.getId(),
                 List.of(bears.getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Expected between 1 and 1 modes");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

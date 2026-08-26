@@ -75,14 +75,14 @@ public class PermanentControlSupport {
                                        String sourceSetCode, int power, int toughness) {
         List<UUID> createdIds = new ArrayList<>();
         Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        boolean isCreature = token.primaryType() == CardType.CREATURE;
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, isCreature);
         int totalAmount = amount * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
-        boolean isCreature = token.primaryType() == CardType.CREATURE;
         for (int i = 0; i < totalAmount; i++) {
             Card tokenCard = TokenCardFactory.create(token, power, toughness, sourceSetCode);
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(

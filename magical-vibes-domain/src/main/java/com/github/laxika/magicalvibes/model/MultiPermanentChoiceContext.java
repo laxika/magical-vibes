@@ -21,6 +21,19 @@ import java.util.UUID;
  */
 public sealed interface MultiPermanentChoiceContext {
 
+    /** The activating player chooses one or more other artifacts to exile as an ability cost. */
+    record ActivatedAbilityExileArtifactsCost(UUID playerId, UUID sourcePermanentId, int abilityIndex,
+                                               int xValue, UUID targetId, Zone targetZone,
+                                               List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+                                               ActivatedAbility ability, Permanent sourcePermanentSnapshot)
+            implements MultiPermanentChoiceContext {
+
+        public ActivatedAbilityExileArtifactsCost {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? Map.of() : Map.copyOf(damageAssignments);
+        }
+    }
+
     record SagaChapterCounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, String chapterName, CounterType counterType,
                                           int total) implements MultiPermanentChoiceContext {
@@ -204,6 +217,11 @@ public sealed interface MultiPermanentChoiceContext {
      * {@code sourceName} names the source in the game log.
      */
     record UntapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
+    }
+
+    /** The affected player chooses exactly the required number of permanents to untap. */
+    record UntapPermanentsForAmount(String sourceName, int requiredCount)
+            implements MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
@@ -520,6 +538,11 @@ public sealed interface MultiPermanentChoiceContext {
      * for each one actually sacrificed (Mana Seism).
      */
     record SacrificePermanentsAddManaPerSacrificed(ManaColor color) implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */
+    record SacrificePermanentsOrElse(int requiredCount, CardEffect sacrificedEffect,
+                                     CardEffect elseEffect) implements MultiPermanentChoiceContext {
     }
 
     /**

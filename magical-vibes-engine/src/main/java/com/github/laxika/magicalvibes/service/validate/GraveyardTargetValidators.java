@@ -77,6 +77,9 @@ public class GraveyardTargetValidators {
         if (!effect.targetGraveyard()) {
             return; // Non-targeting effects choose at resolution time
         }
+        if (ctx.targetZone() != Zone.GRAVEYARD && effect.targetGroup() >= 0) {
+            return;
+        }
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Effect requires a graveyard target");
         }
@@ -374,7 +377,8 @@ public class GraveyardTargetValidators {
             tvs.requireTargetPlayer(ctx);
             return;
         }
-        if (effect.scope() != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD) {
+        if (effect.scope() != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
+                && effect.scope() != GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
             return;
         }
         if (ctx.targetZone() != Zone.GRAVEYARD) {
@@ -386,6 +390,15 @@ public class GraveyardTargetValidators {
         Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (effect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+            UUID controllerId = ctx.sourceControllerId();
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(
+                    ctx.gameData(), ctx.targetId());
+            if (controllerId != null && graveyardOwnerId != null
+                    && !controllerId.equals(graveyardOwnerId)) {
+                throw new IllegalStateException("Target must be in your graveyard");
+            }
         }
         if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             throw new IllegalStateException("Target must be a " + CardPredicateUtils.describeFilter(effect.filter()));

@@ -39,11 +39,13 @@ import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
@@ -94,6 +96,7 @@ public class DrawService {
     private final LifeSupport lifeSupport;
     private final GraveyardService graveyardService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final DredgeSupport dredgeSupport;
 
     public DrawService(GameQueryService gameQueryService,
                        ExileService exileService,
@@ -104,7 +107,8 @@ public class DrawService {
                        @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler,
                        @Lazy LifeSupport lifeSupport,
                        @Lazy GraveyardService graveyardService,
-                       ConditionEvaluationService conditionEvaluationService) {
+                       ConditionEvaluationService conditionEvaluationService,
+                       DredgeSupport dredgeSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -115,6 +119,7 @@ public class DrawService {
         this.lifeSupport = lifeSupport;
         this.graveyardService = graveyardService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.dredgeSupport = dredgeSupport;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -133,6 +138,15 @@ public class DrawService {
         // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
         // see a stable answer even if their source enters play later in the turn.
         boolean firstDrawStepDraw = markFirstDrawStepDraw(gameData, playerId);
+
+        List<Integer> dredgeIndices = dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
+        if (!dredgeIndices.isEmpty()) {
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                    .builder(playerId, dredgeIndices, GraveyardChoiceDestination.DREDGE,
+                            "Choose a card to dredge, or decline.")
+                    .build());
+            return;
+        }
 
         Permanent sharedFateSource = findSharedFateSource(gameData);
         if (sharedFateSource != null) {
@@ -1282,6 +1296,22 @@ public class DrawService {
 
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} controller-draw any-target trigger queued",
+                            gameData.id, perm.getCard().getName());
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && perm.getCard().getEffectTargetIndex(effect) >= 0) {
+                    // A permanent-target draw trigger (Mantle of Tides): choose the target as the
+                    // ability is put on the stack, using the card's declared target filter.
+                    gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
+                            perm.getCard(),
+                            drawingPlayerId,
+                            new ArrayList<>(List.of(effect)),
+                            perm.getId(),
+                            perm.getCard().getTargetFilter()
+                    ));
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} controller-draw permanent-target trigger queued",
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -158,6 +159,29 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
                 verify(graveyardService).addCardToGraveyard(gd, player1Id, might);
+            }
+
+            @Test
+            @DisplayName("Counters a spell and puts it in its owner's hand")
+            void countersSpellAndPutsItInOwnersHand() {
+                gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+                gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+                Card bears = createCreatureCard("Grizzly Bears");
+                StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+                gd.stack.add(bearsEntry);
+
+                Card remand = createInstantCard("Remand");
+                StackEntry remandEntry = new StackEntry(StackEntryType.INSTANT_SPELL, remand, player2Id,
+                        remand.getName(), List.of(new CounterSpellEffect(CounteredSpellDestination.HAND)),
+                        0, bears.getId(), null);
+
+                counterSpellHandler.resolve(gd, remandEntry,
+                        new CounterSpellEffect(CounteredSpellDestination.HAND));
+
+                assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+                assertThat(gd.playerHands.get(player1Id)).containsExactly(bears);
+                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
             }
 
             @Test

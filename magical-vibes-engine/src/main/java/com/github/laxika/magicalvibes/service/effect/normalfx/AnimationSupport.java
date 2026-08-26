@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -82,6 +83,15 @@ public class AnimationSupport {
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new SetBasePowerToughnessEffect(power, toughness), target.getId(), null, null,
                 duration, 0));
+    }
+
+    private void addDynamicAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry,
+                                                         Permanent target,
+                                                         AnimatePermanentsEffect effect) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness()), target.getId(),
+                null, null, effect.duration(), 0));
     }
 
     private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
@@ -212,7 +222,12 @@ public class AnimationSupport {
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
-            addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+            if (effect.dynamicPowerToughness()) {
+                addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
+            } else {
+                addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
+                        EffectDuration.UNTIL_END_OF_TURN);
+            }
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
@@ -458,6 +473,21 @@ public class AnimationSupport {
             animatePermanently(gameData, target, effect, power, toughness,
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
         }
+    }
+
+    public void animateChosen(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        if (entry.getChosenPermanentId() == null) {
+            return;
+        }
+        Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+        if (chosen == null) {
+            return;
+        }
+        AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        animatePermanently(gameData, chosen, effect, power, toughness,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
     }
 
     /**

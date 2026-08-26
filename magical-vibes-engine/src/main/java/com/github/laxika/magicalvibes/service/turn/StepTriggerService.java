@@ -1292,7 +1292,14 @@ public class StepTriggerService {
                         }
                     }
 
-                    if (effect instanceof MayPayManaEffect mayPay) {
+                    if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                card, activePlayerId, new ArrayList<>(List.of(effect))));
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(card, "'s upkeep ability triggers."));
+                        log.info("Game {} - {} graveyard upkeep trigger queued for graveyard target selection",
+                                gameData.id, card.getName());
+                    } else if (effect instanceof MayPayManaEffect mayPay) {
                         gameData.queueMayAbility(card, activePlayerId, mayPay, null);
                     } else if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(card, activePlayerId, may);
@@ -2274,6 +2281,32 @@ public class StepTriggerService {
         PermanentChoiceContext.PucasMischiefOwnTarget trigger =
                 gameData.pollPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class);
 
+        ExchangeControlOfTargetPermanentsEffect exchange = interdependentExchange(trigger.effects());
+        if (exchange != null && exchange.requireOpponentPowerNotGreater()) {
+            List<UUID> validOwnTargets = new ArrayList<>();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
+            if (battlefield != null) {
+                for (Permanent own : battlefield) {
+                    if (!gameQueryService.isCreature(gameData, own)) continue;
+                    int ownPower = gameQueryService.getEffectivePower(gameData, own);
+                    if (hasOpponentCreatureAtMostPower(gameData, trigger.controllerId(), ownPower)) {
+                        validOwnTargets.add(own.getId());
+                    }
+                }
+            }
+            if (validOwnTargets.isEmpty()) {
+                log.info("Game {} - {} exchange skipped (no legal target pair)",
+                        gameData.id, trigger.sourceCard().getName());
+                processNextPucasMischiefTarget(gameData);
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(trigger);
+            playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validOwnTargets,
+                    trigger.sourceCard().getName() + " — Choose a creature you control.");
+            gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s enter-the-battlefield ability triggers."));
+            return;
+        }
+
         // A nonland permanent you control is a legal first target only if some opponent nonland
         // permanent has mana value <= its own — i.e. own MV >= the smallest opponent MV.
         int minOpponentManaValue = Integer.MAX_VALUE;
@@ -2313,6 +2346,29 @@ public class StepTriggerService {
         gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
         log.info("Game {} - {} upkeep trigger awaiting own target selection (Puca's Mischief)",
                 gameData.id, trigger.sourceCard().getName());
+    }
+
+    private ExchangeControlOfTargetPermanentsEffect interdependentExchange(List<CardEffect> effects) {
+        return effects.stream()
+                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
+                .filter(ExchangeControlOfTargetPermanentsEffect.class::isInstance)
+                .map(ExchangeControlOfTargetPermanentsEffect.class::cast)
+                .findFirst().orElse(null);
+    }
+
+    private boolean hasOpponentCreatureAtMostPower(GameData gameData, UUID controllerId, int power) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(controllerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && gameQueryService.getEffectivePower(gameData, permanent) <= power) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void handleOpeningHandTriggers(GameData gameData) {
@@ -2964,6 +3020,7 @@ public class StepTriggerService {
                 case 1 -> EffectSlot.SAGA_CHAPTER_I;
                 case 2 -> EffectSlot.SAGA_CHAPTER_II;
                 case 3 -> EffectSlot.SAGA_CHAPTER_III;
+                case 4 -> EffectSlot.SAGA_CHAPTER_IV;
                 default -> null;
             };
             if (chapterSlot == null) continue;
@@ -2972,10 +3029,11 @@ public class StepTriggerService {
             if (chapterEffects.isEmpty()) continue;
 
             String chapterName = switch (newLoreCount) {
-                case 1 -> "I";
-                case 2 -> "II";
-                case 3 -> "III";
-                default -> String.valueOf(newLoreCount);
+                    case 1 -> "I";
+                    case 2 -> "II";
+                    case 3 -> "III";
+                    case 4 -> "IV";
+                    default -> String.valueOf(newLoreCount);
             };
 
             boolean needsPlayerTarget = chapterEffects.stream()
@@ -3161,9 +3219,26 @@ public class StepTriggerService {
         cards.add(pending.card());
         cards.addAll(pending.additionalCards());
 
-        List<Card> returningCards = cards.stream()
-                .filter(card -> gameData.removeFromExile(card.getId()))
-                .toList();
+        List<Card> returningCards;
+        if (pending.cardsToAttachToPrimary().isEmpty()) {
+            returningCards = cards.stream()
+                    .filter(card -> gameData.removeFromExile(card.getId()))
+                    .toList();
+        } else {
+            if (!gameData.removeFromExile(pending.card().getId())) {
+                log.info("Game {} - delayed attached return skipped because its primary card is no longer in exile",
+                        gameData.id);
+                return;
+            }
+            List<Card> returned = new ArrayList<>();
+            returned.add(pending.card());
+            for (Card additional : pending.additionalCards()) {
+                if (gameData.removeFromExile(additional.getId())) {
+                    returned.add(additional);
+                }
+            }
+            returningCards = returned;
+        }
         if (returningCards.isEmpty()) {
             log.info("Game {} - delayed return skipped because its cards are no longer in exile", gameData.id);
             return;
@@ -3172,6 +3247,8 @@ public class StepTriggerService {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         List<Permanent> returnedPermanents = new ArrayList<>();
+        List<UUID> returnedControllerIds = new ArrayList<>();
+        Permanent primaryPermanent = null;
         for (Card card : returningCards) {
             Permanent perm = new Permanent(card);
             if (pending.returnTapped()) {
@@ -3200,11 +3277,26 @@ public class StepTriggerService {
             if (pending.grantHaste()) {
                 perm.getPersistentGrantedKeywords().add(Keyword.HASTE);
             }
+            if (card.getId().equals(pending.card().getId())) {
+                primaryPermanent = perm;
+            }
+            boolean attachToPrimary = primaryPermanent != null
+                    && pending.cardsToAttachToPrimary().contains(card.getId());
+            UUID cardControllerId = attachToPrimary && card.getOwnerId() != null
+                    ? card.getOwnerId() : controllerId;
+            if (attachToPrimary) {
+                perm.setAttachedTo(primaryPermanent.getId());
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, perm, enterTappedTypes, simultaneouslyEntered);
+                    gameData, cardControllerId, perm, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(perm);
             returnedPermanents.add(perm);
-            String playerName = gameData.playerIdToName.get(controllerId);
+            returnedControllerIds.add(cardControllerId);
+            if (attachToPrimary) {
+                triggerCollectionService.checkAuraAttachedTriggers(
+                        gameData, card, primaryPermanent.getId());
+            }
+            String playerName = gameData.playerIdToName.get(cardControllerId);
             String attackText = pending.returnAttacking() && attackTargetId != null
                     ? " tapped and attacking" : "";
             gameLogService.append(gameData,
@@ -3212,8 +3304,13 @@ public class StepTriggerService {
                             + playerName + "'s control."));
             log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
         }
-        for (Card card : returningCards) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+        for (int i = 0; i < returningCards.size(); i++) {
+            Card card = returningCards.get(i);
+            UUID cardControllerId = returnedControllerIds.get(i);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, cardControllerId, card, null, false);
+        }
+        if (primaryPermanent != null && !pending.cardsToAttachToPrimary().isEmpty()) {
+            creatureControlService.recomputeControl(gameData, primaryPermanent);
         }
 
         if (pending.discardControllerCardsEqualToReturnedToughness()
@@ -3960,7 +4057,8 @@ public class StepTriggerService {
                 }
                 if (cardToReturn != null) {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
-                    gameData.addCardToHand(pending.ownerId(), cardToReturn);
+                    permanentRemovalService.addCardToHandFromGraveyard(
+                            gameData, pending.ownerId(), pending.ownerId(), cardToReturn);
                     String playerName = gameData.playerIdToName.get(pending.ownerId());
                     gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
                             " returns to " + playerName + "'s hand (delayed trigger)."));
@@ -5253,7 +5351,13 @@ public class StepTriggerService {
         }
 
         for (CardEffect effect : mayEffects) {
-            gameData.queueMayAbility(perm.getCard(), controllerId, (MayEffect) effect, null, perm.getId());
+            MayEffect may = (MayEffect) effect;
+            if (may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER) {
+                gameData.queueMayAbility(perm.getCard(), controllerId, may, null, perm.getId(),
+                        gameData.activePlayerId, new Permanent(perm));
+            } else {
+                gameData.queueMayAbility(perm.getCard(), controllerId, may, null, perm.getId());
+            }
         }
 
         for (ChooseOneEffect effect : modalEffects) {

@@ -40,6 +40,7 @@ public class StackEntry {
     /** The opponent chosen before that opponent selected the spell's creature target. */
     @Setter private UUID opponentChosenTargetPlayerId;
     private boolean targetIdOverriddenForEffectResolution;
+    private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
@@ -76,6 +77,7 @@ public class StackEntry {
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
+    @Setter private boolean castWithAdventure;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -106,7 +108,7 @@ public class StackEntry {
         return card.getEffects(EffectSlot.SPELL).stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
-                .anyMatch(RepeatableAdditionalManaCost::multikicker);
+                .anyMatch(cost -> cost.multikickerPaymentCount(repeatedAdditionalCosts) > 0);
     }
     /**
      * Whether this spell's buyback cost was paid (CR 702.27). Stamped by
@@ -323,11 +325,20 @@ public class StackEntry {
      */
     private final List<UUID> playersDealtDamageThisResolution = new ArrayList<>();
 
+    /** Trigger effects already fired for the single noncombat damage event represented by this entry. */
+    private final Map<UUID, Set<CardEffect>> noncombatExcessDamageTriggerEffectsFired = new HashMap<>();
+
     /** Records that this entry dealt damage to {@code playerId}; duplicates are ignored. */
     public void recordPlayerDealtDamage(UUID playerId) {
         if (playerId != null && !playersDealtDamageThisResolution.contains(playerId)) {
             playersDealtDamageThisResolution.add(playerId);
         }
+    }
+
+    public boolean markNoncombatExcessDamageTriggerFired(UUID sourcePermanentId, CardEffect effect) {
+        return noncombatExcessDamageTriggerEffectsFired
+                .computeIfAbsent(sourcePermanentId, ignored -> new HashSet<>())
+                .add(effect);
     }
 
     /**
@@ -564,6 +575,7 @@ public class StackEntry {
                 source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
+        this.castWithAdventure = source.castWithAdventure;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
@@ -636,6 +648,8 @@ public class StackEntry {
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
+        source.noncombatExcessDamageTriggerEffectsFired.forEach((sourceId, effects) ->
+                this.noncombatExcessDamageTriggerEffectsFired.put(sourceId, new HashSet<>(effects)));
     }
 
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
@@ -869,7 +883,7 @@ public class StackEntry {
         if (card == null) {
             return null;
         }
-        if (castWithOmen && card.getBackFaceCard() != null) {
+        if ((castWithOmen || castWithAdventure) && card.getBackFaceCard() != null) {
             return card.getBackFaceCard();
         }
         Card effectiveCard = getCard();
@@ -958,6 +972,10 @@ public class StackEntry {
         this.targetIdOverriddenForEffectResolution = false;
     }
 
+    public void setResolvingEffectTargetGroup(Integer targetGroup) {
+        this.resolvingEffectTargetGroup = targetGroup;
+    }
+
     /**
      * Whether any effect that will actually resolve on this entry is bound to the given target
      * group. A group with no surviving bound effect (a gated-out intervening-if trigger) consumed
@@ -983,7 +1001,7 @@ public class StackEntry {
             return true;
         }
         for (CardEffect effect : effectsToResolve) {
-            if (targeting.getEffectTargetIndex(effect) == groupIndex) {
+            if (targeting.isEffectBoundToTargetGroup(effect, groupIndex)) {
                 return true;
             }
         }
@@ -1001,7 +1019,10 @@ public class StackEntry {
      */
     public List<UUID> targetsForEffect(CardEffect effect) {
         Card targeting = getTargetingCard();
-        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
+        int group = targeting == null ? -1
+                : resolvingEffectTargetGroup != null && targeting.hasEffectTargetIndex(effect)
+                ? resolvingEffectTargetGroup
+                : targeting.getEffectTargetIndex(effect);
         if (group < 0) {
             return getTargetIds();
         }
@@ -1026,7 +1047,10 @@ public class StackEntry {
      */
     public List<UUID> targetsForBoundEffectGroup(CardEffect effect) {
         Card targeting = getTargetingCard();
-        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
+        int group = targeting == null ? -1
+                : resolvingEffectTargetGroup != null && targeting.hasEffectTargetIndex(effect)
+                ? resolvingEffectTargetGroup
+                : targeting.getEffectTargetIndex(effect);
         return group < 0 ? null : targetsForGroup(group);
     }
 

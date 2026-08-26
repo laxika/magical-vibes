@@ -619,6 +619,17 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
     }
 
+    public void castAdventure(Player player, int cardIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, null,
+                targetIds != null ? targetIds : List.of());
+    }
+
+    public void castAdventure(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, targetId, List.of());
+    }
+
     public void foretell(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.foretellCard(gameData, player, cardIndex);
@@ -771,6 +782,11 @@ public class GameTestHarness {
     public void playGraveyardLand(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), true);
+    }
+
+    public void playGraveyardLand(Player player, UUID graveyardCardId) {
+        ensurePriority(player);
+        gameService.playGraveyardLand(gameData, player, graveyardCardId);
     }
 
     public void castPlaneswalker(Player player, int cardIndex) {

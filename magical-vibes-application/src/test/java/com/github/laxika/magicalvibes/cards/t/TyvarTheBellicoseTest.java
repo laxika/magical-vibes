@@ -41,6 +41,7 @@ class TyvarTheBellicoseTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, 0, null, null);
         harness.tapPermanent(player1, 2);
+        harness.passPriority(player1);
         resolveAllTriggers();
 
         assertThat(priest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

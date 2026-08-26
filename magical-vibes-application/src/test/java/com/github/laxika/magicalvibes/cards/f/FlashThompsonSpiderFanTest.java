@@ -72,7 +72,7 @@ class FlashThompsonSpiderFanTest extends BaseCardTest {
 
     private void chooseMode(String mode) {
         harness.handleListChoice(player1, mode);
-        harness.handleListChoice(player1, ChooseOneEffect.NO_MODE_LABEL);
+        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
     }
 
     private void castFlash() {

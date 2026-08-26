@@ -250,7 +250,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
                 when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
                 when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
-                when(gameQueryService.getTokenMultiplier(gd, player2Id)).thenReturn(1);
+                when(gameQueryService.getTokenMultiplier(gd, player2Id, true)).thenReturn(1);
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
@@ -274,7 +274,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
                 when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
                 when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
-                when(gameQueryService.getTokenMultiplier(gd, player2Id)).thenReturn(1);
+                when(gameQueryService.getTokenMultiplier(gd, player2Id, false)).thenReturn(1);
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 

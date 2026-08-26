@@ -279,6 +279,21 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 null, null, null, permanent, controllerId, null, 0, null, false, 0, false);
     }
 
+    public DiscardFollowUp withSourceContext(UUID sourcePermanentId,
+                                             Permanent sourcePermanentSnapshot,
+                                             int eventValue) {
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards,
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition, enteringPermanent, enteringControllerId,
+                plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount,
+                thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount,
+                thenEffectUsesDiscardedManaValue, rummageDrawPlayerId,
+                thenEffectAlternateCardType, thenEffectAlternate,
+                targetOpponentsDiscardThenDraw, sourcePermanentId,
+                sourcePermanentSnapshot, eventValue);
+    }
+
     /**
      * The same follow-up with the each-player remainder (both choosers and their per-player amounts)
      * advanced past the current chooser.

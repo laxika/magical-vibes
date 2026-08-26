@@ -67,6 +67,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardHasAdventurePredicate) {
+            return "card with Adventure";
+        }
         if (predicate instanceof CardHasDisturbPredicate) {
             return "card with disturb";
         }
@@ -90,6 +93,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardManaValueLessThanSourcePowerPredicate) {
             return "card with mana value less than this creature's power";
+        }
+        if (predicate instanceof CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate) {
+            return "card with mana value at most the number of permanent cards in your graveyard";
         }
         if (predicate instanceof CardManaValueLessThanSourceLoyaltyPredicate) {
             return "card with mana value less than this planeswalker's loyalty";

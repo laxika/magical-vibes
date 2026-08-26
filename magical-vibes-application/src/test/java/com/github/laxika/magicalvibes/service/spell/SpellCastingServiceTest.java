@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -162,6 +163,9 @@ class SpellCastingServiceTest {
     private LifeSupport lifeSupport;
 
     @Mock
+    private LandCopyOnEnterService landCopyOnEnterService;
+
+    @Mock
     private PlayerInputService playerInputService;
 
     private SpellCastingService svc;
@@ -174,6 +178,7 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
         svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
@@ -183,7 +188,7 @@ class SpellCastingServiceTest {
                 permanentRemovalService, triggerCollectionService,
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
-                mutationCoordinator, stateBasedActionService, lifeSupport, playerInputService);
+                mutationCoordinator, stateBasedActionService, lifeSupport, landCopyOnEnterService, playerInputService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -231,6 +236,12 @@ class SpellCastingServiceTest {
                         .hasType(invocation.getArgument(1)));
         lenient().when(gameQueryService.canCastSpellFromZone(
                         any(GameData.class), any(Card.class), any(Zone.class)))
+                .thenReturn(true);
+        lenient().when(gameQueryService.canCastSpellFromZone(
+                        any(GameData.class), any(Card.class), any(Zone.class), any(UUID.class)))
+                .thenReturn(true);
+        lenient().when(gameQueryService.canPlayerCastSpellsFromZone(
+                        any(GameData.class), any(UUID.class), any(Zone.class)))
                 .thenReturn(true);
         lenient().when(gameQueryService.canPlayersCastSpellsFromZone(
                         any(GameData.class), any(Zone.class)))

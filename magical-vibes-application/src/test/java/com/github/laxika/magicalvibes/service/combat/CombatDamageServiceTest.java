@@ -126,6 +126,7 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
                 combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport.class),
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
 
@@ -151,6 +152,7 @@ class CombatDamageServiceTest {
         // withQueryScope is a passthrough on the mock: run the supplied queries directly
         lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
                 .thenAnswer(inv -> inv.getArgument(1, java.util.function.Supplier.class).get());
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gameData), any(UUID.class))).thenReturn(1);
     }
 
     // ===== Stub helpers =====

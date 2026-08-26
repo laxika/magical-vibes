@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.condition;
  * resolved this turn"). The engine increments
  * {@code GameData.permanentAbilityResolutionsThisTurn} whenever an activated or triggered ability whose
  * effects carry this condition resolves (counting resolutions, not activations, so copies of
- * the ability count but activations countered on the stack do not), and this condition is met
+ * the ability count but abilities countered on the stack do not), and this condition is met
  * only when that per-permanent count equals {@code n} — the clause fires on the exact n-th
  * resolution and never on a later one.
  */

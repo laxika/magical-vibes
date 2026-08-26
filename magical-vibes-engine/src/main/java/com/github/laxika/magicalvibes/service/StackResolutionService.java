@@ -232,7 +232,8 @@ public class StackResolutionService {
             }
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class)) {
             triggerCollectionService.processNextDrawTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
@@ -380,6 +381,8 @@ public class StackResolutionService {
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
+        gameData.spellEntryCounters.remove(card.getId());
+        gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
         if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
             gameData.playerDecks.get(ownerId).add(physicalCard);
         } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
@@ -1046,6 +1049,7 @@ public class StackResolutionService {
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
+            gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
     }
@@ -1064,13 +1068,14 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an ability whose effects branch on {@code NthAbilityResolutionThisTurn}
-     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim
-     * or Nissa, Resurgent Animist).
-     * Counted at resolution (not activation), so copies of the ability count but activations
-     * countered on the stack do not; fizzled abilities never reach this point. Incremented before
-     * effect dispatch so the condition sees the count including the current resolution, and only
-     * here (not on async resume) so each resolution counts exactly once.
+     * entry is an activated or triggered ability whose effects branch on
+     * {@code NthAbilityResolutionThisTurn} ("if this is the Nth time this ability has resolved this
+     * turn", e.g. Ashling the Pilgrim, Nissa, Resurgent Animist, and Vito, Fanatic of Aclazotz).
+     * Counted at resolution, so
+     * copies of the ability count but abilities countered on the stack do not; fizzled abilities
+     * never reach this point. Incremented before effect dispatch so the condition sees the count
+     * including the current resolution, and only here (not on async resume) so each resolution
+     * counts exactly once.
      */
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
         if ((entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
@@ -1079,8 +1084,7 @@ public class StackResolutionService {
             return;
         }
         boolean countsResolutions = entry.getEffectsToResolve().stream()
-                .anyMatch(e -> e instanceof ConditionalEffect conditional
-                        && conditional.condition() instanceof NthAbilityResolutionThisTurn);
+                .anyMatch(CardEffect::hasAbilityResolutionCondition);
         if (countsResolutions) {
             gameData.permanentAbilityResolutionsThisTurn.merge(entry.getSourcePermanentId(), 1, Integer::sum);
         }
@@ -1122,6 +1126,10 @@ public class StackResolutionService {
             gameData.playerDecks.get(ownerId).add(physicalCard);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+        } else if (entry.isCastWithAdventure()) {
+            gameData.addToExile(ownerId, physicalCard);
+            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with Adventure."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
@@ -1244,6 +1252,7 @@ public class StackResolutionService {
             case 1 -> EffectSlot.SAGA_CHAPTER_I;
             case 2 -> EffectSlot.SAGA_CHAPTER_II;
             case 3 -> EffectSlot.SAGA_CHAPTER_III;
+            case 4 -> EffectSlot.SAGA_CHAPTER_IV;
             default -> null;
         };
         if (chapterSlot == null) return;
@@ -1255,6 +1264,7 @@ public class StackResolutionService {
             case 1 -> "I";
             case 2 -> "II";
             case 3 -> "III";
+            case 4 -> "IV";
             default -> String.valueOf(loreCount);
         };
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "235")
+@CardRegistration(set = "RAV", collectorNumber = "264")
 public class Junktroller extends Card {
 
     public Junktroller() {

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -93,6 +95,7 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             for (int idx : bottomCardOrder) {
                 graveyard.add(scryCards.get(idx));
             }
+            setDirectSurveilEventValue(gameData, topCardOrder.size());
         } else {
             // Scry: the reject pile goes to the bottom of the library in order.
             for (int idx : bottomCardOrder) {
@@ -140,5 +143,19 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
         // two cards.") before auto-passing. The hand-rolled version this replaced auto-passed even
         // when those resumed effects had opened a new prompt.
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void setDirectSurveilEventValue(GameData gameData, int cardsKeptOnTop) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            return;
+        }
+
+        entry.getEffectsToResolve().stream()
+                .filter(SurveilThenEffect.class::isInstance)
+                .map(SurveilThenEffect.class::cast)
+                .filter(effect -> !effect.queueReflexiveAbility())
+                .findFirst()
+                .ifPresent(effect -> entry.setEventValue(cardsKeptOnTop));
     }
 }

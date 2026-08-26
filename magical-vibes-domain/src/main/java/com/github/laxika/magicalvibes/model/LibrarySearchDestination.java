@@ -43,6 +43,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Discover a qualifying card: cast it for free or put it into its controller's hand. */
+    DISCOVER,
     CAST_ONE_AND_PUT_OTHER_INTO_HAND,
     PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,
     /** Exile one chosen card, then offer it for casting without paying its mana cost. */

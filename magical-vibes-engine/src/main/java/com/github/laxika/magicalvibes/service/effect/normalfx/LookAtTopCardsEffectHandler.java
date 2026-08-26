@@ -437,13 +437,33 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         if (chooseCount > 1 || randomBottom) {
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
             int max = Math.min(chooseCount, matchingCards.size());
+            if (e.payLifePerSelectedCard() > 0) {
+                int affordable = gameQueryService.canPlayerLifeChange(gameData, controllerId)
+                        ? gameData.getLife(controllerId) / e.payLifePerSelectedCard()
+                        : 0;
+                max = Math.min(max, affordable);
+                if (max == 0) {
+                    for (Card card : topCards) {
+                        graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
+                    }
+                    gameLogService.append(gameData, GameLog.text(playerName
+                            + " cannot pay for any of the revealed cards, so they are put into the graveyard."));
+                    return;
+                }
+            }
             String revealPrompt;
             if (max == 1) {
-                revealPrompt = e.reveal()
+                revealPrompt = e.payLifePerSelectedCard() > 0
+                        ? "You may put a card into your hand by paying "
+                                + e.payLifePerSelectedCard() + " life."
+                        : e.reveal()
                         ? "You may put a " + description + " from among them into your hand."
                         : "You may reveal a " + description + " from among them and put it into your hand.";
             } else {
-                revealPrompt = e.reveal()
+                revealPrompt = e.payLifePerSelectedCard() > 0
+                        ? "You may put up to " + max + " cards into your hand by paying "
+                                + e.payLifePerSelectedCard() + " life for each."
+                        : e.reveal()
                         ? (chooseCount >= Integer.MAX_VALUE
                                 ? "You may put any number of " + description + "s into your hand."
                                 : "You may put up to " + max + " " + description + "s into your hand.")
@@ -454,8 +474,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                     controllerId, topCards, cardIds, toGraveyard, true,
                     !toGraveyard && !randomBottom, randomBottom, false,
-                    e.loseLifePerSelectedCard(), null,
-                    max, revealPrompt, false, 0, false, e.effectIfNoCardChosen()));
+                    e.payLifePerSelectedCard() > 0
+                            ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
+                    null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
+                    e.payLifePerSelectedCard() > 0));
             return;
         }
 

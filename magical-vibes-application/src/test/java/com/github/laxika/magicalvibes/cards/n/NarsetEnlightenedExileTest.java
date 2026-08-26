@@ -48,6 +48,8 @@ class NarsetEnlightenedExileTest extends BaseCardTest {
         Forest land = new Forest();
         GrizzlyBears creature = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(valid, equalToPower, land, creature));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         declareAttackers(List.of(0));
 
@@ -62,6 +64,7 @@ class NarsetEnlightenedExileTest extends BaseCardTest {
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.ExileCastSpellTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);

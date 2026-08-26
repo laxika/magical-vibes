@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -143,8 +144,10 @@ public class DiscardTriggerCollectorService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
                 gameData.playerLifeTotals.put(discardingPlayerId,
-                        gameQueryService.lifeAfterDamage(gameData, discardingPlayerId, effectiveDamage));
+                        gameQueryService.lifeAfterDamage(gameData, discardingPlayerId, lifeLoss));
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
@@ -440,12 +443,13 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTriggers({
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    })
     private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, you may pay {N}. If you do, ..." Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. Queue it as a proper
-        // triggered ability so it uses the stack (and, when cycling, resolves above the cycling draw); its
-        // MayAbilityChoice pay prompt then comes up at resolution. (Drake Haven)
+        // Queue may-pay discard triggers as proper triggered abilities so they use the stack and the
+        // MayAbilityChoice payment prompt comes up at resolution. (Drake Haven, Spirit Cairn)
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -457,7 +461,7 @@ public class DiscardTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on cycle/discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
+        log.info("Game {} - {} triggers on discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
         return true;
     }
 
@@ -509,6 +513,27 @@ public class DiscardTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on discard event (create {} token(s))", gameData.id,
                 sourceCard.getName(), discardEvent.discardedCount());
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileTopCardsMayPlayUntilNextEndStepEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleExileTopCardsMayPlayUntilNextEndStepOnDiscardEvent(
+            TriggerMatchContext match, ExileTopCardsMayPlayUntilNextEndStepEffect trigger,
+            TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (exile top card)",
+                gameData.id, sourceCard.getName());
         return true;
     }
 
@@ -568,8 +593,10 @@ public class DiscardTriggerCollectorService {
         if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
+            int lifeLoss = amount
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
             int currentLife = gameData.getLife(discardingPlayerId);
-            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - amount);
+            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - lifeLoss);
         }
 
         return true;

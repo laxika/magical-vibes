@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "147")
+@CardRegistration(set = "SPM", collectorNumber = "199")
 public class SPDrPilotedByPeni extends Card {
 
     public SPDrPilotedByPeni() {

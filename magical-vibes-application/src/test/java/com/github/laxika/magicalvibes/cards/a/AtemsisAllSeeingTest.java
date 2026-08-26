@@ -96,5 +96,7 @@ class AtemsisAllSeeingTest extends BaseCardTest {
         atemsis.setAttacking(true);
         resolveCombat();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
     }
 }

@@ -209,6 +209,7 @@ export interface Card {
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;
+  modalModesMayRepeat?: boolean;
   modalOptions: ModalOptionView[] | null;
   /** Additional counters to remove when casting this card from exile. */
   exileCastCounterCost: number;
@@ -467,6 +468,8 @@ export interface AvailableAttackersNotification {
   availableTargets: AttackTarget[];
   taxPerCreature: number;
   mustAttackWithAtLeastOne: boolean;
+  /** True when the recipient chooses attackers for the active player's creatures. */
+  choosingForOpponent?: boolean;
 }
 
 export interface AvailableBlockersNotification {

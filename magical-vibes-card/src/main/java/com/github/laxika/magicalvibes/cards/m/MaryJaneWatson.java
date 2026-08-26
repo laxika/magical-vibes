@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "134")
+@CardRegistration(set = "SPM", collectorNumber = "229")
 public class MaryJaneWatson extends Card {
 
     public MaryJaneWatson() {

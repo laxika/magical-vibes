@@ -85,6 +85,7 @@ public enum Keyword {
     FUSE,
     OFFERING,
     DELVE,
+    DREDGE,
     MODULAR,
     SUNBURST,
     PROTOTYPE,

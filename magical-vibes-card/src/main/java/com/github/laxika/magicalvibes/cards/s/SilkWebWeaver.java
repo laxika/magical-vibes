@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "145")
+@CardRegistration(set = "SPM", collectorNumber = "215")
 public class SilkWebWeaver extends Card {
 
     public SilkWebWeaver() {

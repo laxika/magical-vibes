@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ISD", collectorNumber = "96")
 @CardRegistration(set = "SOI", collectorNumber = "106")
 @CardRegistration(set = "GRN", collectorNumber = "67")
+@CardRegistration(set = "LCI", collectorNumber = "99")
 public class DeadWeight extends Card {
 
     public DeadWeight() {

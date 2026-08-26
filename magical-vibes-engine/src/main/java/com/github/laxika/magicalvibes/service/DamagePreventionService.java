@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddPlusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackingCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
@@ -236,6 +237,12 @@ public class DamagePreventionService {
         return applyCreaturePreventionShield(gameData, permanent, damage, false);
     }
 
+    /** Returns whether a permanent replaces damage to itself with +1/+1 counters. */
+    public boolean hasDamageToPlusOnePlusOneCounterReplacement(Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof PreventDamageAndAddPlusCountersEffect);
+    }
+
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
         return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, null);
     }
@@ -245,6 +252,20 @@ public class DamagePreventionService {
         if (damage > 0 && gameQueryService.isCreature(gameData, permanent)) {
             damage = applyControlledCreaturesDamageReduction(gameData, permanent, damage);
             if (damage <= 0) return 0;
+        }
+        // Phytohydra: this is a damage replacement effect, not prevention, so it still applies
+        // when damage can't be prevented.
+        if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof PreventDamageAndAddPlusCountersEffect)) {
+            if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
+                int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
+                if (counters > 0) {
+                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                            permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+                    recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+                }
+            }
+            return 0;
         }
         if (permanent.isDamageCantBePreventedOrRedirectedThisTurn()) return damage;
         // Kiora, the Crashing Wave: prevent all damage dealt to the targeted permanent until its
@@ -474,6 +495,12 @@ public class DamagePreventionService {
         }
 
         if (gameQueryService.isDamageFromPermanentSourceToCreaturePrevented(gameData, damageSource, permanent)) {
+            return 0;
+        }
+
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
+        if (gameQueryService.isDamageFromControlledSourceToControlledCreaturePrevented(
+                gameData, permanent, sourceControllerId)) {
             return 0;
         }
 
@@ -782,6 +809,14 @@ public class DamagePreventionService {
         }
         gameData.damagePreventionLifeGainShields.addAll(toReAdd);
         return remaining;
+    }
+
+    /** Applies life gain riders attached to global creature-source prevention shields. */
+    public void applyAllByCreaturesPreventionLifeGain(GameData gameData, int preventedDamage) {
+        if (preventedDamage <= 0 || gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty()) return;
+        for (UUID playerId : gameData.damageByCreaturesPreventionLifeGainPlayers) {
+            lifeSupport.applyGainLife(gameData, playerId, preventedDamage, "prevented damage");
+        }
     }
 
     /**

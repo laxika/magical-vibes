@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreature
 import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1147,7 +1148,7 @@ public class CastingCostService {
                             && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                             && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
                             && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
-                            && manaValueCapSatisfied(perm, card, altCost)
+                            && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                             && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
                         if (!altCost.oncePerTurn()) {
                             return new FreeCastSource(perm, altCost);
@@ -1178,6 +1179,7 @@ public class CastingCostService {
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && altCost.manaValueCapCounter() == null
+                        && altCost.manaValueCapAmount() == null
                         && !altCost.oncePerTurn()
                         && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
@@ -1190,7 +1192,13 @@ public class CastingCostService {
         return null;
     }
 
-    private boolean manaValueCapSatisfied(Permanent perm, Card card, AlternativeCostForSpellsEffect altCost) {
+    private boolean manaValueCapSatisfied(GameData gameData, UUID playerId, Permanent perm, Card card,
+                                          AlternativeCostForSpellsEffect altCost) {
+        if (altCost.manaValueCapAmount() != null) {
+            int cap = amountEvaluationService.evaluate(gameData, altCost.manaValueCapAmount(),
+                    new AmountContext(playerId, perm, null, 0, 0));
+            return card.getManaValue() <= cap;
+        }
         if (altCost.manaValueCapCounter() == null) return true;
         return card.getManaValue() <= perm.getCounterCount(altCost.manaValueCapCounter());
     }
@@ -1703,6 +1711,21 @@ public class CastingCostService {
                 .sum();
     }
 
+    public boolean canPayFlashbackSacrificeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        List<SacrificePermanentsCost> sacrificeCosts = flashback.getCosts(SacrificePermanentsCost.class);
+        List<SacrificeXPermanentsCastingCost> xSacrificeCosts =
+                flashback.getCosts(SacrificeXPermanentsCastingCost.class);
+        if (sacrificeCosts.isEmpty() && xSacrificeCosts.isEmpty()) {
+            return false;
+        }
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(playerId);
+        return sacrificeCosts.stream().allMatch(cost -> battlefield.stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, cost.filter(), filterContext))
+                .count() >= cost.count());
+    }
+
     public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
         var lifeCost = flashback.getCost(LifeCastingCost.class);
         return lifeCost.isEmpty()
@@ -1716,6 +1739,7 @@ public class CastingCostService {
             if (!(cost instanceof ManaCastingCost)
                     && !(cost instanceof TapUntappedPermanentsCost)
                     && !(cost instanceof SacrificePermanentsCost)
+                    && !(cost instanceof SacrificeXPermanentsCastingCost)
                     && !(cost instanceof DiscardXCardsCastingCost)
                     && !(cost instanceof LifeCastingCost)
                     && !(cost instanceof RemoveXCountersFromControlledPermanentsCastingCost)) {
@@ -1726,13 +1750,19 @@ public class CastingCostService {
         if (!canPayFlashbackCounterCosts(gameData, playerId, flashback)) {
             return false;
         }
+        if ((!flashback.getCosts(SacrificePermanentsCost.class).isEmpty()
+                || !flashback.getCosts(SacrificeXPermanentsCastingCost.class).isEmpty())
+                && !canPayFlashbackSacrificeCost(gameData, playerId, flashback)) {
+            return false;
+        }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
             return flashback.costs().stream().allMatch(cost -> cost instanceof ManaCastingCost
                     || cost instanceof DiscardXCardsCastingCost
                     || cost instanceof LifeCastingCost
-                    || cost instanceof RemoveXCountersFromControlledPermanentsCastingCost);
+                    || cost instanceof RemoveXCountersFromControlledPermanentsCastingCost
+                    || cost instanceof SacrificeXPermanentsCastingCost);
         }
 
         var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);

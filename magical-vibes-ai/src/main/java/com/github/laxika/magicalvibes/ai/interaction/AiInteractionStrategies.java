@@ -34,6 +34,7 @@ public final class AiInteractionStrategies {
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
         register(new PlarggAndNassariOpponentChoiceAiStrategy());
         register(new PlarggAndNassariCardChoiceAiStrategy());
+        register(new EyeOfTheStormCastChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
         register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
@@ -72,6 +73,7 @@ public final class AiInteractionStrategies {
         register(new ExiledCardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
         register(new RevealedHandChoiceAiStrategy());
+        register(new SpectersShriekChoiceAiStrategy());
         register(new RevealCardsDiscardChoiceAiStrategy());
         register(new AlternatingHandExileChoiceAiStrategy());
         register(new MasterOfPredicamentsCardChoiceAiStrategy());
@@ -80,6 +82,8 @@ public final class AiInteractionStrategies {
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
+        register(new CraftMaterialChoiceAiStrategy());
+        register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "34")
+@CardRegistration(set = "SPM", collectorNumber = "251")
 public class ImpostorSyndrome extends Card {
 
     public ImpostorSyndrome() {

@@ -65,6 +65,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPlarggAndNassariOpponentChoice);
         register(PendingInteraction.PlarggAndNassariCardChoice.class,
                 this::projectPlarggAndNassariCardChoice);
+        register(PendingInteraction.EyeOfTheStormCastChoice.class,
+                this::projectEyeOfTheStormCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
         register(PendingInteraction.AssimilationAegisCopyChoice.class,
                 this::projectAssimilationAegisCopyChoice);
@@ -130,6 +132,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
+        register(PendingInteraction.SpectersShriekChoice.class, this::projectSpectersShriekChoice);
         register(PendingInteraction.RevealCardsDiscardChoice.class,
                 this::projectRevealCardsDiscardChoice);
         register(PendingInteraction.AlternatingHandExileChoice.class,
@@ -139,6 +142,9 @@ public class InteractionPromptProjectionRegistry {
                 this::projectGraveyardExileCostChoice);
         register(PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 this::projectActivatedAbilityGraveyardExileCostChoice);
+        register(PendingInteraction.CraftMaterialChoice.class, this::projectCraftMaterialChoice);
+        register(PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice.class,
+                this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
         register(PendingInteraction.RetracedImageCardChoice.class,
@@ -324,6 +330,15 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()), 1,
                 "Choose a nonland card exiled with Plargg and Nassari.");
+    }
+
+    private InteractionPromptMessage projectEyeOfTheStormCastChoice(
+            GameData gameData, PendingInteraction.EyeOfTheStormCastChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCopyIds()),
+                exiledCardViews(gameData, interaction.validCopyIds()),
+                interaction.validCopyIds().size(),
+                "Choose any number of Eye of the Storm copies to cast without paying their mana costs.");
     }
 
     private InteractionPromptMessage projectExiledSpellCopyChoice(
@@ -552,7 +567,9 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.pool()),
                 interaction.maximumSelectionCount(),
                 interaction.requiredCount() < 0
-                        ? "Choose any number of " + interaction.cardLabel()
+                        ? "Choose " + (interaction.maximumSelectionCount() < interaction.pool().size()
+                                ? "up to " + interaction.maximumSelectionCount()
+                                : "any number of") + " " + interaction.cardLabel()
                                 + " cards to reveal and put on top of your library."
                         : "Choose " + interaction.minimumSelectionCount() + " cards to put on top of your library.");
     }
@@ -842,6 +859,14 @@ public class InteractionPromptProjectionRegistry {
                 interaction.optional());
     }
 
+    private InteractionPromptMessage projectSpectersShriekChoice(
+            GameData gameData, PendingInteraction.SpectersShriekChoice interaction) {
+        List<CardView> cardViews =
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews, interaction.validIndices(), interaction.prompt(), true);
+    }
+
     private InteractionPromptMessage projectAlternatingHandExileChoice(
             GameData gameData, PendingInteraction.AlternatingHandExileChoice interaction) {
         List<CardView> cardViews =
@@ -893,6 +918,19 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectActivatedAbilityGraveyardExileCostChoice(
             GameData gameData, PendingInteraction.ActivatedAbilityGraveyardExileCostChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectCraftMaterialChoice(
+            GameData gameData, PendingInteraction.CraftMaterialChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.minimumCards(),
+                interaction.maximumCards(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectActivatedAbilityGraveyardLibraryCostChoice(
+            GameData gameData, PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
     }
@@ -1140,7 +1178,8 @@ public class InteractionPromptProjectionRegistry {
                 interaction.mustAttackIndices(),
                 targets,
                 interaction.taxPerCreature(),
-                interaction.mustAttackWithAtLeastOne());
+                interaction.mustAttackWithAtLeastOne(),
+                interaction.choosingForOpponent());
     }
 
     private AvailableBlockersMessage projectBlockerDeclaration(
@@ -1263,6 +1302,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
                 || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
                 || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
+                || context instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
                 || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice;
     }
 

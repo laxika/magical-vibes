@@ -43,7 +43,7 @@ class TolarianContemptTest extends BaseCardTest {
         Permanent unmarkedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -53,7 +53,6 @@ class TolarianContemptTest extends BaseCardTest {
                 .doesNotContain(unmarkedCreature.getId());
 
         harness.handlePermanentChosen(player1, markedCreature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.TargetLibraryDestinationChoice.class);
@@ -62,7 +61,8 @@ class TolarianContemptTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(unmarkedCreature)
                 .doesNotContain(markedCreature);
-        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(existingTop, markedCreature.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).contains(existingTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(markedCreature.getCard());
     }
 
     private void castTolarianContempt() {
@@ -70,6 +70,7 @@ class TolarianContemptTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

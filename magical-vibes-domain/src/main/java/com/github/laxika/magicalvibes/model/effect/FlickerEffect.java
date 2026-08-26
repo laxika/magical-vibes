@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.Set;
 
 /**
- * Exile permanent(s) and return them to the battlefield under their owner's control (CR 610.3) as
- * new objects — counters, attached Auras/Equipment and other state are lost, and tokens cease to
- * exist in exile. When {@code returnUnderController} is true (Restoration Angel), the card returns
+ * Exile permanent(s) and return them to the battlefield under their owner's control as new objects
+ * (CR 400.7) — counters, attached Auras/Equipment and other state are lost, and tokens cease to
+ * exist in exile (CR 111.7). When {@code returnUnderController} is true (Restoration Angel), the card returns
  * under the effect controller's control instead, keeping a stolen creature permanently. For a
  * self-flicker, this flag also distinguishes "under your control" from "under its owner's control."
  *
@@ -51,7 +51,7 @@ public record FlickerEffect(
         boolean addCounterIfReturnedUnderControllerOtherwiseTap,
         Set<Keyword> grantedKeywordsOnReturn,
         boolean chooseAnyNumber,
-        boolean returnAtControllerNextStep) implements CardEffect {
+        boolean returnAtControllerNextStep) implements AttachedPermanentSelfTargetingEffect {
 
     public FlickerEffect {
         grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
@@ -154,6 +154,12 @@ public record FlickerEffect(
                 TurnStep.END_STEP, returnTapped, null, null, 0, false, false);
     }
 
+    /** Exile the enchanted creature and all Auras attached to it, returning them at the next end step. */
+    public static FlickerEffect exileEnchantedCreatureAndAurasReturnAtEndStep() {
+        return new FlickerEffect(FlickerScope.ENCHANTED_CREATURE_AND_AURAS, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
     /**
      * Exile this permanent, immediately return it under the effect controller's control
      * (Deadeye Navigator granted ability — "Exile this creature, then return it to the battlefield
@@ -252,7 +258,7 @@ public record FlickerEffect(
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
             return TargetSpec.benign(TargetPredicates.player());
         }
-        if (scope == FlickerScope.SELF) {
+        if (scope == FlickerScope.SELF || scope == FlickerScope.ENCHANTED_CREATURE_AND_AURAS) {
             return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;

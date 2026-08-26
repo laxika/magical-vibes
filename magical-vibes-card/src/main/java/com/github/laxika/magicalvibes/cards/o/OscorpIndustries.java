@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "182")
+@CardRegistration(set = "SPM", collectorNumber = "282")
 public class OscorpIndustries extends Card {
 
     public OscorpIndustries() {

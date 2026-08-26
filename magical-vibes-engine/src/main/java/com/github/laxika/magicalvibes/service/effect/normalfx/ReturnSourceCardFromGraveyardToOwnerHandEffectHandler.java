@@ -43,7 +43,7 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
 
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-        gameData.playerHands.get(ownerId).add(sourceCard);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, sourceCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         

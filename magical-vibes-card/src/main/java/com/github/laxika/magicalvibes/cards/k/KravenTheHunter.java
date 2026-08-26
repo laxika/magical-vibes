@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "133")
+@CardRegistration(set = "SPM", collectorNumber = "273")
 public class KravenTheHunter extends Card {
 
     public KravenTheHunter() {

@@ -43,6 +43,7 @@ class CardImmutabilityArchTest {
             "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
             "PermanentCopierService",  // assembles fresh clone-copy cards
+            "LandCopyOnEnterService",  // adds Cave to the fresh clone-copy card installed by PermanentCopierService
             "CloneService",            // "except it has ..." on the fresh clone-copy card
             "CopySupport",             // assembles fresh spell-copy cards
             "CopyControllerCastSpellEffectHandler", // decorates the fresh spell-copy card

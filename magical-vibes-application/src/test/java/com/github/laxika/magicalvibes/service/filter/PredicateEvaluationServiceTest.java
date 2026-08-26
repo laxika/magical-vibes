@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -29,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePr
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsDoubleFacedPredicate;
@@ -88,6 +90,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
@@ -107,6 +110,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControl
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
@@ -297,6 +301,16 @@ class PredicateEvaluationServiceTest {
     @Nested
     @DisplayName("matchesCardPredicate")
     class MatchesCardPredicate {
+
+        @Test
+        void matchesCardsWithAdventureCastingOption() {
+            Card adventure = new Card();
+            adventure.addCastingOption(new AdventureCast("{1}{G}"));
+            Card ordinary = new Card();
+
+            assertThat(evaluator.matchesCardPredicate(adventure, new CardHasAdventurePredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(ordinary, new CardHasAdventurePredicate(), null)).isFalse();
+        }
 
         @Test
         @DisplayName("null predicate returns true")
@@ -805,6 +819,27 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentManaValueAtMostControllerGraveyardCountPredicate uses the target's controller's graveyard")
+        void manaValueAtMostControllerGraveyardCountMatches() {
+            gd.playerGraveyards.get(player2Id).add(createArtifact("Graveyard Card One"));
+            gd.playerGraveyards.get(player2Id).add(createArtifact("Graveyard Card Two"));
+
+            Card eligibleCard = createArtifact("Eligible Artifact");
+            eligibleCard.setManaCost("{2}");
+            Permanent eligible = addPermanent(player2Id, eligibleCard);
+            Card ineligibleCard = createArtifact("Ineligible Artifact");
+            ineligibleCard.setManaCost("{3}");
+            Permanent ineligible = addPermanent(player2Id, ineligibleCard);
+
+            PermanentManaValueAtMostControllerGraveyardCountPredicate predicate =
+                    new PermanentManaValueAtMostControllerGraveyardCountPredicate();
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(eligible, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(ineligible, predicate, context)).isFalse();
+        }
+
+        @Test
         @DisplayName("Lowest mana value nonland predicate ignores lands and allows ties")
         void lowestManaValueNonlandPredicateIgnoresLandsAndAllowsTies() {
             Card lowCard = createArtifact("Low Artifact");
@@ -1193,6 +1228,23 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(1))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentToughnessGreaterThanPowerPredicate matches only strict toughness superiority")
+        void toughnessGreaterThanPowerPredicateMatchesStrictly() {
+            Permanent greaterToughness = addPermanent(player1Id,
+                    createCreature("Giant Spider", 2, 4, CardColor.GREEN));
+            Permanent equalPowerToughness = addPermanent(player1Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent greaterPower = addPermanent(player1Id,
+                    createCreature("Goblin Piker", 2, 1, CardColor.RED));
+
+            PermanentToughnessGreaterThanPowerPredicate predicate =
+                    new PermanentToughnessGreaterThanPowerPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, greaterToughness, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, equalPowerToughness, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, greaterPower, predicate)).isFalse();
         }
 
         @Test

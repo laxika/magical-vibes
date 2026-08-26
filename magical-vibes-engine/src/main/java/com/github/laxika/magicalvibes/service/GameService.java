@@ -889,6 +889,17 @@ public class GameService {
         }
     }
 
+    public void playGraveyardLand(GameData gameData, Player player, UUID graveyardCardId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playGraveyardLand(gameData, actionPlayer, graveyardCardId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playGraveyardLand(gameData, player, graveyardCardId, 0);
+        }
+    }
+
     public void playCardWithEvoke(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                   Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
         Player actionPlayer = player;
@@ -932,6 +943,19 @@ public class GameService {
             requirePriority(gameData, player);
             spellCastingService.playCardWithAlternateCost(gameData, player, cardIndex, xValue, targetId,
                     damageAssignments, targetIds != null ? targetIds : List.of());
+        }
+    }
+
+    public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playAdventureCard(gameData, actionPlayer, cardIndex, xValue, targetId, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playAdventureCard(gameData, player, cardIndex, xValue, targetId,
+                    targetIds != null ? targetIds : List.of());
         }
     }
 

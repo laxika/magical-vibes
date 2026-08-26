@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "157")
+@CardRegistration(set = "SPM", collectorNumber = "276")
 public class UltimateGreenGoblin extends Card {
 
     public UltimateGreenGoblin() {

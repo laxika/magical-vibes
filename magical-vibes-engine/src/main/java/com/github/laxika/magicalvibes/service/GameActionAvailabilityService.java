@@ -107,7 +107,8 @@ public class GameActionAvailabilityService {
     public int getPotentialManaTotal(GameData gameData, UUID playerId) {
         int potential = potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal();
         ManaPool current = gameData.playerManaPools.get(playerId);
-        return potential + (current == null ? 0 : current.getAbilityOnlyManaTotal());
+        return potential + (current == null ? 0
+                : current.getAbilityOnlyManaTotal() + current.getLandAbilityOnlyManaTotal());
     }
 
     /**
@@ -155,10 +156,17 @@ public class GameActionAvailabilityService {
                     continue;
                 }
                 ManaPool pool = fullPool;
+                if (gameQueryService.isLand(gameData, perm)) {
+                    pool = new VirtualManaPool(fullPool);
+                    pool.promoteLandAbilityOnlyMana();
+                }
                 if (ability.isRequiresTap()) {
                     if (poolWithoutSource == null) {
                         poolWithoutSource = potentialManaService.buildVirtualManaPool(gameData, playerId, perm.getId());
                         poolWithoutSource.promoteAbilityOnlyMana();
+                        if (gameQueryService.isLand(gameData, perm)) {
+                            poolWithoutSource.promoteLandAbilityOnlyMana();
+                        }
                         if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
                             poolWithoutSource.setAllManaSpendableAsAnyColor(true);
                         }
@@ -270,21 +278,18 @@ public class GameActionAvailabilityService {
 
     /** Per-player values shared by every card's playability check; computed once per hand scan. */
     private record SpellPlayabilityContext(boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
-                                           int landsPlayed, boolean spellLimitReached, boolean cantCastDueToAttack,
+                                           int landsPlayed, boolean cantCastDueToAttack,
                                            Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames,
                                            CastingCostService.CostModifierSnapshot costSnapshot,
                                            List<Permanent> battlefield) {
     }
 
     private SpellPlayabilityContext buildSpellPlayabilityContext(GameData gameData, UUID playerId) {
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
         return new SpellPlayabilityContext(
                 playerId.equals(gameData.activePlayerId),
                 gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
                 gameData.stack.isEmpty(),
                 gameData.landsPlayedThisTurn.getOrDefault(playerId, 0),
-                spellsCast >= maxSpells,
                 castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId),
                 castingPermissionService.getRestrictedSpellTypes(gameData, playerId),
                 castingPermissionService.getForbiddenCardNames(gameData, playerId),
@@ -315,7 +320,13 @@ public class GameActionAvailabilityService {
             pool.promoteForetellSpellOnlyMana();
         }
 
-        if (card.getCastingOption(OmenCast.class).isPresent() && card.getBackFaceCard() != null
+        if ((card.getCastingOption(OmenCast.class).isPresent()
+                || card.getCastingOption(AdventureCast.class).isPresent()) && card.getBackFaceCard() != null
+                && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
+                extraConvokeMana, additionalGenericCost, ctx)) {
+            return true;
+        }
+        if (card.getCastingOption(AdventureCast.class).isPresent() && card.getBackFaceCard() != null
                 && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
                 extraConvokeMana, additionalGenericCost, ctx)) {
             return true;
@@ -619,9 +630,11 @@ public class GameActionAvailabilityService {
                     gameData, playerId, card, pool, additionalGenericCost))
                     && castingPermissionService.canCastWithTiming(gameData, playerId, card,
                             ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())
-                    && !ctx.spellLimitReached() && !ctx.cantCastDueToAttack();
+                    && !castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                    && !ctx.cantCastDueToAttack();
         }
-        if (ctx.spellLimitReached() || ctx.cantCastDueToAttack()) {
+        if (castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                || ctx.cantCastDueToAttack()) {
             return false;
         }
         if (castingPermissionService.isSpellRestricted(gameData, playerId, card, ctx.restrictedSpellTypes(), ctx.forbiddenCardNames())) {
@@ -955,7 +968,6 @@ public class GameActionAvailabilityService {
         if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
             return playable;
         }
-
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
@@ -964,6 +976,7 @@ public class GameActionAvailabilityService {
 
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty
                 || gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                || gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)
                 || castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)) {
             return playable;
@@ -986,6 +999,33 @@ public class GameActionAvailabilityService {
         return playable;
     }
 
+    public boolean canPlayGraveyardLand(GameData gameData, UUID playerId, Card card, UUID graveyardOwnerId) {
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
+            return false;
+        }
+        if (!playerId.equals(gameQueryService.getPriorityPlayerId(gameData))) {
+            return false;
+        }
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)
+                || !gameData.stack.isEmpty()
+                || gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                || gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)
+                || castingPermissionService.isLandPlayRestricted(gameData, playerId)
+                || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)
+                || !card.hasType(CardType.LAND)
+                || castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
+            return false;
+        }
+        boolean hasPermission = playerId.equals(graveyardOwnerId)
+                ? castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId)
+                : false;
+        return hasPermission || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
+    }
+
     public List<Integer> getPlayableFlashbackIndices(GameData gameData, UUID playerId) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
@@ -1001,6 +1041,9 @@ public class GameActionAvailabilityService {
         if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
             return playable;
         }
+        if (gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)) {
+            return playable;
+        }
 
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null) {
@@ -1011,9 +1054,6 @@ public class GameActionAvailabilityService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Optional<UUID> graveyardCastSourceId = castingPermissionService.findGraveyardCastSourcePermanentId(gameData, playerId);
         Set<CardType> typesCastFromGraveyard = graveyardCastSourceId
@@ -1022,11 +1062,11 @@ public class GameActionAvailabilityService {
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
-            if (spellLimitReached || cantCastDueToAttack) {
+            if (cantCastDueToAttack) {
                 continue;
             }
             if (!card.hasType(CardType.LAND)
-                    && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD)) {
+                    && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD, playerId)) {
                 continue;
             }
 
@@ -1037,6 +1077,9 @@ public class GameActionAvailabilityService {
             }
             var disturb = card.getCastingOption(DisturbCast.class);
             Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
+            if (castingPermissionService.isSpellLimitReached(gameData, playerId, castHalf)) {
+                continue;
+            }
             var harmonize = card.getCastingOption(HarmonizeCast.class);
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
             if (graveyardCast.isEmpty()) {
@@ -1188,6 +1231,12 @@ public class GameActionAvailabilityService {
             }
             if (flashback.isPresent()
                     && !castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashback.get())) {
+                continue;
+            }
+            if (flashback.isPresent()
+                    && (!flashback.get().getCosts(SacrificePermanentsCost.class).isEmpty()
+                    || !flashback.get().getCosts(SacrificeXPermanentsCastingCost.class).isEmpty())
+                    && !castingCostService.canPayFlashbackSacrificeCost(gameData, playerId, flashback.get())) {
                 continue;
             }
             ManaPool pool = gameData.playerManaPools.get(playerId);

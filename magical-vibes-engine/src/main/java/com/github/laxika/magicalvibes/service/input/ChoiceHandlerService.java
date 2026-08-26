@@ -149,6 +149,10 @@ public class ChoiceHandlerService {
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid restricted card name: " + colorName);
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
+                && !colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid card name: " + colorName);
+        }
 
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
             handleDevotionManaColorChosen(gameData, player, colorName, ctx);
@@ -177,6 +181,11 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.SpellOnlyManaColorChoice ctx) {
             handleSpellOnlyManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.ChosenPlayerManaColorChoice ctx) {
+            handleChosenPlayerManaColorChosen(gameData, player, colorName, colorChoice, ctx);
             return;
         }
 
@@ -448,6 +457,10 @@ public class ChoiceHandlerService {
             handleNameCardMillDrawChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice ctx) {
+            handleChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
             handleChooseCreatureNameRevealTopCardsChoice(gameData, player, colorName, ctx);
             return;
@@ -470,6 +483,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice ctx) {
             handleChooseNameRevealRandomHandCardsDiscardChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
+            handleChooseNameRevealHandDiscardChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
@@ -784,6 +801,9 @@ public class ChoiceHandlerService {
         } else if (ctx.creatureSpellOrAbilityOnly()) {
             // "Any combination of colors" means each mana gets its own color choice.
             manaPool.addCreatureSpellOrAbilityMana(manaColor, 1);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
                     + " mana (creature spells or creature abilities only).";
@@ -794,7 +814,9 @@ public class ChoiceHandlerService {
             int remaining = amount - 1;
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice
-                        .creatureSpellOrAbilityOnly(ctx.playerId(), remaining);
+                        .creatureSpellOrAbilityOnly(ctx.playerId(), remaining)
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors,
@@ -809,6 +831,9 @@ public class ChoiceHandlerService {
             if (ctx.creatureSourceSpellOrAbility()) {
                 manaPool.addSubtypeCreatureSourceSpellOrAbilityMana(
                         ctx.restrictedToCreatureSubtype(), manaColor, 1);
+                if (ctx.fromCaveSource()) {
+                    manaPool.addCaveManaTag(manaColor, 1);
+                }
                 subtypeLabel = ctx.restrictedToCreatureSubtype().getDisplayName();
                 restriction = "creature spells or creature-source abilities";
             } else {
@@ -817,6 +842,9 @@ public class ChoiceHandlerService {
                     restrictedSubtypes = Set.of(ctx.restrictedToCreatureSubtype());
                 }
                 manaPool.addSubtypeSpellOrAbilityMana(restrictedSubtypes, manaColor, 1);
+                if (ctx.fromCaveSource()) {
+                    manaPool.addCaveManaTag(manaColor, 1);
+                }
                 subtypeLabel = restrictedSubtypes.stream()
                         .map(CardSubtype::getDisplayName)
                         .toList()
@@ -836,6 +864,7 @@ public class ChoiceHandlerService {
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype())
                         : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype());
+                nextCtx = nextCtx.withSnowSource(ctx.fromSnowSource()).withCaveSource(ctx.fromCaveSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -845,6 +874,9 @@ public class ChoiceHandlerService {
         } else if (ctx.flashbackOnly()) {
             // "Any combination of colors" — add 1 mana of the chosen color per choice
             manaPool.addFlashbackOnlyMana(manaColor, 1);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana (flashback only).";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -853,7 +885,10 @@ public class ChoiceHandlerService {
             // If more mana to choose, prompt again for the next color
             int remaining = amount - 1;
             if (remaining > 0) {
-                ChoiceContext.ManaColorChoice nextCtx = new ChoiceContext.ManaColorChoice(ctx.playerId(), ctx.fromCreature(), remaining, null, true);
+                ChoiceContext.ManaColorChoice nextCtx = new ChoiceContext.ManaColorChoice(
+                        ctx.playerId(), ctx.fromCreature(), remaining, null, true)
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add (flashback only)."));
@@ -863,6 +898,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsRiot()) {
             manaPool.add(manaColor, 1);
             manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, 1);
             }
@@ -877,7 +915,9 @@ public class ChoiceHandlerService {
             int remaining = amount - 1;
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.riotColorCombination(
-                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions());
+                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -895,6 +935,9 @@ public class ChoiceHandlerService {
                 if (ctx.fromSnowSource()) {
                     manaPool.addSnowManaTag(manaColor, 1);
                 }
+                if (ctx.fromCaveSource()) {
+                    manaPool.addCaveManaTag(manaColor, 1);
+                }
                 if (ctx.fromCreature()) {
                     manaPool.addCreatureMana(manaColor, 1);
                 }
@@ -911,7 +954,8 @@ public class ChoiceHandlerService {
                         : ctx.fixedColorOptions();
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.fixedColorCombination(
                         ctx.playerId(), ctx.fromCreature(), remaining, nextColors)
-                        .withSnowSource(ctx.fromSnowSource());
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
                 if (ctx.differentColors()) {
                     nextCtx = ChoiceContext.ManaColorChoice.differentColors(
                             ctx.playerId(), ctx.fromCreature(), remaining, nextColors);
@@ -927,6 +971,9 @@ public class ChoiceHandlerService {
             }
         } else if (ctx.manaValueAtLeastFour()) {
             manaPool.addManaValueAtLeastFourOnlyMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (spells with mana value 4 or greater only).";
@@ -949,10 +996,17 @@ public class ChoiceHandlerService {
                     player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount, ctx.grantsUncounterable());
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
         } else if (ctx.creatureSpellOnly()) {
-            manaPool.addCreatureSpellOnlyMana(manaColor, amount);
             if (ctx.fromCreature()) {
                 manaPool.addCreatureSourceCreatureSpellOnlyMana(manaColor, amount);
+            } else {
+                manaPool.addCreatureSpellOnlyMana(manaColor, amount);
+            }
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
             }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
@@ -962,6 +1016,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsAdditionalPlusOneCounter()) {
             manaPool.add(manaColor, amount);
             manaPool.addAdditionalCounterGrantingMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
             }
@@ -976,8 +1033,14 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} counter-granting mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.instantSorceryOnly()) {
             manaPool.addInstantSorceryOnlyColored(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
         } else if (ctx.abilityOnly()) {
             manaPool.addAbilityOnlyMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (activated abilities only).";
@@ -986,6 +1049,9 @@ public class ChoiceHandlerService {
                     player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.artifactSpellOrAbilityOnly()) {
             manaPool.addArtifactOnlyMana(manaColor, amount);
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
+            }
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (artifact spells or abilities only).";
@@ -995,6 +1061,9 @@ public class ChoiceHandlerService {
             manaPool.add(manaColor, amount);
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
+            }
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, amount);
             }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
@@ -1048,6 +1117,35 @@ public class ChoiceHandlerService {
             trigger.setProducedManaColor(manaColor);
             effectResolutionService.resolveEffects(gameData, trigger);
         }
+    }
+
+    private void handleChosenPlayerManaColorChosen(GameData gameData, Player player, String colorName,
+                                                   PendingInteraction.ColorChoice colorChoice,
+                                                   ChoiceContext.ChosenPlayerManaColorChoice ctx) {
+        if (!colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor chosenColor = ManaColor.valueOf(colorName);
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.sourceControllerId(), chosenColor);
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.recipientPlayerId());
+        manaPool.add(manaColor, ctx.amount());
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, ctx.amount());
+        }
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.sourceControllerId())) {
+            AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
+                + colorName.toLowerCase() + " mana."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleDifferentColorManaChosen(GameData gameData, Player player, String colorName,
@@ -3547,7 +3645,7 @@ public class ChoiceHandlerService {
                 for (Card card : toReturn) {
                     graveyard.remove(card);
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-                    gameData.addCardToHand(controllerId, card);
+                    graveyardService.addCardToHandFromGraveyard(gameData, controllerId, controllerId, card);
                 }
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);
@@ -3769,6 +3867,57 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleChooseNameRevealHandDiscardChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
+        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+
+        if (hand == null || hand.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> toDiscard = hand.stream()
+                .filter(card -> card.getName().equals(cardName))
+                .toList();
+        if (toDiscard.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " has no cards named \""
+                    + cardName + "\" to discard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        hand.removeAll(toDiscard);
+        gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
+        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        for (Card card : toDiscard) {
+            graveyardService.discardCard(gameData, targetPlayerId, card);
+            gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+        }
+        triggerCollectionService.finishDiscardEvent(gameData);
+
+        gameLogService.append(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
+                + " card" + (toDiscard.size() == 1 ? "" : "s") + " named \"" + cardName + "\"."));
+        log.info("Game {} - {} discards {} card(s) named {}", gameData.id, targetName,
+                toDiscard.size(), cardName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleNameCardMillGainLifeChoice(GameData gameData, Player player, String cardName,
                                                   ChoiceContext.NameCardMillGainLifeChoice ctx) {
         gameData.interaction.clearAwaitingInput();
@@ -3809,6 +3958,57 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} milled the named card {}, {} draws a card",
                     gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
                     matched.getName(), controllerName);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        if (deck == null || deck.isEmpty()) {
+            if (deck != null) {
+                Collections.shuffle(deck);
+            }
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is empty."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> revealed = new ArrayList<>();
+        Card found = null;
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            revealed.add(card);
+            if (card.getName().equals(cardName)) {
+                found = card;
+                break;
+            }
+        }
+
+        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        gameLogService.append(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
+
+        if (found == null) {
+            Collections.shuffle(revealed);
+            deck.addAll(revealed);
+            gameLogService.append(gameData, GameLog.text(
+                    targetName + " does not reveal a card named \"" + cardName + "\" and shuffles their library."));
+        } else {
+            revealed.remove(found);
+            for (Card card : revealed) {
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
+            }
+            deck.addFirst(found);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    targetName + " puts ", found, " on top of their library."));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

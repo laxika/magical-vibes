@@ -51,9 +51,10 @@ public class TokenCopySupport {
             return;
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, tokenControllerId);
         List<Permanent> tokens = new ArrayList<>();
         for (Card sourceCard : sourceCards) {
+            int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                    gameData, tokenControllerId, sourceCard.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 Card tokenCard = buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(

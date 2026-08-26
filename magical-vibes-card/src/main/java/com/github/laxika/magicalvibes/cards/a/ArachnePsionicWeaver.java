@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePr
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "2")
+@CardRegistration(set = "SPM", collectorNumber = "245")
 public class ArachnePsionicWeaver extends Card {
 
     public ArachnePsionicWeaver() {

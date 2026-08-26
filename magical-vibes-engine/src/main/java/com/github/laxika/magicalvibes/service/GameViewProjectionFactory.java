@@ -392,11 +392,15 @@ public class GameViewProjectionFactory {
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
         // Determine which players have their top card visible to the viewer.
         // PlayWithTopCardRevealedEffect = publicly revealed to all players.
-        // LookAtTopCardOfOwnLibraryEffect and library-cast permissions = private, only visible
-        // to the controller.
+        // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect and temporary
+        // top-library permissions = private, only visible to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
+            if (pid.equals(viewerId)
+                    && data.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(pid)) {
+                revealedPlayerIds.add(pid);
+            }
             UUID freePlayCardId = data.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(pid);
             if (freePlayCardId != null && deck != null && !deck.isEmpty()
                     && freePlayCardId.equals(deck.getFirst().getId())) {
@@ -410,9 +414,13 @@ public class GameViewProjectionFactory {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof PlayWithTopCardRevealedEffect) {
+                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all
-                        revealedPlayerIds.add(pid);
+                        if (topCardRevealed.allPlayers()) {
+                            revealedPlayerIds.addAll(data.orderedPlayerIds);
+                        } else {
+                            revealedPlayerIds.add(pid);
+                        }
                     } else if (pid.equals(viewerId) &&
                             (effect instanceof LookAtTopCardOfOwnLibraryEffect
                                     || effect instanceof AllowCastFromTopOfLibraryEffect
@@ -511,9 +519,6 @@ public class GameViewProjectionFactory {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttackExile = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
@@ -606,7 +611,9 @@ public class GameViewProjectionFactory {
                 continue;
             }
 
-            if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
+            if (card.getManaCost() == null
+                    || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                    || cantCastDueToAttackExile) continue;
             if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
@@ -684,7 +691,8 @@ public class GameViewProjectionFactory {
 
     /**
      * Returns the top card of the player's library as a playable CardView if:
-     * - the player has a permanent with a permission to cast from the library top
+     * - the player has a permanent or temporary permission to cast from the top of their library
+     * - the top card matches one of the castable types
      * - the player can afford and is allowed to cast it
      */
     List<CardView> getPlayableLibraryTopCards(GameData gameData, UUID playerId) {
@@ -743,14 +751,12 @@ public class GameViewProjectionFactory {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
-        if (spellLimitReached || cantCastDueToAttack) return playable;
+        if (castingPermissionService.isSpellLimitReached(gameData, playerId, topCard)
+                || cantCastDueToAttack) return playable;
         if (castingPermissionService.isSpellRestricted(gameData, playerId, topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return playable;

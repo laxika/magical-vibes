@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSour
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "131")
+@CardRegistration(set = "SPM", collectorNumber = "272")
 public class JackalGeniusGeneticist extends Card {
 
     public JackalGeniusGeneticist() {

@@ -492,9 +492,9 @@
           [class.blocking]="creature && ip.perm.blocking"
           [class.combat-nudge]="creature && (mine ? (isAttackingCreature(ip.originalIndex, true) || isBlockingCreature(ip.originalIndex, true)) : (ip.perm.attacking || ip.perm.blocking))"
           [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"
-          [class.can-attack]="mine && creature && canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
-          [class.selected-attacker]="mine && creature && declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
-          [class.must-attack]="mine && creature && mustAttackIndices().has(ip.originalIndex)"
+          [class.can-attack]="isAttackerSelectionSide(mine) && creature && canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+          [class.selected-attacker]="isAttackerSelectionSide(mine) && creature && declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
+          [class.must-attack]="isAttackerSelectionSide(mine) && creature && mustAttackIndices().has(ip.originalIndex)"
           [class.can-block]="isBlockerSide(mine) && creature && canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
           [class.selected-blocker]="isBlockerSide(mine) && creature && selectedBlockerIndex() === ip.originalIndex"
           [class.assigned-blocker]="isBlockerSide(mine) && creature && isAssignedBlocker(ip.originalIndex)"
@@ -513,12 +513,12 @@
             @if (mine ? isAttackingCreature(ip.originalIndex, true) : ip.perm.attacking) {
               <div badge-tl class="card-combat-badge attacking-badge">Attacking</div>
             }
-            @if (mine && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
+            @if (isAttackerSelectionSide(mine) && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
               <div badge-tl class="card-combat-badge attack-target-badge"
                 title="Click to change attack target"
                 (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
             }
-            @if (mine && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && canDeclareBand()) {
+            @if (isAttackerSelectionSide(mine) && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && canDeclareBand()) {
               <div badge-tl class="card-combat-badge band-badge"
                 title="Banding (CR 702.22): click to group attackers into a band"
                 (click)="$event.stopPropagation(); cycleBand(ip.originalIndex)">{{ getBandLabel(ip.originalIndex) }}</div>
@@ -659,7 +659,7 @@
     @if (choice.choosingGraveyardCards) {
       <div class="reveal-hand-overlay">
         <div class="reveal-hand-card">
-          <h2>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMaxCount }} selected)</h2>
+          <h2>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMinCount > 0 ? choice.graveyardChoiceMinCount + '–' : '' }}{{ choice.graveyardChoiceMaxCount }} selected)</h2>
           <div class="reveal-hand-cards">
             @for (card of choice.multiGraveyardCards; track $index) {
               <app-card-display
@@ -671,7 +671,8 @@
                 (mouseleave)="onCardHoverEnd()" />
             }
           </div>
-          <button class="btn-keep" (click)="choice.confirmGraveyardCardChoice()">Confirm</button>
+          <button class="btn-keep" (click)="choice.confirmGraveyardCardChoice()"
+            [disabled]="choice.graveyardChoiceSelectedIds().size < choice.graveyardChoiceMinCount">Confirm</button>
         </div>
       </div>
     }

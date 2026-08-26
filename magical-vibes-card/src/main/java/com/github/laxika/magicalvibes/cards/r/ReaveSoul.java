@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "115")
+@CardRegistration(set = "ELD", collectorNumber = "103")
 public class ReaveSoul extends Card {
 
     public ReaveSoul() {

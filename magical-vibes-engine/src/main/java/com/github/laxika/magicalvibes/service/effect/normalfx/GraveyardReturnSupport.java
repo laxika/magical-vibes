@@ -420,7 +420,9 @@ public class GraveyardReturnSupport {
                 || card.hasType(effect.plusOneCountersIfCardType()))
                 && (effect.plusOneCountersIfCondition() == null
                 || conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
-                ConditionContext.forCasting(controllerId)));
+                entry == null
+                        ? ConditionContext.forCasting(controllerId)
+                        : ConditionContext.forStackEntry(entry)));
         boolean exiledCostCounter = exiledCostSubtypeMatches
                 && effect.counterIfExiledCostCardHasSubtype() != null
                 && effect.counterCountIfExiledCostCardHasSubtype() > 0;
@@ -573,7 +575,8 @@ public class GraveyardReturnSupport {
                                 effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
                         applyBattlefieldReturnRiders(gameData, controllerId, card, effect);
                     } else {
-                        gameData.addCardToHand(controllerId, card);
+                        permanentRemovalService.addCardToHandFromGraveyard(
+                                gameData, controllerId, controllerId, card);
                     }
                 }
             } finally {
@@ -629,7 +632,8 @@ public class GraveyardReturnSupport {
                             || toOwnersLibrary || effect.underOwnersControl())
                             ? gyEntry.getKey() : controllerId;
                     if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                        gameData.addCardToHand(targetPlayerId, card);
+                        permanentRemovalService.addCardToHandFromGraveyard(
+                                gameData, gyEntry.getKey(), targetPlayerId, card);
                     } else if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
                         gameData.playerDecks.get(targetPlayerId).addFirst(card);
                     } else if (effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
@@ -748,7 +752,8 @@ public class GraveyardReturnSupport {
                 } else if (effect.battlefieldIfCreatureElseExile()) {
                     exileService.exileCard(gameData, controllerId, randomCard);
                 } else {
-                    gameData.addCardToHand(controllerId, randomCard);
+                    permanentRemovalService.addCardToHandFromGraveyard(
+                            gameData, controllerId, controllerId, randomCard);
                 }
                 returnedCards.add(randomCard);
             }
@@ -836,6 +841,8 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, matchingIndices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
+                .enterWithCounters(effect.enterWithCounters())
                 .mandatory(effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
@@ -900,6 +907,8 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, indices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
+                .enterWithCounters(effect.enterWithCounters())
                 .cardPool(cardPool);
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -953,17 +962,30 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         List<Card> movedCards = new ArrayList<>();
 
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (UUID cardId : targetIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                UUID graveyardOwnerId = card == null
+                        ? null
+                        : gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                if (card != null && graveyardOwnerId == null) {
+                    graveyardOwnerId = gameData.playerGraveyards.entrySet().stream()
+                            .filter(e -> e.getValue() != null && e.getValue().stream()
+                                    .anyMatch(c -> c.getId().equals(cardId)))
+                            .map(Map.Entry::getKey)
+                            .findFirst()
+                            .orElse(null);
+                }
+                List<Card> graveyard = graveyardOwnerId == null
+                        ? null
+                        : gameData.playerGraveyards.get(graveyardOwnerId);
                 if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                     cardConsumer.accept(graveyard, card);
                     movedCards.add(card);
-                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId, card);
                 }
             }
         } finally {
@@ -986,7 +1008,7 @@ public class GraveyardReturnSupport {
                                        boolean enterTapped) {
         String playerName = gameData.playerIdToName.get(playerId);
         if (destination == GraveyardChoiceDestination.HAND) {
-            gameData.addCardToHand(playerId, card);
+            permanentRemovalService.addCardToHandFromGraveyard(gameData, playerId, playerId, card);
             
             gameLogService.append(gameData, GameLog.textCardText(playerName + " returns " , card, " from graveyard to hand."));
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
@@ -1000,6 +1022,11 @@ public class GraveyardReturnSupport {
         } else {
             putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype, enterTapped);
         }
+    }
+
+    public void addCardToHandFromGraveyard(GameData gameData, UUID graveyardOwnerId,
+                                           UUID handOwnerId, Card card) {
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, graveyardOwnerId, handOwnerId, card);
     }
 
     public void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card) {
@@ -1585,7 +1612,8 @@ public class GraveyardReturnSupport {
                                          List<Permanent> simultaneouslyEntered,
                                          Set<Keyword> additionalKeywords) {
         UUID controllerId = entry.getControllerId();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                gameData, controllerId, sourceCard.hasType(CardType.CREATURE));
         Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = new Card();

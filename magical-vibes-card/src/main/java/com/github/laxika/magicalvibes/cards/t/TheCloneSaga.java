@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "28")
+@CardRegistration(set = "SPM", collectorNumber = "219")
 public class TheCloneSaga extends Card {
 
     public TheCloneSaga() {

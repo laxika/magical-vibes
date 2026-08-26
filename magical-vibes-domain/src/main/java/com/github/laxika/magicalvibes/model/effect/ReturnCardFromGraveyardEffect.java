@@ -238,6 +238,8 @@ import java.util.Set;
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
  * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
+ * @param targetGroup          positional graveyard-card target group resolved by this effect, or
+ *                             {@code -1} when the effect uses the ordinary target path
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -308,8 +310,9 @@ public record ReturnCardFromGraveyardEffect(
         DynamicAmount dynamicMaxManaValue,
         boolean unearth,
         boolean exileAtNextUpkeep,
-        List<CardEffect> battlefieldEffectGrants
-) implements CombatDamageAmountAwareEffect {
+        List<CardEffect> battlefieldEffectGrants,
+        int targetGroup
+) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect {
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -323,6 +326,7 @@ public record ReturnCardFromGraveyardEffect(
         private List<CardSubtype> grantSubtypes = List.of();
         private Set<CounterType> enterWithCounters = Set.of();
         private List<CardEffect> battlefieldEffectGrants = List.of();
+        private int targetGroup = -1;
     }
 
     @Override
@@ -331,12 +335,24 @@ public record ReturnCardFromGraveyardEffect(
         // resolution-time variants pick their card later. The declared scope is source(): it is the
         // one place the own/opponent/all narrowing lives, so the kept validator and every
         // enumeration path read the same value.
-        return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard(source)) : TargetSpec.NONE;
+        if (!targetGraveyard) {
+            return TargetSpec.NONE;
+        }
+        if (targetGroup >= 0) {
+            return TargetSpec.benign(TargetPredicates.anyOf(
+                    TargetPredicates.graveyardCard(source), TargetPredicates.anyTarget()));
+        }
+        return TargetSpec.benign(TargetPredicates.graveyardCard(source));
     }
 
     @Override
     public DynamicAmount combatDamageAmount() {
         return dynamicMaxManaValue;
+    }
+
+    @Override
+    public List<Integer> targetGroups() {
+        return targetGroup < 0 ? List.of() : List.of(targetGroup);
     }
 
     @Override

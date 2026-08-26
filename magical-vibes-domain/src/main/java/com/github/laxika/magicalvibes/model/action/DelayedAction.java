@@ -78,6 +78,7 @@ public sealed interface DelayedAction permits
         DelayedUnblockedAttackerGainLife,
         DelayedUnblockedAttackerCubeCounter,
         DelayedUnblockedAttackerUntapRemoveFromCombat,
+        DelayedAttackerDeclarationControl,
         DelayedBlockerDeclarationControl,
         DelayedDestroyCreatureDamagedByWatchedCreature,
         DelayedSacrificeSourceWhenTargetLeaves,

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "126")
+@CardRegistration(set = "SPM", collectorNumber = "270")
 public class CheeringCrowd extends Card {
 
     public CheeringCrowd() {

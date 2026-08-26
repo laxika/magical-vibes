@@ -64,7 +64,7 @@ public class ExileTriggeringCreatureAndReturnSourceToHandEffectHandler implement
         }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCard.getId());
         permanentRemovalService.removeCardFromGraveyardById(gameData, sourceCard.getId());
-        gameData.addCardToHand(ownerId, sourceCard);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, sourceCard);
         gameLogService.append(gameData, GameLog.cardThen(sourceCard, " returns to its owner's hand."));
         log.info("Game {} - {} returns from its graveyard to its owner's hand", gameData.id, sourceCard.getName());
     }
