@@ -31,6 +31,7 @@ class ShadyInformantTest extends BaseCardTest {
         Permanent informant = findPermanent(player1, "Shady Informant");
         assertThat(informant.isFaceDown()).isTrue();
 
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(informant));
 

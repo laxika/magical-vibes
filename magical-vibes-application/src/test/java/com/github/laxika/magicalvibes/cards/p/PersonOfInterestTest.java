@@ -25,6 +25,7 @@ class PersonOfInterestTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent person = findPermanent(player1, "Person of Interest");
         assertThat(person.isSuspected()).isTrue();

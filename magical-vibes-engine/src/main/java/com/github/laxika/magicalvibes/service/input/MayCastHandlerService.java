@@ -753,7 +753,7 @@ public class MayCastHandlerService {
                 ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToPlay.getId());
         if (graveyardCard == null || graveyardOwnerId == null
                 || !graveyardOwnerId.equals(expectedGraveyardOwnerId)
-                || !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
+                || filter != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " is no longer a legal target in your graveyard."));
             log.info("Game {} - {} no longer a legal graveyard target for play-from-graveyard", gameData.id, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

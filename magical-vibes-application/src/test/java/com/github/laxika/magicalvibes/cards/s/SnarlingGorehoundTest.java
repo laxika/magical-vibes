@@ -40,7 +40,8 @@ class SnarlingGorehoundTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SnarlingGorehound());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

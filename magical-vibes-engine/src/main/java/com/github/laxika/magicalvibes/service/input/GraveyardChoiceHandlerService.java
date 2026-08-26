@@ -639,7 +639,8 @@ public class GraveyardChoiceHandlerService {
         }
         if (multiGraveyardChoice.maxTotalManaValue() != null
                 && selectedManaValue > multiGraveyardChoice.maxTotalManaValue()) {
-            throw new IllegalStateException("Selected cards exceed the total mana value limit");
+            throw new IllegalStateException("Selected cards exceed the total mana value "
+                    + multiGraveyardChoice.maxTotalManaValue() + " limit");
         }
 
         var deadlyCoverUpContext = gameData.graveyardTargetOperation.resolutionTimeDeadlyCoverUp;

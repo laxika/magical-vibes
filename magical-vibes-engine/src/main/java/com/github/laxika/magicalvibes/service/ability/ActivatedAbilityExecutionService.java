@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -1770,6 +1771,15 @@ public class ActivatedAbilityExecutionService {
                 effectivePermanentTargetIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
+        if (!ability.getMultiTargetFilters().isEmpty()) {
+            List<TargetFilter> targetFilters = new ArrayList<>(effectivePermanentTargetIds.size());
+            for (int i = 0; i < effectivePermanentTargetIds.size(); i++) {
+                targetFilters.add(i < ability.getMultiTargetFilters().size()
+                        ? ability.getMultiTargetFilters().get(i)
+                        : ability.getTargetFilter());
+            }
+            stackEntry.setTargetFilters(targetFilters);
+        }
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));

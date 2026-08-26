@@ -55,6 +55,7 @@ class YarusRoarOfTheOldGodsTest extends BaseCardTest {
         Card bearCard = new GrizzlyBears();
         bearCard.setOwnerId(player2.getId());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, bearCard);
+        gd.stolenCreatures.put(bear.getId(), player2.getId());
         bear.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         bear.setMarkedDamage(2);
 

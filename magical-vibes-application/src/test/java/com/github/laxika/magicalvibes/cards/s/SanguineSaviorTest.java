@@ -52,10 +52,6 @@ class SanguineSaviorTest extends BaseCardTest {
         harness.castInstant(player2, 0, savior.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
-
         assertThat(gd.stack).isEmpty();
         assertThat(savior.isFaceDown()).isTrue();
         harness.assertInGraveyard(player2, "Shock");

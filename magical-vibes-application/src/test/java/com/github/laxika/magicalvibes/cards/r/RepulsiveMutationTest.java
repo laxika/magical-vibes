@@ -67,6 +67,6 @@ class RepulsiveMutationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature you control");
+                .hasMessageContaining("Card is not playable");
     }
 }

@@ -31,6 +31,8 @@ class VengefulTrackerTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         harness.assertInGraveyard(player2, "Implements of Sacrifice");
+        harness.handleListChoice(player2, ManaColor.BLACK.name());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
@@ -45,6 +47,7 @@ class VengefulTrackerTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         harness.assertNotOnBattlefield(player2, token.getCard().getName());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);

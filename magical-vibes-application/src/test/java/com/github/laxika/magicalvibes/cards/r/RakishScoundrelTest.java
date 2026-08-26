@@ -64,10 +64,6 @@ class RakishScoundrelTest extends BaseCardTest {
         harness.castInstant(player2, 0, scoundrel.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
-
         assertThat(gd.stack).isEmpty();
         assertThat(scoundrel.isFaceDown()).isTrue();
     }

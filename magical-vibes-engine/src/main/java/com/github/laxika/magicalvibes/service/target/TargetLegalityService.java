@@ -1592,9 +1592,7 @@ public class TargetLegalityService {
         }
     }
 
-    /**
-     * Validates the permanent target groups that follow a separately stored primary target.
-     */
+    /** Validates a flat target list containing both stack and battlefield target groups. */
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
                                                        UUID controllerId, int xValue) {
         validateMixedSpellAndPermanentTargets(
@@ -1610,7 +1608,7 @@ public class TargetLegalityService {
             }
             return;
         }
-        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 1,
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 0,
                 selectedEffects);
     }
 
@@ -2351,7 +2349,8 @@ public class TargetLegalityService {
                                     graveyardCard, graveyardFilter.predicate(), entry.getCard().getId());
                         }
                     }
-                } else if (secondaryTargetsAreOnStack) {
+                } else if (secondaryTargetsAreOnStack
+                        || declaredTargetPositionTargetsSpell(gameData, entry, i)) {
                     legal = checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked()).isEmpty();
                 } else {
@@ -2757,6 +2756,12 @@ public class TargetLegalityService {
     private List<TargetFilter> targetFiltersForDeclaredPositions(GameData gameData, StackEntry entry,
                                                                   int targetCount) {
         List<TargetFilter> filters = new ArrayList<>(targetCount);
+        if (!entry.getTargetFilters().isEmpty()) {
+            for (int i = 0; i < targetCount; i++) {
+                filters.add(i < entry.getTargetFilters().size() ? entry.getTargetFilters().get(i) : null);
+            }
+            return filters;
+        }
         if (entry.getTargetFilter() != null) {
             for (int i = 0; i < targetCount; i++) {
                 filters.add(entry.getTargetFilter());
@@ -2803,6 +2808,32 @@ public class TargetLegalityService {
             filters.add(fallback);
         }
         return filters;
+    }
+
+    private boolean declaredTargetPositionTargetsSpell(GameData gameData, StackEntry entry,
+                                                        int targetPosition) {
+        Card card = entry.getTargetingCard();
+        if (card == null || entry.isTargetIdsFromAssignments()) {
+            return false;
+        }
+        int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;
+        int consumed = 0;
+        for (SpellTarget group : card.getSpellTargets()) {
+            if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
+                continue;
+            }
+            int declaredSize = group.getIndex() < entry.getTargetGroupSizes().size()
+                    ? entry.getTargetGroupSizes().get(group.getIndex())
+                    : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
+                            entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
+            if (targetPosition < consumed + Math.max(declaredSize, 0)) {
+                return entry.getEffectsToResolve().stream()
+                        .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
+            }
+            consumed += Math.max(declaredSize, 0);
+        }
+        return false;
     }
 
     /**

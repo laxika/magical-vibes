@@ -2233,6 +2233,8 @@ public class SpellCastingService {
                 ? targetLegalityService.isSpellOnStack(gameData, targetId)
                 : mixedSpellOrPermanentTarget
                 ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                : mixedSpellAndPermanentTargets
+                ? false
                 : unwrappedNeedsSpellTarget;
         if (mixedSpellOrPermanentTarget && targetId == null) {
             throw new IllegalStateException("Spell requires a target");

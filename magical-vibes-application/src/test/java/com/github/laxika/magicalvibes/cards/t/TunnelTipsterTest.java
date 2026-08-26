@@ -24,8 +24,6 @@ class TunnelTipsterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
@@ -36,8 +34,9 @@ class TunnelTipsterTest extends BaseCardTest {
         assertThat(tipster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(tipster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -49,7 +48,7 @@ class TunnelTipsterTest extends BaseCardTest {
         Permanent tipster = findPermanent(player1, "Tunnel Tipster");
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

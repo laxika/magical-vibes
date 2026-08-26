@@ -22,17 +22,17 @@ class TrostaniThreeWhispersTest extends BaseCardTest {
     void grantsKeywordsUntilEndOfTurn() {
         addTrostani();
         Permanent target = addCreatureReady(player1, new RagingGoblin());
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
         harness.clearPriorityPassed();
-        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
         harness.clearPriorityPassed();
-        harness.activateAbility(player1, 2, null, target.getId());
+        harness.activateAbility(player1, 0, 2, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
@@ -56,12 +56,12 @@ class TrostaniThreeWhispersTest extends BaseCardTest {
         Permanent whiteTarget = addCreatureReady(player1, new RagingGoblin());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.activateAbility(player1, 1, null, greenTarget.getId());
+        harness.activateAbility(player1, 0, 1, null, greenTarget.getId());
         harness.passBothPriorities();
 
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.activateAbility(player1, 1, null, whiteTarget.getId());
+        harness.activateAbility(player1, 0, 1, null, whiteTarget.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, greenTarget, Keyword.VIGILANCE)).isTrue();

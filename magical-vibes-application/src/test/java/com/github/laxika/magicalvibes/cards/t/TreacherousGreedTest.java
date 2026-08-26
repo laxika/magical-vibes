@@ -21,6 +21,7 @@ class TreacherousGreedTest extends BaseCardTest {
     @DisplayName("Sacrifices a creature that dealt damage, then draws and changes life totals")
     void sacrificesDamagingCreatureAndResolvesAllEffects() {
         Permanent sorcerer = new Permanent(new ProdigalSorcerer());
+        sorcerer.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(sorcerer);
 
         harness.activateAbility(player1, 0, null, player2.getId());

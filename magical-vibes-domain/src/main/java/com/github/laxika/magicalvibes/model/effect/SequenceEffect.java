@@ -98,6 +98,9 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
 
     @Override
     public CardEffect boundToDyingCard(UUID dyingCardId) {
+        if (steps.stream().noneMatch(DyingCreatureCardAwareEffect.class::isInstance)) {
+            return this;
+        }
         List<CardEffect> boundSteps = steps.stream()
                 .map(step -> step instanceof DyingCreatureCardAwareEffect aware
                         ? aware.boundToDyingCard(dyingCardId) : step)

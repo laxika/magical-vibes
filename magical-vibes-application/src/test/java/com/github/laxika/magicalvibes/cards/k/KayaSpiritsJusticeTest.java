@@ -78,6 +78,7 @@ class KayaSpiritsJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent token = findPermanent(player1, "Spirit");
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        kaya.setLoyaltyActivationsThisTurn(0);
 
         activateWithTargets(kaya, List.of(creature.getId()));
         harness.passBothPriorities();
@@ -91,7 +92,7 @@ class KayaSpiritsJusticeTest extends BaseCardTest {
         assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
-        assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     private Permanent addReadyKaya(int loyalty) {

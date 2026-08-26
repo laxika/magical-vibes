@@ -56,6 +56,8 @@ public class StackEntry {
     @Setter private List<Integer> targetCardGroupSizes = List.of();
     private Map<CardEffect, List<UUID>> targetCardIdsByEffect = Map.of();
     @Setter private TargetFilter targetFilter;
+    /** Per-position filters declared by a multi-target activated ability. */
+    @Setter private List<TargetFilter> targetFilters = List.of();
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
     @Setter private boolean returnToHandAfterResolving;
@@ -644,6 +646,7 @@ public class StackEntry {
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
+        this.targetFilters = source.targetFilters.isEmpty() ? List.of() : new ArrayList<>(source.targetFilters);
         this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;

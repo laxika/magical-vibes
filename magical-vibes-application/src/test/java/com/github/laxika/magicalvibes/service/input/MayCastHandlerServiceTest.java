@@ -915,7 +915,7 @@ class MayCastHandlerServiceTest {
             Card card = createSorcery("Borrowed Spell");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
             PendingMayAbility ability = abilityFor(card);
-            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD)).thenReturn(true);
+            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(true);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER2_ID);
 

@@ -42,7 +42,7 @@ class LumberingLaundryTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.clearMessages();
 
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.CLEANUP);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

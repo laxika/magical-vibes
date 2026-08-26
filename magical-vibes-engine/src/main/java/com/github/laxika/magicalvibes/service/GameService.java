@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -1185,6 +1186,14 @@ public class GameService {
                 .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
                 .toList();
         if (!effects.isEmpty()) {
+            if (effects.size() == 1 && effects.getFirst() instanceof ChooseOneEffect modal) {
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        permanent.getCard(), controllerId, modal, permanent.getId()));
+                if (autoPass) {
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
+                return;
+            }
             BattlefieldAndGraveyardCardChoosingEffect mixedZoneChoice = effects.stream()
                     .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
                     .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
@@ -1209,6 +1218,7 @@ public class GameService {
                 boolean includeAbilities = false;
                 if (permanent.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
                     spellFilter = filter.predicate();
+                    includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
                 }
                 gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                         permanent.getCard(), controllerId, effects, spellFilter, includeAbilities,

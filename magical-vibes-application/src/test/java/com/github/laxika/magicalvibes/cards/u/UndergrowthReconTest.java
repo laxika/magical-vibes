@@ -25,9 +25,9 @@ class UndergrowthReconTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(forest));
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
@@ -45,9 +45,9 @@ class UndergrowthReconTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");

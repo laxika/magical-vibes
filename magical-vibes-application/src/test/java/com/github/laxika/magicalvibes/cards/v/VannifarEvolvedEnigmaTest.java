@@ -26,6 +26,7 @@ class VannifarEvolvedEnigmaTest extends BaseCardTest {
 
         advanceToBeginningOfCombat(player1);
         harness.handleListChoice(player1, "Cloak a card from your hand");
+        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
         Permanent cloaked = gd.playerBattlefields.get(player1.getId()).stream()
@@ -47,6 +48,7 @@ class VannifarEvolvedEnigmaTest extends BaseCardTest {
 
         advanceToBeginningOfCombat(player1);
         harness.handleListChoice(player1, "Put a +1/+1 counter on each colorless creature you control");
+        harness.passBothPriorities();
 
         assertThat(colorlessCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(coloredCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

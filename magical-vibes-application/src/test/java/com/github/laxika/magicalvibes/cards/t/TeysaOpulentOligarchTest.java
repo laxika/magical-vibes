@@ -44,10 +44,13 @@ class TeysaOpulentOligarchTest extends BaseCardTest {
 
         List<Permanent> clues = List.copyOf(findPermanents(player1, "Clue"));
         assertThat(clues).hasSize(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
         for (Permanent clue : clues) {
             int index = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
-            harness.sacrificePermanent(player1, index, clue.getId());
-            harness.passBothPriorities();
+            harness.activateAbility(player1, index, null, null);
+            while (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            }
         }
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
@@ -60,6 +63,7 @@ class TeysaOpulentOligarchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NoviceInspector()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
@@ -75,6 +79,7 @@ class TeysaOpulentOligarchTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

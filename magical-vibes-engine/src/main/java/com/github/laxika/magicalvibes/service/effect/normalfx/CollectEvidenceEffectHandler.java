@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
@@ -66,6 +67,20 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
         }
 
         TargetSpec targetSpec = thenEffect.targetSpec();
+        if (targetSpec.selfTargeting()) {
+            StackEntry reflexiveAbility = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    entry.getCard(),
+                    entry.getControllerId(),
+                    entry.getCard().getName() + "'s reflexive ability",
+                    new ArrayList<>(List.of(thenEffect)),
+                    entry.getXValue(),
+                    entry.getSourcePermanentId());
+            reflexiveAbility.setEventValue(entry.getEventValue());
+            reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+            gameData.stack.add(reflexiveAbility);
+            return;
+        }
         TargetPredicate targetPredicate = targetSpec.targetPredicate();
         List<UUID> validPermanentTargets = new ArrayList<>();
         if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {

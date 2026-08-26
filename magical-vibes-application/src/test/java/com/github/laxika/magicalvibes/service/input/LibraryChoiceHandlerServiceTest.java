@@ -706,7 +706,8 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
             // Dino should have been put onto battlefield
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
 
             // Remaining cards should be on bottom of library (not in graveyard)
             assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
@@ -755,7 +756,8 @@ class LibraryChoiceHandlerServiceTest {
 
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
             verify(exileService).exileCard(gd, player1Id, land);
             verify(exileService).exileCard(gd, player1Id, instant);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());

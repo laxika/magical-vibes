@@ -238,6 +238,34 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void turnFaceUpXValueChoiceReservesFixedManaComponents() throws Exception {
+        ManaPool manaPool = new ManaPool();
+        manaPool.add(ManaColor.WHITE, 4);
+        gameData.playerManaPools.put(aiPlayerId, manaPool);
+
+        new TurnFaceUpXValueChoiceAiStrategy().answer(
+                new PendingInteraction.TurnFaceUpXValueChoice(
+                        aiPlayerId, UUID.randomUUID(), "{X}{W}", 7,
+                        "Choose X.", "Aurelia's Vindicator"),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(3));
+    }
+
+    @Test
+    void exiledCreatureCopyChoiceChoosesAnEligibleCard() throws Exception {
+        UUID first = UUID.randomUUID();
+
+        new ExiledCreatureCopyChoiceAiStrategy().answer(
+                new PendingInteraction.ExiledCreatureCopyChoice(
+                        aiPlayerId, UUID.randomUUID(), List.of(first, UUID.randomUUID())),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first)));
+    }
+
+    @Test
     void exileFromOpponentHandOrGraveyardChoosesHighestManaValue() throws Exception {
         UUID opponentId = UUID.randomUUID();
         Card handCard = card("Hand card", "{2}");
