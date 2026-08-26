@@ -620,19 +620,6 @@ public class PredicateEvaluationService {
                             .contains(hasSubtypePredicate.subtype());
                 }
                 boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
-                if (gameData != null && creatureSubtype) {
-                    if (gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
-                            .contains(hasSubtypePredicate.subtype())) {
-                        yield true;
-                    }
-                    if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()
-                            || permanent.getTransientRemovedSubtypes().contains(hasSubtypePredicate.subtype())
-                            || !permanent.getTransientCreatureTypeOverrides().isEmpty()
-                            || permanent.getTransientCreatureTypeOverride() != null) {
-                        yield false;
-                    }
-                    yield gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING);
-                }
                 // "Loses all creature types" strips every creature subtype (base/transient/granted) and,
                 // via hasKeyword, the Changeling grant too.
                 if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
@@ -649,12 +636,15 @@ public class PredicateEvaluationService {
                 if (creatureSubtype && permanent.getTransientCreatureTypeOverride() != null) {
                     yield permanent.getTransientCreatureTypeOverride() == hasSubtypePredicate.subtype();
                 }
+                if (gameData != null && creatureSubtype) {
+                    yield gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
+                            .contains(hasSubtypePredicate.subtype())
+                            || gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING);
+                }
                 yield permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
                         || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
                         || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype())
-                        || (creatureSubtype && (gameData == null
-                        ? permanent.hasKeyword(Keyword.CHANGELING)
-                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
+                        || (creatureSubtype && permanent.hasKeyword(Keyword.CHANGELING));
             }
             case PermanentHasAnySubtypePredicate hasAnySubtypePredicate -> {
                 CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
