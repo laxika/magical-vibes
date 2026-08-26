@@ -86,7 +86,8 @@ public record LookAtTopCardsEffect(
         DynamicAmount chooseManaValueAtMost,
         CardEffect effectIfNoCardChosen,
         boolean recordChosenCount,
-        int loseLifePerSelectedCard
+        int loseLifePerSelectedCard,
+        LibrarySelectionFollowUp battlefieldSelectionFollowUp
 ) implements CardEffect {
 
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
@@ -96,7 +97,7 @@ public record LookAtTopCardsEffect(
             CardEffect effectIfNoCardChosen, boolean recordChosenCount) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
                 optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
-                effectIfNoCardChosen, recordChosenCount, 0);
+                effectIfNoCardChosen, recordChosenCount, 0, null);
     }
 
     /** Canonical form without an effect for the no-card branch. */
@@ -180,7 +181,7 @@ public record LookAtTopCardsEffect(
             int lookCount, int lifeLossPerSelectedCard) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), null,
                 LookDestination.GRAVEYARD, false, LibrarySearchDestination.HAND, true,
-                false, null, null, false, lifeLossPerSelectedCard);
+                false, null, null, false, lifeLossPerSelectedCard, null);
     }
 
     /** Reveal the top cards, put one into hand, the rest into the graveyard, and gain life equal
@@ -294,9 +295,15 @@ public record LookAtTopCardsEffect(
      */
     public static LookAtTopCardsEffect mayPutAnyNumberMatchingOntoBattlefieldRestOnBottomRandom(
             int lookCount, CardPredicate choosePredicate) {
+        return mayPutAnyNumberMatchingOntoBattlefieldRestOnBottomRandom(lookCount, choosePredicate, null);
+    }
+
+    /** You may put any number of matching cards onto the battlefield and create a reflexive follow-up. */
+    public static LookAtTopCardsEffect mayPutAnyNumberMatchingOntoBattlefieldRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, LibrarySelectionFollowUp followUp) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), choosePredicate,
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
-                LibrarySearchDestination.BATTLEFIELD, true);
+                LibrarySearchDestination.BATTLEFIELD, true, false, null, null, false, 0, followUp);
     }
 
     /** You may put up to {@code maxCount} matching cards onto the battlefield tapped; the rest go

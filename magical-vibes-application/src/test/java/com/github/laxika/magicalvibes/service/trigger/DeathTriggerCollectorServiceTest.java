@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffe
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -295,6 +296,40 @@ class DeathTriggerCollectorServiceTest {
             var baked = (PutCounterOnTargetForEachDyingSourceCounterEffect) may.wrapped();
             assertThat(baked.count()).isEqualTo(3);
             assertThat(baked.targetPredicate()).isEqualTo(targetPredicate);
+        }
+    }
+
+    @Nested
+    @DisplayName("handlePutCountersOnTargetForEachDyingSourcePower")
+    class PutCountersOnTargetForEachDyingSourcePower {
+
+        @Test
+        @DisplayName("Snapshots the dying creature's effective power")
+        void snapshotsPower() {
+            Card card = createCreature("Galuf's target", 3, 2);
+            Permanent perm = new Permanent(card);
+            var effect = new PutCountersOnTargetForEachDyingSourcePowerEffect();
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            assertThat(svc.handlePutCountersOnTargetForEachDyingSourcePower(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+            var baked = (PutCountersOnTargetForEachDyingSourcePowerEffect) pending.effects().getFirst();
+            assertThat(baked.count()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Does not trigger when the dying permanent is unavailable")
+        void noPermanent() {
+            Card card = createCreature("Galuf's target", 3, 2);
+            Permanent perm = new Permanent(card);
+            var effect = new PutCountersOnTargetForEachDyingSourcePowerEffect();
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
+
+            assertThat(svc.handlePutCountersOnTargetForEachDyingSourcePower(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
+            assertThat(gd.pendingInteractions).isEmpty();
         }
     }
 

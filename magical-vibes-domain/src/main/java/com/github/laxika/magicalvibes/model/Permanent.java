@@ -856,6 +856,11 @@ public class Permanent {
         this.tapped = true;
     }
 
+    /** Sets the permanent's status for an entry replacement without applying untap effects. */
+    public void enterUntapped() {
+        this.tapped = false;
+    }
+
     public void untap() {
         // Stun counters (CR 122.1c / 701.x): if a tapped permanent would become untapped,
         // remove a stun counter from it instead. This is the single funnel point for all

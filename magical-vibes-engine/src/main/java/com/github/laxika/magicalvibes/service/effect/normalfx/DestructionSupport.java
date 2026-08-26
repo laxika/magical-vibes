@@ -910,48 +910,53 @@ public class DestructionSupport {
                                       CreateTokenEffect token, int tokenCount,
                                       String sourceName, String sourceSetCode) {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
+                gameData, controllerId, token);
+        int totalAmount = tokenCount * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        boolean isCreature = token.primaryType() == CardType.CREATURE;
 
-        for (int count = 0; count < tokenCount; count++) {
-            for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = TokenCardFactory.create(
-                        token, token.tokenPower(), token.tokenToughness(), sourceSetCode);
-                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                        gameData, controllerId, tokenCard);
+        for (int count = 0; count < totalAmount + (additionalFrog != null && totalAmount > 0 ? 1 : 0); count++) {
+            boolean isAdditionalFrog = count >= totalAmount;
+            CreateTokenEffect tokenToCreate = isAdditionalFrog ? additionalFrog : token;
+            int tokenPower = isAdditionalFrog ? 1 : token.tokenPower();
+            int tokenToughness = isAdditionalFrog ? 1 : token.tokenToughness();
+            boolean isCreature = tokenToCreate.primaryType() == CardType.CREATURE;
+            Card tokenCard = TokenCardFactory.create(
+                    tokenToCreate, tokenPower, tokenToughness, sourceSetCode);
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, controllerId, tokenCard);
 
-                Permanent tokenPermanent = new Permanent(tokenCard);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
-                if (token.tappedAndAttacking()) {
-                    tokenPermanent.tap();
-                    tokenPermanent.setAttacking(true);
-                } else if (token.tapped()) {
-                    tokenPermanent.tap();
-                }
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            if (tokenToCreate.tappedAndAttacking()) {
+                tokenPermanent.tap();
+                tokenPermanent.setAttacking(true);
+            } else if (tokenToCreate.tapped()) {
+                tokenPermanent.tap();
+            }
 
-                String playerName = gameData.playerIdToName.get(controllerId);
-                String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
-                if (isCreature) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(playerName + " creates a " + token.tokenPower() + "/" + token.tokenToughness()
-                                    + " " + colorName)
-                            .card(tokenCard)
-                            .text(" creature token.")
-                            .build());
-                    log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
-                            token.tokenPower(), token.tokenToughness(), token.tokenName(), playerName);
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String colorName = tokenToCreate.color() != null ? tokenToCreate.color().name().toLowerCase() + " " : "";
+            if (isCreature) {
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(playerName + " creates a " + tokenPower + "/" + tokenToughness
+                                + " " + colorName)
+                        .card(tokenCard)
+                        .text(" creature token.")
+                        .build());
+                log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
+                        tokenPower, tokenToughness, tokenToCreate.tokenName(), playerName);
 
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-                } else {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(playerName + " creates a " + colorName)
-                            .card(tokenCard)
-                            .text(" token.")
-                            .build());
-                    log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
-                            token.tokenName(), playerName);
-                }
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            } else {
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(playerName + " creates a " + colorName)
+                        .card(tokenCard)
+                        .text(" token.")
+                        .build());
+                log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
+                        tokenToCreate.tokenName(), playerName);
             }
         }
     }

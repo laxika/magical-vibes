@@ -34,6 +34,38 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Stonehewer Giant: attach the just-placed Equipment {@code equipmentPermanentId} to the chosen creature. */
     record AttachEquipmentToCreature(UUID equipmentPermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
+    /** Zack Fair: choose which Equipment attached to the sacrificed source to attach to the target. */
+    record AttachSacrificedEquipmentToTarget(UUID targetCreatureId, List<UUID> equipmentPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachSacrificedEquipmentToTarget {
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
+    record AttachControlledEquipmentToTargetCreature(UUID targetCreatureId, UUID controllerId,
+                                                     Card sourceCard, List<UUID> equipmentPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachControlledEquipmentToTargetCreature {
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
+    /** Gilgamesh: choose a Samurai to receive one of the Equipment put onto the battlefield. */
+    record AttachEquipmentToSamurai(List<UUID> equipmentPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachEquipmentToSamurai {
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
+    /** Gilgamesh: choose which Equipment to attach after choosing the Samurai. */
+    record AttachEquipmentToSamuraiTarget(UUID samuraiPermanentId, List<UUID> equipmentPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachEquipmentToSamuraiTarget {
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
     /** Reckless Crew: choose at most one distinct Equipment for each created token. */
     record CreateTokensAndAttachEquipment(Card sourceCard, UUID controllerId, List<UUID> tokenIds,
                                           int tokenIndex, List<UUID> chosenEquipmentIds)
@@ -115,6 +147,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Memories Returning: choose which opponent makes the next bottom-of-library pick. */
+    record MemoriesReturningOpponentChoice(UUID controllerId, List<Card> remainingCards,
+                                           int phase, String sourceCardName)
+            implements PermanentChoiceContext {
+        public MemoriesReturningOpponentChoice {
+            remainingCards = List.copyOf(remainingCards);
+        }
+    }
+
     /**
      * Echo Chamber: {@code choosingPlayerId} picks one creature they control; a token copy of it is
      * then created under {@code copyControllerId}'s control from {@code sourceCard}.
@@ -123,6 +164,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID choosingPlayerId,
             UUID copyControllerId,
             Card sourceCard
+    ) implements PermanentChoiceContext {}
+
+    /** Zenos yae Galvus: the controller chooses an opposing creature for the temporary debuff. */
+    record ChooseOpponentCreatureThenBoostOthers(
+            UUID sourcePermanentId,
+            Card sourceCard,
+            UUID controllerId,
+            int powerBoost,
+            int toughnessBoost
     ) implements PermanentChoiceContext {}
 
     /**
@@ -249,15 +299,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *                                the battlefield; {@code null} otherwise.
      */
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
-                              Integer eventValue, Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
+                              Integer eventValue, Permanent sourcePermanentSnapshot,
+                              TargetFilter targetFilter) implements PermanentChoiceContext {
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) {
-            this(dyingCard, controllerId, effects, null, null);
+            this(dyingCard, controllerId, effects, null, null, null);
         }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
-                                  Integer eventValue) {
-            this(dyingCard, controllerId, effects, eventValue, null);
+                                   Integer eventValue) {
+            this(dyingCard, controllerId, effects, eventValue, null, null);
+        }
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                                  Integer eventValue, Permanent sourcePermanentSnapshot) {
+            this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, null);
         }
     }
 
@@ -741,27 +797,39 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChandraTorchCastSpellTarget(Card cardToCast, UUID controllerId, Card sourceCard, int damage,
                                        List<UUID> chosenTargets) implements PermanentChoiceContext {}
 
+    record VaanCastSpellTarget(Card cardToCast, UUID controllerId, Card sourceCard,
+                               UUID sourcePermanentId, List<UUID> chosenTargets) implements PermanentChoiceContext {}
+
     record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                     boolean withoutPayingManaCost, UUID ownerId,
-                                    boolean restrictAdditionalSpellsThisTurn) implements PermanentChoiceContext {
+                                    boolean restrictAdditionalSpellsThisTurn,
+                                    boolean anyManaType) implements PermanentChoiceContext {
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                         boolean withoutPayingManaCost) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, null, false);
+                    withoutPayingManaCost, null, false, false);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,
                                         boolean withoutPayingManaCost, UUID ownerId) {
             this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
-                    withoutPayingManaCost, ownerId, false);
+                    withoutPayingManaCost, ownerId, false, false);
+        }
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                        boolean withoutPayingManaCost, UUID ownerId,
+                                        boolean restrictAdditionalSpellsThisTurn) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, false);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, true, null, false);
+            this(cardToCast, controllerId, spellEffects, spellType, false, true, null, false, false);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,

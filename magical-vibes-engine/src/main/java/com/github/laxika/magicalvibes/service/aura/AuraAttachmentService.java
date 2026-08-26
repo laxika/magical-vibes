@@ -258,6 +258,9 @@ public class AuraAttachmentService {
                 if (gameQueryService.playerHasProtectionFromEverything(gameData, attachedTo)) {
                     return "enchanted player has protection from everything";
                 }
+                if (gameQueryService.playerHasProtectionFromOpponents(gameData, attachedTo, controllerId)) {
+                    return "enchanted player has protection from the Aura's controller";
+                }
                 for (CardColor color : gameQueryService.getEffectiveColors(gameData, attachment)) {
                     if (gameQueryService.playerHasProtectionFromColor(gameData, attachedTo, color)) {
                         return "enchanted player has protection from it";

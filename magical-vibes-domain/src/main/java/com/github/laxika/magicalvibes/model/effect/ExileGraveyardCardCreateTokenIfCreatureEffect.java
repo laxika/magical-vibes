@@ -3,21 +3,28 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Exile target card from a graveyard. If it was a creature card, create a 2/2 black Zombie
- * creature token. Used by Deluge of the Dead. An optional filter can narrow the target, as needed
- * for wordings that say "target creature card".
+ * Exile target card from a graveyard. If it was a creature card, create the supplied token.
+ * An optional filter can narrow the target, as needed for wordings that say "target creature card".
  *
  * @param filter predicate restricting valid targets; {@code null} allows any card
+ * @param token token created when the exiled card is a creature
  */
-public record ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter)
+public record ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter, CreateTokenEffect token)
         implements CardEffect, TokenCreatingEffect {
 
     public ExileGraveyardCardCreateTokenIfCreatureEffect() {
-        this(null);
+        this(null, CreateTokenEffect.blackZombie(1));
+    }
+
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter) {
+        this(filter, CreateTokenEffect.blackZombie(1));
+    }
+
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(CreateTokenEffect token) {
+        this(null, token);
     }
 
     @Override
@@ -29,21 +36,21 @@ public record ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter
 
     @Override
     public DynamicAmount tokenAmount() {
-        return new Fixed(1);
+        return token.amount();
     }
 
     @Override
     public CardType tokenType() {
-        return CardType.CREATURE;
+        return token.primaryType();
     }
 
     @Override
     public int tokenPower() {
-        return 2;
+        return token.tokenPower();
     }
 
     @Override
     public int tokenToughness() {
-        return 2;
+        return token.tokenToughness();
     }
 }

@@ -15,6 +15,11 @@ public interface ManaAbilityEffectHandler {
     void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                  int manaMultiplier, boolean creatureSource);
 
+    default void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
+                         int manaMultiplier, boolean creatureSource, CardEffect effect) {
+        resolve(gameData, playerId, player, permanent, manaMultiplier, creatureSource);
+    }
+
     default boolean isRevertable() {
         return false;
     }

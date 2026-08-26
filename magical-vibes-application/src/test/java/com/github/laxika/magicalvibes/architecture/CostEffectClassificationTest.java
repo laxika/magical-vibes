@@ -115,6 +115,7 @@ class CostEffectClassificationTest {
             "DiscardXCardsCost",
             "EscalateDiscardCost",
             "EscalateManaCost",
+            "TieredManaCost",
             "RepeatableAdditionalManaCost",
             "BeholdCost",
             "BeholdAndExileCost",

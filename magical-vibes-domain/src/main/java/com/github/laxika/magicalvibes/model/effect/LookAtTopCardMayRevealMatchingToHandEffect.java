@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
+import java.util.List;
+
 /**
  * Look at the top card of the controller's library. If it matches {@code predicate}, the controller
  * may reveal it and put it into their hand. When {@code mayGraveyardOtherwise} is set, a card that
  * does not end up in hand (either because it does not match, or because the reveal was declined)
  * may instead be put into the graveyard; otherwise it simply stays on top of the library.
+ * When a matching card is put into hand, {@code effectsIfCardPutIntoHand} resolves afterward.
  *
  * <p>Domri Rade's +1 uses {@code CardTypePredicate(CREATURE)} without the graveyard fallback;
  * Archghoul of Thraben uses {@code CardSubtypePredicate(ZOMBIE)} with it. The {@link Stage} field
@@ -15,8 +18,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record LookAtTopCardMayRevealMatchingToHandEffect(
         CardPredicate predicate,
         boolean mayGraveyardOtherwise,
-        Stage stage
+        Stage stage,
+        List<CardEffect> effectsIfCardPutIntoHand
 ) implements CardEffect {
+
+    public LookAtTopCardMayRevealMatchingToHandEffect {
+        effectsIfCardPutIntoHand = effectsIfCardPutIntoHand == null
+                ? List.of() : List.copyOf(effectsIfCardPutIntoHand);
+    }
 
     public enum Stage {
         /** Stack resolution: private look, then queue the appropriate may. */
@@ -28,10 +37,21 @@ public record LookAtTopCardMayRevealMatchingToHandEffect(
     }
 
     public LookAtTopCardMayRevealMatchingToHandEffect(CardPredicate predicate, boolean mayGraveyardOtherwise) {
-        this(predicate, mayGraveyardOtherwise, Stage.LOOK);
+        this(predicate, mayGraveyardOtherwise, Stage.LOOK, List.of());
+    }
+
+    public LookAtTopCardMayRevealMatchingToHandEffect(CardPredicate predicate, boolean mayGraveyardOtherwise,
+                                                      Stage stage) {
+        this(predicate, mayGraveyardOtherwise, stage, List.of());
+    }
+
+    public LookAtTopCardMayRevealMatchingToHandEffect(CardPredicate predicate, boolean mayGraveyardOtherwise,
+                                                      List<CardEffect> effectsIfCardPutIntoHand) {
+        this(predicate, mayGraveyardOtherwise, Stage.LOOK, effectsIfCardPutIntoHand);
     }
 
     public LookAtTopCardMayRevealMatchingToHandEffect withStage(Stage stage) {
-        return new LookAtTopCardMayRevealMatchingToHandEffect(predicate, mayGraveyardOtherwise, stage);
+        return new LookAtTopCardMayRevealMatchingToHandEffect(
+                predicate, mayGraveyardOtherwise, stage, effectsIfCardPutIntoHand);
     }
 }

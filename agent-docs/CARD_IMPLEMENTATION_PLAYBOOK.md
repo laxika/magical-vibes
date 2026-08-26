@@ -541,6 +541,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
 | `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CreatureDiedUnderYourControlThisTurn(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new CreatureDiedUnderOpponentControlThisTurn(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CardsLeftGraveyardThisTurn(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new DidntActivateLoyaltyAbilityThisTurn(), wrapped)` | - | yes | yes (controller end step) | controller activated no planeswalker loyalty ability this turn (The Chain Veil) — reads `GameData.playersWhoActivatedLoyaltyAbilityThisTurn`, recorded when the loyalty cost is paid |
 | `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
@@ -583,6 +584,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
 | `ConditionalEffect(new SourceIsAttackingOrBlocking(), wrapped)` | yes | - | - | "unless it's attacking or blocking" — reads the source's current combat flags. Tromokratis's conditional hexproof |
+| `ConditionalEffect(new SourceAttackedThisTurn(), wrapped)` | yes | - | - | "as long as this permanent attacked this turn" — reads the source's turn attack record, so the condition remains true after combat. The Lunar Whale |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |

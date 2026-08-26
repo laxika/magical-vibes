@@ -54,6 +54,7 @@ public enum Keyword {
     FLANKING,
     CONSPIRE,
     RETRACE,
+    JUMP,
     JUMP_START,
     BANDING,
     EMERGE,
@@ -88,7 +89,8 @@ public enum Keyword {
     EPIC,
     TOXIC,
     COMPLEATED,
-    MOBILIZE;
+    MOBILIZE,
+    BLOW_UP;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

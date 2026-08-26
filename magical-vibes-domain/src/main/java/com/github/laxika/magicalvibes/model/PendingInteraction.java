@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
+import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -22,6 +23,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingStudyCounterExileReturn,
         PendingOpponentChoosesCardToHandRestToGraveyard,
+        PendingMemoriesReturningChoice,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingMurmursFromBeyondChoice,
         PendingThranTomeChoice,
@@ -1857,7 +1859,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean faceDown, int faceDownPower, int faceDownToughness,
                           java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
                           UUID returnSourcePermanentId, CounterType artifactCounterType,
-                          int artifactCounterCount, boolean returnToHandAtEndStep)
+                          int artifactCounterCount, boolean returnToHandAtEndStep,
+                          com.github.laxika.magicalvibes.model.filter.CardPredicate enterTappedAndAttackingIf)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -1873,7 +1876,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
                     faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
-                    returnSourcePermanentId, artifactCounterType, artifactCounterCount, false);
+                    returnSourcePermanentId, artifactCounterType, artifactCounterCount, false, null);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -2420,7 +2423,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean selectedToBattlefieldTapped, int minCount,
                                boolean gainLifeEqualToSelectedCardManaValue,
                                CardEffect effectIfNoCardChosen,
-                               boolean recordSelectedCount)
+                               boolean recordSelectedCount,
+                               LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                               boolean selectLandsAfterHand,
+                               boolean selectedToBattlefieldSimultaneously)
             implements PendingInteraction {
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -2434,7 +2440,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
-                    null, false);
+                    null, false, null, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -2449,7 +2455,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
-                    effectIfNoCardChosen, false);
+                    effectIfNoCardChosen, false, null, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -2485,7 +2491,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
-                    selectedToBattlefieldTapped, 0, false, null, recordSelectedCount);
+                    selectedToBattlefieldTapped, 0, false, null, recordSelectedCount, null,
+                    false, false);
+        }
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped,
+                                   boolean recordSelectedCount,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, 0, false, null, recordSelectedCount,
+                    battlefieldSelectionFollowUp, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,

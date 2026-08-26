@@ -104,6 +104,8 @@ public class GameData {
     public final Map<UUID, Map<CardSubtype, Integer>> sacrificedPermanentSubtypeCountThisTurn = new ConcurrentHashMap<>();
     /** Players who surveilled at least once this turn. */
     public final Set<UUID> playersWhoSurveilledThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who have flipped at least one coin this turn. */
+    public final Set<UUID> playersWhoFlippedCoinsThisTurn = ConcurrentHashMap.newKeySet();
     /**
      * Card IDs of every spell cast this turn by any player, in cast order. Unlike
      * {@link #spellsCastThisTurn} this preserves the global ordering across players, which is what
@@ -508,6 +510,10 @@ public class GameData {
             new EachPlayerDiscardsOrLosesLifeState();
     /** Progress state for Creeping Dread's each-player discard comparison. */
     public final CreepingDreadState creepingDread = new CreepingDreadState();
+    /** Progress state for collecting one discarded card from every player before drawing. */
+    public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
+            eachPlayerDiscardsOneThenDrawsForEachCardType =
+            new EachPlayerDiscardsOneThenDrawsForEachCardTypeState();
     /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
     public final DispersalState dispersal = new DispersalState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
@@ -585,6 +591,9 @@ public class GameData {
      *  right graveyard/hand/library on leave; which player CONTROLS the permanent is derived from
      *  the floating {@code L2_CONTROL} effects (see {@link #deriveControllerOf}). */
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
+    /** Reflexive Equipment-unattach triggers registered until the end of the current turn. */
+    public final Map<UUID, List<ControlLossUnattachTrigger>> controlLossUnattachTriggers =
+            new ConcurrentHashMap<>();
     public boolean endTurnRequested;
     /**
      * Unified queue of pending player interactions (decisions awaiting player input).
@@ -618,6 +627,10 @@ public class GameData {
     /** How many combat phases have begun this turn (1 during the first combat phase). Reset at the
      *  start of each turn and incremented on entering BEGINNING_OF_COMBAT; read by FirstCombatPhase. */
     public int combatPhasesThisTurn;
+    /** Number of end steps that have begun during the current turn. */
+    public int endStepsThisTurn;
+    /** Additional end steps to insert before cleanup at the end of the current turn. */
+    public int additionalEndStepsPending;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
@@ -697,6 +710,9 @@ public class GameData {
      * start/stop matching after the effect resolved (official ruling).
      */
     public final Set<PermanentPredicate> allDamagePreventionPredicates = ConcurrentHashMap.newKeySet();
+    /** Predicates whose matching permanents controlled by the keyed player have all damage prevented. */
+    public final Map<UUID, Set<PermanentPredicate>> allDamagePreventionPredicatesByController =
+            new ConcurrentHashMap<>();
     /** Predicates whose matching permanents controlled by the keyed player have combat damage prevented. */
     public final Map<UUID, Set<PermanentPredicate>> combatDamagePreventionPredicatesByController =
             new ConcurrentHashMap<>();
@@ -1255,6 +1271,9 @@ public class GameData {
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks how much combat damage each player was dealt this turn. */
+    public final Map<UUID, Integer> combatDamageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
+
     /** Permanent IDs of creatures that dealt combat damage to a creature this turn. */
     public final Set<UUID> combatDamageSourcesThatDealtToCreaturesThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -1355,6 +1374,14 @@ public class GameData {
         }
         playersDealtDamageThisTurn.add(playerId);
         damageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
+    }
+
+    /** Records that {@code amount} combat damage was dealt to {@code playerId} this turn. */
+    public void recordCombatDamageToPlayer(UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        combatDamageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
     }
 
     /** Records that {@code amount} noncombat damage was dealt to {@code playerId} this turn. */
@@ -1465,6 +1492,9 @@ public class GameData {
     /** Tracks which creatures that dealt combat damage to players this turn had the Changeling keyword.
      *  These creatures count as having all creature subtypes for subtype-conditional triggers. */
     public final Set<UUID> combatDamageSourcesWithChangelingThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks which creatures that dealt combat damage to players this turn had the Legendary supertype. */
+    public final Set<UUID> combatDamageSourcesWithLegendaryThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks, per player who controlled the source at damage time, the union of subtypes of creatures
      *  they controlled that dealt combat damage to a player this turn. Used to evaluate the prowl
@@ -1813,6 +1843,22 @@ public class GameData {
     public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN
                 || fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST);
+    }
+
+    public void registerControlLossUnattachTrigger(UUID equipmentId, UUID controllerId, Card sourceCard) {
+        controlLossUnattachTriggers
+                .computeIfAbsent(equipmentId, ignored -> Collections.synchronizedList(new ArrayList<>()))
+                .add(new ControlLossUnattachTrigger(controllerId, sourceCard));
+    }
+
+    public List<ControlLossUnattachTrigger> controlLossUnattachTriggersFor(UUID equipmentId) {
+        List<ControlLossUnattachTrigger> triggers = controlLossUnattachTriggers.get(equipmentId);
+        if (triggers == null) {
+            return List.of();
+        }
+        synchronized (triggers) {
+            return List.copyOf(triggers);
+        }
     }
 
     /** Removes and returns all floating effects with {@code UNTIL_END_OF_COMBAT} duration. */
@@ -3223,6 +3269,16 @@ public class GameData {
         copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
         this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
                 copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.active =
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.active;
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId =
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId;
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.currentPlayerId =
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.currentPlayerId;
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining.addAll(
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining);
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.addAll(
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes);
         copy.dispersal.active = this.dispersal.active;
         copy.dispersal.remainingOpponentIds.addAll(this.dispersal.remainingOpponentIds);
         copy.dispersal.currentOpponentId = this.dispersal.currentOpponentId;
@@ -3294,6 +3350,8 @@ public class GameData {
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
+        copy.endStepsThisTurn = this.endStepsThisTurn;
+        copy.additionalEndStepsPending = this.additionalEndStepsPending;
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
@@ -3342,6 +3400,10 @@ public class GameData {
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
         copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
         copy.allDamagePreventionPredicates.addAll(this.allDamagePreventionPredicates);
+        this.allDamagePreventionPredicatesByController.forEach((controllerId, predicates) ->
+                copy.allDamagePreventionPredicatesByController
+                        .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
+                        .addAll(predicates));
         this.combatDamagePreventionPredicatesByController.forEach((controllerId, predicates) ->
                 copy.combatDamagePreventionPredicatesByController
                         .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
@@ -3443,6 +3505,7 @@ public class GameData {
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
+        copy.playersWhoFlippedCoinsThisTurn.addAll(this.playersWhoFlippedCoinsThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         copy.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn
@@ -3463,6 +3526,9 @@ public class GameData {
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
+        this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
+                copy.controlLossUnattachTriggers.put(equipmentId,
+                        Collections.synchronizedList(new ArrayList<>(triggers))));
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
         copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
@@ -3481,6 +3547,7 @@ public class GameData {
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        copy.combatDamageDealtToPlayersThisTurn.putAll(this.combatDamageDealtToPlayersThisTurn);
         copy.combatDamageSourcesThatDealtToCreaturesThisTurn
                 .addAll(this.combatDamageSourcesThatDealtToCreaturesThisTurn);
         this.noncombatDamageToPlayersThisTurn.forEach((k, v) ->
@@ -3527,6 +3594,7 @@ public class GameData {
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
+        copy.combatDamageSourcesWithLegendaryThisTurn.addAll(this.combatDamageSourcesWithLegendaryThisTurn);
         this.combatDamageToPlayerControllerSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayerControllerSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.controllersDealtCombatDamageWithChangelingThisTurn.addAll(this.controllersDealtCombatDamageWithChangelingThisTurn);
@@ -3667,6 +3735,8 @@ public class GameData {
         copy.graveyardTargetOperation.anyNumber = this.graveyardTargetOperation.anyNumber;
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
         copy.graveyardTargetOperation.cumulativeUpkeepPayment = this.graveyardTargetOperation.cumulativeUpkeepPayment;
+        copy.graveyardTargetOperation.physicalCard = this.graveyardTargetOperation.physicalCard;
+        copy.graveyardTargetOperation.castWithAdventure = this.graveyardTargetOperation.castWithAdventure;
         copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
         copy.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects =
                 this.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects == null

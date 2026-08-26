@@ -17,22 +17,36 @@ import java.util.List;
  * {@code StackEntry.exileInsteadOfGraveyard} on the free cast.</p>
  *
  * <p>{@code filter} is an optional additional restriction for cards whose oracle text narrows the
- * instant-or-sorcery choice further, such as an instant-only choice.</p>
+ * instant-or-sorcery choice further, such as an instant-only choice. {@code anyManaType} allows
+ * the spell's colored mana requirements to be paid with mana of any type for this cast.</p>
  */
 public record CastTargetInstantOrSorceryFromGraveyardEffect(
         GraveyardSearchScope scope,
         boolean withoutPayingManaCost,
         boolean exileInsteadOfGraveyard,
-        CardPredicate filter
+        CardPredicate filter,
+        boolean anyManaType
 ) implements CardEffect {
 
     public CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope scope, boolean withoutPayingManaCost) {
-        this(scope, withoutPayingManaCost, false, null);
+        this(scope, withoutPayingManaCost, false, null, false);
     }
 
     public CastTargetInstantOrSorceryFromGraveyardEffect(
             GraveyardSearchScope scope, boolean withoutPayingManaCost, boolean exileInsteadOfGraveyard) {
-        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null);
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null, false);
+    }
+
+    public CastTargetInstantOrSorceryFromGraveyardEffect(
+            GraveyardSearchScope scope, boolean withoutPayingManaCost,
+            boolean exileInsteadOfGraveyard, boolean anyManaType) {
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null, anyManaType);
+    }
+
+    public CastTargetInstantOrSorceryFromGraveyardEffect(
+            GraveyardSearchScope scope, boolean withoutPayingManaCost,
+            boolean exileInsteadOfGraveyard, CardPredicate filter) {
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, filter, false);
     }
 
     @Override

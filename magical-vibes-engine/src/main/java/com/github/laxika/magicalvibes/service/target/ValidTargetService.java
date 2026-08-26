@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWi
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardOrExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -141,6 +142,7 @@ public class ValidTargetService {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
         List<UUID> validGraveyardCardIds = new ArrayList<>();
+        List<UUID> validExiledCardIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null ? Set.copyOf(alreadySelectedIds) : Set.of();
 
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
@@ -261,6 +263,11 @@ public class ValidTargetService {
             }
         }
 
+        if (allowedTargets.contains(TargetType.EXILE)) {
+            validExiledCardIds.addAll(computeValidExiledTargetsForSpell(
+                    gameData, spellEffects, controllerId, excludeIds, card));
+        }
+
         String prompt = "Select a target for " + card.getName();
         if (isMultiTarget) {
             prompt = "Select targets for " + card.getName();
@@ -271,7 +278,33 @@ public class ValidTargetService {
         int effectiveX = xValue != null ? xValue : 0;
         int responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
                 gameData, card, controllerId, effectiveX, isKicked);
-        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, responseMinTargets, responseMaxTargets, prompt);
+        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
+                validExiledCardIds, responseMinTargets, responseMaxTargets, prompt);
+    }
+
+    private List<UUID> computeValidExiledTargetsForSpell(GameData gameData, List<CardEffect> spellEffects,
+                                                          UUID controllerId, Set<UUID> excludeIds, Card sourceCard) {
+        FilterContext context = targetFilterContext(gameData, sourceCard.getId(), controllerId, null);
+        List<UUID> validIds = new ArrayList<>();
+        for (UUID exileOwnerId : gameData.orderedPlayerIds) {
+            for (Card exiledCard : gameData.getPlayerExiledCards(exileOwnerId)) {
+                if (excludeIds.contains(exiledCard.getId())) {
+                    continue;
+                }
+                boolean valid = spellEffects.stream()
+                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                        .anyMatch(effect -> targetPredicateEvaluationService.matchesExiledCard(
+                                effect.targetSpec().targetPredicate(), exiledCard, context)
+                                && targetValidationService.checkEffectTargets(List.of(effect),
+                                        new TargetValidationContext(gameData, exiledCard.getId(),
+                                                com.github.laxika.magicalvibes.model.Zone.EXILE, sourceCard, 0,
+                                                controllerId, null)).isEmpty());
+                if (valid) {
+                    validIds.add(exiledCard.getId());
+                }
+            }
+        }
+        return validIds;
     }
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, Integer announcedXValue) {
@@ -1032,11 +1065,21 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
-            return true;
-        }
-
-        if (allowedTargets.contains(TargetType.EXILE)) {
-            return true;
+            ValidTargetsResponse validTargets = computeValidTargetsForSpell(
+                    gameData, card, controllerId, List.of(), maxXValue, kicked);
+            if (!validTargets.validGraveyardCardIds().isEmpty()) {
+                return true;
+            }
+            if (allowedTargets.contains(TargetType.EXILE)
+                    && !validTargets.validExiledCardIds().isEmpty()) {
+                return true;
+            }
+        } else if (allowedTargets.contains(TargetType.EXILE)) {
+            ValidTargetsResponse validTargets = computeValidTargetsForSpell(
+                    gameData, card, controllerId, List.of(), maxXValue, kicked);
+            if (!validTargets.validExiledCardIds().isEmpty()) {
+                return true;
+            }
         }
 
         return false;
@@ -1332,6 +1375,8 @@ public class ValidTargetService {
                     gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {
             return matchesReturnCardFilter(gameData, e, c, sourceCardId);
+        } else if (effect instanceof ReturnTargetCardFromGraveyardOrExileToHandEffect e) {
+            return predicateEvaluationService.matchesCardPredicate(c, e.graveyardFilter(), sourceCardId);
         } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
             return c.hasType(CardType.CREATURE) && c.getManaValue() == effectiveXValue;
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {

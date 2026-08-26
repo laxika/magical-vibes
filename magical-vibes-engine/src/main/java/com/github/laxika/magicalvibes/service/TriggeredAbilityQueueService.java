@@ -20,11 +20,13 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
@@ -87,13 +89,14 @@ public class TriggeredAbilityQueueService {
             }
 
             var dyingCard = pending.dyingCard();
-            TargetFilter deathFilter = dyingCard.getTargetFilter();
+            TargetFilter deathFilter = pending.targetFilter() != null
+                    ? pending.targetFilter() : dyingCard.getTargetFilter();
             // The card-level target filter belongs to whichever ability declared it via
             // target(...).addEffect(...). If none of THIS death trigger's effects are bound to a
             // declared target group, that filter is a different ability's cast-time filter (e.g.
             // Soulstinger's ETB "target creature you control") and must not narrow this death
             // trigger — its own effect targets any creature.
-            if (deathFilter != null
+            if (pending.targetFilter() == null && deathFilter != null
                     && pending.effects().stream().noneMatch(e -> dyingCard.getEffectTargetIndex(e) >= 0)) {
                 deathFilter = null;
             }
@@ -160,6 +163,9 @@ public class TriggeredAbilityQueueService {
     }
 
     private boolean hasOptionalSingleTarget(Card card, List<CardEffect> effects) {
+        if (effects.stream().anyMatch(OptionalTargetEffect.class::isInstance)) {
+            return true;
+        }
         if (card.getSpellTargets().size() != 1) {
             return false;
         }
@@ -1165,6 +1171,8 @@ public class TriggeredAbilityQueueService {
             int maxTargets = 1;
             int minTargets = 1;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
+            boolean anyNumber = false;
+            int maxTotalManaValue = 0;
             for (CardEffect effect : pending.effects()) {
                 if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
@@ -1174,6 +1182,19 @@ public class TriggeredAbilityQueueService {
                     filter = returnEffect.filter();
                     maxTargets = returnEffect.maxTargets();
                     minTargets = returnEffect.minTargets();
+                    break;
+                } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect) {
+                    filter = returnEffect.filter();
+                    minTargets = 0;
+                    if (returnEffect.hasTotalManaValueCap()) {
+                        anyNumber = true;
+                        maxTotalManaValue = returnEffect.maxTotalManaValue();
+                        maxTargets = Integer.MAX_VALUE;
+                    } else {
+                        maxTargets = returnEffect.maxTargets();
+                    }
+                    scope = returnEffect.targetSpec().graveyardScope()
+                            .orElse(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
                     break;
                 }
             }
@@ -1191,7 +1212,8 @@ public class TriggeredAbilityQueueService {
                 List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
                 if (graveyard != null) {
                     for (Card graveyardCard : graveyard) {
-                        if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
+                        if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)
+                                && (!anyNumber || graveyardCard.getManaValue() <= maxTotalManaValue)) {
                             matchingCards.add(graveyardCard);
                         }
                     }
@@ -1201,8 +1223,12 @@ public class TriggeredAbilityQueueService {
             gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class);
 
             if (matchingCards.isEmpty()) {
-                log.info("Game {} - {} chapter {} graveyard-target skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                if (anyNumber) {
+                    pushSagaChapterGraveyardTriggeredAbility(gameData, pending, List.of());
+                } else {
+                    log.info("Game {} - {} chapter {} graveyard-target skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                }
                 continue;
             }
 
@@ -1210,6 +1236,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.card = pending.sourceCard();
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+            gameData.graveyardTargetOperation.anyNumber = anyNumber;
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
             gameData.graveyardTargetOperation.chapterName = pending.chapterName();
 
@@ -1225,6 +1252,27 @@ public class TriggeredAbilityQueueService {
                     gameData.id, pending.sourceCard().getName(), pending.chapterName());
             return;
         }
+    }
+
+    private void pushSagaChapterGraveyardTriggeredAbility(
+            GameData gameData, PermanentChoiceContext.SagaChapterGraveyardTarget pending, List<UUID> cardIds) {
+        String description = pending.sourceCard().getName() + "'s chapter " + pending.chapterName() + " ability";
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                pending.sourceCard(),
+                pending.controllerId(),
+                description,
+                new ArrayList<>(pending.effects()),
+                0,
+                null,
+                pending.sourcePermanentId(),
+                java.util.Map.of(),
+                null,
+                new ArrayList<>(cardIds),
+                List.of()));
+        gameLogService.append(gameData, GameLog.text(description + " triggers targeting no cards."));
+        log.info("Game {} - {} triggered ability pushed onto stack with no graveyard targets",
+                gameData.id, pending.sourceCard().getName());
     }
 
     public void processNextSpellGraveyardTargetTrigger(GameData gameData) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public sealed interface ChoiceContext {
@@ -33,6 +34,14 @@ public sealed interface ChoiceContext {
     record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes) implements ChoiceContext {
         public ManaColorSpellChoice {
             subtypes = Set.copyOf(subtypes);
+        }
+    }
+
+    record RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
+                                     List<ManaColor> fixedColorOptions,
+                                     ManaRestriction restriction) implements ChoiceContext {
+        public RestrictedManaColorChoice {
+            fixedColorOptions = List.copyOf(fixedColorOptions);
         }
     }
 

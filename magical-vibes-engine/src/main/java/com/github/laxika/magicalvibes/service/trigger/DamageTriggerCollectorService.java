@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -677,6 +678,29 @@ public class DamageTriggerCollectorService {
     }
 
     // ── ON_CONTROLLER_DEALT_DAMAGE (Living Artifact) ───────────────────
+
+    @CollectsTrigger(value = SacrificeSelfEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    private boolean handleEnchantedCreatureDealtDamageSacrificeSelf(TriggerMatchContext match,
+            SacrificeSelfEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        Permanent aura = match.permanent();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                aura.getCard(),
+                match.controllerId(),
+                aura.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                aura.getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(aura.getCard()));
+        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE sacrifice trigger fires",
+                match.gameData().id, aura.getCard().getName());
+        return true;
+    }
 
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamagePutCounters(TriggerMatchContext match,

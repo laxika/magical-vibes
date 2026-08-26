@@ -840,7 +840,8 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PlayLandsFromTopOfLibraryEffect) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof PlayLandsFromTopOfLibraryEffect) {
                     return true;
                 }
             }
@@ -881,6 +882,12 @@ public class CastingPermissionService {
      * permanent's use for the turn is unspent; the returned id keys that per-instance tracking.
      */
     public Optional<UUID> findFilteredGraveyardPermissionSource(GameData gameData, UUID playerId, Card card) {
+        return findFilteredGraveyardPermission(gameData, playerId, card).map(permission -> permission.sourcePermanentId());
+    }
+
+    /** Returns the matching graveyard-cast permission, including its additional cast costs. */
+    public Optional<FilteredGraveyardPermission> findFilteredGraveyardPermission(
+            GameData gameData, UUID playerId, Card card) {
         if (!isCastableSpellCard(card)) {
             return Optional.empty();
         }
@@ -890,7 +897,8 @@ public class CastingPermissionService {
         }
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (!(effect instanceof CastSpellsFromGraveyardPermission permission)
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
                         || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
                     continue;
                 }
@@ -899,10 +907,14 @@ public class CastingPermissionService {
                             || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
                     continue;
                 }
-                return Optional.of(perm.getId());
+                return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
             }
         }
         return Optional.empty();
+    }
+
+    public record FilteredGraveyardPermission(UUID sourcePermanentId,
+                                              CastSpellsFromGraveyardPermission permission) {
     }
 
     /**
@@ -917,6 +929,7 @@ public class CastingPermissionService {
                 .findFirst()
                 .ifPresent(perm -> {
                     boolean oncePerTurn = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
                             .anyMatch(effect -> effect instanceof CastSpellsFromGraveyardPermission permission
                                     && permission.oncePerControllerTurn());
                     if (oncePerTurn) {
@@ -1067,7 +1080,8 @@ public class CastingPermissionService {
         if (battlefield == null) return castableTypes;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AllowCastFromTopOfLibraryEffect allow) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof AllowCastFromTopOfLibraryEffect allow) {
                     castableTypes.addAll(allow.castableTypes());
                 }
             }
@@ -1093,7 +1107,8 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AllowCastFromTopOfLibraryEffect allow
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
                         && (allow.matches(card)
                         || (card.getType() != CardType.LAND && allow.filter() != null
                         && predicateEvaluationService.matchesCardPredicate(

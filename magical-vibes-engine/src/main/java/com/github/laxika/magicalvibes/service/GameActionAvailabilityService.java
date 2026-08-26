@@ -317,6 +317,11 @@ public class GameActionAvailabilityService {
                 extraConvokeMana, additionalGenericCost, ctx)) {
             return true;
         }
+        if (card.getCastingOption(AdventureCast.class).isPresent() && card.getBackFaceCard() != null
+                && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
+                extraConvokeMana, additionalGenericCost, ctx)) {
+            return true;
+        }
         // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
         // mutating the caller's pool. Only copy when the player actually has the permission (rare).
         if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {
@@ -336,6 +341,11 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             flagged.setAllManaSpendableAsAnyColor(true);
             pool = flagged;
+        }
+        if (!card.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteNoncreatureSpellOnlyMana();
         }
         if (card.hasType(CardType.CREATURE) && pool.getCreatureSpellOrAbilityManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
@@ -1020,7 +1030,8 @@ public class GameActionAvailabilityService {
                 isGrantedGraveyardCast = CastingPermissionService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
-            boolean isGrantedCyclingGraveyardCast = flashback.isEmpty()
+            Optional<CastingPermissionService.FilteredGraveyardPermission> filteredGraveyardPermission =
+                    flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
                     && !grantedFlashback
@@ -1029,7 +1040,9 @@ public class GameActionAvailabilityService {
                     && !isGrantedGraveyardPlay
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
-                    && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
+                    ? castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
+                    : Optional.empty();
+            boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermission.isPresent();
 
             boolean isJumpStart = card.getCastingOption(JumpStartCast.class).isPresent()
                     && flashback.isEmpty()
@@ -1162,10 +1175,34 @@ public class GameActionAvailabilityService {
             if (!castingCostService.canPayAdditionalSpellCostsFromGraveyard(gameData, playerId, castHalf)) {
                 continue;
             }
+            if (isGrantedCyclingGraveyardCast
+                    && !canPayFilteredGraveyardPermissionCosts(gameData, playerId,
+                    filteredGraveyardPermission.get().permission().additionalCosts())) {
+                continue;
+            }
 
             playable.add(i);
         }
 
         return playable;
+    }
+
+    private boolean canPayFilteredGraveyardPermissionCosts(GameData gameData, UUID playerId,
+                                                            List<CastingCost> costs) {
+        for (CastingCost cost : costs) {
+            if (cost instanceof LifeCastingCost lifeCost) {
+                if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                        || gameData.getLife(playerId) < lifeCost.amount()) {
+                    return false;
+                }
+            } else if (cost instanceof DiscardCardCastingCost) {
+                if (gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

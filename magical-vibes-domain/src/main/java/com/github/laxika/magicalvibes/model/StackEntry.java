@@ -61,9 +61,12 @@ public class StackEntry {
      * into-library dispositions still win.
      */
     @Setter private boolean exileInsteadOfGraveyard;
+    /** Whether an effect already moved this spell out of the stack during resolution. */
+    @Setter private boolean spellDispositionHandled;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
+    @Setter private boolean castWithAdventure;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -200,6 +203,8 @@ public class StackEntry {
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
     @Setter private Permanent sacrificedPermanentSnapshot;
+    /** Equipment attached to a source permanent when it was sacrificed as an ability cost. */
+    @Setter private List<UUID> sacrificedAttachedEquipmentIds = List.of();
     /** Effective power of the permanent sacrificed as an additional cost, when snapshotted. */
     @Setter private int sacrificedPower;
     /** Effective toughness of the permanent sacrificed as an additional cost, when snapshotted. */
@@ -274,6 +279,8 @@ public class StackEntry {
     private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
+    /** Counters applied to a permanent as it enters from this spell. */
+    private final Map<CounterType, Integer> enteringCounters = new EnumMap<>(CounterType.class);
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
@@ -530,8 +537,10 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
+        this.spellDispositionHandled = source.spellDispositionHandled;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
+        this.castWithAdventure = source.castWithAdventure;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
@@ -574,6 +583,8 @@ public class StackEntry {
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
         this.sacrificedPermanentSnapshot = source.sacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.sacrificedPermanentSnapshot);
+        this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.sacrificedAttachedEquipmentIds);
         this.sacrificedPower = source.sacrificedPower;
         this.sacrificedToughness = source.sacrificedToughness;
         this.sacrificedCard = source.sacrificedCard;
@@ -597,6 +608,7 @@ public class StackEntry {
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
+        this.enteringCounters.putAll(source.enteringCounters);
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
     }
 
@@ -617,6 +629,14 @@ public class StackEntry {
             counters.remove(counterType);
         } else {
             counters.put(counterType, count);
+        }
+    }
+
+    public void setEnteringCounterCount(CounterType counterType, int count) {
+        if (count <= 0) {
+            enteringCounters.remove(counterType);
+        } else {
+            enteringCounters.put(counterType, count);
         }
     }
 

@@ -40,7 +40,8 @@ public record FlickerEffect(
         boolean grantHaste,
         boolean returnAtOwnerNextEndStep,
         boolean plusOnePlusOneCountersOnlyOnCreatures,
-        int loyaltyCountersOnPlaneswalkersOnReturn) implements CardEffect {
+        int loyaltyCountersOnPlaneswalkersOnReturn,
+        boolean addAdditionalEndStepIfFirst) implements CardEffect {
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
                          TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
@@ -49,7 +50,7 @@ public record FlickerEffect(
                          boolean returnAtOwnerNextEndStep) {
         this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
                 plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
-                returnAtOwnerNextEndStep, false, 0);
+                returnAtOwnerNextEndStep, false, 0, false);
     }
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
@@ -86,7 +87,7 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, counters, false, false,
-                false, true, counters);
+                false, true, counters, false);
     }
 
     /** Exile this permanent, return it under your control at the beginning of the next end step (Argent Sphinx). */
@@ -132,6 +133,13 @@ public record FlickerEffect(
     public static FlickerEffect flickerTarget() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
+    /** Exile target permanent, immediately return it under its owner's control, and add an end step if this is the first end step of the turn. */
+    public static FlickerEffect flickerTargetWithAdditionalEndStep() {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, true);
     }
 
     /**

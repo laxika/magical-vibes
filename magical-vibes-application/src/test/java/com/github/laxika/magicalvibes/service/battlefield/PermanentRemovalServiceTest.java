@@ -998,6 +998,8 @@ class PermanentRemovalServiceTest {
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 3, "Lightning Bolt");
 
             assertThat(result).isEqualTo(0);
+            assertThat(creature.getMarkedDamage()).isEqualTo(3);
+            assertThat(gd.permanentsDealtDamageThisTurn).contains(creature.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Serra Angel") && logEntry.plainText().contains("absorbs") && logEntry.plainText().contains("redirected")));
         }

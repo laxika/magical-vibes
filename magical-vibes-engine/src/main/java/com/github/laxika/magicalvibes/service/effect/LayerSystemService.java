@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -587,13 +588,15 @@ public class LayerSystemService {
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
      *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
      *     (cheap insurance — no L4-L6 input reads hands today);</li>
+     * <li>player life totals, which dynamic base P/T setters may read while producing layer-7b
+     *     entries;</li>
      * <li>{@code timestampCounter} as stamp-event insurance.</li>
      * </ul>
      *
      * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
      * every query and only the finished board is cached): emblems, the conditions of the
-     * conditional wrappers the pass did not collect, life totals, turn/step state, amount
-     * evaluation beyond the fields above. The wrappers the pass DOES collect are exactly those
+     * conditional wrappers the pass did not collect, turn/step state, amount evaluation beyond
+     * the fields above. The wrappers the pass DOES collect are exactly those
      * whose conditions read only what is hashed here — that is what
      * {@link ConditionBoardStability} decides, so widening it means widening this method too.
      *
@@ -606,6 +609,7 @@ public class LayerSystemService {
         h = mix(h, gameData.timestampCounter);
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
+            h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
             if (enteredThisTurn != null) {
@@ -2362,6 +2366,16 @@ public class LayerSystemService {
                         });
                     }
                 }
+                case SetBasePowerToughnessToAmountEffect ignored ->
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                                (target, harvested) -> {
+                                    if (harvested.isBasePTOverridden()) {
+                                        entries.add(new BasePtEntry(target.permanent().getId(),
+                                                harvested.getBasePowerOverride(), harvested.getBaseToughnessOverride(),
+                                                instance.timestamp(), instance.position(),
+                                                provenanceSourceName(instance)));
+                                    }
+                                });
                 case AnimateNoncreatureArtifactsEffect ignored -> {
                     // Gated off for artifacts that animate themselves — their own animation
                     // defines the base P/T, not March's MV.

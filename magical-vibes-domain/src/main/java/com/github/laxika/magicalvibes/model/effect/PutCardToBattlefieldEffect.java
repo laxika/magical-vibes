@@ -39,6 +39,8 @@ import java.util.Set;
  *                                without drawing (Wrenn and Seven)
  * @param returnToHandAtEndStep   if {@code true}, the chosen permanent is returned to its owner's hand at the
  *                                beginning of the next end step, if it is still on the battlefield (Surprise Deployment)
+ * @param enterTappedAndAttackingIf if non-null, a chosen card matching this predicate enters the battlefield
+ *                                  tapped and attacking; other chosen cards enter normally
  */
 public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean enterTapped, boolean maxManaValueBoundedByX,
@@ -48,7 +50,8 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean faceDown, int faceDownPower, int faceDownToughness,
                                          Set<CardType> faceDownCardTypes,
                                          boolean returnExiledSourceIfSacrificed,
-                                         boolean returnToHandAtEndStep) implements CardEffect {
+                                         boolean returnToHandAtEndStep,
+                                         CardPredicate enterTappedAndAttackingIf) implements CardEffect {
 
     public PutCardToBattlefieldEffect {
         faceDownCardTypes = Set.copyOf(faceDownCardTypes);
@@ -63,7 +66,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                       Set<CardType> faceDownCardTypes) {
         this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
                 attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
-                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, false, false);
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, false, false, null);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
@@ -155,7 +158,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, true,
-                returnToHandAtEndStep);
+                returnToHandAtEndStep, enterTappedAndAttackingIf);
     }
 
     /** Surprise Deployment: return the chosen permanent to its owner's hand at the next end step. */
@@ -163,6 +166,13 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                returnExiledSourceIfSacrificed, true);
+                returnExiledSourceIfSacrificed, true, enterTappedAndAttackingIf);
+    }
+
+    public PutCardToBattlefieldEffect withEnterTappedAndAttackingIf(CardPredicate predicate) {
+        return new PutCardToBattlefieldEffect(this.predicate, label, enterTapped, maxManaValueBoundedByX,
+                grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate);
     }
 }

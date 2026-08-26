@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDa
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagePersistenceEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
@@ -78,6 +79,7 @@ public class TurnCleanupService {
         resetEndOfTurnModifiers(gameData);
         tapPermanentsReturningToOwner(gameData);
         creatureControlService.reconcileControl(gameData);
+        gameData.controlLossUnattachTriggers.clear();
     }
 
     /**
@@ -185,8 +187,13 @@ public class TurnCleanupService {
 
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
-            p.setMarkedDamage(0);
-            p.setDamagedByDeathtouch(false);
+            boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
+                    && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(DamagePersistenceEffect.class::isInstance);
+            if (!damagePersists) {
+                p.setMarkedDamage(0);
+                p.setDamagedByDeathtouch(false);
+            }
             p.setTimesRegeneratedThisTurn(0);
             // Reset unconditionally: resetModifiers() only touches "until end of turn" state, so it is a
             // no-op on an unmodified permanent. Guarding it on a hand-maintained list of dirty flags let
@@ -258,6 +265,7 @@ public class TurnCleanupService {
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
         gameData.allDamagePreventionPredicates.clear();
+        gameData.allDamagePreventionPredicatesByController.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.combatDamagePreventionPredicatesByController.clear();

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -68,12 +67,11 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
                 GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         if (targetCard.hasType(CardType.CREATURE)) {
-            CreateTokenEffect zombie = CreateTokenEffect.blackZombie(1);
             entry.getCreatedPermanentIds().addAll(
-                    permanentControlSupport.applyCreateToken(gameData, controllerId, zombie, 1,
-                            entry.getCard().getSetCode(), 2, 2));
-            log.info("Game {} - {} creates a Zombie token from exiled creature card",
-                    gameData.id, playerName);
+                    permanentControlSupport.applyCreateToken(gameData, controllerId, e.token(), 1,
+                            entry.getCard().getSetCode()));
+            log.info("Game {} - {} creates a {} token from exiled creature card",
+                    gameData.id, playerName, e.token().tokenName());
         }
     }
 }

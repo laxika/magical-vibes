@@ -16,6 +16,7 @@ public sealed interface DynamicAmount permits
         AttachedPermanentColorCount,
         BasicLandTypesAmongControlledLands,
         CardTypesAmongCardsInGraveyard,
+        CardTypesAmongCardsDiscardedThisResolution,
         DistinctManaCostsAmongCardsInGraveyard,
         DistinctManaValuesAmongStudyCounterCardsInExile,
         DistinctManaValuesAmongControlledPermanents,

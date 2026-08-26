@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditi
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -28,7 +30,7 @@ public class GraveyardTargetingSupport {
 
     public Target findTarget(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
-            CardEffect targetEffect = unwrapMay(effect);
+            CardEffect targetEffect = unwrapTargetingWrappers(effect);
             // A "you may [exile this, then return target cards]" bundle keeps its steps in a
             // SequenceEffect, so the targeting step lives one level deeper (Iname, Life Aspect).
             if (targetEffect instanceof SequenceEffect sequence) {
@@ -61,8 +63,17 @@ public class GraveyardTargetingSupport {
         return null;
     }
 
-    private CardEffect unwrapMay(CardEffect effect) {
-        return effect instanceof MayEffect may ? may.wrapped() : effect;
+    private CardEffect unwrapTargetingWrappers(CardEffect effect) {
+        CardEffect unwrapped = effect;
+        while (true) {
+            if (unwrapped instanceof MayEffect may) {
+                unwrapped = may.wrapped();
+            } else if (unwrapped instanceof ConditionalEffect conditional) {
+                unwrapped = conditional.wrapped();
+            } else {
+                return unwrapped;
+            }
+        }
     }
 
     private Target targetOf(CardEffect effect) {
@@ -84,6 +95,10 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
             return new Target(imprint.filter(), imprint.scope(), "to exile", 1, 1);
+        }
+        if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copy) {
+            GraveyardSearchScope scope = copy.targetSpec().graveyardScope().orElseThrow();
+            return new Target(copy.filter(), scope, "to exile and copy", 1, 0);
         }
         if (effect instanceof GrantTargetGraveyardCardCastEffect grantCast) {
             return new Target(grantCast.filter(), grantCast.scope(), "to cast", 1, 1);

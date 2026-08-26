@@ -9,6 +9,7 @@ public enum CounterType {
     AWAKENING,
     BAIT,
     BLAZE,
+    BLIGHT,
     BOUNTY,
     BRIBERY,
     BOOK,

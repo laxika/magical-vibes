@@ -125,19 +125,37 @@ public class PlayerInteractionSupport {
                 && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getCard().getId() : null;
         if (effect.returnToHandAtEndStep()) {
-            playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                    effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
-                    effect.drawAndRepeat(), repeats ? effect.predicate() : null,
-                    repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
-                    effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId, true);
+            if (effect.enterTappedAndAttackingIf() != null) {
+                playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
+                        effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
+                        effect.drawAndRepeat(), repeats ? effect.predicate() : null,
+                        repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
+                        effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
+                        returnExiledSourceCardId, true, effect.enterTappedAndAttackingIf());
+            } else {
+                playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
+                        effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
+                        effect.drawAndRepeat(), repeats ? effect.predicate() : null,
+                        repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
+                        effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
+                        returnExiledSourceCardId, true);
+            }
         } else {
-            playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                    effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
-                    effect.drawAndRepeat(), repeats ? effect.predicate() : null,
-                    repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
-                    effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId);
+            if (effect.enterTappedAndAttackingIf() != null) {
+                playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
+                        effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
+                        effect.drawAndRepeat(), repeats ? effect.predicate() : null,
+                        repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
+                        effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
+                        returnExiledSourceCardId, false, effect.enterTappedAndAttackingIf());
+            } else {
+                playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
+                        effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
+                        effect.drawAndRepeat(), repeats ? effect.predicate() : null,
+                        repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
+                        effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
+                        returnExiledSourceCardId);
+            }
         }
 
     }

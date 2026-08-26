@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChandraTorchExileCastSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.VaanExileCastSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -57,6 +58,7 @@ public class PermanentChoiceSpellHandlerService {
     private final PsychicBattleSupport psychicBattleSupport;
     private final SpellCastingService spellCastingService;
     private final ChandraTorchExileCastSupport chandraTorchExileCastSupport;
+    private final VaanExileCastSupport vaanExileCastSupport;
     private final TargetLegalityService targetLegalityService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -71,6 +73,7 @@ public class PermanentChoiceSpellHandlerService {
                                               PsychicBattleSupport psychicBattleSupport,
                                               @Lazy SpellCastingService spellCastingService,
                                               @Lazy ChandraTorchExileCastSupport chandraTorchExileCastSupport,
+                                              @Lazy VaanExileCastSupport vaanExileCastSupport,
                                               TargetLegalityService targetLegalityService,
                                               InteractionHandlerRegistry interactionHandlerRegistry) {
         this.gameQueryService = gameQueryService;
@@ -84,6 +87,7 @@ public class PermanentChoiceSpellHandlerService {
         this.psychicBattleSupport = psychicBattleSupport;
         this.spellCastingService = spellCastingService;
         this.chandraTorchExileCastSupport = chandraTorchExileCastSupport;
+        this.vaanExileCastSupport = vaanExileCastSupport;
         this.targetLegalityService = targetLegalityService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
     }
@@ -315,6 +319,11 @@ public class PermanentChoiceSpellHandlerService {
         chandraTorchExileCastSupport.completeTarget(gameData, permanentId, context);
     }
 
+    public void handleVaanCastSpellTarget(GameData gameData, UUID permanentId,
+                                           PermanentChoiceContext.VaanCastSpellTarget context) {
+        vaanExileCastSupport.completeTarget(gameData, permanentId, context);
+    }
+
     /**
      * Collects the targets of a multi-target spell cast from exile one slot at a time. Each response
      * fills the next declared target slot; while slots remain, computes the legal candidates for the
@@ -418,7 +427,7 @@ public class PermanentChoiceSpellHandlerService {
             if (!gct.withoutPayingManaCost()) {
                 try {
                     spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), gct.cardToCast(), 0,
-                            Zone.GRAVEYARD);
+                            Zone.GRAVEYARD, gct.anyManaType());
                 } catch (IllegalStateException ex) {
                     graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
                     gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), " can't be cast because its mana cost can't be paid."));

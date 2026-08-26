@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,6 +19,12 @@ import java.util.UUID;
  * active record (records are immutable, shallow copy).
  */
 public sealed interface MultiPermanentChoiceContext {
+
+    /** Complete a resolution-time choice of permanents from which counters are removed. */
+    record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
+                                             PermanentPredicate permanentFilter)
+            implements MultiPermanentChoiceContext {
+    }
 
     record SagaChapterCounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, String chapterName, CounterType counterType,
@@ -39,6 +46,12 @@ public sealed interface MultiPermanentChoiceContext {
         public DealDamageToDamagedPlayerControls(StackEntry damageEntry, int damage) {
             this(damageEntry, new com.github.laxika.magicalvibes.model.amount.Fixed(damage));
         }
+    }
+
+    /** Light of Judgment: destroy up to one matching permanent attached to the damaged creature. */
+    record DestroyUpToOneAttachedPermanent(UUID targetCreatureId, PermanentPredicate attachedFilter,
+                                            UUID sourceCardId, UUID sourceControllerId,
+                                            String sourceCardName) implements MultiPermanentChoiceContext {
     }
 
     /** Destroy a permanent the damaged player controls (mandatory combat damage trigger, e.g. Deus of Calamity). */

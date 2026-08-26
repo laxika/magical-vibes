@@ -1814,6 +1814,16 @@ public class TargetLegalityService {
         if (entry.getTargetId() != null) {
             if (entry.getTargetZone() == Zone.EXILE) {
                 targetFizzled = gameQueryService.findCardInExileById(gameData, entry.getTargetId()) == null;
+                if (!targetFizzled) {
+                    List<CardEffect> exileTargetEffects = entry.getEffectsToResolve().stream()
+                            .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                            .toList();
+                    targetFizzled = targetValidationService.checkEffectTargets(
+                            exileTargetEffects,
+                            new TargetValidationContext(gameData, entry.getTargetId(), Zone.EXILE,
+                                    entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                    entry.getSourcePermanentSnapshot())).isPresent();
+                }
             } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) == null;
                 if (!targetFizzled) {
@@ -2353,6 +2363,10 @@ public class TargetLegalityService {
         }
         if (gameQueryService.playerHasProtectionFromEverything(gameData, targetPlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has protection from everything and can't be targeted";
+        }
+        if (gameQueryService.playerHasProtectionFromOpponents(gameData, targetPlayerId, sourcePlayerId)) {
+            return gameData.playerIdToName.get(targetPlayerId)
+                    + " has protection from the source's controller and can't be targeted";
         }
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
                 && gameQueryService.playerHasHexproof(gameData, targetPlayerId)

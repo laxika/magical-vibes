@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -111,7 +112,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             gameData.queueDelayedAction(new PendingExileReturn(
                     cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
                     e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
-                    e.returnAtOwnerNextEndStep(), false, false));
+                    e.returnAtOwnerNextEndStep(), false, false, false, null, null, false,
+                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn()));
         }
     }
 
@@ -212,6 +214,13 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         for (FlickeredPermanent flickered : exiled) {
             returnAfterImmediateExile(gameData, entry, e, flickered);
+        }
+
+        if (e.addAdditionalEndStepIfFirst()
+                && gameData.currentStep == TurnStep.END_STEP
+                && gameData.endStepsThisTurn == 1) {
+            gameData.additionalEndStepsPending++;
+            gameLogService.append(gameData, GameLog.text("There is an additional end step after this step."));
         }
     }
 

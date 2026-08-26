@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -9,10 +10,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -37,6 +40,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GameQueryService gameQueryService;
     private final GameMutationCoordinator mutationCoordinator;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -54,11 +58,32 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         }
         String controllerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
+        ReturnCardExiledWithSourceToBattlefieldEffect returnEffect =
+                (ReturnCardExiledWithSourceToBattlefieldEffect) effect;
+
+        if (returnEffect.targeted()) {
+            if (entry.getTargetZone() != Zone.EXILE
+                    || entry.getTargetId() == null) {
+                return;
+            }
+            ExiledCardEntry target = gameData.findExiledCard(entry.getTargetId());
+            if (target == null || target.faceDown()
+                    || !sourcePermanentId.equals(target.sourcePermanentId())
+                    || !matches(entry, returnEffect, target.card())) {
+                gameLogService.append(gameData, GameLog.text(
+                        "The target card is no longer legal for " + sourceName + "."));
+                return;
+            }
+            returnToBattlefield(gameData, controllerId, target.card(), sourceName,
+                    returnEffect.grantedSubtype(), returnEffect.entersTapped(),
+                    returnEffect.additionalPlusOnePlusOneCounters());
+            return;
+        }
 
         List<Card> matching = gameData.exiledCards.stream()
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
                 .map(ExiledCardEntry::card)
-                .filter(card -> matches(entry, effect, card))
+                .filter(card -> matches(entry, returnEffect, card))
                 .toList();
 
         if (matching.isEmpty()) {
@@ -69,12 +94,12 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
         if (matching.size() == 1) {
             returnToBattlefield(gameData, controllerId, matching.getFirst(), sourceName,
-                    ((ReturnCardExiledWithSourceToBattlefieldEffect) effect).grantedSubtype());
+                    returnEffect.grantedSubtype());
             return;
         }
 
         gameData.queueInteraction(new PendingReturnExiledWithSourceCard(true, controllerId,
-                ((ReturnCardExiledWithSourceToBattlefieldEffect) effect).grantedSubtype()));
+                returnEffect.grantedSubtype()));
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,
@@ -94,12 +119,30 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
     /** Shared with the multi-card choice path in {@code LibraryChoiceHandlerService}. */
     public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                     CardSubtype grantedSubtype) {
+        returnToBattlefield(gameData, controllerId, card, sourceName, grantedSubtype, false, 0);
+    }
+
+    private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                     CardSubtype grantedSubtype, boolean entersTapped,
+                                     int additionalPlusOnePlusOneCounters) {
         if (!gameData.removeFromExile(card.getId())) {
             return;
         }
         Permanent permanent = new Permanent(card);
         if (grantedSubtype != null) {
             permanent.getGrantedSubtypes().add(grantedSubtype);
+        }
+        if (entersTapped) {
+            permanent.tap();
+        }
+        if (additionalPlusOnePlusOneCounters > 0
+                && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent, controllerId)) {
+            int count = gameQueryService.doublePlusOnePlusOneCounters(
+                    gameData, permanent, controllerId, additionalPlusOnePlusOneCounters);
+            if (count > 0) {
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                        permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
+            }
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         gameLogService.append(gameData, GameLog.textCardText(
@@ -110,9 +153,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
     }
 
-    private boolean matches(StackEntry entry, CardEffect effect, Card card) {
-        ReturnCardExiledWithSourceToBattlefieldEffect e =
-                (ReturnCardExiledWithSourceToBattlefieldEffect) effect;
+    private boolean matches(StackEntry entry, ReturnCardExiledWithSourceToBattlefieldEffect e, Card card) {
         return (e.filter() == null || predicateEvaluationService.matchesCardPredicate(
                 card, e.filter(), entry.getCard().getId()))
                 && (!e.requiresManaValueEqualsX() || card.getManaValue() == entry.getXValue());

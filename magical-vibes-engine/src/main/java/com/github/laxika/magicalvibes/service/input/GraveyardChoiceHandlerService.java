@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -79,6 +80,7 @@ public class GraveyardChoiceHandlerService {
             exileMatchingCardsSupport;
     private final DestructionSupport destructionSupport;
     private final ExileDragonApproachAndSearchSupport exileDragonApproachAndSearchSupport;
+    private final TargetLegalityService targetLegalityService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -622,6 +624,15 @@ public class GraveyardChoiceHandlerService {
         }
 
         List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
+        if (pendingEffects != null) {
+            targetLegalityService.validateMultiTargetGraveyardAbility(
+                    gameData,
+                    gameData.graveyardTargetOperation.controllerId,
+                    pendingEffects,
+                    cardIds,
+                    gameData.graveyardTargetOperation.card == null
+                            ? null : gameData.graveyardTargetOperation.card.getId());
+        }
         CardEffect activeSpellGraveyardChoiceEffect =
                 gameData.graveyardTargetOperation.activeSpellGraveyardChoiceEffect;
         List<CardEffect> targetValidationEffects = activeSpellGraveyardChoiceEffect != null
@@ -908,6 +919,8 @@ public class GraveyardChoiceHandlerService {
         int pendingXValue = gameData.graveyardTargetOperation.xValue;
         UUID pendingTargetPlayerId = gameData.graveyardTargetOperation.targetPlayerId;
         boolean pendingFlashback = gameData.graveyardTargetOperation.flashback;
+        Card pendingPhysicalCard = gameData.graveyardTargetOperation.physicalCard;
+        boolean pendingAdventure = gameData.graveyardTargetOperation.castWithAdventure;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
         UUID pendingSpellCounterTargetId = gameData.graveyardTargetOperation.spellCounterTargetId;
@@ -926,6 +939,8 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.singleGraveyard = false;
         gameData.graveyardTargetOperation.targetPlayerId = null;
         gameData.graveyardTargetOperation.flashback = false;
+        gameData.graveyardTargetOperation.physicalCard = null;
+        gameData.graveyardTargetOperation.castWithAdventure = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
@@ -962,6 +977,12 @@ public class GraveyardChoiceHandlerService {
             spellEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
             if (pendingFlashback) {
                 spellEntry.setCastWithFlashback(true);
+            }
+            if (pendingPhysicalCard != null) {
+                spellEntry.setPhysicalCard(pendingPhysicalCard);
+            }
+            if (pendingAdventure) {
+                spellEntry.setCastWithAdventure(true);
             }
             spellEntry.setSourceZone(pendingFlashback ? Zone.GRAVEYARD : Zone.HAND);
             gameData.stack.add(spellEntry);

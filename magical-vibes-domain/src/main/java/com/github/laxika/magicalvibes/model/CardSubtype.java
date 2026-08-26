@@ -73,6 +73,7 @@ public enum CardSubtype {
     WEREWOLF("Werewolf"),
     WOLF("Wolf"),
     MONK("Monk"),
+    MOOGLE("Moogle"),
     GRIFFIN("Griffin"),
     SKELETON("Skeleton"),
     ELEPHANT("Elephant"),
@@ -112,6 +113,7 @@ public enum CardSubtype {
     ILLUSION("Illusion"),
     DRAKE("Drake"),
     DRONE("Drone"),
+    ROBOT("Robot"),
     SPAWN("Spawn"),
     WARRIOR("Warrior"),
     WARLOCK("Warlock"),
@@ -144,6 +146,7 @@ public enum CardSubtype {
     KAVU("Kavu"),
     CYCLOPS("Cyclops"),
     HORROR("Horror"),
+    HERO("Hero"),
     HIPPO("Hippo"),
     PHELDDAGRIF("Phelddagrif"),
     PHOENIX("Phoenix"),
@@ -249,7 +252,8 @@ public enum CardSubtype {
     ZUBERA("Zubera"),
     YANLING("Yanling"),
     MITE("Mite"),
-    OMEN("Omen");
+    OMEN("Omen"),
+    TOWN("Town");
 
     @Getter
     private final String displayName;

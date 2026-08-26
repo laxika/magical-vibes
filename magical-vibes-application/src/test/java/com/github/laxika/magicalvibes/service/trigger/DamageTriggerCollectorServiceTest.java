@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -328,6 +329,25 @@ class DamageTriggerCollectorServiceTest {
     @Nested
     @DisplayName("ON_ENCHANTED_CREATURE_DEALT_DAMAGE — CreateTokenEffect")
     class CreateTokensOnEnchantedCreatureDamage {
+
+        @Test
+        @DisplayName("queues a self-sacrifice trigger for damage to an enchanted creature")
+        void queuesSelfSacrificeForEnchantedCreatureDamage() {
+            Permanent aura = createPermanent("Sleep Magic");
+            Permanent creature = createPermanent("Hill Giant");
+            var effect = new SacrificeSelfEffect();
+            var ctx = new TriggerContext.DamageToCreature(creature, 2, player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
 
         @Test
         @DisplayName("queues tokens for the enchanted creature's current controller and records damage")

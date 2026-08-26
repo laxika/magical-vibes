@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -46,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -75,6 +77,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class StackResolutionService {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final SagaChapterService sagaChapterService;
     private final CloneService cloneService;
     private final GraveyardService graveyardService;
     private final LegendRuleService legendRuleService;
@@ -95,6 +98,7 @@ public class StackResolutionService {
     private final AuraCopyService auraCopyService;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
+                                  SagaChapterService sagaChapterService,
                                   CloneService cloneService,
                                   GraveyardService graveyardService,
                                   LegendRuleService legendRuleService,
@@ -114,6 +118,7 @@ public class StackResolutionService {
                                   AuraCopyService auraCopyService,
                                   @Lazy ParadigmService paradigmService) {
         this.battlefieldEntryService = battlefieldEntryService;
+        this.sagaChapterService = sagaChapterService;
         this.cloneService = cloneService;
         this.graveyardService = graveyardService;
         this.legendRuleService = legendRuleService;
@@ -269,6 +274,8 @@ public class StackResolutionService {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         }
         perm.setCastFromZone(entry.getSourceZone());
+        entry.getEnteringCounters().forEach((counterType, count) ->
+                perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
         perm.setCast(!entry.isCopy());
@@ -665,12 +672,7 @@ public class StackResolutionService {
 
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (enteredCard.isSaga()) {
-                int loreCounters = gameQueryService.replaceCounters(gameData, enchPerm,
-                        CounterType.LORE, 1, controllerId);
-                enchPerm.setCounterCount(CounterType.LORE, loreCounters);
-                gameLogService.append(gameData, GameLog.cardThen(enteredCard, " gets a lore counter (1)."));
-                log.info("Game {} - {} enters with lore counter 1", gameData.id, enteredCard.getName());
-                triggerSagaChapter(gameData, enchPerm, enteredCard, controllerId, 1);
+                sagaChapterService.initializeSaga(gameData, enchPerm, enteredCard, controllerId);
             }
 
             // Check if enchantment has "as enters" color choice
@@ -928,11 +930,12 @@ public class StackResolutionService {
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
+                Card dispositionCard = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
                 if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
-                    exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
-                    gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
+                    exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
+                    gameLogService.append(gameData, GameLog.isExiled(dispositionCard));
                 } else {
-                    graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), entry.getCard());
+                    graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), dispositionCard);
                 }
             }
         } else {
@@ -951,7 +954,8 @@ public class StackResolutionService {
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
                 if (isNonCopySpell(entry)) {
-                    exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
+                    exileService.exileCard(gameData, entry.getOwnerId(), entry.isCastWithAdventure()
+                            ? entry.getPhysicalCard() : entry.getCard());
                 }
                 return;
             }
@@ -987,7 +991,7 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an activated ability whose effects branch on {@code NthAbilityResolutionThisTurn}
+     * entry is an activated or triggered ability whose effects branch on {@code NthAbilityResolutionThisTurn}
      * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
      * Counted at resolution (not activation), so copies of the ability count but activations
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
@@ -995,15 +999,34 @@ public class StackResolutionService {
      * here (not on async resume) so each resolution counts exactly once.
      */
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
-        if (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY || entry.getSourcePermanentId() == null) {
+        if ((entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                || resolutionSourcePermanentId(entry) == null) {
             return;
         }
         boolean countsResolutions = entry.getEffectsToResolve().stream()
-                .anyMatch(e -> e instanceof ConditionalEffect conditional
-                        && conditional.condition() instanceof NthAbilityResolutionThisTurn);
+                .anyMatch(this::containsNthAbilityResolutionCondition);
         if (countsResolutions) {
-            gameData.permanentAbilityResolutionsThisTurn.merge(entry.getSourcePermanentId(), 1, Integer::sum);
+            gameData.permanentAbilityResolutionsThisTurn.merge(
+                    resolutionSourcePermanentId(entry), 1, Integer::sum);
         }
+    }
+
+    private UUID resolutionSourcePermanentId(StackEntry entry) {
+        return entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId()
+                : entry.getSourcePermanentSnapshot() == null
+                        ? null : entry.getSourcePermanentSnapshot().getId();
+    }
+
+    private boolean containsNthAbilityResolutionCondition(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditional.condition() instanceof NthAbilityResolutionThisTurn;
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(this::containsNthAbilityResolutionCondition);
+        }
+        return false;
     }
 
     /**
@@ -1011,6 +1034,9 @@ public class StackResolutionService {
      * Copies cease to exist per rule 707.10a and abilities have no card to dispose of.
      */
     private void handleSpellDisposition(GameData gameData, StackEntry entry) {
+        if (entry.isSpellDispositionHandled()) {
+            return;
+        }
         if (!isNonCopySpell(entry)) {
             return;
         }
@@ -1033,6 +1059,11 @@ public class StackResolutionService {
             gameData.playerDecks.get(ownerId).add(physicalCard);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+        } else if (entry.isCastWithAdventure()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addToExile(ownerId, physicalCard);
+            gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with its Adventure."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
@@ -1131,114 +1162,6 @@ public class StackResolutionService {
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
-    }
-
-    /**
-     * Triggers the appropriate Saga chapter ability for the given lore counter value.
-     * If the chapter's effects need targeting, queues for target selection;
-     * otherwise pushes the chapter's effects onto the stack as a triggered ability.
-     */
-    private void triggerSagaChapter(GameData gameData, Permanent sagaPerm, Card card, UUID controllerId, int loreCount) {
-        EffectSlot chapterSlot = switch (loreCount) {
-            case 1 -> EffectSlot.SAGA_CHAPTER_I;
-            case 2 -> EffectSlot.SAGA_CHAPTER_II;
-            case 3 -> EffectSlot.SAGA_CHAPTER_III;
-            default -> null;
-        };
-        if (chapterSlot == null) return;
-
-        List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
-        if (chapterEffects.isEmpty()) return;
-
-        String chapterName = switch (loreCount) {
-            case 1 -> "I";
-            case 2 -> "II";
-            case 3 -> "III";
-            default -> String.valueOf(loreCount);
-        };
-
-        boolean needsPlayerTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                || card.getSagaChapterTargetFilters(chapterSlot).stream()
-                .anyMatch(com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter.class::isInstance);
-        boolean hasSagaTargetGroups = !card.getSagaChapterTargetGroups(chapterSlot).isEmpty();
-        boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                || hasSagaTargetGroups;
-        boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e ->
-                e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                        || e instanceof ReturnTargetCardsFromGraveyardToHandEffect);
-        if (hasSagaTargetGroups) {
-            gameData.queueInteraction(
-                    new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
-                            card.getSagaChapterTargetFilters(chapterSlot),
-                            card.getSagaChapterTargetGroups(chapterSlot), List.of(), 0));
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    "'s chapter " + chapterName + " ability triggers."));
-            log.info("Game {} - {} chapter {} triggers (awaiting grouped target selection)",
-                    gameData.id, card.getName(), chapterName);
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
-        } else if (needsPlayerTarget && needsPermanentTarget) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    card, controllerId, new ArrayList<>(chapterEffects), false,
-                    sagaChapterAnyTargetFilter(chapterEffects), 0, sagaPerm.getId()));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-            log.info("Game {} - {} chapter {} triggers (awaiting any target selection)",
-                    gameData.id, card.getName(), chapterName);
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
-        } else if (needsPlayerTarget) {
-            gameData.queueInteraction(
-                    new PermanentChoiceContext.SagaChapterPlayerTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
-                            card.getSagaChapterTargetFilters(chapterSlot)));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-            log.info("Game {} - {} chapter {} triggers (awaiting player target selection)", gameData.id, card.getName(), chapterName);
-            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
-        } else if (needsPermanentTarget) {
-            gameData.queueInteraction(
-                    new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
-                            card.getSagaChapterTargetFilters(chapterSlot),
-                            card.getSagaChapterTargetGroups(chapterSlot), List.of(), 0));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-            log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
-        } else if (needsGraveyardTarget) {
-            gameData.queueInteraction(
-                    new PermanentChoiceContext.SagaChapterGraveyardTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-            log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
-            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
-        } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s chapter " + chapterName + " ability",
-                    new ArrayList<>(chapterEffects),
-                    null,
-                    sagaPerm.getId()
-            ));
-
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-            log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
-        }
-    }
-
-    private TargetFilter sagaChapterAnyTargetFilter(List<CardEffect> chapterEffects) {
-        CardEffect permanentTargetEffect = chapterEffects.stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                .findFirst()
-                .orElseThrow();
-        var permanentPredicate = permanentTargetEffect.targetSpec().targetPredicate()
-                .permanentRestriction().orElse(new PermanentTruePredicate());
-        PlayerRelation relation = chapterEffects.stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                .map(CardEffect::targetPlayerRelation)
-                .findFirst()
-                .orElse(PlayerRelation.ANY);
-        return new AnyTargetPredicateTargetFilter(permanentPredicate,
-                new PlayerRelationPredicate(relation), "target opponent or planeswalker");
     }
 
     private boolean maybeBeginBasicLandTypeChoice(GameData gameData, UUID controllerId, Card characteristics) {

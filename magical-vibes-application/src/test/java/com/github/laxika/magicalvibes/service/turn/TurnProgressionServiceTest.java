@@ -465,6 +465,25 @@ class TurnProgressionServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("advanceStep — additional end steps")
+    class AdditionalEndSteps {
+
+        @Test
+        @DisplayName("Returns to END_STEP before cleanup when an additional end step is pending")
+        void returnsToEndStepWhenAdditionalEndStepIsPending() {
+            gd.currentStep = TurnStep.END_STEP;
+            gd.endStepsThisTurn = 1;
+            gd.additionalEndStepsPending = 1;
+
+            turnProgressionService.advanceStep(gd);
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+            assertThat(gd.endStepsThisTurn).isEqualTo(2);
+            assertThat(gd.additionalEndStepsPending).isZero();
+        }
+    }
+
     // =========================================================================
     // advanceStep — CLEANUP step
     // =========================================================================

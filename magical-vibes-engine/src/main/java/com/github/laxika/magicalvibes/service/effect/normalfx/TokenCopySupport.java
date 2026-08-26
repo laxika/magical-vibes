@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -36,6 +37,7 @@ public class TokenCopySupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final SagaChapterService sagaChapterService;
 
     public void createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                   Permanent sourcePermanent,
@@ -89,11 +91,18 @@ public class TokenCopySupport {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }
+            if (effect.sacrificeAtNextUpkeep()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP));
+            }
 
             Card sourceCard = tokenPermanent.getCard();
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, tokenControllerId, sourceCard, null, false);
+            if (sourceCard.isSaga()) {
+                sagaChapterService.initializeSaga(gameData, tokenPermanent, sourceCard, tokenControllerId);
+            }
 
             if (effect.initialCounters() != null && !effect.initialCounters().isEmpty()
                     && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
@@ -174,6 +183,10 @@ public class TokenCopySupport {
                 }
                 tokenCard.addEffect(slot, registration.effect(), registration.triggerMode());
             }
+        }
+        if (effect.additionalSlotEffects() != null) {
+            effect.additionalSlotEffects().forEach((slot, effects) ->
+                    effects.forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect)));
         }
         for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
             tokenCard.addActivatedAbility(ability);

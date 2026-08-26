@@ -157,6 +157,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
+    /** Triggers whenever an opponent gains control of a permanent from this permanent's controller. */
+    ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT,
     /** Triggers whenever an opponent sacrifices a nontoken permanent. */
     ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED,
     /** Global watcher: triggers whenever any player sacrifices a creature ("Whenever a player
@@ -523,6 +525,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_II,
     /** Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. */
     SAGA_CHAPTER_III,
+    /** Saga chapter IV ability. Triggers when the fourth lore counter is placed. */
+    SAGA_CHAPTER_IV,
+    /** Saga chapter V ability. Triggers when the fifth lore counter is placed. */
+    SAGA_CHAPTER_V,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,
@@ -595,6 +601,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
      *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
     ON_SELF_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another permanent leaves the battlefield by any means. */
+    ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers whenever another creature (any player's) leaves the battlefield by any means
      *  (destruction, exile, bounce, sacrifice, tuck). Global watcher — fires on every permanent
      *  with this slot except the leaving creature itself. Checked in PermanentRemovalService via

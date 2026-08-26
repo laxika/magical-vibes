@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -123,7 +124,24 @@ public class GraveyardService {
     public List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         gameData.lastMilledCardColorSymbols.clear();
-        int cardsToMill = Math.min(count, deck.size());
+        int additionalCards = 0;
+        if (count > 0) {
+            int[] bonus = {0};
+            gameData.forEachPermanent((controllerId, permanent) -> {
+                if (controllerId.equals(targetPlayerId)
+                        || permanent.isFaceDown()
+                        || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                    return;
+                }
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ControllerOpponentMillBonusEffect millBonus) {
+                        bonus[0] += millBonus.amount();
+                    }
+                }
+            });
+            additionalCards = bonus[0];
+        }
+        int cardsToMill = Math.min(count + additionalCards, deck.size());
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
@@ -176,6 +194,25 @@ public class GraveyardService {
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} triggers on being milled", gameData.id, card.getName());
+            }
+        }
+        return cardsEnteredGraveyard;
+    }
+
+    /**
+     * Moves cards from the top of a player's library into that player's graveyard without treating
+     * the event as milling.
+     */
+    public List<Card> resolvePutTopCardsIntoGraveyard(GameData gameData, UUID targetPlayerId, int count) {
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        int cardsToMove = Math.min(count, deck.size());
+        List<Card> movedCards = new ArrayList<>(deck.subList(0, cardsToMove));
+        deck.subList(0, cardsToMove).clear();
+        List<Card> cardsEnteredGraveyard = new ArrayList<>();
+        for (Card card : movedCards) {
+            if (addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY,
+                    false, null, null, null, false, true)) {
+                cardsEnteredGraveyard.add(card);
             }
         }
         return cardsEnteredGraveyard;
@@ -316,6 +353,16 @@ public class GraveyardService {
                                        boolean suppressLibraryCreatureCardsTrigger,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
                                        Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryCreatureCardsTrigger,
+                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot,
+                selfGraveyardTriggerSuppressed, false);
+    }
+
+    private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                       boolean suppressLibraryCreatureCardsTrigger,
+                                       UUID battlefieldControllerId, UUID battlefieldPermanentId,
+                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
+                                       boolean suppressLibraryMillTriggers) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         // CR 614.7 — self-replacement effects apply first
 
@@ -479,7 +526,7 @@ public class GraveyardService {
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-            if (sourceZone == Zone.LIBRARY) {
+            if (sourceZone == Zone.LIBRARY && !suppressLibraryMillTriggers) {
                 triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);
             }
         }

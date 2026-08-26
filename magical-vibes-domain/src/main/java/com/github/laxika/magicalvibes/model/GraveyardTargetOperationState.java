@@ -43,6 +43,10 @@ public class GraveyardTargetOperationState {
     public final Map<CardEffect, List<UUID>> spellGraveyardCardIdsByEffect = new IdentityHashMap<>();
     /** Whether the spell is being cast with flashback */
     public boolean flashback;
+    /** Physical hand card for an alternate-face spell whose cast face is stored in {@link #card}. */
+    public Card physicalCard;
+    /** Whether the pending spell was cast as an Adventure. */
+    public boolean castWithAdventure;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
