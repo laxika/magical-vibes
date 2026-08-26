@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWi
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardOrExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -1182,6 +1183,21 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
+            ValidTargetsResponse validTargets = computeValidTargetsForSpell(
+                    gameData, card, controllerId, List.of(), maxXValue, kicked);
+            if (!validTargets.validGraveyardCardIds().isEmpty()) {
+                return true;
+            }
+            if (allowedTargets.contains(TargetType.EXILE)
+                    && !validTargets.validExiledCardIds().isEmpty()) {
+                return true;
+            }
+        } else if (allowedTargets.contains(TargetType.EXILE)) {
+            ValidTargetsResponse validTargets = computeValidTargetsForSpell(
+                    gameData, card, controllerId, List.of(), maxXValue, kicked);
+            if (!validTargets.validExiledCardIds().isEmpty()) {
+                return true;
+            }
             return true;
         }
 
@@ -1533,6 +1549,8 @@ public class ValidTargetService {
                     gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {
             return matchesReturnCardFilter(gameData, e, c, sourceCardId);
+        } else if (effect instanceof ReturnTargetCardFromGraveyardOrExileToHandEffect e) {
+            return predicateEvaluationService.matchesCardPredicate(c, e.graveyardFilter(), sourceCardId);
         } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
             return c.hasType(CardType.CREATURE) && c.getManaValue() == effectiveXValue;
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {

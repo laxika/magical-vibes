@@ -133,6 +133,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
@@ -3386,7 +3387,7 @@ public class AbilityActivationService {
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, permanent);
+            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, permanent, ability);
             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, permanent)
                     ? subtypeSpellOrAbilityContext : Set.of();
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
@@ -4372,10 +4373,11 @@ public class AbilityActivationService {
                                       List<UUID> targetIds) {
         try {
             ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
+            int dryRunXValue = Math.max(0, ability.getMinimumXValue());
             int additionalGenericCost = getActivatedAbilityAdditionalGenericCost(
-                    gameData, playerId, permanent, ability, targetId, targetIds);
+                    gameData, playerId, permanent, ability, targetId, targetIds, dryRunXValue);
             validateActivationLegality(
-                    gameData, playerId, permanent, ability, abilityIndex, 0, manaPool,
+                    gameData, playerId, permanent, ability, abilityIndex, dryRunXValue, manaPool,
                     additionalGenericCost);
             return true;
         } catch (IllegalStateException | IllegalArgumentException e) {
@@ -4470,6 +4472,10 @@ public class AbilityActivationService {
                                            ManaPool manaPool, int additionalGenericCost,
                                            boolean discardCostAlreadyPaid) {
         List<CardEffect> abilityEffects = ability.getEffects();
+
+        if (xValue < ability.getMinimumXValue()) {
+            throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
+        }
 
         // Sen Triplets: a player locked out this turn can't activate any ability.
         if (gameData.playersCantActivateAbilitiesThisTurn.contains(playerId)) {
@@ -4672,7 +4678,7 @@ public class AbilityActivationService {
             }
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            Set<CardSubtype> soaCtx = effectiveSpellOrAbilitySubtypes(gameData, permanent);
+            Set<CardSubtype> soaCtx = effectiveSpellOrAbilitySubtypes(gameData, permanent, ability);
             Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, permanent)
                     ? soaCtx : Set.of();
             boolean powerstoneCtx = manaPool != null && manaPool.getPowerstoneOnlyColorless() > 0;
@@ -5878,8 +5884,14 @@ public class AbilityActivationService {
         return subtypes;
     }
 
-    private Set<CardSubtype> effectiveSpellOrAbilitySubtypes(GameData gameData, Permanent permanent) {
+    private Set<CardSubtype> effectiveSpellOrAbilitySubtypes(GameData gameData, Permanent permanent,
+                                                              ActivatedAbility ability) {
         Set<CardSubtype> subtypes = effectiveSubtypes(permanent);
+        if (ability.getEffects().stream().anyMatch(EquipEffect.class::isInstance)) {
+            subtypes.add(CardSubtype.EQUIPMENT);
+        } else {
+            subtypes.remove(CardSubtype.EQUIPMENT);
+        }
         if (!gameQueryService.getEffectiveColors(gameData, permanent).isEmpty()) {
             subtypes.remove(CardSubtype.ELDRAZI);
         }

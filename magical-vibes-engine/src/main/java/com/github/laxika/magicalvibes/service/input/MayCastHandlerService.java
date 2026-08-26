@@ -536,7 +536,8 @@ public class MayCastHandlerService {
                             gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
                                             spellEffects, spellType, castEffect.exileInsteadOfGraveyard(),
-                                            castEffect.withoutPayingManaCost(), graveyardOwnerId,
+                                            castEffect.withoutPayingManaCost(), graveyardOwnerId, false,
+                                            castEffect.anyManaType(),
                                             castEffect.copyCount()));
                             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                                     "Choose a target for " + cardToCast.getName() + ".");
@@ -552,7 +553,7 @@ public class MayCastHandlerService {
                         if (!castEffect.withoutPayingManaCost()) {
                             try {
                                 spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
-                                        Zone.GRAVEYARD);
+                                        Zone.GRAVEYARD, castEffect.anyManaType());
                             } catch (IllegalStateException ex) {
                                 gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast because its mana cost can't be paid."));
                                 log.info("Game {} - {} cannot pay to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());

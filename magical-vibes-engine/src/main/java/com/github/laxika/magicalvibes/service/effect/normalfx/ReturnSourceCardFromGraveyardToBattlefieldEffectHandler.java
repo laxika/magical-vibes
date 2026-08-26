@@ -45,7 +45,10 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnSourceCardFromGraveyardToBattlefieldEffect) effect;
 
-        Card card = entry.getCard();
+        Card card = entry.getSourcePermanentSnapshot() != null
+                && entry.getSourcePermanentSnapshot().getOriginalCard() != null
+                ? entry.getSourcePermanentSnapshot().getOriginalCard()
+                : entry.getCard();
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (ownerId == null) {
             log.info("Game {} - {} graveyard return fizzles (no longer in a graveyard)", gameData.id, card.getName());

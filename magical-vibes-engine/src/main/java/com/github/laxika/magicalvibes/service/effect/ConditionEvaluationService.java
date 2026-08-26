@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.AnyGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
@@ -213,6 +214,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentC
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentDealtCombatDamageByLegendaryCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
@@ -228,6 +230,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThi
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
@@ -242,6 +245,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
@@ -421,6 +425,12 @@ public class ConditionEvaluationService {
             case CreatureDiedUnderYourControlThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
+            case CreatureDiedUnderOpponentControlThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.orderedPlayerIds.stream()
+                            .filter(playerId -> !playerId.equals(ctx.controllerId()))
+                            .anyMatch(playerId -> gameData.creatureDeathCountThisTurn
+                                    .getOrDefault(playerId, 0) > 0);
             case CreatureCardPutIntoYourGraveyardThisTurn ignored ->
                     ctx.controllerId() != null
                             && !gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn
@@ -766,6 +776,8 @@ public class ConditionEvaluationService {
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case OpponentDealtCombatDamageByLegendaryCreatureThisTurn ignored ->
+                    opponentWasDealtCombatDamageByLegendaryCreatureThisTurn(gameData, ctx.controllerId());
             case OpponentDrewAtLeastCardsThisTurn c ->
                     opponentDrewAtLeastCardsThisTurn(gameData, ctx.controllerId(), c.minimum());
             case OpponentGainedLifeThisTurn c ->
@@ -821,6 +833,8 @@ public class ConditionEvaluationService {
                     didAnyOpponentLoseLifeThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case AnyPlayerLostLifeThisTurn c ->
                     didAnyPlayerLoseLifeThisTurn(gameData, c.minimumAmount());
+            case AnyPlayerDealtCombatDamageAtLeastThisTurn c ->
+                    didAnyPlayerReceiveCombatDamageAtLeast(gameData, c.minimumAmount());
             case OpponentLostLifeLastTurn ignored ->
                     didAnyOpponentLoseLifeLastTurn(gameData, ctx.controllerId());
             case ControllerDidntLoseLifeThisTurn ignored ->
@@ -1002,6 +1016,10 @@ public class ConditionEvaluationService {
             case SourceAttackedOrBlockedThisTurn ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && (source.isAttackedThisTurn() || source.isBlockedThisTurn());
+            }
+            case SourceAttackedThisTurn ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isAttackedThisTurn();
             }
             case SourceIsPaired ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
@@ -2428,6 +2446,20 @@ public class ConditionEvaluationService {
         return false;
     }
 
+    private boolean opponentWasDealtCombatDamageByLegendaryCreatureThisTurn(GameData gameData,
+                                                                              UUID controllerId) {
+        if (controllerId == null) return false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            boolean legendarySourceDealtDamage = gameData.combatDamageSourcesWithLegendaryThisTurn.stream()
+                    .anyMatch(sourceId -> gameData.combatDamageToPlayersThisTurn
+                            .getOrDefault(sourceId, Set.of())
+                            .contains(playerId));
+            if (legendarySourceDealtDamage) return true;
+        }
+        return false;
+    }
+
     private boolean opponentDrewAtLeastCardsThisTurn(GameData gameData, UUID controllerId, int minimum) {
         if (controllerId == null) return false;
         return gameData.orderedPlayerIds.stream()
@@ -2482,6 +2514,13 @@ public class ConditionEvaluationService {
         int threshold = Math.max(1, minimumAmount);
         return gameData.orderedPlayerIds.stream()
                 .anyMatch(playerId -> gameData.lifeLostThisTurn.getOrDefault(playerId, 0) >= threshold);
+    }
+
+    private boolean didAnyPlayerReceiveCombatDamageAtLeast(GameData gameData, int minimumAmount) {
+        int threshold = Math.max(1, minimumAmount);
+        return gameData.orderedPlayerIds.stream()
+                .anyMatch(playerId -> gameData.combatDamageDealtToPlayersThisTurn
+                        .getOrDefault(playerId, 0) >= threshold);
     }
 
     private int activationCountThisTurn(GameData gameData, ConditionContext ctx, int abilityIndex) {

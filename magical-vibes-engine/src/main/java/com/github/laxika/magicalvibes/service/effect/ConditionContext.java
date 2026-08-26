@@ -188,7 +188,11 @@ public record ConditionContext(
     }
 
     public static ConditionContext forStackEntry(StackEntry entry) {
-        return new ConditionContext(entry.getControllerId(), entry.getSourcePermanentId(),
+        UUID sourcePermanentId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId()
+                : entry.getSourcePermanentSnapshot() == null
+                        ? null : entry.getSourcePermanentSnapshot().getId();
+        return new ConditionContext(entry.getControllerId(), sourcePermanentId,
                 entry.getSourcePermanentSnapshot(), entry.getCard(), entry.isKicked(), entry.isBuyback(),
                 entry.isProwl(), entry.isMadness(), entry.isCastForForetell(), entry.isOverloaded(),
                 entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,

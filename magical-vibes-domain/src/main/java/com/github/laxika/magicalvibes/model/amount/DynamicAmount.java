@@ -151,5 +151,6 @@ public sealed interface DynamicAmount permits
         UnspentMana,
         UntappedLandsAtTurnStart,
         WebSlingingReturnedCreatureManaValue,
-        XValue {
+        XValue,
+        CardTypesAmongCardsDiscardedThisResolution {
 }

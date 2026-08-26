@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 /**
  * Returns one card exiled "with" the source permanent to the battlefield under the ability
@@ -14,16 +17,40 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record ReturnCardExiledWithSourceToBattlefieldEffect(
         CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
-        boolean enterTapped, boolean enterAttacking)
+        boolean enterTapped, boolean enterAttacking,
+        boolean targeted, int additionalPlusOnePlusOneCounters)
         implements CardEffect {
 
     public ReturnCardExiledWithSourceToBattlefieldEffect() {
-        this(null, false, null, false, false);
+        this(null, false, null, false, false, false, 0);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
                                                          boolean requiresManaValueEqualsX,
                                                          CardSubtype grantedSubtype) {
-        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false);
+        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, 0);
+    }
+
+    public ReturnCardExiledWithSourceToBattlefieldEffect(
+            CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
+            boolean enterTapped, boolean enterAttacking) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype,
+                enterTapped, enterAttacking, false, 0);
+    }
+
+    public static ReturnCardExiledWithSourceToBattlefieldEffect targetedCreature(
+            boolean enterTapped, int additionalPlusOnePlusOneCounters) {
+        return new ReturnCardExiledWithSourceToBattlefieldEffect(
+                new CardTypePredicate(CardType.CREATURE), false, null,
+                enterTapped, false, true, additionalPlusOnePlusOneCounters);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        if (!targeted) {
+            return TargetSpec.NONE;
+        }
+        CardPredicate targetFilter = filter == null ? new CardTruePredicate() : filter;
+        return TargetSpec.benign(TargetPredicates.exiledCards(targetFilter));
     }
 }

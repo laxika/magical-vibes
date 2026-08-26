@@ -370,12 +370,18 @@ public record CreateTokenEffect(
 
     /** Treasure token with a dynamically computed count. */
     public static CreateTokenEffect ofTreasureToken(DynamicAmount amount) {
-        return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),
+        return ofTreasureToken(amount, false);
+    }
+
+    /** Treasure token with a dynamically computed count and an explicit tapped state. */
+    public static CreateTokenEffect ofTreasureToken(DynamicAmount amount, boolean tapped) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,
+                List.of(CardSubtype.TREASURE), Set.of(), Set.of(), false, tapped, Map.of(),
                 List.of(new ActivatedAbility(
                         true, null,
                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                         "{T}, Sacrifice this artifact: Add one mana of any color."
-                )));
+                )), false, false, false, 0, Set.of());
     }
 
     /** Clue token: colorless artifact with "{2}, Sacrifice this token: Draw a card." */

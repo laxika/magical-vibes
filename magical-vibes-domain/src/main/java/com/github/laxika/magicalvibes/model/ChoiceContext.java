@@ -49,6 +49,14 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
+                                     List<ManaColor> fixedColorOptions,
+                                     ManaRestriction restriction) implements ChoiceContext {
+        public RestrictedManaColorChoice {
+            fixedColorOptions = List.copyOf(fixedColorOptions);
+        }
+    }
+
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}

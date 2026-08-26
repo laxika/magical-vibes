@@ -1144,6 +1144,12 @@ public class DamageSupport {
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
         }
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.playerHasProtectionFromOpponents(gameData, playerId, sourceControllerId)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
         // Protection from card name (Runed Halo) prevents all damage from sources with that name.
         // Gideon's Intervention likewise prevents damage from sources with the chosen name.
         if (gameQueryService.isDamagePreventable(gameData)

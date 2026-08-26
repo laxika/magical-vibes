@@ -391,10 +391,21 @@ public class MayCopyHandlerService {
      */
     public void handleCopyTriggeredAbilityRetargetChoice(GameData gameData, Player player, boolean accepted,
                                                          PendingMayAbility ability) {
+        handleCopyAbilityRetargetChoice(gameData, player, accepted, ability, "triggered ability");
+    }
+
+    /** Recomputes legal targets for a copied activated or triggered ability on the stack. */
+    public void handleCopyAbilityRetargetChoice(GameData gameData, Player player, boolean accepted,
+                                                PendingMayAbility ability) {
+        handleCopyAbilityRetargetChoice(gameData, player, accepted, ability, "ability");
+    }
+
+    private void handleCopyAbilityRetargetChoice(GameData gameData, Player player, boolean accepted,
+                                                 PendingMayAbility ability, String abilityType) {
         if (!accepted) {
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " keeps the original target for the copy."));
-            log.info("Game {} - {} declines to retarget triggered ability copy", gameData.id, player.getUsername());
+            log.info("Game {} - {} declines to retarget {} copy", gameData.id, player.getUsername(), abilityType);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -408,7 +419,7 @@ public class MayCopyHandlerService {
             }
         }
         if (copyEntry == null) {
-            log.info("Game {} - Triggered ability copy no longer on stack for retarget", gameData.id);
+            log.info("Game {} - Ability copy no longer on stack for retarget", gameData.id);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -443,7 +454,7 @@ public class MayCopyHandlerService {
 
         if (validTargets.isEmpty()) {
             gameLogService.append(gameData, GameLog.text("No valid new targets available for the copy."));
-            log.info("Game {} - No valid targets for triggered ability copy retarget", gameData.id);
+            log.info("Game {} - No valid targets for {} copy retarget", gameData.id, abilityType);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -451,7 +462,7 @@ public class MayCopyHandlerService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copyEntry.getCard().getName()
-                        + "'s triggered ability.");
+                        + "'s " + abilityType + ".");
     }
 
     public void handleRedirectRetargetChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

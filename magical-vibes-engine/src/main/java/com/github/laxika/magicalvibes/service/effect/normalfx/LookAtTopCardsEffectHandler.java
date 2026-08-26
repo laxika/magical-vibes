@@ -225,7 +225,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 randomBottom, remainingToExile, 0, null,
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),
-                e.recordChosenCount(), e.cloakChosenPermanents(), false));
+                e.recordChosenCount(), e.cloakChosenPermanents(), false,
+                e.battlefieldSelectionFollowUp(), false, false));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
@@ -485,7 +486,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     e.payLifePerSelectedCard() > 0
                             ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
                     null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
-                    false, e.payLifePerSelectedCard() > 0));
+                    false, e.payLifePerSelectedCard() > 0, null, false, false));
             return;
         }
 

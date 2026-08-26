@@ -290,7 +290,11 @@ public sealed interface Condition permits
         CreaturesDiedThisTurnAtLeast,
         SnowManaSpentToCast,
         SourceWasSecondSpellCastThisTurn,
-        WonClash {
+        WonClash,
+        AnyPlayerDealtCombatDamageAtLeastThisTurn,
+        CreatureDiedUnderOpponentControlThisTurn,
+        OpponentDealtCombatDamageByLegendaryCreatureThisTurn,
+        SourceAttackedThisTurn {
 
     /** Human-readable condition name for log messages (e.g. "metalcraft", "equipped"). */
     String conditionName();

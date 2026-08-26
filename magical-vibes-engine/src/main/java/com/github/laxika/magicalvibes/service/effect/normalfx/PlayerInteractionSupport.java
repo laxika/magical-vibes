@@ -136,21 +136,13 @@ public class PlayerInteractionSupport {
         UUID returnExiledSourceCardId = effect.returnExiledSourceIfSacrificed()
                 && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getCard().getId() : null;
-        if (effect.returnToHandAtEndStep()) {
-            playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                    effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
-                    effect.drawAndRepeat(), repeats ? effect.predicate() : null,
-                    repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
-                    effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId, true, effect.cloaked(), thenEffect, thenCondition);
-        } else {
-            playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                    effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
-                    effect.drawAndRepeat(), repeats ? effect.predicate() : null,
-                    repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
-                    effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId, false, effect.cloaked(), thenEffect, thenCondition);
-        }
+        playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
+                effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
+                effect.drawAndRepeat(), repeats ? effect.predicate() : null,
+                repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
+                effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
+                returnExiledSourceCardId, effect.returnToHandAtEndStep(), effect.cloaked(),
+                thenEffect, thenCondition, effect.enterTappedAndAttackingIf());
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {

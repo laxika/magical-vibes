@@ -521,6 +521,24 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("Ally-equipment scan queues a may ability")
+    void allyEquipmentQueuesMayAbility() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
+
+        Card enteringEquipment = new Card();
+        enteringEquipment.setName("Equipment");
+        enteringEquipment.setType(CardType.ARTIFACT);
+        enteringEquipment.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(enteringEquipment));
+
+        service.checkAllyEquipmentEntersTriggers(gd, player1Id, enteringEquipment);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(MayEffect.class);
+    }
+
+    @Test
     @DisplayName("Graveyard artifact scan queues a may ability")
     void graveyardArtifactQueuesMayAbility() {
         Card source = new Card();

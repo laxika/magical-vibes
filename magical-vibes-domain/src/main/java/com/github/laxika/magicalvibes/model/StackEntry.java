@@ -44,6 +44,8 @@ public class StackEntry {
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    /** Counters a permanent spell is instructed to enter with. */
+    private final Map<CounterType, Integer> enteringCounters = new EnumMap<>(CounterType.class);
     /** Card id of the spell whose stack object is the source of this ability. */
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
@@ -60,6 +62,8 @@ public class StackEntry {
     @Setter private List<TargetFilter> targetFilters = List.of();
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
+    /** Whether an effect already placed the physical spell card in its final zone. */
+    @Setter private boolean spellDispositionHandled;
     @Setter private boolean returnToHandAfterResolving;
     /** When set, the resolved spell card is put into its owner's library at this 0-based position from the
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
@@ -210,6 +214,8 @@ public class StackEntry {
      * information when the source left the battlefield before resolution (sacrifice costs).
      */
     @Setter private Permanent sourcePermanentSnapshot;
+    /** Equipment permanent ids sacrificed with the source as part of its activation cost. */
+    @Setter private List<UUID> sacrificedAttachedEquipmentIds = List.of();
     /** Last-known snapshot of the permanent attached to the source Aura when its trigger fired. */
     @Setter private Permanent attachedPermanentSnapshot;
     /**
@@ -562,6 +568,7 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
         this.counters.putAll(source.counters);
+        this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
         this.manaSpentToCast = source.manaSpentToCast;
@@ -573,6 +580,7 @@ public class StackEntry {
         this.targetFilter = source.targetFilter;
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
+        this.spellDispositionHandled = source.spellDispositionHandled;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
@@ -622,6 +630,8 @@ public class StackEntry {
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
+        this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.sacrificedAttachedEquipmentIds);
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
@@ -680,6 +690,14 @@ public class StackEntry {
             counters.remove(counterType);
         } else {
             counters.put(counterType, count);
+        }
+    }
+
+    public void setEnteringCounterCount(CounterType counterType, int count) {
+        if (count <= 0) {
+            enteringCounters.remove(counterType);
+        } else {
+            enteringCounters.put(counterType, count);
         }
     }
 

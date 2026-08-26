@@ -113,6 +113,15 @@ class FaceOracleMapperTest {
         assertThat(map(face, BACK).keywords()).containsExactly(Keyword.FLYING);
     }
 
+    @Test
+    void frontFaceKeepsOnlyTheKeywordsItsOwnTextStates() {
+        Builder face = face()
+                .text("Dragonfire Dive — During your turn, Dion and other Knights you control have flying.")
+                .keywords(List.of("Flying"));
+
+        assertThat(map(face, FRONT).keywords()).isEmpty();
+    }
+
     /** A face that grants a keyword to others does not claim it for itself. */
     @Test
     void aGrantedKeywordIsNotTheFacesOwn() {

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEff
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,6 +26,7 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +40,12 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
         UUID targetId = entry.getAttackedTargetId();
         if (targetId == null) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? entry.getSourcePermanentSnapshot()
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, sourcePermanent));
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
         if (gameData.playerIds.contains(targetId)) {
             if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);

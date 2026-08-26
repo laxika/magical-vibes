@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
@@ -410,6 +411,7 @@ public final class LayerClassifier {
                                 ? new LayerClassification(Set.of(Layer.L7A_CDA), true, false)
                                 : new LayerClassification(Set.of(Layer.L7B_SET_PT), false, false)));
         map.put(SetBasePowerToughnessEffect.class, fixed(Layer.L7B_SET_PT));
+        map.put(SetBasePowerToughnessToAmountEffect.class, fixed(Layer.L7B_SET_PT));
 
         // Sublayer 7c — P/T additions.
         map.put(StaticBoostEffect.class, new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT),

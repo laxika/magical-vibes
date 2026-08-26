@@ -16,6 +16,12 @@ public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup,
                                                    int victimTargetGroup,
                                                    int powerMultiplier) implements CardEffect {
 
+    public TargetDealsPowerDamageToTargetEffect {
+        if (powerMultiplier < 1) {
+            throw new IllegalArgumentException("Power multiplier must be positive");
+        }
+    }
+
     public TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int victimTargetGroup) {
         this(sourceTargetGroup, victimTargetGroup, 1);
     }
@@ -23,6 +29,10 @@ public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup,
     /** "Target creature deals damage equal to its power to another target" — groups 0 and 1. */
     public TargetDealsPowerDamageToTargetEffect() {
         this(0, 1, 1);
+    }
+
+    public TargetDealsPowerDamageToTargetEffect(int powerMultiplier) {
+        this(0, 1, powerMultiplier);
     }
 
     @Override

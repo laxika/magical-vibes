@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLa
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
@@ -469,6 +471,41 @@ public class LandTapTriggerCollectorService {
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                         + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana."));
         return true;
+    }
+
+    @CollectsTrigger(value = AddManaWhenLandOfColorTappedForManaEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddManaWhenColorLandTapped(TriggerMatchContext match,
+            AddManaWhenLandOfColorTappedForManaEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
+
+        var gameData = match.gameData();
+        Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
+        if (tappedLand == null || !landProducesManaColor(gameData, tappedLand, trigger.color())) return false;
+
+        gameData.playerManaPools.get(lt.tappingPlayerId()).add(trigger.color());
+        gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + gameData.playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana."));
+        return true;
+    }
+
+    private boolean landProducesManaColor(com.github.laxika.magicalvibes.model.GameData gameData,
+                                           Permanent land, ManaColor color) {
+        boolean printedAbilityProducesColor = land.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                .filter(ManaProducingEffect.class::isInstance)
+                .map(ManaProducingEffect.class::cast)
+                .anyMatch(mana -> mana.estimatedManaColor() == color);
+        if (printedAbilityProducesColor) return true;
+
+        return gameQueryService.computeStaticBonus(gameData, land).grantedActivatedAbilities().stream()
+                .filter(ActivatedAbility::isRequiresTap)
+                .filter(ActivatedAbility::isManaAbility)
+                .flatMap(ability -> ability.getEffects().stream())
+                .filter(ManaProducingEffect.class::isInstance)
+                .map(ManaProducingEffect.class::cast)
+                .anyMatch(mana -> mana.estimatedManaColor() == color);
     }
 
     @CollectsTrigger(value = AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect.class,

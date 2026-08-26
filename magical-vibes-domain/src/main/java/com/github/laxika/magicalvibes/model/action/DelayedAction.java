@@ -105,5 +105,8 @@ public sealed interface DelayedAction permits
         ReboundAtNextUpkeep,
         PendingExileReturn,
         EachPlayerHandExileReturnAtNextEndStep,
-        TargetPlayerHandExileReturnAtNextTurnEndStep {
+        TargetPlayerHandExileReturnAtNextTurnEndStep,
+        DelayedDamageDoubling,
+        DelayedVehicleAttack,
+        UnattachEquipmentAtNextEndStep {
 }

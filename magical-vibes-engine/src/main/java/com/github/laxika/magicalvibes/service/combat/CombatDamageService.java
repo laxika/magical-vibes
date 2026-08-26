@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
@@ -1196,6 +1197,9 @@ public class CombatDamageService {
                     .add(defenderId);
             gameData.playersDealtCombatDamageSinceTheirLastTurn.add(defenderId);
             gameData.recordCreatureDamageSourceToPlayer(creature.getId(), defenderId);
+            if (gameQueryService.hasEffectiveSupertype(gameData, creature, CardSupertype.LEGENDARY)) {
+                gameData.combatDamageSourcesWithLegendaryThisTurn.add(creature.getId());
+            }
 
             // Record creature subtypes at combat damage time for subtype-conditional triggers
             // (e.g. Admiral Beckett Brass checks if 3+ Pirates dealt damage to a player)
@@ -1578,7 +1582,7 @@ public class CombatDamageService {
                         StackEntry se = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
-                                attackerId,
+                                ownerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 new ArrayList<>(effects),
                                 triggerTargetId,
@@ -2832,6 +2836,8 @@ public class CombatDamageService {
                             .add(defenderId);
                 }
             }
+            gameData.recordDamageToPlayer(defenderId, damageDealt);
+            gameData.recordCombatDamageToPlayer(defenderId, damageDealt);
             gameData.recordDamageToPlayer(defenderId, damageDealt, Math.min(damageDealt, artifactDamage));
             triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defenderId, damageDealt);
         }
@@ -2917,6 +2923,8 @@ public class CombatDamageService {
                         gameData.playerLifeTotals.put(targetId,
                                 gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
                     }
+                    gameData.recordDamageToPlayer(targetId, redirectEffective);
+                    gameData.recordCombatDamageToPlayer(targetId, redirectEffective);
                     Permanent sourcePermanent = redirect.damageSourceId() == null
                             ? null
                             : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
@@ -3246,6 +3254,9 @@ public class CombatDamageService {
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, defenderId, atk.getCard().getName()))
                     && !(gameQueryService.isDamagePreventable(gameData)
                             && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, defenderId, atk.getCard().getName()))
+                    && !(gameQueryService.isDamagePreventable(gameData)
+                            && gameQueryService.playerHasProtectionFromOpponents(gameData, defenderId,
+                            gameQueryService.findPermanentController(gameData, atk.getId())))
                     && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, attackerColor)
                     && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, defenderId, atk)) {
                 UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());

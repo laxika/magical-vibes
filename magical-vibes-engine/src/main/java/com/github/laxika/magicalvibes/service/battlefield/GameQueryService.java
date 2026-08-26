@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityTimingEffect;
@@ -115,6 +116,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroL
 import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageFromSpellsEffect;
@@ -5187,6 +5189,33 @@ public class GameQueryService {
     }
 
     /**
+     * Returns whether the player has protection from a source controlled by the given opponent,
+     * through a static effect on a permanent they control.
+     */
+    public boolean playerHasProtectionFromOpponents(GameData gameData, UUID playerId,
+                                                    UUID sourceControllerId) {
+        if (playerId == null || sourceControllerId == null || playerId.equals(sourceControllerId)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || computeStaticBonus(gameData, permanent).losesAllAbilities()
+                    || permanent.isStaticEffectSuppressed(PlayerHasProtectionFromOpponentsEffect.class)) {
+                continue;
+            }
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(PlayerHasProtectionFromOpponentsEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the player controls a permanent with a
      * {@link PlayerHasProtectionFromChosenNameEffect} static effect whose chosen card name equals
      * the given name (Runed Halo). Such a player can't be targeted, dealt damage, or enchanted by
@@ -5669,8 +5698,9 @@ public class GameQueryService {
 
     /**
      * Returns the number of additional copies for a triggered ability sourced by a permanent.
-     * Each matching static effect contributes one copy, and a static effect never applies to the
-     * permanent carrying that effect.
+     * Each matching static effect contributes one copy. By default, a static effect does not apply
+     * to the permanent carrying that effect and only static effects controlled by the triggering
+     * ability's controller are considered; an effect can opt into either exception explicitly.
      */
     public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
                                                         Permanent triggeringPermanent) {
@@ -5685,27 +5715,31 @@ public class GameQueryService {
                                                         Permanent triggeringPermanent,
                                                         boolean attackTrigger) {
         if (controllerId == null || triggeringPermanent == null) return 0;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return 0;
-
         int count = 0;
-        for (Permanent staticSource : battlefield) {
-            if (staticSource.getId().equals(triggeringPermanent.getId())
-                    || staticSource.isLosesAllAbilitiesUntilEndOfTurn()) {
-                continue;
-            }
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceControllerId(controllerId)
-                    .withSourcePermanentSnapshot(staticSource);
-            for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AdditionalTriggeredAbilityEffect additional
-                        && (!additional.attackOnly() || attackTrigger)
-                        && predicateEvaluationService.matchesPermanentPredicate(
-                                triggeringPermanent, additional.sourcePredicate(), filterContext)
-                        && (additional.condition() == null
-                        || conditionEvaluationService.isMet(gameData, additional.condition(),
-                        ConditionContext.forStaticEffect(staticSource, controllerId)))) {
-                    count++;
+        for (UUID staticControllerId : gameData.playerBattlefields.keySet()) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(staticControllerId);
+            if (battlefield == null) continue;
+            for (Permanent staticSource : battlefield) {
+                if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof AdditionalTriggeredAbilityEffect additional)
+                            || (additional.attackOnly() && !attackTrigger)
+                            || (!additional.allControllers() && !staticControllerId.equals(controllerId))
+                            || (!additional.includeSourcePermanent()
+                            && staticSource.getId().equals(triggeringPermanent.getId()))) {
+                        continue;
+                    }
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceControllerId(staticControllerId)
+                            .withSourcePermanentId(staticSource.getId())
+                            .withSourcePermanentSnapshot(staticSource);
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            triggeringPermanent, additional.sourcePredicate(), filterContext)
+                            && (additional.condition() == null
+                            || conditionEvaluationService.isMet(gameData, additional.condition(),
+                            ConditionContext.forStaticEffect(staticSource, staticControllerId)))) {
+                        count++;
+                    }
                 }
             }
         }
@@ -5730,27 +5764,87 @@ public class GameQueryService {
         if (battlefield != null) {
             for (Permanent staticSource : battlefield) {
                 if (!checkedSources.add(staticSource.getId())) continue;
-                count += countAdditionalCreatureDeathEffects(staticSource, triggeringPermanent, filterContext);
+                count += countAdditionalCreatureDeathEffects(staticSource, triggeringPermanent,
+                        filterContext.withSourcePermanentSnapshot(staticSource)
+                                .withSourcePermanentId(staticSource.getId()));
             }
         }
 
         for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingCreatures.entrySet()) {
             if (!controllerId.equals(gameData.simultaneousDyingControllers.get(entry.getKey()))) continue;
             if (!checkedSources.add(entry.getKey())) continue;
-            count += countAdditionalCreatureDeathEffects(entry.getValue(), triggeringPermanent, filterContext);
+            Permanent staticSource = entry.getValue();
+            count += countAdditionalCreatureDeathEffects(staticSource, triggeringPermanent,
+                    filterContext.withSourcePermanentSnapshot(staticSource)
+                            .withSourcePermanentId(staticSource.getId()));
+        }
+        return count;
+    }
+
+    /**
+     * Returns the number of additional copies for a creature-death trigger from an emblem. An
+     * attached source applies when its equipped creature is controlled by the emblem's controller,
+     * including when the source or host is dying simultaneously.
+     */
+    public int countAdditionalCreatureDeathTriggeredAbilityTriggersForEmblem(GameData gameData,
+                                                                               UUID controllerId) {
+        if (controllerId == null) return 0;
+
+        Set<UUID> checkedSources = new HashSet<>();
+        int count = 0;
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent staticSource : battlefield) {
+                if (!checkedSources.add(staticSource.getId())) continue;
+                count += countAdditionalEmblemCreatureDeathEffects(gameData, controllerId, staticSource);
+            }
+        }
+        for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingCreatures.entrySet()) {
+            if (!checkedSources.add(entry.getKey())) continue;
+            count += countAdditionalEmblemCreatureDeathEffects(gameData, controllerId, entry.getValue());
         }
         return count;
     }
 
     private int countAdditionalCreatureDeathEffects(Permanent staticSource, Permanent triggeringPermanent,
                                                      FilterContext filterContext) {
-        if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()) return 0;
+        if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()
+                || staticSource.isAuraEffectsIgnoredThisTurn()) return 0;
 
         int count = 0;
         for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof AdditionalCreatureDeathTriggerEffect additional
                     && predicateEvaluationService.matchesPermanentPredicate(
                             triggeringPermanent, additional.sourcePredicate(), filterContext)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int countAdditionalEmblemCreatureDeathEffects(GameData gameData, UUID controllerId,
+                                                            Permanent staticSource) {
+        if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()
+                || staticSource.isAuraEffectsIgnoredThisTurn()
+                || !staticSource.isAttached()) {
+            return 0;
+        }
+
+        Permanent equippedCreature = findPermanentById(gameData, staticSource.getAttachedTo());
+        if (equippedCreature == null) {
+            equippedCreature = gameData.simultaneousDyingCreatures.get(staticSource.getAttachedTo());
+        }
+        if (equippedCreature == null || !isCreature(gameData, equippedCreature)) return 0;
+
+        UUID equippedCreatureController = gameData.findControllerOf(equippedCreature);
+        if (equippedCreatureController == null) {
+            equippedCreatureController = gameData.simultaneousDyingControllers.get(equippedCreature.getId());
+        }
+        if (!controllerId.equals(equippedCreatureController)) return 0;
+
+        int count = 0;
+        for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof AdditionalCreatureDeathTriggerEffect additional
+                    && additional.includeOwnedEmblemTriggers()) {
                 count++;
             }
         }
@@ -6501,6 +6595,11 @@ public class GameQueryService {
         if (recipientPlayerId == null) return 1;
 
         int[] multiplier = {1};
+        for (DelayedDamageDoubling doubling : gameData.getDelayedActions(DelayedDamageDoubling.class)) {
+            if (recipientPlayerId.equals(doubling.targetPlayerId())) {
+                multiplier[0] *= 2;
+            }
+        }
         gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof DoubleDamageToControllerAndSelfEffect
@@ -7310,14 +7409,30 @@ public class GameQueryService {
      * (a {@code null} filter covers every creature that player controls). Both combat and noncombat
      * damage dealt to such a creature is fully prevented by the caller.
      */
-    /** Returns whether a controlled matching permanent is protected from combat damage this turn. */
+    /** Returns whether a controlled matching permanent is protected from damage this turn. */
     public boolean isDamagePreventedByControlledPredicate(GameData gameData, Permanent permanent) {
+        return isDamagePreventedByControlledPredicate(gameData, permanent, true);
+    }
+
+    /** Returns whether a controlled matching permanent is protected from the requested damage type this turn. */
+    public boolean isDamagePreventedByControlledPredicate(GameData gameData, Permanent permanent,
+                                                          boolean isCombatDamage) {
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (controllerId == null) return false;
-        Set<PermanentPredicate> predicates = gameData.combatDamagePreventionPredicatesByController.get(controllerId);
-        return predicates != null && predicates.stream()
+        FilterContext context = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        Set<PermanentPredicate> allDamagePredicates =
+                gameData.allDamagePreventionPredicatesByController.get(controllerId);
+        if (allDamagePredicates != null && allDamagePredicates.stream()
                 .anyMatch(predicate -> predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, predicate, FilterContext.of(gameData)));
+                        permanent, predicate, context))) {
+            return true;
+        }
+        if (!isCombatDamage) return false;
+        Set<PermanentPredicate> combatPredicates =
+                gameData.combatDamagePreventionPredicatesByController.get(controllerId);
+        return combatPredicates != null && combatPredicates.stream()
+                .anyMatch(predicate -> predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, predicate, context));
     }
 
     public int getControlledCreatureDamageLimit(GameData gameData, Permanent creature) {

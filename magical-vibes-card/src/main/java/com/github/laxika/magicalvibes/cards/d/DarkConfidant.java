@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
 
+@CardRegistration(set = "FIN", collectorNumber = "94")
 @CardRegistration(set = "RAV", collectorNumber = "81")
 public class DarkConfidant extends Card {
 

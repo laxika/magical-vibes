@@ -545,12 +545,15 @@ public class GraveyardTargetingService {
     }
 
     public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
-            List<CardEffect> effects, UUID sourcePermanentId,
-            ExileGraveyardCardsEffect exileEffect) {
-        CardPredicate filter = exileEffect.filter();
+            List<CardEffect> effects, UUID sourcePermanentId) {
+        GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(effects);
+        if (target == null) {
+            return;
+        }
+        CardPredicate filter = target.filter();
 
         List<Card> matchingCards = new ArrayList<>();
-        List<UUID> searchPlayerIds = exileEffect.targetSpec().graveyardScope().orElseThrow()
+        List<UUID> searchPlayerIds = target.scope()
                 .graveyardOwners(gameData.orderedPlayerIds, controllerId);
         for (UUID playerId : searchPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId, controllerId);
@@ -591,13 +594,20 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
-                "Choose up to one target card from a graveyard to exile.");
+        int maxTargets = Math.min(target.maxTargets(), matchingCards.size());
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards,
+                maxTargets, target.minTargets(), "Choose up to one target card from a graveyard "
+                        + target.destination() + ".");
 
         String logEntry = description + " triggers — choose a graveyard target.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} beginning-of-combat trigger awaiting graveyard target selection",
                 gameData.id, card.getName());
+    }
+
+    public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, ExileGraveyardCardsEffect ignored) {
+        handleBeginningOfCombatGraveyardTargeting(gameData, controllerId, card, effects, sourcePermanentId);
     }
 
     public void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,

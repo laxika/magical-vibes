@@ -169,6 +169,7 @@ public class CardChoiceHandlerService {
         UUID returnExiledSourceCardId = null;
         UUID returnSourcePermanentId = null;
         CardPredicate drawAndRepeatPredicate = null;
+        CardPredicate enterTappedAndAttackingIf = null;
         String drawAndRepeatLabel = null;
         UUID attachEquipmentCardId = null;
         UUID exileSourceIfDeclinedId = null;
@@ -194,6 +195,7 @@ public class CardChoiceHandlerService {
             returnExiledSourceCardId = hc.returnExiledSourceCardId();
             drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
             drawAndRepeatLabel = hc.drawAndRepeatLabel();
+            enterTappedAndAttackingIf = hc.enterTappedAndAttackingIf();
             faceDown = hc.faceDown();
             faceDownPower = hc.faceDownPower();
             faceDownToughness = hc.faceDownToughness();
@@ -258,8 +260,16 @@ public class CardChoiceHandlerService {
             if (isTargeted) {
                 resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
             } else {
-                Permanent enteredPermanent = resolveUntargetedCardChoice(gameData, player, playerId, card, enterTapped, grantHaste,
-                        sacrificeAtEndStep, returnToHandAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
+                UUID sourceCardId = gameData.pendingEffectResolutionEntry == null
+                        || gameData.pendingEffectResolutionEntry.getCard() == null
+                        ? null : gameData.pendingEffectResolutionEntry.getCard().getId();
+                boolean enterTappedAndAttacking = enterTappedAndAttackingIf != null
+                        && predicateEvaluationService.matchesCardPredicate(card, enterTappedAndAttackingIf,
+                        sourceCardId, gameData, playerId);
+                boolean selectedEnterTapped = enterTapped || enterTappedAndAttacking;
+                boolean selectedEnterAttacking = enterAttacking || enterTappedAndAttacking;
+                Permanent enteredPermanent = resolveUntargetedCardChoice(gameData, player, playerId, card, selectedEnterTapped, grantHaste,
+                        sacrificeAtEndStep, returnToHandAtEndStep, attachEquipmentCardId, selectedEnterAttacking, sacrificeUnlessPayGenericReduction,
                         faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                         cloaked, returnExiledSourceCardId);
                 if (artifactCounterType != null && gameQueryService.isArtifact(gameData, enteredPermanent)) {
@@ -277,7 +287,6 @@ public class CardChoiceHandlerService {
                 if (thenEffect != null) {
                     StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
                     if (pendingEntry != null) {
-                        UUID sourceCardId = pendingEntry.getCard() == null ? null : pendingEntry.getCard().getId();
                         if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
                                 card, thenCondition, sourceCardId, gameData, playerId)) {
                             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
@@ -294,7 +303,9 @@ public class CardChoiceHandlerService {
                     PutCardToBattlefieldEffect repeatEffect = new PutCardToBattlefieldEffect(drawAndRepeatPredicate,
                             drawAndRepeatLabel, enterTapped, false, false, false, false, false, drawAndRepeat,
                             putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked);
-
+                    if (enterTappedAndAttackingIf != null) {
+                        repeatEffect = repeatEffect.withEnterTappedAndAttackingIf(enterTappedAndAttackingIf);
+                    }
                     if (returnToHandAtEndStep) {
                         repeatEffect = repeatEffect.returningToHandAtEndStep();
                     }
@@ -1705,9 +1716,12 @@ public class CardChoiceHandlerService {
         if (grantHaste) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
+        UUID attackTargetId = enterAttacking && gameData.pendingEffectResolutionEntry != null
+                ? gameData.pendingEffectResolutionEntry.getAttackedTargetId() : null;
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
         if (enterAttacking) {
             permanent.setAttacking(true);
+            permanent.setAttackTarget(attackTargetId);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             if (pendingEntry != null) {
                 UUID attackTarget = pendingEntry.getAttackedTargetId();

@@ -57,6 +57,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast noncreature spells. */
+    record NoncreatureSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNoncreatureSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "noncreature spells only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override
@@ -171,6 +184,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "creature spells or creature abilities only";
+        }
+    }
+
+    /** Mana spendable only to cast spells of the given subtype or activate equip abilities. */
+    record SubtypeSpellsOrAbilities(CardSubtype subtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSubtypeSpellOrAbilityMana(subtype, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return subtype + " spells or abilities only";
         }
     }
 

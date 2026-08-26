@@ -262,6 +262,9 @@ public sealed interface TriggerContext {
     record PermanentTransforms(Permanent transformedPermanent, Card transformedCard, UUID controllerId)
             implements TriggerContext {}
 
+    /** Context for a permanent changing from one player's control to an opponent's control. */
+    record PermanentControlChanged(Permanent changedPermanent, UUID previousControllerId,
+                                   UUID newControllerId) implements TriggerContext {}
     /** Context for a change between the day and night designations. */
     record DayNightChange(DayNight previous, DayNight current) implements TriggerContext {}
 

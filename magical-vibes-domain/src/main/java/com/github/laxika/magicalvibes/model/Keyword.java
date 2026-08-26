@@ -60,6 +60,7 @@ public enum Keyword {
     FLANKING,
     CONSPIRE,
     RETRACE,
+    JUMP,
     JUMP_START,
     BANDING,
     EMERGE,
@@ -105,6 +106,7 @@ public enum Keyword {
     DOUBLE,
     PLOT,
     AMASS,
+    BLOW_UP,
     DISGUISE;
 
     /**

@@ -3030,6 +3030,10 @@ public class TargetLegalityService {
         if (gameQueryService.playerHasProtectionFromEverything(gameData, targetPlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has protection from everything and can't be targeted";
         }
+        if (gameQueryService.playerHasProtectionFromOpponents(gameData, targetPlayerId, sourcePlayerId)) {
+            return gameData.playerIdToName.get(targetPlayerId)
+                    + " has protection from the source's controller and can't be targeted";
+        }
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
                 && gameQueryService.playerHasHexproof(gameData, targetPlayerId)
                 && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, sourcePlayerId)) {

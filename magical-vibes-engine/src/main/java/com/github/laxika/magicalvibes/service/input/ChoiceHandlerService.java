@@ -173,6 +173,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.RestrictedManaColorChoice ctx) {
+            handleRestrictedManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.PersistentManaColorChoice ctx) {
             handlePersistentManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
             return;
@@ -1121,6 +1126,32 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRestrictedManaColorChosen(GameData gameData, Player player, String colorName,
+                                                 ChoiceContext.RestrictedManaColorChoice ctx,
+                                                 List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+        ManaColor manaColor = ManaColor.valueOf(colorName);
+        gameData.interaction.clearAwaitingInput();
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        ctx.restriction().applyTo(manaPool, manaColor, 1);
+
+        int remaining = ctx.amount() - 1;
+        if (remaining > 0) {
+            ChoiceContext.RestrictedManaColorChoice nextContext =
+                    new ChoiceContext.RestrictedManaColorChoice(ctx.playerId(), remaining,
+                            ctx.fromCreature(), ctx.fixedColorOptions(), ctx.restriction());
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    ctx.playerId(), null, null, nextContext,
+                    ctx.fixedColorOptions().stream().map(Enum::name).toList(),
+                    "Choose a color of mana to add (" + ctx.restriction().description() + ")."));
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -4424,7 +4455,7 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their hand."));
             log.info("Game {} - {} named correctly, {} goes to hand", gameData.id, targetName, topCard.getName());
         } else {
-            graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
+            graveyardService.resolvePutTopCardsIntoGraveyard(gameData, targetPlayerId, 1);
             gameLogService.append(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their graveyard."));
             dealRevealMissDamage(gameData, ctx, targetPlayerId);
             log.info("Game {} - {} named incorrectly, {} goes to graveyard", gameData.id, targetName, topCard.getName());

@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.UUID;
+
 /** Resolves a death trigger that puts the triggering card on the bottom of its owner's library. */
 @Slf4j
 @Component
@@ -48,6 +51,8 @@ public class PutTriggeringCardFromGraveyardOnBottomOfLibraryEffectHandler
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
+        List<Card> library = gameData.playerDecks.get(ownerId);
+        library.add(deadCard);
         gameData.playerDecks.get(ownerId).add(deadCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);

@@ -30,6 +30,8 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        TargetPlayerGainsControlOfSourceCreatureEffect e =
+                (TargetPlayerGainsControlOfSourceCreatureEffect) effect;
         
                 if (entry.getTargetId() == null || !gameData.playerIds.contains(entry.getTargetId())) {
                     return;
@@ -59,5 +61,12 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
                 creatureControlService.applyControlEffect(gameData, newControllerId, source,
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                         EffectDuration.PERMANENT, null, entry.getCard().getName());
+
+                if (e.thenEffect() != null) {
+                    int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+                    if (effectIndex >= 0) {
+                        entry.insertEffectsToResolve(effectIndex + 1, List.of(e.thenEffect()));
+                    }
+                }
     }
 }

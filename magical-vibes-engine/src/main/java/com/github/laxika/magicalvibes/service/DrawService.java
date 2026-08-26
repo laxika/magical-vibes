@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
@@ -97,6 +98,7 @@ public class DrawService {
     private final LifeSupport lifeSupport;
     private final GraveyardService graveyardService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
 
     public DrawService(GameQueryService gameQueryService,
@@ -109,6 +111,7 @@ public class DrawService {
                        @Lazy LifeSupport lifeSupport,
                        @Lazy GraveyardService graveyardService,
                        ConditionEvaluationService conditionEvaluationService,
+                       GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                        DredgeSupport dredgeSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
@@ -120,6 +123,7 @@ public class DrawService {
         this.lifeSupport = lifeSupport;
         this.graveyardService = graveyardService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.dredgeSupport = dredgeSupport;
     }
 
@@ -1235,7 +1239,9 @@ public class DrawService {
 
         for (Permanent perm : battlefield) {
             List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
-            if (drawEffects == null || drawEffects.isEmpty()) continue;
+            drawEffects = drawEffects == null ? new ArrayList<>() : new ArrayList<>(drawEffects);
+            drawEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot));
+            if (drawEffects.isEmpty()) continue;
 
             for (CardEffect authoredEffect : drawEffects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);

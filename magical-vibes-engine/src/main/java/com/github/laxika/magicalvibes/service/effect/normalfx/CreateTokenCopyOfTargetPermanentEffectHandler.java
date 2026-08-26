@@ -38,7 +38,9 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
         List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
         if (targetIds == null) {
-            targetIds = !entry.getTargetCardIds().isEmpty()
+            targetIds = !entry.getTargetIds().isEmpty()
+                    ? entry.getTargetIds()
+                    : !entry.getTargetCardIds().isEmpty()
                     ? entry.getTargetCardIds()
                     : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()

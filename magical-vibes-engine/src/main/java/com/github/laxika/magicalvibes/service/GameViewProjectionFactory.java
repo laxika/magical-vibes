@@ -606,6 +606,10 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.setSnowManaSpendableAsAnyColor(true);
             }
+            if (!card.hasType(CardType.CREATURE) && cardPool.getNoncreatureSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteNoncreatureSpellOnlyMana();
+            }
             if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
                     && cardPool.getCreatureOrEnchantmentSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -820,11 +824,16 @@ public class GameViewProjectionFactory {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, topCard, topCard.getParsedManaCost());
             ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaPool cardPool = pool;
+            if (!topCard.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(pool);
+                cardPool.promoteNoncreatureSpellOnlyMana();
+            }
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, topCard, 0, Zone.LIBRARY);
-            boolean canAfford = cost.canPay(pool, additionalCost);
+            boolean canAfford = cost.canPay(cardPool, additionalCost);
             if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
-                canAfford = cost.canPayAsGeneric(pool, 0, additionalCost);
+                canAfford = cost.canPayAsGeneric(cardPool, 0, additionalCost);
             }
             if (!canAfford) {
                 canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);

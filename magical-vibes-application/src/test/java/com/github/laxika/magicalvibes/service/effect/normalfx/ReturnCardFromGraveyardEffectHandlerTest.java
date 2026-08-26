@@ -308,6 +308,30 @@ class ReturnCardFromGraveyardEffectHandlerTest {
             }
 
             @Test
+            @DisplayName("Marks mandatory resolution-time graveyard choices as mandatory")
+            void marksMandatoryChoiceAsMandatory() {
+                Card creature = createCard("Grizzly Bears");
+                gd.playerGraveyards.get(player1Id).add(creature);
+
+                CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+                ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(filter)
+                        .mandatory(true)
+                        .build();
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
+                        player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
+
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
+
+                returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.GraveyardChoice gc && gc.mandatory()));
+            }
+
+            @Test
             @DisplayName("Logs message and removes shuffle effect when no matching cards in any graveyard")
             void logsMessageWhenNoMatchingCards() {
                 CardPredicate filter = new CardAnyOfPredicate(List.of(

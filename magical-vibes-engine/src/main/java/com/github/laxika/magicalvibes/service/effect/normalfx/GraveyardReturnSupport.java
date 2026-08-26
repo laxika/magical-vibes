@@ -1028,6 +1028,7 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, matchingIndices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
                 .mandatory(effect.greatestPower())
@@ -1094,6 +1095,7 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, indices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .mandatory(effect.mandatory())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
                 .cardPool(cardPool);
@@ -1781,15 +1783,15 @@ public class GraveyardReturnSupport {
                                          Integer powerOverride, Integer toughnessOverride) {
         createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, false, false,
-                new ArrayList<>(), additionalKeywords);
+                new ArrayList<>(), additionalKeywords, false);
     }
 
     /**
      * Variant for effects that create several token copies as one simultaneous event (Hour of
      * Eternity). {@code simultaneouslyEntered} accumulates every token this call places, and is
      * passed to the entry funnel so batch-mates cannot apply their own replacement or static
-     * abilities to each other (CR 614.12). Callers creating a single token pass a fresh list; the
-     * token-multiplier copies made inside one call are batched against each other regardless.
+     * abilities to each other. Callers creating a single token pass a fresh list; the token-multiplier
+     * copies made inside one call are batched against each other regardless.
      */
     public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
                                          List<CardSubtype> additionalSubtypes, boolean grantHaste,
@@ -1798,6 +1800,21 @@ public class GraveyardReturnSupport {
                                          boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
                                          List<Permanent> simultaneouslyEntered,
                                          Set<Keyword> additionalKeywords) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste, exileAtEndStep,
+                colorOverride, powerOverride, toughnessOverride, replaceSubtypes,
+                grantHasteUntilEndOfTurn, simultaneouslyEntered, additionalKeywords, false);
+    }
+
+    /**
+     * Variant that optionally makes each created token enter tapped.
+     */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride,
+                                         boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
+                                         List<Permanent> simultaneouslyEntered,
+                                         Set<Keyword> additionalKeywords, boolean enterTapped) {
         UUID controllerId = entry.getControllerId();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(
                 gameData, controllerId, sourceCard.hasType(CardType.CREATURE));
@@ -1868,6 +1885,9 @@ public class GraveyardReturnSupport {
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (grantHasteUntilEndOfTurn) {
                 tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
+            }
+            if (enterTapped) {
+                tokenPermanent.tap();
             }
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, simultaneouslyEntered);

@@ -270,6 +270,8 @@ public enum CardSubtype {
     MITE("Mite"),
     OMEN("Omen"),
     FLAGBEARER("Flagbearer"),
+    MOOGLE("Moogle"),
+    TOWN("Town"),
     ROBOT("Robot");
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(

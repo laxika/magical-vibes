@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCard
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -417,6 +418,13 @@ public class ActivatedAbilityExecutionService {
                 .filter(SacrificeSelfCost.class::isInstance)
                 .map(SacrificeSelfCost.class::cast)
                 .findFirst();
+        Permanent sacrificedSourceSnapshot = sacrificeSelfCost
+                .filter(SacrificeSelfCost::recordSacrificedPermanentSnapshot)
+                .map(cost -> new Permanent(permanent))
+                .orElse(null);
+        List<UUID> sacrificedAttachedEquipmentIds = sacrificedSourceSnapshot == null
+                ? List.of()
+                : findAttachedEquipmentIds(gameData, permanent.getId());
         if (sacrificeSelfCost.isPresent()) {
             // Snapshot power before leaving the battlefield (CR 608.2h last-known information).
             if (sacrificeSelfCost.get().trackPower()) {
@@ -612,7 +620,7 @@ public class ActivatedAbilityExecutionService {
                 .anyMatch(SacrificeCreatureCost::recordSacrificedPermanentSnapshot);
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                 targetZone, targetIds, damageAssignments, tracksSacrificedCard,
-                recordsSacrificedPermanentSnapshot);
+                recordsSacrificedPermanentSnapshot, sacrificedSourceSnapshot, sacrificedAttachedEquipmentIds);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -1023,6 +1031,21 @@ public class ActivatedAbilityExecutionService {
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color from a fixed set", gameData.id, player.getUsername());
+                }
+            } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedColors) {
+                int picks = amountEvaluationService.evaluate(gameData, restrictedColors.amount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
+                if (picks > 0 && restrictedColors.colors().size() == 1) {
+                    restrictedColors.restriction().applyTo(gameData.playerManaPools.get(playerId),
+                            restrictedColors.colors().get(0), picks);
+                } else if (picks > 0) {
+                    ChoiceContext.RestrictedManaColorChoice choiceContext =
+                            new ChoiceContext.RestrictedManaColorChoice(playerId, picks, isCreatureSource,
+                                    restrictedColors.colors(), restrictedColors.restriction());
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext,
+                            restrictedColors.colors().stream().map(Enum::name).toList(),
+                            "Choose a color of mana to add (" + restrictedColors.restriction().description() + ")."));
                 }
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 int amount = amountEvaluationService.evaluate(gameData, arm.amount(),
@@ -1479,6 +1502,9 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 total += amountEvaluationService.evaluate(gameData, arm.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
+            } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedColors) {
+                total += amountEvaluationService.evaluate(gameData, restrictedColors.amount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 total += ahg.amount();
             } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
@@ -1716,7 +1742,9 @@ public class ActivatedAbilityExecutionService {
                                     List<UUID> targetIds,
                                     Map<UUID, Integer> damageAssignments,
                                     boolean tracksSacrificedCard,
-                                    boolean recordsSacrificedPermanentSnapshot) {
+                                    boolean recordsSacrificedPermanentSnapshot,
+                                    Permanent sacrificedSourceSnapshot,
+                                    List<UUID> sacrificedAttachedEquipmentIds) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -1789,6 +1817,10 @@ public class ActivatedAbilityExecutionService {
         if (recordsSacrificedPermanentSnapshot) {
             stackEntry.setSacrificedPermanentSnapshot(permanent.getChosenSacrificedPermanentSnapshot());
         }
+        if (sacrificedSourceSnapshot != null) {
+            stackEntry.setSacrificedPermanentSnapshot(sacrificedSourceSnapshot);
+            stackEntry.setSacrificedAttachedEquipmentIds(List.copyOf(sacrificedAttachedEquipmentIds));
+        }
         Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());
         stackEntry.setActivationManaSpent(activationManaSpent == null ? Map.of() : Map.copyOf(activationManaSpent));
         // Carry the creature chosen during activation (e.g. tapped for a TapCreatureCost) so
@@ -1807,6 +1839,16 @@ public class ActivatedAbilityExecutionService {
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
+    private List<UUID> findAttachedEquipmentIds(GameData gameData, UUID hostId) {
+        List<UUID> equipmentIds = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (hostId.equals(permanent.getAttachedTo())
+                    && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                equipmentIds.add(permanent.getId());
+            }
+        });
+        return List.copyOf(equipmentIds);
+    }
     private Map<CardEffect, List<UUID>> targetCardIdsByEffect(ActivatedAbility ability,
                                                                List<CardEffect> effects,
                                                                List<UUID> targetIds,

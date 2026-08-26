@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -47,6 +48,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -107,6 +110,7 @@ public class LibraryChoiceHandlerService {
     private final DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
@@ -1693,9 +1697,7 @@ public class LibraryChoiceHandlerService {
             Card card = placedCards.get(i);
             Permanent perm = permanents.get(i);
 
-            if (card.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
-            }
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
             if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
                 perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
                 perm.setSummoningSick(false);
@@ -2012,6 +2014,11 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PendingMemoriesReturningChoice.class)) {
+            handleMemoriesReturningChoice(gameData, allRevealedCards, cardIds);
+            return;
+        }
+
         // Karn, Scion of Urza -1: controller chose which silver-counter card to return
         if (gameData.hasPendingInteraction(PendingKarnScionExileReturn.class)) {
             handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
@@ -2060,6 +2067,12 @@ public class LibraryChoiceHandlerService {
             }
         }
 
+        if (libraryRevealChoice.selectLandsAfterHand()) {
+            handleHandSelectionThenLandSelection(gameData, controllerId, playerName,
+                    selectedCards, remainingCards);
+            return;
+        }
+
         if (libraryRevealChoice.recordSelectedCount() && gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.setEventValue(selectedCards.size());
         }
@@ -2079,42 +2092,54 @@ public class LibraryChoiceHandlerService {
         // Put selected cards onto the battlefield
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        for (Card card : selectedCards) {
-            Permanent perm = new Permanent(card, Zone.LIBRARY);
-            if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
-                perm.setFaceDownAsCloaked();
-            }
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, perm, enterTappedTypesSnapshot, simultaneouslyEntered);
-            simultaneouslyEntered.add(perm);
-            if (selectedCards.size() == 1 && gameData.pendingEffectResolutionEntry != null) {
-                gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
-            }
-            if (libraryRevealChoice.selectedToBattlefieldTapped()) {
-                perm.tap();
-            }
+        List<UUID> selectedPermanentIds = new ArrayList<>();
+        if (libraryRevealChoice.selectedToBattlefieldSimultaneously()) {
+            placeCardsOnBattlefieldSimultaneously(gameData, selectedCards, controllerId,
+                    libraryRevealChoice.selectedToBattlefieldTapped(), false, false, false,
+                    null, null, null);
+        } else {
+            List<Permanent> simultaneouslyEntered = new ArrayList<>();
+            for (Card card : selectedCards) {
+                Permanent perm = new Permanent(card, Zone.LIBRARY);
+                if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
+                    perm.setFaceDownAsCloaked();
+                }
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, controllerId, perm, enterTappedTypesSnapshot, simultaneouslyEntered);
+                simultaneouslyEntered.add(perm);
+                selectedPermanentIds.add(perm.getId());
+                if (selectedCards.size() == 1 && gameData.pendingEffectResolutionEntry != null) {
+                    gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
+                }
+                if (libraryRevealChoice.selectedToBattlefieldTapped()) {
+                    perm.tap();
+                }
 
-            if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
-                gameLogService.append(gameData, GameLog.text(playerName + " puts a card onto the battlefield face down."));
-            } else {
-                gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
-            }
+                if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
+                    gameLogService.append(gameData, GameLog.text(
+                            playerName + " puts a card onto the battlefield face down."));
+                } else {
+                    gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
+                }
 
-            if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
-                battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, card);
-            } else if (card.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
-            }
-            if (!libraryRevealChoice.selectedToBattlefieldCloaked()
-                    && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
-                perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
-                perm.setSummoningSick(false);
-            }
-            if (!gameData.interaction.isAwaitingInput()) {
-                legendRuleService.checkLegendRule(gameData, controllerId);
+                if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
+                    battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, card);
+                } else if (card.hasType(CardType.CREATURE)) {
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+                }
+                if (!libraryRevealChoice.selectedToBattlefieldCloaked()
+                        && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+                    perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+                    perm.setSummoningSick(false);
+                }
+                if (!gameData.interaction.isAwaitingInput()) {
+                    legendRuleService.checkLegendRule(gameData, controllerId);
+                }
             }
         }
+
+        queueLibrarySelectionFollowUp(gameData, libraryRevealChoice.battlefieldSelectionFollowUp(),
+                selectedPermanentIds);
 
         // Handle remaining cards based on destination
         if (libraryRevealChoice.remainingToGraveyard()) {
@@ -2312,6 +2337,58 @@ public class LibraryChoiceHandlerService {
                         card, null, false);
             }
         }
+    }
+
+    private void queueLibrarySelectionFollowUp(GameData gameData,
+                                               LibrarySelectionFollowUp followUp,
+                                               List<UUID> selectedPermanentIds) {
+        if (followUp == null || selectedPermanentIds.isEmpty()
+                || gameData.pendingEffectResolutionEntry == null) {
+            return;
+        }
+
+        StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+        CardEffect followUpEffect = followUp.createEffect(selectedPermanentIds);
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceEntry.getCard(),
+                sourceEntry.getControllerId(),
+                sourceEntry.getCard().getName() + "'s reflexive ability",
+                List.of(new MayEffect(followUpEffect, followUp.prompt())),
+                null,
+                sourceEntry.getSourcePermanentId()));
+    }
+
+    private void handleHandSelectionThenLandSelection(GameData gameData, UUID controllerId,
+                                                       String playerName, List<Card> selectedCards,
+                                                       List<Card> remainingCards) {
+        for (Card card : selectedCards) {
+            gameData.addCardToHand(controllerId, card);
+        }
+        if (!selectedCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " puts a card into their hand."));
+        }
+
+        List<Card> landCards = remainingCards.stream()
+                .filter(card -> card.hasType(CardType.LAND))
+                .toList();
+        if (landCards.isEmpty()) {
+            for (Card card : remainingCards) {
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
+            }
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " puts the remaining cards into their graveyard."));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, new ArrayList<>(remainingCards),
+                landCards.stream().map(Card::getId).toList(),
+                true, false, false, false, false, 0, null, landCards.size(),
+                "You may put any number of land cards from among them onto the battlefield tapped.",
+                true, 0, false, null, false, null, false, true));
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
@@ -2569,6 +2646,12 @@ public class LibraryChoiceHandlerService {
     private void handleMurmursFromBeyondRevealChoice(GameData gameData, List<Card> allRevealedCards,
                                                      List<UUID> selectedCardIds) {
         murmursFromBeyondEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
+        finishSearchAndResume(gameData);
+    }
+
+    private void handleMemoriesReturningChoice(GameData gameData, List<Card> allRevealedCards,
+                                                List<UUID> selectedCardIds) {
+        memoriesReturningEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
         finishSearchAndResume(gameData);
     }
 

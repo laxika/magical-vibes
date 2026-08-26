@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -147,6 +148,7 @@ public class AdditionalSpellCostService {
             BeholdCost.class,
             DelveCost.class,
             RevealCardFromHandCost.class,
+            TieredManaCost.class,
             SpreeAdditionalManaCost.class);
 
     private final GameQueryService gameQueryService;
@@ -199,6 +201,7 @@ public class AdditionalSpellCostService {
             DelveCost delveCost,
             RevealCardFromHandCost revealCardCost,
             ChooseCreatureTypeCost chooseCreatureTypeCost,
+            TieredManaCost tieredManaCost,
             PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost,
             SpreeAdditionalManaCost spreeAdditionalManaCost
     ) {
@@ -226,6 +229,7 @@ public class AdditionalSpellCostService {
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
                     || revealCardCost != null || chooseCreatureTypeCost != null
+                    || tieredManaCost != null
                     || spreeAdditionalManaCost != null;
         }
 
@@ -387,6 +391,7 @@ public class AdditionalSpellCostService {
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         RevealCardFromHandCost revealCardCost = removeFirst(effects, RevealCardFromHandCost.class);
         ChooseCreatureTypeCost chooseCreatureTypeCost = removeFirst(effects, ChooseCreatureTypeCost.class);
+        TieredManaCost tieredManaCost = removeFirst(effects, TieredManaCost.class);
         SpreeAdditionalManaCost spreeAdditionalManaCost = removeFirst(effects, SpreeAdditionalManaCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay,
                 sacOrDiscard, permCost, discardOrSacrifice, exileCreatureCost, multiPermCost,
@@ -399,7 +404,8 @@ public class AdditionalSpellCostService {
                 discardOrPay, discardOrPayLife,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost,
-                chooseCreatureTypeCost, payLifeOrSacrificePermanentCost, spreeAdditionalManaCost);
+                chooseCreatureTypeCost, tieredManaCost,
+                payLifeOrSacrificePermanentCost, spreeAdditionalManaCost);
     }
 
     /** Adds additional costs granted by permanents before extracting the spell's cast costs. */
@@ -638,6 +644,7 @@ public class AdditionalSpellCostService {
                 // playability by itself — concrete mode+payment selections are validated at cast.
                 case EscalateDiscardCost ignored -> { }
                 case EscalateManaCost ignored -> { }
+                case TieredManaCost ignored -> { }
                 case EscalateSacrificeCost ignored -> { }
                 case EscalateTapCost ignored -> { }
                 // Sacrificing all creatures / permanents you control is legal with zero.
@@ -992,6 +999,9 @@ public class AdditionalSpellCostService {
         if (costs.escalateManaCost() != null) {
             validateEscalateManaCost(card, costs.escalateManaCost(), selection.escalateModeCount());
         }
+        if (costs.tieredManaCost() != null) {
+            validateTieredManaCost(card, costs.tieredManaCost(), announcedXValue == null ? 0 : announcedXValue);
+        }
         if (costs.chooseXValueCost() != null) {
             validateChooseXValueCost(card, costs.chooseXValueCost(), announcedXValue != null ? announcedXValue : 0);
         }
@@ -1234,6 +1244,24 @@ public class AdditionalSpellCostService {
             return "";
         }
         return cost.manaCost().repeat(times);
+    }
+
+    /** Builds the selected mode's additional mana-cost suffix for a tiered spell. */
+    public String tieredManaSuffix(TieredManaCost cost, int modeIndex) {
+        if (cost == null) {
+            return "";
+        }
+        if (modeIndex < 0 || modeIndex >= cost.additionalManaCosts().size()) {
+            throw new IllegalStateException("Invalid tiered mode index: " + modeIndex);
+        }
+        return cost.additionalManaCosts().get(modeIndex);
+    }
+
+    /** Validates the selected mode for a tiered spell's additional mana cost. */
+    public void validateTieredManaCost(Card card, TieredManaCost cost, int modeIndex) {
+        if (modeIndex < 0 || modeIndex >= cost.additionalManaCosts().size()) {
+            throw new IllegalStateException("Invalid tiered mode for " + card.getName());
+        }
     }
 
     /**

@@ -19,20 +19,25 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPa
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -108,6 +113,53 @@ class CastingPermissionServiceTest {
 
         when(conditionEvaluationService.isMet(eq(gd), eq(sultai), any())).thenReturn(true);
         assertThat(svc.canPlayLandsFromGraveyard(gd, player1Id)).isTrue();
+    }
+
+    @Test
+    @DisplayName("conditional graveyard-spell permission applies only when its condition is met")
+    void conditionalGraveyardSpellPermission() {
+        Card source = new Card();
+        ControllerTurn controllerTurn = new ControllerTurn();
+        source.addEffect(EffectSlot.STATIC,
+                new ConditionalEffect(controllerTurn,
+                        new CastSpellsFromGraveyardEffect(new CardTruePredicate())));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card spell = new Card();
+        spell.setType(CardType.INSTANT);
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null))
+                .thenReturn(true);
+        when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(false);
+        assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isFalse();
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(true);
+        assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isTrue();
+    }
+
+    @Test
+    @DisplayName("conditional top-library permissions apply only when their condition is met")
+    void conditionalTopLibraryPermissions() {
+        Card whale = new Card();
+        SourceAttackedThisTurn attacked = new SourceAttackedThisTurn();
+        whale.addEffect(EffectSlot.STATIC,
+                new ConditionalEffect(attacked, new PlayLandsFromTopOfLibraryEffect()));
+        whale.addEffect(EffectSlot.STATIC,
+                new ConditionalEffect(attacked,
+                        new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE))));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(whale));
+
+        Card creature = new Card();
+        creature.setType(CardType.CREATURE);
+        when(conditionEvaluationService.isMet(eq(gd), eq(attacked), any())).thenReturn(false);
+        assertThat(svc.canPlayLandsFromTopOfLibrary(gd, player1Id)).isFalse();
+        assertThat(svc.getCastableTypesFromTopOfLibrary(gd, player1Id)).isEmpty();
+        assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isFalse();
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(attacked), any())).thenReturn(true);
+        assertThat(svc.canPlayLandsFromTopOfLibrary(gd, player1Id)).isTrue();
+        assertThat(svc.getCastableTypesFromTopOfLibrary(gd, player1Id))
+                .containsExactly(CardType.CREATURE);
+        assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isTrue();
     }
 
     @Nested
