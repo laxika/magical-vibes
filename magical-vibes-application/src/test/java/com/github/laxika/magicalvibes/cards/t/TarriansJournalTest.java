@@ -73,7 +73,8 @@ class TarriansJournalTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 

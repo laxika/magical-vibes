@@ -43,13 +43,14 @@ class IdolOfTheDeepKingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         Permanent equipment = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof SovereignsMacuahuitl)
                 .findFirst().orElseThrow();
-        assertThat(idol.isTransformed()).isTrue();
-        assertThat(equipment).isSameAs(idol);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(idol);
+        assertThat(equipment.isTransformed()).isTrue();
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
     }

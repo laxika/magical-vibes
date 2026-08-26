@@ -40,6 +40,7 @@ public class StackEntry {
     /** The opponent chosen before that opponent selected the spell's creature target. */
     @Setter private UUID opponentChosenTargetPlayerId;
     private boolean targetIdOverriddenForEffectResolution;
+    private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
@@ -971,6 +972,10 @@ public class StackEntry {
         this.targetIdOverriddenForEffectResolution = false;
     }
 
+    public void setResolvingEffectTargetGroup(Integer targetGroup) {
+        this.resolvingEffectTargetGroup = targetGroup;
+    }
+
     /**
      * Whether any effect that will actually resolve on this entry is bound to the given target
      * group. A group with no surviving bound effect (a gated-out intervening-if trigger) consumed
@@ -996,7 +1001,7 @@ public class StackEntry {
             return true;
         }
         for (CardEffect effect : effectsToResolve) {
-            if (targeting.getEffectTargetIndex(effect) == groupIndex) {
+            if (targeting.isEffectBoundToTargetGroup(effect, groupIndex)) {
                 return true;
             }
         }
@@ -1014,7 +1019,10 @@ public class StackEntry {
      */
     public List<UUID> targetsForEffect(CardEffect effect) {
         Card targeting = getTargetingCard();
-        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
+        int group = targeting == null ? -1
+                : resolvingEffectTargetGroup != null && targeting.hasEffectTargetIndex(effect)
+                ? resolvingEffectTargetGroup
+                : targeting.getEffectTargetIndex(effect);
         if (group < 0) {
             return getTargetIds();
         }
@@ -1039,7 +1047,10 @@ public class StackEntry {
      */
     public List<UUID> targetsForBoundEffectGroup(CardEffect effect) {
         Card targeting = getTargetingCard();
-        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
+        int group = targeting == null ? -1
+                : resolvingEffectTargetGroup != null && targeting.hasEffectTargetIndex(effect)
+                ? resolvingEffectTargetGroup
+                : targeting.getEffectTargetIndex(effect);
         return group < 0 ? null : targetsForGroup(group);
     }
 

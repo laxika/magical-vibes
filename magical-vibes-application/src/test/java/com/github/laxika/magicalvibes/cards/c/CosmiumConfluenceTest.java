@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CosmiumConfluence.class, CavernOfSouls.class, GhostlyPrison.class})
+@CardUsed({CosmiumConfluence.class, GhostlyPrison.class})
 class CosmiumConfluenceTest extends BaseCardTest {
 
     private void addMana() {
@@ -25,7 +28,11 @@ class CosmiumConfluenceTest extends BaseCardTest {
 
     @Test
     void repeatedCaveModeResolvesAllThreeSelections() {
-        Permanent cave = harness.addToBattlefieldAndReturn(player1, new CavernOfSouls());
+        Card caveCard = new Card();
+        caveCard.setName("Test Cave");
+        caveCard.setType(CardType.LAND);
+        caveCard.setSubtypes(List.of(CardSubtype.CAVE));
+        Permanent cave = harness.addToBattlefieldAndReturn(player1, caveCard);
         harness.setHand(player1, List.of(new CosmiumConfluence()));
         addMana();
 

@@ -50,7 +50,8 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(huatli), null, null);
         harness.passBothPriorities();
 
-        assertThat(huatli.isTransformed()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(huatli);
+        assertThat(findPermanent(player1, "Roar of the Fifth People").isTransformed()).isTrue();
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && entry.getDescription().contains("chapter I"));
     }

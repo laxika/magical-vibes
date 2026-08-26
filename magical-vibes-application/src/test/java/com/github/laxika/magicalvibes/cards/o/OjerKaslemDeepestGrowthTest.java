@@ -63,6 +63,7 @@ class OjerKaslemDeepestGrowthTest extends BaseCardTest {
     @DisplayName("Transforms back when its controller controls at least ten permanents")
     void transformsBackWithTenPermanents() {
         Permanent temple = returnOjerAsTemple();
+        temple.untap();
         addForests(9);
         prepareSorcerySpeedActivation();
         addTransformMana();
@@ -78,6 +79,7 @@ class OjerKaslemDeepestGrowthTest extends BaseCardTest {
     @DisplayName("Cannot transform back with fewer than ten permanents")
     void cannotTransformBackWithFewerThanTenPermanents() {
         Permanent temple = returnOjerAsTemple();
+        temple.untap();
         addForests(8);
         prepareSorcerySpeedActivation();
         addTransformMana();
@@ -93,8 +95,8 @@ class OjerKaslemDeepestGrowthTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Murder()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, ojer.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

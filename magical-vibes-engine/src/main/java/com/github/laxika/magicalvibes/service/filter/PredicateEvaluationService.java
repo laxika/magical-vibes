@@ -599,6 +599,10 @@ public class PredicateEvaluationService {
                             .contains(hasSubtypePredicate.subtype());
                 }
                 boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
+                if (gameData != null && creatureSubtype) {
+                    yield gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
+                            .contains(hasSubtypePredicate.subtype());
+                }
                 // "Loses all creature types" strips every creature subtype (base/transient/granted) and,
                 // via hasKeyword, the Changeling grant too.
                 if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
@@ -1940,6 +1944,15 @@ public class PredicateEvaluationService {
                 }
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 yield source != null && source.getId().equals(permanent.getId());
+            }
+            case PermanentControlledBySourceControllerPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+                yield battlefield != null && battlefield.contains(permanent);
             }
             case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
                 // Recursion-safe: both colour sets come from the in-flight layer state (or the

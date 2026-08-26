@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WaylayingPirates.class, GrizzlyBears.class, Millstone.class})
 class WaylayingPiratesTest extends BaseCardTest {
@@ -49,8 +49,7 @@ class WaylayingPiratesTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new WaylayingPirates()));
         addManaForWaylayingPirates();
-        harness.castCreature(player1, 0, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isFalse();
@@ -65,15 +64,23 @@ class WaylayingPiratesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WaylayingPirates()));
         addManaForWaylayingPirates();
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, creature.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creature.isTapped()).isFalse();
     }
 
     private void castWaylayingPirates(Permanent target) {
         harness.setHand(player1, List.of(new WaylayingPirates()));
         addManaForWaylayingPirates();
-        harness.castCreature(player1, 0, 0, target.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 

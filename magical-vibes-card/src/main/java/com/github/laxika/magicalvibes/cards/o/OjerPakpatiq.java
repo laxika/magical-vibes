@@ -20,7 +20,7 @@ public class OjerPakpatiq extends Card {
         addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.REBOUND, new CardTypePredicate(CardType.INSTANT)));
         addEffect(EffectSlot.ON_DEATH,
-                new ReturnSourceTransformedFromGraveyardEffect(true, CounterType.TIME, 3));
+                new ReturnSourceTransformedFromGraveyardEffect(true, CounterType.TIME, 3, true));
     }
 
     @java.lang.Override

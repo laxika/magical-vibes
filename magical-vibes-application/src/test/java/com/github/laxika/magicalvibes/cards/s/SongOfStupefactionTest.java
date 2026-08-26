@@ -59,7 +59,7 @@ class SongOfStupefactionTest extends BaseCardTest {
         aura.setAttachedTo(bears.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 

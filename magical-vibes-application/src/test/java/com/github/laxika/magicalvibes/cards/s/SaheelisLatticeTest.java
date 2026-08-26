@@ -69,7 +69,7 @@ class SaheelisLatticeTest extends BaseCardTest {
                         && permanent.getCard() instanceof MastercraftRaptor)
                 .findFirst()
                 .orElseThrow();
-        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(4);
     }
 

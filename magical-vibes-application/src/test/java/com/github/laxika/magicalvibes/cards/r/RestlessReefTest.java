@@ -84,6 +84,11 @@ class RestlessReefTest extends BaseCardTest {
     void attackingMillsChosenPlayer() {
         Permanent reef = addReadyReef(player1);
         harness.setLibrary(player2, libraryWithFiveCards());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(reef)));
 

@@ -26,6 +26,7 @@ class PreacherOfTheSchismTest extends BaseCardTest {
     @DisplayName("Creates a lifelink Vampire and draws while both players are tied for most life")
     void triggersForTiedLifeLeaders() {
         harness.setLibrary(player1, List.of(new Card()));
+        harness.setHand(player1, List.of());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         addPreacherReady(player1);
@@ -49,6 +50,7 @@ class PreacherOfTheSchismTest extends BaseCardTest {
     void onlyCreatesTokenWhenAttackedPlayerLeads() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
         addPreacherReady(player1);
 
         declareAttackers(List.of(0));
@@ -64,6 +66,7 @@ class PreacherOfTheSchismTest extends BaseCardTest {
     @DisplayName("Draws and loses life without creating a token when attacking a lower-life player")
     void onlyDrawsWhenControllerLeads() {
         harness.setLibrary(player1, List.of(new Card()));
+        harness.setHand(player1, List.of());
         harness.setLife(player1, 20);
         harness.setLife(player2, 10);
         addPreacherReady(player1);

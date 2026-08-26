@@ -31,12 +31,12 @@ class FabricationFoundryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FabricationFoundry());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ChromaticStar()));
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.WHITE)).isEqualTo(1);
 
-        harness.setHand(player1, List.of(new ChromaticStar()));
         harness.castArtifact(player1, 0);
         assertThat(gd.stack).hasSize(1);
     }

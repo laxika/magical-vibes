@@ -21,7 +21,7 @@ public class SunbirdStandard extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",
-                List.of(new ExileSelfCost(), new CraftMaterialCost(1, null, false, false),
+                List.of(new ExileSelfCost(), CraftMaterialCost.oneOrMore(),
                         new ReturnSourceFromExileTransformedEffect()),
                 "{5}, Exile this artifact, Exile one or more other permanents you control and/or cards from your graveyard: "
                         + "Return this card transformed under its owner's control. Craft only as a sorcery.",

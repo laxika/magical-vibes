@@ -25,8 +25,12 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
     @DisplayName("Triples creature tokens created under its controller's control")
     void triplesCreatureTokens() {
         harness.addToBattlefield(player1, new OjerTaqDeepestFoundation());
-
-        harness.addToBattlefield(player1, new HangedExecutioner());
+        harness.setHand(player1, List.of(new HangedExecutioner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(3);
     }
@@ -35,8 +39,11 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
     @DisplayName("Does not multiply noncreature tokens")
     void doesNotMultiplyNoncreatureTokens() {
         harness.addToBattlefield(player1, new OjerTaqDeepestFoundation());
-
-        harness.addToBattlefield(player1, new BrazenFreebooter());
+        harness.setHand(player1, List.of(new BrazenFreebooter()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -59,6 +66,7 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
     @DisplayName("Transforms back after attacking with three creatures")
     void transformsBackAfterAttackingWithThreeCreatures() {
         Permanent temple = returnOjerAsTemple();
+        temple.untap();
         gd.creaturesAttackedCountThisTurn.put(player1.getId(), 3);
         addTransformMana();
 
@@ -76,6 +84,7 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
     @DisplayName("Cannot transform back without attacking with three creatures")
     void cannotTransformBackWithoutAttackingWithThreeCreatures() {
         Permanent temple = returnOjerAsTemple();
+        temple.untap();
         addTransformMana();
 
         harness.forceActivePlayer(player1);
@@ -94,7 +103,7 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Murder()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, ojer.getId());
         harness.passBothPriorities();

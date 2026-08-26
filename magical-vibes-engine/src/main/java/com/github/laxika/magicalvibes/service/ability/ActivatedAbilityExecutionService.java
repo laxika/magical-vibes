@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTri
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
@@ -896,6 +897,13 @@ public class ActivatedAbilityExecutionService {
                         gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + amount + " " + award.color().getCode() + " from ").card(permanent.getCard()).text(".").build());
                     }
                 }
+            } else if (effect instanceof RemoveCounterFromSourceEffect remove) {
+                int amount = remove.dynamicAmount() != null
+                        ? amountEvaluationService.evaluate(gameData, remove.dynamicAmount(),
+                                AmountContext.forManaAbility(permanent, playerId, xValue))
+                        : remove.amount();
+                permanentCounterSupport.removeCounterFromPermanent(
+                        gameData, permanent, remove.counterType(), amount);
             } else if (effect instanceof RevealAnyNumberOfCardsFromHandEffect reveal) {
                 List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
                 List<UUID> validCardIds = hand.stream()

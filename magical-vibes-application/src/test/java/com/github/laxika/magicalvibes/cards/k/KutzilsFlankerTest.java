@@ -59,8 +59,8 @@ class KutzilsFlankerTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of(1)));
 
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bottomCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, bottomCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -91,10 +91,7 @@ class KutzilsFlankerTest extends BaseCardTest {
     }
 
     private Permanent findFlanker() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof KutzilsFlanker)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Kutzil's Flanker");
     }
 
     private void resolveCreatureAndEtb() {

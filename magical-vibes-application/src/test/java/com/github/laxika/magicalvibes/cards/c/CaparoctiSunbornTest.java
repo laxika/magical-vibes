@@ -29,8 +29,6 @@ class CaparoctiSunbornTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(artifact.isTapped()).isTrue();
         assertThat(creature.isTapped()).isTrue();

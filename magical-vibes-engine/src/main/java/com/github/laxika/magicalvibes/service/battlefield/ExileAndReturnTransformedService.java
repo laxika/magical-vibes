@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +90,9 @@ public class ExileAndReturnTransformedService {
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, newPerm);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(
+                gameData, returnControllerId, returnedCard, null, false);
+        initializeReturnedSaga(gameData, returnControllerId, newPerm);
 
         if (transformed) {
             gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
@@ -129,10 +136,35 @@ public class ExileAndReturnTransformedService {
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(
+                gameData, ownerId, backFace, null, false);
+        initializeReturnedSaga(gameData, ownerId, newPerm);
         gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
                 " returns transformed from exile as ", backFace, "."));
         log.info("Game {} - {} returns transformed from exile as {}",
                 gameData.id, originalCard.getName(), backFace.getName());
         return true;
+    }
+
+    private void initializeReturnedSaga(GameData gameData, UUID controllerId, Permanent saga) {
+        Card card = saga.getCard();
+        if (!card.isSaga()) {
+            return;
+        }
+
+        int loreCounters = gameQueryService.replaceCounters(
+                gameData, saga, CounterType.LORE, 1, controllerId);
+        saga.setCounterCount(CounterType.LORE, loreCounters);
+        List<CardEffect> chapterEffects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
+        if (!chapterEffects.isEmpty()) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s chapter I ability",
+                    chapterEffects,
+                    null,
+                    saga.getId()));
+        }
     }
 }

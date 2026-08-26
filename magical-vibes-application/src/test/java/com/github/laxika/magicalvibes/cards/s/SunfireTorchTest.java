@@ -34,6 +34,7 @@ class SunfireTorchTest extends BaseCardTest {
         Permanent torch = attachTorch(player1, bears);
 
         declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -56,6 +57,7 @@ class SunfireTorchTest extends BaseCardTest {
         Permanent torch = attachTorch(player1, bears);
 
         declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 

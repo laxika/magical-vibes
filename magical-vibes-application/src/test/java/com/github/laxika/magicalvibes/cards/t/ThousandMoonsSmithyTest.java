@@ -57,8 +57,8 @@ class ThousandMoonsSmithyTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent gnome = findPermanents(player1, "Gnome Soldier").getFirst();
-        assertThat(gqs.getEffectivePower(gd, gnome)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, gnome)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gnome)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gnome)).isEqualTo(3);
     }
 
     @Test

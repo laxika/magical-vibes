@@ -29,7 +29,7 @@ public class SaheelisLattice extends Card {
                 "{4}{R}",
                 List.of(
                         new ExileSelfCost(),
-                        new CraftMaterialCost(CardSubtype.DINOSAUR),
+                        CraftMaterialCost.oneOrMore(CardSubtype.DINOSAUR),
                         new ReturnSourceFromExileTransformedEffect()),
                 "{4}{R}, Exile this artifact, Exile one or more Dinosaurs you control and/or Dinosaur cards from your graveyard: "
                         + "Return this card transformed under its owner's control. Craft only as a sorcery.",

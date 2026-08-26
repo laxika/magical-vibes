@@ -1983,10 +1983,12 @@ public class LayerSystemService {
             List<PermanentSlot> targets = new ArrayList<>();
             PermanentSlot source = floating.sourcePermanentId() == null
                     ? null : slotsById.get(floating.sourcePermanentId());
+            Pass activePass = ACTIVE_PASS.get();
+            GameData gameData = activePass == null ? null : activePass.gameData;
             for (PermanentSlot slot : slots) {
-                if (matchesL4Filter(slot, floating.scope(), board,
+                if (matchesL4Filter(slot, floating.scope(), board, gameData,
                         source == null ? null : source.permanent(),
-                        source == null ? null : source.controllerId(),
+                        source == null ? floating.controllerId() : source.controllerId(),
                         floating.sourcePermanentId())) {
                     targets.add(slot);
                 }

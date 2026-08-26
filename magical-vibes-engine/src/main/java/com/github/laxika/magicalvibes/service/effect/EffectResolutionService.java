@@ -120,6 +120,14 @@ public class EffectResolutionService {
         for (int i = startIndex; i < effects.size(); i++) {
             CardEffect effect = effects.get(i);
             CardEffect effectToResolve = effect;
+            int effectOccurrence = 0;
+            for (int previous = 0; previous < i; previous++) {
+                if (effects.get(previous) == effect) {
+                    effectOccurrence++;
+                }
+            }
+            int resolvingTargetGroup = entry.getCard().getEffectTargetIndex(effect, effectOccurrence);
+            entry.setResolvingEffectTargetGroup(resolvingTargetGroup >= 0 ? resolvingTargetGroup : null);
 
             // Resolution-time conditions that depend on the target (e.g. TargetPermanentMatches)
             // must see this effect's group target, not the raw entry.targetId — for a multi-target
@@ -258,7 +266,7 @@ public class EffectResolutionService {
             // the Card's SpellTarget declarations (StackEntry.targetsForEffect slices the flat
             // target list by group). Single-target handlers read the remapped targetId; handlers
             // that support several targets per group consult targetsForEffect themselves.
-            int targetIdx = entry.getCard().getEffectTargetIndex(effect);
+            int targetIdx = resolvingTargetGroup;
             UUID savedTargetId = entry.getTargetId();
             if (targetIdx >= 0) {
                 List<UUID> groupTargets = entry.targetsForEffect(effect);
@@ -300,6 +308,7 @@ public class EffectResolutionService {
         }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
+        entry.setResolvingEffectTargetGroup(null);
         // Cast-time mana snapshots (converge, colors spent) live until resolution truly finishes.
         // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast
         // ConditionalEffect on resume, like Cankerous Thirst); StackResolutionService only clears

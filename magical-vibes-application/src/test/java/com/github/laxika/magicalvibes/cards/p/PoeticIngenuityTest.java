@@ -54,6 +54,7 @@ class PoeticIngenuityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Spellbook(), new Spellbook()));
 
         harness.castArtifact(player1, 0);
+        resolveAllTriggers();
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 

@@ -34,6 +34,7 @@ class ZoyowaLavaTongueTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZoyowaLavaTongue());
         descend(player1);
         harness.setHand(player2, List.of(new Shock()));
+        harness.setLibrary(player2, List.of());
 
         resolveTrigger();
 
@@ -50,6 +51,8 @@ class ZoyowaLavaTongueTest extends BaseCardTest {
     void opponentSacrifices() {
         harness.addToBattlefield(player1, new ZoyowaLavaTongue());
         descend(player1);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         resolveTrigger();
@@ -67,6 +70,7 @@ class ZoyowaLavaTongueTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZoyowaLavaTongue());
         descend(player1);
         harness.setHand(player2, List.of(new Shock()));
+        harness.setLibrary(player2, List.of());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         resolveTrigger();
@@ -84,6 +88,8 @@ class ZoyowaLavaTongueTest extends BaseCardTest {
     void opponentWithNoOptionTakesDamage() {
         harness.addToBattlefield(player1, new ZoyowaLavaTongue());
         descend(player1);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of());
 
         resolveTrigger();
 

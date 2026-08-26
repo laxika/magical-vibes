@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,12 +17,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ZoyowasJustice.class, FountainOfYouth.class, HillGiant.class, LlanowarElves.class, Plains.class})
+@CardUsed({ZoyowasJustice.class, Millstone.class, HillGiant.class, LlanowarElves.class, Plains.class})
 class ZoyowasJusticeTest extends BaseCardTest {
 
     @Test
     void shufflesTargetArtifactAndItsOwnerDiscoversUsingManaValue() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Millstone());
         LlanowarElves discovered = new LlanowarElves();
         harness.setLibrary(player2, List.of(new Plains(), new HillGiant(), discovered));
         harness.setHand(player1, List.of(new ZoyowasJustice()));
@@ -35,12 +36,13 @@ class ZoyowasJusticeTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
-        assertThat(search.params().cards()).containsExactly(discovered);
+        assertThat(search.params().cards()).hasSize(1);
+        Card found = search.params().cards().getFirst();
+        assertThat(found).isIn(discovered, target.getCard());
         harness.handleCardChosen(player2, -1);
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        assertThat(gd.playerHands.get(player2.getId())).contains(discovered);
-        assertThat(gd.playerDecks.get(player2.getId())).contains(target.getCard());
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        assertThat(gd.playerHands.get(player2.getId())).contains(found);
     }
 
     @Test

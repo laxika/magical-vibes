@@ -155,6 +155,7 @@ class StateBasedActionServiceTest {
         if (finalChapter >= 1) card.addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToAnyTargetEffect(1));
         if (finalChapter >= 2) card.addEffect(EffectSlot.SAGA_CHAPTER_II, new DealDamageToAnyTargetEffect(1));
         if (finalChapter >= 3) card.addEffect(EffectSlot.SAGA_CHAPTER_III, new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 4) card.addEffect(EffectSlot.SAGA_CHAPTER_IV, new DealDamageToAnyTargetEffect(1));
         return card;
     }
 
@@ -646,6 +647,19 @@ class StateBasedActionServiceTest {
             Card card = createSagaCard("Phyrexian Scriptures", 3);
             Permanent perm = new Permanent(card);
             perm.setCounterCount(CounterType.LORE, 2);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
+        @DisplayName("Four-chapter Saga survives with three lore counters")
+        void fourChapterSagaSurvivesAtChapterThree() {
+            Card card = createSagaCard("Four-Chapter Saga", 4);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);

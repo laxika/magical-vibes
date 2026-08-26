@@ -46,6 +46,7 @@ class OakenSirenTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new CopperMyr()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activateForBlue();
         harness.castCreature(player1, 0);

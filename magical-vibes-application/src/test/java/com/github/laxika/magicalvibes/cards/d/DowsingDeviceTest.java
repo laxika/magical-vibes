@@ -31,12 +31,14 @@ class DowsingDeviceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castArtifact(player1, 0, target.getId());
-        resolveAllTriggers();
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
-        Permanent device = findPermanent(player1, "Dowsing Device");
+        Permanent device = findPermanent(player1, "Geode Grotto");
         assertThat(device.isTransformed()).isTrue();
         assertThat(device.getCard()).isInstanceOf(GeodeGrotto.class);
     }
@@ -56,9 +58,11 @@ class DowsingDeviceTest extends BaseCardTest {
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
         harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(findPermanent(player1, "Dowsing Device").isTransformed()).isFalse();
     }

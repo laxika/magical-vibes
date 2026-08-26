@@ -57,8 +57,8 @@ class MagmaticGalleonTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HourOfDevastation()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castSorcery(player1, 0, List.of());
         harness.passBothPriorities();

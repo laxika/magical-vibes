@@ -33,6 +33,7 @@ class WailOfTheForgottenTest extends BaseCardTest {
         Card discarded = new GrizzlyBears();
         harness.setHand(player2, List.of(discarded));
         castWail(1, List.of(player2.getId()));
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(discarded);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
@@ -47,12 +48,12 @@ class WailOfTheForgottenTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WailOfTheForgotten()));
         addWailMana();
 
-        harness.castModalSorcery(player1, 0, 2, List.of());
+        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{2}, List.of(), List.of());
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardsChosen(List.of(chosen.getId())));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -70,6 +71,7 @@ class WailOfTheForgottenTest extends BaseCardTest {
         harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{0, 1},
                 List.of(target.getId(), player2.getId()), List.of());
         harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(discarded);
@@ -94,7 +96,8 @@ class WailOfTheForgottenTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WailOfTheForgotten()));
         addWailMana();
 
-        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 0, List.of(land.getId())))
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(
+                player1, 0, 1, 3, new int[]{0}, List.of(land.getId()), List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonland permanent");
     }
@@ -102,7 +105,7 @@ class WailOfTheForgottenTest extends BaseCardTest {
     private void castWail(int modeIndex, List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new WailOfTheForgotten()));
         addWailMana();
-        harness.castModalSorcery(player1, 0, modeIndex, targetIds);
+        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{modeIndex}, targetIds, List.of());
         harness.passBothPriorities();
     }
 

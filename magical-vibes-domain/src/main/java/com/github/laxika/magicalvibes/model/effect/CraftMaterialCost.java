@@ -13,29 +13,29 @@ import java.util.List;
  */
 public record CraftMaterialCost(int minimumCount, CardType requiredType, CardSubtype requiredSubtype,
                                 List<CardSubtype> requiredSubtypes, boolean nonlandOnly,
-                                boolean requireActivatedAbility) implements CostEffect {
+                                boolean requireActivatedAbility, boolean allowsAdditionalMaterials) implements CostEffect {
 
     public CraftMaterialCost() {
-        this(1, CardType.ARTIFACT, null, List.of(), false, false);
+        this(1, CardType.ARTIFACT, null, List.of(), false, false, false);
     }
 
     public CraftMaterialCost(int minimumCount, CardType requiredType, boolean nonlandOnly,
                              boolean requireActivatedAbility) {
-        this(minimumCount, requiredType, null, List.of(), nonlandOnly, requireActivatedAbility);
+        this(minimumCount, requiredType, null, List.of(), nonlandOnly, requireActivatedAbility, false);
     }
 
     public CraftMaterialCost(int minimumCount, CardType requiredType, CardSubtype requiredSubtype,
                              boolean nonlandOnly, boolean requireActivatedAbility) {
         this(minimumCount, requiredType, requiredSubtype, List.of(), nonlandOnly,
-                requireActivatedAbility);
+                requireActivatedAbility, false);
     }
 
     public CraftMaterialCost(CardSubtype requiredSubtype) {
-        this(1, null, requiredSubtype, List.of(), false, false);
+        this(1, null, requiredSubtype, List.of(), false, false, false);
     }
 
     public CraftMaterialCost(List<CardSubtype> requiredSubtypes) {
-        this(requiredSubtypes.size(), null, null, requiredSubtypes, false, false);
+        this(requiredSubtypes.size(), null, null, requiredSubtypes, false, false, false);
     }
 
     public static CraftMaterialCost withRequiredSubtypes(CardSubtype... requiredSubtypes) {
@@ -60,6 +60,14 @@ public record CraftMaterialCost(int minimumCount, CardType requiredType, CardSub
 
     /** The material form used by The Enigma Jewel. */
     public static CraftMaterialCost nonlandsWithActivatedAbilities(int minimumCount) {
-        return new CraftMaterialCost(minimumCount, null, null, List.of(), true, true);
+        return new CraftMaterialCost(minimumCount, null, null, List.of(), true, true, true);
+    }
+
+    public static CraftMaterialCost oneOrMore() {
+        return new CraftMaterialCost(1, null, null, List.of(), false, false, true);
+    }
+
+    public static CraftMaterialCost oneOrMore(CardSubtype requiredSubtype) {
+        return new CraftMaterialCost(1, null, requiredSubtype, List.of(), false, false, true);
     }
 }

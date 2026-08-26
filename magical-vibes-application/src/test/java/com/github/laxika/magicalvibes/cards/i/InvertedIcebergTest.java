@@ -68,7 +68,7 @@ class InvertedIcebergTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(target.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(titan.getId(), target.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

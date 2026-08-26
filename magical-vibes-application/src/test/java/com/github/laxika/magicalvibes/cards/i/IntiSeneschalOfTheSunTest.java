@@ -36,6 +36,7 @@ class IntiSeneschalOfTheSunTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
