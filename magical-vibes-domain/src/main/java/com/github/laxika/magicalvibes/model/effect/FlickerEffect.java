@@ -204,7 +204,8 @@ public record FlickerEffect(
     public static FlickerEffect controllersChooseAnyNumberCreaturesRepeatedByX() {
         return new FlickerEffect(FlickerScope.CONTROLLERS_PERMANENTS,
                 new PermanentIsCreaturePredicate(), ReturnTiming.IMMEDIATE,
-                TurnStep.END_STEP, false, null, null, 0, false, false);
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), true, false);
     }
 
     /**

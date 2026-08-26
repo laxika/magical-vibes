@@ -3274,8 +3274,7 @@ public class TriggerCollectionService {
 
     private void enqueueCloakedWardTrigger(GameData gameData, Permanent source, UUID controllerId,
                                            StackEntry triggeringEntry) {
-        Card wardSourceCard = new Card();
-        wardSourceCard.setName("Cloaked creature");
+        Card wardSourceCard = Card.namedRuntimePlaceholder("Cloaked creature");
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 wardSourceCard,

@@ -281,6 +281,14 @@ public class Card {
         }
     }
 
+    /** Creates an immutable synthetic card used only to identify a runtime stack entry. */
+    public static Card namedRuntimePlaceholder(String name) {
+        Card card = new Card();
+        card.name = name;
+        card.freeze();
+        return card;
+    }
+
     /**
      * Copy constructor backing {@link #createRuntimeCopy()}. Copies every field, including the
      * id, but not {@link #frozen} — the copy starts mutable. Collection fields are copied into
