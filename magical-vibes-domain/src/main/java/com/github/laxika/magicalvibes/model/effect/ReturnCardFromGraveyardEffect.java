@@ -90,8 +90,9 @@ import java.util.Set;
  *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
  *                             only meaningful when {@link #targetGraveyard} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
- *                             permanent matching this predicate after entering the battlefield; the
- *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
+ *                             permanent matching this predicate; on a mass battlefield return, each
+ *                             matching card is attached to a legal matching permanent when possible
+ *                             and cards with no legal attachment remain in the graveyard
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
  * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned

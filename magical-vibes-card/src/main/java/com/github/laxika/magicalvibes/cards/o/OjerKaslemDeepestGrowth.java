@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsRevealTwoTypesT
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "204")
+@CardRegistration(set = "LCI", collectorNumber = "318")
 public class OjerKaslemDeepestGrowth extends Card {
 
     public OjerKaslemDeepestGrowth() {

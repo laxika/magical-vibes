@@ -235,6 +235,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsNthSpellCastThisTurnPredicate` | `(int spellNumber)` | the spell at 1-based position `spellNumber` in this turn's **global** cast order across all players. "counter target spell that's the second spell cast this turn" — Second Guess with `2`. Read from `GameData.getSpellCastOrdinalThisTurn(cardId)` (appended by `recordSpellCast`, cleared each turn), so copies put on the stack without being cast never match |
 | `StackEntryKickedPredicate` | `()` | spells cast with a kicker or at least one multikicker payment |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
+| `StackEntryTargetsOnlySingleCreaturePredicate` | `()` | spells whose target occurrences all identify one creature; repeated occurrences of that creature are allowed (Muck Drubb) |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
 | `StackEntryNotTargetedByNamedCreatureAbilityPredicate` | `(String creatureName)` | target spells that are not already targeted by an activated or triggered ability from another creature with the given name; source-aware and evaluated by `TargetLegalityService` |

@@ -640,7 +640,8 @@ public class PlayerInteractionSupport {
                 typeMatches = !excludedTypes.contains(handCard.getType());
             }
             if (typeMatches
-                    && (filter == null || predicateEvaluationService.matchesCardPredicate(handCard, filter, sourceCardId))) {
+                    && (filter == null || predicateEvaluationService.matchesCardPredicate(
+                    handCard, filter, sourceCardId, gameData, targetPlayerId, null, null, entry.getXValue()))) {
                 validIndices.add(i);
             }
         }

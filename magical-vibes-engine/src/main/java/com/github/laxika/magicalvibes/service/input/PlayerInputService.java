@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1152,6 +1153,19 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a Primal Clay shape", gameData.id, playerName);
+    }
+
+    public void beginPowerToughnessFormChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                              List<PowerToughnessForm> forms, boolean turnFaceUp) {
+        ChoiceContext.PowerToughnessFormChoice choiceContext =
+                new ChoiceContext.PowerToughnessFormChoice(permanentId, forms, turnFaceUp);
+        List<String> options = forms.stream().map(PowerToughnessForm::label).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a base power and toughness."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a base power and toughness", gameData.id, playerName);
     }
 
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {

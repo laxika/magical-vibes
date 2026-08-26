@@ -738,6 +738,14 @@ public sealed interface ChoiceContext {
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
 
+    /** Choosing a base power/toughness form as a permanent enters or is turned face up. */
+    record PowerToughnessFormChoice(UUID permanentId, List<PowerToughnessForm> forms,
+                                     boolean turnFaceUp) implements ChoiceContext {
+        public PowerToughnessFormChoice {
+            forms = List.copyOf(forms);
+        }
+    }
+
     /**
      * Choosing a basic land type "as ~ enters". When {@code chainSecondAfter} is true, answering
      * the first pick immediately begins a second pick ({@code isSecondChoice=true}) for cards that
@@ -1381,15 +1389,20 @@ public sealed interface ChoiceContext {
     }
 
     /**
-     * Forgotten Lore: after the targeted opponent has chosen a card in the controller's graveyard,
-     * the controller chooses whether to pay {G} and repeat the process. Only offered when the
-     * controller can afford {G} and at least one unchosen card remains. Answered via
-     * {@code handleListChoice}.
+     * Forgotten Lore and Shrouded Lore: after the targeted opponent has chosen a card in the
+     * controller's graveyard, the controller chooses whether to pay the configured mana cost and
+     * repeat the process. Only offered when the controller can afford it and at least one unchosen
+     * card remains. Answered via {@code handleListChoice}.
      */
-    record ForgottenLorePaymentChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
+    record ForgottenLorePaymentChoice(UUID affectedPlayerId, String sourceCardName, String repeatManaCost)
+            implements ChoiceContext {
 
         public static final String PAY = "Pay {G}";
         public static final String DECLINE = "Don't pay";
+
+        public static String payOption(String repeatManaCost) {
+            return "Pay " + repeatManaCost;
+        }
     }
 
     /** Indulgent Tormentor: the targeted opponent chooses sacrifice, payment, or a draw. */

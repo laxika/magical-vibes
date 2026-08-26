@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCrea
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
@@ -114,6 +116,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final AbilityActivationService abilityActivationService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
     private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
@@ -139,6 +142,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
+    private final AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler anyPlayerMaySacrificeCreatureToCounterSpellHandler;
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
     private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
@@ -543,7 +547,8 @@ public class PermanentChoiceBattlefieldHandlerService {
             log.info("Game {} - {} exiles {}", gameData.id, context.sourceCardName(), exiledCard.getName());
             permanentRemovalService.removeOrphanedAuras(gameData);
         } else {
-            destructionSupport.tryDestroyAndLog(gameData, target, context.sourceCardName());
+            destructionSupport.tryDestroyAndLog(gameData, target, context.sourceCardName(),
+                    context.cannotBeRegenerated());
         }
 
         // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
@@ -1765,6 +1770,18 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleAnyPlayerMaySacrificeCreatureToCounterSpell(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell context) {
+        anyPlayerMaySacrificeCreatureToCounterSpellHandler.sacrificeCreature(
+                gameData, context.sacrificingPlayerId(), permanentId);
+        anyPlayerMaySacrificeCreatureToCounterSpellHandler.counterSpell(
+                gameData, context.sourceCard(), context.effect());
+        anyPlayerMaySacrificeCreatureToCounterSpellHandler.advance(
+                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificePermanentThen(GameData gameData, UUID permanentId,
                                               PermanentChoiceContext.SacrificePermanentThen ctx) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
@@ -2189,6 +2206,13 @@ public class PermanentChoiceBattlefieldHandlerService {
     }
 
     public void handlePendingAuraPlacement(GameData gameData, UUID playerId, UUID permanentId) {
+        if (gameData.retetherOperation.isActive()) {
+            if (graveyardReturnSupport.completeRetetherAuraChoice(gameData, playerId, permanentId)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
         Card auraCard = gameData.interaction.consumePendingAuraCard();
         UUID auraOwnerId = gameData.interaction.consumePendingAuraOwnerId();
         // If an explicit aura owner was set (e.g. Necrotic Plague), use it instead of the chooser

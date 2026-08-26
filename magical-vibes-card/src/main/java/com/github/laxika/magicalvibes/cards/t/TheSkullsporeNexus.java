@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "212")
+@CardRegistration(set = "LCI", collectorNumber = "340")
 public class TheSkullsporeNexus extends Card {
 
     public TheSkullsporeNexus() {

@@ -253,6 +253,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(gameData, permanentId, aosc);
         } else if (context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop ams) {
             battlefieldHandler.handleAnyPlayerMaySacrificeLandPutSourceOnTop(gameData, permanentId, ams);
+        } else if (context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell ams) {
+            battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {
             battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentAndReturnTargetCards spar) {

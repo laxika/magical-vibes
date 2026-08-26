@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnWh
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -75,6 +76,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -1120,7 +1122,7 @@ public class DamageTriggerCollectorService {
             ReflectSourceDamageToItsControllerEffect trigger, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
         if (sd.totalDamage() <= 0) return false;
-        if (!sourceHasColor(sd.sourceCard(), trigger.color())) return false;
+        if (!sourceHasColor(match.gameData(), sd, trigger.color())) return false;
 
         GameData gameData = match.gameData();
         UUID recipientId = sd.sourceControllerId();
@@ -1145,6 +1147,26 @@ public class DamageTriggerCollectorService {
                         + gameData.playerIdToName.get(recipientId) + "."));
         log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
                 sd.totalDamage(), gameData.playerIdToName.get(recipientId));
+        return true;
+    }
+
+    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    private boolean handleChosenColorSourceDamage(TriggerMatchContext match,
+            MayPayManaEffect trigger, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
+        Permanent watcher = match.permanent();
+        if (watcher == null || watcher.getChosenColor() == null
+                || damage.damageToPlayers().getOrDefault(match.controllerId(), 0) <= 0
+                || !sourceHasColor(match.gameData(), damage, watcher.getChosenColor())) {
+            return false;
+        }
+
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                watcher.getCard(), match.controllerId(), List.of(trigger), true, null, 0, watcher.getId()));
+        gameLogService.append(match.gameData(), GameLog.cardThen(watcher.getCard(),
+                " triggers — choose a target."));
+        log.info("Game {} - {} triggers after a source of the chosen color dealt damage to its controller",
+                match.gameData().id, watcher.getCard().getName());
         return true;
     }
 
@@ -1511,10 +1533,20 @@ public class DamageTriggerCollectorService {
         return handleEquippedCreatureDealsCombatDamage(match, conditional, ctx);
     }
 
-    private boolean sourceHasColor(Card card, CardColor color) {
-        if (card == null || color == null) return false;
-        if (card.getColor() == color) return true;
-        return card.getColors().contains(color);
+    private boolean sourceHasColor(GameData gameData, TriggerContext.SourceDealsDamage damage,
+                                   CardColor color) {
+        if (damage.sourceCard() == null || color == null) return false;
+
+        Set<CardColor> sourceColors;
+        Permanent sourcePermanent = damage.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, damage.sourcePermanentId());
+        if (sourcePermanent != null) {
+            sourceColors = gameQueryService.getEffectiveColors(gameData, sourcePermanent);
+        } else {
+            sourceColors = gameQueryService.getEffectiveCardColors(gameData, damage.sourceCard());
+        }
+        return gameQueryService.getDamageSourceColors(gameData, sourceColors).contains(color);
     }
 
     /**

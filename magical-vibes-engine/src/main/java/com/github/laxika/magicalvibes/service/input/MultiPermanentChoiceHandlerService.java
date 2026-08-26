@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnNControlledPermanentsToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import lombok.RequiredArgsConstructor;
@@ -90,6 +91,7 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopiesOfSaddledCreatureEffectHandler
             createTokenCopiesOfSaddledCreatureEffectHandler;
     private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
+    private final ReturnNControlledPermanentsToHandEffectHandler returnNControlledPermanentsToHandEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler distinctTokenCopyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -274,6 +276,11 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two creatures must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ReturnNControlledPermanentsToHand returnContext
+                && permanentIds.size() != returnContext.effect().count()) {
+            throw new IllegalStateException("Exactly " + returnContext.effect().count()
+                    + " permanents must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.TargetPlayerSacrificesCreatureAndPlaneswalker ctx) {
             if (permanentIds.size() != ctx.requiredCount()) {
@@ -500,6 +507,8 @@ public class MultiPermanentChoiceHandlerService {
             handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnAnyNumberAndRecordCount ctx) {
             handleReturnAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ReturnNControlledPermanentsToHand ctx) {
+            handleReturnNControlledPermanentsToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber ctx) {
             if (flickerEffectHandler.completeAnyNumberChoice(gameData, permanentIds, ctx)
                     && !gameData.interaction.isAwaitingInput()) {
@@ -1272,6 +1281,17 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleReturnNControlledPermanentsToHand(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.ReturnNControlledPermanentsToHand context) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No pending effect resolution entry");
+        }
+        returnNControlledPermanentsToHandEffectHandler.completeChoice(gameData, permanentIds, context, entry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,

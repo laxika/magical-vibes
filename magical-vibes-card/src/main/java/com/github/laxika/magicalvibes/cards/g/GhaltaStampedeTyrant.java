@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "185")
+@CardRegistration(set = "LCI", collectorNumber = "326")
 public class GhaltaStampedeTyrant extends Card {
 
     public GhaltaStampedeTyrant() {

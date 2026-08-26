@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "189")
+@CardRegistration(set = "LCI", collectorNumber = "296")
+@CardRegistration(set = "LCI", collectorNumber = "339")
 public class HuatliPoetOfUnity extends Card {
 
     public HuatliPoetOfUnity() {

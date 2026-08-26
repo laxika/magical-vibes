@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "61")
+@CardRegistration(set = "LCI", collectorNumber = "364")
 public class KitesailLarcenist extends Card {
 
     public KitesailLarcenist() {

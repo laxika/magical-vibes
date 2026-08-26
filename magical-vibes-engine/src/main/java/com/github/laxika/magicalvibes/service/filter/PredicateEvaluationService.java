@@ -250,6 +250,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWit
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
@@ -2674,6 +2675,7 @@ public class PredicateEvaluationService {
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
             case StackEntryTargetsYouPredicate ignored -> false;
             case StackEntryTargetsAnyPlayerPredicate ignored -> false;
+            case StackEntryTargetsOnlySingleCreaturePredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
             case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;

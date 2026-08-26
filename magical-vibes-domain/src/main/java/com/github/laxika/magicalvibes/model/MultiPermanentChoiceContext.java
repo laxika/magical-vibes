@@ -232,6 +232,12 @@ public sealed interface MultiPermanentChoiceContext {
     record ReturnAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
     }
 
+    /** Return exactly the required number of matching permanents, or all available if fewer exist. */
+    record ReturnNControlledPermanentsToHand(
+            com.github.laxika.magicalvibes.model.effect.ReturnNControlledPermanentsToHandEffect effect)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Resolve one choice in a repeated immediate controller-creature flicker. */
     record FlickerAnyNumber(StackEntry resolvingEntry,
                             com.github.laxika.magicalvibes.model.effect.FlickerEffect effect,

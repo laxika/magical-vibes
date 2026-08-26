@@ -1814,6 +1814,20 @@ public class LayerSystemService {
                 }
             }
             case AnimatePermanentsEffect animate -> {
+                if (animate.scope() == GrantScope.ALL_PERMANENTS) {
+                    for (PermanentSlot target : scopeTargets(gameData, instance, animate.scope(),
+                            animate.filter(), slots, slotsById, board)) {
+                        CharacteristicState state = states.get(target.permanent().getId());
+                        if (state == null) continue;
+                        state.addCardType(CardType.CREATURE);
+                        animate.grantedCardTypes().forEach(state::addCardType);
+                        animate.grantedSubtypes().forEach(state::addSubtype);
+                        if (animate.grantedKeywords().contains(Keyword.CHANGELING)) {
+                            state.addKeyword(Keyword.CHANGELING);
+                        }
+                    }
+                    return;
+                }
                 // NOT managed: the base P/T, colour, subtypes and keywords are contributed by the
                 // legacy self-handler during assembly (StaticEffectSupport
                 // .applySelfOnlyConditionalStaticEffect), which must keep running. Layer 4 records
@@ -2596,6 +2610,19 @@ public class LayerSystemService {
                                                 provenanceSourceName(instance)));
                                     }
                                 });
+                case AnimatePermanentsEffect animate -> {
+                    if (animate.scope() == GrantScope.ALL_PERMANENTS) {
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                                (target, harvested) -> {
+                                    if (harvested.isBasePTOverridden()) {
+                                        entries.add(new BasePtEntry(target.permanent().getId(),
+                                                harvested.getBasePowerOverride(), harvested.getBaseToughnessOverride(),
+                                                instance.timestamp(), instance.position(),
+                                                provenanceSourceName(instance)));
+                                    }
+                                });
+                    }
+                }
                 case AnimateNoncreatureArtifactsEffect ignored -> {
                     // Gated off for artifacts that animate themselves — their own animation
                     // defines the base P/T, not March's MV.

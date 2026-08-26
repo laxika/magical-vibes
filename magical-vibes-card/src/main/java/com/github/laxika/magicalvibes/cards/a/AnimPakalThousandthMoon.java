@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "223")
+@CardRegistration(set = "LCI", collectorNumber = "300")
 public class AnimPakalThousandthMoon extends Card {
 
     public AnimPakalThousandthMoon() {

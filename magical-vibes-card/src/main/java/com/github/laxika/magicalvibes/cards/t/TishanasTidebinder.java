@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "81")
+@CardRegistration(set = "LCI", collectorNumber = "335")
 public class TishanasTidebinder extends Card {
 
     public TishanasTidebinder() {

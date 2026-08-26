@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "85")
+@CardRegistration(set = "LCI", collectorNumber = "412")
 public class WaylayingPirates extends Card {
 
     public WaylayingPirates() {

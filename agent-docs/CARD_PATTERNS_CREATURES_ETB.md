@@ -10,7 +10,7 @@ For an ETB that pays X and then offers a free cast of an instant or sorcery with
 from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
 `h/HaloForager.java`.
 
-Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; the registrar creates a one-shot echo trigger for the source permanent's current controller.
+Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep. The registrar creates a one-shot echo trigger for the source permanent's current controller.
 
 ## Vanilla creatures (empty body, all from Scryfall)
 

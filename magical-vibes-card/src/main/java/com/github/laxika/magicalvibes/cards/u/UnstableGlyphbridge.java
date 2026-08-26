@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "41")
+@CardRegistration(set = "LCI", collectorNumber = "358")
 public class UnstableGlyphbridge extends Card {
 
     public UnstableGlyphbridge() {

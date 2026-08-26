@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "88")
+@CardRegistration(set = "LCI", collectorNumber = "316")
 public class AclazotzDeepestBetrayal extends Card {
 
     public AclazotzDeepestBetrayal() {

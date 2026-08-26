@@ -227,6 +227,19 @@ public class TriggerCollectionService {
 
     // ── Spell-cast triggers ────────────────────────────────────────────
 
+    public void checkTimeCounterRemovedFromExiledCardTriggers(GameData gameData, Card card,
+            UUID ownerId, int remainingCounters) {
+        if (card == null || ownerId == null) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.TimeCounterRemovedFromExile(remainingCounters);
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)) {
+            dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card),
+                    EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, effect, context);
+        }
+    }
+
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
     }
@@ -2326,6 +2339,40 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Handles {@link EffectSlot#ON_CONTROLLER_CREATURE_RETURNED_TO_HAND} — "Whenever a creature is
+     * returned to your hand from the battlefield, ...". The watcher is checked before the returned
+     * permanent leaves, so the returned permanent itself can trigger. The returned card must be a
+     * creature and its owner must be the watching permanent's controller.
+     */
+    public void checkControllerCreatureReturnedToHandTriggers(GameData gameData,
+                                                               Permanent returnedPermanent,
+                                                               boolean wasCreature,
+                                                               UUID returnedToPlayerId) {
+        if (!wasCreature || returnedToPlayerId == null) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(returnedToPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : new ArrayList<>(battlefield)) {
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_CREATURE_RETURNED_TO_HAND)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        returnedToPlayerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+                log.info("Game {} - {} triggers on a creature returned to its controller's hand ({})",
+                        gameData.id, perm.getCard().getName(), returnedPermanent.getCard().getName());
+            }
+        }
+    }
+
     // ── Ally-permanent-sacrificed triggers ──────────────────────────────
 
     public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
@@ -2604,6 +2651,10 @@ public class TriggerCollectionService {
     /** Drains pending multi-target trigger choices (ETB token copies and ON_SELF_CAST multi-target). */
     public void processNextETBTokenMultiTargetTrigger(GameData gameData) {
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+    }
+
+    public boolean needsSlotBySlotTargetSelection(Card card) {
+        return etbTokenTargetService.needsSlotBySlotTargetSelection(card);
     }
 
     /**
@@ -5071,6 +5122,14 @@ public class TriggerCollectionService {
                         gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
                     }
                 }
+            }
+        });
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerId.equals(gainingPlayerId)) return;
+
+            for (Permanent perm : List.copyOf(battlefield)) {
+                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_GAINS_LIFE, ctx);
             }
         });
 

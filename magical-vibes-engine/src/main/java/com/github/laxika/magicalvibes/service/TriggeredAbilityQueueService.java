@@ -360,6 +360,20 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
+            ReturnCardFromGraveyardEffect returnEffect = pending.effects().stream()
+                    .map(this::targetedReturnEffect)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+            if (returnEffect != null) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        pending.sourceCard(), pending.controllerId(), new ArrayList<>(pending.effects()),
+                        null, returnEffect.upTo() ? 0 : 1, 0));
+                processNextSpellGraveyardTargetTrigger(gameData);
+                return;
+            }
+
             ReturnTargetCardsFromGraveyardToHandEffect gyReturn = pending.effects().stream()
                     .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
                     .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
@@ -676,7 +690,11 @@ public class TriggeredAbilityQueueService {
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
-                            : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
+                            : result.canTargetExiledCards() && result.canTargetPermanents()
+                                    ? "target permanent or suspended card"
+                                    : result.canTargetExiledCards()
+                                            ? "target suspended card"
+                                            : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             if (optionalTarget) {
@@ -742,7 +760,8 @@ public class TriggeredAbilityQueueService {
         }
         boolean needsTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
         if (needsTarget) {
             if (sourceCard.getSpellTargets().size() > 1) {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(

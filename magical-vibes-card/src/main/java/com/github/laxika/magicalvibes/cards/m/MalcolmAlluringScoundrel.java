@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "63")
+@CardRegistration(set = "LCI", collectorNumber = "293")
 public class MalcolmAlluringScoundrel extends Card {
 
     public MalcolmAlluringScoundrel() {

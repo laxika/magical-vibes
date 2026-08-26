@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "156")
+@CardRegistration(set = "LCI", collectorNumber = "295")
 public class IntiSeneschalOfTheSun extends Card {
 
     public IntiSeneschalOfTheSun() {

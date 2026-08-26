@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.OjerAxonilDamageReplacementEf
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "158")
+@CardRegistration(set = "LCI", collectorNumber = "317")
 public class OjerAxonil extends Card {
 
     public OjerAxonil() {

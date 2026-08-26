@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "43")
+@CardRegistration(set = "LCI", collectorNumber = "359")
 public class WardenOfTheInnerSky extends Card {
 
     public WardenOfTheInnerSky() {

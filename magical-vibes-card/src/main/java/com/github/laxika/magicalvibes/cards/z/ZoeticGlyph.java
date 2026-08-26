@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LCI", collectorNumber = "86")
+@CardRegistration(set = "LCI", collectorNumber = "413")
 public class ZoeticGlyph extends Card {
 
     public ZoeticGlyph() {

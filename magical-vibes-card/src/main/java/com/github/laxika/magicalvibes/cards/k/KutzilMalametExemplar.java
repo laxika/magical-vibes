@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanBasePowerPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "232")
+@CardRegistration(set = "LCI", collectorNumber = "304")
 public class KutzilMalametExemplar extends Card {
 
     public KutzilMalametExemplar() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSameTotalPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -585,6 +587,51 @@ public class EnterTriggerCollectorService {
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect for entering controller)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = SearchLibraryForCreatureWithSameTotalPowerToughnessEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreatureSearchSameTotalPowerToughness(
+            TriggerMatchContext match,
+            SearchLibraryForCreatureWithSameTotalPowerToughnessEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        if (enteringPermanent == null
+                || !enteringPermanent.isCast()
+                || enteringPermanent.getCastFromZone() != Zone.HAND) {
+            return false;
+        }
+
+        int power = gameQueryService.getEffectivePower(match.gameData(), enteringPermanent);
+        int toughness = gameQueryService.getEffectiveToughness(match.gameData(), enteringPermanent);
+        Card sourceCard = match.permanent().getCard();
+        MayEffect may = new MayEffect(
+                new SearchLibraryForCreatureWithSameTotalPowerToughnessEffect(power, toughness),
+                "Search your library for a creature card with the same total power and toughness?");
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(may)),
+                    enteringPermanentId,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            entry.setTriggeringPermanentPowerAtTrigger(power);
+            entry.setTriggeringPermanentToughnessAtTrigger(toughness);
+            match.gameData().stack.add(entry);
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (same total power and toughness search)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }

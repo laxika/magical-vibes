@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "265")
+@CardRegistration(set = "LCI", collectorNumber = "390")
 public class ThreefoldThunderhulk extends Card {
 
     public ThreefoldThunderhulk() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "191")
+@CardRegistration(set = "LCI", collectorNumber = "327")
 public class HulkingRaptor extends Card {
 
     public HulkingRaptor() {

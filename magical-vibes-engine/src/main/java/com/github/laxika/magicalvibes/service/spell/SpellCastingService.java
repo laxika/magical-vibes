@@ -2435,7 +2435,7 @@ public class SpellCastingService {
                 graveyardScopes.contains(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
 
         // Detect effects that target cards in exile (e.g. Runic Repetition and Darkpact).
-        CardEffect exileTargetingEffect = card.getEffects(EffectSlot.SPELL).stream()
+        CardEffect exileTargetingEffect = targetingSpellEffects.stream()
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
                 .findFirst().orElse(null);
         boolean needsExileTargeting = exileTargetingEffect != null;
@@ -2463,7 +2463,8 @@ public class SpellCastingService {
         // Validate target if specified (can be a permanent or a player)
         if (targetId != null && !targetingSpellOnStack) {
             if (needsExileTargeting && targetIsExiledCard) {
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE, playerId);
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetingSpellEffects,
+                        targetId, Zone.EXILE, effectiveXValue, playerId);
             } else if (needsSingleGraveyardTargeting) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {

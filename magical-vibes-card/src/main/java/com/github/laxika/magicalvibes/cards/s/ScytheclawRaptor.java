@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "165")
+@CardRegistration(set = "LCI", collectorNumber = "323")
 public class ScytheclawRaptor extends Card {
 
     public ScytheclawRaptor() {

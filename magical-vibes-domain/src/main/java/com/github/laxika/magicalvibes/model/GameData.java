@@ -579,7 +579,7 @@ public class GameData {
     public final PlaguecrafterState plaguecrafter = new PlaguecrafterState();
     /** Progress state for Winter's Chill's per-target "may pay {1} or {2}" flow. */
     public final WintersChillState wintersChill = new WintersChillState();
-    /** Progress state for Forgotten Lore's "opponent chooses a card; you may pay {G} to repeat" flow. */
+    /** Progress state for Forgotten Lore and Shrouded Lore's repeating graveyard-choice flow. */
     public final ForgottenLoreState forgottenLore = new ForgottenLoreState();
     /**
      * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
@@ -676,6 +676,7 @@ public class GameData {
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
+    public final RetetherOperationState retetherOperation = new RetetherOperationState();
     public boolean cleanupDiscardPending;
     /** Tracks exile-until-source-leaves connections (O-ring style).
      *  Maps source permanent UUID to the exiled cards + owner info.
@@ -4306,6 +4307,11 @@ public class GameData {
         copy.cloneOperation.addTypeAppropriateCounters = this.cloneOperation.addTypeAppropriateCounters;
         copy.cloneOperation.entersTapped = this.cloneOperation.entersTapped;
         copy.cloneOperation.landPlay = this.cloneOperation.landPlay;
+        copy.cloneOperation.xValue = this.cloneOperation.xValue;
+        copy.cloneOperation.copyCardFilter = this.cloneOperation.copyCardFilter;
+        copy.cloneOperation.graveyardCopyChoicePending = this.cloneOperation.graveyardCopyChoicePending;
+        copy.cloneOperation.exileCopiedGraveyardCardAfterEntry =
+                this.cloneOperation.exileCopiedGraveyardCardAfterEntry;
 
         copy.landCopyOperation.physicalCard = this.landCopyOperation.physicalCard;
         copy.landCopyOperation.enteringCard = this.landCopyOperation.enteringCard;
@@ -4322,6 +4328,10 @@ public class GameData {
         copy.warpWorldOperation.enterTappedTypesSnapshot.addAll(this.warpWorldOperation.enterTappedTypesSnapshot);
         copy.warpWorldOperation.needsLegendChecks = this.warpWorldOperation.needsLegendChecks;
         copy.warpWorldOperation.sourceName = this.warpWorldOperation.sourceName;
+
+        copy.retetherOperation.pendingAuraChoices.addAll(this.retetherOperation.pendingAuraChoices);
+        copy.retetherOperation.pendingPlacements.addAll(this.retetherOperation.pendingPlacements);
+        copy.retetherOperation.activeChoice = this.retetherOperation.activeChoice;
 
         // --- Map<UUID, Map<Integer, Integer>> (activated ability uses) ---
         this.activatedAbilityUsesThisTurn.forEach((k, v) ->

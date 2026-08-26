@@ -153,6 +153,8 @@ public class ActivatedAbility {
     private boolean suspendsSourceFromHand;
     /** Number of time counters placed when this ability suspends its source card. */
     private int suspendTimeCounters;
+    /** Whether the number of time counters placed by suspend is the activated ability's X value. */
+    private boolean suspendTimeCountersFromX;
     /** Whether this hand-activated ability reveals the source card without moving it out of hand. */
     private boolean revealsSourceFromHand;
     /**
@@ -308,6 +310,7 @@ public class ActivatedAbility {
         copy.sourceStaysInHand = this.sourceStaysInHand;
         copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
         copy.suspendTimeCounters = this.suspendTimeCounters;
+        copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
@@ -378,6 +381,13 @@ public class ActivatedAbility {
         }
         this.suspendsSourceFromHand = true;
         this.suspendTimeCounters = timeCounters;
+        return this;
+    }
+
+    /** Marks this hand-activated ability as suspend X, using the chosen X value as time counters. */
+    public ActivatedAbility withSuspendsSourceFromHandX() {
+        this.suspendsSourceFromHand = true;
+        this.suspendTimeCountersFromX = true;
         return this;
     }
 

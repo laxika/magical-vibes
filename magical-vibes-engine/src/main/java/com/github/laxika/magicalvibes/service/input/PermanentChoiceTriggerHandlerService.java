@@ -838,6 +838,13 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -895,20 +902,31 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleEntersTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EntersTriggerTarget ett) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        boolean isExiledCardTarget = target == null
+                && gameQueryService.findCardInExileById(gameData, permanentId) != null;
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
         boolean declined = hasOptionalSingleTarget(ett.sourceCard(), ett.effects())
                 && isPlayerTarget
                 && permanentId.equals(ett.controllerId());
-        if (target != null || isPlayerTarget) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ett.sourceCard(),
-                    ett.controllerId(),
-                    ett.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(ett.effects()),
-                    null,
-                    ett.sourcePermanentId()
-            );
+        if (target != null || isPlayerTarget || isExiledCardTarget) {
+            StackEntry entry = isExiledCardTarget
+                    ? new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            ett.sourceCard(),
+                            ett.controllerId(),
+                            ett.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(ett.effects()),
+                            permanentId,
+                            Zone.EXILE,
+                            ett.sourcePermanentId())
+                    : new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            ett.sourceCard(),
+                            ett.controllerId(),
+                            ett.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(ett.effects()),
+                            null,
+                            ett.sourcePermanentId());
             if (!declined) {
                 entry.setTargetId(permanentId);
             }
@@ -2168,6 +2186,9 @@ public class PermanentChoiceTriggerHandlerService {
 
         Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
         if (graveyardCard != null) return graveyardCard.getName();
+
+        Card exiledCard = gameQueryService.findCardInExileById(gameData, targetId);
+        if (exiledCard != null) return exiledCard.getName();
 
         return targetId.toString();
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreaturesThenReturnCreatureCardsEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "94")
+@CardRegistration(set = "LCI", collectorNumber = "337")
 public class BringerOfTheLastGift extends Card {
 
     public BringerOfTheLastGift() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "234")
+@CardRegistration(set = "LCI", collectorNumber = "342")
 public class MoltenCollapse extends Card {
 
     public MoltenCollapse() {

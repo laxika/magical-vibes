@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "191")
 @CardRegistration(set = "LCI", collectorNumber = "188")
+@CardRegistration(set = "LCI", collectorNumber = "380")
 public class GrowingRitesOfItlimoc extends Card {
 
     public GrowingRitesOfItlimoc() {

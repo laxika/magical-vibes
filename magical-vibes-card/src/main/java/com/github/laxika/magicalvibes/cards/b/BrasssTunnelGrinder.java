@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEf
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "135")
+@CardRegistration(set = "LCI", collectorNumber = "373")
 public class BrasssTunnelGrinder extends Card {
 
     public BrasssTunnelGrinder() {

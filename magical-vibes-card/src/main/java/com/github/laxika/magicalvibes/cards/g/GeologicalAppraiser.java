@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 
 @CardRegistration(set = "LCI", collectorNumber = "150")
+@CardRegistration(set = "LCI", collectorNumber = "407")
 public class GeologicalAppraiser extends Card {
 
     public GeologicalAppraiser() {

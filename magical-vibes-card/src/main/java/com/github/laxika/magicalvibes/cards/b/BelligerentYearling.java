@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "133")
+@CardRegistration(set = "LCI", collectorNumber = "320")
 public class BelligerentYearling extends Card {
 
     public BelligerentYearling() {

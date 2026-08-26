@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "220")
+@CardRegistration(set = "LCI", collectorNumber = "298")
 public class AkawalliTheSeethingTower extends Card {
 
     public AkawalliTheSeethingTower() {

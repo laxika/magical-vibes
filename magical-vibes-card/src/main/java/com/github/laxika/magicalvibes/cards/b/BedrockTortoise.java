@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "176")
+@CardRegistration(set = "LCI", collectorNumber = "378")
 public class BedrockTortoise extends Card {
 
     public BedrockTortoise() {

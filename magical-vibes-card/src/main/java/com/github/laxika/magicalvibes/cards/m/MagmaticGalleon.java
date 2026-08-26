@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "157")
+@CardRegistration(set = "LCI", collectorNumber = "376")
 public class MagmaticGalleon extends Card {
 
     public MagmaticGalleon() {

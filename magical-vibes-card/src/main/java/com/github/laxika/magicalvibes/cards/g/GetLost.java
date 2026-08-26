@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "14")
+@CardRegistration(set = "LCI", collectorNumber = "333")
 public class GetLost extends Card {
 
     public GetLost() {

@@ -596,6 +596,14 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        if (gameData.cloneOperation.copyCardFilter != null) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.interaction.clearPermanentChoiceContext();
+            cloneService.completeCloneEntryFromGraveyard(gameData, cardIds.getFirst());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimeExileNCardsThenEffectResume) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimeExileNCardsThenEffectChosenCardIds =

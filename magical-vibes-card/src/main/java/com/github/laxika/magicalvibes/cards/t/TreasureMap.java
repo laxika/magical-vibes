@@ -19,6 +19,7 @@ import java.util.List;
  */
 @CardRegistration(set = "XLN", collectorNumber = "250")
 @CardRegistration(set = "LCI", collectorNumber = "267")
+@CardRegistration(set = "LCI", collectorNumber = "391")
 public class TreasureMap extends Card {
 
     public TreasureMap() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 
 @CardRegistration(set = "LCI", collectorNumber = "228")
+@CardRegistration(set = "LCI", collectorNumber = "385")
 public class DeepfathomEcho extends Card {
 
     public DeepfathomEcho() {

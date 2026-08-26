@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "183")
+@CardRegistration(set = "LCI", collectorNumber = "325")
 public class EarthshakerDreadmaw extends Card {
 
     public EarthshakerDreadmaw() {

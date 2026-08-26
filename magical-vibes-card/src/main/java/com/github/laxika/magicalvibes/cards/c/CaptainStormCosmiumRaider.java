@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "227")
+@CardRegistration(set = "LCI", collectorNumber = "303")
 public class CaptainStormCosmiumRaider extends Card {
 
     public CaptainStormCosmiumRaider() {

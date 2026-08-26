@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "196")
+@CardRegistration(set = "LCI", collectorNumber = "382")
+@CardRegistration(set = "LCI", collectorNumber = "403")
 public class JadelightSpelunker extends Card {
 
     public JadelightSpelunker() {

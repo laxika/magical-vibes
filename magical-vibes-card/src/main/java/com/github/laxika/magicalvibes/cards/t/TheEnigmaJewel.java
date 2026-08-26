@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransfor
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "55")
+@CardRegistration(set = "LCI", collectorNumber = "362")
 public class TheEnigmaJewel extends Card {
 
     public TheEnigmaJewel() {

@@ -63,6 +63,24 @@ public class MayCopyHandlerService {
                                                   PendingMayAbility ability, CopyPermanentOnEnterEffect copyEffect) {
         String typeLabel = copyEffect.typeLabel();
         if (accepted) {
+            if (copyEffect.cardFilter() != null) {
+                List<Card> validCards = new ArrayList<>();
+                for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
+                    for (Card graveyardCard : gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of())) {
+                        if (predicateEvaluationService.matchesCardPredicate(
+                                graveyardCard, copyEffect.cardFilter(), null, gameData, graveyardOwnerId)) {
+                            validCards.add(graveyardCard);
+                        }
+                    }
+                }
+                playerInputService.beginMultiGraveyardChoice(gameData, ability.controllerId(), validCards, 1, 1,
+                        "Choose a " + typeLabel + " to copy.");
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " accepts — choosing a " + typeLabel + " to copy."));
+                log.info("Game {} - {} accepts copy {}", gameData.id, player.getUsername(), typeLabel);
+                return;
+            }
+
             // Collect valid targets (the copying permanent is NOT on the battlefield yet)
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceControllerId(ability.controllerId());
