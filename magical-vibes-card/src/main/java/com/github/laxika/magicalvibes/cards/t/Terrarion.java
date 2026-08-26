@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "201")
+@CardRegistration(set = "RAV", collectorNumber = "273")
 public class Terrarion extends Card {
 
     public Terrarion() {

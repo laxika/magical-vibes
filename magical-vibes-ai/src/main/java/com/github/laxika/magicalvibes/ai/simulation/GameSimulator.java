@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -1288,6 +1289,10 @@ public class GameSimulator {
                 continue;
             }
             if (effect instanceof CostEffect cost) {
+                if (effect instanceof DiscardCardOrSacrificePermanentCost
+                        && !castingCostService.validDiscardCostIndices(gd, playerId, card).isEmpty()) {
+                    continue;
+                }
                 PermanentPredicate filter = cost.consumedPermanentFilter();
                 if (filter != null) {
                     return battlefield.stream()

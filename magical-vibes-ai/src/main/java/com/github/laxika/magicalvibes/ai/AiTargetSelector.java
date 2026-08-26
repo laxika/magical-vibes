@@ -712,6 +712,7 @@ class AiTargetSelector {
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
+                case DIFFERENT_NAMES -> !other.getCard().getName().equals(candidate.getCard().getName());
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
@@ -1262,7 +1263,9 @@ class AiTargetSelector {
                 (e instanceof CreatureBoostEffect boost
                         && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
                         || e instanceof RegenerationEffect
-                        || (e instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.TARGET));
+                        || (e instanceof KeywordGrantingEffect grant
+                        && (grant.scope() == GrantScope.TARGET
+                        || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES)));
 
         if (canTargetPermanent) {
             if (isBeneficial) {

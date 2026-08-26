@@ -13,10 +13,17 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * grant are used by Ashiok, Nightmare Weaver's loyalty ability.
  */
 public record ReturnCardExiledWithSourceToBattlefieldEffect(
-        CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype)
+        CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
+        boolean enterTapped, boolean enterAttacking)
         implements CardEffect {
 
     public ReturnCardExiledWithSourceToBattlefieldEffect() {
-        this(null, false, null);
+        this(null, false, null, false, false);
+    }
+
+    public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
+                                                         boolean requiresManaValueEqualsX,
+                                                         CardSubtype grantedSubtype) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false);
     }
 }

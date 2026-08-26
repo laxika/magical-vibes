@@ -35,7 +35,7 @@ public class TheGitrogRavenousRide extends Card {
                                 new DrawCardEffect(new SacrificedPermanentPower()),
                                 new PutUpToCardsFromHandOntoBattlefieldEffect(
                                         new CardTypePredicate(CardType.LAND), "land",
-                                        new SacrificedPermanentPower())),
+                                        new SacrificedPermanentPower(), true)),
                         "a creature that saddled it this turn"),
                         "Sacrifice a creature that saddled it this turn?"));
 

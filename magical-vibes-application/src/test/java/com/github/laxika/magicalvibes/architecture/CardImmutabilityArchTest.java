@@ -40,8 +40,10 @@ class CardImmutabilityArchTest {
             "CardPrinting",            // stamps printing data on freshly constructed cards and their back faces
             "GameSetupService",        // stamps ownerId, then freezes
             "SpellCastingService",     // mutates the modal runtime copy it just created
+            "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
             "PermanentCopierService",  // assembles fresh clone-copy cards
+            "LandCopyOnEnterService",  // adds Cave to the fresh clone-copy card installed by PermanentCopierService
             "CloneService",            // "except it has ..." on the fresh clone-copy card
             "CopySupport",             // assembles fresh spell-copy cards
             "CopyControllerCastSpellEffectHandler", // decorates the fresh spell-copy card
@@ -69,6 +71,8 @@ class CardImmutabilityArchTest {
             "ReturnDyingOpponentCreatureAsTreasureEffectHandler", // changes a fresh runtime copy into a Treasure card
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
             "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
+            "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
+            "LudevicCopySupport", // decorates the fresh clone-copy card installed by PermanentCopierService
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

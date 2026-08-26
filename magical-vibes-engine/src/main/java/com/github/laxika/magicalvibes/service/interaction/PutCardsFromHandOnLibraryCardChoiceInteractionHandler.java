@@ -122,6 +122,16 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         }
 
         putOnLibrary(gameData, player, validated, interaction.placement() == HandToLibraryPlacement.TOP);
+        if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
+            Card sourceCard = interaction.thenEffectSourceCard();
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    player.getId(),
+                    sourceCard.getName() + "'s effect",
+                    List.of(interaction.thenEffect())
+            ));
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

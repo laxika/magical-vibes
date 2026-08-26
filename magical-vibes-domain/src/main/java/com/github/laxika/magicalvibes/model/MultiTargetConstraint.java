@@ -53,5 +53,7 @@ public enum MultiTargetConstraint {
     /** The second target must be another creature or land of the Aura's current host type. */
     SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST,
     /** At most one selected card may be assigned to each color. */
-    AT_MOST_ONE_PER_COLOR
+    AT_MOST_ONE_PER_COLOR,
+    /** The chosen targets must have different names. */
+    DIFFERENT_NAMES
 }

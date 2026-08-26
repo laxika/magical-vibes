@@ -20,8 +20,17 @@ public record MassDamageEffect(
         PermanentPredicate filter,
         boolean perCreatureAmount,
         boolean exileInsteadOfDie,
-        boolean cantRegenerate
+        boolean cantRegenerate,
+        boolean damagesBattles
 ) implements BoardWipeEffect {
+
+    public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
+                            boolean damagesPlaneswalkers, PermanentPredicate filter,
+                            boolean perCreatureAmount, boolean exileInsteadOfDie,
+                            boolean cantRegenerate) {
+        this(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount,
+                exileInsteadOfDie, cantRegenerate, false);
+    }
 
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
                             boolean damagesPlaneswalkers, PermanentPredicate filter,
@@ -52,6 +61,11 @@ public record MassDamageEffect(
     /** Fixed damage to creatures, optionally players, that prevents regeneration of creatures dealt damage. */
     public static MassDamageEffect cantRegenerate(int damage, boolean damagesPlayers, PermanentPredicate filter) {
         return new MassDamageEffect(new Fixed(damage), damagesPlayers, false, filter, false, false, true);
+    }
+
+    /** Fixed damage to each creature, planeswalker, and battle. */
+    public static MassDamageEffect damageToEachCreaturePlaneswalkerAndBattle(int damage) {
+        return new MassDamageEffect(new Fixed(damage), false, true, null, false, false, false, true);
     }
 
     /** Fixed damage to all creatures only (e.g. Pyroclasm) */

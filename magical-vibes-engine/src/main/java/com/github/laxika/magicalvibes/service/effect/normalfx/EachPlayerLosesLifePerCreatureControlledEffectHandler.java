@@ -24,6 +24,9 @@ public class EachPlayerLosesLifePerCreatureControlledEffectHandler implements No
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerLosesLifePerCreatureControlledEffect) effect;
         gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (e.opponentsOnly() && playerId.equals(entry.getControllerId())) {
+                return;
+            }
             int creatureCount = 0;
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard().hasType(CardType.CREATURE)

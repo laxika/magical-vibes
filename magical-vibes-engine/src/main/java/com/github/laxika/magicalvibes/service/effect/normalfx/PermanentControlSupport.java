@@ -85,8 +85,9 @@ public class PermanentControlSupport {
                                         boolean fireTokenTriggers) {
         List<UUID> createdIds = new ArrayList<>();
         Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
+        boolean isCreature = token.primaryType() == CardType.CREATURE;
         int tokenMultiplier = applyTokenMultiplier
-                ? gameQueryService.getTokenMultiplier(gameData, controllerId) : 1;
+                ? gameQueryService.getTokenMultiplier(gameData, controllerId, isCreature) : 1;
         int totalAmount = amount * tokenMultiplier;
         boolean addClueToken = applyAdditionalReplacements
                 && totalAmount > 0
@@ -96,7 +97,6 @@ public class PermanentControlSupport {
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
-        boolean isCreature = token.primaryType() == CardType.CREATURE;
         for (int i = 0; i < totalAmount; i++) {
             Card tokenCard = TokenCardFactory.create(token, power, toughness, sourceSetCode);
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
@@ -181,7 +181,7 @@ public class PermanentControlSupport {
                 : gameQueryService.findPermanentController(gameData, createdIds.get(createdIds.size() - 1));
         if (fireTokenTriggers) {
             battlefieldEntryService.checkAllyTokenEntersTriggers(
-                    gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds.size());
+                    gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds);
         }
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);

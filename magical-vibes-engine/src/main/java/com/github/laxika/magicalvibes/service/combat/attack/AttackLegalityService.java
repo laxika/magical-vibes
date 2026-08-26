@@ -229,8 +229,11 @@ public class AttackLegalityService {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (restriction.restrictedAttackerId() == null
+                            || restriction.restrictedAttackerId().equals(
+                            gameData.findControllerOf(attacker)))
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                                    attacker, restriction.exemptionPredicate(), context)) {
+                            attacker, restriction.exemptionPredicate(), context)) {
                         return false;
                     }
                 }
@@ -242,8 +245,11 @@ public class AttackLegalityService {
                     CardEffect effect = fe.effect();
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (restriction.restrictedAttackerId() == null
+                            || restriction.restrictedAttackerId().equals(
+                            gameData.findControllerOf(attacker)))
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, attacker, restriction.exemptionPredicate())) {
+                            gameData, attacker, restriction.exemptionPredicate())) {
                         return false;
                     }
                 }
@@ -420,13 +426,16 @@ public class AttackLegalityService {
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
 
-        if (gameQueryService.computeStaticBonus(gameData, creature).grantedEffects().stream()
-                .anyMatch(MustAttackPlayerEffect.class::isInstance)) {
+        List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, creature).grantedEffects();
+        if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)) {
             UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, creatureControllerId);
             if (defendingPlayerId != null && canAttackDefender(gameData, creature, defendingPlayerId)) {
                 count[0]++;
             }
         }
+        count[0] += (int) grantedEffects.stream()
+                .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null)
+                .count();
 
         // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
         // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement

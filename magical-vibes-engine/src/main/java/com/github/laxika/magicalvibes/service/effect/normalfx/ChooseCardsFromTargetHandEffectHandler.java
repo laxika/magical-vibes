@@ -69,7 +69,10 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
         switch (e.destination()) {
             case DISCARD -> {
                 gameData.discardCausedByOpponent = true;
-                if (e.revealHand()) {
+                if (e.declineEffect() != null) {
+                    playerInteractionSupport.resolveHandRevealAndChooseOrElse(gameData, entry, count,
+                            e.excludedTypes(), e.includedTypes(), e.filter(), e.declineEffect(), e);
+                } else if (e.revealHand()) {
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), true, false, null,
                             e.upTo(), false, e.declineFallbackDiscardCount());
@@ -85,8 +88,9 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                 playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(gameData, entry, count,
                         e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
                         e.upTo(), e.exileAllCopiesOfChosenNames(), e.declineFallbackDiscardCount(),
-                        e.imprintOnSource(), e.grantPlayPermission(), e.returnAtNextEndStep(),
-                        e.exilePlayOpponentTax(), e.chosenCardCondition(), e.chosenCardThenEffect());
+                        e.imprintOnSource(), e.revealHand(), e.grantPlayPermission(),
+                        e.returnAtNextEndStep(), e.exilePlayOpponentTax(),
+                        e.chosenCardCondition(), e.chosenCardThenEffect());
             }
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);
             case SHUFFLE_INTO_LIBRARY ->

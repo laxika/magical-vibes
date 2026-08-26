@@ -22,8 +22,16 @@ public class ExileCreaturesInsteadOfDyingThisTurnEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.playersExilingCreaturesInsteadOfDyingThisTurn.add(entry.getControllerId());
+        ExileCreaturesInsteadOfDyingThisTurnEffect exileEffect =
+                (ExileCreaturesInsteadOfDyingThisTurnEffect) effect;
+        if (exileEffect.opponentsOnly()) {
+            gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.add(entry.getControllerId());
+        } else {
+            gameData.playersExilingCreaturesInsteadOfDyingThisTurn.add(entry.getControllerId());
+        }
         gameLogService.append(gameData, GameLog.text(
-                "Creatures that would die this turn are exiled instead."));
+                exileEffect.opponentsOnly()
+                        ? "Creatures opponents control that would die this turn are exiled instead."
+                        : "Creatures that would die this turn are exiled instead."));
     }
 }

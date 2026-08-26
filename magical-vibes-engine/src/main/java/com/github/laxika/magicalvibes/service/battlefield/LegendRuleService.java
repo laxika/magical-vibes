@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.GlobalLegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledSubtypeLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -54,11 +55,18 @@ public class LegendRuleService {
         }
 
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
-            if (entry.getValue().size() >= 2
-                    && !hasGlobalExemption(gameData)
+            if (entry.getValue().size() >= 2 && !hasGlobalExemption(gameData)
                     && !allExempt(gameData, battlefield, entry.getKey())) {
+                List<UUID> nonExemptPermanents = entry.getValue().stream()
+                        .filter(id -> findPermanent(battlefield, id)
+                                .map(perm -> !hasControlledSubtypeExemption(gameData, battlefield, perm))
+                                .orElse(false))
+                        .toList();
+                if (nonExemptPermanents.size() < 2) {
+                    continue;
+                }
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey()));
-                playerInputService.beginPermanentChoice(gameData, controllerId, entry.getValue(),
+                playerInputService.beginPermanentChoice(gameData, controllerId, nonExemptPermanents,
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
                 return true;
             }
@@ -99,6 +107,20 @@ public class LegendRuleService {
             }
         }
         return count;
+    }
+
+    private java.util.Optional<Permanent> findPermanent(List<Permanent> battlefield, UUID id) {
+        return battlefield.stream().filter(perm -> perm.getId().equals(id)).findFirst();
+    }
+
+    private boolean hasControlledSubtypeExemption(GameData gameData, List<Permanent> battlefield,
+                                                  Permanent permanent) {
+        var effectiveSubtypes = gameQueryService.effectiveCreatureSubtypes(gameData, permanent);
+        return battlefield.stream()
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(ControlledSubtypeLegendRuleExemptionEffect.class::isInstance)
+                .map(ControlledSubtypeLegendRuleExemptionEffect.class::cast)
+                .anyMatch(exemption -> effectiveSubtypes.contains(exemption.exemptedSubtype()));
     }
 
     /**

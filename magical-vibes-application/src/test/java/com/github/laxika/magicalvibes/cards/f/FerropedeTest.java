@@ -51,10 +51,10 @@ class FerropedeTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
@@ -71,6 +71,8 @@ class FerropedeTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
@@ -88,10 +90,10 @@ class FerropedeTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

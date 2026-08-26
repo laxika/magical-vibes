@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -68,6 +71,7 @@ public class AnimationSupport {
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerCollectionService triggerCollectionService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final LudevicCopySupport ludevicCopySupport;
 
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
@@ -82,6 +86,15 @@ public class AnimationSupport {
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new SetBasePowerToughnessEffect(power, toughness), target.getId(), null, null,
                 duration, 0));
+    }
+
+    private void addDynamicAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry,
+                                                         Permanent target,
+                                                         AnimatePermanentsEffect effect) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness()), target.getId(),
+                null, null, effect.duration(), 0));
     }
 
     private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
@@ -213,7 +226,12 @@ public class AnimationSupport {
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
-            addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+            if (effect.dynamicPowerToughness()) {
+                addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
+            } else {
+                addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
+                        EffectDuration.UNTIL_END_OF_TURN);
+            }
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
@@ -516,6 +534,21 @@ public class AnimationSupport {
         }
     }
 
+    public void animateChosen(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        if (entry.getChosenPermanentId() == null) {
+            return;
+        }
+        Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+        if (chosen == null) {
+            return;
+        }
+        AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        animatePermanently(gameData, chosen, effect, power, toughness,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+    }
+
     /**
      * TARGET-less PERMANENT-duration animation of an already-identified permanent, for effects that
      * animate permanents they just created rather than targeted — Nissa, Worldwaker's ultimate
@@ -654,10 +687,23 @@ public class AnimationSupport {
     }
 
     public boolean transformToBackFace(GameData gameData, Permanent self) {
+        return transformToBackFace(gameData, self, false);
+    }
+
+    public boolean transformToBackFaceForDayNight(GameData gameData, Permanent self) {
+        return transformToBackFace(gameData, self, true);
+    }
+
+    private boolean transformToBackFace(GameData gameData, Permanent self, boolean dayNightTransition) {
         Card originalCard = self.getOriginalCard();
         Card backFace = originalCard.getBackFaceCard();
         if (backFace == null) {
             log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
+            return false;
+        }
+
+        if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
+                && isDayNightBound(self)) {
             return false;
         }
 
@@ -687,7 +733,20 @@ public class AnimationSupport {
         return true;
     }
 
-    public void transformToFrontFace(GameData gameData, Permanent self) {
+    public boolean transformToFrontFace(GameData gameData, Permanent self) {
+        return transformToFrontFace(gameData, self, false);
+    }
+
+    public boolean transformToFrontFaceForDayNight(GameData gameData, Permanent self) {
+        return transformToFrontFace(gameData, self, true);
+    }
+
+    private boolean transformToFrontFace(GameData gameData, Permanent self, boolean dayNightTransition) {
+        if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
+                && isDayNightBound(self)) {
+            return false;
+        }
+
         Card originalCard = self.getOriginalCard();
         Card backCard = self.getCard();
         String backName = backCard.getName();
@@ -699,6 +758,12 @@ public class AnimationSupport {
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
         fireEquipmentTransformTriggers(gameData, self);
         fireAllyPermanentTransformTriggers(gameData, self, originalCard);
+        return true;
+    }
+
+    private boolean isDayNightBound(Permanent permanent) {
+        return permanent.getCard().getKeywords().contains(Keyword.DAYBOUND)
+                || permanent.getCard().getKeywords().contains(Keyword.NIGHTBOUND);
     }
 
     private void fireAllyPermanentTransformTriggers(GameData gameData, Permanent transformed, Card transformedCard) {
@@ -756,6 +821,10 @@ public class AnimationSupport {
         }
 
         for (CardEffect e : effects) {
+            if (e instanceof ApplyLudevicCopyEffect) {
+                ludevicCopySupport.resolveAfterTransform(gameData, self);
+                continue;
+            }
             if (e instanceof MayEffect may) {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));

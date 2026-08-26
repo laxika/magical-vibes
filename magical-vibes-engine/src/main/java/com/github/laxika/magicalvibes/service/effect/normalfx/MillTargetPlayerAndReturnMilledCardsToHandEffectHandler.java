@@ -55,7 +55,8 @@ public class MillTargetPlayerAndReturnMilledCardsToHandEffectHandler implements 
             try {
                 for (Card card : returnable) {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-                    gameData.addCardToHand(targetPlayerId, card);
+                    permanentRemovalService.addCardToHandFromGraveyard(
+                            gameData, targetPlayerId, targetPlayerId, card);
                 }
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);

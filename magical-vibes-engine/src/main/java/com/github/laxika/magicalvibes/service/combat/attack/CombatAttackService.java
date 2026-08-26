@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
@@ -24,16 +25,21 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
@@ -56,10 +62,14 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -78,6 +88,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
@@ -474,7 +486,8 @@ public class CombatAttackService {
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(
                 gameData.activePlayerId, prompt.attackableIndices(), prompt.mustAttackIndices(),
-                prompt.availableTargets(), prompt.taxPerCreature(), prompt.mustAttackWithAtLeastOne()));
+                prompt.availableTargets(), prompt.taxPerCreature(), prompt.mustAttackWithAtLeastOne(),
+                attackerDeclarationChooser(gameData, gameData.activePlayerId)));
     }
 
     /**
@@ -493,11 +506,15 @@ public class CombatAttackService {
         if (gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class) == null) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
-        if (!player.getId().equals(gameData.activePlayerId)) {
-            throw new IllegalStateException("Only the active player can declare attackers");
+        PendingInteraction.AttackerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (!player.getId().equals(pending.decidingPlayerId())) {
+            throw new IllegalStateException(pending.choosingForOpponent()
+                    ? "Only the player choosing attackers can declare attackers"
+                    : "Only the active player can declare attackers");
         }
 
-        UUID playerId = player.getId();
+        UUID playerId = gameData.activePlayerId;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Integer> attackable = getAttackableCreatureIndices(gameData, playerId);
 
@@ -664,9 +681,11 @@ public class CombatAttackService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int lifeCost = payPhyrexianAttackTax(pool, phyrexianPayments, attackerIndices.size());
             if (lifeCost > 0) {
+                int lifeLoss = lifeCost
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
                 int currentLife = gameData.playerLifeTotals.get(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
-                gameData.lifeLostThisTurn.merge(playerId, lifeCost, Integer::sum);
+                gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+                gameData.lifeLostThisTurn.merge(playerId, lifeLoss, Integer::sum);
             }
         }
 
@@ -704,6 +723,21 @@ public class CombatAttackService {
             // permanent's transient attacking state.
             if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
+            } else if (attackTarget != null) {
+                Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
+                if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) {
+                    gameData.permanentsThatAttackedBattlesThisTurn.add(attacker.getId());
+                }
+            }
+            if (attackTarget != null) {
+                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
+                if (gameData.playerIds.contains(attackTarget)
+                        || (targetPermanent != null && targetPermanent.getCard().hasType(CardType.PLANESWALKER))) {
+                    UUID attackedPlayerId = gameData.playerIds.contains(attackTarget)
+                            ? attackTarget
+                            : gameQueryService.findPermanentController(gameData, attackTarget);
+                    gameData.recordAttackAgainstPlayerOrPlaneswalker(playerId, attackedPlayerId);
+                }
             }
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)
                     && !gameQueryService.attackingDoesNotCauseTapping(gameData, attacker)) {
@@ -822,9 +856,23 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && ce.condition() instanceof ControlsPermanentCount
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && ce.condition() instanceof ControlsPermanentCount ? ce.wrapped() : e);
+
                 // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ControlsAnotherPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ControllerCastSpellThisTurn
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
@@ -876,6 +924,14 @@ public class CombatAttackService {
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof MinimumAttackers
                         ? ce.wrapped() : e);
+
+                ConditionContext attackedTargetContext = ConditionContext.forPermanent(attacker, playerId)
+                        .withTargetId(attacker.getAttackTarget());
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetMatches
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetMatches ? ce.wrapped() : e);
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
@@ -1243,6 +1299,22 @@ public class CombatAttackService {
 
                 if (matchingEffects.isEmpty()) continue;
 
+                if (matchingEffects.size() == 1
+                        && matchingEffects.getFirst() instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
+                    int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
+                    try {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), playerId, new ChooseOneEffect(modal.options()), perm.getId(), true));
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                        log.info("Game {} - {} attack trigger queued for mode selection",
+                                gameData.id, perm.getCard().getName());
+                    } finally {
+                        gameData.restoreTriggeredAbilityCopies(previousCopies);
+                    }
+                    continue;
+                }
+
                 // Optional ("you may") per-creature attack triggers go on the stack as CR 603.5
                 // resolution-time may abilities: the source permanent is the *attacking* creature
                 // ("that creature", the damage source), while the source card is the ability's owner
@@ -1258,7 +1330,8 @@ public class CombatAttackService {
                 int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
                 try {
                     for (CardEffect effect : mayEffects) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null, attacker.getId());
+                        gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null, attacker.getId(),
+                                attacker.getAttackTarget());
                     }
 
                     if (!mandatoryEffects.isEmpty()) {
@@ -1286,6 +1359,10 @@ public class CombatAttackService {
                             attackTrigger.setTargetId(attacker.getId());
                             attackTrigger.setNonTargeting(true);
                             attackTrigger.setTriggeringPermanentId(attacker.getId());
+                            if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
+                                    && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect)) {
+                                attackTrigger.setEventValue(attacker.getCard().getManaValue());
+                            }
                             gameData.stack.add(attackTrigger);
                         }
                     }
@@ -1533,8 +1610,9 @@ public class CombatAttackService {
         // per attacking creature, on every permanent with this slot across all battlefields, regardless
         // of who controls the attacker or whom it attacks (e.g. Caltrops pings every attacker). The
         // attacking creature is stored as a non-targeting targetId so the effect can act on "it".
-        // Supports TriggeringPermanentConditionalEffect to restrict which attackers trigger the
-        // ability (e.g. Windreader Sphinx — "whenever a creature with flying attacks").
+        // Supports nested TriggeringPermanentConditionalEffect and
+        // TriggeringPermanentControllerConditionalEffect wrappers to restrict which attackers
+        // trigger the ability (e.g. Windreader Sphinx and Nahiri, Forged in Fury).
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
@@ -1545,14 +1623,27 @@ public class CombatAttackService {
 
                     List<CardEffect> matchingAnyAttackEffects = new ArrayList<>();
                     for (CardEffect effect : anyAttackEffects) {
-                        if (effect instanceof TriggeringPermanentConditionalEffect permConditional) {
-                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
-                                    permConditional.predicate())) {
-                                matchingAnyAttackEffects.add(permConditional.wrapped());
+                        CardEffect matchingEffect = effect;
+                        boolean matches = true;
+                        while (matches) {
+                            if (matchingEffect instanceof TriggeringPermanentControllerConditionalEffect controllerConditional) {
+                                if (!permController.equals(gameQueryService.findPermanentController(gameData, attacker.getId()))) {
+                                    matches = false;
+                                } else {
+                                    matchingEffect = controllerConditional.wrapped();
+                                }
+                            } else if (matchingEffect instanceof TriggeringPermanentConditionalEffect permConditional) {
+                                if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
+                                        permConditional.predicate())) {
+                                    matches = false;
+                                } else {
+                                    matchingEffect = permConditional.wrapped();
+                                }
+                            } else {
+                                break;
                             }
-                        } else {
-                            matchingAnyAttackEffects.add(effect);
                         }
+                        if (matches) matchingAnyAttackEffects.add(matchingEffect);
                     }
                     if (matchingAnyAttackEffects.isEmpty()) continue;
 
@@ -1696,6 +1787,16 @@ public class CombatAttackService {
         return CombatResult.AUTO_PASS_ONLY;
     }
 
+    /**
+     * Returns the player who declares this combat's attackers: the active player unless a
+     * "you choose which creatures attack this turn" effect is in force.
+     */
+    private UUID attackerDeclarationChooser(GameData gameData, UUID activePlayerId) {
+        List<DelayedAttackerDeclarationControl> controls =
+                gameData.getDelayedActions(DelayedAttackerDeclarationControl.class);
+        return controls.isEmpty() ? activePlayerId : controls.getLast().chooserId();
+    }
+
     private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {
         return gameData.beginTriggeredAbilityCopies(1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
@@ -1831,6 +1932,8 @@ public class CombatAttackService {
     private boolean isDefendingPlayerCondition(Condition condition) {
         return switch (condition) {
             case DefendingPlayerControlsPermanent ignored -> true;
+            case DefendingPlayerHasMoreCardsInHandThanController ignored -> true;
+            case DefendingPlayerHandAtMost ignored -> true;
             case DefendingPlayerPoisoned ignored -> true;
             case NotCondition not -> isDefendingPlayerCondition(not.inner());
             default -> false;

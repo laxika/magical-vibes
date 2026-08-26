@@ -124,12 +124,18 @@ public class ExampleCard extends Card {
   - TriggerMode is on the registration, not the effect — keeps effects pure and reusable
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
 
+- One trigger for several permanents tapped as one event:
+  - `addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, effect, TriggerMode.ONCE_PER_BATCH)`
+  - The tap-payment path brackets multi-permanent tap events so the registration fires once
+
 - Predicate-based targeting:
   - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
   - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`, `PermanentHasSupertypePredicate`
 
 - Flashback spell (cast from graveyard for alternate cost, then exile):
   - `addCastingOption(new FlashbackCast("{cost}"))` + normal effects/targeting
+  - Variable counter costs use `new RemoveXCountersFromControlledPermanentsCastingCost(counterType, predicate)` in the `FlashbackCast` cost list; pass the selected permanent IDs through the flashback additional-cost selection field
+  - For "Exile X [quality] cards from your graveyard" in the flashback cost, compose `new ManaCastingCost("{cost}")` with `new ExileXCardsFromGraveyardCastingCost(new CardColorPredicate(COLOR), "label")`; the graveyard cast path validates and pays the selected indices against the announced X
   - Card is cast as a spell from the graveyard (counterable, triggers "whenever you cast"), then exiled whether it resolves or fizzles
   - Distinct from graveyard activated abilities (which put ABILITIES on stack, not spells)
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AncientGrudge.java`
@@ -558,7 +564,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsPermanent(filter), wrapped)` | yes | yes | yes (attack) |
 | `EnchantedPermanentConditionalEffect` | yes | - | - |
-| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (upkeep, end step) |
+| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (attack, upkeep, end step) | attack-time count gates are checked when attackers are declared and the surviving effect is unwrapped |
 | `ConditionalEffect(new NoOtherPermanent(filter), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new AttachedPermanentControllerControlsNoOther(filter), wrapped)` | yes | yes | - | same as above but relative to the controller of the permanent the source Aura/Equipment is attached to, excluding that permanent (Predator's Gambit "as long as its controller controls no other creatures"); never met while the source is unattached |
 | `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
@@ -576,6 +582,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | yes (upkeep) | counts **nontoken** cards only — a token that reaches a graveyard ceases to exist, so it can never be one of the "N or more … cards". Mortal Combat: `(20, new CardTypePredicate(CardType.CREATURE))` + `WinGameEffect()` |
 | `ConditionalEffect(new SourceCardInGraveyard(), wrapped)` | - | yes | yes (graveyard triggers) | intervening-if for abilities that trigger from a graveyard ("... if this card is in your graveyard, ..."): true while the source card object is still in its controller's graveyard. Vengeful Pharaoh |
+| `ConditionalEffect(new SourceCardSuspended(), wrapped)` | - | yes | yes (suspended-card triggers) | intervening-if for abilities that require the source card to remain exiled with a positive time-counter entry. Curse of the Cabal |
 | `ConditionalEffect(new CardsAboveSelfInGraveyard(threshold, filter), wrapped)` | - | yes | yes (graveyard upkeep) | source's controller graveyard is ordered; counts filter-matching cards positioned *above* self (higher index). Nether Shadow: `(3, new CardTypePredicate(CardType.CREATURE))` |
 | `ConditionalEffect(new CardDirectlyAboveSelfInGraveyard(filter), wrapped)` | - | yes | yes (graveyard upkeep / graveyard end step) | like the above but matches only the single card *immediately* above self in the ordered graveyard. Krovikan Horror: `new CardTypePredicate(CardType.CREATURE)` |
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |

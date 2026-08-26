@@ -57,6 +57,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells from a graveyard. */
+    record GraveyardSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addGraveyardOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "graveyard spells only";
+        }
+    }
+
     record ForetellOrInstantSorcery() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -70,6 +83,22 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "foretell or instant/sorcery spells only";
+        }
+    }
+
+    record DisturbOrInstantSorcery() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addDisturbOrInstantSorceryOnlyColorless(amount);
+            } else {
+                pool.addDisturbOrInstantSorceryOnlyColored(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "disturb or instant/sorcery spells only";
         }
     }
 
@@ -158,11 +187,27 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /** Mana that can't be spent to cast nonartifact spells (Powerstone tokens). */
-    record Powerstone() implements ManaRestriction {
+    /** Mana spendable only to activate abilities of land sources (Sunken Citadel). */
+    record LandAbilities() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addPowerstoneOnlyColorless(amount);
+            pool.addLandAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "land abilities only";
+        }
+    }
+
+    /** Mana that can't be spent to cast nonartifact spells (Powerstone tokens and Karn). */
+    record Powerstone(boolean persistsUntilEndOfTurn) implements ManaRestriction {
+        public Powerstone() {
+            this(false);
+        }
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addPowerstoneOnlyColorless(amount, persistsUntilEndOfTurn);
         }
 
         @Override

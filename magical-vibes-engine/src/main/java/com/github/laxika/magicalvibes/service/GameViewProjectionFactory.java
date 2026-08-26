@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
+import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -178,7 +179,7 @@ public class GameViewProjectionFactory {
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                    potentialPayableAbilityIndices, speeds
+                    potentialPayableAbilityIndices, speeds, gameData.dayNight
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -429,14 +430,21 @@ public class GameViewProjectionFactory {
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
         // Determine which players have their top card visible to the viewer.
         // PlayWithTopCardRevealedEffect = publicly revealed to all players.
-        // LookAtTopCardOfOwnLibraryEffect and library-cast permissions = private, only visible
-        // to the controller.
+        // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect and temporary
+        // top-library permissions = private, only visible to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
+            if (pid.equals(viewerId)
+                    && data.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(pid)) {
+                revealedPlayerIds.add(pid);
+            }
             UUID freePlayCardId = data.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(pid);
             if (freePlayCardId != null && deck != null && !deck.isEmpty()
                     && freePlayCardId.equals(deck.getFirst().getId())) {
+                revealedPlayerIds.add(pid);
+            }
+            if (pid.equals(viewerId) && data.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(pid)) {
                 revealedPlayerIds.add(pid);
             }
 
@@ -444,9 +452,13 @@ public class GameViewProjectionFactory {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof PlayWithTopCardRevealedEffect) {
+                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all
-                        revealedPlayerIds.add(pid);
+                        if (topCardRevealed.allPlayers()) {
+                            revealedPlayerIds.addAll(data.orderedPlayerIds);
+                        } else {
+                            revealedPlayerIds.add(pid);
+                        }
                     } else if (pid.equals(viewerId) &&
                             (effect instanceof LookAtTopCardOfOwnLibraryEffect
                                     || effect instanceof AllowCastFromTopOfLibraryEffect
@@ -545,9 +557,6 @@ public class GameViewProjectionFactory {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttackExile = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
@@ -589,8 +598,12 @@ public class GameViewProjectionFactory {
 
         for (Card card : exiledCards) {
             ManaPool cardPool = pool;
+            if (pool.getExiledSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteExiledSpellOnlyMana();
+            }
             if (snowManaAsAnyColorIds.contains(card.getId())) {
-                cardPool = new ManaPool(pool);
+                cardPool = new ManaPool(cardPool);
                 cardPool.setSnowManaSpendableAsAnyColor(true);
             }
             if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
@@ -609,6 +622,14 @@ public class GameViewProjectionFactory {
                     && exiledEntry != null
                     && playerId.equals(exiledEntry.exilerId())
                     && exiledEntry.exiledTurnNumber() < gameData.turnNumber;
+            Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
+            boolean hasSuspendedExileAbility = timeCounters != null && timeCounters > 0
+                    && card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isExileOnly);
+            if (hasSuspendedExileAbility) {
+                playable.add(cardViewFactory.create(card));
+                continue;
+            }
+
             UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
             boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
                     || castableFromExileWithSource.contains(card.getId())
@@ -628,12 +649,15 @@ public class GameViewProjectionFactory {
                 continue;
             }
 
-            if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
+            if (card.getManaCost() == null
+                    || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                    || cantCastDueToAttackExile) continue;
             if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
+            if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 if (!foretellPermission
@@ -650,12 +674,14 @@ public class GameViewProjectionFactory {
                             gameData, playerId, card, baseCost);
                     boolean canAfford;
                     if (anyManaTypeIds.contains(card.getId())) {
-                        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+                        int additionalCost = castingCostService.getCastCostModifier(
+                                gameData, playerId, card, 0, Zone.EXILE);
                         canAfford = foretellPermission
                                 ? cost.canPayAsGeneric(cardPool, 0, additionalCost)
                                 : cost.canPayAsGeneric(cardPool);
                     } else {
-                        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+                        int additionalCost = castingCostService.getCastCostModifier(
+                                gameData, playerId, card, 0, Zone.EXILE);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
                         boolean powerstoneContext = isArtifact && cardPool.getPowerstoneOnlyColorless() > 0;
                         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
@@ -668,6 +694,20 @@ public class GameViewProjectionFactory {
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
                         if (!foretellPermission && !canAfford) {
                             canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                        }
+                        if (!canAfford
+                                && (card.getKeywords().contains(Keyword.CONVOKE)
+                                || gameQueryService.hasSpellCastingAbilityGrant(
+                                gameData, playerId, card, Keyword.CONVOKE, Zone.EXILE))) {
+                            int untappedCreatureCount = gameData.playerBattlefields
+                                    .getOrDefault(playerId, List.of())
+                                    .stream()
+                                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                                    .filter(permanent -> !permanent.isTapped())
+                                    .mapToInt(ignored -> 1)
+                                    .sum();
+                            canAfford = pool.getTotal() + untappedCreatureCount
+                                    >= cost.getManaValue() + additionalCost;
                         }
                     }
                     if (playWithoutPaying || canAfford) {
@@ -689,7 +729,8 @@ public class GameViewProjectionFactory {
 
     /**
      * Returns the top card of the player's library as a playable CardView if:
-     * - the player has a permanent with a permission to cast from the library top
+     * - the player has a permanent or temporary permission to cast from the top of their library
+     * - the top card matches one of the castable types
      * - the player can afford and is allowed to cast it
      */
     List<CardView> getPlayableLibraryTopCards(GameData gameData, UUID playerId) {
@@ -711,12 +752,13 @@ public class GameViewProjectionFactory {
 
         Card topCard = deck.getFirst();
         boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, topCard);
+        boolean lifeTopPlay = castingPermissionService.hasLibraryTopCardLifePlayPermission(gameData, playerId, topCard);
 
         if (topCard.hasType(CardType.LAND)) {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || canPlayLandFromTop)
+            if ((freeTopPlay || lifeTopPlay || canPlayLandFromTop)
                     && isActivePlayer
                     && isMainPhase
                     && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
@@ -726,7 +768,7 @@ public class GameViewProjectionFactory {
         }
 
         if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
-                || (!freeTopPlay && topCard.getManaCost() == null)) {
+                || (!freeTopPlay && !lifeTopPlay && topCard.getManaCost() == null)) {
             return playable;
         }
 
@@ -747,18 +789,17 @@ public class GameViewProjectionFactory {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
-        if (spellLimitReached || cantCastDueToAttack) return playable;
+        if (castingPermissionService.isSpellLimitReached(gameData, playerId, topCard)
+                || cantCastDueToAttack) return playable;
         if (castingPermissionService.isSpellRestricted(gameData, playerId, topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
+        if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, topCard)) return playable;
 
         if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 
@@ -779,7 +820,8 @@ public class GameViewProjectionFactory {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, topCard, topCard.getParsedManaCost());
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, topCard);
+            int additionalCost = castingCostService.getCastCostModifier(
+                    gameData, playerId, topCard, 0, Zone.LIBRARY);
             boolean canAfford = cost.canPay(pool, additionalCost);
             if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
                 canAfford = cost.canPayAsGeneric(pool, 0, additionalCost);
@@ -797,8 +839,19 @@ public class GameViewProjectionFactory {
 
     private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {
         CardView view = cardViewFactory.create(card, grantedSubtypes);
-        if (view.hasAlternateCastingCost()
-                || !castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
+        if (view.hasAlternateCastingCost()) {
+            return view;
+        }
+        WebSlingingEffect webSlinging = castingCostService.findWebSlingingEffectFromBattlefield(
+                gameData, playerId, card);
+        if (webSlinging != null) {
+            return view.toBuilder()
+                    .hasAlternateCastingCost(true)
+                    .alternateCostReturnCount(1)
+                    .alternateCostManaCost(webSlinging.manaCost())
+                    .build();
+        }
+        if (!castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
             return view;
         }
         return view.toBuilder()
@@ -850,7 +903,8 @@ public class GameViewProjectionFactory {
                 getEnergyCounters(data),
                 getStackViews(data),
                 getGraveyardViews(data),
-                getSpeeds(data)
+                getSpeeds(data),
+                data.dayNight
         );
     }
 

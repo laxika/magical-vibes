@@ -98,6 +98,6 @@ public class CreateTokenCopyOfEachOtherControlledPermanentEffectHandler
             }
         }
         battlefieldEntryService.checkAllyTokenEntersTriggers(
-                gameData, entry.getControllerId(), createdTokenIds.size());
+                gameData, entry.getControllerId(), createdTokenIds);
     }
 }

@@ -131,6 +131,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                                 .exileAtEndStep(effect.exileAtEndStep())
                                 .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                                 .animateFound(effect.animateFound())
+                                .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
                                 .battlefieldCounter(effect.battlefieldCounter())
                                 .followUp(followUp)
                                 .shuffleAfterSelection(effect.shuffleAfterSelection())
@@ -156,8 +157,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         LibrarySearchDestination destination = effect.destination();
         String prompt = buildPrompt(baseDesc, destination, restricted, count, effect.requireDifferentNames());
 
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
-                LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+        LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                         .remainingCount(count)
                         .reveals(reveals(restricted, destination))
                         .canFailToFind(restricted)
@@ -169,13 +169,17 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .exileAtEndStep(effect.exileAtEndStep())
                         .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                         .animateFound(effect.animateFound())
+                        .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
                         .battlefieldCounter(effect.battlefieldCounter())
                         .followUp(followUp)
                         .enterWithCounters(effect.enterWithCounters())
                         .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
-                                ? entry.getBeholdChosenSubtype() : null)
-                        .build(),
+                                ? entry.getBeholdChosenSubtype() : null);
+        if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER) {
+            params.battlefieldControllerId(entry.getTargetId());
+        }
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, params.build(),
                 prompt, restricted);
 
         log.info("Game {} - {} searches library for {} card(s) to {} ({} matches)",
@@ -242,6 +246,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             case BATTLEFIELD_TAPPED -> count > 1
                     ? "Search your library for a " + desc + " to put onto the battlefield tapped" + remaining + "."
                     : "Search your library for a " + desc + " and put it onto the battlefield tapped.";
+            case BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER -> "Search your library for a " + desc
+                    + " and put it onto the battlefield tapped under target player's control.";
             default -> count > 1
                     ? "Search your library for a " + desc + " to put onto the battlefield" + remaining + "."
                     : "Search your library for a " + desc + " and put it onto the battlefield.";

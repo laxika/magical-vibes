@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -42,10 +44,13 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
@@ -152,6 +157,12 @@ class TargetLegalityServiceTest {
         lenient().when(gameQueryService.isCreature(eq(gd), any(Permanent.class)))
                 .thenAnswer(invocation ->
                         invocation.<Permanent>getArgument(1).getCard().hasType(CardType.CREATURE));
+        lenient().when(gameQueryService.isArtifact(eq(gd), any(Permanent.class)))
+                .thenAnswer(invocation ->
+                        invocation.<Permanent>getArgument(1).getCard().hasType(CardType.ARTIFACT));
+        lenient().when(gameQueryService.isLand(eq(gd), any(Permanent.class)))
+                .thenAnswer(invocation ->
+                        invocation.<Permanent>getArgument(1).getCard().hasType(CardType.LAND));
         lenient().when(gameQueryService.getEffectiveCardColors(eq(gd), any(Card.class)))
                 .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
     }
@@ -221,6 +232,25 @@ class TargetLegalityServiceTest {
                 gd, player1Id, List.of(effect), List.of(ownCard.getId(), opponentCard.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("All targets must be in a single graveyard");
+    }
+
+    @Test
+    @DisplayName("rejects opponent graveyard exile targets spanning multiple opponent graveyards")
+    void rejectsOpponentGraveyardExileTargetsSpanningMultipleGraveyards() {
+        Card firstOpponentCard = createCreature("First opponent card", CardColor.GREEN);
+        Card secondOpponentCard = createCreature("Second opponent card", CardColor.RED);
+        UUID secondOpponentId = UUID.randomUUID();
+        ExileGraveyardCardsEffect effect =
+                new ExileGraveyardCardsEffect(2, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD);
+        when(gameQueryService.findCardInGraveyardById(gd, firstOpponentCard.getId())).thenReturn(firstOpponentCard);
+        when(gameQueryService.findCardInGraveyardById(gd, secondOpponentCard.getId())).thenReturn(secondOpponentCard);
+        when(gameQueryService.findGraveyardOwnerById(gd, firstOpponentCard.getId())).thenReturn(player2Id);
+        when(gameQueryService.findGraveyardOwnerById(gd, secondOpponentCard.getId())).thenReturn(secondOpponentId);
+
+        assertThatThrownBy(() -> sut.validateMultiTargetGraveyardAbility(
+                gd, player1Id, List.of(effect), List.of(firstOpponentCard.getId(), secondOpponentCard.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("All targets must be in a single opponent's graveyard");
     }
 
     @Test
@@ -726,6 +756,18 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("throws when any-target effect has a permanent-only target filter")
+        void throwsWhenAnyTargetEffectHasPermanentOnlyFilter() {
+            Card spell = createTargetingSpell("Filtered Burn", CardColor.RED);
+            spell.target(new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature"));
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("This spell cannot target players");
+        }
+
+        @Test
         @DisplayName("passes when modal spell with permanent-targeting mode targets a permanent")
         void passesWhenModalSpellWithPermanentModeTargetsPermanent() {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
@@ -1053,9 +1095,6 @@ class TargetLegalityServiceTest {
             Permanent artifact = addPermanent(player2Id, artifactCard);
             Permanent creature = addPermanent(player2Id, creatureCard);
             Permanent land = addPermanent(player2Id, landCard);
-            when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
-            when(gameQueryService.isLand(gd, land)).thenReturn(true);
-
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 0, 3)
                     .withMultiTargetConstraint(
@@ -1977,6 +2016,22 @@ class TargetLegalityServiceTest {
     class MatchesStackEntryPredicate {
 
         @Test
+        @DisplayName("matches StackEntryControlledByEnchantedPlayerPredicate against the source attachment")
+        void matchesControlledByEnchantedPlayerPredicate() {
+            Permanent source = new Permanent(createCreature("Curse", CardColor.BLACK));
+            source.setAttachedTo(player2Id);
+            StackEntry entry = new StackEntry(createCreature("Bear", CardColor.GREEN), player2Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryControlledByEnchantedPlayerPredicate(), player1Id, source))
+                    .isTrue();
+            StackEntry opponentEntry = new StackEntry(createCreature("Bear", CardColor.GREEN), player1Id);
+            assertThat(sut.matchesStackEntryPredicate(gd, opponentEntry,
+                    new StackEntryControlledByEnchantedPlayerPredicate(), player1Id, source))
+                    .isFalse();
+        }
+
+        @Test
         @DisplayName("matches StackEntryTypeInPredicate")
         void matchesTypeInPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
@@ -2107,6 +2162,35 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("matches a spell whose mana value equals the source power")
+        void matchesManaValueEqualToSourcePower() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(2);
+            Card card = createCreature("Matching creature", CardColor.GREEN);
+            card.setManaCost("{2}");
+            StackEntry entry = new StackEntry(card, player1Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaValueEqualsSourcePowerPredicate(), player1Id, source))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("includes the chosen X when matching the source power")
+        void includesChosenXWhenMatchingSourcePower() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(2);
+            Card card = createCreature("X creature", CardColor.GREEN);
+            card.setManaCost("{1}{X}");
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card, player1Id,
+                    "X creature", List.of(), 1);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaValueEqualsSourcePowerPredicate(), player1Id, source))
+                    .isTrue();
+        }
+
+        @Test
         @DisplayName("StackEntryMaxManaValuePredicate counts the chosen X (CR 107.3a)")
         void maxManaValuePredicateCountsChosenX() {
             Card card = createCreature("X Spell", CardColor.BLUE);
@@ -2120,6 +2204,25 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryMaxManaValuePredicate(5), player2Id))
                     .isTrue();
+        }
+
+        @Test
+        @DisplayName("StackEntryManaValueAtMostControllerGraveyardCountPredicate uses the spell controller's graveyard")
+        void manaValueAtMostControllerGraveyardCountMatches() {
+            Card card = createCreature("Bear", CardColor.GREEN);
+            card.setManaCost("{2}");
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card, player1Id,
+                    "Bear", List.of(), 0);
+            gd.playerGraveyards.get(player1Id).add(createCreature("Graveyard Bear", CardColor.GREEN));
+            gd.playerGraveyards.get(player1Id).add(createCreature("Graveyard Bear", CardColor.GREEN));
+
+            StackEntryManaValueAtMostControllerGraveyardCountPredicate predicate =
+                    new StackEntryManaValueAtMostControllerGraveyardCountPredicate();
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, predicate, player2Id)).isTrue();
+
+            gd.playerGraveyards.get(player1Id).clear();
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, predicate, player2Id)).isFalse();
         }
 
         @Test

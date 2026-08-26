@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,8 +22,10 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -66,6 +70,9 @@ class DrawServiceTest {
 
     @Mock
     private ConditionEvaluationService conditionEvaluationService;
+
+    @Mock
+    private DredgeSupport dredgeSupport;
 
     @InjectMocks
     private DrawService sut;
@@ -157,6 +164,26 @@ class DrawServiceTest {
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
         }
+    }
+
+    @Test
+    void targetedSecondDrawTriggerQueuesPermanentTargetChoice() {
+        Card card = createCard("Mantle of Tides", CardType.ARTIFACT);
+        AttachSourceEquipmentToTargetCreatureEffect effect = new AttachSourceEquipmentToTargetCreatureEffect();
+        card.target(TargetFilters.creatureYouControl())
+                .addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, effect);
+        Permanent equipment = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(equipment);
+        gd.cardsDrawnThisTurn.put(player1Id, 2);
+
+        sut.checkControllerDrawTriggers(gd, player1Id);
+
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class))
+                .isNotNull()
+                .satisfies(trigger -> {
+                    assertThat(trigger.sourcePermanentId()).isEqualTo(equipment.getId());
+                    assertThat(trigger.targetFilter()).isEqualTo(TargetFilters.creatureYouControl());
+                });
     }
 
     @Test

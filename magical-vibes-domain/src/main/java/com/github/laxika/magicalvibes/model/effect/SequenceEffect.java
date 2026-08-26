@@ -44,7 +44,8 @@ import java.util.UUID;
  * "that player".</p>
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
-        implements CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect {
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -83,6 +84,11 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     @Override
     public boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) {
         return controllerDrawCount == 0 || controllerDrawCount == cardsDrawnThisTurn;
+    }
+
+    @Override
+    public boolean hasAbilityResolutionCondition() {
+        return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
     }
 
     @Override
@@ -141,5 +147,14 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
             }
         }
         return result;
+    }
+
+    @Override
+    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
+        return new SequenceEffect(steps.stream()
+                .map(step -> step instanceof CombatDamageDealerAwareEffect aware
+                        ? aware.withCombatDamageDealerIds(dealerIds)
+                        : step)
+                .toList(), controllerDrawCount, onlyIfSacrificed);
     }
 }

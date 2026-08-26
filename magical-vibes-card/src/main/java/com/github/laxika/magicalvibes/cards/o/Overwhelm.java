@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "189")
+@CardRegistration(set = "RAV", collectorNumber = "175")
 public class Overwhelm extends Card {
 
     public Overwhelm() {

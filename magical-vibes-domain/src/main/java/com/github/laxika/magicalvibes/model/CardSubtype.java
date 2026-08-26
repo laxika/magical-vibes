@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 public enum CardSubtype {
 
@@ -13,13 +15,16 @@ public enum CardSubtype {
     PLAINS("Plains"),
     SWAMP("Swamp"),
     DESERT("Desert"),
+    CAVE("Cave"),
     LAIR("Lair"),
     ANGEL("Angel"),
+    ARCHON("Archon"),
     AETHERBORN("Aetherborn"),
     ANTELOPE("Antelope"),
     AUROCHS("Aurochs"),
     APE("Ape"),
     MONKEY("Monkey"),
+    MOUSE("Mouse"),
     ATOG("Atog"),
     ARCHER("Archer"),
     ARTIFICER("Artificer"),
@@ -45,9 +50,12 @@ public enum CardSubtype {
     DWARF("Dwarf"),
     RANGER("Ranger"),
     SPIDER("Spider"),
+    SYMBIOTE("Symbiote"),
+    VILLAIN("Villain"),
     SPIKE("Spike"),
     BEAST("Beast"),
     HUMAN("Human"),
+    HERO("Hero"),
     CLERIC("Cleric"),
     BIRD("Bird"),
     CAT("Cat"),
@@ -68,6 +76,7 @@ public enum CardSubtype {
     NOMAD("Nomad"),
     ALLY("Ally"),
     KOR("Kor"),
+    KOBOLD("Kobold"),
     WIZARD("Wizard"),
     SORCERER("Sorcerer"),
     MUTANT("Mutant"),
@@ -82,8 +91,10 @@ public enum CardSubtype {
     EYE("Eye"),
     FAERIE("Faerie"),
     FISH("Fish"),
+    SHARK("Shark"),
     FROG("Frog"),
     FUNGUS("Fungus"),
+    OTTER("Otter"),
     MERFOLK("Merfolk"),
     OCTOPUS("Octopus"),
     SQUID("Squid"),
@@ -145,6 +156,7 @@ public enum CardSubtype {
     GOBLIN("Goblin"),
     GOAT("Goat"),
     GOD("God"),
+    DEMIGOD("Demigod"),
     KAVU("Kavu"),
     CYCLOPS("Cyclops"),
     HORROR("Horror"),
@@ -163,6 +175,7 @@ public enum CardSubtype {
     THRULL("Thrull"),
     EQUIPMENT("Equipment"),
     LIZARD("Lizard"),
+    LLAMA("Llama"),
     LHURGOYF("Lhurgoyf"),
     LICID("Licid"),
     SCOUT("Scout"),
@@ -211,6 +224,7 @@ public enum CardSubtype {
     PEGASUS("Pegasus"),
     PEASANT("Peasant"),
     PENTAVITE("Pentavite"),
+    TRISKELAVITE("Triskelavite"),
     PINCHER("Pincher"),
     PEST("Pest"),
     PILOT("Pilot"),
@@ -226,6 +240,7 @@ public enum CardSubtype {
     TREASURE("Treasure"),
     CLUE("Clue"),
     BLOOD("Blood"),
+    MAP("Map"),
     FOOD("Food"),
     POWERSTONE("Powerstone"),
     SHARD("Shard"),
@@ -254,7 +269,16 @@ public enum CardSubtype {
     YANLING("Yanling"),
     MITE("Mite"),
     OMEN("Omen"),
-    FLAGBEARER("Flagbearer");
+    FLAGBEARER("Flagbearer"),
+    ROBOT("Robot");
+
+    private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
+            AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
+            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, SAMUT, YANLING);
+
+    public static List<CardSubtype> planeswalkerTypes() {
+        return PLANESWALKER_TYPES;
+    }
 
     @Getter
     private final String displayName;

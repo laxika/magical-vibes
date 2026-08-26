@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "194")
+@CardRegistration(set = "MID", collectorNumber = "185")
 public class EccentricFarmer extends Card {
 
     public EccentricFarmer() {

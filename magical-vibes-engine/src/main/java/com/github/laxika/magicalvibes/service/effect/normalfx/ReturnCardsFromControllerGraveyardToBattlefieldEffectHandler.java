@@ -61,6 +61,7 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
         }
 
         if (e.maxTotalManaValue() != null) {
+            gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume = true;
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
                     controllerId, matching, e.maxCount(),
                     "Choose up to " + e.maxCount() + " matching cards with total mana value "

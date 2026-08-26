@@ -47,14 +47,24 @@ public class EachPlayerMayPutCardFromHandChoiceInteractionHandler
             throw new IllegalStateException("Choose zero or one valid card");
         }
 
+        boolean cardPutThisRound = interaction.cardPutThisRound();
         List<UUID> accumulated = new ArrayList<>(interaction.chosenCardIds());
-        accumulated.addAll(chosen);
+        if (interaction.repeatUntilNoOne()) {
+            if (!chosen.isEmpty()) {
+                cardPutThisRound = support.putCardOntoBattlefield(
+                        gameData, player.getId(), chosen.getFirst(), interaction.cardName())
+                        || cardPutThisRound;
+            }
+        } else {
+            accumulated.addAll(chosen);
+        }
         gameData.interaction.clearAwaitingInput();
 
         EachPlayerMayPutCardFromHandToBattlefieldEffect effect =
-                new EachPlayerMayPutCardFromHandToBattlefieldEffect(interaction.predicate(), interaction.label());
+                new EachPlayerMayPutCardFromHandToBattlefieldEffect(interaction.predicate(), interaction.label(),
+                        false, interaction.repeatUntilNoOne(), interaction.startingPlayerId() != null);
         boolean begunNext = support.beginNextChoice(gameData, interaction.remainingPlayerIds(), accumulated,
-                effect, interaction.cardName());
+                effect, interaction.cardName(), cardPutThisRound, interaction.startingPlayerId());
         inputCompletionService.publishStateAfterInput(gameData);
         if (!begunNext) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

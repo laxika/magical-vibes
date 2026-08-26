@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -127,6 +128,7 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
                 combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport.class),
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
 
@@ -152,6 +154,7 @@ class CombatDamageServiceTest {
         // withQueryScope is a passthrough on the mock: run the supplied queries directly
         lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
                 .thenAnswer(inv -> inv.getArgument(1, java.util.function.Supplier.class).get());
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gameData), any(UUID.class))).thenReturn(1);
     }
 
     // ===== Stub helpers =====
@@ -1286,6 +1289,26 @@ class CombatDamageServiceTest {
                     .filter(se -> se.getEffectsToResolve().stream().anyMatch(DrawCardEffect.class::isInstance))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Batched ally creature player-or-battle trigger fires once and keeps its watcher as source")
+        void batchedAllyCreaturePlayerOrBattleTriggerFiresOnce() {
+            Card watcherCard = createCard("Dragon watcher", 2, 2);
+            watcherCard.addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+                    new AllyCombatDamageTriggerEffect(null, new DrawCardEffect(1), false, true));
+            Permanent watcher = new Permanent(watcherCard);
+            gameData.playerBattlefields.get(player1Id).add(watcher);
+            addAttacker("Dragon one", 2, 2);
+            addAttacker("Dragon two", 2, 2);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(DrawCardEffect.class::isInstance))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getSourcePermanentId()).isEqualTo(watcher.getId());
         }
 
         private void stubbedDelayedDrawPredicate() {

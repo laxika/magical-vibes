@@ -29,6 +29,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractPlayerInteractionHandlerTest {
@@ -62,6 +65,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
         player1Id = game.player1Id();
         player2Id = game.player2Id();
         gd = game.gameData();
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService, predicateEvaluationService,
                 gameLogService, playerInputService, cardRevealService,

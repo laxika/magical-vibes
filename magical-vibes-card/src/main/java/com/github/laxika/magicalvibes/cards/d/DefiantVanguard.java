@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "7")
+@CardRegistration(set = "TSB", collectorNumber = "5")
 public class DefiantVanguard extends Card {
 
     public DefiantVanguard() {

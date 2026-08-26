@@ -15,7 +15,7 @@ public class LanternOfInsight extends Card {
 
     public LanternOfInsight() {
         // Players play with the top card of their libraries revealed.
-        addEffect(EffectSlot.STATIC, new PlayWithTopCardRevealedEffect());
+        addEffect(EffectSlot.STATIC, PlayWithTopCardRevealedEffect.forAllPlayers());
         // {T}, Sacrifice this artifact: Target player shuffles.
         addActivatedAbility(new ActivatedAbility(
                 true,

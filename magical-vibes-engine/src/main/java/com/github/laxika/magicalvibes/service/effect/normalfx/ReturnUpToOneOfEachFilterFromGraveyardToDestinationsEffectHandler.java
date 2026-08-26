@@ -74,6 +74,10 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
                 graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,
                         (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
                         " returns ", " from graveyard to hand.");
+            } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
+                graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,
+                        (graveyard, card) -> gameData.playerDecks.get(entry.getControllerId()).addFirst(card),
+                        " puts ", " from graveyard on top of their library.");
             }
         }
 

@@ -9,11 +9,16 @@ import com.github.laxika.magicalvibes.model.CardType;
  * announced mana X determines how many cards are exiled.
  *
  * @param requiredType the card type every exiled card must have (null = any, e.g. Haunting Misery's creature cards)
+ * @param requireAtLeastOne whether the cost cannot be paid with X equal to zero
  */
-public record ExileXCardsFromGraveyardCost(CardType requiredType) implements CostEffect {
+public record ExileXCardsFromGraveyardCost(CardType requiredType, boolean requireAtLeastOne) implements CostEffect {
 
     public ExileXCardsFromGraveyardCost() {
-        this(null);
+        this(null, false);
+    }
+
+    public ExileXCardsFromGraveyardCost(CardType requiredType) {
+        this(requiredType, false);
     }
 
     @Override

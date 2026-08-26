@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithOwnHandRevealedEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "23")
+@CardRegistration(set = "TSB", collectorNumber = "7")
 public class EnduringRenewal extends Card {
 
     public EnduringRenewal() {

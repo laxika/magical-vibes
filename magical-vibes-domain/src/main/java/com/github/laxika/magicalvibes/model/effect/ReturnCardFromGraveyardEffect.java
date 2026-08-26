@@ -90,8 +90,9 @@ import java.util.Set;
  *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
  *                             only meaningful when {@link #targetGraveyard} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
- *                             permanent matching this predicate after entering the battlefield; the
- *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
+ *                             permanent matching this predicate; on a mass battlefield return, each
+ *                             matching card is attached to a legal matching permanent when possible
+ *                             and cards with no legal attachment remain in the graveyard
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
  * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned
@@ -176,6 +177,10 @@ import java.util.Set;
  *                             replacement (e.g. Dreams of the Dead — "If the creature would leave the
  *                             battlefield, exile it instead of putting it anywhere else"; also Unearth's
  *                             CR 702.100 rider, where it pairs with {@link #exileAtEndStep})
+ * @param exileIfDying         {@code true} to set the permanent's "if this creature would die, exile it
+ *                             instead" replacement (e.g. Can't Stay Away); unlike
+ *                             {@link #exileIfLeavesBattlefield}, this does not replace moves to hand or
+ *                             library
  * @param plusOneCountersIfSubtype when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
  *                             the returned permanent only if the returned card has this subtype (e.g. Defy
  *                             Death — "If it's an Angel, put two +1/+1 counters on it"); when null,
@@ -233,6 +238,9 @@ import java.util.Set;
  * @param unearth              {@code true} when the battlefield return is an unearth activation,
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
+ * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
+ * @param targetGroup          positional graveyard-card target group resolved by this effect, or
+ *                             {@code -1} when the effect uses the ordinary target path
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -282,6 +290,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean greatestPower,
         boolean topmost,
         boolean exileIfLeavesBattlefield,
+        boolean exileIfDying,
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
         CardSubtype plusOneCountersIfExiledCostCardHasSubtype,
@@ -301,8 +310,10 @@ public record ReturnCardFromGraveyardEffect(
         boolean shuffleGraveyardBeforeRandomSelection,
         DynamicAmount dynamicMaxManaValue,
         boolean unearth,
-        boolean exileAtNextUpkeep
-) implements CombatDamageAmountAwareEffect {
+        boolean exileAtNextUpkeep,
+        List<CardEffect> battlefieldEffectGrants,
+        int targetGroup
+) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect {
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -315,6 +326,8 @@ public record ReturnCardFromGraveyardEffect(
         private Set<Keyword> grantKeywords = Set.of();
         private List<CardSubtype> grantSubtypes = List.of();
         private Set<CounterType> enterWithCounters = Set.of();
+        private List<CardEffect> battlefieldEffectGrants = List.of();
+        private int targetGroup = -1;
     }
 
     @Override
@@ -323,12 +336,24 @@ public record ReturnCardFromGraveyardEffect(
         // resolution-time variants pick their card later. The declared scope is source(): it is the
         // one place the own/opponent/all narrowing lives, so the kept validator and every
         // enumeration path read the same value.
-        return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard(source)) : TargetSpec.NONE;
+        if (!targetGraveyard) {
+            return TargetSpec.NONE;
+        }
+        if (targetGroup >= 0) {
+            return TargetSpec.benign(TargetPredicates.anyOf(
+                    TargetPredicates.graveyardCard(source), TargetPredicates.anyTarget()));
+        }
+        return TargetSpec.benign(TargetPredicates.graveyardCard(source));
     }
 
     @Override
     public DynamicAmount combatDamageAmount() {
         return dynamicMaxManaValue;
+    }
+
+    @Override
+    public List<Integer> targetGroups() {
+        return targetGroup < 0 ? List.of() : List.of(targetGroup);
     }
 
     @Override

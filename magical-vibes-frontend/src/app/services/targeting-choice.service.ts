@@ -107,12 +107,14 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
     this.pendingBuybackSacrificePermanentId = null;
+    this.pendingBuybackSacrificePermanentIds = [];
     this.choosingBuybackDiscard = false;
     this.buybackDiscardCardIndex = -1;
     this.buybackDiscardSelectedIndices.set([]);
@@ -126,6 +128,7 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
@@ -259,6 +262,7 @@ export class TargetingChoiceService {
   modeChoicesRequired = 1;
   modeChoicesMax = 1;
   modeOptional = false;
+  modeModesMayRepeat = false;
   modeSelectedIndices: number[] = [];
   modeForAbility = false;
   modeAbilityPermanentIndex = -1;
@@ -333,12 +337,14 @@ export class TargetingChoiceService {
   buybackCardName = '';
   buybackCost = '';
   buybackRequiresSacrifice = false;
+  buybackSacrificeCount = 0;
   buybackDiscardCount = 0;
   choosingBuybackSacrifice = false;
   buybackSacrificeCardIndex = -1;
   buybackSacrificeDescription = '';
-  buybackSacrificeSelectedId = signal<string | null>(null);
+  buybackSacrificeSelectedIds = signal<string[]>([]);
   private pendingBuybackSacrificePermanentId: string | null = null;
+  private pendingBuybackSacrificePermanentIds: string[] = [];
   choosingBuybackDiscard = false;
   buybackDiscardCardIndex = -1;
   buybackDiscardSelectedIndices = signal<number[]>([]);
@@ -620,6 +626,7 @@ export class TargetingChoiceService {
         this.buybackCardName = card.name;
         this.buybackCost = card.buybackCost;
         this.buybackRequiresSacrifice = card.buybackRequiresSacrifice ?? false;
+        this.buybackSacrificeCount = card.buybackSacrificeCount ?? 1;
         this.buybackDiscardCount = card.buybackDiscardCount ?? 0;
         return;
       }
@@ -652,6 +659,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -806,8 +814,9 @@ export class TargetingChoiceService {
     this.pendingBuyback = true;
     const savedIndex = this.buybackCardIndex;
     const requiresSacrifice = this.buybackRequiresSacrifice;
+    const sacrificeCount = this.buybackSacrificeCount;
     const discardCount = this.buybackDiscardCount;
-    const sacrificeDescription = this.buybackCost;
+    const sacrificeDescription = this.buybackCost.replace(/^Sacrifice /, '');
     this.choosingBuyback = false;
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
@@ -816,7 +825,8 @@ export class TargetingChoiceService {
       this.choosingBuybackSacrifice = true;
       this.buybackSacrificeCardIndex = savedIndex;
       this.buybackSacrificeDescription = sacrificeDescription;
-      this.buybackSacrificeSelectedId.set(null);
+      this.buybackSacrificeCount = sacrificeCount;
+      this.buybackSacrificeSelectedIds.set([]);
       return;
     }
     if (discardCount > 0) {
@@ -836,6 +846,7 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.buybackDiscardSelectedIndices.set([]);
     this.pendingBuybackDiscardHandIndices = null;
@@ -848,6 +859,7 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.buybackDiscardSelectedIndices.set([]);
     this.pendingBuybackDiscardHandIndices = null;
@@ -856,20 +868,35 @@ export class TargetingChoiceService {
 
   toggleBuybackSacrifice(permanentId: string): void {
     if (!this.choosingBuybackSacrifice) return;
-    this.buybackSacrificeSelectedId.set(
-      this.buybackSacrificeSelectedId() === permanentId ? null : permanentId);
+    const selected = this.buybackSacrificeSelectedIds();
+    if (selected.includes(permanentId)) {
+      this.buybackSacrificeSelectedIds.set(selected.filter(id => id !== permanentId));
+    } else if (selected.length < this.buybackSacrificeCount) {
+      this.buybackSacrificeSelectedIds.set([...selected, permanentId]);
+    }
+  }
+
+  isBuybackSacrificeSelected(permanentId: string): boolean {
+    return this.choosingBuybackSacrifice && this.buybackSacrificeSelectedIds().includes(permanentId);
   }
 
   confirmBuybackSacrifice(): void {
-    const selectedId = this.buybackSacrificeSelectedId();
-    if (!this.choosingBuybackSacrifice || selectedId == null) return;
+    const selectedIds = this.buybackSacrificeSelectedIds();
+    if (!this.choosingBuybackSacrifice || selectedIds.length !== this.buybackSacrificeCount) return;
     const savedIndex = this.buybackSacrificeCardIndex;
-    this.pendingBuybackSacrificePermanentId = selectedId;
+    if (this.buybackSacrificeCount === 1) {
+      this.pendingBuybackSacrificePermanentId = selectedIds[0];
+      this.pendingBuybackSacrificePermanentIds = [];
+    } else {
+      this.pendingBuybackSacrificePermanentId = null;
+      this.pendingBuybackSacrificePermanentIds = [...selectedIds];
+    }
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.continuePlayCard(savedIndex);
   }
 
@@ -916,9 +943,11 @@ export class TargetingChoiceService {
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
+    this.buybackSacrificeCount = 0;
     this.pendingBuyback = false;
     this.pendingBuybackSacrificePermanentId = null;
+    this.pendingBuybackSacrificePermanentIds = [];
     this.choosingBuybackDiscard = false;
     this.buybackDiscardCardIndex = -1;
     this.buybackDiscardSelectedIndices.set([]);
@@ -933,6 +962,15 @@ export class TargetingChoiceService {
       this.modeSelectedIndices = [optionIndex];
       return;
     }
+    if (this.modeModesMayRepeat) {
+      const count = this.modeSelectedIndices.filter(i => i === optionIndex).length;
+      this.modeSelectedIndices = this.modeSelectedIndices.length >= this.modeChoicesMax
+        ? count === 0
+          ? this.modeSelectedIndices
+          : this.modeSelectedIndices.filter(i => i !== optionIndex)
+        : [...this.modeSelectedIndices, optionIndex];
+      return;
+    }
     if (this.modeSelectedIndices.includes(optionIndex)) {
       this.modeSelectedIndices = this.modeSelectedIndices.filter(i => i !== optionIndex);
     } else if (this.modeSelectedIndices.length < this.modeChoicesMax) {
@@ -944,14 +982,26 @@ export class TargetingChoiceService {
     return this.modeSelectedIndices.includes(optionIndex);
   }
 
+  modeSelectionCount(optionIndex: number): number {
+    return this.modeSelectedIndices.filter(i => i === optionIndex).length;
+  }
+
   /**
    * Encodes the mode selection the same way the engine's ChooseOneEffect.encodeModeSelection
-   * does: exact choose-one uses the 0-based mode index; choose-two / one-or-more use a
-   * negative bitmask (including selecting a single mode of a one-or-more spell).
+   * does: exact choose-one uses the 0-based mode index; ordinary multi-mode spells use a
+   * negative bitmask, while repeatable modes use a positional encoding.
    */
   private encodeModeSelection(indices: number[]): number {
     if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       return indices[0];
+    }
+    if (this.modeModesMayRepeat) {
+      const base = this.modeOptions.length + 1;
+      let encoded = 0;
+      for (const i of indices) {
+        encoded = encoded * base + i + 1;
+      }
+      return -encoded;
     }
     let mask = 0;
     for (const i of indices) {
@@ -1063,6 +1113,7 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
     this.modeForAbility = false;
     this.modeAbilityPermanentIndex = -1;
@@ -1238,6 +1289,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -1422,6 +1474,10 @@ export class TargetingChoiceService {
     if (this.pendingBuybackSacrificePermanentId != null) {
       msg.sacrificePermanentId = this.pendingBuybackSacrificePermanentId;
       this.pendingBuybackSacrificePermanentId = null;
+    }
+    if (this.pendingBuybackSacrificePermanentIds.length > 0) {
+      msg.additionalCostSacrificePermanentIds = this.pendingBuybackSacrificePermanentIds;
+      this.pendingBuybackSacrificePermanentIds = [];
     }
     if (extra) {
       Object.assign(msg, extra);
@@ -2892,6 +2948,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = ability.modalChoicesRequired ?? 1;
       this.modeChoicesMax = ability.modalChoicesMax ?? this.modeChoicesRequired;
       this.modeOptional = false;
+      this.modeModesMayRepeat = false;
       this.modeSelectedIndices = [];
       return;
     }

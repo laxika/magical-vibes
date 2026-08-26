@@ -22,7 +22,7 @@ class VialSmasherGleefulGrenadierTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VialSmasherGleefulGrenadier());
         harness.setHand(player1, List.of(new DauthiMercenary()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -41,7 +41,8 @@ class VialSmasherGleefulGrenadierTest extends BaseCardTest {
     void doesNotTriggerForNonOutlaw() {
         harness.addToBattlefield(player1, new VialSmasherGleefulGrenadier());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

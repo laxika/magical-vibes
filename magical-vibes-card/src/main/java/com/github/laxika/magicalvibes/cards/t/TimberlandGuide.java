@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "AVR", collectorNumber = "197")
+@CardRegistration(set = "MID", collectorNumber = "202")
 public class TimberlandGuide extends Card {
 
     public TimberlandGuide() {

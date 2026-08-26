@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "295")
+@CardRegistration(set = "TSB", collectorNumber = "106")
 public class AssaultBattery extends Card {
 
     public AssaultBattery() {

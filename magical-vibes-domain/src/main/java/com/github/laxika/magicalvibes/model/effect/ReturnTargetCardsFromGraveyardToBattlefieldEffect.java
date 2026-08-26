@@ -54,7 +54,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false);
     }
 
-    /** Creates an ETB form whose up-to cap is evaluated from the entering spell's cast context. */
+    /** Creates a dynamic-cap form whose up-to cap is evaluated from the spell's cast context. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter,
                                                               DynamicAmount dynamicMaxTargets) {
         this(filter, 0, false, false, dynamicMaxTargets, 0, null, null, null, 0,

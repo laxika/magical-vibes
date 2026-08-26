@@ -146,8 +146,10 @@ public class LandTapTriggerCollectorService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change."));
             } else {
-                int currentLife = gameData.getLife(tappingPlayerId);
-                gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, tappingPlayerId);
+                gameData.playerLifeTotals.put(tappingPlayerId,
+                        gameQueryService.lifeAfterDamage(gameData, tappingPlayerId, lifeLoss));
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage,
@@ -272,14 +274,16 @@ public class LandTapTriggerCollectorService {
     private boolean handleAddExtraManaOfChosenColor(TriggerMatchContext match,
             AddExtraManaOfChosenColorOnLandTapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
-        // Only triggers for the controller's own lands
-        if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
+        if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
         CardColor chosenColor = match.permanent().getChosenColor();
         if (chosenColor == null) return false;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
+        if (trigger.landFilter() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(
+                        match.gameData(), tappedLand, trigger.landFilter())) return false;
 
         ManaColor chosenManaColor = ManaColor.valueOf(chosenColor.name());
         boolean producesChosenColor = tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()

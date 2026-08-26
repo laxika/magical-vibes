@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -57,6 +59,8 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 
 @ExtendWith(MockitoExtension.class)
 class MayCastHandlerServiceTest {
@@ -75,6 +79,7 @@ class MayCastHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     @Mock private SpellCastingService spellCastingService;
     @Mock private TargetLegalityService targetLegalityService;
+    @Mock private ValidTargetService validTargetService;
 
     @InjectMocks
     private MayCastHandlerService svc;
@@ -241,6 +246,25 @@ class MayCastHandlerServiceTest {
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);
 
             assertThat(targets).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Includes graveyard-card targets for alternate casts")
+        void includesGraveyardCardTargets() {
+            Card card = createSorcery("Call to the Netherworld");
+            Card graveyardCard = createCreature("Walking Corpse");
+            gd.playerGraveyards.get(PLAYER1_ID).add(graveyardCard);
+            CardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .targetGraveyard(true)
+                    .build();
+            when(validTargetService.computeValidTargetsForSpell(
+                    eq(gd), eq(card), eq(PLAYER1_ID), eq(List.of()), eq(0), eq(null)))
+                    .thenReturn(new ValidTargetsResponse(
+                            List.of(), List.of(), List.of(graveyardCard.getId()), List.of(), 1, 1, ""));
+
+            assertThat(svc.buildValidSpellTargets(gd, card, List.of(effect), PLAYER1_ID))
+                    .containsExactly(graveyardCard.getId());
         }
 
         @Test
@@ -578,7 +602,8 @@ class MayCastHandlerServiceTest {
         }
 
         private void allowGraveyardCasting() {
-            when(gameQueryService.canCastSpellFromZone(eq(gd), any(Card.class), eq(Zone.GRAVEYARD)))
+            when(gameQueryService.canCastSpellFromZone(
+                    eq(gd), any(Card.class), eq(Zone.GRAVEYARD), eq(PLAYER1_ID)))
                     .thenReturn(true);
         }
 
@@ -601,7 +626,8 @@ class MayCastHandlerServiceTest {
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
-            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD)).thenReturn(false);
+            when(gameQueryService.canCastSpellFromZone(
+                    gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(false);
 
             svc.handleCastFromGraveyardChoice(gd, player1, true, ability, opponentGraveyardFree());
 

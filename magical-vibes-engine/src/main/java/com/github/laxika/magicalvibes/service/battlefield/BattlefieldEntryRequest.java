@@ -19,22 +19,32 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       int xValue,
                                       boolean kicked,
                                       List<String> repeatedAdditionalCosts,
+                                      int convokeCreatureCount,
                                       EnterBattlefieldOnDiscardEffect discardReplacement,
                                       EnterWithCountersEffect enterWithCounters) {
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
                                    List<String> repeatedAdditionalCosts,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, 0, discardReplacement, enterWithCounters);
+    }
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts,
                                    EnterBattlefieldOnDiscardEffect discardReplacement) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, discardReplacement, null);
+                repeatedAdditionalCosts, 0, discardReplacement, null);
     }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
                                    List<String> repeatedAdditionalCosts) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, null, null);
+                repeatedAdditionalCosts, 0, null, null);
     }
 
     public BattlefieldEntryRequest {

@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param tokenForController if non-null, creates this token for each exiled permanent's controller
  * @param targetFilter optional predicate narrowing the permanent target
  */
-public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController, PermanentPredicate targetFilter)
+public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController,
+                                         PermanentPredicate targetFilter)
         implements RemovalEffect {
 
     public ExileTargetPermanentEffect() {

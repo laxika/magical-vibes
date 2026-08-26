@@ -68,7 +68,14 @@ public class BattlefieldEntryService {
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                             int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
-                List.of(), xValue, kicked, repeatedAdditionalCosts);
+                List.of(), xValue, kicked, repeatedAdditionalCosts, 0);
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                            int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                                            int convokeCreatureCount) {
+        place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
+                List.of(), xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
@@ -100,8 +107,17 @@ public class BattlefieldEntryService {
     private void place(GameData gameData, UUID controllerId, Permanent permanent,
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
+        place(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                xValue, kicked, repeatedAdditionalCosts, 0);
+    }
+
+    private void place(GameData gameData, UUID controllerId, Permanent permanent,
+                       Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
+                       int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                       int convokeCreatureCount) {
         placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
-                enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts));
+                enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts,
+                convokeCreatureCount, null, null));
     }
 
     public UUID resolveEnteringController(GameData gameData, UUID controllerId, Permanent permanent) {
@@ -153,6 +169,11 @@ public class BattlefieldEntryService {
 
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
         triggerService.checkAllyTokenEntersTriggers(gameData, controllerId, count);
+    }
+
+    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId,
+                                              List<UUID> permanentIds) {
+        triggerService.checkAllyTokenEntersTriggers(gameData, controllerId, permanentIds);
     }
 
     public void handleCreatureEnteredBattlefield(

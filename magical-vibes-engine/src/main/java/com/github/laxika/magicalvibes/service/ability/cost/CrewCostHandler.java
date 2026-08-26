@@ -96,6 +96,9 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         lastTappedCreaturePower = Math.max(0,
                 gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, chosen));
         chosen.tap();
+        if (cost instanceof CrewCost && sourcePermanent != null) {
+            sourcePermanent.recordCreatureThatCrewedThisTurn(chosen.getId());
+        }
         if (cost instanceof CrewCost && sourcePermanentId != null) {
             gameData.recordCreatureCrewingPermanent(sourcePermanentId, chosen.getId());
         } else if (cost instanceof SaddleCost && sourcePermanentId != null) {

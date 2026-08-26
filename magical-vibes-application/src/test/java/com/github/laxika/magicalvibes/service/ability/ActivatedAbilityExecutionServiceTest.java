@@ -56,9 +56,11 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -79,6 +81,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
@@ -96,6 +99,8 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private GameLogService gameLogService;
@@ -150,6 +155,13 @@ class ActivatedAbilityExecutionServiceTest {
         // No Mana Reflection in these tests — every mana production is 1x.
         lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
+        lenient().when(gameQueryService.lifeAfterDamage(eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> gameData.getLife(invocation.getArgument(1))
+                        - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gameData), any(UUID.class))).thenReturn(1);
+        lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
+                        eq(gameData), anyInt(), any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     // =========================================================================

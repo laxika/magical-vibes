@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -66,7 +69,16 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             additionalTypes.addAll(e.additionalTypes());
             copyCard.setAdditionalTypes(Set.copyOf(additionalTypes));
         }
+        if (!e.removedSupertypes().isEmpty()) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(copyCard.getSupertypes());
+            supertypes.removeAll(e.removedSupertypes());
+            copyCard.setSupertypes(Set.copyOf(supertypes));
+        }
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
+        if (e.grantHasteToPermanentSpell() && isPermanentSpell(spellSnapshot.getEntryType())) {
+            copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
+        }
 
         copySupport.addCopyToStack(gameData, copyEntry);
 
@@ -83,5 +95,12 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
         }
+    }
+
+    private boolean isPermanentSpell(StackEntryType entryType) {
+        return switch (entryType) {
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            case INSTANT_SPELL, SORCERY_SPELL, TRIGGERED_ABILITY, ACTIVATED_ABILITY -> false;
+        };
     }
 }

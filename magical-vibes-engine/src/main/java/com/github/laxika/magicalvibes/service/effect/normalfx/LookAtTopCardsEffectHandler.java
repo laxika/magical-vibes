@@ -96,8 +96,13 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             } else {
                 resolvePutOneOnTop(gameData, entry, e, lookCount);
             }
+        } else if (e.chosenDestination() == LibrarySearchDestination.GRAVEYARD
+                && e.restDestination() == LookDestination.TOP_OF_LIBRARY) {
+            resolveOneToGraveyardRestOnTop(gameData, entry, lookCount);
+        } else if (e.chosenDestination() == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
+            resolveOneToExilePlayableRestOnBottomRandom(gameData, entry, lookCount);
         } else if (e.optional()) {
-            resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount);
+            resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount, chooseManaValueAtMost);
         } else if (e.restDestination() == LookDestination.GRAVEYARD) {
             resolveRestToGraveyard(gameData, entry, e, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.TOP_OF_LIBRARY) {
@@ -220,7 +225,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 randomBottom, remainingToExile, 0, null,
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),
-                e.recordChosenCount(), e.cloakChosenPermanents()));
+                e.recordChosenCount(), e.cloakChosenPermanents(), false));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
@@ -293,6 +298,43 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 true));
     }
 
+    private void resolveOneToGraveyardRestOnTop(GameData gameData, StackEntry entry, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+
+        String prompt = "Put one card into your graveyard. Put the rest back on top of your library.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(result.controllerId(), result.topCards())
+                        .sourceCards(new ArrayList<>(result.topCards()))
+                        .reorderRemainingToTop(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.GRAVEYARD)
+                        .build(),
+                prompt,
+                false));
+    }
+
+    private void resolveOneToExilePlayableRestOnBottomRandom(
+            GameData gameData, StackEntry entry, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, false);
+        if (result == null) return;
+
+        String prompt = "Exile one card to play this turn. Put the rest on the bottom of your library in a random order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(result.controllerId(), result.topCards())
+                        .sourceCards(new ArrayList<>(result.topCards()))
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM)
+                        .build(),
+                prompt,
+                false));
+    }
+
     /**
      * One looked-at card into hand, the rest back on top of the library in an order the player
      * chooses (Diabolic Vision). The pick and the reorder both run through the
@@ -338,8 +380,16 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 + " finds no eligible cards. All cards are put on the bottom of their library in a random order."));
     }
 
+    private void putOnBottomInRandomOrder(GameData gameData, UUID controllerId, String playerName,
+            List<Card> topCards) {
+        java.util.Collections.shuffle(topCards);
+        gameData.playerDecks.get(controllerId).addAll(topCards);
+        gameLogService.append(gameData, GameLog.text(playerName
+                + " puts all looked-at cards on the bottom of their library in a random order."));
+    }
+
     private void resolveMayRevealToHand(GameData gameData, StackEntry entry,
-            LookAtTopCardsEffect e, int lookCount, int chooseCount) {
+            LookAtTopCardsEffect e, int lookCount, int chooseCount, int chooseManaValueAtMost) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, false);
         if (result == null) return;
@@ -360,7 +410,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(),
-                entry.getCard().getId(), gameData, controllerId);
+                entry.getCard().getId(), gameData, controllerId).stream()
+                .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
+                .toList();
         if (matchingCards.isEmpty()) {
             if (toGraveyard) {
                 for (Card card : topCards) {
@@ -379,17 +431,47 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (chooseCount <= 0) {
+            if (randomBottom) {
+                putOnBottomInRandomOrder(gameData, controllerId, playerName, topCards);
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            }
+            insertEffectAfterCurrent(entry, e, e.effectIfNoCardChosen());
+            return;
+        }
+
         String description = CardPredicateUtils.describeFilter(e.choosePredicate());
         if (chooseCount > 1 || randomBottom) {
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
             int max = Math.min(chooseCount, matchingCards.size());
+            if (e.payLifePerSelectedCard() > 0) {
+                int affordable = gameQueryService.canPlayerLifeChange(gameData, controllerId)
+                        ? gameData.getLife(controllerId) / e.payLifePerSelectedCard()
+                        : 0;
+                max = Math.min(max, affordable);
+                if (max == 0) {
+                    for (Card card : topCards) {
+                        graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
+                    }
+                    gameLogService.append(gameData, GameLog.text(playerName
+                            + " cannot pay for any of the revealed cards, so they are put into the graveyard."));
+                    return;
+                }
+            }
             String revealPrompt;
             if (max == 1) {
-                revealPrompt = e.reveal()
+                revealPrompt = e.payLifePerSelectedCard() > 0
+                        ? "You may put a card into your hand by paying "
+                                + e.payLifePerSelectedCard() + " life."
+                        : e.reveal()
                         ? "You may put a " + description + " from among them into your hand."
                         : "You may reveal a " + description + " from among them and put it into your hand.";
             } else {
-                revealPrompt = e.reveal()
+                revealPrompt = e.payLifePerSelectedCard() > 0
+                        ? "You may put up to " + max + " cards into your hand by paying "
+                                + e.payLifePerSelectedCard() + " life for each."
+                        : e.reveal()
                         ? (chooseCount >= Integer.MAX_VALUE
                                 ? "You may put any number of " + description + "s into your hand."
                                 : "You may put up to " + max + " " + description + "s into your hand.")
@@ -400,8 +482,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                     controllerId, topCards, cardIds, toGraveyard, true,
                     !toGraveyard && !randomBottom, randomBottom, false,
-                    e.loseLifePerSelectedCard(), null,
-                    max, revealPrompt, false, 0, false, e.effectIfNoCardChosen()));
+                    e.payLifePerSelectedCard() > 0
+                            ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
+                    null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
+                    false, e.payLifePerSelectedCard() > 0));
             return;
         }
 

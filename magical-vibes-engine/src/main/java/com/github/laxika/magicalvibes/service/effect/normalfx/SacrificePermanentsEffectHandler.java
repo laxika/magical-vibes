@@ -62,7 +62,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         var e = (SacrificePermanentsEffect) effect;
         // "Sacrifice a creature" (bare creature filter) uses the single-select creature primitive;
         // every other filter uses the multi-permanent-choice flow. Both are behaviourally tested.
-        boolean creatureSingleSac = e.filter() instanceof PermanentIsCreaturePredicate;
+        boolean creatureSingleSac = e.filter() instanceof PermanentIsCreaturePredicate
+                && !e.simultaneousChoices();
 
         switch (e.recipient()) {
             case CONTROLLER -> resolveSinglePlayer(gameData, entry, e, entry.getControllerId(), creatureSingleSac);
@@ -296,7 +297,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
         } else {
             // Some players need to choose — begin the first prompt
-            destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
+            destructionSupport.beginNextForcedSacrificeFromQueue(
+                    gameData, choosers, autoSacrificeIds, e.simultaneousChoices());
         }
     }
 

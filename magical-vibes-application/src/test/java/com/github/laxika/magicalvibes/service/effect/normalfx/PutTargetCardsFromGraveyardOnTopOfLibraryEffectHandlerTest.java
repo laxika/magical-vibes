@@ -112,6 +112,8 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
 
                 when(gameQueryService.findCardInGraveyardById(gd, artifact1.getId())).thenReturn(artifact1);
                 when(gameQueryService.findCardInGraveyardById(gd, artifact2.getId())).thenReturn(artifact2);
+                when(gameQueryService.findGraveyardOwnerById(gd, artifact1.getId())).thenReturn(player1Id);
+                when(gameQueryService.findGraveyardOwnerById(gd, artifact2.getId())).thenReturn(player1Id);
 
                 putCardsOnTopOfLibraryHandler.resolve(gd, entry, effect);
 

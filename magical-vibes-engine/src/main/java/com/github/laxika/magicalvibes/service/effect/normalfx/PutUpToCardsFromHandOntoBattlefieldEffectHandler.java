@@ -28,6 +28,6 @@ public class PutUpToCardsFromHandOntoBattlefieldEffectHandler implements NormalE
         int maxCount = Math.max(0, amountEvaluationService.evaluate(gameData, putEffect.maxCount(),
                 AmountContext.forStackEntry(entry, null)));
         support.beginChoice(gameData, entry.getControllerId(), putEffect.predicate(), putEffect.label(),
-                maxCount, entry.getCard().getId(), entry.getCard().getName());
+                maxCount, entry.getCard().getId(), entry.getCard().getName(), putEffect.tapped());
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
+import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
@@ -162,7 +164,12 @@ public class MayMiscHandlerService {
         }
 
         if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
+            boolean wasTapped = sourcePermanent.isTapped();
             sourcePermanent.untap();
+            if (wasTapped && gameData.currentStep == TurnStep.UNTAP
+                    && controllerId.equals(gameData.untapStepPlayerId)) {
+                gameData.untapStepUntappedPermanentCount++;
+            }
             // A "for as long as this stays tapped" control effect (Seasinger) ends on untap.
             creatureControlService.onSourceUntapped(gameData, sourcePermanent);
             // Giant Oyster: the -1/-1 counters its untap lock accrued go away with the lock.
@@ -462,10 +469,11 @@ public class MayMiscHandlerService {
         boolean canPayLife = lifeCost <= 0 || gameData.getLife(controllerId) >= lifeCost;
         if (accepted && canPayLife && deck != null && !deck.isEmpty()) {
             if (lifeCost > 0) {
+                int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
                 int life = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, life - lifeCost);
-                triggerCollectionService.checkLifePaymentTriggers(gameData, controllerId, lifeCost);
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeCost + " life."));
+                gameData.playerLifeTotals.put(controllerId, life - lifeLoss);
+                triggerCollectionService.checkLifePaymentTriggers(gameData, controllerId, lifeLoss);
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeLoss + " life."));
             }
             Card topCard = deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, libraryOwnerId, topCard, Zone.LIBRARY);
@@ -483,9 +491,11 @@ public class MayMiscHandlerService {
     public void handleExploreMayGraveyardChoice(GameData gameData, Player player, boolean accepted) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
+        Card exploredCard = deck.isEmpty() ? null : deck.getFirst();
 
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
+            exploredCard = topCard;
             graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
             
             gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" into their graveyard.").build());
@@ -498,7 +508,7 @@ public class MayMiscHandlerService {
         }
 
         // Explore is complete — check for "whenever a creature you control explores" triggers
-        triggerCollectionService.checkExploreTriggers(gameData, controllerId);
+        triggerCollectionService.checkExploreTriggers(gameData, controllerId, exploredCard);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
@@ -707,6 +717,48 @@ public class MayMiscHandlerService {
             // All leyline choices resolved — continue with game start
             mulliganService.continueStartGame(gameData);
         }
+    }
+
+    public void handleGemstoneCavernsChoice(GameData gameData, Player player, boolean accepted,
+                                            PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean sourceInHand = hand != null && hand.stream()
+                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
+
+        if (!accepted || !sourceInHand) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + (accepted ? " cannot begin the game with " : " declines to begin the game with "),
+                    card, " on the battlefield."));
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                mulliganService.continueStartGame(gameData);
+            }
+            return;
+        }
+
+        hand.removeIf(handCard -> handCard.getId().equals(card.getId()));
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        permanent.setCounterCount(CounterType.LUCK, 1);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+
+        if (hand.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " begins the game with ", card, " on the battlefield."));
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                mulliganService.continueStartGame(gameData);
+            }
+            return;
+        }
+
+        gameData.pendingGemstoneCavernsChoice = new PendingGemstoneCavernsChoice(card, controllerId);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " begins the game with ", card,
+                " on the battlefield and must exile a card from their hand."));
+        playerInputService.beginExileFromHandChoice(gameData, controllerId, null, 1);
     }
 
     public void handleSphinxAmbassadorChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

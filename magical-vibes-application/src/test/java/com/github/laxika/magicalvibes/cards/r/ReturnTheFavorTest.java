@@ -29,8 +29,6 @@ class ReturnTheFavorTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(pyromancer), null, player2.getId());
         UUID abilityId = harness.getGameData().stack.getLast().getCard().getId();
-        harness.passPriority(player2);
-
         cast(new int[]{0}, List.of(abilityId));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -76,8 +74,6 @@ class ReturnTheFavorTest extends BaseCardTest {
         harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, player1.getId());
-        harness.passPriority(player2);
-
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         cast(new int[]{1}, List.of(shock.getId()));
@@ -98,15 +94,12 @@ class ReturnTheFavorTest extends BaseCardTest {
         harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, player1.getId());
-        harness.passPriority(player2);
-
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         cast(new int[]{0, 1}, List.of(shock.getId(), shock.getId()));
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

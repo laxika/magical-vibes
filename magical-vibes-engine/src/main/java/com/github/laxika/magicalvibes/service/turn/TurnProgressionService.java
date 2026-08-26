@@ -141,12 +141,25 @@ public class TurnProgressionService {
         }
 
         TurnStep next = gameData.currentStep.next();
+        boolean nextUpkeepIsAdditional = false;
+
+        if (gameData.currentStep == TurnStep.UPKEEP && gameData.additionalUpkeepsRemaining > 0) {
+            next = TurnStep.UPKEEP;
+            gameData.additionalUpkeepsRemaining--;
+            nextUpkeepIsAdditional = true;
+        }
+
         boolean additionalCombatPhase = false;
 
-        if (gameData.currentStep == TurnStep.UNTAP
-                && next == TurnStep.UPKEEP
-                && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
-            next = TurnStep.PRECOMBAT_MAIN;
+        if (next == TurnStep.UPKEEP && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
+            if (nextUpkeepIsAdditional) {
+                while (gameData.additionalUpkeepsRemaining > 0) {
+                    gameData.additionalUpkeepsRemaining--;
+                }
+                next = TurnStep.DRAW;
+            } else if (gameData.currentStep == TurnStep.UNTAP) {
+                next = TurnStep.PRECOMBAT_MAIN;
+            }
             logSkippedPhase(gameData, "upkeep");
         }
 
@@ -239,6 +252,7 @@ public class TurnProgressionService {
 
         if (next != null) {
             gameData.currentStep = next;
+            gameData.currentUpkeepIsAdditional = next == TurnStep.UPKEEP && nextUpkeepIsAdditional;
             String logEntry = "Step: " + next.getDisplayName();
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - Step advanced to {}", gameData.id, next);
@@ -479,6 +493,8 @@ public class TurnProgressionService {
         gameData.turnNumber++;
         gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
         gameData.currentStep = TurnStep.first();
+        gameData.additionalUpkeepsRemaining = 0;
+        gameData.currentUpkeepIsAdditional = false;
         gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
@@ -503,12 +519,16 @@ public class TurnProgressionService {
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
         gameData.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn.clear();
         gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
+        gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
+        gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.playersWhoSacrificedArtifactsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
+        gameData.permanentsThatAttackedBattlesThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        gameData.playersMaxSpellsThisTurn.clear();
         Set<CardType> nextTurnRestrictedTypes = gameData.playersCantCastSpellTypesNextTurn.remove(nextActive);
         if (nextTurnRestrictedTypes != null) {
             gameData.playersCantCastSpellTypesThisTurn.merge(nextActive, nextTurnRestrictedTypes,
@@ -527,12 +547,15 @@ public class TurnProgressionService {
         gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.clear();
+        gameData.playersWhoDescendedThisTurn.clear();
+        gameData.descentsThisTurn.clear();
         gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.clear();
         gameData.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn.clear();
         gameData.cardsDiscardedOrCycledThisTurn.clear();
         gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.clear();
         gameData.cardsDiscardedByOpponentThisTurn.clear();
         gameData.playersWhosePermanentsLeftBattlefieldThisTurn.clear();
+        gameData.creatureLeftBattlefieldCountThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
@@ -543,6 +566,10 @@ public class TurnProgressionService {
         gameData.lifeLostLastTurn.clear();
         gameData.lifeLostLastTurn.putAll(gameData.lifeLostThisTurn);
         gameData.lifeLostThisTurn.clear();
+        gameData.playersDealtCombatDamageLastTurn.clear();
+        if (gameData.playersDealtCombatDamageSinceTheirLastTurn.remove(nextActive)) {
+            gameData.playersDealtCombatDamageLastTurn.add(nextActive);
+        }
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
@@ -550,6 +577,7 @@ public class TurnProgressionService {
         gameData.damageDealtThisTurnBySource.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
+        gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn.clear();
         gameData.creaturesThatSaddledPermanentThisTurn.clear();
         gameData.creaturesThatCrewedPermanentThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
@@ -587,6 +615,7 @@ public class TurnProgressionService {
         gameData.damageDealtToPlayersThisTurn.clear();
         gameData.artifactDamageDealtToPlayersThisTurn.clear();
         gameData.noncombatDamageDealtToPlayersThisTurn.clear();
+        gameData.redSourceNoncombatDamageThisTurn.clear();
         gameData.lastRedSpellDamagerThisTurn.clear();
         gameData.untappedLandsAtTurnStart.clear();
         gameData.handSizeAtTurnStart.clear();
@@ -601,6 +630,7 @@ public class TurnProgressionService {
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
+        gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
@@ -632,6 +662,7 @@ public class TurnProgressionService {
             p.setAttackedThisTurn(false);
             p.setBlockedThisTurn(false);
             p.setBecomeTargetCounterUsedThisTurn(false);
+            p.setBackupAbilityCopyUsedThisTurn(false);
             p.getChosenModeLabelsThisTurn().clear();
         });
         gameData.phasedOutPermanents.values().forEach(
@@ -648,6 +679,8 @@ public class TurnProgressionService {
             // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
             activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);
         }
+        gameData.additionalEnterCountersUntilNextTurn.remove(nextActive);
+        gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
         // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
         // player whose turn is beginning (its entries are keyed by that controlling player).
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
@@ -783,6 +816,7 @@ public class TurnProgressionService {
      * (log the turn start and broadcast game state).
      */
     public void completeTurnAdvance(GameData gameData) {
+        untapStepService.finishUntapStep(gameData, gameData.activePlayerId);
         String activeName = gameData.playerIdToName.get(gameData.activePlayerId);
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + activeName + "'s turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));

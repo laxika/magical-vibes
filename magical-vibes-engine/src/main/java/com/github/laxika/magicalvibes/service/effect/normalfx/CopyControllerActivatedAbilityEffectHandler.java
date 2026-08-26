@@ -44,6 +44,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
         StackEntry copyEntry = copySupport.createCopyStackEntry(snapshot, copyCard, copyControllerId, snapshot.getTargetId());
         copyEntry.setTargetFilter(snapshot.getTargetFilter());
         copyEntry.setDamageSourceCard(snapshot.getDamageSourceCard());
+        copyEntry.setNonTargeting(snapshot.isNonTargeting());
 
         copySupport.addCopyToStack(gameData, copyEntry);
 
@@ -54,6 +55,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
         // a copy with no target, or a multi-target ability, keeps the original targets.
         boolean singleTarget = snapshot.getTargetId() != null
                 && (snapshot.getTargetIds() == null || snapshot.getTargetIds().size() <= 1)
+                && !snapshot.isNonTargeting()
                 && e.ability() != null && !e.ability().isMultiTarget();
         if (singleTarget) {
             PendingMayAbility retargetAbility = new PendingMayAbility(

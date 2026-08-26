@@ -31,6 +31,8 @@ class WardscaleCrocodileTest extends BaseCardTest {
         Permanent crocodile = addCreatureReady(player1, new WardscaleCrocodile());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, crocodile.getId(), null))
                 .isInstanceOf(IllegalStateException.class)

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PCY", collectorNumber = "115")
+@CardRegistration(set = "TSB", collectorNumber = "81")
 public class JolraelEmpressOfBeasts extends Card {
 
     public JolraelEmpressOfBeasts() {

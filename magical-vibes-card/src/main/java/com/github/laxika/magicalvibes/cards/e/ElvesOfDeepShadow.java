@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "76")
+@CardRegistration(set = "RAV", collectorNumber = "161")
 public class ElvesOfDeepShadow extends Card {
 
     public ElvesOfDeepShadow() {

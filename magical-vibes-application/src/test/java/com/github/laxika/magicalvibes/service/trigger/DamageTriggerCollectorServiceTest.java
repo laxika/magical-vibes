@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -40,12 +42,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -88,6 +92,9 @@ class DamageTriggerCollectorServiceTest {
 
     @Mock
     private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+
+    @Mock
+    private TapUntapSupport tapUntapSupport;
 
     @InjectMocks
     private DamageTriggerCollectorService sut;
@@ -276,6 +283,30 @@ class DamageTriggerCollectorServiceTest {
                 EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
 
         assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("routes self combat-damage graveyard targets through the graveyard choice")
+    void queuesSelfCombatDamageGraveyardTarget() {
+        Permanent source = createPermanent("Archpriest of Shadows");
+        var effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardTypePredicate(CardType.CREATURE))
+                .targetGraveyard(true)
+                .build();
+        var ctx = new TriggerContext.SourceDealsCombatDamage(
+                source.getCard(), player1Id, source.getId(), 4);
+
+        boolean result = registry.dispatch(
+                match(source, player1Id, effect),
+                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class).minCount())
+                .isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -597,6 +628,26 @@ class DamageTriggerCollectorServiceTest {
                     any(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class),
                     eq(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT),
                     any(), any());
+        }
+
+        @Test
+        @DisplayName("untaps the trigger permanent when the effect requests it")
+        void untapsWhenRequested() {
+            Permanent triggerPerm = createPermanent("Contested Game Ball");
+            Permanent sourcePerm = createPermanent("Grizzly Bears");
+            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true, true);
+            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
+
+            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
+            when(gameQueryService.isCreature(gd, sourcePerm)).thenReturn(true);
+            when(gameQueryService.findPermanentController(gd, sourcePerm.getId())).thenReturn(player2Id);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(tapUntapSupport).untapPermanent(gd, triggerPerm);
         }
 
         @Test

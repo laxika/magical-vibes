@@ -60,6 +60,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             case TARGET_SPELL_CONTROLLER -> findTargetSpellControllerId(gameData, targetId);
             case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId() != null
                     ? entry.getTriggeringPermanentControllerId() : targetId;
+            case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetId == null
+                    ? null
+                    : gameData.playerIds.contains(targetId)
+                    ? targetId
+                    : gameQueryService.findPermanentController(gameData, targetId);
+            case TRIGGERING_SPELL_CONTROLLER -> targetId;
         };
         if (choicePlayerId == null) {
             gameData.resolvingMayEffectFromStack = false;

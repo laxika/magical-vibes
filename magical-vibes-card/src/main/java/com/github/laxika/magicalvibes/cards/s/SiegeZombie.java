@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "131")
+@CardRegistration(set = "MID", collectorNumber = "121")
 public class SiegeZombie extends Card {
 
     public SiegeZombie() {

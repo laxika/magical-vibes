@@ -46,6 +46,7 @@ class StormTheCitadelTest extends BaseCardTest {
 
         castStormTheCitadel();
         attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
         resolveCombat();
         harness.passBothPriorities();
 

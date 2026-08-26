@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "27")
+@CardRegistration(set = "TOR", collectorNumber = "12")
 public class PayNoHeed extends Card {
 
     public PayNoHeed() {

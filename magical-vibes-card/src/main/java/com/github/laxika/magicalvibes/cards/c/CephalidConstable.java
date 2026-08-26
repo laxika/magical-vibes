@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "72")
+@CardRegistration(set = "JUD", collectorNumber = "35")
 public class CephalidConstable extends Card {
 
     public CephalidConstable() {

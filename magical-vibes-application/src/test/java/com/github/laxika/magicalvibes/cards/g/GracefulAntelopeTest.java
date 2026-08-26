@@ -21,11 +21,10 @@ class GracefulAntelopeTest extends BaseCardTest {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
         resolveCombatAndTrigger();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, mountain.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.PLAINS);
 
@@ -41,6 +40,8 @@ class GracefulAntelopeTest extends BaseCardTest {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
         resolveCombatAndTrigger();
+        harness.handlePermanentChosen(player1, mountain.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
@@ -54,7 +55,6 @@ class GracefulAntelopeTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombatAndTrigger();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -62,6 +62,7 @@ class GracefulAntelopeTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, mountain.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     private Permanent attackWithAntelope(Player player) {

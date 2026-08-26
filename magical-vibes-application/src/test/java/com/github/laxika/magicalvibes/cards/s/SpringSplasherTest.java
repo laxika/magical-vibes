@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -30,9 +31,7 @@ class SpringSplasherTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(-3);
         assertThat(target.getToughnessModifier()).isZero();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();

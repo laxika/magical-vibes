@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -2058,6 +2059,27 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("getAdditionalDamageToOpponentsBonus")
+    class AdditionalDamageToOpponentsBonus {
+
+        @Test
+        @DisplayName("applies only to matching-color sources and opponents")
+        void appliesOnlyToMatchingColorSourcesAndOpponents() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Torbran", new AdditionalDamageToOpponentsFromColorSourcesEffect(2, CardColor.RED)));
+            Card redSource = createCreature("Red Source", 1, 1, CardColor.RED);
+            Card greenSource = createCreature("Green Source", 1, 1, CardColor.GREEN);
+
+            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, redSource, null, player2Id))
+                    .isEqualTo(2);
+            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, greenSource, null, player2Id))
+                    .isZero();
+            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, redSource, null, player1Id))
+                    .isZero();
+        }
+    }
+
     // ===== getEnchantedPlayerDamageMultiplier =====
 
     @Nested
@@ -3190,6 +3212,22 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(gqs.getEffectiveColors(gd, perm)).containsExactly(CardColor.GREEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("getEffectiveCardTypes")
+    class GetEffectiveCardTypes {
+
+        @Test
+        @DisplayName("includes intrinsic and additional card types")
+        void includesIntrinsicAndAdditionalCardTypes() {
+            Card card = createCreature("Artifact Creature", 2, 2, CardColor.GREEN);
+            card.setAdditionalTypes(EnumSet.of(CardType.ARTIFACT));
+            Permanent perm = addPermanent(player1Id, card);
+
+            assertThat(gqs.getEffectiveCardTypes(gd, perm))
+                    .containsExactlyInAnyOrder(CardType.CREATURE, CardType.ARTIFACT);
         }
     }
 

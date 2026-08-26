@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "DRB", collectorNumber = "4")
 @CardRegistration(set = "4ED", collectorNumber = "186")
 @CardRegistration(set = "SUM", collectorNumber = "143")
+@CardRegistration(set = "TSB", collectorNumber = "59")
 public class DragonWhelp extends Card {
 
     public DragonWhelp() {

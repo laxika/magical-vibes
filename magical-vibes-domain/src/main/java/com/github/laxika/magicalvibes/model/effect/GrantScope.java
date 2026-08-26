@@ -10,6 +10,8 @@ public enum GrantScope {
      */
     SELF_AND_PAIRED,
     TARGET,
+    /** The target creature and every other creature sharing a color with it. */
+    TARGET_AND_SHARING_CREATURES,
     ENCHANTED_CREATURE,
     ENCHANTED_PERMANENT,
     EQUIPPED_CREATURE,

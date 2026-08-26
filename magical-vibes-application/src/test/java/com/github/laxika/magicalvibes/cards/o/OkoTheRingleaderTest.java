@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,15 +29,14 @@ class OkoTheRingleaderTest extends BaseCardTest {
     void copiesCreatureAndGrantsHexproofUntilEndOfTurn() {
         Permanent oko = addReadyOko(player1, 3);
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, oko)).isTrue();
         assertThat(gqs.hasKeyword(gd, oko, Keyword.HEXPROOF)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
         assertThat(gqs.isPlaneswalker(gd, oko)).isTrue();
         assertThat(gqs.hasKeyword(gd, oko, Keyword.HEXPROOF)).isFalse();

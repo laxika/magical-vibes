@@ -193,17 +193,26 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /**
      * A "for each of these permanents, you may search your library for a card with the same name and
      * put it onto the battlefield" queue: the {@code names} still to be searched for, whether only
-     * creature cards qualify ({@code creatureOnly}, Doubling Chant) and where the found card goes.
+     * creature cards qualify ({@code creatureOnly}, Doubling Chant), whether each search is optional,
+     * and where the found card goes.
      */
     public record SameNamePickQueue(List<String> names, boolean creatureOnly,
-                                    LibrarySearchDestination destination) {
+                                    LibrarySearchDestination destination,
+                                    UUID libraryOwnerId, UUID battlefieldControllerId,
+                                    boolean optional) {
+
+        public SameNamePickQueue(List<String> names, boolean creatureOnly,
+                                 LibrarySearchDestination destination) {
+            this(names, creatureOnly, destination, null, null, true);
+        }
 
         public SameNamePickQueue {
             names = List.copyOf(names);
         }
 
         public SameNamePickQueue withNames(List<String> remaining) {
-            return new SameNamePickQueue(remaining, creatureOnly, destination);
+            return new SameNamePickQueue(remaining, creatureOnly, destination,
+                    libraryOwnerId, battlefieldControllerId, optional);
         }
     }
 
@@ -494,6 +503,25 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                                       LibrarySearchDestination destination) {
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
                 new SameNamePickQueue(names, creatureOnly, destination), List.of(), null, null, null);
+    }
+
+    /** The same-name queue with a separately searched library and battlefield controller. */
+    public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
+                                                      LibrarySearchDestination destination,
+                                                      UUID libraryOwnerId, UUID battlefieldControllerId) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
+                new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId, true),
+                List.of(), null, null, null);
+    }
+
+    /** The same-name queue with explicit mandatory-versus-optional searches. */
+    public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
+                                                      LibrarySearchDestination destination,
+                                                      UUID libraryOwnerId, UUID battlefieldControllerId,
+                                                      boolean optional) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
+                new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId, optional),
+                List.of(), null, null, null);
     }
 
     /** The queue of colours still to search for, one card per colour to hand (Conflux). */

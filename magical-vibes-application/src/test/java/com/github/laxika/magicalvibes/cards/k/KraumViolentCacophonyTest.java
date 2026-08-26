@@ -28,13 +28,13 @@ class KraumViolentCacophonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(kraum.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(kraum.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
 
         harness.castInstant(player1, 0, player2.getId());

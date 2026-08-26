@@ -32,6 +32,7 @@ class SurveillanceMonitorTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -43,8 +44,8 @@ class SurveillanceMonitorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(p -> p.getCard().isToken())
                 .singleElement().satisfies(thopter -> {
-                    assertThat(gqs.getEffectivePower(thopter)).isEqualTo(1);
-                    assertThat(gqs.getEffectiveToughness(thopter)).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(1);
                     assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
                     assertThat(thopter.getCard().hasType(CardType.ARTIFACT)).isTrue();
                 });
@@ -77,6 +78,7 @@ class SurveillanceMonitorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId())))
