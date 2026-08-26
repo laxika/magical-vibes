@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -64,12 +66,9 @@ class TheMillenniumCalendarTest extends BaseCardTest {
     }
 
     private void runUntapStep(Player untappingPlayer) {
-        Player opponent = untappingPlayer.equals(player1) ? player2 : player1;
-        harness.forceActivePlayer(opponent);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(untappingPlayer);
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(UntapStepService.class)
+                .finishUntapStep(gd, untappingPlayer.getId()));
     }
 }

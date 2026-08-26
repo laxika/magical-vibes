@@ -56,6 +56,6 @@ class MarketGnomeTest extends BaseCardTest {
 
         harness.assertLife(player1, 11);
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).contains("Plains");
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bricks);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bricks);
     }
 }

@@ -31,7 +31,7 @@ class TheBelligerentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveFromLibraryTop(player1, player2.getId());
 
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 13);
     }
 
     @Test
@@ -79,7 +79,7 @@ class TheBelligerentTest extends BaseCardTest {
         crew.setSummoningSick(false);
         harness.setLibrary(player1, List.of(topCard));
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         declareAttackers(player1, List.of(0));

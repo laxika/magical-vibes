@@ -1258,6 +1258,7 @@ public class ManaCost {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
             if (artifactContext) {
+                available += pool.getArtifactOnlyMana(entry.getKey());
                 available += pool.getArtifactSpellOrAbilityOnlyMana(entry.getKey());
             }
             if (instantSorceryOnlyColorlessContext) {
@@ -1280,6 +1281,7 @@ public class ManaCost {
         }
         if (artifactContext) {
             remaining += pool.getArtifactOnlyColorless();
+            remaining += pool.getArtifactOnlyManaTotal() - artifactOnlyManaUsedForColoredCosts(pool);
             remaining += pool.getArtifactSpellOrAbilityOnlyManaTotal()
                     - artifactSpellOrAbilityOnlyManaUsedForColoredCosts(pool);
         }
@@ -1321,6 +1323,7 @@ public class ManaCost {
             for (ManaColor color : ManaColor.values()) {
                 int amount = pool.get(color);
                 if (artifactContext) {
+                    amount += pool.getArtifactOnlyMana(color);
                     amount += pool.getArtifactSpellOrAbilityOnlyMana(color);
                 }
                 if (instantSorceryOnlyColorlessContext) {

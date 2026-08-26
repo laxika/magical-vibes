@@ -49,8 +49,10 @@ class TheEnigmaJewelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(jewel.getCard()).isInstanceOf(LocusOfEnlightenment.class);
-        assertThat(gd.getCardsExiledByPermanent(jewel.getId()))
+        Permanent locus = findPermanent(player1, "Locus of Enlightenment");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(jewel);
+        assertThat(locus.getCard()).isInstanceOf(LocusOfEnlightenment.class);
+        assertThat(gd.getCardsExiledByPermanent(locus.getId()))
                 .hasSize(4)
                 .allMatch(card -> card instanceof CutthroatCenturion);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -74,20 +76,23 @@ class TheEnigmaJewelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(jewel.getCard()).isInstanceOf(LocusOfEnlightenment.class);
+        Permanent locus = findPermanent(player1, "Locus of Enlightenment");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(jewel);
+        assertThat(locus.getCard()).isInstanceOf(LocusOfEnlightenment.class);
         harness.clearPriorityPassed();
-        harness.activateAbility(player1, 0, 0, null, null);
+        int locusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(locus);
+        harness.activateAbility(player1, locusIndex, 0, null, null);
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         harness.handlePermanentChosen(player1, firstSacrifice.getId());
         resolveAllTriggers();
 
-        assertThat(jewel.getPowerModifier()).isEqualTo(4);
-        assertThat(jewel.getToughnessModifier()).isEqualTo(4);
+        assertThat(locus.getPowerModifier()).isEqualTo(4);
+        assertThat(locus.getToughnessModifier()).isEqualTo(4);
 
         harness.clearPriorityPassed();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, locusIndex, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no more than 1");
     }

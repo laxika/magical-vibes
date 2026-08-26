@@ -33,6 +33,7 @@ class TrumpetingCarnosaurTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);

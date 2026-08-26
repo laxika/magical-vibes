@@ -75,5 +75,6 @@ class OltecArchaeologistsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0, mode);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }

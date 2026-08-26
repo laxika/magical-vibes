@@ -31,7 +31,7 @@ class ConfoundingRiddleTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardsChosen(List.of(chosen.getId())));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, third, fourth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third, fourth);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

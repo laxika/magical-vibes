@@ -32,6 +32,7 @@ class VisageOfDreadTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.RevealedHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);

@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,6 +105,7 @@ class AbilityActivationServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private ExileService exileService;
     @Mock private AmountEvaluationService amountEvaluationService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks

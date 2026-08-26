@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.CrypticCaves;
+import com.github.laxika.magicalvibes.cards.c.CavernousMaw;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,13 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScamperingSurveyor.class, CrypticCaves.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ScamperingSurveyor.class, CavernousMaw.class, Forest.class, GrizzlyBears.class})
 class ScamperingSurveyorTest extends BaseCardTest {
 
     @Test
     void searchesForABasicLandOrCaveAndPutsItOntoTheBattlefieldTapped() {
         Card basicLand = new Forest();
-        Card cave = new CrypticCaves();
+        Card cave = new CavernousMaw();
         Card nonmatching = new GrizzlyBears();
         castSurveyor(List.of(basicLand, cave, nonmatching));
 

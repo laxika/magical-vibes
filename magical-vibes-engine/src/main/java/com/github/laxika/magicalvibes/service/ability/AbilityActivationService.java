@@ -3737,7 +3737,8 @@ public class AbilityActivationService {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.CraftMaterialChoice(
                         playerId, permanent.getId(), effectiveIndex, effectiveXValue, targetId, targetZone,
                         targetIds, damageAssignments, candidates,
-                        craftMaterialCost.minimumCount(), craftMaterialCost.minimumCount(),
+                        craftMaterialCost.minimumCount(), craftMaterialCost.allowsAdditionalMaterials()
+                                ? candidates.size() : craftMaterialCost.minimumCount(),
                         permanent.getCard().getName() + " - choose " + craftMaterialPrompt(craftMaterialCost) + "."));
                 mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
@@ -4889,7 +4890,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Not awaiting craft material choice");
         }
         if (cardIds == null
-                || cardIds.size() != choice.minimumCards()
+                || cardIds.size() < choice.minimumCards()
+                || cardIds.size() > choice.maximumCards()
                 || new HashSet<>(cardIds).size() != cardIds.size()
                 || !choice.validCardIds().containsAll(cardIds)) {
             throw new IllegalStateException("Choose between " + choice.minimumCards() + " and "
@@ -5056,7 +5058,8 @@ public class AbilityActivationService {
 
     private void payCraftMaterialCost(GameData gameData, Player player, Permanent source, List<UUID> cardIds,
                                       CraftMaterialCost cost) {
-        if (cardIds == null || cardIds.size() != cost.minimumCount()
+        if (cardIds == null || cardIds.size() < cost.minimumCount()
+                || (!cost.allowsAdditionalMaterials() && cardIds.size() > cost.minimumCount())
                 || new HashSet<>(cardIds).size() != cardIds.size()) {
             throw new IllegalStateException("Not enough distinct craft materials selected");
         }

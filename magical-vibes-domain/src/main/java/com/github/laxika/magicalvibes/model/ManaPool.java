@@ -2016,6 +2016,7 @@ public class ManaPool {
     }
 
     public void addCreatureSourceCreatureSpellOnlyMana(ManaColor color, int amount) {
+        addCreatureSpellOnlyMana(color, amount);
         creatureSourceCreatureSpellOnlyMana.merge(color, amount, Integer::sum);
     }
 

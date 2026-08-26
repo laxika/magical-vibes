@@ -27,6 +27,7 @@ class SpelunkingTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -44,6 +45,7 @@ class SpelunkingTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, 20);
@@ -58,6 +60,7 @@ class SpelunkingTest extends BaseCardTest {
         addManaForSpelunking();
 
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -75,6 +78,7 @@ class SpelunkingTest extends BaseCardTest {
         addManaForSpelunking();
 
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

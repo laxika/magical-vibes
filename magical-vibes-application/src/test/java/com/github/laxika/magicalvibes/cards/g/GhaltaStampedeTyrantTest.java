@@ -31,6 +31,7 @@ class GhaltaStampedeTyrantTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         var choice = (PendingInteraction.HandCardChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIndices()).containsExactlyInAnyOrder(0, 1);
@@ -57,6 +58,7 @@ class GhaltaStampedeTyrantTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, -1);
 

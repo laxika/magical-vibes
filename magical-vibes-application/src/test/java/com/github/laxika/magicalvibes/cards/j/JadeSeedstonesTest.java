@@ -29,9 +29,9 @@ class JadeSeedstonesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

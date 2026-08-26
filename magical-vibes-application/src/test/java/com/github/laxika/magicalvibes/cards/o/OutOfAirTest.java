@@ -93,14 +93,14 @@ class OutOfAirTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         Shock shock = new Shock();
         harness.setHand(player1, List.of(bears, shock));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.setHand(player2, List.of(new OutOfAir()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passPriority(player1);
         harness.castInstant(player1, 0, target.getId());
         harness.passPriority(player1);
 

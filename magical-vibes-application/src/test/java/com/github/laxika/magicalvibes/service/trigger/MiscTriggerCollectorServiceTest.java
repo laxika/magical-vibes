@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -436,7 +437,7 @@ class MiscTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AllySacrificed(player1Id, clue);
 
             when(predicateEvaluationService.matchesPermanentPredicate(
-                    any(GameData.class), any(Permanent.class), any(PermanentPredicate.class)))
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(

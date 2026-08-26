@@ -69,7 +69,9 @@ class StalactiteStalkerTest extends BaseCardTest {
     private void sacrificeForestToDescend() {
         harness.addToBattlefield(player1, new ZuranOrb());
         harness.addToBattlefield(player1, new Forest());
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Zuran Orb")),
+                null, null);
         harness.passBothPriorities();
     }
 

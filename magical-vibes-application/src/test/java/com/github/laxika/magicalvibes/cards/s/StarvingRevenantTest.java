@@ -33,6 +33,7 @@ class StarvingRevenantTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         gs.handleInteractionAnswer(gd, player1,

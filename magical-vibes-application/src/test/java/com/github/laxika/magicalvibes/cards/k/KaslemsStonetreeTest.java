@@ -29,6 +29,7 @@ class KaslemsStonetreeTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);

@@ -79,11 +79,6 @@ class MalametBrawlerTest extends BaseCardTest {
     }
 
     private void declareMalametAttackers(List<Integer> attackers) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        harness.inMutationScope(() -> harness.getCombatAttackService()
-                .declareAttackers(gd, player1, attackers, null, null));
+        declareAttackers(player1, attackers);
     }
 }

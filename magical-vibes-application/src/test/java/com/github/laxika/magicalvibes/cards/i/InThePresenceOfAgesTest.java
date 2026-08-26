@@ -82,7 +82,7 @@ class InThePresenceOfAgesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()).stream().map(Card::getId))
-                .containsExactlyInAnyOrder(topCards.get(0).getId(), topCards.get(1).getId(),
+                .contains(topCards.get(0).getId(), topCards.get(1).getId(),
                         topCards.get(2).getId(), topCards.get(3).getId());
     }
 

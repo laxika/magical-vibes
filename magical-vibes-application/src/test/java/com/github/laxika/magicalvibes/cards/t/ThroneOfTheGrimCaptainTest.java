@@ -89,8 +89,9 @@ class ThroneOfTheGrimCaptainTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
-        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(permanent ->
-                permanent.getCard() == returned && permanent.isTapped() && permanent.isAttacking());
+        Permanent returnedPermanent = findPermanent(player1, returned.getName());
+        assertThat(returnedPermanent.isTapped()).isTrue();
+        harness.assertLife(player2, 12);
     }
 
     private Permanent addReadyCaptain() {

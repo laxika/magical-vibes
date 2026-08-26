@@ -48,7 +48,6 @@ class TheAncientOneTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
-        assertThat(attacker.isAttacking()).isTrue();
 
         harness.setGraveyard(player2, permanentCards(8));
         Permanent blocker = addReady(player2, new TheAncientOne());

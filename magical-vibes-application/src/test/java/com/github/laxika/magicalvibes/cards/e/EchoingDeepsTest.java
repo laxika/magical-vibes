@@ -47,7 +47,7 @@ class EchoingDeepsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(forest);
 
         entered.untap();
-        harness.activateAbility(player1, 0, 0, null);
+        harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }

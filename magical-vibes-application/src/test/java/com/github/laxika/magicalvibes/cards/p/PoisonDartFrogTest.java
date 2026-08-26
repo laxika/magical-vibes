@@ -32,7 +32,7 @@ class PoisonDartFrogTest extends BaseCardTest {
         Permanent frog = addCreatureReady(player1, new PoisonDartFrog());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, frog, Keyword.DEATHTOUCH)).isTrue();

@@ -86,6 +86,6 @@ class KitesailLarcenistTest extends BaseCardTest {
     private void assertTreasure(Permanent permanent) {
         assertThat(gqs.isArtifact(gd, permanent)).isTrue();
         assertThat(gqs.isCreature(gd, permanent)).isFalse();
-        assertThat(permanent.getCard().getSubtypes()).contains(CardSubtype.TREASURE);
+        assertThat(gqs.computeStaticBonus(gd, permanent).grantedSubtypes()).contains(CardSubtype.TREASURE);
     }
 }

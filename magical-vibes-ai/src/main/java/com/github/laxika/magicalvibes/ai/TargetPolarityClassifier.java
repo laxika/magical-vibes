@@ -371,6 +371,7 @@ public class TargetPolarityClassifier {
             entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ShuffleTargetPermanentIntoLibraryThenDiscoverEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("EquipoiseEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
@@ -515,6 +516,7 @@ public class TargetPolarityClassifier {
             entry("GrantColorEffect", TargetPolarity.NEUTRAL),
             entry("GrantColorUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantSubtypeEffect", TargetPolarity.NEUTRAL),
+            entry("GrantSubtypeToTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("MoveCounterFromTargetCreatureToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("RemoveAllCountersFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
@@ -523,6 +525,7 @@ public class TargetPolarityClassifier {
             entry("SetTargetColorEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetPermanentNameEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetPermanentSupertypeEffect", TargetPolarity.NEUTRAL),
+            entry("SetCardTypesEffect", TargetPolarity.HARMFUL),
             entry("SetChosenColorForTargetCreaturesUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL),

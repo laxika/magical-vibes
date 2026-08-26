@@ -25,7 +25,12 @@ class BraidedNetTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with three net counters and locks another nonland permanent while tapped")
     void entersAndLocksAnotherPermanent() {
-        Permanent net = harness.addToBattlefieldAndReturn(player1, new BraidedNet());
+        harness.setHand(player1, List.of(new BraidedNet()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent net = findPermanent(player1, "Braided Net");
         Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         elves.setSummoningSick(false);
 
@@ -36,7 +41,7 @@ class BraidedNetTest extends BaseCardTest {
         assertThat(elves.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.tapPermanent(player1, 1))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be activated");
+                .hasMessageContaining("already tapped");
         assertThat(net.getCounterCount(CounterType.NET)).isEqualTo(2);
     }
 
@@ -66,6 +71,7 @@ class BraidedNetTest extends BaseCardTest {
         Card first = new GrizzlyBears();
         Card second = new HillGiant();
         Card third = new LlanowarElves();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, second, third));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);

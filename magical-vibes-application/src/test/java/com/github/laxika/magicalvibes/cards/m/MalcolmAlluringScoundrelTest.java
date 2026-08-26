@@ -29,6 +29,7 @@ class MalcolmAlluringScoundrelTest extends BaseCardTest {
         assertThat(malcolm.getCounterCount(CounterType.CHORUS)).isEqualTo(4);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -65,6 +66,7 @@ class MalcolmAlluringScoundrelTest extends BaseCardTest {
         harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(malcolm);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);

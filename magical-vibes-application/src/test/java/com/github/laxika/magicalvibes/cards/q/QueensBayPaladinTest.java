@@ -40,7 +40,7 @@ class QueensBayPaladinTest extends BaseCardTest {
 
         Permanent returned = findPermanentByCardId(vampire.getId());
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
-        harness.assertLife(player1, 18);
+        harness.assertLife(player1, 17);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -61,7 +61,7 @@ class QueensBayPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanentByCardId(vampire.getId()).getCounterCount(CounterType.FINALITY)).isEqualTo(1);
-        harness.assertLife(player1, 18);
+        harness.assertLife(player1, 17);
     }
 
     @Test

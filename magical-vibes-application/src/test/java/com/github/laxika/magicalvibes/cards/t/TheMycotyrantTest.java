@@ -35,8 +35,8 @@ class TheMycotyrantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, mycotyrant)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, mycotyrant)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mycotyrant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mycotyrant)).isEqualTo(4);
     }
 
     @Test

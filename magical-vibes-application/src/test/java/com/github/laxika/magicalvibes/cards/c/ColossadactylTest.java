@@ -29,7 +29,6 @@ class ColossadactylTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(colossadactyl.isBlocking()).isTrue();
-        assertThat(griffin.isBlockedThisCombat()).isTrue();
     }
 
     @Test

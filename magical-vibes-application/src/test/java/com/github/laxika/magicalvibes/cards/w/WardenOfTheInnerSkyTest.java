@@ -48,9 +48,6 @@ class WardenOfTheInnerSkyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handlePermanentChosen(player1, warden.getId());
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(warden.isTapped()).isTrue();
         assertThat(artifact.isTapped()).isTrue();

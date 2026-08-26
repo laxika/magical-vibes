@@ -47,10 +47,12 @@ class VitoFanaticOfAclazotzTest extends BaseCardTest {
     }
 
     private void sacrifice(Permanent permanent) {
-        assertThat(gd.playerBattlefields.get(player1.getId()).remove(permanent)).isTrue();
-        gd.playerGraveyards.get(player1.getId()).add(permanent.getCard());
-        harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), permanent.getCard());
+        harness.inMutationScope(() -> {
+            assertThat(gd.playerBattlefields.get(player1.getId()).remove(permanent)).isTrue();
+            gd.playerGraveyards.get(player1.getId()).add(permanent.getCard());
+            harness.getTriggerCollectionService()
+                    .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), permanent.getCard());
+        });
         resolveAllTriggers();
     }
 }

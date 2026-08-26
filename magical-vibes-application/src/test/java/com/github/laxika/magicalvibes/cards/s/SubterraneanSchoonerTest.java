@@ -21,7 +21,7 @@ class SubterraneanSchoonerTest extends BaseCardTest {
         Permanent crewer = addCreatureReady(player1, new GrizzlyBears());
         Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
 
-        crewSchooner();
+        crewSchooner(crewer);
         declareAttackers(List.of(0));
 
         PendingInteraction.PermanentChoice choice =
@@ -39,7 +39,7 @@ class SubterraneanSchoonerTest extends BaseCardTest {
         Forest topLand = new Forest();
         harness.setLibrary(player1, List.of(topLand));
 
-        crewSchooner();
+        crewSchooner(crewer);
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, crewer.getId());
         harness.passBothPriorities();
@@ -53,8 +53,11 @@ class SubterraneanSchoonerTest extends BaseCardTest {
         return schooner;
     }
 
-    private void crewSchooner() {
+    private void crewSchooner(Permanent crewer) {
         harness.activateAbility(player1, 0, null, null);
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, crewer.getId());
+        }
         harness.passBothPriorities();
     }
 }

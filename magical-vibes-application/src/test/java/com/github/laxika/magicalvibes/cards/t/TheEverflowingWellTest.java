@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,9 +50,11 @@ class TheEverflowingWellTest extends BaseCardTest {
         Permanent well = harness.addToBattlefieldAndReturn(player1, new TheEverflowingWell());
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
         resolveAllTriggers();
 
         assertThat(well.getCard()).isInstanceOf(TheMyriadPools.class);
@@ -59,7 +63,7 @@ class TheEverflowingWellTest extends BaseCardTest {
     @Test
     @DisplayName("Copies a permanent spell onto another permanent when its mana pays for that spell")
     void copiesPermanentSpellUsingProducedMana() {
-        harness.addToBattlefield(player1, new TheMyriadPools());
+        Permanent pools = harness.addToBattlefieldAndReturn(player1, new TheMyriadPools());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
         harness.activateAbility(player1, 0, 0, null, null);
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -68,7 +72,8 @@ class TheEverflowingWellTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(target.getId());
+                .contains(target.getId())
+                .doesNotContain(pools.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

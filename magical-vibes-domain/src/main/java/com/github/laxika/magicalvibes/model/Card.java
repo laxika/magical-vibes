@@ -193,7 +193,7 @@ public class Card {
     @Getter(AccessLevel.NONE)
     private final List<SpellTarget> spellTargets = new ArrayList<>();
     @Getter(AccessLevel.NONE)
-    private final Map<CardEffect, Integer> effectTargetIndexMap = new IdentityHashMap<>();
+    private final Map<CardEffect, List<Integer>> effectTargetIndexMap = new IdentityHashMap<>();
     // Runtime override set by modal spells (ChooseOneEffect) at cast time — only ever written on
     // an unfrozen runtime copy (see SpellCastingService's modal copy-on-cast)
     private TargetFilter castTimeTargetFilter;
@@ -328,7 +328,8 @@ public class Card {
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
-        this.effectTargetIndexMap.putAll(source.effectTargetIndexMap);
+        source.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                this.effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         this.castTimeTargetFilter = source.castTimeTargetFilter;
         this.watermark = source.watermark;
         this.backFaceCard = source.backFaceCard;
@@ -409,7 +410,8 @@ public class Card {
         this.spellTargets.clear();
         this.spellTargets.addAll(face.spellTargets);
         this.effectTargetIndexMap.clear();
-        this.effectTargetIndexMap.putAll(face.effectTargetIndexMap);
+        face.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                this.effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         this.castTimeTargetFilter = face.castTimeTargetFilter;
         this.watermark = face.watermark;
         this.castingOptions = new ArrayList<>(face.castingOptions);
@@ -616,7 +618,7 @@ public class Card {
             return;
         }
         assertMutable();
-        effectTargetIndexMap.put(effect, targetIndex);
+        effectTargetIndexMap.computeIfAbsent(effect, ignored -> new ArrayList<>()).add(targetIndex);
         switch (effect) {
             case ConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case ConditionalReplacementEffect e -> {
@@ -686,8 +688,9 @@ public class Card {
                     sourceTarget.getDynamicMaxTargets());
             spellTargets.add(target);
         }
-        source.effectTargetIndexMap.forEach((effect, targetIndex) ->
-                registerEffectTargetIndex(effect, targetIndexOffset + targetIndex));
+        source.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                targetIndices.forEach(targetIndex ->
+                        registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
     }
 
     /**
@@ -813,7 +816,29 @@ public class Card {
      * Returns the target index for the given effect instance, or -1 if not mapped.
      */
     public int getEffectTargetIndex(CardEffect effect) {
-        return effectTargetIndexMap.getOrDefault(effect, -1);
+        return getEffectTargetIndex(effect, 0);
+    }
+
+    /**
+     * Returns the target index for a particular occurrence of an effect instance. Repeatable modal
+     * spells can insert the same immutable effect object more than once, with a distinct target
+     * group for each selection.
+     */
+    public int getEffectTargetIndex(CardEffect effect, int occurrence) {
+        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        if (targetIndices == null || occurrence < 0 || occurrence >= targetIndices.size()) {
+            return -1;
+        }
+        return targetIndices.get(occurrence);
+    }
+
+    public boolean hasEffectTargetIndex(CardEffect effect) {
+        return effectTargetIndexMap.containsKey(effect);
+    }
+
+    public boolean isEffectBoundToTargetGroup(CardEffect effect, int groupIndex) {
+        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        return targetIndices != null && targetIndices.contains(groupIndex);
     }
 
     /**
@@ -823,7 +848,7 @@ public class Card {
      * second group); such a group is never a gated-out trigger group.
      */
     public boolean bindsEffectToTargetGroup(int groupIndex) {
-        return effectTargetIndexMap.containsValue(groupIndex);
+        return effectTargetIndexMap.values().stream().anyMatch(indices -> indices.contains(groupIndex));
     }
 
     /**
@@ -841,8 +866,9 @@ public class Card {
             cumulative += st.getMaxTargets();
             if (expandedPosition < cumulative) {
                 int groupIndex = st.getIndex();
-                for (Map.Entry<CardEffect, Integer> entry : effectTargetIndexMap.entrySet()) {
-                    if (entry.getValue() == groupIndex && entry.getKey().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                for (Map.Entry<CardEffect, List<Integer>> entry : effectTargetIndexMap.entrySet()) {
+                    if (entry.getValue().contains(groupIndex)
+                            && entry.getKey().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         return true;
                     }
                 }
@@ -864,7 +890,8 @@ public class Card {
                     st.getKickedMinTargets(), st.getKickedMaxTargets(), st.getIndex(), st.isXScaled(),
                     st.getDynamicMinTargets(), st.getDynamicMaxTargets()));
         }
-        effectTargetIndexMap.putAll(original.effectTargetIndexMap);
+        original.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         castTimeTargetFilter = original.castTimeTargetFilter;
     }
 
@@ -1236,6 +1263,7 @@ public class Card {
      * Returns 0 if the card has no chapter abilities.
      */
     public int getSagaFinalChapter() {
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_II).isEmpty()) return 2;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_I).isEmpty()) return 1;
