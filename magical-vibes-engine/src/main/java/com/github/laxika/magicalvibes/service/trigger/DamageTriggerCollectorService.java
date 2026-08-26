@@ -553,6 +553,15 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
+    private boolean handleAnyCreatureDealtDamageMay(TriggerMatchContext match, MayEffect effect,
+                                                     TriggerContext ctx) {
+        TriggerContext.AnyCreatureDealtDamage dc = (TriggerContext.AnyCreatureDealtDamage) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        return enqueueAnyCreatureDealtDamage(match, effect, dc);
+    }
+
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
             slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
     private boolean handleAnyCreatureDealtDamagePermanentConditional(TriggerMatchContext match,
@@ -595,6 +604,8 @@ public class DamageTriggerCollectorService {
         );
         entry.setTargetId(dc.damagedCreature().getId());
         entry.setEventValue(dc.damageDealt());
+        entry.setTriggeringPermanentId(dc.damagedCreature().getId());
+        entry.setTriggeringPermanentControllerId(dc.damagedCreatureControllerId());
         entry.setNonTargeting(true);
         gameData.stack.add(entry);
 
@@ -1606,10 +1617,15 @@ public class DamageTriggerCollectorService {
     private boolean handleDealtDamageConditional(TriggerMatchContext match,
                                                   ConditionalEffect conditional,
                                                   TriggerContext ctx) {
-        if (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                        ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (conditional.interveningIf()) {
+            Permanent damagedCreature = dc.damagedCreature();
+            UUID controllerId = gameQueryService.findPermanentController(match.gameData(), damagedCreature.getId());
+            if (controllerId == null
+                    || !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                    ConditionContext.forPermanent(damagedCreature, controllerId), dc.damageDealt())) {
+                return false;
+            }
         }
         return handleDealtDamageDefault(match, conditional, ctx);
     }

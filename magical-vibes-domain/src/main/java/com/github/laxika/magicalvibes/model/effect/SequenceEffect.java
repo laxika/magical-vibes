@@ -44,7 +44,8 @@ import java.util.UUID;
  * "that player".</p>
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
-        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect, EndStepPlayerTargetedEffect {
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -94,6 +95,16 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     public boolean onlyTriggersOnSacrifice() {
         return onlyIfSacrificed;
     }
+
+    @Override
+    public CardEffect boundToDyingCard(UUID dyingCardId) {
+        List<CardEffect> boundSteps = steps.stream()
+                .map(step -> step instanceof DyingCreatureCardAwareEffect aware
+                        ? aware.boundToDyingCard(dyingCardId) : step)
+                .toList();
+        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         TargetSpec implicitSourceSpec = TargetSpec.NONE;

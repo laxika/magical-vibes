@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -197,6 +198,16 @@ public class ValidTargetService {
                     Permanent candidate = gameQueryService.findPermanentById(gameData, id);
                     return candidate != null && selected.stream()
                             .noneMatch(sel -> gameQueryService.sharesCardType(sel, candidate));
+                });
+            }
+            if (card.getMultiTargetConstraint()
+                    == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                validPermanentIds.removeIf(id -> {
+                    List<UUID> trialTargets = new ArrayList<>(alreadySelectedIds);
+                    trialTargets.add(id);
+                    return !targetLegalityService.fitsAtMostOneArtifactCreatureEnchantmentAndPlaneswalker(
+                            gameData, trialTargets);
                 });
             }
             // Cross-target restriction (Bioshift): later positions may only choose permanents
@@ -1515,6 +1526,12 @@ public class ValidTargetService {
                     && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                             .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
         } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
+            return !e.targetPutIntoGraveyardFromAnywhereThisTurn()
+                    || (graveyardOwnerId != null
+                    && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
+        } else if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect e) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
             return !e.targetPutIntoGraveyardFromAnywhereThisTurn()
                     || (graveyardOwnerId != null

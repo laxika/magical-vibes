@@ -636,8 +636,9 @@ public class GameActionAvailabilityService {
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
             return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+                    || castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)
                     || castingCostService.canAffordWebSlingingCost(
-                    gameData, playerId, card, pool, additionalGenericCost))
+                            gameData, playerId, card, pool, additionalGenericCost))
                     && castingPermissionService.canCastWithTiming(gameData, playerId, card,
                             ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())
                     && !castingPermissionService.isSpellLimitReached(gameData, playerId, card)
@@ -675,6 +676,10 @@ public class GameActionAvailabilityService {
             return true;
         }
 
+        if (castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)) {
+            return true;
+        }
+
         if (castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
             return true;
         }
@@ -682,7 +687,9 @@ public class GameActionAvailabilityService {
         // A split card with fuse offers several mutually exclusive costs (each half, plus the fused
         // total) — it is castable if any one of them is payable, so every candidate is tried below.
         List<ManaCost> candidateCosts = castableCosts(card);
-        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
+        boolean collectEvidenceCostPaid = castingCostService.canPayCollectEvidenceCost(gameData, playerId, card);
+        int additionalCost = castingCostService.getCastCostModifier(
+                gameData, playerId, card, ctx.costSnapshot(), 0, collectEvidenceCostPaid)
                 + additionalGenericCost;
         if (castingCostService.hasTargetBasedCostIncrease(card)) {
             ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
@@ -914,6 +921,9 @@ public class GameActionAvailabilityService {
         }
         if (castingCostService.canAffordWebSlingingCost(gameData, playerId, card, pool, additionalCost)) {
             return true;
+        }
+        if (card.getCastingOption(AdventureCast.class).isPresent()) {
+            return false;
         }
         return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
     }

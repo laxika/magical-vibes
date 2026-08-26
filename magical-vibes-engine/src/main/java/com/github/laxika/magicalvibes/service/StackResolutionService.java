@@ -485,6 +485,7 @@ public class StackResolutionService {
 
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
+        perm.setCollectEvidenceCostPaid(entry.isCollectEvidenceCostPaid());
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
@@ -1151,10 +1152,8 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with its Adventure."));
-            gameData.addToExile(ownerId, physicalCard);
-            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with Adventure."));
+            gameLogService.append(gameData, GameLog.cardThen(physicalCard,
+                    " is exiled with permission to cast its creature face."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);

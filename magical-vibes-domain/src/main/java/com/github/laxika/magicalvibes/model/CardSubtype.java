@@ -71,6 +71,7 @@ public enum CardSubtype {
     GRAVEBORN("Graveborn"),
     INKLING("Inkling"),
     AURA("Aura"),
+    CASE("Case"),
     RUNE("Rune"),
     NOMAD("Nomad"),
     ALLY("Ally"),

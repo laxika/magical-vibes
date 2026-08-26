@@ -132,6 +132,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
@@ -1663,15 +1664,27 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
+        CardEffect resolved = conditional.wrapped();
+        boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
+        if (oncePerTurn) {
+            if (match.gameData().oncePerTurnTriggersFiredThisTurn.contains(match.permanent().getId())) {
+                return false;
+            }
+            resolved = ((OncePerTurnTriggerEffect) resolved).wrapped();
+        }
+
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
+                new ArrayList<>(List.of(resolved)),
                 null,
                 match.permanent().getId()
         ));
+        if (oncePerTurn) {
+            match.gameData().oncePerTurnTriggersFiredThisTurn.add(match.permanent().getId());
+        }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (controller's permanent put into graveyard from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());

@@ -163,6 +163,11 @@ export class TargetingChoiceService {
     this.alternateCostExileHandLabel = '';
     this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
+    this.alternateCostCollectEvidence = false;
+    this.alternateCostCollectEvidenceAmount = 0;
+    this.selectingAlternateCostGraveyardCards = false;
+    this.alternateCostSelectedGraveyardIndices.set([]);
+    this.pendingAlternateExileGraveyardIndices = [];
     this.alternateCostSelectedIds.set([]);
     this.choosingBehold = false;
     this.selectingBeholdPermanent = false;
@@ -379,6 +384,10 @@ export class TargetingChoiceService {
   alternateCostRevealsHandCard = false;
   alternateCostDiscardsHandCard = false;
   alternateCostRequiresTarget = false;
+  alternateCostCollectEvidence = false;
+  alternateCostCollectEvidenceAmount = 0;
+  selectingAlternateCostGraveyardCards = false;
+  alternateCostSelectedGraveyardIndices = signal<number[]>([]);
   alternateCostSelectedIds = signal<string[]>([]);
   alternateCostSelectedHandIndices = signal<number[]>([]);
   selectingAlternateCostHandCard = false;
@@ -387,6 +396,7 @@ export class TargetingChoiceService {
   private pendingAlternateHandCardIndices: number[] = [];
   private pendingAlternateHandCardDiscards = false;
   private pendingAlternateExileHandIndices: number[] = [];
+  private pendingAlternateExileGraveyardIndices: number[] = [];
 
   choosingBehold = false;
   selectingBeholdPermanent = false;
@@ -585,6 +595,8 @@ export class TargetingChoiceService {
         this.alternateCostRevealsHandCard = card.alternateCostRevealsHandCard ?? false;
         this.alternateCostDiscardsHandCard = card.alternateCostDiscardsHandCard ?? false;
         this.alternateCostRequiresTarget = card.alternateCostRequiresTarget ?? false;
+        this.alternateCostCollectEvidence = card.alternateCostCollectEvidence ?? false;
+        this.alternateCostCollectEvidenceAmount = card.alternateCostCollectEvidenceAmount ?? 0;
         return;
       }
 
@@ -1390,6 +1402,10 @@ export class TargetingChoiceService {
       this.pendingAlternateHandCardIndices = [];
       this.pendingAlternateHandCardDiscards = false;
       this.pendingAlternateExileHandIndices = [];
+    }
+    if (this.pendingAlternateExileGraveyardIndices.length > 0) {
+      msg.exileGraveyardCardIndices = this.pendingAlternateExileGraveyardIndices;
+      this.pendingAlternateExileGraveyardIndices = [];
     }
     if (this.pendingGraveyardCastDiscardHandIndex != null) {
       msg.discardHandCardIndex = this.pendingGraveyardCastDiscardHandIndex;
@@ -2491,6 +2507,11 @@ export class TargetingChoiceService {
 
   choosePayAlternateCost(): void {
     this.choosingAlternateCost = false;
+    if (this.alternateCostCollectEvidence) {
+      this.selectingAlternateCostGraveyardCards = true;
+      this.alternateCostSelectedGraveyardIndices.set([]);
+      return;
+    }
     const battlefieldNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount + this.alternateCostReturnCount;
     if (battlefieldNeeded > 0) {
       this.selectingAlternateCostCreatures = true;
@@ -2579,6 +2600,54 @@ export class TargetingChoiceService {
     this.continuePlayCard(spellIndex);
   }
 
+  get alternateCostGraveyardCards(): Card[] {
+    const game = this.gameSignal();
+    const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+    return playerIndex >= 0 ? game?.graveyards[playerIndex] ?? [] : [];
+  }
+
+  toggleAlternateCostGraveyardCard(graveyardIndex: number): void {
+    if (!this.selectingAlternateCostGraveyardCards) return;
+    if (!this.alternateCostGraveyardCards[graveyardIndex]) return;
+    const selected = this.alternateCostSelectedGraveyardIndices();
+    this.alternateCostSelectedGraveyardIndices.set(
+      selected.includes(graveyardIndex)
+        ? selected.filter(index => index !== graveyardIndex)
+        : [...selected, graveyardIndex]);
+  }
+
+  isAlternateCostGraveyardCardSelected(graveyardIndex: number): boolean {
+    return this.alternateCostSelectedGraveyardIndices().includes(graveyardIndex);
+  }
+
+  alternateCostSelectedGraveyardManaValue(): number {
+    return this.alternateCostSelectedGraveyardIndices()
+      .reduce((total, index) => total + this.cardManaValue(this.alternateCostGraveyardCards[index]), 0);
+  }
+
+  confirmAlternateCostGraveyardCards(): void {
+    if (!this.selectingAlternateCostGraveyardCards
+        || this.alternateCostSelectedGraveyardManaValue() < this.alternateCostCollectEvidenceAmount) return;
+    const spellIndex = this.alternateCostCardIndex;
+    const selected = [...this.alternateCostSelectedGraveyardIndices()];
+    this.resetAlternateCostState();
+    this.pendingAlternateExileGraveyardIndices = selected;
+    this.continuePlayCard(spellIndex);
+  }
+
+  cancelAlternateCostGraveyardCards(): void {
+    this.resetAlternateCostState();
+  }
+
+  private cardManaValue(card: Card | undefined): number {
+    if (!card?.manaCost) return 0;
+    return (card.manaCost.match(/\{([^}]+)\}/g) ?? []).reduce((total, symbol) => {
+      const value = symbol.slice(1, -1);
+      const numeric = Number.parseInt(value, 10);
+      return total + (Number.isNaN(numeric) ? value === 'X' ? 0 : 1 : numeric);
+    }, 0);
+  }
+
   toggleAlternateCostCreature(permanentId: string): void {
     if (!this.selectingAlternateCostCreatures) return;
     const totalNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount + this.alternateCostReturnCount;
@@ -2616,6 +2685,7 @@ export class TargetingChoiceService {
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
     this.selectingAlternateCostHandCard = false;
+    this.selectingAlternateCostGraveyardCards = false;
     this.alternateCostCardIndex = -1;
     this.alternateCostCardName = '';
     this.alternateCostSacrificeCount = 0;
@@ -2629,8 +2699,11 @@ export class TargetingChoiceService {
     this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostRequiresTarget = false;
+    this.alternateCostCollectEvidence = false;
+    this.alternateCostCollectEvidenceAmount = 0;
     this.alternateCostSelectedIds.set([]);
     this.alternateCostSelectedHandIndices.set([]);
+    this.alternateCostSelectedGraveyardIndices.set([]);
     this.pendingAlternateExileHandIndex = null;
     this.pendingAlternateHandCardIndices = [];
     this.pendingAlternateHandCardDiscards = false;

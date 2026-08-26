@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
@@ -167,6 +168,34 @@ class GameQueryServiceTest {
         private void resetBeginPassCount() {
             beginPassCount = 0;
         }
+    }
+
+    @Test
+    @DisplayName("recognizes four matching spells cast this turn")
+    void recognizesFourMatchingSpellsCastThisTurn() {
+        Card first = new Card();
+        first.setName("First Instant");
+        first.setType(CardType.INSTANT);
+        Card second = new Card();
+        second.setName("Second Instant");
+        second.setType(CardType.INSTANT);
+        Card third = new Card();
+        third.setName("Third Instant");
+        third.setType(CardType.INSTANT);
+        Card fourth = new Card();
+        fourth.setName("Fourth Instant");
+        fourth.setType(CardType.INSTANT);
+
+        gd.recordSpellCast(player1Id, first);
+        gd.recordSpellCast(player1Id, second);
+        gd.recordSpellCast(player1Id, third);
+        assertThat(gqs.hasControllerCastFourOrMoreSpellsThisTurn(gd, player1Id, new CardTruePredicate()))
+                .isFalse();
+
+        gd.recordSpellCast(player1Id, fourth);
+
+        assertThat(gqs.hasControllerCastFourOrMoreSpellsThisTurn(gd, player1Id, new CardTruePredicate()))
+                .isTrue();
     }
 
     // ===== Helper methods =====

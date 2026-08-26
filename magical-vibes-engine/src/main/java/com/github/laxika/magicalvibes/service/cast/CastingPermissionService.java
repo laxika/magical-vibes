@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -1446,15 +1447,51 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
-                        && (allow.matches(card)
-                        || (card.getType() != CardType.LAND && allow.filter() != null
-                        && predicateEvaluationService.matchesCardPredicate(
-                        card, allow.filter(), perm.getOriginalCard().getId(), gameData, playerId)))) {
+                        && matchesTopLibraryPermission(gameData, playerId, perm, card, allow)
+                        && (!allow.oncePerTurn()
+                        || !gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(perm.getId()))) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /** Marks the once-each-turn top-library permission used by a successful normal-cost cast. */
+    public void markOncePerTurnLibraryCastPermissionUsed(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return;
+
+        boolean hasUnlimitedPermission = battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(AllowCastFromTopOfLibraryEffect.class::isInstance)
+                        .map(AllowCastFromTopOfLibraryEffect.class::cast)
+                        .filter(permission -> !permission.oncePerTurn())
+                        .filter(permission -> matchesTopLibraryPermission(
+                                gameData, playerId, permanent, card, permission)))
+                .findAny()
+                .isPresent();
+        if (hasUnlimitedPermission) return;
+
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AllowCastFromTopOfLibraryEffect permission
+                        && permission.oncePerTurn()
+                        && !gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(permanent.getId())
+                        && matchesTopLibraryPermission(gameData, playerId, permanent, card, permission)) {
+                    gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.add(permanent.getId());
+                    return;
+                }
+            }
+        }
+    }
+
+    private boolean matchesTopLibraryPermission(GameData gameData, UUID playerId, Permanent source,
+                                                Card card, AllowCastFromTopOfLibraryEffect permission) {
+        return permission.matches(card)
+                || (card.getType() != CardType.LAND && permission.filter() != null
+                && predicateEvaluationService.matchesCardPredicate(
+                card, permission.filter(), source.getOriginalCard().getId(), gameData, playerId));
     }
 
     /**
@@ -1468,7 +1505,8 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof AnyManaTypeCastEffect anyMana
-                        && cardHasAnyType(card, anyMana.spellTypes())) {
+                        && (cardHasAnyType(card, anyMana.spellTypes())
+                        || cardHasAnySubtype(card, anyMana.spellSubtypes()))) {
                     return true;
                 }
             }
@@ -1480,6 +1518,13 @@ public class CastingPermissionService {
         if (types.contains(card.getType())) return true;
         for (CardType type : card.getAdditionalTypes()) {
             if (types.contains(type)) return true;
+        }
+        return false;
+    }
+
+    private static boolean cardHasAnySubtype(Card card, Set<CardSubtype> subtypes) {
+        for (CardSubtype subtype : card.getSubtypes()) {
+            if (subtypes.contains(subtype)) return true;
         }
         return false;
     }

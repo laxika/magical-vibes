@@ -904,4 +904,29 @@ class MayCastHandlerServiceTest {
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
         }
     }
+
+    @Nested
+    @DisplayName("Casting a card from a specific graveyard")
+    class SpecificGraveyardCast {
+
+        @Test
+        @DisplayName("Casts an opponent's non-targeted spell for free with exile replacement")
+        void castsOpponentSpellWithExileReplacement() {
+            Card card = createSorcery("Borrowed Spell");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+            PendingMayAbility ability = abilityFor(card);
+            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD)).thenReturn(true);
+            when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER2_ID);
+
+            svc.handleCastFromSpecificGraveyardChoice(gd, player1, true, ability, PLAYER2_ID);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry stackEntry = gd.stack.getFirst();
+            assertThat(stackEntry.isExileInsteadOfGraveyard()).isTrue();
+            assertThat(stackEntry.getOwnerIdOverride()).isEqualTo(PLAYER2_ID);
+            assertThat(stackEntry.getSourceZone()).isEqualTo(Zone.GRAVEYARD);
+            verify(permanentRemovalService).removeCardFromGraveyardById(gd, card.getId());
+        }
+    }
 }

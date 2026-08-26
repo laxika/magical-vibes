@@ -106,7 +106,8 @@ public enum Keyword {
     DOUBLE,
     PLOT,
     AMASS,
-    BLOW_UP;
+    BLOW_UP,
+    DISGUISE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

@@ -333,6 +333,11 @@ public class PermanentRemovalService {
         return removePermanentToExile(gameData, target, null);
     }
 
+    /** Removes a permanent to a face-down exile zone. */
+    public boolean removePermanentToExileFaceDown(GameData gameData, Permanent target) {
+        return removePermanentToExile(gameData, target, null, true);
+    }
+
     /**
      * Removes a permanent to exile and records its cards as exiled with {@code sourcePermanentId}
      * when one is supplied.
@@ -347,13 +352,20 @@ public class PermanentRemovalService {
      */
     public boolean removePermanentToExileAsCraftMaterial(GameData gameData, Permanent target,
                                                          UUID sourcePermanentId) {
-        return removePermanentToExile(gameData, target, sourcePermanentId, true);
+        return removePermanentToExile(gameData, target, sourcePermanentId, false, true);
     }
 
     private boolean removePermanentToExile(GameData gameData, Permanent target, UUID sourcePermanentId,
+                                           boolean faceDown) {
+        return removePermanentToExile(gameData, target, sourcePermanentId, faceDown, false);
+    }
+
+    private boolean removePermanentToExile(GameData gameData, Permanent target, UUID sourcePermanentId,
+                                           boolean faceDown,
                                            boolean exiledWhileActivatingCraftAbility) {
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
+        List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
@@ -374,14 +386,26 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
                 gameData, target, controllerId, Zone.EXILE);
-        for (Card leaving : target.cardsLeavingBattlefield()) {
+        for (Card leaving : leavingCards) {
             if (sourcePermanentId == null) {
-                exileService.exileCard(gameData, ownerId, leaving);
+                if (faceDown) {
+                    exileService.exileCardFaceDown(gameData, ownerId, leaving, null);
+                } else {
+                    exileService.exileCard(gameData, ownerId, leaving);
+                }
             } else {
-                exileService.exileCard(gameData, ownerId, leaving, sourcePermanentId);
+                if (faceDown) {
+                    exileService.exileCardFaceDown(gameData, ownerId, leaving, sourcePermanentId);
+                } else {
+                    exileService.exileCard(gameData, ownerId, leaving, sourcePermanentId);
+                }
             }
         }
-        graveyardService.notifyCardsExiledFromBattlefield(gameData, target.cardsLeavingBattlefield().size());
+        List<Card> creatureCards = leavingCards.stream()
+                .filter(card -> !card.isToken() && card.hasType(CardType.CREATURE))
+                .toList();
+        graveyardService.notifyCardsExiledFromBattlefield(
+                gameData, leavingCards.size(), controllerId, wasCreature, creatureCards);
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -884,6 +908,7 @@ public class PermanentRemovalService {
                             target.setDamagedByDeathtouch(true);
                         }
                         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+                        gameData.recordDamageSourceControlledBy(sourcePermanentId, sourceControllerId);
                         graveyardService.recordCreatureDamagedByPermanent(gameData, sourcePermanentId, target, effectiveDamage);
                         triggerCollectionService.checkDealtDamageToCreatureTriggers(
                                 gameData, target, effectiveDamage, sourceControllerId);
@@ -1143,6 +1168,7 @@ public class PermanentRemovalService {
                                               boolean creatureDeathTriggersSuppressed) {
         boolean wentToGraveyard = false;
         int exiledFromBattlefield = 0;
+        List<Card> exiledCreatureCards = new ArrayList<>();
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
         OpponentDyingCreatureExileReplacement opponentExileReplacement = wasCreature
@@ -1163,6 +1189,9 @@ public class PermanentRemovalService {
                 } else {
                     exileService.exileCard(gameData, ownerId, leaving);
                 }
+                if (!leaving.isToken() && leaving.hasType(CardType.CREATURE)) {
+                    exiledCreatureCards.add(leaving);
+                }
                 if (opponentExileReplacement != null && opponentExileReplacement.effect().addIceCounter()) {
                     gameData.exiledCardsWithIceCounters.add(leaving.getId());
                 }
@@ -1177,6 +1206,9 @@ public class PermanentRemovalService {
                     wentToGraveyard = true;
                 } else if (gameData.findExiledCard(leaving.getId()) != null) {
                     exiledFromBattlefield++;
+                    if (!leaving.isToken() && leaving.hasType(CardType.CREATURE)) {
+                        exiledCreatureCards.add(leaving);
+                    }
                 }
             }
         }
@@ -1198,7 +1230,9 @@ public class PermanentRemovalService {
                         may, null, opponentExileReplacement.sourcePermanentId());
             }
         }
-        graveyardService.notifyCardsExiledFromBattlefield(gameData, exiledFromBattlefield);
+        graveyardService.notifyCardsExiledFromBattlefield(
+                gameData, exiledFromBattlefield, controllerId,
+                wasCreature && exiledFromBattlefield > 0, exiledCreatureCards);
         if (wentToGraveyard) {
             if (target.getCounterCount(CounterType.OIL) > 0) {
                 gameData.recordPermanentWithOilCounterPutIntoGraveyard();

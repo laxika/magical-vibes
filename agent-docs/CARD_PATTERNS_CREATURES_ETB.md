@@ -20,6 +20,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Disguise creature with face-down ward | `d/DefenestratedPhantom.java` | `addMorph(faceUpCost)` supplies the disguise alternate cost; wrap `CounterUnlessPaysEffect(2)` in `ConditionalEffect(new SourceIsFaceDown(), ...)` on `ON_BECOMES_TARGET_OF_OPPONENT_SPELL` so the ward exists only while face down. |
 | Tribute + conditional ETB | `o/Ornitharch.java` | STATIC `TributeEffect(N)` records the opponent's as-enters choice; wrap the conditional ETB in `TributeNotPaidEffect` so it is dropped when the full counter amount entered on the creature |
 | Infect creature | `b/BlackcleaveGoblin.java` | Haste + Infect auto-loaded from Scryfall. Infect deals damage as -1/-1 counters to creatures and poison counters to players. |
 | Infect + damage replacement | `p/PhyrexianHydra.java` | Infect from Scryfall + STATIC PreventDamageAndAddMinusCountersEffect. Prevents all damage to self and puts -1/-1 counters instead. |

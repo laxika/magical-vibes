@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
 import java.util.Map;
@@ -38,14 +40,8 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
         List<CardSubtype> creatureSubtypeOverride,
         boolean tapped,
-        int amount
+        DynamicAmount amount
 ) implements CardEffect {
-
-    public CreateTokenCopyOfTargetPermanentEffect {
-        if (amount < 1) {
-            throw new IllegalArgumentException("Token copy amount must be positive");
-        }
-    }
 
     public CreateTokenCopyOfTargetPermanentEffect(
             List<CardSubtype> additionalSubtypes, Set<CardType> additionalTypes,
@@ -57,7 +53,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
                 trackWithSource, createForTargetController, colorOverride, additionalKeywords,
-                false, Map.of(), List.of(), false, 1);
+                false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -71,7 +67,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
                 trackWithSource, createForTargetController, colorOverride, additionalKeywords,
-                false, Map.of(), creatureSubtypeOverride, false, 1);
+                false, Map.of(), creatureSubtypeOverride, false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -86,24 +82,30 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
                 trackWithSource, createForTargetController, colorOverride, additionalKeywords,
-                sacrificeAtNextUpkeep, additionalSlotEffects, List.of(), false, 1);
+                sacrificeAtNextUpkeep, additionalSlotEffects, List.of(), false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect() {
         this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
-                false, false, null, Set.of(), false, Map.of(), List.of(), false, 1);
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, new Fixed(1));
+    }
+
+    /** Creates {@code amount} copies of each targeted permanent. */
+    public CreateTokenCopyOfTargetPermanentEffect(DynamicAmount amount) {
+        this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, amount);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false, false,
-                false, false, null, Set.of(), false, Map.of(), List.of(), false, 1);
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
             boolean grantHaste, boolean exileAtEndStep, boolean sacrificeAtEndStep) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep,
                 sacrificeAtEndStep, false, false, false, null, Set.of(),
-                false, Map.of(), List.of(), false, 1);
+                false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -111,7 +113,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             boolean sacrificeAtEndStep, boolean tappedAndAttacking) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep,
                 sacrificeAtEndStep, tappedAndAttacking, false, false, null, Set.of(),
-                false, Map.of(), List.of(), false, 1);
+                false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -120,7 +122,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Map<CounterType, Integer> initialCounters) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 false, false, false, false, false, false, null, Set.of(),
-                false, Map.of(), List.of(), false, 1);
+                false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -130,7 +132,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Set<Keyword> additionalKeywords) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 false, false, false, false, false, false, colorOverride, additionalKeywords,
-                false, Map.of(), List.of(), false, 1);
+                false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -140,7 +142,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Set<Keyword> additionalKeywords) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 false, false, false, false, false, false, colorOverride, additionalKeywords,
-                false, Map.of(), List.of(), false, amount);
+                false, Map.of(), List.of(), false, new Fixed(amount));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -150,7 +152,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             boolean exileAtEndStep, boolean sacrificeAtEndStep, boolean tappedAndAttacking) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
-                false, false, null, Set.of(), false, Map.of(), List.of(), false, 1);
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect withAdditionalEffects(
@@ -158,7 +160,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
                 false, false, null, Set.of(), sacrificeAtNextUpkeep, additionalSlotEffects,
-                List.of(), false, 1);
+                List.of(), false, new Fixed(1));
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect withCreatureSubtypeOverride(
@@ -166,19 +168,19 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), power, toughness, Map.of(), false, false, false, false,
                 false, false, colorOverride, Set.of(), false, Map.of(),
-                creatureSubtypes, false, 1);
+                creatureSubtypes, false, new Fixed(1));
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect trackedForTargetController() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
-                true, true, null, Set.of(), false, Map.of(), List.of(), false, 1);
+                true, true, null, Set.of(), false, Map.of(), List.of(), false, new Fixed(1));
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect tappedTokenCopy() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
-                false, false, null, Set.of(), false, Map.of(), List.of(), true, 1);
+                false, false, null, Set.of(), false, Map.of(), List.of(), true, new Fixed(1));
     }
 
     @Override

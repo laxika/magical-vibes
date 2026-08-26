@@ -81,6 +81,7 @@ public class StackEntry {
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
+    /** Whether this spell was cast via Adventure; after resolving, its physical card is exiled with permission to cast the front face. */
     @Setter private boolean castWithAdventure;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
@@ -124,6 +125,8 @@ public class StackEntry {
     @Setter private boolean buyback;
     /** Whether this spell's put-counter additional cost was paid. */
     @Setter private boolean putCounterCostPaid;
+    /** Whether this spell's optional collect-evidence additional cost was paid. */
+    @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
     /**
@@ -594,6 +597,7 @@ public class StackEntry {
         this.kicked = source.kicked;
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
+        this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);

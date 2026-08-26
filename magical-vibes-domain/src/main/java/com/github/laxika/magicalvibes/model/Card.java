@@ -204,6 +204,8 @@ public class Card {
     private List<CastingOption> castingOptions = new ArrayList<>();
     /** Morph's face-up cost; the face-down cast uses the standard {3} alternate cost. */
     private String morphCost;
+    /** Optional dynamic generic reduction applied to the morph/disguise face-up cost. */
+    private DynamicAmount morphCostReduction;
     /** Optional card-reveal component of a morph face-up cost. */
     private RevealCardsFromHandCastingCost morphRevealCost;
     /** Optional permanent-return component of a morph face-up cost. */
@@ -279,6 +281,14 @@ public class Card {
         }
     }
 
+    /** Creates an immutable synthetic card used only to identify a runtime stack entry. */
+    public static Card namedRuntimePlaceholder(String name) {
+        Card card = new Card();
+        card.name = name;
+        card.freeze();
+        return card;
+    }
+
     /**
      * Copy constructor backing {@link #createRuntimeCopy()}. Copies every field, including the
      * id, but not {@link #frozen} — the copy starts mutable. Collection fields are copied into
@@ -336,6 +346,7 @@ public class Card {
         this.modalDoubleFaced = source.modalDoubleFaced;
         this.castingOptions = new ArrayList<>(source.castingOptions);
         this.morphCost = source.morphCost;
+        this.morphCostReduction = source.morphCostReduction;
         this.morphRevealCost = source.morphRevealCost;
         this.morphAdditionalCost = source.morphAdditionalCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
@@ -416,6 +427,7 @@ public class Card {
         this.watermark = face.watermark;
         this.castingOptions = new ArrayList<>(face.castingOptions);
         this.morphCost = face.morphCost;
+        this.morphCostReduction = face.morphCostReduction;
         this.morphRevealCost = face.morphRevealCost;
         this.spellCastTimingRestriction = face.spellCastTimingRestriction;
         this.castCondition = face.castCondition;
@@ -960,6 +972,16 @@ public class Card {
     public void addMorph(String morphCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
+        this.morphRevealCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph/disguise with a dynamic generic reduction to its face-up cost. */
+    public void addMorph(String morphCost, DynamicAmount morphCostReduction) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphCostReduction = morphCostReduction;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
@@ -969,6 +991,7 @@ public class Card {
     public void addMorph(String morphCost, CardPredicate revealPredicate, String revealLabel) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(
@@ -989,6 +1012,7 @@ public class Card {
     public void addMorphWithRevealCost(CardPredicate revealPredicate, String revealLabel) {
         assertMutable();
         this.morphCost = "{0}";
+        this.morphCostReduction = null;
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
         this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));

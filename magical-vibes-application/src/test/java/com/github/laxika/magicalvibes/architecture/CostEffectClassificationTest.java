@@ -113,6 +113,7 @@ class CostEffectClassificationTest {
             "ChooseCreatureTypeCost",
             "ExileCardFromGraveyardCost",
             "ExileXCardsFromGraveyardCost",
+            "CollectEvidenceCost",
             "ExileNCardsFromGraveyardCost",
             "DiscardCardTypeCost",
             "DiscardRandomCardCost",

@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -21,6 +23,7 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
 
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +38,10 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
             return;
         }
 
+        boolean allBattlefield = returnEffect.destinations().stream()
+                .allMatch(destination -> destination == GraveyardChoiceDestination.BATTLEFIELD);
         int targetOffset = 0;
+        List<UUID> battlefieldTargetIds = new ArrayList<>();
         for (int groupIndex = 0; groupIndex < groupSizes.size(); groupIndex++) {
             int groupSize = groupSizes.get(groupIndex);
             if (groupSize < 0 || targetOffset + groupSize > entry.getTargetCardIds().size()) {
@@ -56,10 +62,14 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
 
             GraveyardChoiceDestination destination = returnEffect.destinations().get(groupIndex);
             if (destination == GraveyardChoiceDestination.BATTLEFIELD) {
-                graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,
-                        (graveyard, card) -> graveyardReturnSupport.putCardOntoBattlefield(
-                                gameData, entry.getControllerId(), card, null, null),
-                        " returns ", " from graveyard to the battlefield.");
+                if (allBattlefield) {
+                    battlefieldTargetIds.addAll(legalTargetIds);
+                } else {
+                    graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,
+                            (graveyard, card) -> graveyardReturnSupport.putCardOntoBattlefield(
+                                    gameData, entry.getControllerId(), card, null, null),
+                            " returns ", " from graveyard to the battlefield.");
+                }
             } else if (destination == GraveyardChoiceDestination.HAND) {
                 graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,
                         (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
@@ -69,6 +79,24 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
                         (graveyard, card) -> gameData.playerDecks.get(entry.getControllerId()).addFirst(card),
                         " puts ", " from graveyard on top of their library.");
             }
+        }
+
+        if (!allBattlefield) {
+            return;
+        }
+
+        List<Card> battlefieldCards = battlefieldTargetIds.stream()
+                .distinct()
+                .map(targetId -> gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of())
+                        .stream().filter(card -> card.getId().equals(targetId)).findFirst().orElse(null))
+                .filter(card -> card != null)
+                .toList();
+        if (!battlefieldCards.isEmpty()) {
+            for (Card card : battlefieldCards) {
+                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+            }
+            graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
+                    gameData, Map.of(entry.getControllerId(), battlefieldCards), false, null);
         }
     }
 }
