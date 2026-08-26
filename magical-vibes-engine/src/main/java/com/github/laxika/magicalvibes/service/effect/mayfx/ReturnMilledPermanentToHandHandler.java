@@ -43,18 +43,28 @@ public class ReturnMilledPermanentToHandHandler implements MayEffectHandlerBean 
         UUID groupId = marker.groupId();
 
         if (accepted) {
-            gameData.pendingMayAbilities.removeIf(pending -> pending.effects().stream()
-                    .filter(ReturnMilledPermanentToHandEffect.class::isInstance)
-                    .map(ReturnMilledPermanentToHandEffect.class::cast)
-                    .anyMatch(candidate -> groupId.equals(candidate.groupId())));
+            int acceptedCount = ability.eventValue() + 1;
+            if (acceptedCount >= marker.maxCount()) {
+                removeOffersInGroup(gameData, groupId);
+            } else {
+                for (int i = 0; i < gameData.pendingMayAbilities.size(); i++) {
+                    PendingMayAbility pending = gameData.pendingMayAbilities.get(i);
+                    boolean sameGroup = pending.effects().stream()
+                            .filter(ReturnMilledPermanentToHandEffect.class::isInstance)
+                            .map(ReturnMilledPermanentToHandEffect.class::cast)
+                            .anyMatch(candidate -> groupId.equals(candidate.groupId()));
+                    if (sameGroup) {
+                        gameData.pendingMayAbilities.set(i, pending.withEventValue(acceptedCount));
+                    }
+                }
+            }
 
             Card card = gameQueryService.findCardInGraveyardById(gameData, ability.sourceCard().getId());
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, ability.sourceCard().getId());
             if (card != null && ownerId != null
                     && predicateEvaluationService.matchesCardPredicate(
                     card, marker.filter(), ability.sourceCard().getId(), gameData, ownerId)) {
-                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-                gameData.addCardToHand(ownerId, card);
+                permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
                 if (marker.bonusFilter() != null
                         && predicateEvaluationService.matchesCardPredicate(
                         card, marker.bonusFilter(), ability.sourceCard().getId(), gameData, ownerId)) {
@@ -65,5 +75,12 @@ public class ReturnMilledPermanentToHandHandler implements MayEffectHandlerBean 
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void removeOffersInGroup(GameData gameData, UUID groupId) {
+        gameData.pendingMayAbilities.removeIf(pending -> pending.effects().stream()
+                .filter(ReturnMilledPermanentToHandEffect.class::isInstance)
+                .map(ReturnMilledPermanentToHandEffect.class::cast)
+                .anyMatch(candidate -> groupId.equals(candidate.groupId())));
     }
 }

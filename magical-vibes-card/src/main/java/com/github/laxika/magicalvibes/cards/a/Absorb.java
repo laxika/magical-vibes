@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "226")
+@CardRegistration(set = "RNA", collectorNumber = "151")
 public class Absorb extends Card {
 
     public Absorb() {

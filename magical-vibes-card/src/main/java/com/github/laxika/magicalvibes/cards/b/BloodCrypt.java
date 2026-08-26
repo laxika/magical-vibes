@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "238")
+@CardRegistration(set = "RNA", collectorNumber = "245")
 @CardRegistration(set = "ECL", collectorNumber = "262")
 @CardRegistration(set = "ECL", collectorNumber = "349")
 public class BloodCrypt extends Card {

@@ -297,6 +297,8 @@
             } @else {
               <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Exile {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card from hand</button>
             }
+          } @else if (choice.targeting.alternateCostIsPlot) {
+            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }}</button>
           }
           <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
         </div>
@@ -442,9 +444,9 @@
 
     @if (choice.targeting.choosingBuybackSacrifice) {
       <div class="side-prompt prompt-targeting">
-        <span class="side-prompt-text">Select a land to sacrifice for {{ choice.targeting.buybackSacrificeDescription }}</span>
+        <span class="side-prompt-text">Select {{ choice.targeting.buybackSacrificeDescription }}</span>
         <div class="side-prompt-buttons side-prompt-buttons-stacked">
-          <button class="btn-side-prompt" (click)="choice.targeting.confirmBuybackSacrifice()" [disabled]="choice.targeting.buybackSacrificeSelectedId() == null">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmBuybackSacrifice()" [disabled]="choice.targeting.buybackSacrificeSelectedIds().length !== choice.targeting.buybackSacrificeCount">Cast</button>
           <button class="btn-side-prompt" (click)="choice.targeting.cancelBuybackSacrifice()">Cancel</button>
         </div>
       </div>
@@ -475,7 +477,7 @@
             <button class="btn-side-prompt mode-option"
                     [class.mode-option-selected]="choice.targeting.isModeSelected($index)"
                     (click)="choice.targeting.toggleMode($index)">
-              {{ option.label }}@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
+              {{ option.label }}@if (choice.targeting.modeModesMayRepeat && choice.targeting.modeSelectionCount($index) > 1) { <span> (×{{ choice.targeting.modeSelectionCount($index) }})</span> }@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
             </button>
           }
           <button class="btn-side-prompt"

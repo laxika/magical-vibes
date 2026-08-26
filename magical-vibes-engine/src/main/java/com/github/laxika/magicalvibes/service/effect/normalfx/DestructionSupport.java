@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -93,6 +94,7 @@ public class DestructionSupport {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final CreatureControlService creatureControlService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
     private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
@@ -257,6 +259,7 @@ public class DestructionSupport {
                 gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             endSimultaneousCreatureDeaths(gameData);
         }
@@ -270,12 +273,14 @@ public class DestructionSupport {
             if (controllerId == null) continue;
             gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
+            gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
         }
     }
 
     private void endSimultaneousCreatureDeaths(GameData gameData) {
         gameData.simultaneousDyingCreatures.clear();
         gameData.simultaneousDyingControllers.clear();
+        gameData.simultaneousDyingPowers.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {
@@ -419,6 +424,11 @@ public class DestructionSupport {
         effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                 gameData, playerId, effectiveDamage);
 
+        if (effectiveDamage > 0) {
+            gameData.recordDamageToPlayer(playerId, effectiveDamage,
+                    sourceCard.hasType(CardType.ARTIFACT) ? effectiveDamage : 0);
+        }
+
         if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
             if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
                 int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
@@ -439,8 +449,10 @@ public class DestructionSupport {
             return;
         }
 
-        int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+        int lifeLoss = effectiveDamage
+                * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        gameData.playerLifeTotals.put(playerId,
+                gameQueryService.lifeAfterDamage(gameData, playerId, lifeLoss));
 
         if (effectiveDamage > 0) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -742,10 +754,11 @@ public class DestructionSupport {
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             } else if (elseEffect instanceof GivePoisonCountersEffect poison
-                    && poison.recipient() == PoisonRecipient.CONTROLLER) {
+                    && poison.recipient() == PoisonRecipient.CONTROLLER
+                    && poison.amount() instanceof Fixed poisonAmount) {
                 // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the
                 // entry controller is the player who owes the payment.
-                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poison.amount(),
+                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poisonAmount.value(),
                         entry.getCard().getName(), entry.getControllerId());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof ControllerLosesGameEffect) {
@@ -801,8 +814,16 @@ public class DestructionSupport {
             } else if (elseEffect instanceof ReturnToHandEffect returnToHand) {
                 returnToHandEffectHandler.resolve(gameData, entry, returnToHand);
             } else {
-                log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
-                        gameData.id, elseEffect.getClass().getSimpleName());
+                var handler = effectHandlerRegistry.getHandler(elseEffect);
+                if (handler == null) {
+                    log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
+                            gameData.id, elseEffect.getClass().getSimpleName());
+                } else {
+                    handler.resolve(gameData, entry, elseEffect);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        return;
+                    }
+                }
             }
         }
     }
@@ -907,15 +928,15 @@ public class DestructionSupport {
     }
 
     public void createTokenForPlayer(GameData gameData, UUID controllerId,
-                                      CreateTokenEffect token, int tokenCount,
-                                      String sourceName, String sourceSetCode) {
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+                                       CreateTokenEffect token, int tokenCount,
+                                       String sourceName, String sourceSetCode) {
+        boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
         CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                 gameData, controllerId, token);
         int totalAmount = tokenCount * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-
         for (int count = 0; count < totalAmount + (additionalFrog != null && totalAmount > 0 ? 1 : 0); count++) {
             boolean isAdditionalFrog = count >= totalAmount;
             CreateTokenEffect tokenToCreate = isAdditionalFrog ? additionalFrog : token;

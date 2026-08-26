@@ -42,16 +42,27 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
             return;
         }
 
-        // Case 1: Pre-targeted (from spell cast, activated ability, or multi-target spell)
-        if (e.targetGraveyard() && entry.getTargetId() != null) {
-            graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, entry.getTargetId());
+        if (e.targetGraveyard() && e.targetGroup() >= 0) {
+            UUID targetCardId = entry.getTargetCardIdsForEffect(effect).stream().findFirst().orElse(null);
+            if (targetCardId == null) {
+                return;
+            }
+            graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, targetCardId);
             return;
         }
 
-        // Case 1b: Pre-targeted via targetCardIds (from triggered ability graveyard targeting, e.g. Teshar)
+        // Pre-targeted via targetCardIds (from triggered abilities, e.g. Teshar).
+        // Combat-damage triggers also use targetId for the damaged player, so the graveyard card
+        // target must take precedence when both target fields are present.
         if (e.targetGraveyard() && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
             UUID targetCardId = entry.getTargetCardIds().getFirst();
             graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, targetCardId);
+            return;
+        }
+
+        // Pre-targeted from a spell cast or activated ability.
+        if (e.targetGraveyard() && entry.getTargetId() != null) {
+            graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, entry.getTargetId());
             return;
         }
 

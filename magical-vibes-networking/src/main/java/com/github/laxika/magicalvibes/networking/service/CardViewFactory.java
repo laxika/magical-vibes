@@ -84,6 +84,12 @@ public class CardViewFactory {
         boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty();
 
         List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities().stream()
+                .filter(ability -> !ability.isExileOnly())
+                .map(this::createAbilityView)
+                .toList();
+
+        List<ActivatedAbilityView> exileAbilityViews = card.getActivatedAbilities().stream()
+                .filter(ActivatedAbility::isExileOnly)
                 .map(this::createAbilityView)
                 .toList();
 
@@ -223,16 +229,19 @@ public class CardViewFactory {
                 graveyardCastRequiresDiscard,
                 graveyardAbilityViews,
                 handAbilityViews,
+                exileAbilityViews,
                 card.getBackFaceCard() != null,
                 kickerCost,
                 kickerRequiresTap,
                 kickerRequiresReturn,
                 buybackCost,
                 buybackEffect != null && buybackEffect.hasSacrificeCost(),
+                buybackEffect != null ? buybackEffect.sacrificeCount() : 0,
                 buybackEffect != null ? buybackEffect.discardCount() : 0,
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalEffect != null && modalEffect.optional(),
+                modalEffect != null && modalEffect.modesMayRepeat(),
                 modalOptions,
                 0,
                 chooseCreatureTypeCost,

@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +23,9 @@ class WardenOfTheGroveTest extends BaseCardTest {
         Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheGrove());
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(warden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -31,7 +36,7 @@ class WardenOfTheGroveTest extends BaseCardTest {
     void anotherCreatureEnduresWithCounters() {
         Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheGrove());
         warden.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent entering = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent entering = castGrizzlyBears();
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Put 2 +1/+1 counters on this permanent");
@@ -45,7 +50,7 @@ class WardenOfTheGroveTest extends BaseCardTest {
     void anotherCreatureEnduresWithSpirit() {
         Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheGrove());
         warden.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        castGrizzlyBears();
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Create a 2/2 white Spirit creature token");
@@ -60,7 +65,7 @@ class WardenOfTheGroveTest extends BaseCardTest {
     void usesLastKnownCountersWhenWardenLeaves() {
         Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheGrove());
         warden.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent entering = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent entering = castGrizzlyBears();
 
         warden.setMarkedDamage(4);
         harness.runStateBasedActions();
@@ -68,5 +73,14 @@ class WardenOfTheGroveTest extends BaseCardTest {
         harness.handleListChoice(player1, "Put 2 +1/+1 counters on this permanent");
 
         assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    private Permanent castGrizzlyBears() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Grizzly Bears");
     }
 }

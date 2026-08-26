@@ -18,20 +18,26 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param label           human-readable description of {@code predicate}, used in rejection messages
  * @param trackManaValue when true, snapshot the total mana value of the discarded cards into the
  *                       spell's resolution {@code xValue}
+ * @param randomSelection when true, the cards are selected at random instead of by the caster
  */
-public record DiscardXCardsCost(CardPredicate predicate, String label, boolean trackManaValue)
+public record DiscardXCardsCost(CardPredicate predicate, String label, boolean trackManaValue,
+                                boolean randomSelection)
         implements HandCardCost {
 
     public DiscardXCardsCost() {
-        this(null, null, false);
+        this(null, null, false, false);
     }
 
     public DiscardXCardsCost(CardPredicate predicate, String label) {
-        this(predicate, label, false);
+        this(predicate, label, false, false);
     }
 
     public DiscardXCardsCost(boolean trackManaValue) {
-        this(null, null, trackManaValue);
+        this(null, null, trackManaValue, false);
+    }
+
+    public static DiscardXCardsCost random() {
+        return new DiscardXCardsCost(null, null, false, true);
     }
 
     @Override

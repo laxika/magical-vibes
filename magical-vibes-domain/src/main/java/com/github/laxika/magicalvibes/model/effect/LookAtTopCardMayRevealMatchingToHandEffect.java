@@ -6,18 +6,18 @@ import java.util.List;
 
 /**
  * Look at the top card of the controller's library. If it matches {@code predicate}, the controller
- * may reveal it and put it into their hand. When {@code mayGraveyardOtherwise} is set, a card that
- * does not end up in hand (either because it does not match, or because the reveal was declined)
- * may instead be put into the graveyard; otherwise it simply stays on top of the library.
- * When a matching card is put into hand, {@code effectsIfCardPutIntoHand} resolves afterward.
+ * may reveal it and put it into their hand. A card that does not end up in hand (either because it
+ * does not match, or because the reveal was declined) is handled according to
+ * {@code otherwiseDestination}.
  *
- * <p>Domri Rade's +1 uses {@code CardTypePredicate(CREATURE)} without the graveyard fallback;
- * Archghoul of Thraben uses {@code CardSubtypePredicate(ZOMBIE)} with it. The {@link Stage} field
- * distinguishes the initial look (stack resolution) from the may-ability follow-ups.
+ * <p>Domri Rade's +1 uses {@link OtherwiseDestination#TOP}; Archghoul of Thraben uses
+ * {@link OtherwiseDestination#GRAVEYARD}; Vivien's Grizzly uses {@link OtherwiseDestination#BOTTOM}.
+ * The {@link Stage} field distinguishes the initial look (stack resolution) from the may-ability
+ * follow-ups.
  */
 public record LookAtTopCardMayRevealMatchingToHandEffect(
         CardPredicate predicate,
-        boolean mayGraveyardOtherwise,
+        OtherwiseDestination otherwiseDestination,
         Stage stage,
         List<CardEffect> effectsIfCardPutIntoHand
 ) implements CardEffect {
@@ -25,6 +25,12 @@ public record LookAtTopCardMayRevealMatchingToHandEffect(
     public LookAtTopCardMayRevealMatchingToHandEffect {
         effectsIfCardPutIntoHand = effectsIfCardPutIntoHand == null
                 ? List.of() : List.copyOf(effectsIfCardPutIntoHand);
+    }
+
+    public enum OtherwiseDestination {
+        TOP,
+        GRAVEYARD,
+        BOTTOM
     }
 
     public enum Stage {
@@ -37,21 +43,33 @@ public record LookAtTopCardMayRevealMatchingToHandEffect(
     }
 
     public LookAtTopCardMayRevealMatchingToHandEffect(CardPredicate predicate, boolean mayGraveyardOtherwise) {
-        this(predicate, mayGraveyardOtherwise, Stage.LOOK, List.of());
+        this(predicate,
+                mayGraveyardOtherwise ? OtherwiseDestination.GRAVEYARD : OtherwiseDestination.TOP,
+                Stage.LOOK,
+                List.of());
     }
 
-    public LookAtTopCardMayRevealMatchingToHandEffect(CardPredicate predicate, boolean mayGraveyardOtherwise,
-                                                      Stage stage) {
-        this(predicate, mayGraveyardOtherwise, stage, List.of());
+    public LookAtTopCardMayRevealMatchingToHandEffect(
+            CardPredicate predicate, boolean mayGraveyardOtherwise,
+            List<CardEffect> effectsIfCardPutIntoHand) {
+        this(predicate,
+                mayGraveyardOtherwise ? OtherwiseDestination.GRAVEYARD : OtherwiseDestination.TOP,
+                Stage.LOOK,
+                effectsIfCardPutIntoHand);
     }
 
-    public LookAtTopCardMayRevealMatchingToHandEffect(CardPredicate predicate, boolean mayGraveyardOtherwise,
-                                                      List<CardEffect> effectsIfCardPutIntoHand) {
-        this(predicate, mayGraveyardOtherwise, Stage.LOOK, effectsIfCardPutIntoHand);
+    public LookAtTopCardMayRevealMatchingToHandEffect(
+            CardPredicate predicate, OtherwiseDestination otherwiseDestination) {
+        this(predicate, otherwiseDestination, Stage.LOOK, List.of());
+    }
+
+    public LookAtTopCardMayRevealMatchingToHandEffect(
+            CardPredicate predicate, OtherwiseDestination otherwiseDestination, Stage stage) {
+        this(predicate, otherwiseDestination, stage, List.of());
     }
 
     public LookAtTopCardMayRevealMatchingToHandEffect withStage(Stage stage) {
         return new LookAtTopCardMayRevealMatchingToHandEffect(
-                predicate, mayGraveyardOtherwise, stage, effectsIfCardPutIntoHand);
+                predicate, otherwiseDestination, stage, effectsIfCardPutIntoHand);
     }
 }

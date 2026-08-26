@@ -6,51 +6,67 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Exile target card from a graveyard. If it was a creature card, create the supplied token.
- * An optional filter can narrow the target, as needed for wordings that say "target creature card".
+ * Exile target card from a graveyard. If it was a creature card, create one token from the
+ * supplied template. An optional filter can narrow the target, as needed for wordings that say
+ * "target creature card".
  *
  * @param filter predicate restricting valid targets; {@code null} allows any card
- * @param token token created when the exiled card is a creature
+ * @param graveyardScope graveyard from which the target may be chosen
+ * @param tokenTemplate token created when the exiled card was a creature
  */
-public record ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter, CreateTokenEffect token)
+public record ExileGraveyardCardCreateTokenIfCreatureEffect(
+        CardPredicate filter,
+        GraveyardSearchScope graveyardScope,
+        CreateTokenEffect tokenTemplate
+)
         implements CardEffect, TokenCreatingEffect {
 
     public ExileGraveyardCardCreateTokenIfCreatureEffect() {
-        this(null, CreateTokenEffect.blackZombie(1));
+        this(null, GraveyardSearchScope.ALL_GRAVEYARDS, CreateTokenEffect.blackZombie(1));
     }
 
     public ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter) {
-        this(filter, CreateTokenEffect.blackZombie(1));
+        this(filter, GraveyardSearchScope.ALL_GRAVEYARDS, CreateTokenEffect.blackZombie(1));
     }
 
-    public ExileGraveyardCardCreateTokenIfCreatureEffect(CreateTokenEffect token) {
-        this(null, token);
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(CreateTokenEffect tokenTemplate) {
+        this(null, GraveyardSearchScope.ALL_GRAVEYARDS, tokenTemplate);
+    }
+
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(
+            CardPredicate filter, CreateTokenEffect tokenTemplate) {
+        this(filter, GraveyardSearchScope.ALL_GRAVEYARDS, tokenTemplate);
+    }
+
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(GraveyardSearchScope graveyardScope,
+                                                         CreateTokenEffect tokenTemplate) {
+        this(null, graveyardScope, tokenTemplate);
     }
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(filter == null
-                ? TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS)
-                : TargetPredicates.graveyardCards(filter, GraveyardSearchScope.ALL_GRAVEYARDS));
+                ? TargetPredicates.graveyardCard(graveyardScope)
+                : TargetPredicates.graveyardCards(filter, graveyardScope));
     }
 
     @Override
     public DynamicAmount tokenAmount() {
-        return token.amount();
+        return tokenTemplate.amount();
     }
 
     @Override
     public CardType tokenType() {
-        return token.primaryType();
+        return tokenTemplate.primaryType();
     }
 
     @Override
     public int tokenPower() {
-        return token.tokenPower();
+        return tokenTemplate.tokenPower();
     }
 
     @Override
     public int tokenToughness() {
-        return token.tokenToughness();
+        return tokenTemplate.tokenToughness();
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class AwardManaOfChosenColorEffectHandler implements NormalEffectHandlerB
         }
 
         ManaColor manaColor = ManaColor.valueOf(chosenColor.name());
+        manaColor = ManaProductionSupport.effectiveColor(gameData, entry.getControllerId(), manaColor);
         ManaPool pool = gameData.playerManaPools.get(entry.getControllerId());
         pool.add(manaColor);
 

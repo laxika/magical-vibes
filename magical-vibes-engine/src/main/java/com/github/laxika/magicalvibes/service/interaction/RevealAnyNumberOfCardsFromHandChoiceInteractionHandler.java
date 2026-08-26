@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.HashSet;
 import java.util.List;
@@ -105,9 +107,11 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
                             manaContext.xValue(), selectedCards.size())) * manaContext.manaMultiplier();
             if (amount > 0) {
                 ManaPool pool = gameData.playerManaPools.get(interaction.playerId());
-                pool.add(manaContext.manaColor(), amount);
+                ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData,
+                        interaction.playerId(), manaContext.manaColor());
+                pool.add(effectiveColor, amount);
                 if (manaContext.creatureSource()) {
-                    pool.addCreatureMana(manaContext.manaColor(), amount);
+                    pool.addCreatureMana(effectiveColor, amount);
                 }
                 GameLog.Builder manaLog = GameLog.builder()
                         .text(playerName + " adds " + amount + " " + manaContext.manaColor().getCode()

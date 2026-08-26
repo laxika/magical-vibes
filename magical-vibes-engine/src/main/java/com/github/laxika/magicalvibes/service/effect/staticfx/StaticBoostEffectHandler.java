@@ -24,7 +24,9 @@ public class StaticBoostEffectHandler implements StaticEffectHandlerBean {
         if (support.matchesCreatureScope(context, boost.scope(), boost.filter())) {
             int multiplier = boost.scalingCounter() == null
                     ? 1
-                    : context.source().getCounterCount(boost.scalingCounter());
+                    : (boost.scalingCounterOnTarget()
+                            ? context.target().getCounterCount(boost.scalingCounter())
+                            : context.source().getCounterCount(boost.scalingCounter()));
             accumulator.addPower(boost.powerBoost() * multiplier);
             accumulator.addToughness(boost.toughnessBoost() * multiplier);
             accumulator.addKeywords(boost.grantedKeywords());

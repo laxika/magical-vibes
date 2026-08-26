@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "TMP", collectorNumber = "8")
 @CardRegistration(set = "ITP", collectorNumber = "2")
 @CardRegistration(set = "RQS", collectorNumber = "2")
+@CardRegistration(set = "SUM", collectorNumber = "9")
 public class CircleOfProtectionBlack extends Card {
 
     public CircleOfProtectionBlack() {

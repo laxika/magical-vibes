@@ -45,7 +45,8 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
             if (target == null) {
                 return;
             }
-            playerInputService.beginAddBasicLandTypeChoice(gameData, entry.getControllerId(), target.getId(), e.duration(), e.replacing());
+            playerInputService.beginAddBasicLandTypeChoice(
+                    gameData, entry.getControllerId(), target.getId(), e.duration(), e.replacing(), e.allowedTypes());
             return;
         }
 

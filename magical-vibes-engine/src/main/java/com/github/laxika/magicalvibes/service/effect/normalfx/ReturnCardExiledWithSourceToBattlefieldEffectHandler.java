@@ -75,8 +75,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
                 return;
             }
             returnToBattlefield(gameData, controllerId, target.card(), sourceName,
-                    returnEffect.grantedSubtype(), returnEffect.entersTapped(),
-                    returnEffect.additionalPlusOnePlusOneCounters());
+                    returnEffect.grantedSubtype(), returnEffect.enterTapped(),
+                    returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters());
             return;
         }
 
@@ -94,12 +94,13 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
         if (matching.size() == 1) {
             returnToBattlefield(gameData, controllerId, matching.getFirst(), sourceName,
-                    returnEffect.grantedSubtype());
+                    returnEffect.grantedSubtype(), returnEffect.enterTapped(),
+                    returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters());
             return;
         }
 
         gameData.queueInteraction(new PendingReturnExiledWithSourceCard(true, controllerId,
-                returnEffect.grantedSubtype()));
+                returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking()));
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,
@@ -119,11 +120,18 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
     /** Shared with the multi-card choice path in {@code LibraryChoiceHandlerService}. */
     public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                     CardSubtype grantedSubtype) {
-        returnToBattlefield(gameData, controllerId, card, sourceName, grantedSubtype, false, 0);
+        returnToBattlefield(gameData, controllerId, card, sourceName, grantedSubtype, false, false);
+    }
+
+    /** Shared with the multi-card choice path in {@code LibraryChoiceHandlerService}. */
+    public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                    CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking) {
+        returnToBattlefield(gameData, controllerId, card, sourceName,
+                grantedSubtype, enterTapped, enterAttacking, 0);
     }
 
     private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
-                                     CardSubtype grantedSubtype, boolean entersTapped,
+                                     CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
                                      int additionalPlusOnePlusOneCounters) {
         if (!gameData.removeFromExile(card.getId())) {
             return;
@@ -131,9 +139,6 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         Permanent permanent = new Permanent(card);
         if (grantedSubtype != null) {
             permanent.getGrantedSubtypes().add(grantedSubtype);
-        }
-        if (entersTapped) {
-            permanent.tap();
         }
         if (additionalPlusOnePlusOneCounters > 0
                 && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent, controllerId)) {
@@ -144,7 +149,13 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
                         permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
             }
         }
+        if (enterTapped) {
+            permanent.tap();
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+        if (enterAttacking) {
+            permanent.setAttacking(true);
+        }
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(controllerId) + " returns ", card,
                 " from exile to the battlefield."));

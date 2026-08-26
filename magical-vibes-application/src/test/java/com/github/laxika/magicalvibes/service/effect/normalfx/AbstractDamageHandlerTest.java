@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -48,6 +49,7 @@ abstract class AbstractDamageHandlerTest {
     @Mock protected TriggerCollectionService triggerCollectionService;
     @Mock protected LifeSupport lifeSupport;
     @Mock protected com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+    @Mock protected BattleDefeatSupport battleDefeatSupport;
 
     @InjectMocks protected DamageSupport damageSupport;
 
@@ -70,9 +72,13 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gd), any(), any(), any())).thenReturn(1);
         lenient().when(gameQueryService.getPermanentDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.getSourceDamageMultiplier(eq(gd), any(), any(Permanent.class))).thenReturn(1);
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.hasProtectionFromDamageSource(
                 eq(gd), any(Permanent.class), any(Card.class), any())).thenReturn(false);
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gd), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(1));
+        lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
+                        eq(gd), anyInt(), any(), any(), any()))
                 .thenAnswer(inv -> inv.getArgument(1));
         // Reflect Damage is a pass-through when no replacement shield is set up.
         lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
@@ -102,8 +108,9 @@ abstract class AbstractDamageHandlerTest {
                         eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through — dealDamageToPlayer calls it unconditionally.
-        lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(eq(gd), any(), anyInt()))
-                .thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         // Oracle's Attendants: consulted for every creature damage event, including spell damage with no
         // source permanent, so it must pass through when no redirect shield is set up.
         lenient().when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt()))
@@ -219,7 +226,9 @@ abstract class AbstractDamageHandlerTest {
         when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(playerId), anyInt(), anyString())).thenAnswer(inv -> inv.getArgument(2));
+        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                eq(gd), eq(playerId), anyInt(), anyString(), anyBoolean(), nullable(UUID.class)))
+                .thenAnswer(inv -> inv.getArgument(2));
         when(gameQueryService.canPlayerLifeChange(gd, playerId)).thenReturn(true);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
     }

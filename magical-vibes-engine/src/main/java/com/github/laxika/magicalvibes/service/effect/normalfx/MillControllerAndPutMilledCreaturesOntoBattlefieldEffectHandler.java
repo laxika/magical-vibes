@@ -3,34 +3,32 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutMilledCreaturesOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Random Encounter's mill-and-temporary-reanimation effect. */
+import java.util.List;
+import java.util.UUID;
+
+/** Resolves a mill followed by choosing a capped number of the milled creatures to reanimate. */
 @Component
 @RequiredArgsConstructor
 public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
-    private final GameQueryService gameQueryService;
-    private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final PlayerInputService playerInputService;
+    private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,53 +38,51 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var millEffect = (MillControllerAndPutMilledCreaturesOntoBattlefieldEffect) effect;
-        UUID controllerId = entry.getControllerId();
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, millEffect.count());
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard == null) {
+        var choiceContext = gameData.graveyardTargetOperation.milledCreatureReturn;
+        if (choiceContext != null && choiceContext.chosenCardIds() != null) {
+            gameData.graveyardTargetOperation.milledCreatureReturn = null;
+            gameData.rerunCurrentEffectAfterInteraction = false;
+            returnCards(gameData, entry, choiceContext.chosenCardIds(), millEffect.maxCount());
             return;
         }
 
-        List<Card> creatureCards = milled.stream()
-                .filter(card -> card.hasType(CardType.CREATURE))
-                .filter(graveyard::contains)
-                .filter(card -> !graveyardReturnSupport.isCardBlockedFromEnteringFromZone(
-                        gameData, card, Zone.GRAVEYARD))
+        List<Card> milled = graveyardService.resolveMillPlayer(
+                gameData, entry.getControllerId(), millEffect.count());
+        CardTypePredicate creaturePredicate = new CardTypePredicate(CardType.CREATURE);
+        List<Card> eligibleCards = milled.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, creaturePredicate, entry.getCard().getId(), gameData, entry.getControllerId()))
+                .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
                 .toList();
-        if (creatureCards.isEmpty()) {
+        if (eligibleCards.isEmpty()) {
             return;
         }
 
-        graveyardService.beginGraveyardLeaveBatch(gameData);
+        gameData.graveyardTargetOperation.milledCreatureReturn =
+                new com.github.laxika.magicalvibes.model.GraveyardTargetOperationState
+                        .MilledCreatureReturnContext(null);
+        gameData.rerunCurrentEffectAfterInteraction = true;
+        playerInputService.beginMultiGraveyardChoice(
+                gameData,
+                entry.getControllerId(),
+                eligibleCards,
+                millEffect.maxCount(),
+                "Choose up to " + millEffect.maxCount()
+                        + " creature cards to put onto the battlefield.");
+    }
+
+    private void returnCards(GameData gameData, StackEntry entry, List<UUID> cardIds, int maxCount) {
+        List<UUID> previousTargetCardIds = entry.getTargetCardIds();
+        entry.setTargetCardIds(cardIds);
         try {
-            graveyard.removeAll(creatureCards);
-            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, creatureCards);
+            returnHandler.resolveForController(
+                    gameData,
+                    entry,
+                    new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                            new CardTypePredicate(CardType.CREATURE), maxCount, false, false),
+                    entry.getControllerId());
         } finally {
-            graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-
-        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        List<Permanent> enteredPermanents = new ArrayList<>();
-        for (Card card : creatureCards) {
-            Permanent permanent = new Permanent(card);
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
-            permanent.setEnteredFromGraveyardOwnerId(controllerId);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
-            if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
-                simultaneouslyEntered.add(permanent);
-                enteredPermanents.add(permanent);
-            }
-        }
-
-        for (Permanent permanent : enteredPermanents) {
-            graveyardReturnSupport.handleCreatureEtbAndLegendRule(
-                    gameData, controllerId, permanent, permanent.getCard());
-            if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
-            }
+            entry.setTargetCardIds(previousTargetCardIds);
         }
     }
 }

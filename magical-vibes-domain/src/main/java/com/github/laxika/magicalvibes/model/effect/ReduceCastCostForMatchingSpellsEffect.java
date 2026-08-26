@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.Zone;
+
+import java.util.Set;
 
 /**
  * Reduces cast cost of matching spells by the evaluated amount of generic mana.
@@ -10,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>The {@code predicate} determines which spells are affected (e.g. historic, creature, artifact).
  * The {@code scope} determines whose spells are affected (SELF = controller, OPPONENT = opponents).
+ * When {@code sourceZones} is non-empty, only spells cast from those zones are affected. When
+ * {@code plotFromHandOnly} is true, the reduction applies only while plotting a card from hand.
  * The {@code amount} is evaluated against the source permanent, so source-relative amounts
  * ({@code CountersOnSource}) express "for each counter on this creature" wordings.
  *
@@ -24,11 +29,37 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record ReduceCastCostForMatchingSpellsEffect(
         CardPredicate predicate,
         DynamicAmount amount,
-        CostModificationScope scope
+        CostModificationScope scope,
+        Set<Zone> sourceZones,
+        boolean plotFromHandOnly
 ) implements CardEffect {
+
+    public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, DynamicAmount amount,
+                                                  CostModificationScope scope) {
+        this(predicate, amount, scope, Set.of(), false);
+    }
 
     /** Convenience for the common flat reduction ("matching spells cost {N} less to cast"). */
     public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, int amount, CostModificationScope scope) {
-        this(predicate, new Fixed(amount), scope);
+        this(predicate, new Fixed(amount), scope, Set.of(), false);
+    }
+
+    /** Convenience for a flat reduction restricted to spells cast from the given zones. */
+    public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, int amount,
+                                                 CostModificationScope scope, Set<Zone> sourceZones) {
+        this(predicate, new Fixed(amount), scope, sourceZones, false);
+    }
+
+    /** Convenience for a flat reduction that applies only to plotting from hand. */
+    public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, int amount,
+                                                 CostModificationScope scope, Set<Zone> sourceZones,
+                                                 boolean plotFromHandOnly) {
+        this(predicate, new Fixed(amount), scope, sourceZones, plotFromHandOnly);
+    }
+
+    /** Convenience for a flat reduction restricted to spells cast from one zone. */
+    public ReduceCastCostForMatchingSpellsEffect(CardPredicate predicate, int amount,
+                                                  CostModificationScope scope, Zone sourceZone) {
+        this(predicate, new Fixed(amount), scope, Set.of(sourceZone), false);
     }
 }

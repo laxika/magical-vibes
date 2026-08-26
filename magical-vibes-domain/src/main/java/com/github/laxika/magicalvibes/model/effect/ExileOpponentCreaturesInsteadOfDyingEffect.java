@@ -12,41 +12,42 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param nontokenOnly whether token creatures are excluded
  * @param addIceCounter whether the exiled card receives an ice counter
- * @param whenExiledEffect optional effect applied after the creature is exiled
- * @param lifeGainOnExile life gained by this effect's controller when a creature is exiled
+ * @param trackWithSource whether the exiled card is tracked with the permanent carrying this effect
  */
 public record ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, boolean addIceCounter,
                                                          CardEffect whenExiledEffect,
+                                                         boolean trackWithSource,
                                                          int lifeGainOnExile)
         implements CardEffect {
 
     public ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, boolean addIceCounter) {
-        this(nontokenOnly, addIceCounter, null, 0);
-    }
-
-    public ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, boolean addIceCounter,
-                                                       CardEffect whenExiledEffect) {
-        this(nontokenOnly, addIceCounter, whenExiledEffect, 0);
+        this(nontokenOnly, addIceCounter, null, false, 0);
     }
 
     public ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly,
                                                        CardEffect whenExiledEffect) {
-        this(nontokenOnly, false, whenExiledEffect, 0);
+        this(nontokenOnly, false, whenExiledEffect, false, 0);
     }
 
-    public ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, int lifeGainOnExile) {
-        this(nontokenOnly, false, null, lifeGainOnExile);
+    public ExileOpponentCreaturesInsteadOfDyingEffect(
+            boolean nontokenOnly, boolean addIceCounter,
+            CardEffect whenExiledEffect, boolean trackWithSource) {
+        this(nontokenOnly, addIceCounter, whenExiledEffect, trackWithSource, 0);
     }
 
     public ExileOpponentCreaturesInsteadOfDyingEffect() {
-        this(false, false, null, 0);
+        this(false, false, null, false, 0);
     }
 
     public static ExileOpponentCreaturesInsteadOfDyingEffect withIceCounter() {
         return new ExileOpponentCreaturesInsteadOfDyingEffect(true, true);
     }
 
+    public static ExileOpponentCreaturesInsteadOfDyingEffect withSourceTracking() {
+        return new ExileOpponentCreaturesInsteadOfDyingEffect(false, false, null, true);
+    }
+
     public static ExileOpponentCreaturesInsteadOfDyingEffect withLifeGain(int amount) {
-        return new ExileOpponentCreaturesInsteadOfDyingEffect(true, amount);
+        return new ExileOpponentCreaturesInsteadOfDyingEffect(true, false, null, false, amount);
     }
 }

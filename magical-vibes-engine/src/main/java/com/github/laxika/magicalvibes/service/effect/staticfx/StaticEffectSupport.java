@@ -85,6 +85,10 @@ public class StaticEffectSupport {
             CardSubtype.BOLAS
     );
 
+    static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
+    }
+
     /**
      * Returns true if the target matches the given creature-centric scope.
      * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, and OWN_PERMANENTS.
@@ -180,8 +184,13 @@ public class StaticEffectSupport {
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         if (wrapped instanceof StaticBoostEffect boost) {
             if (selfInScope(context, boost.scope(), boost.filter())) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
+                int multiplier = boost.scalingCounter() == null
+                        ? 1
+                        : (boost.scalingCounterOnTarget()
+                                ? context.target().getCounterCount(boost.scalingCounter())
+                                : context.source().getCounterCount(boost.scalingCounter()));
+                accumulator.addPower(boost.powerBoost() * multiplier);
+                accumulator.addToughness(boost.toughnessBoost() * multiplier);
                 accumulator.addKeywords(boost.grantedKeywords());
             }
         } else if (wrapped instanceof BoostSelfEffect boost) {
@@ -223,7 +232,8 @@ public class StaticEffectSupport {
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
         } else if (wrapped instanceof SetBasePowerToughnessEffect setPT
-                && setPT.scope() == GrantScope.SELF) {
+                && setPT.scope() == GrantScope.SELF
+                && matchesStaticFilter(context, context.target(), setPT.filter())) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         } else if (wrapped instanceof GrantEffectEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED

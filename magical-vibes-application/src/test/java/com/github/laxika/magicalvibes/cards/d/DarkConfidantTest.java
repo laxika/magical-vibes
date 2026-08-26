@@ -33,7 +33,7 @@ class DarkConfidantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Revealing a land puts it into hand without life loss")
+    @DisplayName("Revealing a land puts it into your hand without losing life")
     void revealingLandCausesNoLifeLoss() {
         harness.addToBattlefield(player1, new DarkConfidant());
         harness.setHand(player1, List.of());

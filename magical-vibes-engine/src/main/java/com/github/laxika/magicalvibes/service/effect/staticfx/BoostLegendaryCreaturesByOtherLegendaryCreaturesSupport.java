@@ -22,7 +22,10 @@ final class BoostLegendaryCreaturesByOtherLegendaryCreaturesSupport {
                       BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect effect,
                       StaticBonusAccumulator accumulator,
                       StaticEffectSupport support) {
-        if (!support.matchesCreatureScope(context, GrantScope.OWN_CREATURES, LEGENDARY)) {
+        GrantScope scope = context.source().getId().equals(context.target().getId())
+                ? GrantScope.ALL_OWN_CREATURES
+                : GrantScope.OWN_CREATURES;
+        if (!support.matchesCreatureScope(context, scope, LEGENDARY)) {
             return;
         }
 

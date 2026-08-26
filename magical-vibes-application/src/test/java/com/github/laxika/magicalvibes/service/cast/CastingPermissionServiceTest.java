@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
@@ -36,6 +38,7 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -215,6 +218,59 @@ class CastingPermissionServiceTest {
 
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isTrue();
         }
+
+        @Test
+        @DisplayName("turn-scoped top-library permission allows spells and lands")
+        void allowsSpellsAndLandsFromTopOfLibrary() {
+            gd.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.add(player1Id);
+
+            Card instant = new Card();
+            instant.setType(CardType.INSTANT);
+            Card land = new Card();
+            land.setType(CardType.LAND);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, instant)).isTrue();
+            assertThat(svc.canPlayLandsFromTopOfLibrary(gd, player1Id)).isTrue();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player2Id, instant)).isFalse();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, land)).isFalse();
+        }
+
+        @Test
+        @DisplayName("conditional top-library permission applies only when its condition is met")
+        void conditionalTopLibraryPermission() {
+            Card augur = new Card();
+            SourceHasChosenMode coven = new SourceHasChosenMode("Coven");
+            augur.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                    coven, new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE))));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(augur));
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(coven), any())).thenReturn(false);
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isFalse();
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(coven), any())).thenReturn(true);
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isTrue();
+        }
+
+        @Test
+        @DisplayName("allows nonland spells through the mana-value life alternative")
+        void allowsManaValueLifeAlternative() {
+            Card citadel = new Card();
+            citadel.addEffect(EffectSlot.STATIC,
+                    new AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(citadel));
+
+            Card spell = new Card();
+            spell.setType(CardType.CREATURE);
+            Card land = new Card();
+            land.setType(CardType.LAND);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, spell)).isTrue();
+            assertThat(svc.canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gd, player1Id, spell)).isTrue();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, land)).isFalse();
+        }
     }
 
     @Test
@@ -331,6 +387,24 @@ class CastingPermissionServiceTest {
             ruleOfLaw.setType(CardType.ENCHANTMENT);
             ruleOfLaw.addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
             gd.playerBattlefields.get(player2Id).add(new Permanent(ruleOfLaw));
+
+            Card dummy = new Card();
+            dummy.setName("Dummy");
+            dummy.setType(CardType.INSTANT);
+            gd.recordSpellCast(player1Id, dummy);
+
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+            bolt.setType(CardType.INSTANT);
+            bolt.setManaCost("{R}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, bolt)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Rejects spell when a resolution-time spell cap is reached")
+        void rejectsWhenResolutionTimeSpellCapReached() {
+            gd.limitSpellsThisTurn(player1Id, 1);
 
             Card dummy = new Card();
             dummy.setName("Dummy");
@@ -470,6 +544,37 @@ class CastingPermissionServiceTest {
             bolt.setManaCost("{R}");
 
             assertThat(svc.isSpellCastingAllowed(gd, player1Id, bolt)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Rejects an opponent's spell matching a permanent's predicate")
+        void rejectsOpponentSpellMatchingPredicate() {
+            Card llawan = new Card();
+            llawan.addEffect(EffectSlot.STATIC,
+                    new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(llawan));
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+            when(predicateEvaluationService.matchesCardPredicate(
+                    eq(creature), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player2Id)))
+                    .thenReturn(true);
+
+            assertThat(svc.isSpellCastingAllowed(gd, player2Id, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Does not apply a matching-predicate restriction to its controller")
+        void matchingPredicateRestrictionDoesNotAffectSourceController() {
+            Card llawan = new Card();
+            llawan.addEffect(EffectSlot.STATIC,
+                    new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(llawan));
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, creature)).isTrue();
         }
 
         @Test

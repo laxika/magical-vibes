@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Taniwha.class, Island.class, Forest.class, GrizzlyBears.class})
 class TaniwhaTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class TaniwhaTest extends BaseCardTest {
         Permanent island = addToBattlefield(player1, new Island());
         Permanent forest = addToBattlefield(player1, new Forest());
 
-        advanceToUpkeep(player1);
+        advanceToUpkeepWithTaniwhaPhasedIn();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island, forest);
@@ -36,7 +38,7 @@ class TaniwhaTest extends BaseCardTest {
         Permanent bears = addToBattlefield(player1, new GrizzlyBears());
         Permanent opponentIsland = addToBattlefield(player2, new Island());
 
-        advanceToUpkeep(player1);
+        advanceToUpkeepWithTaniwhaPhasedIn();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(taniwha, bears);
@@ -49,7 +51,7 @@ class TaniwhaTest extends BaseCardTest {
         addToBattlefield(player1, new Taniwha());
         Permanent island = addToBattlefield(player1, new Island());
 
-        advanceToUpkeep(player1);
+        advanceToUpkeepWithTaniwhaPhasedIn();
         harness.passBothPriorities();
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);
 
@@ -64,6 +66,11 @@ class TaniwhaTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+    }
+
+    private void advanceToUpkeepWithTaniwhaPhasedIn() {
+        advanceToUpkeep(player1);
+        advanceToUpkeep(player1);
     }
 
     private Permanent addToBattlefield(Player player, Card card) {

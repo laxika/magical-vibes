@@ -53,7 +53,8 @@ public class RenownEffectHandler implements NormalEffectHandlerBean {
             if (amount > 0) {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
-                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, source, amount);
                 permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                         gameData, source, amount, entry.getControllerId());
                 gameLogService.append(gameData, GameLog.builder().card(source.getCard())

@@ -42,7 +42,8 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
+        List<UUID> targets = entry.targetsForEffect(effect);
+        UUID targetId = targets.isEmpty() ? entry.getTargetId() : targets.getFirst();
         if (targetId == null) {
             return;
         }

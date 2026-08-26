@@ -70,6 +70,9 @@ public class ReturnTargetPermanentToHandThenEffectHandler implements NormalEffec
 
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
+        boolean beforeBounceConditionMet = e.beforeBounceCondition() == null
+                || conditionEvaluationService.isMet(gameData, e.beforeBounceCondition(),
+                ConditionContext.forStackEntry(entry));
 
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
             gameLogService.append(gameData,
@@ -87,6 +90,12 @@ public class ReturnTargetPermanentToHandThenEffectHandler implements NormalEffec
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s " + e.thenCondition().conditionName() + " ability does nothing ("
                             + e.thenCondition().conditionNotMetReason() + ")."));
+            return;
+        }
+        if (!beforeBounceConditionMet) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s " + e.beforeBounceCondition().conditionName() + " ability does nothing ("
+                            + e.beforeBounceCondition().conditionNotMetReason() + ")."));
             return;
         }
 

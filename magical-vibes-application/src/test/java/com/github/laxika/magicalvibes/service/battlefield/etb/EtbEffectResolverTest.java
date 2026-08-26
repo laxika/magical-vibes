@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -135,6 +136,21 @@ class EtbEffectResolverTest {
                 new ChooseOneEffect.ChooseOneOption("Gain", opt1, null)));
 
         assertThat(resolver.resolve(ctx(true, 1, false), modal)).isSameAs(opt1);
+    }
+
+    @Test
+    @DisplayName("ChooseOne: unwraps every mode selected by a variable-count modal")
+    void chooseOneUnwrapsEverySelectedMode() {
+        DrawCardEffect opt0 = new DrawCardEffect(1);
+        GainLifeEffect opt1 = new GainLifeEffect(2);
+        ChooseOneEffect modal = ChooseOneEffect.oneOrMore(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw", opt0, null),
+                new ChooseOneEffect.ChooseOneOption("Gain", opt1, null)));
+
+        CardEffect resolved = resolver.resolve(ctx(true,
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}), false), modal);
+
+        assertThat(resolved).isEqualTo(SequenceEffect.of(opt0, opt1));
     }
 
     @Test

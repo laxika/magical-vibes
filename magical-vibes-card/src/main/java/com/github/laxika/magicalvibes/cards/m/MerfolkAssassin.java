@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "32")
+@CardRegistration(set = "TSB", collectorNumber = "25")
 public class MerfolkAssassin extends Card {
 
     public MerfolkAssassin() {

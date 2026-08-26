@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -1127,6 +1129,15 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("includes temporary static replacement effects")
+        void includesTemporaryStaticReplacementEffects() {
+            Permanent scales = addPermanent(player1Id, createCreature("Hardened Scales", 0, 0, CardColor.GREEN));
+            scales.addTemporaryTriggeredEffect(EffectSlot.STATIC, new AddOnePlusOneCountersEffect());
+
+            assertThat(gqs.replacePlusOnePlusOneCounters(gd, player1Id, 1)).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("two markers multiply by four")
         void twoMarkersMultiplyByFour() {
             Card a = createCreature("Corpsejack Menace", 4, 4, CardColor.GREEN);
@@ -1663,6 +1674,31 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("playerHasHexproof")
+    class PlayerHasHexproof {
+
+        @Test
+        @DisplayName("honors an active conditional controller keyword grant")
+        void honorsActiveConditionalGrant() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gruul Spellbreaker", 3, 3, CardColor.RED,
+                    new ConditionalEffect(new ControllerTurn(), new GrantControllerKeywordEffect(Keyword.HEXPROOF))));
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+            assertThat(gqs.playerHasHexproof(gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("ignores an inactive conditional controller keyword grant")
+        void ignoresInactiveConditionalGrant() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gruul Spellbreaker", 3, 3, CardColor.RED,
+                    new ConditionalEffect(new ControllerTurn(), new GrantControllerKeywordEffect(Keyword.HEXPROOF))));
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+            assertThat(gqs.playerHasHexproof(gd, player1Id)).isFalse();
+        }
+    }
+
     // ===== isUncounterable =====
 
     @Nested
@@ -1722,6 +1758,21 @@ class GameQueryServiceTest {
             Card creature = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+        }
+
+        @Test
+        @DisplayName("turn-scoped controller protection applies only to that player's creature spells")
+        void controllerCreatureSpellProtectionThisTurn() {
+            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
+            Card creature = creatureOnStack("Grizzly Bears", 2, player1Id);
+            Card instant = new Card();
+            instant.setName("Shock");
+            instant.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, instant, player1Id,
+                    "Shock", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+            assertThat(gqs.isUncounterable(gd, instant)).isFalse();
         }
 
         @Test
@@ -1995,6 +2046,27 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(1);
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("getAdditionalDamageToOpponentsBonus")
+    class AdditionalDamageToOpponentsBonus {
+
+        @Test
+        @DisplayName("applies only to matching-color sources and opponents")
+        void appliesOnlyToMatchingColorSourcesAndOpponents() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Torbran", new AdditionalDamageToOpponentsFromColorSourcesEffect(2, CardColor.RED)));
+            Card redSource = createCreature("Red Source", 1, 1, CardColor.RED);
+            Card greenSource = createCreature("Green Source", 1, 1, CardColor.GREEN);
+
+            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, redSource, null, player2Id))
+                    .isEqualTo(2);
+            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, greenSource, null, player2Id))
+                    .isZero();
+            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, redSource, null, player1Id))
+                    .isZero();
         }
     }
 
@@ -3130,6 +3202,22 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(gqs.getEffectiveColors(gd, perm)).containsExactly(CardColor.GREEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("getEffectiveCardTypes")
+    class GetEffectiveCardTypes {
+
+        @Test
+        @DisplayName("includes intrinsic and additional card types")
+        void includesIntrinsicAndAdditionalCardTypes() {
+            Card card = createCreature("Artifact Creature", 2, 2, CardColor.GREEN);
+            card.setAdditionalTypes(EnumSet.of(CardType.ARTIFACT));
+            Permanent perm = addPermanent(player1Id, card);
+
+            assertThat(gqs.getEffectiveCardTypes(gd, perm))
+                    .containsExactlyInAnyOrder(CardType.CREATURE, CardType.ARTIFACT);
         }
     }
 

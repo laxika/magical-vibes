@@ -45,7 +45,7 @@ class KelpieGuideTest extends BaseCardTest {
         addLands(8);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
@@ -58,7 +58,7 @@ class KelpieGuideTest extends BaseCardTest {
         addLands(7);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

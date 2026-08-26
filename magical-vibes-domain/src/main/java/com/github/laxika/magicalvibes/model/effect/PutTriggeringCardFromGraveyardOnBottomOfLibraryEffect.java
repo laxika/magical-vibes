@@ -8,6 +8,8 @@ import java.util.UUID;
  *
  * <p>The card ID is bound when the death trigger is collected, so the effect still identifies the
  * correct card if the creature's controller changes before it dies.
+ * Death-trigger effect that puts the card of the creature that died on the bottom of its owner's
+ * library.
  *
  * @param dyingCardId the card ID of the creature that died, or {@code null} in the card definition
  */

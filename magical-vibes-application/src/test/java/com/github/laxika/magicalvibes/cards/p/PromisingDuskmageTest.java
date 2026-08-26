@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.Assassinate;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PromisingDuskmage.class, Assassinate.class, Forest.class})
 class PromisingDuskmageTest extends BaseCardTest {
 
     @Test
@@ -48,9 +50,10 @@ class PromisingDuskmageTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, duskmage.getId());
+        duskmage.tap();
+        harness.setHand(player2, List.of(new Assassinate()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castSorcery(player2, 0, duskmage.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Promising Duskmage");
     }

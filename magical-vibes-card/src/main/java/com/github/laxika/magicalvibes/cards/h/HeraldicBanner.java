@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "254")
+@CardRegistration(set = "ELD", collectorNumber = "222")
 public class HeraldicBanner extends Card {
 
     public HeraldicBanner() {

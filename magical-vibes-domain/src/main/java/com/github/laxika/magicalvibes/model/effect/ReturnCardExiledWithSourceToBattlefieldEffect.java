@@ -13,29 +13,36 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  *
  * <p>Purgatory's upkeep trigger, wrapped in a {@code MayPayManaEffect("{4}", 2, …)} for the
  * "you may pay {4} and 2 life" gate. The filter, mana-value-X restriction, and persistent subtype
- * grant are used by Ashiok, Nightmare Weaver's loyalty ability. The targeted form additionally
- * supports tapped entry and extra +1/+1 counters.
+ * grant are used by Ashiok, Nightmare Weaver's loyalty ability.
  */
 public record ReturnCardExiledWithSourceToBattlefieldEffect(
         CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
-        boolean targeted, boolean entersTapped, int additionalPlusOnePlusOneCounters)
+        boolean enterTapped, boolean enterAttacking,
+        boolean targeted, int additionalPlusOnePlusOneCounters)
         implements CardEffect {
+
+    public ReturnCardExiledWithSourceToBattlefieldEffect() {
+        this(null, false, null, false, false, false, 0);
+    }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
                                                          boolean requiresManaValueEqualsX,
                                                          CardSubtype grantedSubtype) {
-        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, 0);
+        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, 0);
     }
 
-    public ReturnCardExiledWithSourceToBattlefieldEffect() {
-        this(null, false, null, false, false, 0);
+    public ReturnCardExiledWithSourceToBattlefieldEffect(
+            CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
+            boolean enterTapped, boolean enterAttacking) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype,
+                enterTapped, enterAttacking, false, 0);
     }
 
     public static ReturnCardExiledWithSourceToBattlefieldEffect targetedCreature(
-            boolean entersTapped, int additionalPlusOnePlusOneCounters) {
+            boolean enterTapped, int additionalPlusOnePlusOneCounters) {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                false, null, true, entersTapped, additionalPlusOnePlusOneCounters);
+                new CardTypePredicate(CardType.CREATURE), false, null,
+                enterTapped, false, true, additionalPlusOnePlusOneCounters);
     }
 
     @Override

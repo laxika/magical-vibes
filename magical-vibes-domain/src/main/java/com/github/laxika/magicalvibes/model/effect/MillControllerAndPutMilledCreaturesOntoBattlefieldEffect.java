@@ -1,10 +1,18 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Mills cards from the controller's library, then puts each creature card milled by this
- * resolution onto the battlefield under the controller's control with haste. Each creature is
- * scheduled to return to its owner's hand at the beginning of the next end step.
+ * Mills cards from the controller's library, then puts up to {@code maxCount} creature cards
+ * milled by this resolution onto the battlefield.
  */
-public record MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(int count)
+public record MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(int count, int maxCount)
         implements CardEffect {
+
+    public MillControllerAndPutMilledCreaturesOntoBattlefieldEffect {
+        if (count < 0) {
+            throw new IllegalArgumentException("count cannot be negative");
+        }
+        if (maxCount < 0) {
+            throw new IllegalArgumentException("maxCount cannot be negative");
+        }
+    }
 }

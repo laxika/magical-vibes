@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "INR", collectorNumber = "122")
 @CardRegistration(set = "INR", collectorNumber = "387")
+@CardRegistration(set = "MID", collectorNumber = "112")
 public class TheMeathookMassacre extends Card {
 
     public TheMeathookMassacre() {

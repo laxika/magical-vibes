@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "314")
+@CardRegistration(set = "WAR", collectorNumber = "36")
 public class TrustedPegasus extends Card {
 
     public TrustedPegasus() {

@@ -97,12 +97,18 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
             return;
         }
 
-        // "A counter" — move the first kind of counter present on the source creature.
-        CounterType toMove = source.getCounters().entrySet().stream()
-                .filter(e -> e.getValue() > 0)
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
+        // Move one counter of the requested type, or the first kind present when no type was
+        // specified.
+        CounterType toMove = moveEffect.counterType();
+        if (toMove != null && source.getCounterCount(toMove) <= 0) {
+            toMove = null;
+        } else if (toMove == null) {
+            toMove = source.getCounters().entrySet().stream()
+                    .filter(e -> e.getValue() > 0)
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+        }
         if (toMove == null) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " has no counters to move."));
             return;

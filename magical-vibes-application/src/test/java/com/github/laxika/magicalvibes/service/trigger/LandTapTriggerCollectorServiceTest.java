@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -51,7 +53,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -103,6 +107,10 @@ class LandTapTriggerCollectorServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
+        lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
+                        - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
@@ -674,6 +682,48 @@ class LandTapTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("symmetric filtered form adds extra mana for another player's matching land")
+        void addsExtraManaForMatchingLandSymmetrically() {
+            Permanent triggerPerm = createPermanent("Gauntlet of Power");
+            triggerPerm.setChosenColor(CardColor.GREEN);
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var filter = new PermanentHasSupertypePredicate(CardSupertype.BASIC);
+            var effect = new AddExtraManaOfChosenColorOnLandTapEffect(false, filter);
+            var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
+
+            when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, forest, filter)).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("filtered form ignores a nonmatching land")
+        void ignoresNonmatchingLand() {
+            Permanent triggerPerm = createPermanent("Gauntlet of Power");
+            triggerPerm.setChosenColor(CardColor.GREEN);
+            Permanent land = createLandPermanent("Gaea's Cradle", ManaColor.GREEN);
+            var filter = new PermanentHasSupertypePredicate(CardSupertype.BASIC);
+            var effect = new AddExtraManaOfChosenColorOnLandTapEffect(false, filter);
+            var ctx = new TriggerContext.LandTap(player2Id, land.getId());
+
+            when(gameQueryService.findPermanentById(gd, land.getId())).thenReturn(land);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, land, filter)).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
         }
     }
 

@@ -69,7 +69,10 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
         switch (e.destination()) {
             case DISCARD -> {
                 gameData.discardCausedByOpponent = true;
-                if (e.revealHand()) {
+                if (e.declineEffect() != null) {
+                    playerInteractionSupport.resolveHandRevealAndChooseOrElse(gameData, entry, count,
+                            e.excludedTypes(), e.includedTypes(), e.filter(), e.declineEffect(), e);
+                } else if (e.revealHand()) {
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), true, false, null,
                             e.upTo(), false, e.declineFallbackDiscardCount());
@@ -90,7 +93,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                 } else {
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
-                            e.upTo(), e.exileAllCopiesOfChosenNames(), e.imprintOnSource());
+                            e.upTo(), e.exileAllCopiesOfChosenNames(), 0, e.imprintOnSource(), e.revealHand());
                 }
             }
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);

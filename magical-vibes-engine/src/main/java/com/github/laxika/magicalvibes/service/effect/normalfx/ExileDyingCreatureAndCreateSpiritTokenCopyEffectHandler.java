@@ -65,7 +65,7 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
 
         var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(CardSubtype.SPIRIT), Set.of(), null, null, Map.of());
-        int tokenCount = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        int tokenCount = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId(), true);
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> batch = new ArrayList<>();
         for (int i = 0; i < tokenCount; i++) {

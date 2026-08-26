@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * No card-specific engine logic.
  */
 @CardRegistration(set = "4ED", collectorNumber = "275")
+@CardRegistration(set = "SUM", collectorNumber = "219")
 public class TimberWolves extends Card {
 
     public TimberWolves() {

@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M19", collectorNumber = "34")
+@CardRegistration(set = "LCI", collectorNumber = "32")
+@CardRegistration(set = "LCI", collectorNumber = "334")
 public class ResplendentAngel extends Card {
 
     public ResplendentAngel() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,9 +66,9 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
         } else {
             // Counters removed: add {C}{G}{U}.
             ManaPool pool = gameData.playerManaPools.get(controllerId);
-            pool.add(ManaColor.COLORLESS, 1);
-            pool.add(ManaColor.GREEN, 1);
-            pool.add(ManaColor.BLUE, 1);
+            ManaProductionSupport.add(gameData, controllerId, pool, ManaColor.COLORLESS, 1);
+            ManaProductionSupport.add(gameData, controllerId, pool, ManaColor.GREEN, 1);
+            ManaProductionSupport.add(gameData, controllerId, pool, ManaColor.BLUE, 1);
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + " adds {C}{G}{U}."));
             log.info("Game {} - {} adds C/G/U from Bounty of the Luxa", gameData.id, playerName);

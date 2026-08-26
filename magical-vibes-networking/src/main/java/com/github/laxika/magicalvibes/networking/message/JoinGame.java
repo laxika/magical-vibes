@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.networking.message;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
@@ -19,5 +20,5 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals, List<Integer> poisonCounters,
                        List<Integer> energyCounters,
                        List<StackEntryView> stack, List<List<CardView>> graveyards,
-                       List<Integer> speeds) {
+                       List<Integer> speeds, DayNight dayNight) {
 }

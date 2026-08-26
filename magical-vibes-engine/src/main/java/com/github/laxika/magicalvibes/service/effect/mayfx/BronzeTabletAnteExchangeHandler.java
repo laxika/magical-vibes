@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final InputCompletionService inputCompletionService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,9 +51,12 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
                 && gameData.getLife(opponentId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, opponentId);
+            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - lifeLoss);
+            triggerCollectionService.checkLifePaymentTriggers(gameData, opponentId, lifeLoss);
             moveTabletFromExileToOwnerGraveyard(gameData, tabletCard);
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. ", tabletCard, " is put into its owner's graveyard."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + lifeLoss + " life. ", tabletCard, " is put into its owner's graveyard."));
             log.info("Game {} - {} pays {} life to keep {}", gameData.id, player.getUsername(),
                     effect.lifeCost(), tabletCard.getName());
         } else {

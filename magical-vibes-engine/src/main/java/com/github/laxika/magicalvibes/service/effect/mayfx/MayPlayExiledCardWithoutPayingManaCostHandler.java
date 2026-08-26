@@ -45,7 +45,12 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
                 // withdraw the siblings; only a single spell may be cast (Shell of the Last Kappa).
                 gameData.pendingMayAbilities.removeIf(pending -> pending != ability && isExclusive(pending));
             }
-            exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
+            boolean grantHaste = ability.effects().stream()
+                    .filter(MayPlayExiledCardWithoutPayingManaCostEffect.class::isInstance)
+                    .map(MayPlayExiledCardWithoutPayingManaCostEffect.class::cast)
+                    .anyMatch(MayPlayExiledCardWithoutPayingManaCostEffect::grantHaste);
+            exileFreeCastSupport.castFromExileWithoutPaying(
+                    gameData, player, ability.targetCardId(), grantHaste);
         } else {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to play " , ability.sourceCard(), "."));
             log.info("Game {} - {} declines to play exiled {}", gameData.id,

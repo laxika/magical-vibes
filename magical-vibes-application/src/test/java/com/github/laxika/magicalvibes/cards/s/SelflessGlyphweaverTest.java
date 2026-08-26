@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SelflessGlyphweaver.class, Forest.class, GrizzlyBears.class, NicolBolasPlaneswalker.class})
 class SelflessGlyphweaverTest extends BaseCardTest {
 
     @Test
@@ -32,10 +35,11 @@ class SelflessGlyphweaverTest extends BaseCardTest {
     }
 
     @Test
-    void deadlyVanityKeepsTheChosenPlaneswalkerAndDestroysOtherCreaturesAndPlaneswalkers() {
+    void deadlyVanityKeepsTheChosenCreatureOrPlaneswalker() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent keptPlaneswalker = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        keptPlaneswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.addToBattlefield(player1, new Forest());
 
         harness.setHand(player1, List.of(new SelflessGlyphweaver()));

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -59,13 +61,17 @@ public class AwardManaEffectHandler implements NormalEffectHandlerBean {
 
         UUID controllerId = entry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(controllerId);
-        pool.add(e.color(), amount);
+        ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, controllerId, e.color());
+        pool.add(effectiveColor, amount);
+        if (source != null && e.tracksProducingSourceForSpellCastTriggers()) {
+            pool.addSpellCastTriggerMana(source.getId(), effectiveColor, amount);
+        }
         if (source != null && gameQueryService.isCreature(gameData, source)) {
-            pool.addCreatureMana(e.color(), amount);
+            pool.addCreatureMana(effectiveColor, amount);
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = playerName + " adds " + amount + " " + e.color().getCode() + ".";
+        String logEntry = playerName + " adds " + amount + " " + effectiveColor.getCode() + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} adds {} {}", gameData.id, playerName, amount, e.color());
     }

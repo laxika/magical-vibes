@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSourceNameEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -27,6 +28,7 @@ import java.util.Set;
 public class TidalInfluence extends Card {
 
     public TidalInfluence() {
+        addEffect(EffectSlot.STATIC, new CantCastSpellsWithSourceNameEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIDE, new Fixed(1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.TIDE));

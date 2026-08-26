@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({QuandrixCommand.class, Forest.class, GrizzlyBears.class, Shock.class, Spellbook.class})
 class QuandrixCommandTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,7 @@ class QuandrixCommandTest extends BaseCardTest {
         harness.passPriority(player2);
         harness.castModalInstantWithModes(player1, 0, 2, new int[]{1, 3}, spellbook.getId(),
                 List.of(player1.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
@@ -71,7 +74,10 @@ class QuandrixCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Spellbook");
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .doesNotContain(graveyardFirst.getId(), graveyardSecond.getId(), graveyardThird.getId());
+        harness.assertInGraveyard(player1, "Quandrix Command");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySizeBefore + 3);
     }
 

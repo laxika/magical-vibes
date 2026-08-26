@@ -37,9 +37,9 @@ class DreamEaterTest extends BaseCardTest {
 
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of(1)));
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -51,12 +51,14 @@ class DreamEaterTest extends BaseCardTest {
     void decliningBounceLeavesPermanent() {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         castDreamEater();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0, 1, 2, 3), List.of()));
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -79,8 +81,6 @@ class DreamEaterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0, 1, 2, 3), List.of()));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

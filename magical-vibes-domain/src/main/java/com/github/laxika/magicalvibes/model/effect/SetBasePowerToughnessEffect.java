@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * Sets the base power and toughness of the affected permanents to the given values.
  * Modifiers (counters, static boosts) still apply on top of the new base values (CR 613, layer 7b).
@@ -26,12 +28,24 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param scope     which permanents are affected ({@code TARGET} for the one-shot until-EOT usage,
  *                  {@code ENCHANTED_CREATURE}/{@code EQUIPPED_CREATURE}/etc. for continuous static)
  * @param duration  how long a one-shot target or self setter remains active
+ * @param filter    optional permanent predicate for continuous static scopes
  */
 public record SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
-                                           EffectDuration duration) implements CardEffect {
+                                           EffectDuration duration, PermanentPredicate filter) implements CardEffect {
 
     public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope) {
-        this(power, toughness, scope, EffectDuration.UNTIL_END_OF_TURN);
+        this(power, toughness, scope, EffectDuration.UNTIL_END_OF_TURN, null);
+    }
+
+    public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
+                                       EffectDuration duration) {
+        this(power, toughness, scope, duration, null);
+    }
+
+    /** Convenience constructor for a filtered continuous static setter. */
+    public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
+                                       PermanentPredicate filter) {
+        this(power, toughness, scope, EffectDuration.CONTINUOUS, filter);
     }
 
     /**
@@ -65,7 +79,9 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetPredicates.creature());
+            case TARGET -> TargetSpec.benign(duration == EffectDuration.PERMANENT
+                    ? TargetPredicates.permanent()
+                    : TargetPredicates.creature());
             case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
             default -> TargetSpec.NONE;
         };

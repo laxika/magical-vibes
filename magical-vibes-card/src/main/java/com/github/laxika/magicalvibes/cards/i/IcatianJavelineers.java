@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "8a")
 @CardRegistration(set = "FEM", collectorNumber = "8b")
 @CardRegistration(set = "FEM", collectorNumber = "8c")
+@CardRegistration(set = "TSB", collectorNumber = "10")
 public class IcatianJavelineers extends Card {
 
     public IcatianJavelineers() {

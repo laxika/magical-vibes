@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "8ED", collectorNumber = "285")
 @CardRegistration(set = "7ED", collectorNumber = "280")
 @CardRegistration(set = "5ED", collectorNumber = "337")
+@CardRegistration(set = "SUM", collectorNumber = "223")
 public class VerduranEnchantress extends Card {
 
     public VerduranEnchantress() {

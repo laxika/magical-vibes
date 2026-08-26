@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,11 +36,23 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetTargetColorEffect) effect;
+        CardColor color = e.color();
+        if (e.chooseColor()) {
+            if (gameData.chosenSpellColor == null) {
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginSpellColorChoice(gameData, entry.getControllerId());
+                return;
+            }
+            color = gameData.chosenSpellColor;
+            gameData.chosenSpellColor = null;
+            gameData.rerunCurrentEffectAfterInteraction = false;
+        }
+
         UUID targetId = entry.getTargetId();
         // A null color is "becomes colorless" (Ersatz Gnomes) — the empty replacement set of CR 105.3.
-        String colorName = e.color() == null
+        String colorName = color == null
                 ? "colorless"
-                : e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
+                : color.name().charAt(0) + color.name().substring(1).toLowerCase();
 
         // Target may be a permanent or, like Glamerdye, a spell still on the stack.
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -47,8 +62,8 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
             // The legacy fields are seeded for direct getEffectiveColor callers; the layered pass replays
             // the floating effect at its real timestamp.
             target.getTransientColors().clear();
-            if (e.color() != null) {
-                target.getTransientColors().add(e.color());
+            if (color != null) {
+                target.getTransientColors().add(color);
             }
             target.setColorOverridden(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
@@ -66,7 +81,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, targetId);
         if (targetSpell != null) {
             gameData.spellColorOverrides.put(targetId,
-                    e.color() == null ? Set.of() : Set.of(e.color()));
+                    color == null ? Set.of() : Set.of(color));
             
             gameLogService.append(gameData, GameLog.builder().card(targetSpell.getCard()).text(" becomes " + colorName + ".").build());
             log.info("Game {} - spell {} becomes {}", gameData.id, targetSpell.getCard().getName(), colorName);

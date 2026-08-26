@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "305")
+@CardRegistration(set = "RNA", collectorNumber = "10")
 public class HaazdaOfficer extends Card {
 
     public HaazdaOfficer() {

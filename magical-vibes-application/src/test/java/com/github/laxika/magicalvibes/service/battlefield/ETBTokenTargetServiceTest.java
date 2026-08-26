@@ -205,4 +205,28 @@ class ETBTokenTargetServiceTest {
         verify(playerInputService).beginAnyTargetChoice(
                 eq(gd), eq(player1Id), eq(List.of(candidate.getId())), eq(List.of()), contains("target 1.1"));
     }
+
+    @Test
+    @DisplayName("Allows a target to be reused across target groups when the card permits it")
+    void allowsSharedTargetsAcrossGroups() {
+        Permanent candidate = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(candidate);
+        when(gameQueryService.isCreature(gd, candidate)).thenReturn(true);
+
+        Card card = new Card();
+        card.setName("Flash Thompson, Spider-Fan");
+        card.setAllowSharedTargets(true);
+        var firstEffect = new DestroyTargetPermanentEffect();
+        var secondEffect = new DestroyTargetPermanentEffect();
+        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, firstEffect);
+        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, secondEffect);
+        gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, List.of(firstEffect, secondEffect), UUID.randomUUID(),
+                List.of(candidate.getId()), 1, 0, List.of(1)));
+
+        service.processNextETBTokenMultiTargetTrigger(gd);
+
+        verify(playerInputService).beginAnyTargetChoice(
+                eq(gd), eq(player1Id), eq(List.of(candidate.getId())), eq(List.of()), contains("target 2"));
+    }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "334")
+@CardRegistration(set = "RNA", collectorNumber = "111")
 public class RubblebeltRecluse extends Card {
 
     public RubblebeltRecluse() {

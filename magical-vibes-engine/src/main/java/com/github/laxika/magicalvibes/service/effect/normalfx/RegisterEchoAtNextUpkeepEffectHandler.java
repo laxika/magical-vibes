@@ -28,6 +28,7 @@ public class RegisterEchoAtNextUpkeepEffectHandler implements NormalEffectHandle
         }
 
         var e = (RegisterEchoAtNextUpkeepEffect) effect;
-        gameData.queueDelayedAction(new EchoAtNextUpkeep(sourcePermanentId, e.manaCost(), entry.getCard()));
+        gameData.queueDelayedAction(new EchoAtNextUpkeep(
+                sourcePermanentId, e.manaCost(), e.dynamicManaCost(), entry.getCard()));
     }
 }

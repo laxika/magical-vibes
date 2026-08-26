@@ -7,6 +7,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * own token creation — multiple instances on the battlefield stack multiplicatively.
  *
  * @param multiplier the factor by which token creation is multiplied (e.g. 2 for doubling)
+ * @param creatureTokensOnly whether the effect applies only to creature tokens
  */
-public record MultiplyTokenCreationEffect(int multiplier) implements CardEffect {
+public record MultiplyTokenCreationEffect(int multiplier, boolean creatureTokensOnly) implements CardEffect {
+
+    /** Applies to all tokens. */
+    public MultiplyTokenCreationEffect(int multiplier) {
+        this(multiplier, false);
+    }
 }

@@ -97,7 +97,8 @@ public class ETBTokenTargetService {
                 StackEntryType type = se.getEntryType();
                 boolean isSpell = type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL
                         || type == StackEntryType.CREATURE_SPELL || type == StackEntryType.ENCHANTMENT_SPELL
-                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL;
+                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL
+                        || type == StackEntryType.BATTLE_SPELL;
                 boolean isAbility = type == StackEntryType.ACTIVATED_ABILITY
                         || type == StackEntryType.TRIGGERED_ABILITY;
                 if (!isSpell && !(pending.includeAbilities() && isAbility)) {
@@ -136,7 +137,7 @@ public class ETBTokenTargetService {
             TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
                     gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
                     pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
-                    pending.triggeringPermanentId() == null
+                    pending.sourcePermanentId() == null
                             ? null
                             : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
             List<UUID> validPlayerTargets = targets.validTargets().stream()
@@ -214,7 +215,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -231,7 +232,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -248,7 +249,7 @@ public class ETBTokenTargetService {
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (pending.chosenTargetsSoFar().contains(pid)) continue;
+                    if (targetAlreadyChosen(pending, pid)) continue;
                     if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, group.getFilter())) {
                         validPlayerTargets.add(pid);
                     }
@@ -261,7 +262,7 @@ public class ETBTokenTargetService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
+                        if (targetAlreadyChosen(pending, p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
                                 pending.controllerId(), card, pending.sourcePermanentId())) {
                             validPermanentTargets.add(p.getId());
@@ -309,7 +310,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -334,6 +335,18 @@ public class ETBTokenTargetService {
                     gameData.id, card.getName(), idx, chosenInGroup);
             return;
         }
+    }
+
+    private boolean targetAlreadyChosen(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                        UUID candidateId) {
+        List<UUID> chosenTargets = pending.chosenTargetsSoFar();
+        int currentGroupStart = pending.groupSizes().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        boolean chosenInCurrentGroup = chosenTargets.subList(currentGroupStart, chosenTargets.size())
+                .contains(candidateId);
+        return chosenInCurrentGroup
+                || (!pending.sourceCard().isAllowSharedTargets() && chosenTargets.contains(candidateId));
     }
 
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
@@ -408,8 +421,14 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        etbEntry.setTriggeringCardId(pending.triggeringCardId());
         if (pending.sourcePermanentId() != null) {
             etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
+            Permanent sourcePermanent = gameQueryService.findPermanentById(
+                    gameData, pending.sourcePermanentId());
+            if (sourcePermanent != null) {
+                etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+            }
         }
         if (!pending.repeatedAdditionalCosts().isEmpty()) {
             etbEntry.setRepeatedAdditionalCosts(List.copyOf(pending.repeatedAdditionalCosts()));

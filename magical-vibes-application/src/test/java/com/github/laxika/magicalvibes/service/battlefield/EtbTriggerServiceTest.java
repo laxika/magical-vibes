@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
@@ -89,5 +90,21 @@ class EtbTriggerServiceTest {
 
         verify(playerInputService).beginColorChoice(
                 gameData, controllerId, permanent.getId(), null, choice);
+    }
+
+    @Test
+    void landEntryBasicLandTypeChoiceIsPresentedBeforeTriggeredEffects() {
+        Card land = new Card();
+        land.setName("Basic Type Land");
+        land.setType(CardType.LAND);
+        ChooseBasicLandTypeOnEnterEffect choice = new ChooseBasicLandTypeOnEnterEffect();
+        land.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, choice);
+        Permanent permanent = new Permanent(land);
+        gameData.playerBattlefields.get(controllerId).add(permanent);
+
+        service.processLandETBEffects(gameData, controllerId, land);
+
+        verify(playerInputService).beginBasicLandTypeChoice(
+                gameData, controllerId, permanent.getId(), false, false, choice.allowedTypes());
     }
 }

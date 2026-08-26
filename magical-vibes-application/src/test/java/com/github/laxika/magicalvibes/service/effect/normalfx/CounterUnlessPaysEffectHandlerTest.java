@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -331,5 +332,29 @@ class CounterUnlessPaysEffectHandlerTest {
                         .hasSize(1)
                         .first()
                         .isInstanceOf(CounterUnlessPaysEffect.class);
+            }
+
+            @Test
+            @DisplayName("Preserves paid riders and the counter spell controller in the may ability")
+            void mayAbilityPreservesPaidRider() {
+                Card elves = createCreatureCard("Llanowar Elves");
+                StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
+                gd.stack.add(elvesEntry);
+
+                ManaPool pool = new ManaPool();
+                pool.add(ManaColor.GREEN, 1);
+                gd.playerManaPools.put(player1Id, pool);
+
+                Card hatchling = createCard("Spiketail Hatchling");
+                CardEffect paidRider = new CounterSpellEffect();
+                StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, elves.getId(), 1);
+                CounterUnlessPaysEffect effect = new CounterUnlessPaysEffect(1, List.of(paidRider));
+
+                counterUnlessPaysHandler.resolve(gd, counterEntry, effect);
+
+                PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+                CounterUnlessPaysEffect pendingEffect = (CounterUnlessPaysEffect) ability.effects().getFirst();
+                assertThat(ability.sourceControllerId()).isEqualTo(player2Id);
+                assertThat(pendingEffect.onPaidEffects()).containsExactly(paidRider);
             }
 }

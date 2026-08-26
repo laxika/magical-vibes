@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyar
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -52,6 +53,7 @@ public class PutTriggeringCardFromGraveyardOnBottomOfLibraryEffectHandler
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
         List<Card> library = gameData.playerDecks.get(ownerId);
         library.add(deadCard);
+        gameData.playerDecks.get(ownerId).add(deadCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         gameLogService.append(gameData, GameLog.builder()

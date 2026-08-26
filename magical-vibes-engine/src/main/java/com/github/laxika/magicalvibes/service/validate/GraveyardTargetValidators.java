@@ -77,6 +77,9 @@ public class GraveyardTargetValidators {
         if (!effect.targetGraveyard()) {
             return; // Non-targeting effects choose at resolution time
         }
+        if (ctx.targetZone() != Zone.GRAVEYARD && effect.targetGroup() >= 0) {
+            return;
+        }
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Effect requires a graveyard target");
         }
@@ -99,14 +102,15 @@ public class GraveyardTargetValidators {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
-        // "from your graveyard" enforcement for the activated-ability path. Spells are validated in
-        // SpellCastingService (which has the caster's playerId); there the source card is on the stack,
-        // so findSourcePermanentController returns null and this check is safely skipped.
+        UUID controllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
         if (effect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
-            UUID controllerId = tvs.findSourcePermanentController(ctx);
             if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
                 throw new IllegalStateException("Target must be in your graveyard");
             }
+        } else if (effect.source() == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                && controllerId != null && controllerId.equals(graveyardOwnerId)) {
+            throw new IllegalStateException("Target must be in an opponent's graveyard");
         }
         if (effect.targetPutIntoGraveyardFromBattlefieldThisTurn()) {
             boolean tracked = graveyardOwnerId != null
@@ -116,6 +120,15 @@ public class GraveyardTargetValidators {
             if (!tracked) {
                 throw new IllegalStateException(
                         "Target must be a card put into a graveyard from the battlefield this turn");
+            }
+        }
+        if (effect.targetNotPutIntoGraveyardThisCombat()) {
+            boolean tracked = graveyardOwnerId != null
+                    && ctx.gameData().cardsPutIntoGraveyardThisCombat
+                            .getOrDefault(graveyardOwnerId, Set.of())
+                            .contains(ctx.targetId());
+            if (tracked) {
+                throw new IllegalStateException("Target can't have been put into a graveyard during this combat");
             }
         }
         int requiredManaValue = ctx.xValue()
@@ -139,8 +152,9 @@ public class GraveyardTargetValidators {
                     + effect.manaValueXOffset() + " or less (" + requiredManaValue + ")");
         }
         if (effect.maxManaValueEqualsLifeGainedThisTurn()) {
-            UUID controllerId = tvs.findSourcePermanentController(ctx);
-            int lifeGained = controllerId == null ? 0 : ctx.gameData().getLifeGainedThisTurn(controllerId);
+            UUID sourceControllerId = tvs.findSourcePermanentController(ctx);
+            int lifeGained = sourceControllerId == null
+                    ? 0 : ctx.gameData().getLifeGainedThisTurn(sourceControllerId);
             if (graveyardCard.getManaValue() > lifeGained) {
                 throw new IllegalStateException(
                         "Target card's mana value must be " + lifeGained + " or less");
@@ -214,7 +228,8 @@ public class GraveyardTargetValidators {
                         effect.filter(),
                         ctx.sourceCard() == null ? null : ctx.sourceCard().getId(),
                         ctx.gameData(),
-                        gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId()))) {
+                        gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId()),
+                        ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
             throw new IllegalStateException("Target card does not match the required filter");
         }
         // Opponent-graveyard scope check is enforced in SpellCastingService (which has playerId context)
@@ -362,7 +377,8 @@ public class GraveyardTargetValidators {
             tvs.requireTargetPlayer(ctx);
             return;
         }
-        if (effect.scope() != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD) {
+        if (effect.scope() != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
+                && effect.scope() != GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
             return;
         }
         if (ctx.targetZone() != Zone.GRAVEYARD) {
@@ -374,6 +390,15 @@ public class GraveyardTargetValidators {
         Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (effect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+            UUID controllerId = ctx.sourceControllerId();
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(
+                    ctx.gameData(), ctx.targetId());
+            if (controllerId != null && graveyardOwnerId != null
+                    && !controllerId.equals(graveyardOwnerId)) {
+                throw new IllegalStateException("Target must be in your graveyard");
+            }
         }
         if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             throw new IllegalStateException("Target must be a " + CardPredicateUtils.describeFilter(effect.filter()));

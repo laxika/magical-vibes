@@ -33,6 +33,19 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
     }
 
     @Test
+    @DisplayName("Returns the number of cards discarded")
+    void returnsDiscardCount() {
+        Card handCard1 = createCard("Mountain");
+        Card handCard2 = createCard("Forest");
+        gd.playerHands.get(player1Id).addAll(List.of(handCard1, handCard2));
+
+        int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService, triggerCollectionService)
+                .discardHand(gd, player1Id, player1Id, "One with Nothing");
+
+        assertThat(discardCount).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Does nothing with empty hand")
     void doesNothingWithEmptyHand() {
         Card card = createCard("One with Nothing");

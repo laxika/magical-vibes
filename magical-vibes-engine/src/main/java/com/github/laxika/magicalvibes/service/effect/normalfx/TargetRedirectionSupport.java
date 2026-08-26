@@ -1,12 +1,18 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +30,7 @@ import java.util.UUID;
 public class TargetRedirectionSupport {
 
     private final TargetLegalityService targetLegalityService;
+    private final ValidTargetService validTargetService;
 
     public List<UUID> collectValidNewTargets(GameData gameData, StackEntry targetSpell) {
         UUID currentTargetId = targetSpell.getTargetId();
@@ -57,6 +64,11 @@ public class TargetRedirectionSupport {
     }
 
     public boolean isValidNewTargetForSpell(GameData gameData, StackEntry targetSpell, UUID candidateTargetId) {
+        if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            return isValidNewTargetForAbility(gameData, targetSpell, candidateTargetId);
+        }
+
         Card spellCard = targetSpell.getCard();
 
         if (EffectResolution.needsSpellTarget(spellCard)) {
@@ -68,5 +80,31 @@ public class TargetRedirectionSupport {
         }
 
         return targetLegalityService.checkSpellTargeting(gameData, spellCard, candidateTargetId, null, targetSpell.getControllerId()).isEmpty();
+    }
+
+    private boolean isValidNewTargetForAbility(GameData gameData, StackEntry abilityEntry, UUID candidateTargetId) {
+        List<CardEffect> effects = abilityEntry.getEffectsToResolve() == null
+                ? List.of() : abilityEntry.getEffectsToResolve();
+        ActivatedAbility syntheticAbility = new ActivatedAbility(
+                false, null, effects, "retarget", abilityEntry.getTargetFilter());
+        int sourcePermanentIndex = findPermanentIndex(gameData, abilityEntry.getSourcePermanentId());
+        ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForAbility(
+                gameData, abilityEntry.getCard(), syntheticAbility,
+                abilityEntry.getControllerId(), sourcePermanentIndex);
+        return validTargets.validPermanentIds().contains(candidateTargetId)
+                || validTargets.validPlayerIds().contains(candidateTargetId)
+                || validTargets.validGraveyardCardIds().contains(candidateTargetId);
+    }
+
+    private int findPermanentIndex(GameData gameData, UUID permanentId) {
+        if (permanentId == null) return -1;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (int i = 0; i < battlefield.size(); i++) {
+                if (permanentId.equals(battlefield.get(i).getId())) return i;
+            }
+        }
+        return -1;
     }
 }

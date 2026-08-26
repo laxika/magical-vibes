@@ -78,6 +78,9 @@ public class EquipSupport {
         }
 
         UUID oldAttachedTo = equipment.getAttachedTo();
+        if (host.getId().equals(oldAttachedTo)) {
+            return true;
+        }
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
         expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(host.getId());

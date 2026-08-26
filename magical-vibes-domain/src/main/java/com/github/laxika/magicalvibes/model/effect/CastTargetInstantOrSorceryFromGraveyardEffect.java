@@ -25,28 +25,35 @@ public record CastTargetInstantOrSorceryFromGraveyardEffect(
         boolean withoutPayingManaCost,
         boolean exileInsteadOfGraveyard,
         CardPredicate filter,
-        boolean anyManaType
+        boolean anyManaType,
+        int copyCount
 ) implements CardEffect {
 
+    public CastTargetInstantOrSorceryFromGraveyardEffect(
+            GraveyardSearchScope scope, boolean withoutPayingManaCost,
+            boolean exileInsteadOfGraveyard, CardPredicate filter) {
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, filter, false, 0);
+    }
+
+    public CastTargetInstantOrSorceryFromGraveyardEffect(
+            GraveyardSearchScope scope, boolean withoutPayingManaCost,
+            boolean exileInsteadOfGraveyard, CardPredicate filter, int copyCount) {
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, filter, false, copyCount);
+    }
+
     public CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope scope, boolean withoutPayingManaCost) {
-        this(scope, withoutPayingManaCost, false, null, false);
+        this(scope, withoutPayingManaCost, false, null, false, 0);
     }
 
     public CastTargetInstantOrSorceryFromGraveyardEffect(
             GraveyardSearchScope scope, boolean withoutPayingManaCost, boolean exileInsteadOfGraveyard) {
-        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null, false);
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null, false, 0);
     }
 
     public CastTargetInstantOrSorceryFromGraveyardEffect(
             GraveyardSearchScope scope, boolean withoutPayingManaCost,
             boolean exileInsteadOfGraveyard, boolean anyManaType) {
-        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null, anyManaType);
-    }
-
-    public CastTargetInstantOrSorceryFromGraveyardEffect(
-            GraveyardSearchScope scope, boolean withoutPayingManaCost,
-            boolean exileInsteadOfGraveyard, CardPredicate filter) {
-        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, filter, false);
+        this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null, anyManaType, 0);
     }
 
     @Override

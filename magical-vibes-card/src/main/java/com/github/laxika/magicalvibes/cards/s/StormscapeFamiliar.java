@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "36")
+@CardRegistration(set = "TSB", collectorNumber = "32")
 public class StormscapeFamiliar extends Card {
 
     public StormscapeFamiliar() {

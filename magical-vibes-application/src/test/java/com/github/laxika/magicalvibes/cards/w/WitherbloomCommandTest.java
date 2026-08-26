@@ -29,8 +29,7 @@ class WitherbloomCommandTest extends BaseCardTest {
 
         harness.castModalSorceryWithModes(player1, 0, 2, new int[]{0, 3}, List.of(player2.getId(), player2.getId()));
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
-
+        harness.handleGraveyardCardChosen(player1, 0);
         harness.assertInHand(player1, forest.getName());
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);

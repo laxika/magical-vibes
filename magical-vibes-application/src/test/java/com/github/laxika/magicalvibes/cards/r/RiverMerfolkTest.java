@@ -1,25 +1,27 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RiverMerfolk.class, Mountain.class})
 class RiverMerfolkTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Activating the mountainwalk ability puts it on the stack targeting itself")
+    @DisplayName("Activating the mountainwalk ability records the source for self-resolution")
     void activatingPutsOnStack() {
-        Permanent merfolk = addRiverMerfolkReady(player1);
+        Permanent merfolk = addCreatureReady(player1, new RiverMerfolk());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -33,7 +35,7 @@ class RiverMerfolkTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving grants mountainwalk until end of turn")
     void resolvingGrantsMountainwalk() {
-        Permanent merfolk = addRiverMerfolkReady(player1);
+        Permanent merfolk = addCreatureReady(player1, new RiverMerfolk());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -44,9 +46,28 @@ class RiverMerfolkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mountainwalk is conditional on the defending player's Mountain")
+    void mountainwalkUsesDefendingPlayersMountain() {
+        Permanent merfolk = addCreatureReady(player1, new RiverMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent blocker = addCreatureReady(player2, new RiverMerfolk());
+        assertThat(bls.canBlockAttacker(gd, blocker, merfolk,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+
+        harness.addToBattlefield(player2, new Mountain());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, merfolk,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
     @DisplayName("Mountainwalk granted by the ability resets at end of turn cleanup")
     void mountainwalkResetsAtEndOfTurn() {
-        Permanent merfolk = addRiverMerfolkReady(player1);
+        Permanent merfolk = addCreatureReady(player1, new RiverMerfolk());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -64,17 +85,10 @@ class RiverMerfolkTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the ability without blue mana")
     void cannotActivateWithoutBlueMana() {
-        addRiverMerfolkReady(player1);
+        addCreatureReady(player1, new RiverMerfolk());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addRiverMerfolkReady(Player player) {
-        Permanent perm = new Permanent(new RiverMerfolk());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

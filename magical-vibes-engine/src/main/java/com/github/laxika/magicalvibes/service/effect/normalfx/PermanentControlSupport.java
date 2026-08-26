@@ -74,7 +74,8 @@ public class PermanentControlSupport {
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                        String sourceSetCode, int power, int toughness) {
         List<UUID> createdIds = new ArrayList<>();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
         int totalAmount = amount * tokenMultiplier;
         CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                 gameData, controllerId, token);
@@ -168,7 +169,7 @@ public class PermanentControlSupport {
                 ? controllerId
                 : gameQueryService.findPermanentController(gameData, createdIds.get(createdIds.size() - 1));
         battlefieldEntryService.checkAllyTokenEntersTriggers(
-                gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds.size());
+                gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds);
 
         log.info("Game {} - {} token(s) created for player {}", gameData.id, createdIds.size(), controllerId);
         return createdIds;

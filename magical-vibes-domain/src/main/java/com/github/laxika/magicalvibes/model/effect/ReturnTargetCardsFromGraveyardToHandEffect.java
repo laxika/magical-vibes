@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Return target cards matching the filter from your graveyard to your hand.
+ * Return target cards matching the filter from a graveyard to a hand. The default spell path uses
+ * the controller's graveyard; activated abilities can provide positional graveyard target groups.
  * Multi-target graveyard selection is handled by SpellCastingService at cast time.
  * Targets are stored in StackEntry.targetCardIds and resolved by GraveyardReturnResolutionService.
  *
@@ -31,6 +34,14 @@ import java.util.Set;
  * @param maxOnePerCardType card types for which at most one selected card is allowed
  * @param unlessAnyPlayerPaysX when {@code true}, any player may pay the spell's X at resolution
  *                             to prevent the return effect
+ * @param opponentChoosesOneForHand when {@code true}, an opponent chooses one of the selected
+ *                                  cards to return to hand and the other returns to the battlefield
+ *                                  with haste and a delayed exile
+ * @param targetGroups         positional graveyard-card target groups resolved by this effect;
+ *                             empty for ordinary single-effect targeting
+ * @param targetGroupsMustShareGraveyard when {@code true}, all configured target groups must be
+ *                                       cards in the same graveyard
+ * @param returnToOwnersHand   when {@code true}, each returned card goes to its owner's hand
  */
 public record ReturnTargetCardsFromGraveyardToHandEffect(
         CardPredicate filter,
@@ -41,46 +52,68 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
         int minTargets,
         boolean requireSharedCreatureType,
         Set<CardType> maxOnePerCardType,
-        boolean unlessAnyPlayerPaysX
-) implements CardEffect {
+        boolean unlessAnyPlayerPaysX,
+        boolean opponentChoosesOneForHand,
+        List<Integer> targetGroups,
+        boolean targetGroupsMustShareGraveyard,
+        boolean returnToOwnersHand
+) implements TargetCardGroupEffect {
 
     public ReturnTargetCardsFromGraveyardToHandEffect {
         maxOnePerCardType = maxOnePerCardType == null ? Set.of() : Set.copyOf(maxOnePerCardType);
+        targetGroups = targetGroups == null ? List.of() : List.copyOf(targetGroups);
+    }
+
+    public ReturnTargetCardsFromGraveyardToHandEffect(
+            CardPredicate filter, int maxTargets, DynamicAmount dynamicMaxTargets,
+            boolean xScaled, boolean exactTargets, int minTargets,
+            boolean requireSharedCreatureType, Set<CardType> maxOnePerCardType,
+            boolean unlessAnyPlayerPaysX) {
+        this(filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
+                requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
+                false, List.of(), false, false);
     }
 
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, int maxTargets) {
-        this(filter, maxTargets, null, false, false, 0, false, Set.of(), false);
+        this(filter, maxTargets, null, false, false, 0, false, Set.of(), false, false,
+                List.of(), false, false);
     }
 
     /** The dynamic-cap form: the cap is counted off the targeted player as the spell is cast. */
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, DynamicAmount dynamicMaxTargets) {
-        this(filter, 0, dynamicMaxTargets, false, false, 0, false, Set.of(), false);
+        this(filter, 0, dynamicMaxTargets, false, false, 0, false, Set.of(), false, false,
+                List.of(), false, false);
     }
 
     /** Exact-X form: choose exactly the spell's paid X matching cards (Shattered Crypt). */
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, int maxTargets, boolean xScaled) {
-        this(filter, maxTargets, null, xScaled, false, 0, false, Set.of(), false);
+        this(filter, maxTargets, null, xScaled, false, 0, false, Set.of(), false, false,
+                List.of(), false, false);
     }
 
     /** Fixed-exact form: choose exactly {@code targetCount} matching cards (Death's Duet). */
     public static ReturnTargetCardsFromGraveyardToHandEffect exactly(CardPredicate filter, int targetCount) {
         return new ReturnTargetCardsFromGraveyardToHandEffect(
-                filter, targetCount, null, false, true, targetCount, false, Set.of(), false);
+                filter, targetCount, null, false, true, targetCount, false, Set.of(), false, false,
+                List.of(), false, false);
     }
 
     /** Fixed-exact form with an X payment that prevents the return at resolution. */
     public static ReturnTargetCardsFromGraveyardToHandEffect exactlyUnlessAnyPlayerPaysX(
             CardPredicate filter, int targetCount) {
         return new ReturnTargetCardsFromGraveyardToHandEffect(
-                filter, targetCount, null, false, true, targetCount, false, Set.of(), true);
+                filter, targetCount, null, false, true, targetCount, false, Set.of(), true, false,
+                List.of(), false, false);
     }
 
     public static ReturnTargetCardsFromGraveyardToHandEffect exactlyOne(CardPredicate filter) {
-        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 1, null, false, false, 1, false, Set.of(), false);
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 1, null, false, false, 1, false,
+                Set.of(), false, false, List.of(), false, false);
     }
 
     public static ReturnTargetCardsFromGraveyardToHandEffect exactlyTwoSharingCreatureType(CardPredicate filter) {
-        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 2, null, false, false, 2, true, Set.of(), false);
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 2, null, false, false, 2, true,
+                Set.of(), false, false, List.of(), false, false);
     }
 
     /** Return up to one card matching each listed card type. */
@@ -90,14 +123,47 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
             throw new IllegalArgumentException("cardTypes must not be empty");
         }
         return new ReturnTargetCardsFromGraveyardToHandEffect(
-                filter, cardTypes.size(), null, false, false, 0, false, cardTypes, false);
+                filter, cardTypes.size(), null, false, false, 0, false, cardTypes, false, false,
+                List.of(), false, false);
+    }
+
+    /** Return one selected card to hand and the other to the battlefield after an opponent chooses. */
+    public static ReturnTargetCardsFromGraveyardToHandEffect opponentChoosesOneForHand(CardPredicate filter) {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(
+                filter, 2, null, false, false, 0, false, Set.of(), false, true,
+                List.of(), false, false);
     }
 
     /** Returns an equivalent effect without the resolution-time payment clause. */
     public ReturnTargetCardsFromGraveyardToHandEffect withoutAnyPlayerPaysX() {
         return new ReturnTargetCardsFromGraveyardToHandEffect(
                 filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
-                requireSharedCreatureType, maxOnePerCardType, false);
+                requireSharedCreatureType, maxOnePerCardType, false, opponentChoosesOneForHand, targetGroups,
+                targetGroupsMustShareGraveyard, returnToOwnersHand);
+    }
+
+    public ReturnTargetCardsFromGraveyardToHandEffect withTargetGroups(int... groups) {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(
+                filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
+                requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
+                opponentChoosesOneForHand, Arrays.stream(groups).boxed().toList(),
+                targetGroupsMustShareGraveyard, returnToOwnersHand);
+    }
+
+    public ReturnTargetCardsFromGraveyardToHandEffect fromSameGraveyard() {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(
+                filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
+                requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
+                opponentChoosesOneForHand, targetGroups, true,
+                returnToOwnersHand);
+    }
+
+    public ReturnTargetCardsFromGraveyardToHandEffect toOwnersHands() {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(
+                filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
+                requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
+                opponentChoosesOneForHand, targetGroups,
+                targetGroupsMustShareGraveyard, true);
     }
 
     @Override

@@ -39,6 +39,7 @@ class BrackwaterElementalTest extends BaseCardTest {
 
         // Reaching the end step sacrifices it.
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Brackwater Elemental");
         harness.assertInGraveyard(player1, "Brackwater Elemental");
     }
@@ -66,6 +67,7 @@ class BrackwaterElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Brackwater Elemental");
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Brackwater Elemental");
         harness.assertInGraveyard(player2, "Brackwater Elemental");

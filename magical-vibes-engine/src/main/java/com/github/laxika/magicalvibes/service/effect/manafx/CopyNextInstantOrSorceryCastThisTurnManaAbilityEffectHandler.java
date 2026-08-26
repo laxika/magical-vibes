@@ -20,7 +20,6 @@ public class CopyNextInstantOrSorceryCastThisTurnManaAbilityEffectHandler implem
         return CopyNextInstantOrSorceryCastThisTurnEffect.class;
     }
 
-    @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         int manaMultiplier, boolean creatureSource) {
         gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(playerId, 1, Integer::sum);
@@ -30,7 +29,7 @@ public class CopyNextInstantOrSorceryCastThisTurnManaAbilityEffectHandler implem
 
     @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
-                        int manaMultiplier, boolean creatureSource, CardEffect effect) {
+                        CardEffect effect, int manaMultiplier, boolean creatureSource) {
         CopyNextInstantOrSorceryCastThisTurnEffect copyEffect =
                 (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
         if (copyEffect.maxManaValue() == null) {

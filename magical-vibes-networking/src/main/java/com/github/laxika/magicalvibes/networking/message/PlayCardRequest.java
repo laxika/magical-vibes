@@ -24,8 +24,7 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                               String beholdCreatureType,
                               Boolean morph,
                               String chosenCreatureType,
-                              Boolean foretell,
-                              Boolean adventure) {
+                              Boolean foretell, Boolean adventure) {
 
     public PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                            List<UUID> targetIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,

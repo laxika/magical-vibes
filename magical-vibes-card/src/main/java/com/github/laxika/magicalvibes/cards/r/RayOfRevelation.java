@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "17")
+@CardRegistration(set = "JUD", collectorNumber = "20")
 public class RayOfRevelation extends Card {
 
     public RayOfRevelation() {

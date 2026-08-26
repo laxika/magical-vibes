@@ -29,6 +29,6 @@ public record DoubleDamageFromChosenSubtypeEffect() implements SourceDamageMulti
     public boolean matchesStackEntrySource(StackEntry entry, Permanent effectSource) {
         CardSubtype chosenSubtype = effectSource.getChosenSubtype();
         return chosenSubtype != null && (entry.getEffectiveDamageSourceCard().getSubtypes().contains(chosenSubtype)
-                || entry.getEffectiveDamageSourceCard().getKeywords().contains(Keyword.CHANGELING));
+                || entry.getEffectiveDamageSourceCard().hasKeyword(Keyword.CHANGELING));
     }
 }

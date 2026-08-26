@@ -77,6 +77,12 @@ public class ExileFreeCastQueueSupport {
         castNextFromQueue(gameData, player.getId());
     }
 
+    /** Casts the selected Eye of the Storm copies in the order chosen by their caster. */
+    public void castChosenCopiesWithoutPaying(GameData gameData, UUID playerId, List<UUID> copyIds) {
+        gameData.interaction.clearAwaitingInput();
+        queueCopiesForFreeCast(gameData, playerId, copyIds);
+    }
+
     /**
      * Queues copies sitting in exile to be cast for free, in the given order, and starts the chain.
      * Each is cast as a copy, so it ceases to exist on resolution (CR 707.10a).

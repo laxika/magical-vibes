@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StoneboundMentor.class, Disentomb.class, GrizzlyBears.class, Reminisce.class})
 class StoneboundMentorTest extends BaseCardTest {
 
     @Test
@@ -67,6 +69,9 @@ class StoneboundMentorTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(bears));
         harness.setHand(player2, List.of(new Disentomb()));
         harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castSorcery(player2, 0, bears.getId());
         harness.passBothPriorities();

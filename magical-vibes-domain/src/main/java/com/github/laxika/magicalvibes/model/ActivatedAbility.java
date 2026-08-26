@@ -63,6 +63,8 @@ public class ActivatedAbility {
     private boolean activatableOnlyByOpponents;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
     private boolean requiresUntap;
+    /** When true, the source permanent must have another activated ability to activate this ability. */
+    private boolean requiresAnotherActivatedAbility;
     /** Predicate a controlled permanent must match to count toward {@link #requiredControlledPermanentCount} (e.g. Leechridden Swamp's "two or more black permanents"). Null = no such restriction. Set via {@link #withRequiredControlledPermanents}. */
     private PermanentPredicate requiredControlledPermanentPredicate;
     /** Minimum number of controlled permanents matching {@link #requiredControlledPermanentPredicate} required to activate. */
@@ -149,6 +151,12 @@ public class ActivatedAbility {
      * triggers fire. Set via {@link #withExilesSourceFromHand()}.
      */
     private boolean exilesSourceFromHand;
+    /** Whether this hand-activated ability suspends the source card with the configured counters. */
+    private boolean suspendsSourceFromHand;
+    /** Number of time counters placed when this ability suspends its source card. */
+    private int suspendTimeCounters;
+    /** Whether the number of time counters placed by suspend is the activated ability's X value. */
+    private boolean suspendTimeCountersFromX;
     /** Whether this hand-activated ability reveals the source card without moving it out of hand. */
     private boolean revealsSourceFromHand;
     /**
@@ -159,6 +167,10 @@ public class ActivatedAbility {
      * {@link #withNinjutsu()}.
      */
     private boolean ninjutsuAbility;
+    /** Whether this hand-activated ability leaves its source card in hand as part of its cost. */
+    private boolean sourceStaysInHand;
+    /** Whether this ability can be activated only while its source card is in exile. */
+    private boolean exileOnly;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -251,8 +263,20 @@ public class ActivatedAbility {
      * Used by the static bonus system to track which permanent granted this ability.
      */
     public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
+        return copyWith(sourcePermanentId, maxActivationsPerTurn);
+    }
+
+    /** Returns a copy with a fixed per-turn activation cap, preserving all other ability properties. */
+    public ActivatedAbility withMaxActivationsPerTurn(int maxActivations) {
+        if (maxActivations < 0) {
+            throw new IllegalArgumentException("Maximum activations must not be negative");
+        }
+        return copyWith(grantSourcePermanentId, maxActivations);
+    }
+
+    private ActivatedAbility copyWith(UUID sourcePermanentId, Integer maxActivations) {
         ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
-                maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
+                maxActivations, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
@@ -261,6 +285,7 @@ public class ActivatedAbility {
         copy.manaCostOfEnchantedPermanent = this.manaCostOfEnchantedPermanent;
         copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
         copy.requiresUntap = this.requiresUntap;
+        copy.requiresAnotherActivatedAbility = this.requiresAnotherActivatedAbility;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
         copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
@@ -281,6 +306,13 @@ public class ActivatedAbility {
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
+        copy.exilesSourceFromHand = this.exilesSourceFromHand;
+        copy.revealsSourceFromHand = this.revealsSourceFromHand;
+        copy.ninjutsuAbility = this.ninjutsuAbility;
+        copy.sourceStaysInHand = this.sourceStaysInHand;
+        copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
+        copy.suspendTimeCounters = this.suspendTimeCounters;
+        copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
@@ -291,6 +323,7 @@ public class ActivatedAbility {
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
+        copy.exileOnly = this.exileOnly;
         return copy;
     }
 
@@ -353,6 +386,23 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks this hand-activated ability as suspending its source card with {@code timeCounters}. */
+    public ActivatedAbility withSuspendsSourceFromHand(int timeCounters) {
+        if (timeCounters < 1) {
+            throw new IllegalArgumentException("Suspend requires at least one time counter");
+        }
+        this.suspendsSourceFromHand = true;
+        this.suspendTimeCounters = timeCounters;
+        return this;
+    }
+
+    /** Marks this hand-activated ability as suspend X, using the chosen X value as time counters. */
+    public ActivatedAbility withSuspendsSourceFromHandX() {
+        this.suspendsSourceFromHand = true;
+        this.suspendTimeCountersFromX = true;
+        return this;
+    }
+
     /**
      * Fluent setter marking a hand-activated ability whose intrinsic cost reveals the source card
      * while leaving it in its owner's hand.
@@ -362,12 +412,24 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks a hand-activated ability whose source card remains in hand after activation. */
+    public ActivatedAbility withSourceStaysInHand() {
+        this.sourceStaysInHand = true;
+        return this;
+    }
+
     /**
      * Fluent setter marking this hand-activated ability as ninjutsu (CR 702.49a). Returns this
      * ability for chaining.
      */
     public ActivatedAbility withNinjutsu() {
         this.ninjutsuAbility = true;
+        return this;
+    }
+
+    /** Marks this ability as activatable only while its source card is in exile. */
+    public ActivatedAbility withExileOnly() {
+        this.exileOnly = true;
         return this;
     }
 
@@ -432,6 +494,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withRequiresUntap() {
         this.requiresUntap = true;
+        return this;
+    }
+
+    /** Marks this ability as requiring another activated ability on its source permanent. */
+    public ActivatedAbility withRequiresAnotherActivatedAbility() {
+        this.requiresAnotherActivatedAbility = true;
         return this;
     }
 

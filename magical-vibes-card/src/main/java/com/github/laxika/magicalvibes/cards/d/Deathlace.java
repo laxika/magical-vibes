@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "131")
+@CardRegistration(set = "SUM", collectorNumber = "102")
 public class Deathlace extends Card {
 
     public Deathlace() {

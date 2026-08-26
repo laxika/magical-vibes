@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +18,34 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       List<Permanent> simultaneouslyEntered,
                                       int xValue,
                                       boolean kicked,
-                                      List<String> repeatedAdditionalCosts) {
+                                      List<String> repeatedAdditionalCosts,
+                                      int convokeCreatureCount,
+                                      EnterBattlefieldOnDiscardEffect discardReplacement,
+                                      EnterWithCountersEffect enterWithCounters) {
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, 0, discardReplacement, enterWithCounters);
+    }
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, 0, discardReplacement, null);
+    }
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, 0, null, null);
+    }
 
     public BattlefieldEntryRequest {
         enterTappedTypes = Set.copyOf(enterTappedTypes);

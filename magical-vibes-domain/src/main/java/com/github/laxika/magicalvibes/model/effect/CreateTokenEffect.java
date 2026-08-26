@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Map;
@@ -97,6 +99,14 @@ public record CreateTokenEffect(
     public CreateTokenEffect withAmount(int newAmount) {
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
+    }
+
+    /** Copy of this blueprint with a different tapped state, all other fields preserved. */
+    public CreateTokenEffect withTapped(boolean newTapped) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
+                colors, subtypes, keywords, additionalTypes, tappedAndAttacking, newTapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
     }
@@ -336,6 +346,28 @@ public record CreateTokenEffect(
                 )));
     }
 
+    /** Tapped Treasure token. */
+    public static CreateTokenEffect ofTappedTreasureToken(int amount) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,
+                List.of(CardSubtype.TREASURE), Set.of(), Set.of(), false, true, Map.of(),
+                List.of(new ActivatedAbility(
+                        true, null,
+                        List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
+                        "{T}, Sacrifice this artifact: Add one mana of any color."
+                )), false, false, false, 0, Set.of());
+    }
+
+    /** Tapped Treasure tokens with a dynamically computed count. */
+    public static CreateTokenEffect ofTappedTreasureToken(DynamicAmount amount) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,
+                List.of(CardSubtype.TREASURE), Set.of(), Set.of(), false, true, Map.of(),
+                List.of(new ActivatedAbility(
+                        true, null,
+                        List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
+                        "{T}, Sacrifice this artifact: Add one mana of any color."
+                )), false, false, false, 0, Set.of());
+    }
+
     /** Treasure token with a dynamically computed count. */
     public static CreateTokenEffect ofTreasureToken(DynamicAmount amount) {
         return ofTreasureToken(amount, false);
@@ -372,6 +404,26 @@ public record CreateTokenEffect(
                         true, "{1}",
                         List.of(new DiscardCardTypeCost(null, null), new SacrificeSelfCost(), new DrawCardEffect()),
                         "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
+                )));
+    }
+
+    /** Map token: colorless artifact with a sorcery-speed ability to make a creature explore. */
+    public static CreateTokenEffect ofMapToken(int amount) {
+        return ofMapToken(new Fixed(amount));
+    }
+
+    /** Map token with a dynamically computed count. */
+    public static CreateTokenEffect ofMapToken(DynamicAmount amount) {
+        return ofArtifactToken(amount, "Map", List.of(CardSubtype.MAP),
+                List.of(new ActivatedAbility(
+                        true,
+                        "{1}",
+                        List.of(new SacrificeSelfCost(), new ExploreEffect(true)),
+                        "{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a sorcery.",
+                        TargetFilters.creatureYouControl(),
+                        null,
+                        null,
+                        ActivationTimingRestriction.SORCERY_SPEED
                 )));
     }
 }

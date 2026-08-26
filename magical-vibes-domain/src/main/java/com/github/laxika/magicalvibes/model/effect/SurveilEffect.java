@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
  * Surveil N — look at the top N cards of your library, then put any number
  * of them into your graveyard and the rest back on top in any order.
@@ -14,9 +17,17 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param count the number of cards to surveil
  * @param applyAdditionalChoices whether static additional-surveil abilities should be offered
  */
-public record SurveilEffect(int count, boolean applyAdditionalChoices) implements CardEffect {
+public record SurveilEffect(DynamicAmount count, boolean applyAdditionalChoices) implements CardEffect {
+
+    public SurveilEffect(int count, boolean applyAdditionalChoices) {
+        this(new Fixed(count), applyAdditionalChoices);
+    }
 
     public SurveilEffect(int count) {
+        this(new Fixed(count), true);
+    }
+
+    public SurveilEffect(DynamicAmount count) {
         this(count, true);
     }
 }

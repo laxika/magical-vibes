@@ -58,6 +58,7 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
                     List.of(new ReturnMilledPermanentToHandEffect(
                             groupId,
                             millEffect.filter(),
+                            millEffect.maxCount(),
                             millEffect.bonusFilter(),
                             millEffect.bonusLife())),
                     "Put " + card.getName() + " into your hand?"));

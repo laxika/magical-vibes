@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupp
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,7 @@ class EnterTriggerCollectorServiceTest {
     @Mock private TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private TargetLegalityService targetLegalityService;
     @Mock private GameLogService gameLogService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
     @Mock private GraveyardTargetingService graveyardTargetingService;
@@ -109,6 +111,7 @@ class EnterTriggerCollectorServiceTest {
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
+                targetLegalityService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 gameLogService, etbTokenTargetService,
                 new GrantedTriggeredAbilitySupport(gameQueryService));

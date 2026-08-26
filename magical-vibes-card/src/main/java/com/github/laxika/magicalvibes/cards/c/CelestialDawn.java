@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffec
 
 @CardRegistration(set = "MIR", collectorNumber = "6")
 @CardRegistration(set = "6ED", collectorNumber = "7")
+@CardRegistration(set = "TSB", collectorNumber = "3")
 public class CelestialDawn extends Card {
 
     public CelestialDawn() {

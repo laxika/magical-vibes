@@ -34,6 +34,7 @@ class UnendingWhisperTest extends BaseCardTest {
         Card drawnCard = new GrizzlyBears();
         Card spell = new UnendingWhisper();
         harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -52,6 +53,7 @@ class UnendingWhisperTest extends BaseCardTest {
         Card spell = new UnendingWhisper();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

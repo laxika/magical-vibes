@@ -23,6 +23,12 @@ public interface CardEffect {
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
 
     /**
+     * Returns {@code true} when an activated ability with this effect may target cards anywhere in
+     * exile rather than only cards exiled with its source permanent.
+     */
+    default boolean targetsAllExiledCardsInAbility() { return false; }
+
+    /**
      * Which players this effect may target, for the effects whose wording narrows the player half
      * of an otherwise shared {@link TargetSpec} — "target <em>opponent</em> or planeswalker" against
      * "target <em>player</em> or planeswalker", which declare the same
@@ -67,6 +73,18 @@ public interface CardEffect {
      * targets have become illegal, so its handler can apply a separate resolution clause.
      */
     default boolean resolvesWhenTargetIllegal() { return false; }
+
+    /**
+     * Returns whether an enter-trigger collector should bind the entering permanent as the
+     * hidden reference used by this effect.
+     */
+    default boolean usesEnteringPermanentReference() { return false; }
+
+    /**
+     * Returns whether this effect or one of its nested effects branches on the source ability's
+     * resolution count for the current turn.
+     */
+    default boolean hasAbilityResolutionCondition() { return false; }
 
     /**
      * Resolves a trigger-only condition that depends on the activated ability that caused the

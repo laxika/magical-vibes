@@ -37,6 +37,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry);
+            case ENCHANTED -> resolveEnchanted(gameData, entry);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e, filterContext);
             case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e, filterContext);
             case ALL_CREATURES -> resolveAllCreatures(gameData, e, filterContext);
@@ -69,6 +70,22 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
+    }
+
+    private void resolveEnchanted(GameData gameData, StackEntry entry) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null || !source.isAttached()) {
+            return;
+        }
+
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        if (enchanted == null) {
+            return;
+        }
+
+        enchanted.setCantBlockThisTurn(true);
+        gameLogService.append(gameData, GameLog.cardThen(enchanted.getCard(), " can't block this turn."));
+        log.info("Game {} - {} can't block this turn", gameData.id, enchanted.getCard().getName());
     }
 
     private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e,

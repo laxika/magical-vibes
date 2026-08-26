@@ -41,7 +41,7 @@ class PilgrimOfTheAgesTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(plains);
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactly(nonBasicPlains, forest);
+                .containsExactlyInAnyOrder(nonBasicPlains, forest);
     }
 
     @Test

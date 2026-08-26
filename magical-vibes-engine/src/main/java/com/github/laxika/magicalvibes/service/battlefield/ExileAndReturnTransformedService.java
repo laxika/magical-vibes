@@ -3,11 +3,15 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +47,14 @@ public class ExileAndReturnTransformedService {
      *         "if you do" condition callers such as Liliana, Heretical Healer hang their rider on
      */
     public boolean exileAndReturnTransformed(GameData gameData, UUID permanentId) {
+        return exileAndReturn(gameData, permanentId, true);
+    }
+
+    public boolean exileAndReturnFront(GameData gameData, UUID permanentId) {
+        return exileAndReturn(gameData, permanentId, false);
+    }
+
+    private boolean exileAndReturn(GameData gameData, UUID permanentId, boolean transformed) {
         Permanent perm = null;
         UUID controllerId = null;
         for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
@@ -60,6 +72,10 @@ public class ExileAndReturnTransformedService {
         Card originalCard = perm.getOriginalCard();
         Card transformedFace = originalCard.getBackFaceCard();
         if (transformedFace == null) return false;
+        Card returnedCard = transformed ? originalCard.getBackFaceCard() : originalCard;
+        if (returnedCard == null) return false;
+        UUID returnControllerId = originalCard.getOwnerId() != null
+                ? originalCard.getOwnerId() : controllerId;
 
         boolean returningTransformed = !perm.isTransformed();
         Card returningCard = returningTransformed ? transformedFace : originalCard;
@@ -139,5 +155,65 @@ public class ExileAndReturnTransformedService {
         log.info("Game {} - {} exiled and returned transformed as {}",
                 gameData.id, originalCard.getName(), transformedFace.getName());
         return true;
+    }
+
+    /** Returns a crafted source card from exile to its owner's battlefield transformed. */
+    public boolean returnTransformedFromExile(GameData gameData, UUID cardId, UUID oldSourcePermanentId) {
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled == null) {
+            return false;
+        }
+
+        Card originalCard = exiled.card();
+        Card backFace = originalCard.getBackFaceCard();
+        if (backFace == null) {
+            return false;
+        }
+
+        UUID ownerId = exiled.ownerId();
+        gameData.removeFromExile(cardId);
+
+        Permanent newPerm = new Permanent(originalCard);
+        newPerm.setCard(backFace);
+        newPerm.setTransformed(true);
+        newPerm.setSummoningSick(false);
+        gameData.transferCardsExiledByPermanent(oldSourcePermanentId, newPerm.getId());
+        if (backFace.hasType(CardType.PLANESWALKER) && backFace.getLoyalty() != null) {
+            int loyalty = gameQueryService.replaceCounters(gameData, newPerm, ownerId,
+                    CounterType.LOYALTY, backFace.getLoyalty(), ownerId);
+            newPerm.setCounterCount(CounterType.LOYALTY, loyalty);
+        }
+
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(
+                gameData, ownerId, backFace, null, false);
+        initializeReturnedSaga(gameData, ownerId, newPerm);
+        gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
+                " returns transformed from exile as ", backFace, "."));
+        log.info("Game {} - {} returns transformed from exile as {}",
+                gameData.id, originalCard.getName(), backFace.getName());
+        return true;
+    }
+
+    private void initializeReturnedSaga(GameData gameData, UUID controllerId, Permanent saga) {
+        Card card = saga.getCard();
+        if (!card.isSaga()) {
+            return;
+        }
+
+        int loreCounters = gameQueryService.replaceCounters(
+                gameData, saga, CounterType.LORE, 1, controllerId);
+        saga.setCounterCount(CounterType.LORE, loreCounters);
+        List<CardEffect> chapterEffects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
+        if (!chapterEffects.isEmpty()) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s chapter I ability",
+                    chapterEffects,
+                    null,
+                    saga.getId()));
+        }
     }
 }

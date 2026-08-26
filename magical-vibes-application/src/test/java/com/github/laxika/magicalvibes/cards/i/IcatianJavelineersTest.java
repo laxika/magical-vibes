@@ -1,30 +1,26 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.a.Aeolipile;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IcatianJavelineers.class, IcatianInfantry.class, Aeolipile.class})
 class IcatianJavelineersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters the battlefield with a javelin counter")
     void entersWithJavelinCounter() {
-        harness.setHand(player1, List.of(new IcatianJavelineers()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IcatianJavelineers(), "{W}");
         harness.passBothPriorities();
 
-        Permanent javelineers = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent javelineers = findPermanent(player1, "Icatian Javelineers");
         assertThat(javelineers.getCounterCount(CounterType.JAVELIN)).isEqualTo(1);
     }
 
@@ -48,13 +44,12 @@ class IcatianJavelineersTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to a target creature")
     void dealsDamageToTargetCreature() {
         addReadyJavelineers();
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IcatianInfantry());
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Icatian Infantry");
     }
 
     @Test
@@ -67,11 +62,22 @@ class IcatianJavelineersTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot target a noncreature artifact")
+    void cannotTargetNoncreatureArtifact() {
+        Permanent javelineers = addReadyJavelineers();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Aeolipile());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(javelineers.isTapped()).isFalse();
+        assertThat(javelineers.getCounterCount(CounterType.JAVELIN)).isEqualTo(1);
+    }
+
     private Permanent addReadyJavelineers() {
-        Permanent javelineers = new Permanent(new IcatianJavelineers());
-        javelineers.setSummoningSick(false);
+        Permanent javelineers = addCreatureReady(player1, new IcatianJavelineers());
         javelineers.setCounterCount(CounterType.JAVELIN, 1);
-        gd.playerBattlefields.get(player1.getId()).add(javelineers);
         return javelineers;
     }
 }

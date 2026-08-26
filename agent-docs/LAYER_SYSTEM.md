@@ -514,6 +514,7 @@ Reasoning behind the non-obvious mappings:
   `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `CopyPermanentOnEnterEffect`) → L1; control
   (`GainControlOfTargetEffect`, `ControlEnchantedCreatureEffect`,
   `GainControlOfEnchantedTargetEffect`, `GainControlOfTargetAuraEffect`,
+  `GainControlOfAuraAttachedPermanentEffect`,
   `TargetPlayerGainsControlOfSourceCreatureEffect`) → L2; `ChangeColorTextEffect` (Mind Bend)
   → L3; `LoseAllCreatureTypesEffect` → L4; `BoostTargetCreatureEffect` (Giant Growth) → 7c;
   `SwitchPowerToughnessEffect` → 7d.
@@ -594,6 +595,11 @@ one-shot results of already-resolved spells/abilities and exist independently of
 per the engine's 613.2 modeling (§7), NOT via dependency — reading out-of-battlefield zones is
 not a same-layer dependency on anything, so the CDA prefix stays outside the dependency
 relation entirely.
+
+Graveyard static effects that modify other battlefield permanents implement
+`GraveyardStaticEffect`. The layered pass collects those effects from the controller's graveyard
+as synthetic source instances, so their ordinary static handlers can evaluate battlefield scope
+and conditions while the graveyard card remains outside the battlefield.
 
 ### Limits
 

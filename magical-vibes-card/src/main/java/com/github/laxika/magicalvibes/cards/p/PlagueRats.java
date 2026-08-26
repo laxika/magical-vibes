@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "188")
 @CardRegistration(set = "4ED", collectorNumber = "154")
+@CardRegistration(set = "SUM", collectorNumber = "123")
 public class PlagueRats extends Card {
 
     public PlagueRats() {

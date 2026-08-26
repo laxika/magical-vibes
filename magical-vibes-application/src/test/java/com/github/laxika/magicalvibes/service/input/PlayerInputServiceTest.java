@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -637,6 +638,24 @@ class PlayerInputServiceTest {
             ChoiceContext.BasicLandTypeChoice ctx =
                     (ChoiceContext.BasicLandTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.allowedTypes()).containsExactly(CardSubtype.ISLAND, CardSubtype.SWAMP);
+        }
+
+        @Test
+        @DisplayName("Offers only the allowed types for a target land choice")
+        void sendsOnlyAllowedTargetLandTypes() {
+            UUID targetLandId = UUID.randomUUID();
+
+            svc.beginAddBasicLandTypeChoice(gd, PLAYER1_ID, targetLandId,
+                    EffectDuration.UNTIL_END_OF_TURN,
+                    true, List.of(CardSubtype.PLAINS, CardSubtype.ISLAND));
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).containsExactly("PLAINS", "ISLAND");
+
+            ChoiceContext.AddBasicLandTypeChoice ctx =
+                    (ChoiceContext.AddBasicLandTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.allowedTypes()).containsExactly(CardSubtype.PLAINS, CardSubtype.ISLAND);
+            assertThat(ctx.replacing()).isTrue();
         }
     }
 

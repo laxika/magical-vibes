@@ -45,7 +45,6 @@ class BalduvianFallenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(fallen.getPowerModifier()).isEqualTo(1);
 

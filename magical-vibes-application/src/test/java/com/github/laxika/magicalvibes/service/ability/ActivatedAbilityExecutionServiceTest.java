@@ -56,9 +56,11 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -78,6 +80,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
@@ -95,6 +99,8 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private GameLogService gameLogService;
@@ -149,6 +155,13 @@ class ActivatedAbilityExecutionServiceTest {
         // No Mana Reflection in these tests — every mana production is 1x.
         lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
+        lenient().when(gameQueryService.lifeAfterDamage(eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> gameData.getLife(invocation.getArgument(1))
+                        - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gameData), any(UUID.class))).thenReturn(1);
+        lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
+                        eq(gameData), anyInt(), any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     // =========================================================================
@@ -1360,7 +1373,8 @@ class ActivatedAbilityExecutionServiceTest {
                     .thenReturn(1);
             // Shield absorbs all 1 damage
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(0);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(0), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player1Id), eq(0), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(0);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -1391,7 +1405,8 @@ class ActivatedAbilityExecutionServiceTest {
             when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), 2))
                     .thenReturn(1);
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(1), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player1Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
             when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
@@ -1423,7 +1438,8 @@ class ActivatedAbilityExecutionServiceTest {
             when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player2Id, perm.getId(), 2))
                     .thenReturn(1);
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player2Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player2Id), eq(1), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player2Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player2Id)).thenReturn(false);
             when(gameQueryService.canPlayerLifeChange(gameData, player2Id)).thenReturn(true);
@@ -1630,7 +1646,8 @@ class ActivatedAbilityExecutionServiceTest {
         when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), damage))
                 .thenReturn(damage);
         when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, damage)).thenReturn(damage);
-        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(damage), anyString()))
+        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                eq(gameData), eq(player1Id), eq(damage), anyString(), anyBoolean(), eq(perm.getId())))
                 .thenReturn(damage);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
         when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);

@@ -127,18 +127,31 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                     ? List.of(entry.getTargetId()) : List.of();
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
             case TARGET_OPPONENT -> {
-                // A combat-damage trigger binds the damaged player as the target; otherwise
-                // (Grimoire Thief) the single opponent is the only legal target in a two-player game.
+                // Combat-damage triggers bind the damaged player as the target, while attack
+                // triggers retain the attacked player or planeswalker in attackedTargetId.
                 UUID opponentId = entry.getTargetId() != null
                         && gameData.orderedPlayerIds.contains(entry.getTargetId())
                         && !entry.getTargetId().equals(controllerId)
                         ? entry.getTargetId()
-                        : gameData.orderedPlayerIds.stream()
-                                .filter(id -> !id.equals(controllerId))
-                                .findFirst().orElse(null);
+                        : defendingPlayerId(gameData, entry.getAttackedTargetId(), controllerId);
                 yield opponentId == null ? List.of() : List.of(opponentId);
             }
         };
+    }
+
+    private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId, UUID controllerId) {
+        if (attackedTargetId != null) {
+            if (gameData.playerIds.contains(attackedTargetId)) {
+                return attackedTargetId;
+            }
+            UUID planeswalkerControllerId = gameQueryService.findPermanentController(gameData, attackedTargetId);
+            if (planeswalkerControllerId != null) {
+                return planeswalkerControllerId;
+            }
+        }
+        return gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst().orElse(null);
     }
 
     private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,

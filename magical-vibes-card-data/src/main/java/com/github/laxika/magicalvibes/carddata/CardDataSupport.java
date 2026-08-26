@@ -45,8 +45,11 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Double strike", Keyword.DOUBLE_STRIKE);
         KEYWORD_MAP.put("First strike", Keyword.FIRST_STRIKE);
         KEYWORD_MAP.put("Flash", Keyword.FLASH);
+        KEYWORD_MAP.put("Split second", Keyword.SPLIT_SECOND);
         KEYWORD_MAP.put("Fading", Keyword.FADING);
+        KEYWORD_MAP.put("Vanishing", Keyword.VANISHING);
         KEYWORD_MAP.put("Vigilance", Keyword.VIGILANCE);
+        KEYWORD_MAP.put("Backup", Keyword.BACKUP);
         KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
         KEYWORD_MAP.put("Changeling", Keyword.CHANGELING);
         KEYWORD_MAP.put("Fear", Keyword.FEAR);
@@ -56,6 +59,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Improvise", Keyword.IMPROVISE);
         KEYWORD_MAP.put("Harmonize", Keyword.HARMONIZE);
         KEYWORD_MAP.put("Haste", Keyword.HASTE);
+        KEYWORD_MAP.put("Riot", Keyword.RIOT);
         KEYWORD_MAP.put("Lifelink", Keyword.LIFELINK);
         KEYWORD_MAP.put("Trample", Keyword.TRAMPLE);
         KEYWORD_MAP.put("Forestwalk", Keyword.FORESTWALK);
@@ -71,6 +75,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
         KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
+        KEYWORD_MAP.put("Daybound", Keyword.DAYBOUND);
+        KEYWORD_MAP.put("Nightbound", Keyword.NIGHTBOUND);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
@@ -100,6 +106,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Madness", Keyword.MADNESS);
         KEYWORD_MAP.put("Escalate", Keyword.ESCALATE);
         KEYWORD_MAP.put("Decayed", Keyword.DECAYED);
+        KEYWORD_MAP.put("Afterlife", Keyword.AFTERLIFE);
         KEYWORD_MAP.put("Blight", Keyword.BLIGHT);
         KEYWORD_MAP.put("Splice", Keyword.SPLICE);
         KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
@@ -107,8 +114,10 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Phasing", Keyword.PHASING);
         KEYWORD_MAP.put("Buyback", Keyword.BUYBACK);
         KEYWORD_MAP.put("Evolve", Keyword.EVOLVE);
+        KEYWORD_MAP.put("Adapt", Keyword.ADAPT);
         KEYWORD_MAP.put("Offering", Keyword.OFFERING);
         KEYWORD_MAP.put("Delve", Keyword.DELVE);
+        KEYWORD_MAP.put("Dredge", Keyword.DREDGE);
         KEYWORD_MAP.put("Modular", Keyword.MODULAR);
         KEYWORD_MAP.put("Sunburst", Keyword.SUNBURST);
         KEYWORD_MAP.put("Prototype", Keyword.PROTOTYPE);
@@ -121,6 +130,13 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Compleated", Keyword.COMPLEATED);
         KEYWORD_MAP.put("Mobilize", Keyword.MOBILIZE);
         KEYWORD_MAP.put("Blow Up", Keyword.BLOW_UP);
+        KEYWORD_MAP.put("Web-slinging", Keyword.WEB_SLINGING);
+        KEYWORD_MAP.put("Mayhem", Keyword.MAYHEM);
+        KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
+        KEYWORD_MAP.put("Camouflage", Keyword.CAMOUFLAGE);
+        KEYWORD_MAP.put("Double", Keyword.DOUBLE);
+        KEYWORD_MAP.put("Amass", Keyword.AMASS);
+        KEYWORD_MAP.put("Plot", Keyword.PLOT);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

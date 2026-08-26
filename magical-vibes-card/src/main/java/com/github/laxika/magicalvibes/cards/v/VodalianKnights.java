@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
@@ -28,12 +29,8 @@ public class VodalianKnights extends Card {
         ));
 
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-                    if (battlefield == null) return true;
-                    return battlefield.stream()
-                            .noneMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
-                },
+                new PermanentNotPredicate(new PermanentControllerControlsPermanentPredicate(
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                 List.of(new SacrificeSelfEffect()),
                 "Vodalian Knights's state-triggered ability"
         ));

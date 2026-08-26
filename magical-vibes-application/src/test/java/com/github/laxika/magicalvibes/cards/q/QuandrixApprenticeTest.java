@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({QuandrixApprentice.class, BarkshellBlessing.class, Forest.class, GrizzlyBears.class,
+        Island.class, Plains.class, Shock.class})
 class QuandrixApprenticeTest extends BaseCardTest {
 
     @Test
@@ -54,8 +57,8 @@ class QuandrixApprenticeTest extends BaseCardTest {
     void copyingInstantTriggersMagecraft() {
         addCreatureReady(player1, new QuandrixApprentice());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        Permanent conspireA = addCreatureReady(player1, new QuandrixApprentice());
-        Permanent conspireB = addCreatureReady(player1, new QuandrixApprentice());
+        Permanent conspireA = addCreatureReady(player1, new GrizzlyBears());
+        Permanent conspireB = addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(
                 new Plains(), new Forest(), new Island(), new Plains(), new Forest(), new Island()));
         harness.setHand(player1, List.of(new BarkshellBlessing()));
@@ -63,11 +66,14 @@ class QuandrixApprenticeTest extends BaseCardTest {
 
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }

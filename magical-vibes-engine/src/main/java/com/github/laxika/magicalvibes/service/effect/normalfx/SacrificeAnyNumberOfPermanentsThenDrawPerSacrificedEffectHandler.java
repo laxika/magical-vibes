@@ -52,7 +52,8 @@ public class SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffectHandler
                 : entry.getCard().getId();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(sourceCardId)
-                .withSourceControllerId(controllerId);
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId());
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
@@ -72,7 +73,7 @@ public class SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffectHandler
 
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
                 new MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed(),
-                "Sacrifice any number of artifacts, creatures, and/or lands. "
+                "Sacrifice any number of permanents. "
                         + "You will draw a card for each permanent sacrificed this way.");
     }
 }

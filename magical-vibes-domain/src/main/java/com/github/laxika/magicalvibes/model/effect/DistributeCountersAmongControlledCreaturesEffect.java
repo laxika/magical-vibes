@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Distributes a dynamic number of counters among creatures controlled by the effect's controller.
@@ -9,6 +10,10 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  */
 public record DistributeCountersAmongControlledCreaturesEffect(
         CounterType counterType, DynamicAmount total) implements CardEffect {
+
+    public DistributeCountersAmongControlledCreaturesEffect(CounterType counterType, int total) {
+        this(counterType, new Fixed(total));
+    }
 
     @Override
     public TargetSpec targetSpec() {

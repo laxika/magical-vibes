@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "237")
 public class SpitefulSquad extends Card {
@@ -16,7 +15,6 @@ public class SpitefulSquad extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
 
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_DEATH,
-                new MoveDyingSourceCountersToTargetCreatureEffect());
+        addEffect(EffectSlot.ON_DEATH, new MoveDyingSourceCountersToTargetCreatureEffect(true));
     }
 }

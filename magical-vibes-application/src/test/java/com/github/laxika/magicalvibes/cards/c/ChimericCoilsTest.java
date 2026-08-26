@@ -43,6 +43,7 @@ class ChimericCoilsTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Chimeric Coils");
     }
