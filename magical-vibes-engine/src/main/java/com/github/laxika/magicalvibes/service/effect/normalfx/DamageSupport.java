@@ -447,7 +447,10 @@ public class DamageSupport {
         // additionally gets the damage marked below (CR 120.3e).
         if (target.getCard().hasType(CardType.PLANESWALKER)) {
             if (damage > 0) {
-                target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) - damage);
+                int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
+                        gameData, target, damage);
+                target.setCounterCount(CounterType.LOYALTY,
+                        target.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
                 queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
                 gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                         " deals " + damage + " damage to ", target.getCard(),
@@ -844,23 +847,33 @@ public class DamageSupport {
                         gameData, targetPermanent, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
-                if (loyaltyDamage > 0) {
+                int damageDealt = loyaltyDamage;
+                int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
+                        gameData, targetPermanent, damageDealt);
+                if (damageDealt > 0) {
+                    gameData.recordDamageToPermanent(targetPermanent.getId(), damageDealt);
+                    if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                            || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
+                        gameData.recordQualifyingDamageControllerToPermanent(
+                                targetPermanent.getId(), entry.getControllerId());
+                    }
                     triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
                             gameData, sourcePermanent, entry.getControllerId(), targetPermanent.getId(),
-                            loyaltyDamage, false, null);
+                            damageDealt, false, null);
                     accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(),
-                            entry.getSourcePermanentId(), loyaltyDamage, null, pwControllerId,
+                            entry.getSourcePermanentId(), damageDealt, null, pwControllerId,
                             targetPermanent.getId());
-                    queueEnchantedCreatureDealsDamageTrigger(gameData, entry, sourcePermanent, loyaltyDamage);
-                    gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), loyaltyDamage);
+                    queueEnchantedCreatureDealsDamageTrigger(gameData, entry, sourcePermanent, damageDealt);
+                    gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), damageDealt);
                     gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), targetPermanent.getId());
                     targetPermanent.setCounterCount(CounterType.LOYALTY,
-                            targetPermanent.getCounterCount(CounterType.LOYALTY) - loyaltyDamage);
+                            targetPermanent.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
                     gameLogService.append(gameData, GameLog.cardTextCard(source,
-                            " deals " + loyaltyDamage + " damage to ", targetPermanent.getCard(),
+                            " deals " + damageDealt + " damage to ", targetPermanent.getCard(),
                             " (" + targetPermanent.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
+                    checkSpellLifelink(gameData, entry, damageDealt);
                 }
-                return Math.max(0, loyaltyDamage);
+                return Math.max(0, damageDealt);
             }
             // A battle deliberately has no arm of its own here: it falls through to
             // dealCreatureDamage, whose CR 120.3h branch removes the defense counters after the

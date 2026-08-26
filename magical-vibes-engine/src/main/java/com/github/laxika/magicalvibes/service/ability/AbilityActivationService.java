@@ -266,6 +266,7 @@ public class AbilityActivationService {
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> poolBefore = snapshotPoolColors(manaPool);
         EnumMap<ManaColor, Integer> creatureManaBefore = snapshotCreatureManaColors(manaPool);
+        int totalManaBefore = manaPool.getTotalAllMana();
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
@@ -442,6 +443,10 @@ public class AbilityActivationService {
             triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
         }
         triggerCollectionService.checkSelfTappedForManaTriggers(gameData, permanent, playerId);
+        if (!isAwaitingOwnManaColorChoice(gameData, playerId)) {
+            triggerCollectionService.checkManaAbilityResolutionTriggers(
+                    gameData, permanent, playerId, manaPool.getTotalAllMana() - totalManaBefore);
+        }
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
         List<StackEntry> deferred = List.of();
         if (gameData.stack.size() > stackBeforeTriggers) {
@@ -531,8 +536,10 @@ public class AbilityActivationService {
      * colour-choice answer handler, which is the first moment the produced mana exists.
      */
     public static void completeParkedManaActivation(GameData gameData, PendingManaActivation parked) {
-        recordRevertableManaActivation(gameData, parked.playerId(), parked.permanentId(),
-                parked.poolBefore(), parked.creatureManaBefore(), parked.deferredTriggers());
+        if (parked.poolBefore() != null) {
+            recordRevertableManaActivation(gameData, parked.playerId(), parked.permanentId(),
+                    parked.poolBefore(), parked.creatureManaBefore(), parked.deferredTriggers());
+        }
     }
 
     private static void recordRevertableManaActivation(GameData gameData, UUID playerId, UUID permanentId,
@@ -3132,8 +3139,8 @@ public class AbilityActivationService {
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
             EnumMap<ManaColor, Integer> manaBefore = payingPool.getAllManaTotals();
             EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(payingPool);
-            EnumMap<ManaColor, Integer> promotedCreatureSourceMana = gameQueryService.isCreature(gameData, permanent)
-                    ? payingPool.promoteCreatureSpellOrAbilityMana()
+            ManaPool.CreatureAbilityManaState promotedCreatureSourceMana = gameQueryService.isCreature(gameData, permanent)
+                    ? payingPool.promoteCreatureAbilityMana()
                     : null;
             try {
                 payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
@@ -3141,7 +3148,7 @@ public class AbilityActivationService {
                         additionalGenericCost, ability.getXColorRestrictions());
             } finally {
                 if (promotedCreatureSourceMana != null) {
-                    payingPool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana,
+                    payingPool.restorePromotedCreatureAbilityMana(promotedCreatureSourceMana,
                             regularManaBefore);
                 }
             }
@@ -3152,11 +3159,11 @@ public class AbilityActivationService {
             ManaCost taxCost = new ManaCost("{" + additionalGenericCost + "}");
             if (gameQueryService.isCreature(gameData, permanent)) {
                 EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(pool);
-                EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
+                ManaPool.CreatureAbilityManaState promotedCreatureSourceMana = pool.promoteCreatureAbilityMana();
                 try {
                     taxCost.pay(pool);
                 } finally {
-                    pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
+                    pool.restorePromotedCreatureAbilityMana(promotedCreatureSourceMana, regularManaBefore);
                 }
             } else {
                 taxCost.pay(pool);
@@ -4129,6 +4136,11 @@ public class AbilityActivationService {
             }
         }
 
+        if (ability.isRequiresAnotherActivatedAbility()
+                && getEffectiveActivatedAbilities(gameData, permanent).size() < 2) {
+            throw new IllegalStateException("Activate only if this creature has another activated ability");
+        }
+
         // Untap requirement ({Q}): the permanent must be tapped, and creatures obey the same
         // summoning-sickness restriction as {T} (CR 302.6).
         if (ability.isRequiresUntap()) {
@@ -4251,7 +4263,7 @@ public class AbilityActivationService {
             }
             if (manaPool != null && gameQueryService.isCreature(gameData, permanent)) {
                 affordabilityPool = copyManaPool(affordabilityPool);
-                affordabilityPool.promoteCreatureSpellOrAbilityMana();
+                affordabilityPool.promoteCreatureAbilityMana();
             }
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);

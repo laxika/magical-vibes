@@ -148,11 +148,16 @@ public class GraveyardTargetingService {
                                                   List<CardEffect> allEffects, UUID sourcePermanentId,
                                                   ExileCardsFromGraveyardEffect exile) {
         List<Card> matchingCards = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        List<UUID> graveyardOwners = exile.ownGraveyardOnly()
+                ? List.of(controllerId) : gameData.orderedPlayerIds;
+        for (UUID playerId : graveyardOwners) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId, controllerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
-                matchingCards.add(graveyardCard);
+                if (exile.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, exile.filter(), card.getId(), gameData, playerId)) {
+                    matchingCards.add(graveyardCard);
+                }
             }
         }
 
@@ -177,7 +182,8 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.singleGraveyard = exile.singleGraveyard();
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
-                            + (exile.singleGraveyard() ? " from a single graveyard" : " from graveyards")
+                            + (exile.ownGraveyardOnly() ? " from your graveyard"
+                            : exile.singleGraveyard() ? " from a single graveyard" : " from graveyards")
                             + " to exile.");
         }
     }

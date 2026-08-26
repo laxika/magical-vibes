@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapEnteringPermanentEffect;
@@ -587,6 +588,7 @@ public class EnterTriggerCollectorService {
     }
 
     @CollectsTriggers({
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
@@ -595,6 +597,8 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
+        int eventValue = mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect
+                ? pe.enteringCard().getManaValue() : 0;
         if (mayPay.sourceIsTriggeringPermanent()) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             if (enteringPermanentId == null) {
@@ -606,7 +610,7 @@ public class EnterTriggerCollectorService {
                         enteringPermanentId, enteringPermanentId));
             } else {
                 match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay,
-                        pe.mayPayTargetCardId(), enteringPermanentId);
+                        pe.mayPayTargetCardId(), enteringPermanentId, eventValue);
             }
             logTriggered(match);
             log.info("Game {} - {} triggers for {} entering (may pay mana)",
@@ -617,7 +621,8 @@ public class EnterTriggerCollectorService {
                 ? pe.mayPayTargetCardId()
                 : null;
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId);
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId, null,
+                    eventValue);
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may pay mana)",
@@ -958,7 +963,8 @@ public class EnterTriggerCollectorService {
 
         Card sourceCard = match.permanent().getCard();
         MayEffect may = new MayEffect(
-                new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
+                new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+                        effect.nameOverride(), effect.additionalSupertypesOverride()),
                 "Have " + sourceCard.getName() + " become a copy of "
                         + pe.enteringCard().getName() + " until end of turn?");
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {

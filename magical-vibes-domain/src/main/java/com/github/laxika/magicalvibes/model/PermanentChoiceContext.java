@@ -171,6 +171,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AwakenTheMaelstromPermanentCopyChoice(UUID controllerId, Card sourceCard)
             implements PermanentChoiceContext {}
 
+    /** Resolution-time choice of a permanent controlled by the ability's controller to copy. */
+    record ChosenPermanentCopyChoice(UUID controllerId, Card sourceCard, PermanentPredicate filter)
+            implements PermanentChoiceContext {}
+
     /** Awaken the Maelstrom: choose a creature for the next counter allocation. */
     record AwakenTheMaelstromCounterCreatureChoice() implements PermanentChoiceContext {}
 

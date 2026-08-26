@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -156,6 +157,13 @@ public class EffectResolutionService {
             }
 
             // CR 603.5 — resolution-time "you may" re-entry after player responded
+            if (effectToResolve instanceof MayEffect may
+                    && shouldSkipAcceptedOncePerTurnMay(gameData, entry, may)) {
+                log.info("Game {} - {}'s once-per-turn may ability already resolved", gameData.id,
+                        entry.getCard().getName());
+                continue;
+            }
+
             if (effectToResolve instanceof MayEffect may && gameData.resolvedMayAccepted != null) {
                 boolean accepted = gameData.resolvedMayAccepted;
                 gameData.resolvedMayAccepted = null;
@@ -318,5 +326,15 @@ public class EffectResolutionService {
         // Now that the whole resolution's damage is dealt, queue any "whenever a [color] source deals
         // damage" reflections (Justice) once per source with the summed total (CR ruling).
         damageSupport.flushSourceDamageReflections(gameData);
+    }
+
+    private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {
+        if (entry.getSourcePermanentId() == null
+                || !(may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy)) {
+            return false;
+        }
+        return copy.markSourceOncePerTurnOnAccept()
+                && !copy.accepted()
+                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
     }
 }

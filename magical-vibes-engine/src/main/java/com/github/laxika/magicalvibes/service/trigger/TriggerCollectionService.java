@@ -2183,6 +2183,30 @@ public class TriggerCollectionService {
         log.info("Game {} - {} triggers on being tapped for mana", gameData.id, tappedPermanent.getCard().getName());
     }
 
+    public void checkManaAbilityResolutionTriggers(GameData gameData, Permanent sourcePermanent,
+                                                    UUID controllerId, int manaProduced) {
+        if (manaProduced <= 0) return;
+
+        List<CardEffect> effects = new ArrayList<>(sourcePermanent.getCard().getEffects(
+                EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                gameData, sourcePermanent, EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES));
+        if (effects.isEmpty()) return;
+
+        TriggerContext context = new TriggerContext.ManaAbilityResolved(controllerId, manaProduced);
+        for (CardEffect effect : effects) {
+            boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
+            CardEffect resolved = unwrapOncePerTurnTrigger(gameData, sourcePermanent, effect);
+            if (resolved == null) continue;
+            boolean triggered = dispatch(new TriggerMatchContext(
+                    gameData, sourcePermanent, controllerId, effect),
+                    EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES, resolved, context);
+            if (triggered && oncePerTurn) {
+                gameData.oncePerTurnTriggersFiredThisTurn.add(sourcePermanent.getId());
+            }
+        }
+    }
+
     public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
         // Desolation et al.: track who tapped a land for mana this turn even if no land-tap
         // trigger permanent is currently on the battlefield (2004-10-04 ruling).

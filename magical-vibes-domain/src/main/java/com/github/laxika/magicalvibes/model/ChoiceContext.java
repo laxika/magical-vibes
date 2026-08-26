@@ -52,6 +52,20 @@ public sealed interface ChoiceContext {
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
+    record SpellOnlyManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                    boolean anyColorCombination, UUID recipientPlayerId)
+            implements ChoiceContext {
+
+        public SpellOnlyManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                        boolean anyColorCombination) {
+            this(playerId, fromCreature, amount, anyColorCombination, null);
+        }
+
+        public SpellOnlyManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new SpellOnlyManaColorChoice(playerId, fromCreature, amount,
+                    anyColorCombination, recipientPlayerId);
+        }
+    }
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
@@ -381,6 +395,14 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(
                     playerId, fromCreature, amount, null, false, false, false, false, null,
                     false, false, false, false, true, null, null, false, null);
+        }
+
+        /** "Add one mana of any of this creature's colors, spendable only to activate creature abilities." */
+        public static ManaColorChoice creatureAbilityOnly(UUID playerId, boolean fromCreature, int amount,
+                                                          List<ManaColor> colors) {
+            return new ManaColorChoice(
+                    playerId, fromCreature, amount, null, false, false, false, false, colors,
+                    false, false, false, false, false, null, null, true, null);
         }
 
         /** "Add N mana of any one color, spendable only to activate abilities." */

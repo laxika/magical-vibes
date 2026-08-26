@@ -187,11 +187,15 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /** Mana that can't be spent to cast nonartifact spells (Powerstone tokens). */
-    record Powerstone() implements ManaRestriction {
+    /** Mana that can't be spent to cast nonartifact spells (Powerstone tokens and Karn). */
+    record Powerstone(boolean persistsUntilEndOfTurn) implements ManaRestriction {
+        public Powerstone() {
+            this(false);
+        }
+
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addPowerstoneOnlyColorless(amount);
+            pool.addPowerstoneOnlyColorless(amount, persistsUntilEndOfTurn);
         }
 
         @Override

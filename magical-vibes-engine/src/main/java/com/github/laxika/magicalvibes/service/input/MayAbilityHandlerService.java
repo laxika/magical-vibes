@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
@@ -858,13 +859,38 @@ public class MayAbilityHandlerService {
         if (ability.sourcePermanentId() == null) {
             return;
         }
-        boolean marksOnAcceptance = ability.effects().stream()
-                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
-                .anyMatch(effect -> effect instanceof CopyControllerCastSpellEffect copy
-                        && copy.markSourceOncePerTurnOnAccept());
-        if (marksOnAcceptance) {
+        CardEffect acceptedEffect = null;
+        for (CardEffect effect : ability.effects()) {
+            CardEffect innerEffect = effect instanceof MayEffect may ? may.wrapped() : effect;
+            if (innerEffect instanceof CopyControllerCastSpellEffect copy
+                    && copy.markSourceOncePerTurnOnAccept()) {
+                acceptedEffect = innerEffect;
+                break;
+            }
+            if (innerEffect instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy
+                    && copy.markSourceOncePerTurnOnAccept()) {
+                acceptedEffect = copy.asAccepted();
+                replaceAcceptedMayEffect(gameData, effect, acceptedEffect);
+                break;
+            }
+        }
+        if (acceptedEffect != null) {
             gameData.oncePerTurnTriggersFiredThisTurn.add(ability.sourcePermanentId());
         }
+    }
+
+    private void replaceAcceptedMayEffect(GameData gameData, CardEffect authoredEffect,
+                                          CardEffect acceptedEffect) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        int effectIndex = gameData.pendingEffectResolutionIndex;
+        if (pendingEntry == null || effectIndex < 0
+                || effectIndex >= pendingEntry.getEffectsToResolve().size()) {
+            return;
+        }
+        CardEffect replacement = authoredEffect instanceof MayEffect may
+                ? new MayEffect(acceptedEffect, may.prompt(), may.elseEffect(), may.choicePlayer())
+                : acceptedEffect;
+        pendingEntry.replaceEffectToResolve(effectIndex, replacement);
     }
 
     private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,

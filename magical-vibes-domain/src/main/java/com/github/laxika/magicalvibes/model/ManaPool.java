@@ -62,6 +62,8 @@ public class ManaPool {
     private int artifactAbilityOnlyColorless;
     /** Colorless mana that can't be spent to cast nonartifact spells (Powerstone tokens). */
     private int powerstoneOnlyColorless;
+    /** The subset of Powerstone mana that survives step and phase transitions until end of turn. */
+    private int persistentPowerstoneOnlyColorless;
     private int myrOnlyColorless;
     /** Per-subtype colorless mana spendable only for matching spells or abilities. */
     private final Map<CardSubtype, Integer> colorlessSubtypeSpellOrAbilityMana = new HashMap<>();
@@ -129,6 +131,8 @@ public class ManaPool {
     /** Temporary regular-pool tag used while paying a creature or enchantment spell. */
     /** Per-color mana that can only be spent to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
     private final EnumMap<ManaColor, Integer> creatureSpellOrAbilityMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana that can only be spent to activate abilities of creature sources. */
+    private final EnumMap<ManaColor, Integer> creatureAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with mana value 4 or greater. */
     private final EnumMap<ManaColor, Integer> manaValueAtLeastFourOnlyMana = new EnumMap<>(ManaColor.class);
     /**
@@ -188,6 +192,7 @@ public class ManaPool {
             creatureSpellOnlyMana.put(color, 0);
             creatureSourceCreatureSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
+            creatureAbilityOnlyMana.put(color, 0);
             artifactOnlyMana.put(color, 0);
             partySpellOrAbilityMana.put(color, 0);
             exiledSpellOnlyMana.put(color, 0);
@@ -217,6 +222,7 @@ public class ManaPool {
         artifactOnlyMana.putAll(source.artifactOnlyMana);
         this.artifactAbilityOnlyColorless = source.artifactAbilityOnlyColorless;
         this.powerstoneOnlyColorless = source.powerstoneOnlyColorless;
+        this.persistentPowerstoneOnlyColorless = source.persistentPowerstoneOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
         colorlessSubtypeSpellOrAbilityMana.putAll(source.colorlessSubtypeSpellOrAbilityMana);
         this.legendarySpellOnlyColorless = source.legendarySpellOnlyColorless;
@@ -260,6 +266,7 @@ public class ManaPool {
         creatureSourceCreatureSpellOnlyMana.putAll(source.creatureSourceCreatureSpellOnlyMana);
         creatureOrEnchantmentSpellOnlyMana.putAll(source.creatureOrEnchantmentSpellOnlyMana);
         creatureSpellOrAbilityMana.putAll(source.creatureSpellOrAbilityMana);
+        creatureAbilityOnlyMana.putAll(source.creatureAbilityOnlyMana);
         manaValueAtLeastFourOnlyMana.putAll(source.manaValueAtLeastFourOnlyMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.exiledCardOnlyMana.entrySet()) {
             exiledCardOnlyMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
@@ -421,6 +428,7 @@ public class ManaPool {
         }
         artifactAbilityOnlyColorless = 0;
         powerstoneOnlyColorless = 0;
+        persistentPowerstoneOnlyColorless = 0;
         myrOnlyColorless = 0;
         colorlessSubtypeSpellOrAbilityMana.clear();
         legendarySpellOnlyColorless = 0;
@@ -441,6 +449,7 @@ public class ManaPool {
             creatureSpellOnlyMana.put(color, 0);
             creatureSourceCreatureSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
+            creatureAbilityOnlyMana.put(color, 0);
             manaValueAtLeastFourOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
@@ -560,6 +569,7 @@ public class ManaPool {
         total += getCreatureSpellOnlyManaTotal();
         total += getCreatureOrEnchantmentSpellOnlyManaTotal();
         total += getCreatureSpellOrAbilityManaTotal();
+        total += getCreatureAbilityOnlyManaTotal();
         total += getManaValueAtLeastFourOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {
             for (int value : colorMap.values()) {
@@ -1020,8 +1030,21 @@ public class ManaPool {
         powerstoneOnlyColorless += amount;
     }
 
+    public void addPowerstoneOnlyColorless(int amount, boolean persistent) {
+        powerstoneOnlyColorless += amount;
+        if (persistent) {
+            persistentPowerstoneOnlyColorless += amount;
+        }
+    }
+
     public void removePowerstoneOnlyColorless(int amount) {
-        powerstoneOnlyColorless = Math.max(0, powerstoneOnlyColorless - amount);
+        int removed = Math.min(amount, powerstoneOnlyColorless);
+        powerstoneOnlyColorless -= removed;
+        persistentPowerstoneOnlyColorless = Math.max(0, persistentPowerstoneOnlyColorless - removed);
+    }
+
+    public int getPersistentPowerstoneOnlyColorless() {
+        return persistentPowerstoneOnlyColorless;
     }
 
     public int getMyrOnlyColorless() {
@@ -2122,6 +2145,67 @@ public class ManaPool {
         }
     }
 
+    /** Adds mana spendable only to activate abilities of creature sources. */
+    public void addCreatureAbilityOnlyMana(ManaColor color, int amount) {
+        creatureAbilityOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getCreatureAbilityOnlyMana(ManaColor color) {
+        return creatureAbilityOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getCreatureAbilityOnlyManaTotal() {
+        int total = 0;
+        for (int value : creatureAbilityOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void removeCreatureAbilityOnlyMana(ManaColor color, int amount) {
+        int current = creatureAbilityOnlyMana.getOrDefault(color, 0);
+        creatureAbilityOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
+    /** Temporarily exposes creature-source ability-only mana during an ability payment. */
+    public CreatureAbilityManaState promoteCreatureAbilityMana() {
+        EnumMap<ManaColor, Integer> creatureSpellOrAbility = promoteCreatureSpellOrAbilityMana();
+        EnumMap<ManaColor, Integer> creatureAbilityOnly = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            int amount = creatureAbilityOnlyMana.getOrDefault(color, 0);
+            creatureAbilityOnly.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                creatureAbilityOnlyMana.put(color, 0);
+            }
+        }
+        return new CreatureAbilityManaState(creatureSpellOrAbility, creatureAbilityOnly);
+    }
+
+    /** Restores unused creature-source restricted mana after an ability payment. */
+    public void restorePromotedCreatureAbilityMana(CreatureAbilityManaState state,
+                                                   EnumMap<ManaColor, Integer> regularBefore) {
+        for (ManaColor color : ManaColor.values()) {
+            int firstPromoted = state.creatureSpellOrAbility().getOrDefault(color, 0);
+            int secondPromoted = state.creatureAbilityOnly().getOrDefault(color, 0);
+            int promoted = firstPromoted + secondPromoted;
+            int spent = Math.max(0, regularBefore.getOrDefault(color, 0) + promoted - get(color));
+            int remaining = Math.max(0, promoted - spent);
+            if (remaining > 0) {
+                pool.merge(color, -remaining, Integer::sum);
+                int firstRemaining = Math.min(firstPromoted, remaining);
+                int secondRemaining = remaining - firstRemaining;
+                creatureSpellOrAbilityMana.merge(color, firstRemaining, Integer::sum);
+                creatureAbilityOnlyMana.merge(color, secondRemaining, Integer::sum);
+            }
+        }
+    }
+
+    public record CreatureAbilityManaState(
+            EnumMap<ManaColor, Integer> creatureSpellOrAbility,
+            EnumMap<ManaColor, Integer> creatureAbilityOnly) {
+    }
+
     /** Adds mana spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
     public void addManaValueAtLeastFourOnlyMana(ManaColor color, int amount) {
         manaValueAtLeastFourOnlyMana.merge(color, amount, Integer::sum);
@@ -2241,8 +2325,12 @@ public class ManaPool {
         artifactOnlyColorless = 0;
         moveManaToPool(replacementColor, artifactAbilityOnlyColorless);
         artifactAbilityOnlyColorless = 0;
-        moveManaToPool(replacementColor, powerstoneOnlyColorless);
-        powerstoneOnlyColorless = 0;
+        int nonPersistentPowerstone = Math.max(0,
+                powerstoneOnlyColorless - persistentPowerstoneOnlyColorless);
+        moveManaToPool(replacementColor, nonPersistentPowerstone);
+        powerstoneOnlyColorless -= nonPersistentPowerstone;
+        persistentPowerstoneOnlyColorless = Math.min(
+                powerstoneOnlyColorless, persistentPowerstoneOnlyColorless);
         moveManaToPool(replacementColor, myrOnlyColorless);
         myrOnlyColorless = 0;
         moveManaToPool(replacementColor, legendarySpellOnlyColorless);
@@ -2287,6 +2375,7 @@ public class ManaPool {
         moveManaTo(replacementColor, creatureSourceCreatureSpellOnlyMana);
         moveManaTo(replacementColor, creatureOrEnchantmentSpellOnlyMana);
         moveManaTo(replacementColor, creatureSpellOrAbilityMana);
+        moveManaTo(replacementColor, creatureAbilityOnlyMana);
         moveManaTo(replacementColor, manaValueAtLeastFourOnlyMana);
         for (EnumMap<ManaColor, Integer> bucket : exiledCardOnlyMana.values()) {
             moveManaTo(replacementColor, bucket);
@@ -2408,6 +2497,7 @@ public class ManaPool {
         drainColorBucket(creatureSpellOnlyMana, protectedColors);
         drainColorBucket(creatureSourceCreatureSpellOnlyMana, protectedColors);
         drainColorBucket(creatureSpellOrAbilityMana, protectedColors);
+        drainColorBucket(creatureAbilityOnlyMana, protectedColors);
         drainColorBucket(manaValueAtLeastFourOnlyMana, protectedColors);
 
         drainColorMap(subtypeCreatureMana, protectedColors);
@@ -2422,7 +2512,10 @@ public class ManaPool {
         if (!protectedColors.contains(ManaColor.COLORLESS)) {
             artifactOnlyColorless = 0;
             artifactAbilityOnlyColorless = 0;
-            powerstoneOnlyColorless = 0;
+            powerstoneOnlyColorless = Math.min(powerstoneOnlyColorless,
+                    persistentPowerstoneOnlyColorless);
+            persistentPowerstoneOnlyColorless = Math.min(
+                    powerstoneOnlyColorless, persistentPowerstoneOnlyColorless);
             myrOnlyColorless = 0;
             colorlessSubtypeSpellOrAbilityMana.clear();
             legendarySpellOnlyColorless = 0;
@@ -2478,6 +2571,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             persistentMana.put(color, 0);
         }
+        persistentPowerstoneOnlyColorless = 0;
     }
 
     public int getPersistentMana(ManaColor color) {
@@ -2532,6 +2626,7 @@ public class ManaPool {
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureOrEnchantmentSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
+            amount += creatureAbilityOnlyMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
             amount += exiledSpellOnlyMana.getOrDefault(color, 0);
             map.put(color.getCode(), amount);
@@ -2586,6 +2681,7 @@ public class ManaPool {
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureOrEnchantmentSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
+            amount += creatureAbilityOnlyMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);

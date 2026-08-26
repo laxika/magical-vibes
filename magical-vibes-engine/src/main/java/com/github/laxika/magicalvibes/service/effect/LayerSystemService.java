@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
@@ -1461,6 +1462,22 @@ public class LayerSystemService {
                             List.copyOf(set.cardTypes())));
                 }
             }
+            case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored -> {
+                manage(board, instance);
+                for (PermanentSlot target : slots) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (isSource(instance, target)
+                            || state == null
+                            || !state.hasCardType(CardType.PLANESWALKER)
+                            || target.permanent().getCounterCount(CounterType.LOYALTY) <= 0) {
+                        continue;
+                    }
+                    state.overrideCardTypes(Set.of(CardType.CREATURE));
+                    record(board, instance, target, new L4Contribution(
+                            List.of(), false, false, null, null, true,
+                            List.of(CardType.CREATURE)));
+                }
+            }
             case GrantSupertypeToEnchantedPermanentEffect grant -> {
                 manage(board, instance);
                 for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
@@ -2519,6 +2536,17 @@ public class LayerSystemService {
                         });
                     }
                 }
+                case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored ->
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                                (target, harvested) -> {
+                                    if (harvested.isBasePTOverridden()) {
+                                        entries.add(new BasePtEntry(target.permanent().getId(),
+                                                harvested.getBasePowerOverride(),
+                                                harvested.getBaseToughnessOverride(),
+                                                instance.timestamp(), instance.position(),
+                                                provenanceSourceName(instance)));
+                                    }
+                                });
                 case AnimateNoncreatureArtifactsEffect ignored -> {
                     // Gated off for artifacts that animate themselves — their own animation
                     // defines the base P/T, not March's MV.

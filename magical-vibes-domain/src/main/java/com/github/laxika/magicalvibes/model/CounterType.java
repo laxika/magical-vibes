@@ -99,6 +99,7 @@ public enum CounterType {
     PUPA,
     QUEST,
     REVIVAL,
+    REJECTION,
     RITUAL,
     RUST,
     PLUS_ONE_PLUS_ONE,

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                      once for each exiled card matching {@code conditionalFilter}
  * @param singleGraveyard whether all selected cards must come from one graveyard
  * @param trackWithSource whether the exiled cards are tracked with the source permanent
+ * @param ownGraveyardOnly whether ETB targeting is restricted to the controller's graveyard
  */
 public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
                                             CardPredicate filter, boolean assignNoCombatDamage,
@@ -33,28 +34,29 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                             int conditionalLifeGain,
                                             boolean singleGraveyard,
                                             boolean conditionalLifePerMatchingCard,
-                                            boolean trackWithSource)
+                                            boolean trackWithSource,
+                                            boolean ownGraveyardOnly)
         implements GraveyardCardChoosingEffect {
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain) {
-        this(maxTargets, lifeGain, false, null, false, null, 0, 0, false, false, false);
+        this(maxTargets, lifeGain, false, null, false, null, 0, 0, false, false, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean singleGraveyard) {
-        this(maxTargets, lifeGain, false, null, false, null, 0, 0, singleGraveyard, false, false);
+        this(maxTargets, lifeGain, false, null, false, null, 0, 0, singleGraveyard, false, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
                                          CardPredicate filter, boolean assignNoCombatDamage) {
         this(maxTargets, lifeGain, lifeGainPerExiledCard, filter, assignNoCombatDamage,
-                null, 0, 0, false, false, false);
+                null, 0, 0, false, false, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate conditionalFilter,
                                          int conditionalLifeLossEachOpponent, int conditionalLifeGain,
                                          boolean singleGraveyard) {
         this(maxTargets, 0, false, null, false, conditionalFilter,
-                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard, false, false);
+                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard, false, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate conditionalFilter,
@@ -62,12 +64,19 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                          boolean singleGraveyard, boolean conditionalLifePerMatchingCard) {
         this(maxTargets, 0, false, null, false, conditionalFilter,
                 conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard,
-                conditionalLifePerMatchingCard, false);
+                conditionalLifePerMatchingCard, false, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, boolean singleGraveyard,
                                          boolean trackWithSource) {
-        this(maxTargets, 0, false, null, false, null, 0, 0, singleGraveyard, false, trackWithSource);
+        this(maxTargets, 0, false, null, false, null, 0, 0, singleGraveyard, false, trackWithSource, false);
+    }
+
+    public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate filter,
+                                         boolean singleGraveyard, boolean trackWithSource,
+                                         boolean ownGraveyardOnly) {
+        this(maxTargets, 0, false, filter, false, null, 0, 0, singleGraveyard, false,
+                trackWithSource, ownGraveyardOnly);
     }
 
     /** Whether the maximum target count is supplied by the ability's X value. */

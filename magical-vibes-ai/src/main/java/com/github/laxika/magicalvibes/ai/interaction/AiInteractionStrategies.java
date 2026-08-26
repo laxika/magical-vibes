@@ -32,6 +32,8 @@ public final class AiInteractionStrategies {
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
+        register(new PlarggAndNassariOpponentChoiceAiStrategy());
+        register(new PlarggAndNassariCardChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
         register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());

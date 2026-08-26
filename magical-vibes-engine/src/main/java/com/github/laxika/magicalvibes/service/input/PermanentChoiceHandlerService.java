@@ -128,6 +128,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesCreatureTheyControlToCopy(gameData, permanentId, echoChamberChoice);
         } else if (context instanceof PermanentChoiceContext.AwakenTheMaelstromPermanentCopyChoice copyChoice) {
             battlefieldHandler.handleAwakenTheMaelstromPermanentCopyChoice(gameData, permanentId, copyChoice);
+        } else if (context instanceof PermanentChoiceContext.ChosenPermanentCopyChoice copyChoice) {
+            battlefieldHandler.handleChosenPermanentCopyChoice(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.AwakenTheMaelstromCounterCreatureChoice) {
             battlefieldHandler.handleAwakenTheMaelstromCounterCreatureChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.OpponentMayGainControlOfCreatureYouControl opponentSteal) {

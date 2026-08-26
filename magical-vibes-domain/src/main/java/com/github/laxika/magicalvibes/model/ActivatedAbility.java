@@ -63,6 +63,8 @@ public class ActivatedAbility {
     private boolean activatableOnlyByOpponents;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
     private boolean requiresUntap;
+    /** When true, the source permanent must have another activated ability to activate this ability. */
+    private boolean requiresAnotherActivatedAbility;
     /** Predicate a controlled permanent must match to count toward {@link #requiredControlledPermanentCount} (e.g. Leechridden Swamp's "two or more black permanents"). Null = no such restriction. Set via {@link #withRequiredControlledPermanents}. */
     private PermanentPredicate requiredControlledPermanentPredicate;
     /** Minimum number of controlled permanents matching {@link #requiredControlledPermanentPredicate} required to activate. */
@@ -267,6 +269,7 @@ public class ActivatedAbility {
         copy.manaCostOfEnchantedPermanent = this.manaCostOfEnchantedPermanent;
         copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
         copy.requiresUntap = this.requiresUntap;
+        copy.requiresAnotherActivatedAbility = this.requiresAnotherActivatedAbility;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
         copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
@@ -454,6 +457,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withRequiresUntap() {
         this.requiresUntap = true;
+        return this;
+    }
+
+    /** Marks this ability as requiring another activated ability on its source permanent. */
+    public ActivatedAbility withRequiresAnotherActivatedAbility() {
+        this.requiresAnotherActivatedAbility = true;
         return this;
     }
 

@@ -215,6 +215,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.LoyaltyDamageReplacementHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -263,7 +264,15 @@ public class GameQueryService {
             CardSubtype.BOLAS
     );
 
+    static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
+    }
+
     private final StaticEffectHandlerRegistry staticEffectRegistry;
+
+    @Autowired
+    @Lazy
+    private LoyaltyDamageReplacementHandlerRegistry loyaltyDamageReplacementHandlerRegistry;
 
     /**
      * The CR 613 layered engine: computes the whole-battlefield layer-4 (type-changing) pass
@@ -3926,6 +3935,32 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given permanent is a creature or planeswalker tied for greatest
+     * mana value among creatures and planeswalkers controlled by its controller.
+     */
+    public boolean hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkers(GameData gameData,
+                                                                                 Permanent permanent) {
+        if (gameData == null || permanent == null
+                || (!isCreature(gameData, permanent) && !isPlaneswalker(gameData, permanent))) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        int greatest = battlefield.stream()
+                .filter(candidate -> isCreature(gameData, candidate) || isPlaneswalker(gameData, candidate))
+                .mapToInt(candidate -> candidate.getCard().getManaValue())
+                .max()
+                .orElse(-1);
+        return permanent.getCard().getManaValue() == greatest;
+    }
+
+    /**
      * Returns {@code true} if the given permanent is an artifact with the greatest mana value
      * among all artifacts on the battlefield. Ties allowed.
      */
@@ -5172,6 +5207,10 @@ public class GameQueryService {
             }
         }
         return result[0];
+    }
+
+    public int applyPlaneswalkerLoyaltyDamageReplacement(GameData gameData, Permanent target, int damage) {
+        return loyaltyDamageReplacementHandlerRegistry.apply(gameData, target, damage);
     }
 
     /**

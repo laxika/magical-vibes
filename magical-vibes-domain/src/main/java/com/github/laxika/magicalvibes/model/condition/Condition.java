@@ -246,6 +246,8 @@ public sealed interface Condition permits
         SpellManaSpentGreaterThanSourcePower,
         SpellXAtLeast,
         TargetManaValueAtMostControllerGraveyardCount,
+        TargetGraveyardCardManaValueAtMost,
+        TargetGraveyardCardManaValueAtLeast,
         TargetPermanentManaValueEqualsControllerUnspentMana,
         TargetPermanentMatches,
         TriggeringPermanentPowerGreaterThanSourcePower,

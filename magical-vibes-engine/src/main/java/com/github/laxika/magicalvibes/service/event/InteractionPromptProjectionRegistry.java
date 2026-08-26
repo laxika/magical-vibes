@@ -61,6 +61,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.PlarggAndNassariOpponentChoice.class,
+                this::projectPlarggAndNassariOpponentChoice);
+        register(PendingInteraction.PlarggAndNassariCardChoice.class,
+                this::projectPlarggAndNassariCardChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
         register(PendingInteraction.AssimilationAegisCopyChoice.class,
                 this::projectAssimilationAegisCopyChoice);
@@ -304,8 +308,22 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 interaction.maxCount(),
-                "You may cast any number of spells from among the exiled cards without paying "
-                        + "their mana costs.");
+                interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectPlarggAndNassariOpponentChoice(
+            GameData gameData, PendingInteraction.PlarggAndNassariOpponentChoice interaction) {
+        return InteractionPromptMessage.multiPermanentPick(
+                List.of(), new ArrayList<>(interaction.opponentIds()), 1,
+                "Choose an opponent to choose a nonland card exiled with Plargg and Nassari.");
+    }
+
+    private InteractionPromptMessage projectPlarggAndNassariCardChoice(
+            GameData gameData, PendingInteraction.PlarggAndNassariCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()), 1,
+                "Choose a nonland card exiled with Plargg and Nassari.");
     }
 
     private InteractionPromptMessage projectExiledSpellCopyChoice(

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -69,6 +70,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
@@ -211,6 +213,15 @@ class PredicateEvaluationServiceTest {
         return card;
     }
 
+    private static Card createPlaneswalker(String name, String manaCost) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.PLANESWALKER);
+        card.setManaCost(manaCost);
+        card.setLoyalty(3);
+        return card;
+    }
+
     private static Card createBattle(String name) {
         Card card = new Card();
         card.setName(name);
@@ -312,6 +323,25 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesCardPredicate(eligible, predicate, sourceCard.getId(), gd, player1Id))
                     .isTrue();
             assertThat(evaluator.matchesCardPredicate(tooExpensive, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueLessThanSourcePowerPredicate is strict")
+        void cardManaValueLessThanSourcePowerPredicateIsStrict() {
+            Card sourceCard = createCreature("Narset", 3, 4, CardColor.WHITE);
+            addPermanent(player1Id, sourceCard);
+
+            Card belowPower = createCreature("Below Power", 2, 2, CardColor.BLUE);
+            belowPower.setManaCost("{2}");
+            Card equalToPower = createCreature("Equal to Power", 3, 3, CardColor.BLUE);
+            equalToPower.setManaCost("{3}");
+            CardManaValueLessThanSourcePowerPredicate predicate =
+                    new CardManaValueLessThanSourcePowerPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(belowPower, predicate, sourceCard.getId(), gd, player1Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(equalToPower, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
         }
 
@@ -2036,6 +2066,23 @@ class PredicateEvaluationServiceTest {
                     new PermanentHasGreatestManaValueAmongAllCreaturesPredicate();
             assertThat(evaluator.matchesStaticFilter(big, greatest, ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(small, greatest, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("greatest mana value compares a controller's creatures and planeswalkers as one group")
+        void greatestManaValueCombinesControllerCreaturesAndPlaneswalkers() {
+            Permanent smallCreature = addPermanent(player2Id,
+                    createCreature("Small Creature", 2, 2, CardColor.GREEN));
+            Permanent planeswalker = addPermanent(player2Id,
+                    createPlaneswalker("Planeswalker", "{4}"));
+            addPermanent(player1Id, createCreature("Unrelated Large Creature", 6, 6, CardColor.RED));
+
+            PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate greatest =
+                    new PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, planeswalker, greatest)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, smallCreature, greatest)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(planeswalker, greatest, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(smallCreature, greatest, ctx())).isFalse();
         }
 
         @Test

@@ -131,6 +131,8 @@ public final class AnyColorManaChoiceSupport {
         if (recipientPlayerId != null) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withRecipientPlayerId(recipientPlayerId);
+            } else if (choiceContext instanceof ChoiceContext.SpellOnlyManaColorChoice spellOnlyChoice) {
+                choiceContext = spellOnlyChoice.withRecipientPlayerId(recipientPlayerId);
             }
         }
         if (fromSnowSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
@@ -138,18 +140,23 @@ public final class AnyColorManaChoiceSupport {
         }
         List<ManaColor> allowedColors = switch (effect.restriction()) {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
-            case SOURCE_PERMANENT_COLORS -> sourcePermanentColors(sourceColors);
+            case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
             default -> ManaColor.COLORS;
         };
         if (allowedColors.size() == 1
                 && (effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
-                || effect.restriction() == ManaSpendRestriction.SOURCE_PERMANENT_COLORS)) {
+                || effect.restriction() == ManaSpendRestriction.SOURCE_PERMANENT_COLORS
+                || effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES)) {
             UUID manaRecipientId = recipientPlayerId != null ? recipientPlayerId : playerId;
             ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
             ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId, allowedColors.get(0));
-            manaPool.add(effectiveColor, amount);
-            if (fromCreature) {
-                manaPool.addCreatureMana(effectiveColor, amount);
+            if (effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES) {
+                manaPool.addCreatureAbilityOnlyMana(effectiveColor, amount);
+            } else {
+                manaPool.add(effectiveColor, amount);
+                if (fromCreature) {
+                    manaPool.addCreatureMana(effectiveColor, amount);
+                }
             }
             return false;
         }
@@ -180,6 +187,10 @@ public final class AnyColorManaChoiceSupport {
             return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
         }
         if (effect.anyColorCombination()) {
+            if (effect.restriction() == ManaSpendRestriction.SPELL_ONLY) {
+                return new ChoiceContext.SpellOnlyManaColorChoice(
+                        playerId, fromCreature, amount, true);
+            }
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount, ManaColor.COLORS);
             if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {
@@ -191,6 +202,8 @@ public final class AnyColorManaChoiceSupport {
         ChoiceContext choice = switch (effect.restriction()) {
             case NONE, INSTANT_SORCERY_COPY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
+            case SPELL_ONLY ->
+                    new ChoiceContext.SpellOnlyManaColorChoice(playerId, fromCreature, amount, false);
             case ABILITIES -> ChoiceContext.ManaColorChoice.abilityOnly(playerId, amount);
             case IMPRINTED_CARD_COLORS -> {
                 List<ManaColor> colors = imprintedCardColors(gameData, sourceCard);
@@ -222,6 +235,9 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype());
             case CREATURE_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.creatureSpellOrAbilityOnly(playerId, amount);
+            case CREATURE_COLORS_ABILITIES ->
+                    ChoiceContext.ManaColorChoice.creatureAbilityOnly(
+                            playerId, fromCreature, amount, sourcePermanentColors(sourceColors));
             case MOUNT_OR_VEHICLE_SPELL ->
                     new ChoiceContext.ManaColorSpellChoice(
                             playerId, amount, Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE));
@@ -279,10 +295,12 @@ public final class AnyColorManaChoiceSupport {
 
     private static String prompt(ManaSpendRestriction restriction) {
         return switch (restriction) {
+            case SPELL_ONLY -> "Choose a color of mana to add (spells only).";
             case ABILITIES -> "Choose a color of mana to add (activated abilities only).";
             case INSTANT_SORCERY_ONLY -> "Choose a color of mana to add (instant and sorcery spells only).";
             case ARTIFACT_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (artifact spells or artifact abilities only).";
             case CREATURE_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (creature spells or creature abilities only).";
+            case CREATURE_COLORS_ABILITIES -> "Choose a color of mana to add (creature abilities only).";
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case GRAVEYARD_SPELL_ONLY -> "Choose a color of mana to add (graveyard spells only).";

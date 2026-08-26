@@ -1095,7 +1095,8 @@ public class GameActionAvailabilityService {
                     && !isGrantedGraveyardCast
                     && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
 
-            boolean isJumpStart = card.getCastingOption(JumpStartCast.class).isPresent()
+            boolean isJumpStart = (card.getCastingOption(JumpStartCast.class).isPresent()
+                    || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize

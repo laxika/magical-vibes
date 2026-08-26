@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExil
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -67,7 +69,18 @@ public class PlayedCardNameTriggerCollectorService {
         if (!lp.fromExile()) {
             return false;
         }
-        return enqueueLandPlayTrigger(match, trigger.resolvedEffects());
+        return enqueueLandPlayTrigger(match, trigger);
+    }
+
+    @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
+            slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    private boolean handleOpponentPlaysLandFromExile(TriggerMatchContext match,
+            LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        if (!lp.fromExile()) {
+            return false;
+        }
+        return enqueueLandPlayTrigger(match, trigger);
     }
 
     @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
@@ -144,6 +157,25 @@ public class PlayedCardNameTriggerCollectorService {
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect) {
         return enqueueLandPlayTrigger(match, List.of(effect));
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
+                                           LandPlayFromExileTriggerEffect trigger) {
+        boolean needsPlayerTarget = trigger.resolvedEffects().stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean needsPermanentTarget = trigger.resolvedEffects().stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        if (needsPlayerTarget || needsPermanentTarget) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    match.permanent().getCard(), match.controllerId(),
+                    new ArrayList<>(trigger.resolvedEffects()),
+                    needsPlayerTarget && !needsPermanentTarget,
+                    trigger.targetFilter(), 0, match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                    "'s triggered ability triggers — choose a target."));
+            return true;
+        }
+        return enqueueLandPlayTrigger(match, trigger.resolvedEffects());
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects) {

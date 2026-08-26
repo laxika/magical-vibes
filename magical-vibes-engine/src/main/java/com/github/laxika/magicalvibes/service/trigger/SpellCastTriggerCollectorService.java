@@ -80,6 +80,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.KioraSovereignOfTheDeepRevealAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.KioraSovereignOfTheDeepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PossibilityStormCastTriggerEffect;
@@ -134,6 +136,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -1199,6 +1202,36 @@ public class SpellCastTriggerCollectorService {
         ));
 
         log.info("Game {} - Sunbird's Invocation trigger queued (mana value {})",
+                match.gameData().id, manaValue);
+        return true;
+    }
+
+    @CollectsTrigger(value = KioraSovereignOfTheDeepTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleKioraSovereignOfTheDeep(TriggerMatchContext match,
+            KioraSovereignOfTheDeepTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.castFromHand()) return false;
+        CardPredicate seaMonsterFilter = new CardAnyOfPredicate(List.of(
+                new CardSubtypePredicate(CardSubtype.KRAKEN),
+                new CardSubtypePredicate(CardSubtype.LEVIATHAN),
+                new CardSubtypePredicate(CardSubtype.OCTOPUS),
+                new CardSubtypePredicate(CardSubtype.SERPENT)));
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), seaMonsterFilter, null,
+                match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+
+        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new KioraSovereignOfTheDeepRevealAndCastEffect(manaValue)))
+        ));
+
+        log.info("Game {} - Kiora's deep trigger queued (mana value {})",
                 match.gameData().id, manaValue);
         return true;
     }

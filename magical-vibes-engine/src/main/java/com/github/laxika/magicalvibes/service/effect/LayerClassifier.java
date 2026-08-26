@@ -101,6 +101,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurn
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -262,6 +263,8 @@ public final class LayerClassifier {
         // use. Outside a STATIC slot this effect is a one-shot resolution (manlands, Crew) that
         // registers its own floating 7b entry and never reaches classification.
         map.put(AnimatePermanentsEffect.class, fixed(Layer.L4_TYPE));
+        map.put(PlaneswalkersWithLoyaltyBecomeCreaturesEffect.class,
+                fixed(Layer.L4_TYPE, Layer.L6_ABILITIES, Layer.L7B_SET_PT));
         map.put(SetCardTypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCardTypesUntilYourNextTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(BecomeEnchantmentUntilCreatureSpellCastEffect.class,

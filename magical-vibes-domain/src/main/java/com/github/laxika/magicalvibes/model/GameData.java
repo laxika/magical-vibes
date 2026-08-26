@@ -599,8 +599,9 @@ public class GameData {
      *  permanent id, so a permanent that leaves and re-enters the battlefield is a new object and may
      *  activate again (CR 400.7). Never cleared at turn cleanup — only by Karn's game restart. */
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisGame = new ConcurrentHashMap<>();
-    /** Per-permanent count of how many times its resolution-counting activated ability has resolved
-     *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim).
+    /** Per-permanent count of how many times its resolution-counting ability has resolved
+     *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim or
+     *  Nissa, Resurgent Animist).
      *  Keyed by source permanent id; reset at the start of each turn. */
     public final Map<UUID, Integer> permanentAbilityResolutionsThisTurn = new ConcurrentHashMap<>();
     /** Maps a permanent that is not controlled by its owner to that owner (recorded on the first
@@ -3446,6 +3447,11 @@ public class GameData {
 
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay,
                                 UUID targetCardId, UUID sourcePermanentId) {
+        queueMayAbility(sourceCard, controllerId, mayPay, targetCardId, sourcePermanentId, 0);
+    }
+
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay,
+                                UUID targetCardId, UUID sourcePermanentId, int eventValue) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -3455,6 +3461,7 @@ public class GameData {
                 targetCardId,
                 sourcePermanentId
         );
+        entry.setEventValue(eventValue);
         stack.add(entry);
     }
 

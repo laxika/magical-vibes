@@ -1,4 +1,5 @@
 # Card Patterns: Lands & Spells
+- Cosmic Rebirth (`c/CosmicRebirth.java`): target a permanent card in your graveyard; gate `ReturnCardFromGraveyardEffect` battlefield/hand branches with `TargetGraveyardCardManaValueAtMost(3)` and `TargetGraveyardCardManaValueAtLeast(4)`, then add `GainLifeEffect(3)`.
 
 Guided Passage's full-library reveal with category-constrained opponent choice is implemented by `g/GuidedPassage.java` and `GuidedPassageEffect()`.
 

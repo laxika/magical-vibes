@@ -88,6 +88,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
         }
+        if (predicate instanceof CardManaValueLessThanSourcePowerPredicate) {
+            return "card with mana value less than this creature's power";
+        }
         if (predicate instanceof CardManaValueLessThanSourceLoyaltyPredicate) {
             return "card with mana value less than this planeswalker's loyalty";
         }

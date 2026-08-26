@@ -520,6 +520,7 @@ public class ActivatedAbilityExecutionService {
                                     && anyColor.restriction() == ManaSpendRestriction.NONE)
                             || manaAbilityEffectHandlerRegistry.isRevertable(e));
             ManaPool pool = gameData.playerManaPools.get(playerId);
+            int totalManaBefore = pool.getTotalAllMana();
             java.util.EnumMap<ManaColor, Integer> poolBefore =
                     revertable ? AbilityActivationService.snapshotPoolColors(pool) : null;
             java.util.EnumMap<ManaColor, Integer> creatureManaBefore =
@@ -527,6 +528,18 @@ public class ActivatedAbilityExecutionService {
             int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
 
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue);
+            if (!AbilityActivationService.isAwaitingOwnManaColorChoice(gameData, playerId)) {
+                int stackBeforeManaResolutionTriggers = gameData.stack.size();
+                triggerCollectionService.checkManaAbilityResolutionTriggers(
+                        gameData, permanent, playerId,
+                        pool.getTotalAllMana() - totalManaBefore);
+                if (gameData.stack.size() > stackBeforeManaResolutionTriggers) {
+                    List<StackEntry> manaResolutionTriggers = new ArrayList<>(
+                            gameData.stack.subList(stackBeforeManaResolutionTriggers, gameData.stack.size()));
+                    gameData.stack.subList(stackBeforeManaResolutionTriggers, gameData.stack.size()).clear();
+                    gameData.pendingManaAbilityTriggers.addAll(manaResolutionTriggers);
+                }
+            }
             if (ability.isRequiresTap() && gameQueryService.isCreature(gameData, permanent)) {
                 triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
             }
@@ -562,18 +575,16 @@ public class ActivatedAbilityExecutionService {
                 gameData.pendingManaAbilityTriggers.addAll(deferredCostTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredActivationTriggers);
             }
-            if (revertable) {
+            if (AbilityActivationService.isAwaitingOwnManaColorChoice(gameData, playerId)) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
-                if (AbilityActivationService.isAwaitingOwnManaColorChoice(gameData, playerId)) {
-                    // The mana has not been produced yet — park the snapshot for the colour-choice
-                    // answer to complete (ChoiceHandlerService.completeParkedManaActivation).
-                    gameData.pendingRevertableManaActivation = new PendingManaActivation(
-                            playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred));
-                } else {
-                    AbilityActivationService.recordRevertableManaActivation(
-                            gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
-                }
+                gameData.pendingRevertableManaActivation = new PendingManaActivation(
+                        playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred));
+            } else if (revertable) {
+                List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
+                        pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
+                AbilityActivationService.recordRevertableManaActivation(
+                        gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
             } else {
                 // A mana ability with side effects (pain-land damage, pool doubling, extra costs)
                 // can't be undone — and undoing earlier activations after it could interact with

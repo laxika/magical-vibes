@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -150,14 +150,14 @@ public class EtbTriggerService {
             return;
         }
 
-        ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
-                .map(ChooseSubtypeOnEnterEffect.class::cast)
+        SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
         if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
             playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
-                    subtypeChoice.allowedSubtypes(), true);
+                    subtypeChoice, true);
             return;
         }
         ChooseBasicLandTypeOnEnterEffect basicLandTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -220,14 +220,13 @@ public class EtbTriggerService {
                     enteringPermanent.getId(), modeChoice.modes());
             return;
         }
-        ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
-                .map(ChooseSubtypeOnEnterEffect.class::cast)
+        SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
         if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
-            playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
-                    subtypeChoice.allowedSubtypes());
+            playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(), subtypeChoice);
             return;
         }
 
@@ -267,7 +266,7 @@ public class EtbTriggerService {
                 .filter(e -> !(e instanceof ChoosePrimalClayFormOnEnterEffect))
                 // "As enters, choose a creature type" is a replacement-style choice made during entry
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
-                .filter(e -> !(e instanceof ChooseSubtypeOnEnterEffect))
+                .filter(e -> !(e instanceof SubtypeChoiceOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
                 .filter(e -> !(e instanceof ReplacementEffect))
                 // Conditional as-enters replacements ("if kicked, enters with N counters") are
@@ -517,20 +516,21 @@ public class EtbTriggerService {
                 .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
                 .filter(e -> !graveyardShuffleIntoLibraryEffects.contains(e))
                 .toList();
-        List<CardEffect> otherEffects = mandatoryEffects.stream()
-                .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
-                .filter(e -> !graveyardCastEffects.contains(e))
-                .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
-                .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
-                .filter(e -> !graveyardStealEffects.contains(e))
-                .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
-                .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
-                .filter(e -> !targetPlayerGraveyardChoiceEffects.contains(e))
-                .filter(e -> !(e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect))
-                .filter(e -> !graveyardTargetReturnEffects.contains(e))
-                .filter(e -> !graveyardCardsExileEffects.contains(e))
-                .filter(e -> !mixedZoneChoiceEffects.contains(e))
-                .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList();
+        List<CardEffect> otherEffects = graveyardExileEffects.isEmpty()
+                ? mandatoryEffects.stream()
+                        .filter(e -> !graveyardCastEffects.contains(e))
+                        .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
+                        .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
+                        .filter(e -> !graveyardStealEffects.contains(e))
+                        .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
+                        .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
+                        .filter(e -> !targetPlayerGraveyardChoiceEffects.contains(e))
+                        .filter(e -> !(e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect))
+                        .filter(e -> !graveyardTargetReturnEffects.contains(e))
+                        .filter(e -> !graveyardCardsExileEffects.contains(e))
+                        .filter(e -> !mixedZoneChoiceEffects.contains(e))
+                        .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList()
+                : List.of();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack).toList();

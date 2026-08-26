@@ -45,6 +45,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasCountersPredicate,
         PermanentHasCumulativeUpkeepPredicate,
         PermanentHasExactlyTwoColorsPredicate,
+        PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate,
         PermanentHasGreatestPowerAmongControllerCreaturesPredicate,
         PermanentHasGreatestManaValueAmongAllArtifactsPredicate,
         PermanentHasGreatestManaValueAmongAllCreaturesPredicate,

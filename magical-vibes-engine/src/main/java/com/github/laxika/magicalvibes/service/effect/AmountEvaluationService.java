@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureTypeCountAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
@@ -112,6 +113,7 @@ import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreature
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
+import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
@@ -245,6 +247,8 @@ public class AmountEvaluationService {
                     countDistinctPermanentNames(gameData, c, ctx);
             case PermanentManaValueSum s ->
                     sumPermanentManaValues(gameData, s, ctx);
+            case PlayersInGame ignored ->
+                    gameData.orderedPlayerIds.size();
             case AttachedPermanentColorCount ignored ->
                     attachedPermanentColorCount(gameData, ctx);
             case TargetPermanentColorCount ignored ->
@@ -288,6 +292,8 @@ public class AmountEvaluationService {
             case CardsExiledWithSource ignored ->
                     ctx.sourcePermanent() == null ? 0
                             : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).size();
+            case GreatestManaValueAmongCardsExiledWithSource ignored ->
+                    greatestManaValueAmongCardsExiledWithSource(gameData, ctx);
             case ForetoldCardsInExile c ->
                     countForetoldCardsInExile(gameData, c, ctx);
             case CardsInGraveyard c ->
@@ -1561,6 +1567,14 @@ public class AmountEvaluationService {
                 .filter(card -> !card.isToken())
                 .filter(card -> card.hasType(CardType.CREATURE))
                 .count();
+    }
+
+    private int greatestManaValueAmongCardsExiledWithSource(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+        return gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
+                .mapToInt(Card::getManaValue)
+                .max()
+                .orElse(0);
     }
 
     private int imprintedCardManaValue(GameData gameData, AmountContext ctx) {

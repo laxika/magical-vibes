@@ -54,14 +54,16 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
         if (copyEffect.filter() != null
-                && !predicateEvaluationService.matchesCardPredicate(targetCard, copyEffect.filter(), null)) {
+                && !predicateEvaluationService.matchesCardPredicate(targetCard, copyEffect.filter(),
+                entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
+                entry.getTriggeringPermanentPowerAtTrigger())) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                     + CardPredicateUtils.describeFilter(copyEffect.filter()) + ")."));
             return;
         }
 
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
         if (graveyardOwnerId == null
                 || !copyEffect.scope().graveyardOwners(gameData.orderedPlayerIds, entry.getControllerId())
                 .contains(graveyardOwnerId)) {

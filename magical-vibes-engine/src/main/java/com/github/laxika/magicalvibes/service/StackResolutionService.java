@@ -47,7 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterE
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
@@ -760,16 +760,15 @@ public class StackResolutionService {
             maybeBeginBasicLandTypeChoice(gameData, controllerId, card);
 
             // Check if enchantment has "as enters" creature type choice (e.g. Xenograft)
-            ChooseSubtypeOnEnterEffect subtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
-                    .map(ChooseSubtypeOnEnterEffect.class::cast)
+            SubtypeChoiceOnEnterEffect subtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                    .map(SubtypeChoiceOnEnterEffect.class::cast)
                     .findFirst()
                     .orElse(null);
             if (subtypeChoice != null) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
-                playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
-                        subtypeChoice.allowedSubtypes());
+                playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(), subtypeChoice);
             }
 
             // Check if enchantment has "as enters, choose odd or even" (Ashling's Prerogative)
@@ -877,16 +876,15 @@ public class StackResolutionService {
         }
 
         // Check if artifact has "as enters" creature type choice (e.g. Pillar of Origins)
-        ChooseSubtypeOnEnterEffect subtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
-                .map(ChooseSubtypeOnEnterEffect.class::cast)
+        SubtypeChoiceOnEnterEffect subtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
         if (subtypeChoice != null && !gameData.interaction.isAwaitingInput()) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
-                    subtypeChoice.allowedSubtypes());
+            playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(), subtypeChoice);
         }
 
         // Check if artifact creature has "as this creature enters, it becomes your choice of ..."
@@ -1066,15 +1064,18 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an activated ability whose effects branch on {@code NthAbilityResolutionThisTurn}
-     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
+     * entry is an ability whose effects branch on {@code NthAbilityResolutionThisTurn}
+     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim
+     * or Nissa, Resurgent Animist).
      * Counted at resolution (not activation), so copies of the ability count but activations
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
      * effect dispatch so the condition sees the count including the current resolution, and only
      * here (not on async resume) so each resolution counts exactly once.
      */
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
-        if (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY || entry.getSourcePermanentId() == null) {
+        if ((entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                || entry.getSourcePermanentId() == null) {
             return;
         }
         boolean countsResolutions = entry.getEffectsToResolve().stream()

@@ -653,6 +653,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleChosenPermanentCopyChoice(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.ChosenPermanentCopyChoice context) {
+        createTokenCopyOfChosenPermanentYouControlEffectHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleAwakenTheMaelstromCounterCreatureChoice(GameData gameData, UUID permanentId) {
         if (gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanentId);

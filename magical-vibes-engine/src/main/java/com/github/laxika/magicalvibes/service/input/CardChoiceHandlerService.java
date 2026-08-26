@@ -1566,6 +1566,18 @@ public class CardChoiceHandlerService {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
         if (enterAttacking) {
             permanent.setAttacking(true);
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            if (pendingEntry != null) {
+                UUID attackTarget = pendingEntry.getAttackedTargetId();
+                if (attackTarget == null && pendingEntry.getSourcePermanentId() != null) {
+                    Permanent attackingSource = gameQueryService.findPermanentById(
+                            gameData, pendingEntry.getSourcePermanentId());
+                    if (attackingSource != null) {
+                        attackTarget = attackingSource.getAttackTarget();
+                    }
+                }
+                permanent.setAttackTarget(attackTarget);
+            }
         }
 
         String stateSuffix = enterTapped && enterAttacking ? " tapped and attacking"

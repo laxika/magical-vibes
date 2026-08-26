@@ -104,6 +104,9 @@ public sealed interface TriggerContext {
      */
     record CreatureTapForMana(UUID tappingPlayerId, UUID tappedCreatureId) implements TriggerContext {}
 
+    /** Context for a creature's mana ability resolving, including the mana it produced. */
+    record ManaAbilityResolved(UUID activatingPlayerId, int manaProduced) implements TriggerContext {}
+
     /**
      * Context for damage-dealt-to-controller triggers (ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).
      */

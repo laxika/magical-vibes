@@ -9,6 +9,8 @@ public enum EffectSlot {
      *  {@code GameData.pendingManaAbilityTriggers} until a player would next receive priority
      *  (CR 603.3). */
     ON_SELF_TAPPED_FOR_MANA,
+    /** "Whenever a mana ability of this permanent resolves." */
+    ON_SELF_MANA_ABILITY_RESOLVES,
     ON_ENTER_BATTLEFIELD,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

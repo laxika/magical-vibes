@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +63,8 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 tokenControllerId = targetControllerId;
             }
         }
-        tokenCopySupport.createTokenCopies(gameData, entry, List.of(targetPermanent.getCard()),
+        tokenCopySupport.createTokenCopies(gameData, entry,
+                Collections.nCopies(effect.amount(), targetPermanent.getCard()),
                 sourcePermanent, tokenControllerId, effect);
     }
 }

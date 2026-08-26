@@ -161,6 +161,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentHasGreatestPowerAmongControlledCreaturesPredicate` | `()` | creatures with greatest power among source controller's creatures (ties allowed) | `gameData` + `sourceControllerId` |
 | `PermanentHasGreatestManaValueAmongAllCreaturesPredicate` | `()` | creatures with greatest mana value among all creatures on the battlefield across every player (ties allowed) | `gameData` |
 | `PermanentHasGreatestManaValueAmongAllArtifactsPredicate` | `()` | artifacts with greatest mana value among all artifacts on the battlefield across every player (ties allowed) | `gameData` |
+| `PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate` | `()` | creatures or planeswalkers tied for greatest mana value among the permanents controlled by the candidate's controller | `gameData` |
 | `PermanentHasGreatestPowerAmongControllerCreaturesPredicate` | `()` | creatures with greatest effective power among the creatures controlled by that permanent's controller (ties allowed) | `gameData` |
 | `PermanentHasGreatestPowerAmongAllCreaturesPredicate` | `()` | creatures with the greatest effective power among all creatures on the battlefield across every player (ties allowed). Topple | `gameData` |
 | `PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate` | `()` | nonland permanents with the lowest mana value among all nonland permanents on the battlefield (ties allowed) | `gameData` |
@@ -334,6 +335,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
 | `CardHasManaAbilityPredicate` | `()` | a card with an intrinsic on-tap mana effect or an activated mana ability; compose with `CardTypePredicate(ARTIFACT)` for tutors such as Moonsilver Key |
+| `CardHasNonManaActivatedAbilityPredicate` | `()` | cards with at least one activated ability that isn't a mana ability |
 | `CardTruePredicate` | `()` | always matches (no restriction). Card counterpart of `PermanentTruePredicate`; use for unrestricted "spells" wordings (Helm of Awakening) |
 | `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `ON_ALLY_CREATURE_ATTACKS` via `TriggeringCardConditionalEffect`) |
 | `CardIsMulticoloredPredicate` | `()` | a card with two or more colours (`Card.getColors().size() >= 2`); monocoloured and colourless cards never match. Card-in-any-zone counterpart of `PermanentIsMonocoloredPredicate`; used as a graveyard filter for "target multicolored card from your graveyard" (Reborn Hope) |
@@ -344,6 +346,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardPowerAtMostPredicate` | `(int maxPower)` | a card whose printed power is <= `maxPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for library searches like "a creature card with power 2 or less" (Imperial Recruiter) |
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is <= the source permanent's effective power; needs `GameData` and `sourceCardId` |
+| `CardManaValueLessThanSourcePowerPredicate` | `()` | a card whose mana value is strictly less than the source permanent's effective power; needs `GameData` and `sourceCardId` |
 | `CardManaValueLessThanSourceLoyaltyPredicate` | `()` | a card whose mana value is less than the source planeswalker's loyalty; needs `GameData` and `sourceCardId` (Nahiri, the Unforgiving) |
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |

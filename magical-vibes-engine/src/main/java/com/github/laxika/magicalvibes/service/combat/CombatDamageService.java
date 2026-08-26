@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
@@ -1627,10 +1629,15 @@ public class CombatDamageService {
                     EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE));
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, perm, EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE));
-            for (CardEffect effect : effects) {
+            for (CardEffect authoredEffect : effects) {
+                CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
+                    FilterContext triggerContext = FilterContext.of(gameData)
+                            .withSourceControllerId(attackerId)
+                            .withSourcePermanentId(perm.getId());
                     if (trigger.dealerPredicate() != null
-                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                            creature, trigger.dealerPredicate(), triggerContext)) {
                         continue;
                     }
                     // "One or more ... deal combat damage" is a single event for the whole batch,
@@ -1643,7 +1650,7 @@ public class CombatDamageService {
                         List<UUID> dealerIds = combatDamageDealtToPlayer.keySet().stream()
                                 .filter(dealer -> trigger.dealerPredicate() == null
                                         || predicateEvaluationService.matchesPermanentPredicate(
-                                        gameData, dealer, trigger.dealerPredicate()))
+                                        dealer, trigger.dealerPredicate(), triggerContext))
                                 .map(Permanent::getId)
                                 .toList();
                         firedEffect = aware.withCombatDamageDealerIds(dealerIds);
@@ -1664,6 +1671,7 @@ public class CombatDamageService {
                     se.setEventValue(damageDealt);
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                             "'s triggered ability goes on the stack."));
                 }
@@ -2794,8 +2802,10 @@ public class CombatDamageService {
                 continue;
             }
             gameData.recordDamageToPermanent(pw.getId(), damage);
-            // CR 306.8: Damage dealt to a planeswalker removes that many loyalty counters from it
-            pw.setCounterCount(CounterType.LOYALTY, pw.getCounterCount(CounterType.LOYALTY) - damage);
+            int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
+                    gameData, pw, damage);
+            pw.setCounterCount(CounterType.LOYALTY,
+                    pw.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
             gameLogService.append(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
                     + pw.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
         }
@@ -2866,8 +2876,10 @@ public class CombatDamageService {
                         gameData, targetPerm, damage, true, damageSource);
                 if (effectiveDamage > 0) {
                     if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
+                        int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
+                                gameData, targetPerm, effectiveDamage);
                         targetPerm.setCounterCount(CounterType.LOYALTY,
-                                targetPerm.getCounterCount(CounterType.LOYALTY) - effectiveDamage);
+                                targetPerm.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
                     }
                     if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         targetPerm.setCounterCount(CounterType.DEFENSE,

@@ -57,7 +57,10 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
@@ -1267,7 +1270,8 @@ public class CombatAttackService {
                 int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
                 try {
                     for (CardEffect effect : mayEffects) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null, attacker.getId());
+                        gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null, attacker.getId(),
+                                attacker.getAttackTarget());
                     }
 
                     boolean mandatoryNeedsTarget = mandatoryEffects.stream()
@@ -1293,6 +1297,10 @@ public class CombatAttackService {
                         // Non-targeting so this never fizzles triggers that ignore it (e.g. Hellrider).
                         attackTrigger.setTargetId(attacker.getId());
                         attackTrigger.setNonTargeting(true);
+                        if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
+                                && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect)) {
+                            attackTrigger.setEventValue(attacker.getCard().getManaValue());
+                        }
                         gameData.stack.add(attackTrigger);
                     }
 
@@ -1539,8 +1547,9 @@ public class CombatAttackService {
         // per attacking creature, on every permanent with this slot across all battlefields, regardless
         // of who controls the attacker or whom it attacks (e.g. Caltrops pings every attacker). The
         // attacking creature is stored as a non-targeting targetId so the effect can act on "it".
-        // Supports TriggeringPermanentConditionalEffect to restrict which attackers trigger the
-        // ability (e.g. Windreader Sphinx — "whenever a creature with flying attacks").
+        // Supports nested TriggeringPermanentConditionalEffect and
+        // TriggeringPermanentControllerConditionalEffect wrappers to restrict which attackers
+        // trigger the ability (e.g. Windreader Sphinx and Nahiri, Forged in Fury).
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
@@ -1551,14 +1560,27 @@ public class CombatAttackService {
 
                     List<CardEffect> matchingAnyAttackEffects = new ArrayList<>();
                     for (CardEffect effect : anyAttackEffects) {
-                        if (effect instanceof TriggeringPermanentConditionalEffect permConditional) {
-                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
-                                    permConditional.predicate())) {
-                                matchingAnyAttackEffects.add(permConditional.wrapped());
+                        CardEffect matchingEffect = effect;
+                        boolean matches = true;
+                        while (matches) {
+                            if (matchingEffect instanceof TriggeringPermanentControllerConditionalEffect controllerConditional) {
+                                if (!permController.equals(gameQueryService.findPermanentController(gameData, attacker.getId()))) {
+                                    matches = false;
+                                } else {
+                                    matchingEffect = controllerConditional.wrapped();
+                                }
+                            } else if (matchingEffect instanceof TriggeringPermanentConditionalEffect permConditional) {
+                                if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
+                                        permConditional.predicate())) {
+                                    matches = false;
+                                } else {
+                                    matchingEffect = permConditional.wrapped();
+                                }
+                            } else {
+                                break;
                             }
-                        } else {
-                            matchingAnyAttackEffects.add(effect);
                         }
+                        if (matches) matchingAnyAttackEffects.add(matchingEffect);
                     }
                     if (matchingAnyAttackEffects.isEmpty()) continue;
 

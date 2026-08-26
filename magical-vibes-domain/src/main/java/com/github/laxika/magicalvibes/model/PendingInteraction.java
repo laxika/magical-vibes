@@ -39,6 +39,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.PlarggAndNassariOpponentChoice,
+        PendingInteraction.PlarggAndNassariCardChoice,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
@@ -442,11 +444,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /**
      * Improvisation Capstone: choose any number of exiled spells to cast without paying their mana costs.
      */
-    record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
+    record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                           String prompt)
             implements PendingInteraction {
+
+        public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               int maxCount) {
+            this(playerId, validCardIds, maxCount,
+                    "You may cast any number of spells from among the exiled cards without paying "
+                            + "their mana costs.");
+        }
 
         public ImprovisationCapstoneCastChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+            prompt = prompt == null ? "You may cast spells from among the exiled cards without paying "
+                    + "their mana costs." : prompt;
         }
 
         @Override
@@ -457,6 +469,48 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** Controller chooses which opponent makes Plargg and Nassari's nonland-card choice. */
+    record PlarggAndNassariOpponentChoice(UUID controllerId, java.util.List<UUID> opponentIds,
+                                          java.util.List<UUID> validCardIds, int maxCastCount)
+            implements PendingInteraction {
+
+        public PlarggAndNassariOpponentChoice {
+            opponentIds = java.util.List.copyOf(opponentIds);
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return controllerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiPermanentPick(
+                    java.util.List.of(), opponentIds, 1, 1);
+        }
+    }
+
+    /** An opponent chooses the nonland card that Plargg and Nassari will set aside. */
+    record PlarggAndNassariCardChoice(UUID opponentId, UUID controllerId,
+                                      java.util.List<UUID> validCardIds, int maxCastCount)
+            implements PendingInteraction {
+
+        public PlarggAndNassariCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return opponentId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

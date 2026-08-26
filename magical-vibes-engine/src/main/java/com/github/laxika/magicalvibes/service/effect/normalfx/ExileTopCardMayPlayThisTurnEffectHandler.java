@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,7 +59,10 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             // Play permission (any card type) expiring at end of turn.
             gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
             gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
-            if (withoutPaying) {
+            boolean freeCast = withoutPaying || exileEffect.freeCastFilter() != null
+                    && predicateEvaluationService.matchesCardPredicate(
+                            topCard, exileEffect.freeCastFilter(), null);
+            if (freeCast) {
                 gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
             }
 

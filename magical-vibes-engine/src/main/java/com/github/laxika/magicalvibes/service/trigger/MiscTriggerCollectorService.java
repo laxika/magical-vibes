@@ -630,6 +630,30 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    private boolean handleSequenceOnOpponentLifeLoss(TriggerMatchContext match,
+            SequenceEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
+        if (lifeLoss.lifeLostAmount() != 1) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on exactly one life lost by an opponent",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     // ── ON_CONTROLLER_GAINS_LIFE ────────────────────────────────────────
 
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_PAYS_LIFE)
@@ -655,6 +679,28 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life payment (put counter on self)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES)
+    private boolean handleManaAbilityResolutionPutCountersOnSelf(TriggerMatchContext match,
+            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+        TriggerContext.ManaAbilityResolved manaAbility = (TriggerContext.ManaAbilityResolved) ctx;
+        var gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        if (amountEvaluationService.referencesEventValue(effect.amount())) {
+            entry.setEventValue(manaAbility.manaProduced());
+        }
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -783,23 +784,39 @@ public class PlayerInputService {
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                    List<CardSubtype> allowedSubtypes, boolean landPlay) {
+        beginSubtypeChoice(gameData, playerId, permanentId, allowedSubtypes, landPlay,
+                "Choose a creature type.");
+    }
+
+    public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                   SubtypeChoiceOnEnterEffect choiceEffect) {
+        beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), false,
+                choiceEffect.choicePrompt());
+    }
+
+    public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                   SubtypeChoiceOnEnterEffect choiceEffect, boolean landPlay) {
+        beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), landPlay,
+                choiceEffect.choicePrompt());
+    }
+
+    private void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                    List<CardSubtype> allowedSubtypes, boolean landPlay, String prompt) {
         ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId, landPlay);
 
         List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
                 ? Arrays.stream(CardSubtype.values())
                 .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
                 .toList()
-                : allowedSubtypes.stream()
-                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
-                .toList();
+                : List.copyOf(allowedSubtypes);
         List<String> creatureTypes = choices.stream()
                 .map(CardSubtype::name)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, creatureTypes, "Choose a creature type."));
+                playerId, null, null, choiceContext, creatureTypes, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
+        log.info("Game {} - Awaiting {}: {}", gameData.id, playerName, prompt);
     }
 
     public void beginSpellCreatureTypeChoice(GameData gameData, UUID playerId) {
@@ -1314,6 +1331,10 @@ public class PlayerInputService {
             CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.AURA,
             CardSubtype.EQUIPMENT, CardSubtype.LOCUS
     );
+
+    static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
+    }
 
     public void beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes) {
         beginCardNameChoice(gameData, playerId, card, excludedTypes, false);

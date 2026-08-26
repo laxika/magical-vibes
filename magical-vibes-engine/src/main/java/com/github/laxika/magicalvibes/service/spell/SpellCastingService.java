@@ -5101,7 +5101,8 @@ public class SpellCastingService {
         boolean grantedHarmonize = harmonizeOpt.isEmpty() && flashbackOpt.isEmpty() && !isDisturb
                 && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
         boolean isHarmonize = (harmonizeOpt.isPresent() && flashbackOpt.isEmpty() && !isDisturb) || grantedHarmonize;
-        boolean isJumpStart = card.getCastingOption(JumpStartCast.class).isPresent()
+        boolean isJumpStart = (card.getCastingOption(JumpStartCast.class).isPresent()
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize;
         boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize && !isJumpStart;

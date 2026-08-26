@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 public enum CardSubtype {
 
@@ -263,6 +265,14 @@ public enum CardSubtype {
     OMEN("Omen"),
     FLAGBEARER("Flagbearer"),
     ROBOT("Robot");
+
+    private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
+            AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
+            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, SAMUT, YANLING);
+
+    public static List<CardSubtype> planeswalkerTypes() {
+        return PLANESWALKER_TYPES;
+    }
 
     @Getter
     private final String displayName;

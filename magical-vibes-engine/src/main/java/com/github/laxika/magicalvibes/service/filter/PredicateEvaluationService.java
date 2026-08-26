@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePred
 import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasManaAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
@@ -46,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
@@ -105,6 +107,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
@@ -416,6 +419,9 @@ public class PredicateEvaluationService {
                     PotentialManaService.hasOnTapManaEffects(card)
                             || card.getActivatedAbilities().stream()
                             .anyMatch(AbilityActivationService::isManaAbility);
+            case CardHasNonManaActivatedAbilityPredicate ignored ->
+                    card.getActivatedAbilities().stream()
+                            .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
             case CardHasNoAbilitiesPredicate ignored ->
                     card.getCardText() == null && card.getKeywords().isEmpty();
             case CardIsPermanentPredicate ignored ->
@@ -441,6 +447,20 @@ public class PredicateEvaluationService {
                         ? sourcePowerAtTrigger
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 yield sourcePower != null && card.getManaValue() <= sourcePower;
+            }
+            case CardManaValueLessThanSourcePowerPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = sourcePermanentId == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                Integer sourcePower = sourcePermanent != null
+                        ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        : sourcePowerAtTrigger != null
+                        ? sourcePowerAtTrigger
+                        : basePowerOfCardInAnyZone(gameData, sourceCardId);
+                yield sourcePower != null && card.getManaValue() < sourcePower;
             }
             case CardManaValueLessThanSourceLoyaltyPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -1601,6 +1621,8 @@ public class PredicateEvaluationService {
                     gameQueryService.hasGreatestManaValueAmongAllCreatures(gameData, permanent);
             case PermanentHasGreatestManaValueAmongAllArtifactsPredicate ignored ->
                     gameQueryService.hasGreatestManaValueAmongAllArtifacts(gameData, permanent);
+            case PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate ignored ->
+                    gameQueryService.hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkers(gameData, permanent);
             case PermanentHasGreatestPowerAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasGreatestPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate ignored ->
@@ -1645,6 +1667,9 @@ public class PredicateEvaluationService {
     /** Whether a static amount filter needs the live board to evaluate permanent ownership. */
     public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
         if (predicate instanceof PermanentOwnedBySourceControllerPredicate) {
+            return true;
+        }
+        if (predicate instanceof PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate) {
             return true;
         }
         if (predicate instanceof PermanentIsModifiedPredicate) {
@@ -1749,6 +1774,8 @@ public class PredicateEvaluationService {
                     hasGreatestManaValueAmongAllCreaturesStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongAllArtifactsPredicate ignored ->
                     hasGreatestManaValueAmongAllArtifactsStatic(permanent, context);
+            case PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate ignored ->
+                    hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersStatic(permanent, context);
             case PermanentInCombatWithSourcePredicate ignored -> inCombatWithSourceStatic(permanent, context);
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
                 CardSubtype chosen = sourceChosenSubtype(context);
@@ -2157,6 +2184,32 @@ public class PredicateEvaluationService {
                 if (matchesStaticLeaf(candidate, new PermanentIsArtifactPredicate())) {
                     greatest = Math.max(greatest, candidate.getCard().getManaValue());
                 }
+            }
+        }
+        return target.getCard().getManaValue() == greatest;
+    }
+
+    private boolean hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersStatic(
+            Permanent target, FilterContext context) {
+        GameData gameData = context == null ? null : context.gameData();
+        if (gameData == null
+                || (!matchesStaticLeaf(target, STATIC_CREATURE_LEAF)
+                && !matchesStaticLeaf(target, new PermanentIsPlaneswalkerPredicate()))) {
+            return false;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        int greatest = -1;
+        for (Permanent candidate : battlefield) {
+            if (matchesStaticLeaf(candidate, STATIC_CREATURE_LEAF)
+                    || matchesStaticLeaf(candidate, new PermanentIsPlaneswalkerPredicate())) {
+                greatest = Math.max(greatest, candidate.getCard().getManaValue());
             }
         }
         return target.getCard().getManaValue() == greatest;

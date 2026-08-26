@@ -394,9 +394,11 @@ public class MultiPermanentChoiceHandlerService {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, id);
                     return permanent == null
                             || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
-                            || !gameQueryService.isCreature(gameData, permanent);
+                            || !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent,
+                            ((MultiPermanentChoiceContext.FlickerAnyNumber) context).effect().filter());
                 })) {
-            throw new IllegalStateException("A selected permanent is no longer a creature you control");
+            throw new IllegalStateException("A selected permanent is no longer an eligible permanent you control");
         }
         if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfChosenDistinctControlledTokens) {
             Set<String> chosenNames = new HashSet<>();
