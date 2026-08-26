@@ -47,6 +47,7 @@ class ShipwreckSentryTest extends BaseCardTest {
     @DisplayName("An artifact entering under an opponent's control does not help")
     void opponentArtifactDoesNotHelp() {
         Permanent sentry = addCreatureReady(player1, new ShipwreckSentry());
+        harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new ChromaticStar()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castArtifact(player2, 0);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.m.MirrorGallery;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,12 +15,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TheMillenniumCalendar.class)
+@CardUsed({TheMillenniumCalendar.class, MirrorGallery.class})
 class TheMillenniumCalendarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts one time counter on each Calendar for each permanent untapped during the untap step")
     void countsPermanentsUntappedDuringUntapStep() {
+        harness.addToBattlefield(player1, new MirrorGallery());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new TheMillenniumCalendar());
         first.tap();
