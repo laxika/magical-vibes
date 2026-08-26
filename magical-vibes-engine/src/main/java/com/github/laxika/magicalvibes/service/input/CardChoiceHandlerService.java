@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingGainLifeOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
+import com.github.laxika.magicalvibes.model.PendingConnive;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlaguecrafterState;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -172,6 +174,8 @@ public class CardChoiceHandlerService {
         Integer sacrificeUnlessPayGenericReduction = null;
         CounterType artifactCounterType = null;
         int artifactCounterCount = 0;
+        CardEffect thenEffect = null;
+        CardPredicate thenCondition = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
@@ -196,6 +200,8 @@ public class CardChoiceHandlerService {
             returnSourcePermanentId = hc.returnSourcePermanentId();
             artifactCounterType = hc.artifactCounterType();
             artifactCounterCount = hc.artifactCounterCount();
+            thenEffect = hc.thenEffect();
+            thenCondition = hc.thenCondition();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -261,6 +267,17 @@ public class CardChoiceHandlerService {
                     if (pendingEntry != null) {
                         pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                                 List.of(ReturnToHandEffect.self()));
+                    }
+                }
+                if (thenEffect != null) {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    if (pendingEntry != null) {
+                        UUID sourceCardId = pendingEntry.getCard() == null ? null : pendingEntry.getCard().getId();
+                        if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
+                                card, thenCondition, sourceCardId, gameData, playerId)) {
+                            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                                    List.of(thenEffect));
+                        }
                     }
                 }
                 // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
@@ -361,6 +378,8 @@ public class CardChoiceHandlerService {
 
         // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
         checkPendingBoostSourceByDiscardedManaValue(gameData, card);
+
+        checkPendingConniveOnDiscard(gameData, card);
 
         DiscardFollowUp followUp = discardChoice.followUp();
         if (followUp.targetOpponentsDiscardThenDraw()) {
@@ -483,6 +502,7 @@ public class CardChoiceHandlerService {
             checkPendingTransformOnCreatureDiscard(gameData, card);
             checkPendingUntapOnDiscardType(gameData, card);
             checkPendingBoostSourceByDiscardedManaValue(gameData, card);
+            checkPendingConniveOnDiscard(gameData, card);
         }
     }
 
@@ -688,7 +708,10 @@ public class CardChoiceHandlerService {
                 } else {
                     gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                    sourceCard, playerId, List.of(thenEffect), null, null, 0,
+                                    sourceCard, playerId, List.of(thenEffect),
+                                    followUp.thenEffectSourcePermanentId(),
+                                    followUp.thenEffectSourcePermanentSnapshot(),
+                                    followUp.thenEffectEventValue(),
                                     thenEffectXValue));
                     playerInputService.beginAnyTargetChoice(gameData, playerId,
                             validPermanentTargets, validPlayerTargets,
@@ -705,18 +728,22 @@ public class CardChoiceHandlerService {
                         sourceCard.getName() + "'s effect",
                         List.of(thenEffect),
                         followUp.thenEffectTargetId(),
-                        (UUID) null);
+                        followUp.thenEffectSourcePermanentId());
+                thenEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
                 thenEntry.setNonTargeting(true);
+                copyDiscardFollowUpContext(gameData, thenEntry, discardedCard);
                 gameData.stack.add(thenEntry);
             } else {
-                StackEntry reflexiveEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
-                        playerId,
-                        sourceCard.getName() + "'s effect",
-                        List.of(thenEffect)
-                );
-                reflexiveEntry.setEventValue(followUp.eachPlayerNoDiscardCount());
+                StackEntry reflexiveEntry = followUp.thenEffectSourcePermanentId() == null
+                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                                sourceCard.getName() + "'s effect", List.of(thenEffect))
+                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                                sourceCard.getName() + "'s effect", List.of(thenEffect),
+                                (UUID) null, followUp.thenEffectSourcePermanentId());
+                reflexiveEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
+                reflexiveEntry.setEventValue(followUp.thenEffectEventValue() > 0
+                        ? followUp.thenEffectEventValue() : followUp.eachPlayerNoDiscardCount());
+                copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard);
                 gameData.stack.add(reflexiveEntry);
             }
             log.info("Game {} - {} discard-then rider pushed for {}",
@@ -724,6 +751,18 @@ public class CardChoiceHandlerService {
         }
 
         resumeRemainingEffectsAfterDiscard(gameData);
+    }
+
+    private void copyDiscardFollowUpContext(GameData gameData, StackEntry entry, Card discardedCard) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            entry.setSourcePermanentSnapshot(pendingEntry.getSourcePermanentSnapshot());
+        }
+        if (discardedCard != null) {
+            entry.setTriggeringCardId(discardedCard.getId());
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    gameData.graveyardEntryVersion(discardedCard.getId()));
+        }
     }
 
     /**
@@ -939,6 +978,52 @@ public class CardChoiceHandlerService {
                     revealedHandChoice.exilePlayOpponentTax()));
         } else {
             finishRevealedHandChoice(gameData, player, revealedHandChoice, chosenCards);
+        }
+    }
+
+    public void handleSpectersShriekCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.SpectersShriekChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.SpectersShriekChoice.class);
+        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        if (cardIndex == -1) {
+            gameData.interaction.clearAwaitingInput();
+            resumeAfterSpectersShriekChoice(gameData);
+            return;
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID targetPlayerId = choice.targetPlayerId();
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        Card chosenCard = targetHand.remove(cardIndex);
+        exileService.exileCard(gameData, targetPlayerId, chosenCard);
+
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", chosenCard, " from " + targetName + "'s hand."));
+
+        gameData.interaction.clearAwaitingInput();
+        List<Card> casterHand = gameData.playerHands.get(player.getId());
+        if (!chosenCard.getColors().contains(CardColor.BLACK) && casterHand != null && !casterHand.isEmpty()) {
+            playerInputService.beginExileFromHandChoice(gameData, player.getId(), null, null, 1);
+            return;
+        }
+
+        resumeAfterSpectersShriekChoice(gameData);
+    }
+
+    private void resumeAfterSpectersShriekChoice(GameData gameData) {
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }
 
@@ -1815,6 +1900,22 @@ public class CardChoiceHandlerService {
                 .text(String.format(" gets +%d/+0 until end of turn.", boost))
                 .build());
         log.info("Game {} - {} gets +{}/+0 (discarded card mana value)", gameData.id, source.getCard().getName(), boost);
+    }
+
+    private void checkPendingConniveOnDiscard(GameData gameData, Card discardedCard) {
+        PendingConnive pending = gameData.pendingConnive;
+        if (pending == null) {
+            return;
+        }
+        gameData.pendingConnive = null;
+        if (discardedCard.hasType(CardType.LAND)) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

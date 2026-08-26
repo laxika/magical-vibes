@@ -146,8 +146,10 @@ public class LandTapTriggerCollectorService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change."));
             } else {
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, tappingPlayerId);
                 gameData.playerLifeTotals.put(tappingPlayerId,
-                        gameQueryService.lifeAfterDamage(gameData, tappingPlayerId, effectiveDamage));
+                        gameQueryService.lifeAfterDamage(gameData, tappingPlayerId, lifeLoss));
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage,

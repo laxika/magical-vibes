@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +25,7 @@ public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean 
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,23 +36,24 @@ public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GivePoisonCountersEffect) effect;
         String sourceName = entry.getCard().getName();
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, null));
 
         switch (e.recipient()) {
-            case CONTROLLER -> lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), e.amount(), sourceName, entry.getControllerId());
+            case CONTROLLER -> lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), amount, sourceName, entry.getControllerId());
             case TARGET_PLAYER -> {
                 UUID targetPlayerId = entry.getTargetId();
                 if (targetPlayerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, targetPlayerId, e.amount(), sourceName, entry.getControllerId());
+                lifeSupport.applyPoisonCounters(gameData, targetPlayerId, amount, sourceName, entry.getControllerId());
             }
             case EACH_PLAYER -> {
                 for (UUID playerId : gameData.orderedPlayerIds) {
-                    lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
+                    lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
                 }
             }
             case EACH_OPPONENT -> {
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     if (!playerId.equals(entry.getControllerId())) {
-                        lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
+                        lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
                     }
                 }
             }
@@ -58,12 +62,12 @@ public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean 
                 if (targetPermanentId == null) return;
                 UUID playerId = gameQueryService.findPermanentController(gameData, targetPermanentId);
                 if (playerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
+                lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
             }
             case ENCHANTED_PERMANENT_CONTROLLER -> {
                 UUID playerId = e.affectedPlayerId();
                 if (playerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, playerId, e.amount(), sourceName, entry.getControllerId());
+                lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
             }
         }
     }

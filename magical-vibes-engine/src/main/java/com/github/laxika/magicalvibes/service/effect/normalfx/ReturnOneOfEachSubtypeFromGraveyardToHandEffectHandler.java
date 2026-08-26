@@ -63,7 +63,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
                 Card card = matching.getFirst();
                 graveyard.remove(card);
                 graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-                gameData.addCardToHand(controllerId, card);
+                graveyardService.addCardToHandFromGraveyard(gameData, controllerId, controllerId, card);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", card, " from graveyard to hand."));

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
@@ -282,6 +283,8 @@ public class StateBasedActionService {
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
+                        gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
+                                gameQueryService.getEffectivePower(gameData, entry.permanent()));
                     }
                 }
             }
@@ -314,6 +317,7 @@ public class StateBasedActionService {
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPowers.clear();
         }
 
         if (!toDie.isEmpty()) {
@@ -335,6 +339,11 @@ public class StateBasedActionService {
             boolean chapterOnStack = gameData.stack.stream()
                     .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                             && p.getId().equals(e.getSourcePermanentId()));
+            StackEntry pendingResolution = gameData.pendingEffectResolutionEntry;
+            if (!chapterOnStack && pendingResolution != null) {
+                chapterOnStack = pendingResolution.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && p.getId().equals(pendingResolution.getSourcePermanentId());
+            }
             if (!chapterOnStack) {
                 sagasToSacrifice.add(p);
             }

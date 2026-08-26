@@ -575,6 +575,14 @@ public class LibrarySearchSupport {
 
     public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
                                           UUID libraryOwnerId, UUID causingControllerId) {
+        if (gameData.playersCantSearchLibrariesThisTurn) {
+            String playerName = gameData.playerIdToName.get(searchingPlayerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + "'s library search is prevented this turn."));
+            log.info("Game {} - {} search prevented this turn", gameData.id, playerName);
+            return false;
+        }
+
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;

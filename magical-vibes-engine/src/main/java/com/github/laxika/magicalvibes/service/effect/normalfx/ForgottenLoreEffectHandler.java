@@ -169,7 +169,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, lastChosenCardId);
-        gameData.addCardToHand(controllerId, card);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, controllerId, controllerId, card);
         gameLogService.append(gameData, GameLog.textCardText(
                 sourceName + " returns ", card, " from the graveyard to its owner's hand."));
     }

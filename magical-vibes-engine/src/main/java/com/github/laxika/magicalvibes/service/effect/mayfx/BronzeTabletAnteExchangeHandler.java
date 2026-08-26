@@ -51,10 +51,12 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
                 && gameData.getLife(opponentId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
-            triggerCollectionService.checkLifePaymentTriggers(gameData, opponentId, effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, opponentId);
+            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - lifeLoss);
+            triggerCollectionService.checkLifePaymentTriggers(gameData, opponentId, lifeLoss);
             moveTabletFromExileToOwnerGraveyard(gameData, tabletCard);
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. ", tabletCard, " is put into its owner's graveyard."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + lifeLoss + " life. ", tabletCard, " is put into its owner's graveyard."));
             log.info("Game {} - {} pays {} life to keep {}", gameData.id, player.getUsername(),
                     effect.lifeCost(), tabletCard.getName());
         } else {

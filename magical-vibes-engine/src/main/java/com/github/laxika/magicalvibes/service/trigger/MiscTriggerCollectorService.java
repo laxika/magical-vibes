@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -169,6 +170,29 @@ public class MiscTriggerCollectorService {
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
         log.info("Game {} - {} triggers on becoming untapped", match.gameData().id, card.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP)
+    private boolean handleUntapStepPutCountersOnSelf(TriggerMatchContext match,
+                                                       PutCountersOnSelfEffect effect, TriggerContext ctx) {
+        TriggerContext.UntapStep untapStep = (TriggerContext.UntapStep) ctx;
+        GameData gameData = match.gameData();
+        Card card = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                match.controllerId(),
+                card.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        if (amountEvaluationService.referencesEventValue(effect.amount())) {
+            entry.setEventValue(untapStep.untappedPermanentCount());
+        }
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(card));
+        log.info("Game {} - {} triggers on untap step", gameData.id, card.getName());
         return true;
     }
 
@@ -313,8 +337,13 @@ public class MiscTriggerCollectorService {
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         if (as.sacrificedCard() == null
-                || !predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
-                        new Permanent(as.sacrificedCard()), conditional.predicate())) {
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                        new Permanent(as.sacrificedCard()), conditional.predicate(),
+                        FilterContext.of(match.gameData())
+                                .withSourceCardId(match.permanent().getCard().getId())
+                                .withSourceControllerId(match.controllerId())
+                                .withSourcePermanentId(match.permanent().getId())
+                                .withSourcePermanentSnapshot(match.permanent()))) {
             return false;
         }
         String cardName = match.permanent().getCard().getName();
@@ -975,8 +1004,12 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY),
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    })
     private boolean handleCreatureCardsPutIntoGraveyardFromLibraryDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1068,7 +1101,12 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
+    })
     private boolean handleCreatureCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2003,7 +2041,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD)
+    })
     boolean handleControllerCreatureCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(

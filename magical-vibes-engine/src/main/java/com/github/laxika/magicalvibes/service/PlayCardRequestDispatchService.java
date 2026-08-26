@@ -54,12 +54,18 @@ public class PlayCardRequestDispatchService {
         }
         if (request.fromExileCardId() != null) {
             gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()));
+                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                    listOrEmpty(request.convokeCreatureIds()));
             return;
         }
         if (Boolean.TRUE.equals(request.morph())) {
             gameService.playCardWithMorph(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                     request.damageAssignments(), listOrEmpty(request.targetIds()), request.discardHandCardIndex());
+            return;
+        }
+        if (Boolean.TRUE.equals(request.adventure())) {
+            gameService.playAdventureCard(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), listOrEmpty(request.targetIds()));
             return;
         }
         if (isPlotAlternateCast(gameData, player, request)) {

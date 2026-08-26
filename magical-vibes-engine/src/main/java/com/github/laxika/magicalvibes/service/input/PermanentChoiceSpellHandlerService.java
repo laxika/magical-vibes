@@ -217,8 +217,17 @@ public class PermanentChoiceSpellHandlerService {
             log.info("Game {} - {} cast-from-library target no longer exists", gameData.id, lct.cardToCast().getName());
         }
 
+        checkDiscoverTriggers(gameData, lct);
+
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private void checkDiscoverTriggers(GameData gameData, PermanentChoiceContext.LibraryCastSpellTarget context) {
+        if (context.discoverValue() != null) {
+            triggerCollectionService.checkDiscoverTriggers(gameData, context.controllerId(),
+                    context.discoverValue());
         }
     }
 
@@ -569,7 +578,8 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(), false);
+            triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
+                    hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             graveyardService.addCardToGraveyard(gameData, hct.controllerId(), hct.cardToCast());

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -43,12 +44,15 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEquals
 import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstNoncreatureSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
@@ -70,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -81,6 +86,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -142,6 +148,7 @@ class SpellCastTriggerCollectorServiceTest {
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.playerIds.add(player1Id);
         gd.playerIds.add(player2Id);
 
         registry = new TriggerCollectorRegistry();
@@ -319,6 +326,27 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("snapshots triggering spell mana value for EventValue counter amounts")
+        void snapshotsTriggeringSpellManaValueForEventValueCounterAmounts() {
+            Permanent perm = createPermanent("Chrome Host Seedshark");
+            var innerEffect = new CreateXTokenWithXCountersEffect(
+                    CreateTokenEffect.whiteSpirit(1), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE);
+            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect));
+            Card spellCard = createInstant("Divination");
+            spellCard.setManaCost("{2}{U}");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+            registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
         }
 
         @Test
@@ -1000,6 +1028,35 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("A same-name graveyard return trigger only fires for creature spells")
+    void sameNameGraveyardReturnTriggerSnapshotsCreatureSpellName() {
+        Permanent perm = createPermanent("Bloodbond March");
+        var effect = new ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect();
+        Card spellCard = createCard("Grizzly Bears");
+        var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+        boolean result = registry.dispatch(match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
+        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
+                .isEqualTo(new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
+                        Integer.MAX_VALUE, new CardNamedPredicate("Grizzly Bears")));
+
+        gd.stack.clear();
+        Card noncreatureSpell = createInstant("Holy Day");
+        var noncreatureContext = new TriggerContext.SpellCast(noncreatureSpell, player2Id, true);
+
+        assertThat(registry.dispatch(match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, noncreatureContext)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("A same-name graveyard damage trigger binds the caster as a non-target")
     void sameNameGraveyardDamageTriggerBindsCaster() {
         Permanent perm = createPermanent("Dwarven Shrine");
@@ -1297,6 +1354,56 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player1Id);
             assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
+        }
+
+        @Test
+        @DisplayName("filters copied spells by the source Aura's enchanted player")
+        void filtersCopiedSpellsByEnchantedPlayer() {
+            Permanent perm = createPermanent("Curse of Shaken Faith");
+            perm.setAttachedTo(player2Id);
+            var effect = new SpellCopyTriggerEffect(null,
+                    List.of(new BoostSelfEffect(2, 2)),
+                    new StackEntryControlledByEnchantedPlayerPredicate(),
+                    true);
+            Card spellCard = createInstant("Lightning Bolt");
+            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+
+            when(predicateEvaluationService.matchesStackEntryPredicate(
+                    eq(copiedSpell), any(), eq(player2Id))).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("allows copied permanent spells when requested")
+        void allowsCopiedPermanentSpellsWhenRequested() {
+            Permanent perm = createPermanent("Curse of Shaken Faith");
+            perm.setAttachedTo(player1Id);
+            var effect = new SpellCopyTriggerEffect(null,
+                    List.of(new BoostSelfEffect(2, 2)),
+                    new StackEntryControlledByEnchantedPlayerPredicate(),
+                    true);
+            Card spellCard = createCard("Grizzly Bears");
+            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
+            copiedSpell.setCopy(true);
+            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+
+            when(predicateEvaluationService.matchesStackEntryPredicate(
+                    eq(copiedSpell), any(), eq(player1Id))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
         }
 
         @Test
@@ -2083,6 +2190,44 @@ class SpellCastTriggerCollectorServiceTest {
                     new TriggerContext.SpellCast(secondSpell, player1Id, true));
 
             assertThat(result).isFalse();
+            assertThat(gd.stack).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — FirstNoncreatureSpellCastTriggerEffect")
+    class FirstNoncreatureSpellCastTrigger {
+
+        @Test
+        @DisplayName("tracks the first noncreature spell globally across all players")
+        void tracksFirstNoncreatureSpellGlobally() {
+            Permanent perm = createPermanent("Nullstone Gargoyle");
+            var effect = new FirstNoncreatureSpellCastTriggerEffect(List.of(new CounterSpellEffect()));
+            Card creatureSpell = createCard("Creature Spell");
+            Card firstNoncreatureSpell = createInstant("First Noncreature Spell");
+            Card laterNoncreatureSpell = createInstant("Later Noncreature Spell");
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class)))
+                    .thenReturn(true);
+
+            gd.recordSpellCast(player1Id, creatureSpell);
+            boolean creatureResult = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(creatureSpell, player1Id, true));
+
+            gd.recordSpellCast(player2Id, firstNoncreatureSpell);
+            boolean firstResult = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(firstNoncreatureSpell, player2Id, true));
+
+            gd.recordSpellCast(player1Id, laterNoncreatureSpell);
+            boolean laterResult = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(laterNoncreatureSpell, player1Id, true));
+
+            assertThat(creatureResult).isFalse();
+            assertThat(firstResult).isTrue();
+            assertThat(laterResult).isFalse();
             assertThat(gd.stack).hasSize(1);
         }
     }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -26,8 +27,10 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseCastCostForChosenNameSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
@@ -57,6 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -306,6 +310,29 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Applies a zone-scoped reduction only to spells cast from that zone")
+        void appliesZoneScopedReductionOnlyToMatchingSourceZone() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC,
+                    new ReduceCastCostForMatchingSpellsEffect(
+                            new CardTruePredicate(), 1, CostModificationScope.SELF, Zone.GRAVEYARD));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenReturn(true);
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+            Card spell = new Card();
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{1}{R}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.GRAVEYARD))
+                    .isEqualTo(-1);
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.EXILE))
+                    .isZero();
+        }
+
+        @Test
         @DisplayName("Includes active floating cost reductions in the snapshot")
         void appliesFloatingCostReduction() {
             gd.addFloatingEffect(new FloatingContinuousEffect(
@@ -433,6 +460,29 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Chosen-name cost increase applies only to the enchanted player")
+        void chosenNameCostIncreaseScopesToEnchantedPlayer() {
+            Card curse = new Card();
+            curse.addEffect(EffectSlot.STATIC, new IncreaseCastCostForChosenNameSpellsEffect(2));
+            Permanent cursePermanent = new Permanent(curse);
+            cursePermanent.setAttachedTo(player2Id);
+            cursePermanent.setChosenName("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(cursePermanent);
+
+            Card matchingSpell = new Card();
+            matchingSpell.setName("Grizzly Bears");
+            matchingSpell.setManaCost("{1}{G}");
+
+            Card differentSpell = new Card();
+            differentSpell.setName("Hill Giant");
+            differentSpell.setManaCost("{3}{R}");
+
+            assertThat(svc.getCastCostModifier(gd, player2Id, matchingSpell)).isEqualTo(2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, matchingSpell)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player2Id, differentSpell)).isZero();
+        }
+
+        @Test
         @DisplayName("OPPONENT-scoped match reduction on opponent's battlefield reduces this player's spells")
         void opponentScopedMatchReductionApplies() {
             Card reducer = new Card();
@@ -488,7 +538,7 @@ class CastingCostServiceTest {
                             CostModificationScope.ALL));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(inv -> {
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenAnswer(inv -> {
                 Card card = inv.getArgument(0);
                 CardTypePredicate pred = inv.getArgument(1);
                 return card.hasType(pred.cardType());
@@ -649,12 +699,6 @@ class CastingCostServiceTest {
                 CardTypePredicate pred = invocation.getArgument(1);
                 return card.hasType(pred.cardType());
             });
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(invocation -> {
-                Card card = invocation.getArgument(0);
-                CardTypePredicate pred = invocation.getArgument(1);
-                return card.hasType(pred.cardType());
-            });
-
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
             Card bolt = new Card();
@@ -1505,6 +1549,21 @@ class CastingCostServiceTest {
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
 
             gd.playerManaPools.get(player1Id).clear();
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("DiscardCardOrPayLifeCost — true with enough life or another hand card")
+        void discardCardOrPayLifeCost() {
+            Card spell = spellWith(new DiscardCardOrPayLifeCost(3));
+            gd.playerHands.get(player1Id).add(spell);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerLifeTotals.put(player1Id, 2);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
             gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }

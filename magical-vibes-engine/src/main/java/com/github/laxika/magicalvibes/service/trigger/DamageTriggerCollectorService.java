@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerExilesRandomHandCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -38,10 +39,12 @@ import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -65,6 +68,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,6 +94,7 @@ public class DamageTriggerCollectorService {
     private final PermanentRemovalService permanentRemovalService;
     private final CreatureControlService creatureControlService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final TapUntapSupport tapUntapSupport;
 
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)
@@ -306,6 +311,9 @@ public class DamageTriggerCollectorService {
         creatureControlService.applyControlEffect(gameData, sourceControllerId, match.permanent(),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                 EffectDuration.PERMANENT, null, match.permanent().getCard().getName());
+        if (controlEffect.untap()) {
+            tapUntapSupport.untapPermanent(gameData, match.permanent());
+        }
 
         log.info("Game {} - {} triggers, {} gains control of {}",
                 gameData.id, match.permanent().getCard().getName(),
@@ -390,6 +398,7 @@ public class DamageTriggerCollectorService {
         @CollectsTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
         @CollectsTrigger(value = DamageSourceControllerGetsPoisonCounterEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
         @CollectsTrigger(value = DamageSourceControllerMillsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
+        @CollectsTrigger(value = DamageSourceControllerExilesRandomHandCardEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
         @CollectsTrigger(value = DamageSourceControllerGainsControlOfDamagedPermanentEffect.class,
                 slot = EffectSlot.ON_DEALT_DAMAGE)
     })
@@ -1081,6 +1090,31 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = LoseLifeUnlessPaysEffect.class,
+            slot = EffectSlot.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
+    private boolean handleOpponentSourceDamageLifeUnlessPays(TriggerMatchContext match,
+            LoseLifeUnlessPaysEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDamageToYouOrYourPermanent damage =
+                (TriggerContext.SourceDamageToYouOrYourPermanent) ctx;
+        if (match.permanent() == null || damage.sourceControllerId() == null
+                || damage.sourceControllerId().equals(match.controllerId())) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                damage.sourceControllerId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
     // ── ON_ANY_SOURCE_DEALS_DAMAGE (Justice) ───────────────────────────
 
     @CollectsTrigger(value = ReflectSourceDamageToItsControllerEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
@@ -1228,7 +1262,8 @@ public class DamageTriggerCollectorService {
             ConditionContext conditionContext = match.permanent() != null
                     ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
                     : ConditionContext.forCard(sourceCard, match.controllerId());
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    conditionContext.withEventValue(sd.totalDamage()))) {
                 return false;
             }
         }
@@ -1303,6 +1338,36 @@ public class DamageTriggerCollectorService {
         return triggered;
     }
 
+    @CollectsTrigger(value = ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect.class,
+            slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    private boolean handleAllyInstantOrSorceryDealsDamageToPlayer(TriggerMatchContext match,
+            ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (sd.damageToPlayers().isEmpty() || match.permanent() == null) return false;
+
+        GameData gameData = match.gameData();
+        Permanent watcher = match.permanent();
+        boolean triggered = false;
+        for (Map.Entry<UUID, Integer> damageEntry : sd.damageToPlayers().entrySet()) {
+            if (damageEntry.getValue() <= 0) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.getCard(),
+                    match.controllerId(),
+                    watcher.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    damageEntry.getKey(),
+                    watcher.getId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+            triggered = true;
+        }
+        return triggered;
+    }
+
     /**
      * Blaze Commando: "Whenever an instant or sorcery spell you control deals damage, ...". The
      * source/controller gating is done by the dispatcher; here the watcher permanent simply queues
@@ -1338,6 +1403,8 @@ public class DamageTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE)
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER)
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
     private boolean handleSelfDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
         if (sd.totalDamage() <= 0) return false;
@@ -1350,6 +1417,18 @@ public class DamageTriggerCollectorService {
                     sourceCard, sd.sourceControllerId(), new ArrayList<>(List.of(effect)), null, minTargets, 0));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger awaits graveyard target",
+                    match.gameData().id, sourceCard.getName());
+            return true;
+        }
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    sourceCard, sd.sourceControllerId(), new ArrayList<>(List.of(effect)),
+                    !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                    targetFilterForTriggeredEffect(sourceCard, effect), sd.totalDamage(),
+                    sd.sourcePermanentId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger awaits target",
                     match.gameData().id, sourceCard.getName());
             return true;
         }
@@ -1397,6 +1476,8 @@ public class DamageTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
     private boolean handleEquippedCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect,
                                                               TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;

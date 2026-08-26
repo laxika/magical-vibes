@@ -74,6 +74,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             }
 
             Permanent perm = new Permanent(card);
+            perm.getPersistentGrantedKeywords().addAll(returnEffect.grantedKeywords());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
                     enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(perm);

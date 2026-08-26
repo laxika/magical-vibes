@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFrom
 
 @CardRegistration(set = "INR", collectorNumber = "243")
 @CardRegistration(set = "INR", collectorNumber = "433")
+@CardRegistration(set = "MID", collectorNumber = "232")
 public class LiesaForgottenArchangel extends Card {
 
     public LiesaForgottenArchangel() {

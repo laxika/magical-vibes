@@ -54,6 +54,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         }
         String controllerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
+        ReturnCardExiledWithSourceToBattlefieldEffect returnEffect =
+                (ReturnCardExiledWithSourceToBattlefieldEffect) effect;
 
         List<Card> matching = gameData.exiledCards.stream()
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
@@ -69,12 +71,12 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
         if (matching.size() == 1) {
             returnToBattlefield(gameData, controllerId, matching.getFirst(), sourceName,
-                    ((ReturnCardExiledWithSourceToBattlefieldEffect) effect).grantedSubtype());
+                    returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking());
             return;
         }
 
         gameData.queueInteraction(new PendingReturnExiledWithSourceCard(true, controllerId,
-                ((ReturnCardExiledWithSourceToBattlefieldEffect) effect).grantedSubtype()));
+                returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking()));
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,
@@ -94,6 +96,12 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
     /** Shared with the multi-card choice path in {@code LibraryChoiceHandlerService}. */
     public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                     CardSubtype grantedSubtype) {
+        returnToBattlefield(gameData, controllerId, card, sourceName, grantedSubtype, false, false);
+    }
+
+    /** Shared with the multi-card choice path in {@code LibraryChoiceHandlerService}. */
+    public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                    CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking) {
         if (!gameData.removeFromExile(card.getId())) {
             return;
         }
@@ -101,7 +109,13 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         if (grantedSubtype != null) {
             permanent.getGrantedSubtypes().add(grantedSubtype);
         }
+        if (enterTapped) {
+            permanent.tap();
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+        if (enterAttacking) {
+            permanent.setAttacking(true);
+        }
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(controllerId) + " returns ", card,
                 " from exile to the battlefield."));

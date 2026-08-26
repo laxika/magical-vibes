@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -77,6 +78,32 @@ public final class EffectResolution {
      */
     public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked, Integer modeIndex) {
         return resolveEffects(rawEffects, kicked, null, modeIndex);
+    }
+
+    /**
+     * Expands conditional branches when locating effects that contribute specialized cast-time
+     * targeting behavior. The actual condition is still evaluated only during resolution.
+     */
+    public static List<CardEffect> expandConditionalTargetingEffects(List<CardEffect> rawEffects) {
+        List<CardEffect> expanded = new ArrayList<>();
+        for (CardEffect effect : rawEffects) {
+            collectConditionalTargetingEffects(effect, expanded);
+        }
+        return List.copyOf(expanded);
+    }
+
+    private static void collectConditionalTargetingEffects(CardEffect effect, List<CardEffect> expanded) {
+        if (effect == null) {
+            return;
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            collectConditionalTargetingEffects(replacement.baseEffect(), expanded);
+            collectConditionalTargetingEffects(replacement.upgradedEffect(), expanded);
+        } else if (effect instanceof ConditionalEffect conditional) {
+            collectConditionalTargetingEffects(conditional.wrapped(), expanded);
+        } else {
+            expanded.add(effect);
+        }
     }
 
     /**
@@ -326,7 +353,9 @@ public final class EffectResolution {
     public static boolean distributesAmountsAmongTargets(CardEffect e) {
         return isChosenDivision(e)
                 || e instanceof PreventDividedDamageEffect
-                || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN);
+                || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN)
+                || (e instanceof ConditionalEffect conditional
+                && distributesAmountsAmongTargets(conditional.wrapped()));
     }
 
     private static boolean isChosenDivision(CardEffect e) {
@@ -424,8 +453,19 @@ public final class EffectResolution {
     public static boolean hasColorSpentCondition(Card card) {
         return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
                 .flatMap(slot -> card.getEffects(slot).stream())
-                .anyMatch(e -> e instanceof ConditionalEffect c
-                        && conditionUsesColorSpentMana(c.condition()));
+                .anyMatch(EffectResolution::effectUsesColorSpentMana);
+    }
+
+    private static boolean effectUsesColorSpentMana(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditionUsesColorSpentMana(conditional.condition());
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return conditionUsesColorSpentMana(replacement.condition());
+        }
+        return effect instanceof ReturnCardFromGraveyardEffect graveyardReturn
+                && graveyardReturn.plusOneCountersIfCondition() != null
+                && conditionUsesColorSpentMana(graveyardReturn.plusOneCountersIfCondition());
     }
 
     private static boolean conditionUsesColorSpentMana(Condition condition) {

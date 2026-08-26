@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -446,6 +448,26 @@ class GameActionAvailabilityServiceTest {
 
     @Nested
     @DisplayName("getPotentialPayableAbilityIndices — abilities payable after tapping mana sources")
+    class GetPlayableGraveyardLandIndicesTests {
+
+        @Test
+        @DisplayName("Recognizes a Mayhem land after it was discarded this turn")
+        void recognizesMayhemLand() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
+
+            Card land = new Card();
+            land.setName("Mayhem Land");
+            land.setType(CardType.LAND);
+            land.addCastingOption(new GraveyardCast(new CardDiscardedThisTurn()));
+            gd.playerGraveyards.get(player1Id).add(land);
+
+            assertThat(svc.getPlayableGraveyardLandIndices(gd, player1Id)).containsExactly(0);
+        }
+    }
+
+    @Nested
+    @DisplayName("getPlayableGraveyardLandIndices")
     class GetPotentialPayableAbilityIndicesTests {
 
         private Permanent manaLand(com.github.laxika.magicalvibes.model.ManaColor color) {

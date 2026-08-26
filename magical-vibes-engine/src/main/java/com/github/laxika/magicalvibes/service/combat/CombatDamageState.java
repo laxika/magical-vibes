@@ -62,12 +62,14 @@ class CombatDamageState {
     final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlaneswalker = new HashMap<>();
+    final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToBattles = new HashMap<>();
     final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToPlaneswalkers = new HashMap<>();
     final Map<Permanent, Set<UUID>> combatDamageRecipientControllers = new HashMap<>();
     final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
+    final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrBattleEffects = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsDamageEffects = new HashMap<>();
     final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
     final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();

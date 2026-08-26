@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>The one-argument form returns exactly the spell's paid X cards. The fixed-cap form returns up
  * to {@code maxTargets} cards and can restrict them to cards put into the graveyard from the
  * battlefield this turn. It can also put counters on each returned permanent. The dynamic-cap form
- * is used by ETB abilities whose cap comes from the cast context, such as multikicker payments.</p>
+ * evaluates its cap from cast or ETB context, such as X payments or multikicker payments.</p>
  */
 public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         CardPredicate filter,
@@ -50,7 +50,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
     }
 
-    /** Creates an ETB form whose up-to cap is evaluated from the entering spell's cast context. */
+    /** Creates a dynamic-cap form whose up-to cap is evaluated from the spell's cast context. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter,
                                                               DynamicAmount dynamicMaxTargets) {
         this(filter, 0, false, false, dynamicMaxTargets, 0, null, null, null, 0,

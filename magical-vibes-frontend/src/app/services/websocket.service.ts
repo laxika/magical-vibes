@@ -209,6 +209,7 @@ export interface Card {
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;
+  modalModesMayRepeat?: boolean;
   modalOptions: ModalOptionView[] | null;
   /** Additional counters to remove when casting this card from exile. */
   exileCastCounterCost: number;
@@ -332,6 +333,7 @@ export interface Game {
   currentStep: TurnStep | null;
   activePlayerId: string | null;
   turnNumber: number;
+  dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
   priorityPlayerId: string | null;
   hand: Card[];
   opponentHand: Card[];
@@ -409,6 +411,7 @@ export interface GameStateNotification {
   status: GameStatus;
   activePlayerId: string;
   turnNumber: number;
+  dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
   currentStep: TurnStep;
   priorityPlayerId: string;
   battlefields: Permanent[][];
@@ -465,6 +468,8 @@ export interface AvailableAttackersNotification {
   availableTargets: AttackTarget[];
   taxPerCreature: number;
   mustAttackWithAtLeastOne: boolean;
+  /** True when the recipient chooses attackers for the active player's creatures. */
+  choosingForOpponent?: boolean;
 }
 
 export interface AvailableBlockersNotification {

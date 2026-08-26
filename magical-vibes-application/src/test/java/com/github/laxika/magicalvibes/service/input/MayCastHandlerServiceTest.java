@@ -602,7 +602,8 @@ class MayCastHandlerServiceTest {
         }
 
         private void allowGraveyardCasting() {
-            when(gameQueryService.canCastSpellFromZone(eq(gd), any(Card.class), eq(Zone.GRAVEYARD)))
+            when(gameQueryService.canCastSpellFromZone(
+                    eq(gd), any(Card.class), eq(Zone.GRAVEYARD), eq(PLAYER1_ID)))
                     .thenReturn(true);
         }
 
@@ -625,7 +626,8 @@ class MayCastHandlerServiceTest {
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
-            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD)).thenReturn(false);
+            when(gameQueryService.canCastSpellFromZone(
+                    gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(false);
 
             svc.handleCastFromGraveyardChoice(gd, player1, true, ability, opponentGraveyardFree());
 

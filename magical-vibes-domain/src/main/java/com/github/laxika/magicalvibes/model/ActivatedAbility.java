@@ -163,6 +163,8 @@ public class ActivatedAbility {
      * {@link #withNinjutsu()}.
      */
     private boolean ninjutsuAbility;
+    /** Whether this hand-activated ability leaves its source card in hand as part of its cost. */
+    private boolean sourceStaysInHand;
     /** Whether this ability can be activated only while its source card is in exile. */
     private boolean exileOnly;
 
@@ -257,8 +259,20 @@ public class ActivatedAbility {
      * Used by the static bonus system to track which permanent granted this ability.
      */
     public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
+        return copyWith(sourcePermanentId, maxActivationsPerTurn);
+    }
+
+    /** Returns a copy with a fixed per-turn activation cap, preserving all other ability properties. */
+    public ActivatedAbility withMaxActivationsPerTurn(int maxActivations) {
+        if (maxActivations < 0) {
+            throw new IllegalArgumentException("Maximum activations must not be negative");
+        }
+        return copyWith(grantSourcePermanentId, maxActivations);
+    }
+
+    private ActivatedAbility copyWith(UUID sourcePermanentId, Integer maxActivations) {
         ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
-                maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
+                maxActivations, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
@@ -287,6 +301,10 @@ public class ActivatedAbility {
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
+        copy.exilesSourceFromHand = this.exilesSourceFromHand;
+        copy.revealsSourceFromHand = this.revealsSourceFromHand;
+        copy.ninjutsuAbility = this.ninjutsuAbility;
+        copy.sourceStaysInHand = this.sourceStaysInHand;
         copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
         copy.suspendTimeCounters = this.suspendTimeCounters;
         copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
@@ -376,6 +394,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withRevealsSourceFromHand() {
         this.revealsSourceFromHand = true;
+        return this;
+    }
+
+    /** Marks a hand-activated ability whose source card remains in hand after activation. */
+    public ActivatedAbility withSourceStaysInHand() {
+        this.sourceStaysInHand = true;
         return this;
     }
 

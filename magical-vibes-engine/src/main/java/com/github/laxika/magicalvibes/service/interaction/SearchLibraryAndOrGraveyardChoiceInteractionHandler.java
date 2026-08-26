@@ -65,18 +65,22 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 .orElseThrow(() -> new IllegalStateException("Chosen card is no longer available"));
         boolean fromLibrary = chosen != null && interaction.libraryCardIds().contains(chosen.getId());
         boolean fromHand = chosen != null && interaction.handCardIds().contains(chosen.getId());
+        boolean fromOutsideGame = chosen != null
+                && interaction.outsideGameCardIds().contains(chosen.getId());
         boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
         if (chosen != null) {
             List<Card> zone = fromLibrary
                     ? gameData.playerDecks.getOrDefault(playerId, List.of())
                     : fromHand
                     ? gameData.playerHands.getOrDefault(playerId, List.of())
+                    : fromOutsideGame
+                    ? gameData.playerSideboards.getOrDefault(playerId, List.of())
                     : gameData.playerGraveyards.getOrDefault(playerId, List.of());
             boolean removed = zone.removeIf(card -> card.getId().equals(chosen.getId()));
             if (!removed) {
                 throw new IllegalStateException("Chosen card is no longer in its search zone");
             }
-            if (!fromLibrary && !fromHand) {
+            if (!fromLibrary && !fromHand && !fromOutsideGame) {
                 graveyardService.notifyCardsLeftGraveyard(gameData, playerId, chosen);
             }
             if (toBattlefield) {
@@ -88,12 +92,15 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             } else {
                 gameData.playerHands.get(playerId).add(chosen);
             }
-            String zoneName = fromLibrary ? "library" : fromHand ? "hand" : "graveyard";
+            String zoneName = fromLibrary ? "library"
+                    : fromHand ? "hand"
+                    : fromOutsideGame ? "sideboard"
+                    : "graveyard";
             String destination = toBattlefield ? "onto the battlefield" : "into their hand";
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(playerId) + " searches their " + zoneName + ", reveals ",
                     chosen, ", and puts it " + destination + "."));
-            if (fromLibrary) {
+            if (interaction.librarySearchAllowed()) {
                 LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
                 LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             }

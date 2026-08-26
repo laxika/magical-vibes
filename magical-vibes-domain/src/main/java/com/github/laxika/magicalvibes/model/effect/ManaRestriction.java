@@ -57,6 +57,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells from a graveyard. */
+    record GraveyardSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addGraveyardOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "graveyard spells only";
+        }
+    }
+
     record ForetellOrInstantSorcery() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -70,6 +83,22 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "foretell or instant/sorcery spells only";
+        }
+    }
+
+    record DisturbOrInstantSorcery() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addDisturbOrInstantSorceryOnlyColorless(amount);
+            } else {
+                pool.addDisturbOrInstantSorceryOnlyColored(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "disturb or instant/sorcery spells only";
         }
     }
 
@@ -155,6 +184,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "abilities only";
+        }
+    }
+
+    /** Mana spendable only to activate abilities of land sources (Sunken Citadel). */
+    record LandAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addLandAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "land abilities only";
         }
     }
 

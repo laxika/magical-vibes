@@ -53,11 +53,12 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeHandler
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameData.getLife(playerId) >= lifeCost;
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - lifeCost);
+            int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
+                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to keep {} ({})", gameData.id,
-                    player.getUsername(), lifeCost, revealed.getName(), ability.sourceCard().getName());
+                    player.getUsername(), lifeLoss, revealed.getName(), ability.sourceCard().getName());
         } else {
             effectHandler.discardCard(gameData, playerId, revealed.getId(), ability.sourceCard(),
                     ability.sourceControllerId());

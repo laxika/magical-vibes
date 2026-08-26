@@ -61,7 +61,7 @@ public class ReturnTriggeringCardToOwnerHandEffectHandler implements NormalEffec
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
-        gameData.playerHands.get(recipientId).add(deadCard);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, recipientId, recipientId, deadCard);
 
         String recipientName = gameData.playerIdToName.get(recipientId);
         gameLogService.append(gameData, GameLog.builder()

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "144")
+@CardRegistration(set = "LCI", collectorNumber = "25")
 public class MischievousPup extends Card {
 
     public MischievousPup() {

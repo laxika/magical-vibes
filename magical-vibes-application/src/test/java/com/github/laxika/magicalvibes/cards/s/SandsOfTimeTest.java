@@ -56,7 +56,10 @@ class SandsOfTimeTest extends BaseCardTest {
         tappedBears.tap();
         tappedForest.tap();
 
-        advanceToUpkeep(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
 
         assertThat(tappedBears.isTapped()).isFalse();

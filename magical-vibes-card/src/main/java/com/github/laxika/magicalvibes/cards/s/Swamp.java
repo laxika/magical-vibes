@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "LCI", collectorNumber = "289")
 @CardRegistration(set = "10E", collectorNumber = "372")
 @CardRegistration(set = "BTD", collectorNumber = "82")
 @CardRegistration(set = "BTD", collectorNumber = "84")
@@ -244,6 +245,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "TDM", collectorNumber = "282")
 @CardRegistration(set = "TDM", collectorNumber = "289")
 @CardRegistration(set = "BTD", collectorNumber = "83")
+@CardRegistration(set = "SPM", collectorNumber = "191")
+@CardRegistration(set = "SPM", collectorNumber = "196")
+@CardRegistration(set = "MID", collectorNumber = "272")
+@CardRegistration(set = "MID", collectorNumber = "273")
 @CardRegistration(set = "SUM", collectorNumber = "298")
 @CardRegistration(set = "SUM", collectorNumber = "299")
 @CardRegistration(set = "SUM", collectorNumber = "300")
@@ -256,9 +261,20 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "WAR", collectorNumber = "256")
 @CardRegistration(set = "WAR", collectorNumber = "257")
 @CardRegistration(set = "WAR", collectorNumber = "258")
+@CardRegistration(set = "ELD", collectorNumber = "258")
+@CardRegistration(set = "ELD", collectorNumber = "259")
+@CardRegistration(set = "ELD", collectorNumber = "260")
+@CardRegistration(set = "ELD", collectorNumber = "261")
 @CardRegistration(set = "TSP", collectorNumber = "290")
 @CardRegistration(set = "TSP", collectorNumber = "291")
 @CardRegistration(set = "TSP", collectorNumber = "293")
+@CardRegistration(set = "MOM", collectorNumber = "279")
+@CardRegistration(set = "MOM", collectorNumber = "286")
+@CardRegistration(set = "MOM", collectorNumber = "287")
+@CardRegistration(set = "RAV", collectorNumber = "295")
+@CardRegistration(set = "RAV", collectorNumber = "296")
+@CardRegistration(set = "RAV", collectorNumber = "297")
+@CardRegistration(set = "RAV", collectorNumber = "298")
 public class Swamp extends Card {
 
     public Swamp() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -34,17 +35,29 @@ public class AllowCastCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) return;
 
-        List<Card> matchingCards = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
-                .filter(card -> e.filter() == null
-                        || predicateEvaluationService.matchesCardPredicate(card, e.filter(), null))
-                .toList();
+        List<Card> matchingCards;
+        if (e.targetSpecificCard()) {
+            ExiledCardEntry targetEntry = entry.getTargetId() == null
+                    ? null : gameData.findExiledCard(entry.getTargetId());
+            Card targetCard = targetEntry == null ? null : targetEntry.card();
+            matchingCards = targetCard != null
+                    && sourcePermanentId.equals(targetEntry.sourcePermanentId())
+                    && (e.filter() == null
+                    || predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null))
+                    ? List.of(targetCard) : List.of();
+        } else {
+            matchingCards = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
+                    .filter(card -> e.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(card, e.filter(), null))
+                    .toList();
+        }
         if (matchingCards.isEmpty()) return;
 
         UUID grantId = UUID.randomUUID();
         for (Card card : matchingCards) {
             gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
                     grantId, sourcePermanentId, entry.getControllerId(), card.getId(),
-                    e.withoutPayingManaCost()));
+                    e.withoutPayingManaCost(), e.putOnBottomOfOwnersLibrary()));
         }
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())

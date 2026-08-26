@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -178,6 +180,24 @@ class MiscTriggerCollectorServiceTest {
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("creature card from any library queues the triggered ability")
+    void creatureCardFromAnyLibraryQueuesTriggeredAbility() {
+        Permanent perm = createPermanent("Dreadhound");
+        var effect = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyardFromLibrary(
+                createCard("Grizzly Bears"), player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 
     @Test
@@ -417,7 +437,7 @@ class MiscTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AllySacrificed(player1Id, clue);
 
             when(predicateEvaluationService.matchesPermanentPredicate(
-                    any(GameData.class), any(Permanent.class), any(PermanentPredicate.class)))
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(
@@ -522,7 +542,7 @@ class MiscTriggerCollectorServiceTest {
 
             var resolved = (GivePoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
             assertThat(resolved.affectedPlayerId()).isEqualTo(player2Id);
-            assertThat(resolved.amount()).isEqualTo(1);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(1));
         }
 
         @Test
@@ -1162,5 +1182,42 @@ class MiscTriggerCollectorServiceTest {
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("queues a trigger for a creature card entering a graveyard from a non-battlefield zone")
+    void queuesNonBattlefieldCreatureCardGraveyardTrigger() {
+        Permanent perm = createPermanent("Syr Konrad, the Grim");
+        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(
+                createCard("Grizzly Bears"), player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("queues a trigger for each creature card leaving the controller's graveyard")
+    void queuesCreatureCardLeavesGraveyardTrigger() {
+        Permanent perm = createPermanent("Syr Konrad, the Grim");
+        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 }

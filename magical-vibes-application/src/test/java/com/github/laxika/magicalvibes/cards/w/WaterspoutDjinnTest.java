@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,10 @@ class WaterspoutDjinnTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Island"))
                 .findFirst().orElseThrow().tap();
         harness.addToBattlefield(player1, new Plains());
-
-        advanceToUpkeep(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

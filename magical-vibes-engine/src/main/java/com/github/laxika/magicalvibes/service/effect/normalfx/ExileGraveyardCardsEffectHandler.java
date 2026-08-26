@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -52,7 +53,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         switch (e.scope()) {
             case OWN -> resolveOwn(gameData, entry, e);
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
-            case TARGET_CARDS_ANY_GRAVEYARD -> resolveTargetAnyGraveyardCards(gameData, entry, e);
+            case TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_CONTROLLER_GRAVEYARD ->
+                    resolveTargetAnyGraveyardCards(gameData, entry, e);
             case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry);
             case TARGET_PLAYER_ENTIRE, DYING_CREATURE_CONTROLLER -> resolveTargetPlayerEntire(gameData, entry);
             case TARGET_PLAYER_ALL_MATCHING -> resolveTargetPlayerAllMatching(gameData, entry, e);
@@ -180,7 +182,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
      * illegal target therefore still logs the fizzle it always did.
      */
     private void resolveTargetAnyGraveyardCards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
-        if (e.eventValueFilter() != null) {
+        boolean controllerGraveyard = e.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD;
+        if (e.eventValueFilter() != null || controllerGraveyard) {
             entry.setEventValue(0);
         }
 
@@ -209,6 +212,9 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
 
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+            if (controllerGraveyard && !entry.getControllerId().equals(graveyardOwnerId)) {
+                continue;
+            }
 
             permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
 
@@ -220,6 +226,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                     exileService.exileCard(gameData, graveyardOwnerId, targetCard);
                 }
             }
+            if (controllerGraveyard && e.grantPlayPermissionUntilEndOfTurn()) {
+                gameData.exilePlayPermissions.put(targetCard.getId(), entry.getControllerId());
+                gameData.exilePlayPermissionsExpireEndOfTurn.add(targetCard.getId());
+            }
             exiledCards.add(targetCard);
         }
 
@@ -227,7 +237,9 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        if (e.eventValueFilter() != null) {
+        if (controllerGraveyard) {
+            entry.setEventValue(exiledCards.size());
+        } else if (e.eventValueFilter() != null) {
             int matchingExiledCards = (int) exiledCards.stream()
                     .filter(card -> predicateEvaluationService.matchesCardPredicate(
                             card, e.eventValueFilter(), null))
@@ -271,28 +283,33 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveTargetPlayerEntire(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetId();
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        List<UUID> targetPlayerIds = entry.getTargetIds().isEmpty()
+                ? entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId())
+                : entry.getTargetIds();
+        for (UUID targetPlayerId : targetPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
 
-        if (graveyard.isEmpty()) {
-            String logEntry = playerName + "'s graveyard is already empty.";
+            if (graveyard == null || graveyard.isEmpty()) {
+                String logEntry = playerName + "'s graveyard is already empty.";
+                gameLogService.append(gameData, GameLog.text(logEntry));
+                continue;
+            }
+
+            List<Card> toExile = new ArrayList<>(graveyard);
+            int count = toExile.size();
+            for (Card card : graveyard) {
+                gameData.addToExile(targetPlayerId, card);
+            }
+            graveyard.clear();
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
+
+            String logEntry = playerName + "'s graveyard is exiled (" + count + " card"
+                    + (count != 1 ? "s" : "") + ").";
             gameLogService.append(gameData, GameLog.text(logEntry));
-            return;
+
+            log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
         }
-
-        List<Card> toExile = new ArrayList<>(graveyard);
-        int count = toExile.size();
-        for (Card card : graveyard) {
-            gameData.addToExile(targetPlayerId, card);
-        }
-        graveyard.clear();
-        graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
-
-        String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-
-        log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
     }
 
     /**

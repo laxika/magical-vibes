@@ -142,8 +142,10 @@ public class LifeSupport {
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
         } else {
-            gameData.playerLifeTotals.put(playerId, newLife);
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, currentLife - newLife);
+            int lifeLoss = (currentLife - newLife)
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         }
         return true;
     }
@@ -154,6 +156,7 @@ public class LifeSupport {
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
         }
+        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
 
@@ -174,6 +177,7 @@ public class LifeSupport {
             return;
         }
 
+        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
         gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);

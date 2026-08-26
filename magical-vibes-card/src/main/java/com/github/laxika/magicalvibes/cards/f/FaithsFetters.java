@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M21", collectorNumber = "17")
+@CardRegistration(set = "RAV", collectorNumber = "16")
 public class FaithsFetters extends Card {
 
     public FaithsFetters() {

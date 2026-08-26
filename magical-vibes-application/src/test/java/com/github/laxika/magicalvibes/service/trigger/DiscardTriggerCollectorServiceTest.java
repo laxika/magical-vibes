@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -99,6 +101,7 @@ class DiscardTriggerCollectorServiceTest {
         lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
                 .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
                         - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
@@ -508,7 +511,32 @@ class DiscardTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_DISCARDS — BoostSelfEffect =====
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS - ExileTopCardMayPlayThisTurnEffect")
+    class ControllerDiscardExileTopCard {
+
+        @Test
+        @DisplayName("queues an exile-and-play trigger for the controller")
+        void queuesExileTopCardTrigger() {
+            Permanent pyre = createPermanent("Pyre of the World Tree");
+            var effect = new ExileTopCardMayPlayThisTurnEffect(false);
+            Card discarded = createCard("Forest");
+            discarded.setType(CardType.LAND);
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(pyre, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(pyre.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
 
     @Nested
     @DisplayName("ON_CONTROLLER_DISCARDS — BoostSelfEffect")
@@ -661,6 +689,31 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(mako.getId());
             assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — ExileTopCardsMayPlayUntilNextEndStepEffect")
+    class ControllerDiscardEventExileTopCard {
+
+        @Test
+        @DisplayName("queues one top-card exile trigger for the discard event")
+        void queuesTopCardExileTrigger() {
+            Permanent inti = createPermanent("Inti, Seneschal of the Sun");
+            var effect = new ExileTopCardsMayPlayUntilNextEndStepEffect(1);
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(inti, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(inti.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
         }
     }

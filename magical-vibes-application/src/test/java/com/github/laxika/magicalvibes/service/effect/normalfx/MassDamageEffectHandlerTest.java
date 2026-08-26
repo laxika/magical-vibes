@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -125,5 +127,32 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                         eq(gd), eq(player1Id), any(), eq(4));
                 verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
                         eq(gd), eq(player2Id), any(), eq(4));
+            }
+
+            @Test
+            @DisplayName("Deals damage to battles when configured")
+            void damagesBattles() {
+                Card intoTheFireCard = createCard("Into the Fire");
+                Card battleCard = createCard("Battle");
+                battleCard.setType(CardType.BATTLE);
+                Permanent battle = addPermanent(player1Id, battleCard);
+                battle.setCounterCount(CounterType.DEFENSE, 5);
+                StackEntry entry = createEntry(intoTheFireCard, player1Id, null);
+                MassDamageEffect effect = MassDamageEffect.damageToEachCreaturePlaneswalkerAndBattle(2);
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
+                when(gameQueryService.findPermanentController(eq(gd), eq(battle.getId()))).thenReturn(player1Id);
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(battle), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
+                stubNoKeywordsOnSource(entry);
+
+                massDamageHandler.resolve(gd, entry, effect);
+
+                assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+                verify(battleDefeatSupport).checkAfterDefenseRemoved(gd, battle);
             }
 }

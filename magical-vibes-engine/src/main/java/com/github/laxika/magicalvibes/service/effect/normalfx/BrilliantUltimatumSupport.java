@@ -174,7 +174,7 @@ public class BrilliantUltimatumSupport {
         log.info("Game {} - {} plays land {} from exile (Brilliant Ultimatum)", gameData.id, playerName, card.getName());
         battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card, true);
         }
     }
 
