@@ -45,8 +45,9 @@ class FussBotherTest extends BaseCardTest {
     void botherCreatesThoptersAndSurveils() {
         Card topCard = new GrizzlyBears();
         Card secondCard = new GrizzlyBears();
+        FussBother bother = new FussBother();
         harness.setLibrary(player1, List.of(topCard, secondCard));
-        harness.setHand(player1, List.of(new FussBother()));
+        harness.setHand(player1, List.of(bother));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -60,6 +61,8 @@ class FussBotherTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .startsWith(topCard, secondCard)
+                .hasSize(3);
     }
 }

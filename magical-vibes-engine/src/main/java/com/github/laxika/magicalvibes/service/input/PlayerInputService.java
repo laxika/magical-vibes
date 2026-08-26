@@ -788,8 +788,14 @@ public class PlayerInputService {
         if (effect.optional() && chosenModes.isEmpty()) {
             optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.NO_MODE_LABEL);
         }
+        if (effect.variableModeCount() && chosenModes.size() >= effect.choicesRequired()) {
+            optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
+        }
+        String prompt = effect.variableModeCount()
+                ? sourceCard.getName() + " - Choose one or more modes, or Done."
+                : sourceCard.getName() + " - Choose one.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, optionLabels, sourceCard.getName() + " - Choose one."));
+                controllerId, null, null, ctx, optionLabels, prompt));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a triggered mode for {}", gameData.id, playerName,

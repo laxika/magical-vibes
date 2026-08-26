@@ -617,6 +617,41 @@ public class SpellCastingService {
      * frozen and shared with AI simulation copies, so every modal cast must first swap in an
      * unfrozen {@link Card#createRuntimeCopy()} that replaces the original in the casting zone.
      */
+    private void validateSuppliedGraveyardTargetBeforePlayabilityFailure(
+            GameData gameData, Card card, UUID controllerId, UUID targetId, int xValue) {
+        if (targetId == null) {
+            return;
+        }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetId);
+        if (graveyardOwnerId == null) {
+            return;
+        }
+
+        List<CardEffect> graveyardEffects = EffectResolution
+                .expandConditionalTargetingEffects(card.getEffects(EffectSlot.SPELL)).stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .toList();
+        if (graveyardEffects.isEmpty()) {
+            return;
+        }
+
+        Set<GraveyardSearchScope> scopes = graveyardEffects.stream()
+                .flatMap(effect -> effect.targetSpec().graveyardScope().stream())
+                .collect(java.util.stream.Collectors.toSet());
+        if (scopes.contains(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
+                && !scopes.contains(GraveyardSearchScope.ALL_GRAVEYARDS)
+                && !graveyardOwnerId.equals(controllerId)) {
+            throw new IllegalStateException("Target must be in your graveyard");
+        }
+        if (scopes.contains(GraveyardSearchScope.OPPONENT_GRAVEYARD)
+                && !scopes.contains(GraveyardSearchScope.ALL_GRAVEYARDS)
+                && graveyardOwnerId.equals(controllerId)) {
+            throw new IllegalStateException("Target must be in an opponent's graveyard");
+        }
+        targetLegalityService.validateEffectTargetInZone(
+                gameData, card, graveyardEffects, targetId, Zone.GRAVEYARD, xValue, controllerId);
+    }
+
     private static boolean isModalSpell(Card card) {
         return card.getEffects(EffectSlot.SPELL).stream().anyMatch(ChooseOneEffect.class::isInstance)
                 || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(ChooseOneEffect.class::isInstance);
@@ -2110,6 +2145,8 @@ public class SpellCastingService {
                     // Allow — the chosen target supplies a cost reduction that the target-free
                     // playability query cannot see.
                 } else {
+                    validateSuppliedGraveyardTargetBeforePlayabilityFailure(
+                            gameData, selectedFaceCheck, playerId, targetId, effectiveXValue);
                     throw new IllegalStateException("Card is not playable");
                 }
             }
@@ -2468,8 +2505,8 @@ public class SpellCastingService {
                     canPay = altCast.reduceManaBySacrificedManaCost()
                             ? cost.canPayAfterReduction(pool, sacrificedManaCost)
                             : cost.canPay(pool, alternateCostXArgument(cost, effectiveXValue,
-                                    computeEmergeManaReduction(gameData, altCast, alternateCostSacrificePermanentIds)
-                                    + faceDownCostReduction));
+                                    computeEmergeManaReduction(gameData, altCast, alternateCostSacrificePermanentIds))
+                                    + faceDownCostReduction);
                 } finally {
                     if (noncreatureMana != null) {
                         pool.restorePromotedNoncreatureSpellOnlyMana(noncreatureMana);
@@ -4254,9 +4291,11 @@ public class SpellCastingService {
                 StackEntry entry = new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId,
-                        null, Map.of(), null, List.of(), targetIds
+                        null, Map.of(), targetingSpellOnStack ? Zone.STACK : null,
+                        List.of(), targetIds
                 );
-                entry.setPrimaryTargetStoredSeparately(allSpellTargetsAlsoAllowPermanents);
+                entry.setPrimaryTargetStoredSeparately(
+                        mixedSpellAndPermanentTargets || allSpellTargetsAlsoAllowPermanents);
                 gameData.stack.add(entry);
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
@@ -4270,7 +4309,6 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetId, null,
                         Map.of(), graveyardOrExileTargetZone, List.of(), List.of()
                 ));
-            } else if (needsExileTargeting) {
             } else if (needsExileTargeting && targetIsExiledCard) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),

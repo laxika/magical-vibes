@@ -1155,6 +1155,8 @@ public class GameService {
 
     /** Turns a targeted face-down creature face up without using its morph or disguise action. */
     public void turnPermanentFaceUpWithoutPayingManaCost(GameData gameData, Permanent permanent) {
+        if (runAsActionIfNeeded(gameData,
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent))) return;
         synchronized (gameData) {
             if (permanent == null || !permanent.isFaceDown()
                     || !gameQueryService.isCreature(gameData, permanent)

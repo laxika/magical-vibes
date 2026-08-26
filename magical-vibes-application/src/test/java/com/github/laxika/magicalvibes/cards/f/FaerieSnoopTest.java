@@ -35,7 +35,6 @@ class FaerieSnoopTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, snoop.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         assertThat(snoop.isFaceDown()).isTrue();

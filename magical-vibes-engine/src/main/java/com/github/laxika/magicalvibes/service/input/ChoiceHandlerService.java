@@ -1415,19 +1415,26 @@ public class ChoiceHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
-                .filter(o -> o.label().equals(chosenLabel))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
-
-        if (ctx.chosenModes().contains(chosen)) {
-            throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
-        }
-
         gameData.interaction.clearAwaitingInput();
         List<ChooseOneEffect.ChooseOneOption> chosenModes = new ArrayList<>(ctx.chosenModes());
-        chosenModes.add(chosen);
-        if (chosenModes.size() < ctx.effect().choicesRequired()) {
+        if (ChooseOneEffect.FINISH_MODE_SELECTION.equals(chosenLabel)) {
+            if (!ctx.effect().variableModeCount()
+                    || chosenModes.size() < ctx.effect().choicesRequired()) {
+                throw new IllegalArgumentException("Invalid mode: " + chosenLabel);
+            }
+        } else {
+            ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
+                    .filter(o -> o.label().equals(chosenLabel))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+            if (chosenModes.contains(chosen)) {
+                throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
+            }
+            chosenModes.add(chosen);
+        }
+        boolean selectionComplete = ChooseOneEffect.FINISH_MODE_SELECTION.equals(chosenLabel)
+                || chosenModes.size() >= ctx.effect().choicesMax();
+        if (!selectionComplete) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
                     ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), chosenModes,
                     ctx.triggeringCardId());
@@ -1436,11 +1443,13 @@ public class ChoiceHandlerService {
         if (ctx.modesResetEachTurn()) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (source != null) {
-                source.getChosenModeLabelsThisTurn().add(chosenLabel);
+                chosenModes.forEach(mode -> source.getChosenModeLabelsThisTurn().add(mode.label()));
             }
         }
         gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
+                player.getUsername() + " chooses "
+                        + chosenModes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList()
+                        + " for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
                 ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
 

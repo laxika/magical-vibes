@@ -265,7 +265,6 @@ public class PermanentCounterSupport {
 
         int previousLoreCount = counterType == CounterType.LORE
                 ? target.getCounterCount(CounterType.LORE) : 0;
-        count = gameQueryService.replaceCounters(gameData, target, counterType, count);
         int previousCount = target.getCounterCount(counterType);
         count = gameQueryService.replaceCounters(gameData, target, counterType, count,
                 placingPlayerId(gameData, entry, target));

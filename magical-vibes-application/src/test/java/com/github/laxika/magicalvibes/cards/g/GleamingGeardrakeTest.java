@@ -16,7 +16,7 @@ class GleamingGeardrakeTest extends BaseCardTest {
 
     @Test
     void entersAndInvestigates() {
-        harness.addToBattlefield(player1, new GleamingGeardrake());
+        harness.enterBattlefieldAndReturn(player1, new GleamingGeardrake());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);

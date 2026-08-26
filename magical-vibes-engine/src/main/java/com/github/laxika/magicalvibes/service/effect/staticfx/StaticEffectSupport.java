@@ -168,6 +168,7 @@ public class StaticEffectSupport {
     }
 
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
+        if (permanent.isFaceDown()) return true;
         if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;

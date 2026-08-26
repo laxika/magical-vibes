@@ -118,7 +118,6 @@ public class TurnProgressionService {
             combatService.processEndOfCombatEquipmentDestruction(gameData);
             combatService.processEndOfCombatDestructions(gameData);
             combatService.processEndOfCombatCombatOpponentDestructions(gameData);
-            combatService.processEndOfCombatCombatOpponentDestructions(gameData);
             combatService.processEndOfCombatSourceCounters(gameData);
             combatService.processEndOfCombatOpponentCounters(gameData);
             combatService.processEndOfCombatCounterRemovals(gameData);

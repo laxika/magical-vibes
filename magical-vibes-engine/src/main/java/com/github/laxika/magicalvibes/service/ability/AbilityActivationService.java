@@ -6719,7 +6719,13 @@ public class AbilityActivationService {
         }
 
         Card exiled = graveyard.remove((int) exileCardIndex);
+        int stackBeforeCostTriggers = gameData.stack.size();
         graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiled);
+        if (gameData.stack.size() > stackBeforeCostTriggers) {
+            gameData.pendingActivatedAbilityCostTriggers.addAll(
+                    new ArrayList<>(gameData.stack.subList(stackBeforeCostTriggers, gameData.stack.size())));
+            gameData.stack.subList(stackBeforeCostTriggers, gameData.stack.size()).clear();
+        }
         exileService.exileCard(gameData, playerId, exiled);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));

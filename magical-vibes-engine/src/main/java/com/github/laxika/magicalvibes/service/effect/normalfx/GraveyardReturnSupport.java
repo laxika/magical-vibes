@@ -196,16 +196,18 @@ public class GraveyardReturnSupport {
         if (effect.attachToSource() && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (sourcePermanent == null || !canEnchant(gameData, targetCard, controllerId, sourcePermanent)) {
+            boolean isEquipment = targetCard.getSubtypes().contains(CardSubtype.EQUIPMENT);
+            if (sourcePermanent == null
+                    || !isEquipment && !canEnchant(gameData, targetCard, controllerId, sourcePermanent)) {
                 gameLogService.append(gameData, GameLog.textCardText(entry.getDescription()
                         + " fizzles (", targetCard, " can't be attached)."));
                 return;
             }
 
             permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
-            Permanent auraPermanent = new Permanent(targetCard);
-            auraPermanent.setAttachedTo(sourcePermanent.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPermanent);
+            Permanent attachedPermanent = new Permanent(targetCard);
+            attachedPermanent.setAttachedTo(sourcePermanent.getId());
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, attachedPermanent);
             gameLogService.append(gameData, GameLog.builder().card(targetCard)
                     .text(" enters the battlefield attached to ").card(sourcePermanent.getCard()).text(".").build());
             log.info("Game {} - {} enters the battlefield attached to {}", gameData.id,

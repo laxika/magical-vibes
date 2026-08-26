@@ -184,17 +184,6 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
 
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
-        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
-        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
-        triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-        triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
-        triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-        triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-        triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
-        triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
-                gameData, target, controllerId, Zone.GRAVEYARD);
         if (!creatureDeathTriggersSuppressed) {
             triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD);
             triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
@@ -202,6 +191,7 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
+            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
             triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
             triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
             triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
@@ -890,8 +880,6 @@ public class PermanentRemovalService {
         if (target == null) return damage;
 
         int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, isCombatDamage);
-        target.addMarkedDamage(null, effectiveDamage);
-        gameData.recordDamageToPermanent(target.getId(), effectiveDamage);
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " absorbs " + effectiveDamage + " redirected " + sourceName + " damage."));
 
@@ -917,6 +905,9 @@ public class PermanentRemovalService {
             }
             return 0;
         }
+
+        target.addMarkedDamage(null, effectiveDamage);
+        gameData.recordDamageToPermanent(target.getId(), effectiveDamage);
 
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
             if (tryDestroyPermanent(gameData, target)) {

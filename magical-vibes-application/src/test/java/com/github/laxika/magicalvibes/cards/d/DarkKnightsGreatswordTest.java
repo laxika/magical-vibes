@@ -57,7 +57,7 @@ class DarkKnightsGreatswordTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, first.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no more than 1");
+                .hasMessageContaining("only once each turn");
     }
 
     private Permanent addGreatswordReady(Player player) {

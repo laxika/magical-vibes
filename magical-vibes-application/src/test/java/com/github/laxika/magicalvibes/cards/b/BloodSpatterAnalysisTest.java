@@ -28,6 +28,7 @@ class BloodSpatterAnalysisTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, opponentCreature.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(opponentCreature.getId()));

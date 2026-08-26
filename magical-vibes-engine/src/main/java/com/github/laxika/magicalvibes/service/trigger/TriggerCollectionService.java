@@ -6172,7 +6172,6 @@ public class TriggerCollectionService {
                 entry.setTriggeringPermanentId(dyingPermanent.getId());
                 entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
                 entry.setEventValue(dyingPower);
-                gameData.stack.add(entry);
                 int previousCopies = gameData.beginTriggeredAbilityCopies(1
                         + gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
                                 gameData, dyingCreatureControllerId, perm));
@@ -9454,6 +9453,34 @@ public class TriggerCollectionService {
             if (controllerId != null) {
                 collectBatchedAllyCreatureDeathTriggers(gameData, dyingEntry.getValue(), controllerId,
                         dyingCreatures);
+                collectBatchedOncePerTurnAllyNontokenDeathTrigger(
+                        gameData, dyingEntry.getValue(), controllerId, dyingCreatures);
+            }
+        }
+    }
+
+    private void collectBatchedOncePerTurnAllyNontokenDeathTrigger(
+            GameData gameData, Permanent watcher, UUID watcherControllerId,
+            List<Map.Entry<UUID, Permanent>> dyingCreatures) {
+        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(watcher.getId())) return;
+
+        Map.Entry<UUID, Permanent> firstOtherNontokenDeath = dyingCreatures.stream()
+                .filter(entry -> !entry.getKey().equals(watcher.getId()))
+                .filter(entry -> watcherControllerId.equals(
+                        gameData.simultaneousDyingControllers.get(entry.getKey())))
+                .filter(entry -> !entry.getValue().getCard().isToken())
+                .findFirst().orElse(null);
+        if (firstOtherNontokenDeath == null) return;
+
+        Permanent dyingPermanent = firstOtherNontokenDeath.getValue();
+        TriggerContext context = new TriggerContext.CreatureDeath(
+                dyingPermanent.getCard(), watcherControllerId,
+                Math.max(0, dyingPermanent.getEffectivePower()),
+                dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(), dyingPermanent);
+        for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)) {
+            if (effect instanceof OncePerTurnTriggerEffect) {
+                dispatchSlotEffect(gameData, watcher, watcherControllerId,
+                        EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, context, effect);
             }
         }
     }

@@ -29,7 +29,9 @@ class FlotsamJetsamTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(first, second, third)
+                .hasSize(4);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 

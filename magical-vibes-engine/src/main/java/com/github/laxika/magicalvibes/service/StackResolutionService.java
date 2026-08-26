@@ -188,6 +188,13 @@ public class StackResolutionService {
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         stateBasedActionService.performStateBasedActions(gameData);
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
             triggerCollectionService.processNextPlotTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {

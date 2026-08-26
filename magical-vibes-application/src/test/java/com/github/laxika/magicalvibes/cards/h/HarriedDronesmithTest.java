@@ -57,9 +57,11 @@ class HarriedDronesmithTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.ensurePriority(player1);
         assertThat(findPermanents(player1, "Thopter")).hasSize(1);
 
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Thopter")).isEmpty();
     }

@@ -27,6 +27,7 @@ class IncineratorOfTheGuiltyTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
         Permanent angel = addCreatureReady(player2, new SerraAngel());
         Permanent bolas = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        bolas.setCounterCount(CounterType.LOYALTY, 5);
 
         resolveCombat();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();

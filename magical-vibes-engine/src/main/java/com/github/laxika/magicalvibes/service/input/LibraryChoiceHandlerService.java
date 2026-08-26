@@ -214,9 +214,14 @@ public class LibraryChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
-        List<Card> sourceZone = librarySearch.sourceSideboard()
-                ? gameData.playerSideboards.getOrDefault(deckOwnerId, List.of())
-                : deck;
+        List<Card> sourceZone;
+        if (sourceCards != null && followUp.selectedCardFollowUp() != null) {
+            sourceZone = sourceCards;
+        } else {
+            sourceZone = librarySearch.sourceSideboard()
+                    ? gameData.playerSideboards.getOrDefault(deckOwnerId, List.of())
+                    : deck;
+        }
 
         if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile) {
             if (sourceCards == null) {
@@ -1423,6 +1428,16 @@ public class LibraryChoiceHandlerService {
 
         if (toBattlefield) {
             performStateBasedActionsIfResolutionComplete(gameData);
+        }
+
+        if (sourceCards != null
+                && followUp.selectedCardFollowUp() != null
+                && followUp.secondBoundedPick() != null
+                && followUp.secondBoundedPick().randomRest()) {
+            Collections.shuffle(sourceCards);
+            deck.addAll(sourceCards);
+            gameLogService.append(gameData, GameLog.text(player.getUsername()
+                    + " puts the unchosen cards on the bottom of their library in a random order."));
         }
 
         insertSelectedCardFollowUp(gameData, followUp, chosenCard, playerId);

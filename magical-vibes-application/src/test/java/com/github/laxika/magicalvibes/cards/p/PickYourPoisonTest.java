@@ -43,9 +43,6 @@ class PickYourPoisonTest extends BaseCardTest {
 
         cast(1);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
-        harness.handleMultiplePermanentsChosen(player2, List.of(enchantment.getId()));
-
         harness.assertInGraveyard(player2, "Glorious Anthem");
     }
 
@@ -56,9 +53,6 @@ class PickYourPoisonTest extends BaseCardTest {
         Permanent groundCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         cast(2);
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
-        harness.handleMultiplePermanentsChosen(player2, List.of(flyingCreature.getId()));
 
         harness.assertInGraveyard(player2, "Wind Drake");
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(groundCreature);

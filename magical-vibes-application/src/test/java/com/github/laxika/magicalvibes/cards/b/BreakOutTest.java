@@ -26,7 +26,7 @@ class BreakOutTest extends BaseCardTest {
         List<Card> library = libraryWith(bears);
         castBreakOut(library);
 
-        harness.handleCardChosen(player1, 0);
+        chooseCard(bears);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -46,7 +46,7 @@ class BreakOutTest extends BaseCardTest {
         List<Card> library = libraryWith(bears);
         castBreakOut(library);
 
-        harness.handleCardChosen(player1, 0);
+        chooseCard(bears);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -64,7 +64,7 @@ class BreakOutTest extends BaseCardTest {
         List<Card> library = libraryWith(wurm);
         castBreakOut(library);
 
-        harness.handleCardChosen(player1, 0);
+        chooseCard(wurm);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId()))
@@ -104,6 +104,12 @@ class BreakOutTest extends BaseCardTest {
 
     private List<Card> libraryWith(Card creature) {
         return List.of(creature, new Shock(), new Shock(), new Shock(), new Shock(), new Shock());
+    }
+
+    private void chooseCard(Card card) {
+        PendingInteraction.LibrarySearch search = gd.interaction
+                .activeInteraction(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, search.params().cards().indexOf(card));
     }
 
     private Permanent findPermanentByCardId(UUID cardId) {

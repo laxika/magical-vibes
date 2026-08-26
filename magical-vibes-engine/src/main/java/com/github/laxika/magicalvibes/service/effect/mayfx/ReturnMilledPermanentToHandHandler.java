@@ -64,6 +64,7 @@ public class ReturnMilledPermanentToHandHandler implements MayEffectHandlerBean 
             if (card != null && ownerId != null
                     && predicateEvaluationService.matchesCardPredicate(
                     card, marker.filter(), ability.sourceCard().getId(), gameData, ownerId)) {
+                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
                 if (marker.bonusFilter() != null
                         && predicateEvaluationService.matchesCardPredicate(

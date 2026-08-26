@@ -28,7 +28,6 @@ class KrenkoBaronOfTinStreetTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Spellbook");
@@ -43,7 +42,7 @@ class KrenkoBaronOfTinStreetTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KrenkoBaronOfTinStreet());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
         harness.setHand(player1, java.util.List.of(new Shatter()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, artifact.getId());
         harness.passBothPriorities();

@@ -84,7 +84,7 @@ class KefkaCourtMageTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player2, opponentPermanent.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentPermanent.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentPermanent);
         assertThat(kefka.isTransformed()).isTrue();

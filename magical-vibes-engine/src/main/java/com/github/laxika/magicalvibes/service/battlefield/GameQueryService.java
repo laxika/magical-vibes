@@ -7166,6 +7166,7 @@ public class GameQueryService {
         if (entry == null) return false;
         StackEntryType type = entry.getEntryType();
         if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL) return false;
+        if (sourceHasKeyword(gameData, entry, null, Keyword.LIFELINK)) return true;
 
         boolean[] hasLifelink = {false};
         gameData.forEachPermanent((playerId, p) -> {

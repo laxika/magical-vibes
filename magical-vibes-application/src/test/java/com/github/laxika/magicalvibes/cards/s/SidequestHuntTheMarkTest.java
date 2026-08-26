@@ -106,7 +106,6 @@ class SidequestHuntTheMarkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, battlefieldIndex(player1, yiazmat), null, null);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         assertThat(yiazmat.isTapped()).isTrue();
@@ -123,7 +122,6 @@ class SidequestHuntTheMarkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, battlefieldIndex(player1, yiazmat), null, null);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         assertThat(yiazmat.isTapped()).isTrue();

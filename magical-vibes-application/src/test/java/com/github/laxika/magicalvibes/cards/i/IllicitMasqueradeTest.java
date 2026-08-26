@@ -72,6 +72,7 @@ class IllicitMasqueradeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private void destroyAllCreatures() {

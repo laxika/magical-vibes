@@ -23,6 +23,7 @@ class FranticScapegoatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Frantic Scapegoat").isSuspected()).isTrue();
     }
@@ -89,6 +90,7 @@ class FranticScapegoatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

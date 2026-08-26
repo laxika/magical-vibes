@@ -51,7 +51,9 @@ class ExtractAConfessionTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Hill Giant");
         harness.assertInGraveyard(player2, "Serra Angel");
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Extract a Confession");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(firstEvidence, secondEvidence, thirdEvidence);
     }

@@ -27,6 +27,7 @@ class FesterleechTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -79,7 +80,7 @@ class FesterleechTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no more than 1 times each turn");
+                .hasMessageContaining("only once each turn");
     }
 
     private Permanent addReadyFesterleech(Player player) {

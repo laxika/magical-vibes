@@ -73,7 +73,7 @@ class EscapeTunnelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be blocked");
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test

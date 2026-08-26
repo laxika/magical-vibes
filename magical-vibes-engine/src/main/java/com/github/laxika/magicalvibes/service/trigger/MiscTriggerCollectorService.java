@@ -746,6 +746,32 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    private boolean handleConditionalOnOpponentLifeLoss(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeLoss.lifeLostAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on opponent life loss", match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     // ── ON_CONTROLLER_GAINS_LIFE ────────────────────────────────────────
 
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_PAYS_LIFE)

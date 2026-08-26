@@ -28,6 +28,7 @@ class ConvenientTargetTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getAttachedTo() != null

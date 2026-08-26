@@ -38,7 +38,6 @@ class DefenestratedPhantomTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, phantom.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Defenestrated Phantom").isFaceDown()).isTrue();

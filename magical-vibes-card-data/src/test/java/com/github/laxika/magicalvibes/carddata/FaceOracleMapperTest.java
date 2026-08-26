@@ -161,6 +161,17 @@ class FaceOracleMapperTest {
         assertThat(data.keywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
     }
 
+    @Test
+    void semicolonSeparatedKeywordLinesRetainEveryKeyword() {
+        OracleData data = map(face()
+                .text("Flying; fear\nCumulative upkeep {B}")
+                .keywords(List.of("Flying", "Fear", "Cumulative upkeep")), FRONT);
+
+        assertThat(data.cardText()).isEqualTo("Flying; Fear\nCumulative upkeep {B}");
+        assertThat(data.keywords())
+                .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.FEAR);
+    }
+
     /** Reminder text is not printed on the card. */
     @Test
     void reminderTextIsStripped() {

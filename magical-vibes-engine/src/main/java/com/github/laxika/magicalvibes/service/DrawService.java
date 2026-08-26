@@ -1296,8 +1296,7 @@ public class DrawService {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
                     // Targeted draw trigger: the controller must choose a target before the ability
                     // goes on the stack.
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(

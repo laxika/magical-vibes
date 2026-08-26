@@ -5448,8 +5448,6 @@ public class StepTriggerService {
         boolean needsGraveyardTarget = mandatoryEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         if (needsGraveyardTarget) {
-            graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
-                    gameData, controllerId, perm.getCard(), mandatoryEffects, perm.getId());
             ExileGraveyardCardsEffect exileEffect = mandatoryEffects.stream()
                     .filter(e -> e instanceof ExileGraveyardCardsEffect ge
                             && ge.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)

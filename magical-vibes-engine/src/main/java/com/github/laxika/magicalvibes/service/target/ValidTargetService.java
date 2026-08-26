@@ -1133,6 +1133,11 @@ public class ValidTargetService {
         List<CardEffect> spellEffects = kicked == null
                 ? card.getEffects(EffectSlot.SPELL)
                 : EffectResolution.resolveEffects(card.getEffects(EffectSlot.SPELL), kicked, null);
+        List<CardEffect> requiredTargetEffects = EffectResolution.expandConditionalTargetingEffects(spellEffects)
+                .stream()
+                .filter(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && returnEffect.upTo()))
+                .toList();
         if (spellEffects.stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::cast)
@@ -1148,7 +1153,7 @@ public class ValidTargetService {
 
         if (allowedTargets.contains(TargetType.PERMANENT)
                 && anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue,
-                spellEffects, kicked)) {
+                requiredTargetEffects, kicked)) {
             return true;
         }
 
@@ -1357,7 +1362,7 @@ public class ValidTargetService {
                         if (gameQueryService.isLandCardTargetRestricted(gameData, c, controllerId)) {
                             continue;
                         }
-                        if (!matchesReturnCardFilter(gameData, rge, c, card.getId())) {
+                        if (!matchesReturnCardFilter(gameData, rge, c, card.getId(), controllerId, xValue)) {
                             continue;
                         }
                         int requiredManaValue = effectiveXValue
@@ -1548,7 +1553,7 @@ public class ValidTargetService {
                     || c.getManaValue() <= amountEvaluationService.evaluate(
                     gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {
-            return matchesReturnCardFilter(gameData, e, c, sourceCardId);
+            return matchesReturnCardFilter(gameData, e, c, sourceCardId, controllerId, xValue);
         } else if (effect instanceof ReturnTargetCardFromGraveyardOrExileToHandEffect e) {
             return predicateEvaluationService.matchesCardPredicate(c, e.graveyardFilter(), sourceCardId);
         } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
@@ -1564,7 +1569,7 @@ public class ValidTargetService {
     }
 
     private boolean matchesReturnCardFilter(GameData gameData, ReturnCardFromGraveyardEffect effect,
-                                             Card card, UUID sourceCardId) {
+                                             Card card, UUID sourceCardId, UUID controllerId, Integer xValue) {
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, sourceCardId);
             UUID cardOwnerId = card.getOwnerId() != null
@@ -1575,7 +1580,8 @@ public class ValidTargetService {
                     || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));
         }
         return effect.filter() == null
-                || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId);
+                || predicateEvaluationService.matchesCardPredicate(
+                card, effect.filter(), sourceCardId, gameData, controllerId, null, null, xValue);
     }
 
     private CardSubtype findSourceChosenSubtype(GameData gameData, UUID sourceCardId) {

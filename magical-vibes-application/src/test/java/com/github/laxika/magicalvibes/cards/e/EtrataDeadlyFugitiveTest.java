@@ -39,7 +39,6 @@ class EtrataDeadlyFugitiveTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isCloaked);
@@ -79,12 +78,15 @@ class EtrataDeadlyFugitiveTest extends BaseCardTest {
     }
 
     private Permanent resolveEtrataTrigger(Card topCard) {
-        harness.setLibrary(player2, List.of(topCard));
+        harness.setLibrary(player2, List.of(topCard, new Island()));
         Permanent etrata = addCreatureReady(player1, new EtrataDeadlyFugitive());
         etrata.setAttacking(true);
 
         resolveCombat();
         harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isCloaked)

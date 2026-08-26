@@ -69,7 +69,6 @@ class QuinaQuGourmetTest extends BaseCardTest {
         Permanent frog = findPermanent(player1, "Frog");
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, battlefieldIndex(quina), 0, null, null);
-        harness.handlePermanentChosen(player1, frog.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(frog);

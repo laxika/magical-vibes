@@ -19,6 +19,6 @@ public class GreenbeltRadical extends Card {
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
         addEffect(EffectSlot.ON_TURNED_FACE_UP,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
     }
 }

@@ -22,6 +22,7 @@ public class CloakTopCardOfDamagedPlayerLibraryEffectHandler implements NormalEf
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,6 +46,10 @@ public class CloakTopCardOfDamagedPlayerLibraryEffectHandler implements NormalEf
         Permanent cloaked = new Permanent(topCard);
         cloaked.setFaceDownAsCloaked();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, cloaked);
+        if (!controllerId.equals(damagedPlayerId)) {
+            graveyardReturnSupport.trackStolenCreature(
+                    gameData, cloaked.getId(), controllerId, damagedPlayerId);
+        }
         battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, topCard);
 
         gameLogService.append(gameData, GameLog.text(

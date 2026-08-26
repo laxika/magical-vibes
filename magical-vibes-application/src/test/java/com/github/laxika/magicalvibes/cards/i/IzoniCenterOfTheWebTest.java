@@ -30,6 +30,7 @@ class IzoniCenterOfTheWebTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(firstEvidence.getId(), secondEvidence.getId()));
         harness.passBothPriorities();
@@ -75,6 +76,7 @@ class IzoniCenterOfTheWebTest extends BaseCardTest {
         Card drawnFirst = new GrizzlyBears();
         Card drawnSecond = new GrizzlyBears();
         harness.setLibrary(player1, List.of(scriedFirst, scriedSecond, drawnFirst, drawnSecond));
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -87,7 +89,7 @@ class IzoniCenterOfTheWebTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
-                .containsExactly(drawnFirst, drawnSecond);
+                .containsExactly(scriedFirst, scriedSecond);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 

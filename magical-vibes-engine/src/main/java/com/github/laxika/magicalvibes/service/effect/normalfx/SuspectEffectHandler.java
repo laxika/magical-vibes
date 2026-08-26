@@ -40,6 +40,12 @@ public class SuspectEffectHandler implements NormalEffectHandlerBean {
                 }
                 yield ids;
             }
+            case ENCHANTED_CREATURE -> {
+                Permanent source = entry.getSourcePermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                yield source == null || source.getAttachedTo() == null
+                        ? List.of() : List.of(source.getAttachedTo());
+            }
             default -> List.of();
         };
 

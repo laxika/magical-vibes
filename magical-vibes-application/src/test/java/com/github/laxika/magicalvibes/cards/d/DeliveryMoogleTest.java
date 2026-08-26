@@ -36,13 +36,15 @@ class DeliveryMoogleTest extends BaseCardTest {
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(libraryArtifact.getId(), graveyardArtifact.getId());
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
+                libraryArtifact.getId(), graveyardArtifact.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(graveyardArtifact.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(graveyardArtifact);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(graveyardArtifact);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryArtifact, expensiveArtifact, nonArtifact);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(libraryArtifact, expensiveArtifact, nonArtifact);
     }
 
     @Test
@@ -56,7 +58,8 @@ class DeliveryMoogleTest extends BaseCardTest {
         resolveEnterTheBattlefieldTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(expensiveArtifact, nonArtifact);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(expensiveArtifact, nonArtifact);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(expensiveArtifact, nonArtifact);
     }
 

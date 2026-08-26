@@ -2172,13 +2172,15 @@ public class GameData {
     }
 
     /**
-     * Removes and returns all NON-control {@code WHILE_SOURCE_TAPPED} floating effects sourced from
+     * Removes and returns all non-control floating effects that last while their source is tapped,
+     * sourced from
      * the given permanent. Called when that permanent becomes untapped (CR 611.2b — such effects end
      * and do not resume). Control {@code WHILE_SOURCE_TAPPED} effects are handled separately by the
      * control reconciliation in {@code CreatureControlService}. Tawnos's Weaponry's +1/+1 buff.
      */
     public List<FloatingContinuousEffect> expireTappedSourceFloatingEffects(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+        return expireFloatingEffects(fe -> (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
                 && !fe.isControlEffect()
                 && sourcePermanentId.equals(fe.sourcePermanentId()));
     }

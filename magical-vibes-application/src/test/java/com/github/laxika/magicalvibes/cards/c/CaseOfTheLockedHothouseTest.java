@@ -67,6 +67,10 @@ class CaseOfTheLockedHothouseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new CaseOfTheUneatenFeast()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castAndResolveFromLibraryTop(player1);
         harness.castAndResolveFromLibraryTop(player1);

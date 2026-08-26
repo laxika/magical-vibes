@@ -38,7 +38,7 @@ class LaughingMadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null, List.of(), 0);
+        harness.castFlashbackWithDiscard(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);

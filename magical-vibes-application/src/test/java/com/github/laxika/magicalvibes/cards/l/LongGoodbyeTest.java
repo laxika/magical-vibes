@@ -61,7 +61,7 @@ class LongGoodbyeTest extends BaseCardTest {
         harness.setHand(player1, List.of(longGoodbye));
         addCastingMana();
         harness.setHand(player2, List.of(cancel));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);

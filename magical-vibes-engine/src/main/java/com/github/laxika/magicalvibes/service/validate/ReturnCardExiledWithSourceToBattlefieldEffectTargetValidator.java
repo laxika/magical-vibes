@@ -25,6 +25,9 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectTargetValidator {
     @ValidatesTarget(ReturnCardExiledWithSourceToBattlefieldEffect.class)
     public void validate(TargetValidationContext ctx,
                           ReturnCardExiledWithSourceToBattlefieldEffect effect) {
+        if (!effect.targeted()) {
+            return;
+        }
         if (ctx.targetZone() != Zone.EXILE || ctx.targetId() == null) {
             throw new IllegalStateException("Effect requires a target card in exile");
         }

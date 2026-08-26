@@ -409,7 +409,16 @@ public class GameActionAvailabilityService {
         boolean externalXCanBeZero = maxXValue == null
                 && card.hasXScaledTargets()
                 && card.getEffectiveMinTargets(0) == 0;
-        boolean allTargetsOptional = !card.getSpellTargets().isEmpty()
+        List<CardEffect> expandedTargetingEffects = EffectResolution.expandConditionalTargetingEffects(
+                targetingSpellEffects);
+        List<CardEffect> declaredTargetEffects = expandedTargetingEffects.stream()
+                .filter(effect -> effect.targetSpec().declaredTarget() != null)
+                .toList();
+        boolean allEffectTargetsOptional = !declaredTargetEffects.isEmpty()
+                && declaredTargetEffects.stream()
+                .allMatch(effect -> effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && returnEffect.upTo());
+        boolean allTargetsOptional = allEffectTargetsOptional || !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0
                 || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0
                 || externalXCanBeZero);

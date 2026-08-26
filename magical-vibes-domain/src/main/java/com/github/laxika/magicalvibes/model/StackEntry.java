@@ -1080,7 +1080,16 @@ public class StackEntry {
                 : resolvingEffectTargetGroup != null && targeting.hasEffectTargetIndex(effect)
                 ? resolvingEffectTargetGroup
                 : targeting.getEffectTargetIndex(effect);
-        return group < 0 ? null : targetsForGroup(group);
+        if (group < 0) {
+            return null;
+        }
+        if (targetIds.isEmpty()) {
+            if (entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura() && group != 0) {
+                return List.of();
+            }
+            return targetId != null ? List.of(targetId) : List.of();
+        }
+        return targetsForGroup(group);
     }
 
     private static List<UUID> assignmentTargetIds(Map<UUID, Integer> assignments) {

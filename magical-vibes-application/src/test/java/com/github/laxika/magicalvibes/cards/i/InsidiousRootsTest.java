@@ -52,6 +52,7 @@ class InsidiousRootsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent plant = findPermanent(player1, "Plant");
+        plant.setSummoningSick(false);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(plant), null, null);
         harness.handleListChoice(player1, ManaColor.BLUE.name());
 

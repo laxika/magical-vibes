@@ -20,12 +20,12 @@ class GoblinMaskmakerTest extends BaseCardTest {
     void attackingReducesTheNextFaceDownSpellCostThisTurn() {
         addCreatureReady(player1, new GoblinMaskmaker());
         harness.setHand(player1, List.of(new BasilicaStalker()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();

@@ -1582,7 +1582,7 @@ public class CombatDamageService {
                         StackEntry se = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
-                                ownerId,
+                                attackerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 new ArrayList<>(effects),
                                 triggerTargetId,
@@ -2836,7 +2836,6 @@ public class CombatDamageService {
                             .add(defenderId);
                 }
             }
-            gameData.recordDamageToPlayer(defenderId, damageDealt);
             gameData.recordCombatDamageToPlayer(defenderId, damageDealt);
             gameData.recordDamageToPlayer(defenderId, damageDealt, Math.min(damageDealt, artifactDamage));
             triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defenderId, damageDealt);
@@ -2923,7 +2922,6 @@ public class CombatDamageService {
                         gameData.playerLifeTotals.put(targetId,
                                 gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
                     }
-                    gameData.recordDamageToPlayer(targetId, redirectEffective);
                     gameData.recordCombatDamageToPlayer(targetId, redirectEffective);
                     Permanent sourcePermanent = redirect.damageSourceId() == null
                             ? null

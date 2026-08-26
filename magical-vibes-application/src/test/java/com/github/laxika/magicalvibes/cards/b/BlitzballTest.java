@@ -35,7 +35,7 @@ class BlitzballTest extends BaseCardTest {
     void drawsTwoCardsAfterLegendaryCreatureDealsCombatDamage() {
         Permanent blitzball = addReadyBlitzball();
         Permanent legendaryCreature = addCreatureReady(player2, new BountyAgent());
-        recordCombatDamageToPlayer(legendaryCreature, player1);
+        recordCombatDamageToPlayer(legendaryCreature, player2);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -68,7 +68,7 @@ class BlitzballTest extends BaseCardTest {
     void cannotDrawWhenLegendaryCreatureDamagedItsController() {
         addReadyBlitzball();
         Permanent legendaryCreature = addCreatureReady(player2, new BountyAgent());
-        recordCombatDamageToPlayer(legendaryCreature, player2);
+        recordCombatDamageToPlayer(legendaryCreature, player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)

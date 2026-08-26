@@ -102,8 +102,7 @@ public class GraveyardTargetingSupport {
             if (scope != null) {
                 boolean anyNumber = exile.scope()
                         == com.github.laxika.magicalvibes.model.effect.GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD;
-                int minTargets = anyNumber ? 0
-                        : exile.exactTargetCount() ? exile.count() : Math.min(1, exile.count());
+                int minTargets = exile.exactTargetCount() ? exile.count() : 0;
                 int maxTargets = anyNumber ? Integer.MAX_VALUE : exile.count();
                 return new Target(exile.filter(), scope, "to exile", maxTargets, minTargets);
             }

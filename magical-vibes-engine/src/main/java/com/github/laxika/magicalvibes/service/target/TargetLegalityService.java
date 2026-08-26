@@ -1103,6 +1103,12 @@ public class TargetLegalityService {
             return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
                     controllerId, null, xValue, kicked);
         }
+        if (targetZone == Zone.STACK
+                || spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                && isSpellOnStack(gameData, targetId)) {
+            return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
+                    controllerId, null, xValue, kicked);
+        }
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && !gameData.playerIds.contains(targetId)) {
@@ -1592,7 +1598,7 @@ public class TargetLegalityService {
         }
     }
 
-    /** Validates a flat target list containing both stack and battlefield target groups. */
+    /** Validates the permanent target groups that follow a separately stored primary target. */
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
                                                        UUID controllerId, int xValue) {
         validateMixedSpellAndPermanentTargets(
@@ -1608,7 +1614,7 @@ public class TargetLegalityService {
             }
             return;
         }
-        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 0,
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 1,
                 selectedEffects);
     }
 
@@ -1702,6 +1708,9 @@ public class TargetLegalityService {
                     validatePlayerPredicate(gameData, controllerId, targetId, playerFilter.predicate(),
                             playerFilter.errorMessage());
                     continue;
+                }
+                if (playerSlotFilter != null) {
+                    throw new IllegalStateException("This spell cannot target players");
                 }
                 if (EffectResolution.needsTarget(card)) {
                     validatePlayerTargetable(gameData, targetId, controllerId, card);
