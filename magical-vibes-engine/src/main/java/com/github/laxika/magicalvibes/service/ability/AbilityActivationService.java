@@ -3817,11 +3817,8 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (craftMaterialCost != null) {
-            List<Card> candidates = collectCraftMaterialCandidates(gameData, playerId, permanent, craftMaterialCost);
-            if (candidates.size() < craftMaterialCost.minimumCount()
-                    || !canSatisfyRequiredCraftSubtypes(gameData, candidates, craftMaterialCost)) {
-                throw new IllegalStateException(craftMaterialError(craftMaterialCost));
-            }
+            List<Card> candidates = validateCraftMaterialCost(
+                    gameData, playerId, permanent, craftMaterialCost);
             if (candidates.size() > craftMaterialCost.minimumCount()) {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.CraftMaterialChoice(
                         playerId, permanent.getId(), effectiveIndex, effectiveXValue, targetId, targetZone,
@@ -4633,6 +4630,15 @@ public class AbilityActivationService {
             }
         }
 
+        CraftMaterialCost craftMaterialCost = abilityEffects.stream()
+                .filter(CraftMaterialCost.class::isInstance)
+                .map(CraftMaterialCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (craftMaterialCost != null) {
+            validateCraftMaterialCost(gameData, playerId, permanent, craftMaterialCost);
+        }
+
         // Pay-life cost
         Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
                 .filter(PayLifeCost.class::isInstance)
@@ -5051,6 +5057,16 @@ public class AbilityActivationService {
             graveyard.stream()
                     .filter(card -> matchesCraftMaterial(card, cost))
                     .forEach(candidates::add);
+        }
+        return candidates;
+    }
+
+    private List<Card> validateCraftMaterialCost(GameData gameData, UUID playerId, Permanent source,
+                                                  CraftMaterialCost cost) {
+        List<Card> candidates = collectCraftMaterialCandidates(gameData, playerId, source, cost);
+        if (candidates.size() < cost.minimumCount()
+                || !canSatisfyRequiredCraftSubtypes(gameData, candidates, cost)) {
+            throw new IllegalStateException(craftMaterialError(cost));
         }
         return candidates;
     }
