@@ -23,6 +23,21 @@ $logPath = Join-Path $repositoryRoot "fuzz.log"
 $testClass = "com.github.laxika.magicalvibes.ai.RandomAiFuzzTest"
 $commitCoAuthor = "Co-authored-by: OpenAI Codex <codex@openai.com>"
 
+function ConvertTo-NativeProcessArgument {
+    param(
+        [AllowEmptyString()]
+        [string] $Value
+    )
+
+    if ($Value.Length -gt 0 -and $Value -notmatch '[\s"]') {
+        return $Value
+    }
+
+    $escaped = $Value -replace '(\\*)"', '$1$1\"'
+    $escaped = $escaped -replace '(\\+)$', '$1$1'
+    return '"' + $escaped + '"'
+}
+
 if (-not (Test-Path -LiteralPath $gradleWrapper)) {
     Write-Error "Gradle wrapper not found at $gradleWrapper."
     exit 1
@@ -134,13 +149,117 @@ try {
     $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($commitSchemaPath, $commitSchema, $utf8WithoutBom)
 
-    & {
-        # A non-Stop preference prevents native stderr from becoming terminating
-        # NativeCommandError records under Windows PowerShell 5.1.
-        $ErrorActionPreference = "Continue"
-        & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot --output-schema $commitSchemaPath --output-last-message $commitOutputPath $prompt
+    $codexArguments = @(
+        "--search",
+        "--ask-for-approval", "never",
+        "exec",
+        "--ephemeral",
+        "--json",
+        "--model", $Model,
+        "--config", $reasoningConfig,
+        "--cd", $repositoryRoot,
+        "--output-schema", $commitSchemaPath,
+        "--output-last-message", $commitOutputPath,
+        "-"
+    )
+    # Drive automation from Codex's terminal JSON event instead of waiting for
+    # every descendant to release the native stdout pipe after a long tool run.
+    $codexStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $codexStartInfo.FileName = (Get-Command codex).Source
+    $codexStartInfo.Arguments = ($codexArguments | ForEach-Object { ConvertTo-NativeProcessArgument $_ }) -join " "
+    $codexStartInfo.WorkingDirectory = $repositoryRoot
+    $codexStartInfo.UseShellExecute = $false
+    $codexStartInfo.RedirectStandardInput = $true
+    $codexStartInfo.RedirectStandardOutput = $true
+    $codexStartInfo.RedirectStandardError = $false
+    $codexStartInfo.CreateNoWindow = $false
+
+    $codexProcess = New-Object System.Diagnostics.Process
+    $codexProcess.StartInfo = $codexStartInfo
+    $codexProcessStarted = $false
+    $codexTurnCompleted = $false
+    $codexTurnFailed = $false
+    try {
+        if (-not $codexProcess.Start()) {
+            Write-Error "Could not start Codex."
+            exit 1
+        }
+        $codexProcessStarted = $true
+
+        $codexProcess.StandardInput.Write($prompt)
+        $codexProcess.StandardInput.Close()
+
+        while (($codexLine = $codexProcess.StandardOutput.ReadLine()) -ne $null) {
+            try {
+                $codexEvent = $codexLine | ConvertFrom-Json
+            }
+            catch {
+                Write-Host $codexLine
+                continue
+            }
+
+            switch ($codexEvent.type) {
+                "thread.started" {
+                    Write-Host "Codex repair thread started: $($codexEvent.thread_id)"
+                }
+                "item.completed" {
+                    if ($codexEvent.item.type -eq "agent_message") {
+                        Write-Host $codexEvent.item.text
+                    }
+                    elseif ($codexEvent.item.type -eq "command_execution") {
+                        Write-Host "Codex command $($codexEvent.item.status): $($codexEvent.item.command)"
+                    }
+                }
+                "error" {
+                    Write-Warning "Codex reported an error: $($codexEvent.message)"
+                }
+                "turn.failed" {
+                    $codexTurnFailed = $true
+                    Write-Warning "Codex repair turn failed."
+                }
+                "turn.completed" {
+                    $codexTurnCompleted = $true
+                    $usage = $codexEvent.usage
+                    Write-Host "Codex repair turn completed (input: $($usage.input_tokens), cached: $($usage.cached_input_tokens), output: $($usage.output_tokens))."
+                }
+            }
+
+            if ($codexTurnCompleted -or $codexTurnFailed) {
+                break
+            }
+        }
+
+        if ($codexTurnCompleted -or $codexTurnFailed) {
+            if (-not $codexProcess.WaitForExit(10000)) {
+                Write-Warning "Codex finished the repair turn but did not exit within 10 seconds; terminating the stalled CLI process."
+                $codexProcess.Kill()
+                $codexProcess.WaitForExit()
+            }
+            if ($codexTurnCompleted) {
+                $codexExitCode = 0
+            }
+            else {
+                $codexExitCode = $codexProcess.ExitCode
+                if ($codexExitCode -eq 0) {
+                    $codexExitCode = 1
+                }
+            }
+        }
+        else {
+            $codexProcess.WaitForExit()
+            $codexExitCode = $codexProcess.ExitCode
+            if ($codexExitCode -eq 0) {
+                $codexExitCode = 1
+            }
+        }
     }
-    $codexExitCode = $LASTEXITCODE
+    finally {
+        if ($codexProcessStarted -and -not $codexProcess.HasExited) {
+            $codexProcess.Kill()
+            $codexProcess.WaitForExit()
+        }
+        $codexProcess.Dispose()
+    }
 
     if ($codexExitCode -ne 0) {
         Write-Error "Codex exited with code $codexExitCode while attempting the fuzz fix."
