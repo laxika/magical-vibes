@@ -418,6 +418,10 @@ public class AdditionalSpellCostService {
         if (hasCreatureSpellAdditionalCountersCost(gameData, playerId, card)) {
             effects.add(new RepeatableAdditionalManaCost(List.of("{1}")));
         }
+        if (card.getManaCost() != null
+                && gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.REPLICATE)) {
+            effects.add(new RepeatableAdditionalManaCost(List.of(card.getManaCost())));
+        }
         return extractAndRemove(effects);
     }
 

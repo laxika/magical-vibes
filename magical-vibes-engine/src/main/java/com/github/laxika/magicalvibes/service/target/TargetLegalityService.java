@@ -1709,9 +1709,6 @@ public class TargetLegalityService {
                             playerFilter.errorMessage());
                     continue;
                 }
-                if (playerSlotFilter != null) {
-                    throw new IllegalStateException("This spell cannot target players");
-                }
                 if (EffectResolution.needsTarget(card)) {
                     validatePlayerTargetable(gameData, targetId, controllerId, card);
                 }

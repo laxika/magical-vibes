@@ -21,7 +21,7 @@ class CaseOfTheStashedSkeletonTest extends BaseCardTest {
     @Test
     @DisplayName("Creates a suspected 2/1 Skeleton token")
     void createsSuspectedSkeleton() {
-        harness.addToBattlefield(player1, new CaseOfTheStashedSkeleton());
+        harness.enterBattlefieldAndReturn(player1, new CaseOfTheStashedSkeleton());
         resolveAllStack();
 
         Permanent skeleton = findPermanent(player1, "Skeleton");
@@ -85,9 +85,9 @@ class CaseOfTheStashedSkeletonTest extends BaseCardTest {
     }
 
     private Permanent addCaseAndResolveSkeleton() {
-        harness.addToBattlefield(player1, new CaseOfTheStashedSkeleton());
+        Permanent casePermanent = harness.enterBattlefieldAndReturn(player1, new CaseOfTheStashedSkeleton());
         resolveAllStack();
-        return findPermanent(player1, "Case of the Stashed Skeleton");
+        return casePermanent;
     }
 
     private void destroySkeleton() {

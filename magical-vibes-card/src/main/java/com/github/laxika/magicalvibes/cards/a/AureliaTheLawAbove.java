@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "188")
+@CardRegistration(set = "MKM", collectorNumber = "317")
+@CardRegistration(set = "MKM", collectorNumber = "357")
 public class AureliaTheLawAbove extends Card {
 
     public AureliaTheLawAbove() {

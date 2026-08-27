@@ -929,6 +929,12 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * Conjurer's Ban: the controller names a card; until their next turn, spells with that name
+     * can't be cast and lands with that name can't be played.
+     */
+    record SpellsAndLandsCantBePlayedUntilNextTurnChoice(UUID controllerId) implements ChoiceContext {}
+
+    /**
      * The target player names a card, then reveals the top card of their library. If it matches
      * the named card it goes to their hand; otherwise it goes to their graveyard and the source
      * ({@code sourcePermanentId}) deals {@code damageOnMiss} damage to them ({@code 0} for no

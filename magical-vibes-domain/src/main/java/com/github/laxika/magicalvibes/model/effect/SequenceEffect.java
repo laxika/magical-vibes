@@ -45,7 +45,8 @@ import java.util.UUID;
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
-        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect {
+        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect,
+        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -109,6 +110,15 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     }
 
     @Override
+    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
+        return new SequenceEffect(steps.stream()
+                .map(step -> step instanceof DamageSourceControllerAwareEffect aware
+                        ? aware.bindDamageSourceController(controllerId, damageDealt)
+                        : step)
+                .toList(), controllerDrawCount, onlyIfSacrificed);
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         TargetSpec implicitSourceSpec = TargetSpec.NONE;
         for (CardEffect step : steps) {
@@ -121,6 +131,14 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
             }
         }
         return implicitSourceSpec;
+    }
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return steps.stream()
+                .filter(effect -> effect instanceof CombatOpponentReferencingEffect)
+                .map(effect -> (CombatOpponentReferencingEffect) effect)
+                .anyMatch(CombatOpponentReferencingEffect::referencesCombatOpponent);
     }
 
     /**

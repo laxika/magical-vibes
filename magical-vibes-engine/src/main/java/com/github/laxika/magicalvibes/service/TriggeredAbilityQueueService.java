@@ -155,7 +155,7 @@ public class TriggeredAbilityQueueService {
 
             var dyingCard = pending.dyingCard();
             TargetFilter deathFilter = pending.targetFilter() != null
-                    ? pending.targetFilter() : dyingCard.getTargetFilter();
+                    ? pending.targetFilter() : targetFilterForTriggeredEffects(dyingCard, pending.effects());
             // The card-level target filter belongs to whichever ability declared it via
             // target(...).addEffect(...). If none of THIS death trigger's effects are bound to a
             // declared target group, that filter is a different ability's cast-time filter (e.g.

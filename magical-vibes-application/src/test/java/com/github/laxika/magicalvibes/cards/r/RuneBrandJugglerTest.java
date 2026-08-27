@@ -62,7 +62,6 @@ class RuneBrandJugglerTest extends BaseCardTest {
 
         addMana();
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, juggler.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Rune-Brand Juggler");

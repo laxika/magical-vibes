@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "12")
+@CardRegistration(set = "MKM", collectorNumber = "337")
+@CardRegistration(set = "MKM", collectorNumber = "378")
 public class DelneyStreetwiseLookout extends Card {
 
     public DelneyStreetwiseLookout() {

@@ -272,7 +272,9 @@ public enum CardSubtype {
     FLAGBEARER("Flagbearer"),
     MOOGLE("Moogle"),
     TOWN("Town"),
-    ROBOT("Robot");
+    ROBOT("Robot"),
+    NEPHILIM("Nephilim"),
+    SAND("Sand");
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,

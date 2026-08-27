@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "214")
+@CardRegistration(set = "MKM", collectorNumber = "365")
 public class KyloxVisionaryInventor extends Card {
 
     public KyloxVisionaryInventor() {

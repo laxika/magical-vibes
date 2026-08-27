@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "116")
+@CardRegistration(set = "MKM", collectorNumber = "304")
 public class TheChaseIsOn extends Card {
 
     public TheChaseIsOn() {

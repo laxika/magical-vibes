@@ -49,7 +49,7 @@ public class CeaseDesist extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Fuse — Cease and then Desist",
                         List.of(exile, gainLife, draw, desist),
-                        List.of(anyPlayer)
+                        anyPlayer
                 ).withManaCost("{5}{B/G}{G/W}{G/W}")
         )));
     }

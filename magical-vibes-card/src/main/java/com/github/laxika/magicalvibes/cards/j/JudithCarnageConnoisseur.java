@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "210")
+@CardRegistration(set = "MKM", collectorNumber = "363")
 public class JudithCarnageConnoisseur extends Card {
 
     private static final String KEYWORD_MODE = "That spell gains deathtouch and lifelink";

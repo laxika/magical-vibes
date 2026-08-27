@@ -322,12 +322,11 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn and can't be
-        // blocked this turn" (and similar mandatory multi-step self-triggers). Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. The steps must stay ONE
-        // atomic triggered ability (SequenceEffect), so queue a single stack entry carrying the source
-        // permanent id — each self step then resolves against this creature. (Cunning Survivor)
+        // Multi-step discard triggers must stay ONE atomic triggered ability (SequenceEffect), so queue
+        // a single stack entry carrying the source permanent id. Each self step then resolves against
+        // this creature.
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(

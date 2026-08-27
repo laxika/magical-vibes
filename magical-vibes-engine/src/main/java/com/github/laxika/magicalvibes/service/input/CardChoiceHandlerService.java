@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
@@ -86,6 +87,7 @@ public class CardChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CombatBlockService combatBlockService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
@@ -168,6 +170,7 @@ public class CardChoiceHandlerService {
         boolean cloaked = false;
         UUID returnExiledSourceCardId = null;
         UUID returnSourcePermanentId = null;
+        UUID blockingAttackerId = null;
         CardPredicate drawAndRepeatPredicate = null;
         CardPredicate enterTappedAndAttackingIf = null;
         String drawAndRepeatLabel = null;
@@ -202,6 +205,7 @@ public class CardChoiceHandlerService {
             faceDownCardTypes = hc.faceDownCardTypes();
             cloaked = hc.cloaked();
             returnSourcePermanentId = hc.returnSourcePermanentId();
+            blockingAttackerId = hc.blockingAttackerId();
             artifactCounterType = hc.artifactCounterType();
             artifactCounterCount = hc.artifactCounterCount();
             thenEffect = hc.thenEffect();
@@ -271,7 +275,7 @@ public class CardChoiceHandlerService {
                 Permanent enteredPermanent = resolveUntargetedCardChoice(gameData, player, playerId, card, selectedEnterTapped, grantHaste,
                         sacrificeAtEndStep, returnToHandAtEndStep, attachEquipmentCardId, selectedEnterAttacking, sacrificeUnlessPayGenericReduction,
                         faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                        cloaked, returnExiledSourceCardId);
+                        cloaked, returnExiledSourceCardId, blockingAttackerId);
                 if (artifactCounterType != null && gameQueryService.isArtifact(gameData, enteredPermanent)) {
                     permanentCounterSupport.placeCounterOnPermanent(gameData,
                             gameData.pendingEffectResolutionEntry, enteredPermanent,
@@ -1703,7 +1707,7 @@ public class CardChoiceHandlerService {
                                              int faceDownPower, int faceDownToughness,
                                              Set<CardType> faceDownCardTypes,
                                              boolean cloaked,
-                                             UUID returnExiledSourceCardId) {
+                                             UUID returnExiledSourceCardId, UUID blockingAttackerId) {
         Permanent permanent = new Permanent(card);
         if (cloaked) {
             permanent.setFaceDownAsCloaked();
@@ -1719,6 +1723,10 @@ public class CardChoiceHandlerService {
         UUID attackTargetId = enterAttacking && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getAttackedTargetId() : null;
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+        if (blockingAttackerId != null) {
+            combatBlockService.markTokenAsBlocking(gameData, permanent,
+                    gameQueryService.findPermanentById(gameData, blockingAttackerId));
+        }
         if (enterAttacking) {
             permanent.setAttacking(true);
             permanent.setAttackTarget(attackTargetId);

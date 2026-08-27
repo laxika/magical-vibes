@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "263")
+@CardRegistration(set = "MKM", collectorNumber = "327")
 public class LushPortico extends Card {
 
     public LushPortico() {

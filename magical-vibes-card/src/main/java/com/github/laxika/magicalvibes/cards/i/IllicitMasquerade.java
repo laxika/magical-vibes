@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "88")
+@CardRegistration(set = "MKM", collectorNumber = "401")
 public class IllicitMasquerade extends Card {
 
     public IllicitMasquerade() {

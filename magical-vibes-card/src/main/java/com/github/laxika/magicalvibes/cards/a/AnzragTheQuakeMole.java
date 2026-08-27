@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "186")
+@CardRegistration(set = "MKM", collectorNumber = "356")
+@CardRegistration(set = "MKM", collectorNumber = "385")
 public class AnzragTheQuakeMole extends Card {
 
     public AnzragTheQuakeMole() {

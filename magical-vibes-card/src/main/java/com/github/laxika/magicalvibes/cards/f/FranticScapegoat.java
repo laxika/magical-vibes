@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SuspectChosenOtherCreatureEff
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "126")
+@CardRegistration(set = "MKM", collectorNumber = "347")
 public class FranticScapegoat extends Card {
 
     public FranticScapegoat() {

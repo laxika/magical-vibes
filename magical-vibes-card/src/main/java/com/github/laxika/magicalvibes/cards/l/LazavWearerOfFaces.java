@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "216")
+@CardRegistration(set = "MKM", collectorNumber = "318")
+@CardRegistration(set = "MKM", collectorNumber = "366")
 public class LazavWearerOfFaces extends Card {
 
     public LazavWearerOfFaces() {

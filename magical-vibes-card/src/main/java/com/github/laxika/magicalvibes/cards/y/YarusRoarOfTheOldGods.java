@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "245")
+@CardRegistration(set = "MKM", collectorNumber = "375")
 public class YarusRoarOfTheOldGods extends Card {
 
     public YarusRoarOfTheOldGods() {

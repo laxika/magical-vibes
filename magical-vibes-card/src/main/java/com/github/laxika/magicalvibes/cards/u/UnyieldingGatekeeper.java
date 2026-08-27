@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "35")
+@CardRegistration(set = "MKM", collectorNumber = "392")
 public class UnyieldingGatekeeper extends Card {
 
     public UnyieldingGatekeeper() {

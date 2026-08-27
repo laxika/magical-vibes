@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "185")
+@CardRegistration(set = "MKM", collectorNumber = "355")
+@CardRegistration(set = "MKM", collectorNumber = "384")
 public class AlquistProftMasterSleuth extends Card {
 
     public AlquistProftMasterSleuth() {

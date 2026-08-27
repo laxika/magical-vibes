@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "176")
+@CardRegistration(set = "MKM", collectorNumber = "353")
 public class SharpEyedRookie extends Card {
 
     public SharpEyedRookie() {

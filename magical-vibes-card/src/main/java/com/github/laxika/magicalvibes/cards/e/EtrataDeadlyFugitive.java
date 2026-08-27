@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "200")
+@CardRegistration(set = "MKM", collectorNumber = "359")
+@CardRegistration(set = "MKM", collectorNumber = "386")
 public class EtrataDeadlyFugitive extends Card {
 
     public EtrataDeadlyFugitive() {

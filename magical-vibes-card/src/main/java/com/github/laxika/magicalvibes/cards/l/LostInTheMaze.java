@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "64")
+@CardRegistration(set = "MKM", collectorNumber = "395")
 public class LostInTheMaze extends Card {
 
     public LostInTheMaze() {

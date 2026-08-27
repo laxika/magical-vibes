@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.SetSelfPermanentSupertypeInde
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "34")
+@CardRegistration(set = "MKM", collectorNumber = "391")
 public class TenthDistrictHero extends Card {
 
     public TenthDistrictHero() {

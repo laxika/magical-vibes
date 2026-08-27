@@ -63,7 +63,10 @@ class CaseOfTheRansackedLabTest extends BaseCardTest {
         resolveEndStepTriggers();
 
         harness.setHand(player1, List.of(new Shock()));
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
@@ -80,9 +83,11 @@ class CaseOfTheRansackedLabTest extends BaseCardTest {
         resolveEndStepTriggers();
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -95,6 +100,7 @@ class CaseOfTheRansackedLabTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         for (int i = 0; i < count; i++) {
+            harness.addMana(player1, ManaColor.RED, 1);
             harness.castInstant(player1, 0, player2.getId());
             harness.passBothPriorities();
         }

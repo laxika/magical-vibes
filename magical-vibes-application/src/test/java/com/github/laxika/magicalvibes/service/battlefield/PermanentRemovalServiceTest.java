@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -342,6 +343,26 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()),
                     eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false), eq(false));
+        }
+
+        @Test
+        @DisplayName("Returns an enchanted creature to hand through a static replacement")
+        void returnsEnchantedCreatureToHandInsteadOfGraveyard() {
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            Card magemark = createEnchantment("Necromancer's Magemark");
+            magemark.addEffect(EffectSlot.STATIC,
+                    new ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect());
+            addPermanent(player1Id, magemark);
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.isEnchanted(gd, bears)).thenReturn(true);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player1Id);
+
+            boolean result = prs.removePermanentToGraveyard(gd, bears);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
+            assertThat(gd.playerHands.get(player1Id)).contains(bears.getOriginalCard());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test

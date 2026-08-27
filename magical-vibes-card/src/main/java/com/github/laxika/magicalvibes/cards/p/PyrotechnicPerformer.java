@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "140")
+@CardRegistration(set = "MKM", collectorNumber = "407")
 public class PyrotechnicPerformer extends Card {
 
     public PyrotechnicPerformer() {

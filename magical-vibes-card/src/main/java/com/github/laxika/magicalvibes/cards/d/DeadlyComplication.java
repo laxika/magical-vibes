@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "195")
+@CardRegistration(set = "MKM", collectorNumber = "312")
 public class DeadlyComplication extends Card {
 
     public DeadlyComplication() {

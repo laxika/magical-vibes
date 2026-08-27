@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnE
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "158")
+@CardRegistration(set = "MKM", collectorNumber = "351")
 public class CulvertAmbusher extends Card {
 
     public CulvertAmbusher() {

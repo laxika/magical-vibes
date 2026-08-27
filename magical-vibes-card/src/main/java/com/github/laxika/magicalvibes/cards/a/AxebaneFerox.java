@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "153")
+@CardRegistration(set = "MKM", collectorNumber = "409")
+@CardRegistration(set = "MKM", collectorNumber = "428")
 public class AxebaneFerox extends Card {
 
     public AxebaneFerox() {

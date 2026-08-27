@@ -16,7 +16,7 @@ import java.util.UUID;
  * @param choicePlayer identifies the player who makes the choice
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
-        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect {
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect, CombatOpponentReferencingEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -33,6 +33,16 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return wrappedSpec != TargetSpec.NONE || elseEffect == null
                 ? wrappedSpec
                 : elseEffect.targetSpec();
+    }
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return referencesCombatOpponent(wrapped) || referencesCombatOpponent(elseEffect);
+    }
+
+    private static boolean referencesCombatOpponent(CardEffect effect) {
+        return effect instanceof CombatOpponentReferencingEffect combatOpponent
+                && combatOpponent.referencesCombatOpponent();
     }
 
     @Override

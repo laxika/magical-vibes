@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "110")
+@CardRegistration(set = "MKM", collectorNumber = "346")
+@CardRegistration(set = "MKM", collectorNumber = "433")
 public class VeinRipper extends Card {
 
     public VeinRipper() {
