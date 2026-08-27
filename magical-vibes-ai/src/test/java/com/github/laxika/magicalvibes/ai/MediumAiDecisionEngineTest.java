@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
@@ -108,6 +109,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -2212,6 +2214,37 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
                 .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
         assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Medium AI chooses only discard for an either-or additional cost")
+    void castsEitherOrCostSpellByDiscardingWithoutSacrificing() {
+        giveAiPriority();
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(aiPlayer, new HowlingMine());
+        Card spell = eitherOrCostCreature();
+        GrizzlyBears discardedCard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(spell, discardedCard));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId())).contains(artifact);
+    }
+
+    private Card eitherOrCostCreature() {
+        Card card = new Card();
+        card.setName("Either-Or Cost Creature");
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}{R}");
+        card.setPower(2);
+        card.setToughness(2);
+        card.addEffect(EffectSlot.SPELL,
+                new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+        return card;
     }
 
     @Test

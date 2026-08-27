@@ -906,6 +906,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (declinesOptionalCostForSingleModalMode(card, cost)) {
                 continue;
             }
+            if (hasAvailableDiscardAlternative(gameData, card, effect)) {
+                continue;
+            }
             PermanentPredicate filter = cost.consumedPermanentFilter();
             if (filter == null) {
                 continue;

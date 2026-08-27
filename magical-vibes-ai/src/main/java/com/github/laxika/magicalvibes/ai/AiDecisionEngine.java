@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
@@ -2712,9 +2713,7 @@ public abstract class AiDecisionEngine {
                 continue;
             }
             // "Sacrifice a creature" — pick the weakest (lowest effective power + toughness).
-            if (effect instanceof DiscardCardOrSacrificePermanentCost
-                    && !castingCostService.validDiscardCostIndices(
-                    gameData, aiPlayer.getId(), card).isEmpty()) {
+            if (hasAvailableDiscardAlternative(gameData, card, effect)) {
                 continue;
             }
             if (cost.sacrificesChosenCreature()) {
@@ -2736,6 +2735,21 @@ public abstract class AiDecisionEngine {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns whether an either-or discard/sacrifice cost can be paid by discarding. The spell
+     * request must carry exactly one branch, so sacrifice selection defers to the discard choice
+     * whenever the shared cost query finds an eligible card.
+     */
+    protected boolean hasAvailableDiscardAlternative(GameData gameData, Card card, CardEffect effect) {
+        if (!(effect instanceof DiscardCardOrSacrificePermanentCost)
+                && !(effect instanceof SacrificePermanentOrDiscardCardCost)) {
+            return false;
+        }
+        List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(
+                gameData, aiPlayer.getId(), card);
+        return validDiscardIndices != null && !validDiscardIndices.isEmpty();
     }
 
     /**

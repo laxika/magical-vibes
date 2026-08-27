@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
@@ -98,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -823,6 +825,37 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
                     .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(remainingCard);
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses only discard for an either-or additional cost")
+        void castsEitherOrCostSpellByDiscardingWithoutSacrificing() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.RED, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.COLORLESS, 1);
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new HowlingMine());
+            Card spell = eitherOrCostCreature();
+            GrizzlyBears discardedCard = new GrizzlyBears();
+            testHarness.setHand(aiTestPlayer, List.of(spell, discardedCard));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(spell);
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId())).containsExactly(discardedCard);
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId())).contains(artifact);
+        }
+
+        private Card eitherOrCostCreature() {
+            Card card = new Card();
+            card.setName("Either-Or Cost Creature");
+            card.setType(CardType.CREATURE);
+            card.setManaCost("{1}{R}");
+            card.setPower(2);
+            card.setToughness(2);
+            card.addEffect(EffectSlot.SPELL,
+                    new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+            return card;
         }
 
         @Test

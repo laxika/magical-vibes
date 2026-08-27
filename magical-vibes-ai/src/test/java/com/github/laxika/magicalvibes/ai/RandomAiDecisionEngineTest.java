@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
+import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -1943,6 +1944,38 @@ class RandomAiDecisionEngineTest {
                 .extracting(Card::getId)
                 .doesNotContain(affordableCreature.getId());
         assertThat(gameData.stack).hasSize(1);
+    }
+
+    @Test
+    void castsSoulsOfTheLostByDiscardingWithoutAlsoSacrificing() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        Permanent permanent = harness.addToBattlefieldAndReturn(aiPlayer, new HowlingMine());
+        SoulsOfTheLost soulsOfTheLost = new SoulsOfTheLost();
+        GrizzlyBears discardedCard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(soulsOfTheLost, discardedCard));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(soulsOfTheLost);
+            assertThat(gameData.playerGraveyards.get(aiPlayer.getId())).containsExactly(discardedCard);
+            assertThat(gameData.playerBattlefields.get(aiPlayer.getId())).contains(permanent);
+        } finally {
+            watcher.uninstall();
+        }
     }
 
     @Test
