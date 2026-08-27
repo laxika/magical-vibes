@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.b.BalmOfRestoration;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.Cooperation;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
+import com.github.laxika.magicalvibes.cards.s.StandardBearer;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -106,6 +108,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void targetsOpposingFlagbearerWhenCastingAura() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent flagbearer = harness.addToBattlefieldAndReturn(opponent, new StandardBearer());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        Cooperation cooperation = new Cooperation();
+        harness.setHand(aiPlayer, List.of(cooperation));
+        harness.addMana(aiPlayer, ManaColor.WHITE, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(cooperation);
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(flagbearer.getId());
+            assertThat(gameData.stack.getFirst().getTargetId()).isNotEqualTo(ownCreature.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void reducesUrgentNecropsyTargetsToAvailableEvidence() {

@@ -12,12 +12,8 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
@@ -968,53 +964,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     }
 
     private List<UUID> findRandomTargets(GameData gameData, Card card) {
-        List<UUID> validTargets = new ArrayList<>();
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-
-        // Use base-mode targeting since AI never kicks spells
-        Set<TargetType> allowed = targetSelector.computeBaseAllowedTargets(card);
-
-        // Add players as targets if allowed, respecting player relation predicates and hexproof/shroud.
-        // The engine check is the last word: an allowed set that merely includes players (a no-op
-        // PLAYER_OR_PERMANENT spec on a live multi-target scope) does not make one legal.
-        if (allowed.contains(TargetType.PLAYER)) {
-            PlayerRelation relation = PlayerRelation.ANY;
-            if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter ptf
-                    && ptf.predicate() instanceof PlayerRelationPredicate prp) {
-                relation = prp.relation();
-            }
-            if (relation != PlayerRelation.OPPONENT
-                    && !gameQueryService.playerHasShroud(gameData, aiPlayer.getId())
-                    && targetSelector.isValidPlayerTarget(gameData, card, aiPlayer.getId(), aiPlayer.getId())) {
-                validTargets.add(aiPlayer.getId());
-            }
-            if (relation != PlayerRelation.SELF && opponentId != null
-                    && !gameQueryService.playerHasShroud(gameData, opponentId)
-                    && !gameQueryService.playerHasHexproof(gameData, opponentId)
-                    && targetSelector.isValidPlayerTarget(gameData, card, opponentId, aiPlayer.getId())) {
-                validTargets.add(opponentId);
-            }
-        }
-
-        // Add permanents only when the card actually admits permanent targets.
-        if (allowed.contains(TargetType.PERMANENT)) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> field = gameData.playerBattlefields.getOrDefault(playerId, List.of());
-                for (Permanent p : field) {
-                    if (targetSelector.isValidPermanentTarget(gameData, card, p, aiPlayer.getId())) {
-                        validTargets.add(p.getId());
-                    }
-                }
-            }
-        }
-
-        // Add graveyard cards as targets if allowed
-        if (allowed.contains(TargetType.GRAVEYARD)) {
-            for (Card c : targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId())) {
-                validTargets.add(c.getId());
-            }
-        }
-        return validTargets;
+        return targetSelector.findLegalSingleSpellTargets(gameData, card, aiPlayer.getId());
     }
 
     // ===== Combat: Random Attackers =====

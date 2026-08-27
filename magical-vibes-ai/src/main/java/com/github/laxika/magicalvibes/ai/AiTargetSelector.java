@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -111,6 +112,16 @@ class AiTargetSelector {
         this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
         this.boardEvaluator = boardEvaluator;
         this.sizeGatedRemovalPump = new SizeGatedRemovalPump(gameQueryService, amountEvaluationService);
+    }
+
+    List<UUID> findLegalSingleSpellTargets(GameData gameData, Card card, UUID controllerId) {
+        ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                gameData, card, controllerId, List.of());
+        List<UUID> targets = new ArrayList<>();
+        targets.addAll(response.validPermanentIds());
+        targets.addAll(response.validPlayerIds());
+        targets.addAll(response.validGraveyardCardIds());
+        return targets;
     }
 
     UUID chooseTarget(GameData gameData, Card card, UUID aiPlayerId) {
