@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
+import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
@@ -2125,6 +2126,37 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Hard AI pays the selected spree mode's additional mana cost")
+    void castsSpreeModeWithItsAdditionalManaCost() {
+        pinLibrariesAndHands();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        for (int i = 0; i < 2; i++) {
+            Permanent plains = new Permanent(new Plains());
+            plains.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(plains);
+        }
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FinalShowdown finalShowdown = new FinalShowdown();
+        finalShowdown.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(player1, List.of(finalShowdown));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(finalShowdown.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(Permanent::isTapped)
+                .hasSize(2);
     }
 
     @Test

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -1674,6 +1675,31 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerBattlefields.get(human.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Medium AI pays the selected spree mode's additional mana cost")
+    void castsSpreeModeWithItsAdditionalManaCost() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(human.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        giveAiPlains(2);
+        harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        FinalShowdown finalShowdown = new FinalShowdown();
+        finalShowdown.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(aiPlayer, List.of(finalShowdown));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(finalShowdown.getId());
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(Permanent::isTapped)
+                .hasSize(2);
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.FlameblastDragon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -659,6 +660,23 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerBattlefields.get(human.getId()))
                     .extracting(permanent -> permanent.getCard().getName())
                     .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+        }
+
+        @Test
+        @DisplayName("Easy AI pays the selected spree mode's additional mana cost")
+        void castsSpreeModeWithItsAdditionalManaCost() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 2);
+            FinalShowdown finalShowdown = new FinalShowdown();
+            testHarness.setHand(aiTestPlayer, List.of(finalShowdown));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(finalShowdown.getId());
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(Permanent::isTapped)
+                    .hasSize(2);
         }
 
         @Test

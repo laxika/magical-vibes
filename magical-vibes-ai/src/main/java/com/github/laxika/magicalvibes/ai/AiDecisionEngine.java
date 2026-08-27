@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
@@ -3024,21 +3025,61 @@ public abstract class AiDecisionEngine {
         return coe.options().get(selectedModes.getFirst()).manaCost();
     }
 
-    /** Returns the mana cost that the selected modal mode will actually use, when applicable. */
+    /** Returns the full mana cost of the selected modal cast, including any spree mode costs. */
     protected String manaCostForSpell(Card card, Integer modeEncoding) {
         String selectedModeManaCost = selectedModalManaCost(card, modeEncoding);
-        return selectedModeManaCost != null ? selectedModeManaCost : card.getManaCost();
+        String baseManaCost = selectedModeManaCost != null ? selectedModeManaCost : card.getManaCost();
+        String spreeManaCost = selectedSpreeManaCost(card, modeEncoding);
+        if (baseManaCost == null) {
+            return spreeManaCost.isEmpty() ? null : spreeManaCost;
+        }
+        return baseManaCost + spreeManaCost;
+    }
+
+    private String selectedSpreeManaCost(Card card, Integer modeEncoding) {
+        if (modeEncoding == null) {
+            return "";
+        }
+        SpreeAdditionalManaCost spreeCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(SpreeAdditionalManaCost.class::isInstance)
+                .map(SpreeAdditionalManaCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (spreeCost == null) {
+            return "";
+        }
+        ChooseOneEffect modal = findChooseOneEffect(card);
+        if (modal == null) {
+            throw new IllegalStateException("Spree cost has no modal choices");
+        }
+        StringBuilder selectedCost = new StringBuilder();
+        for (int modeIndex : modal.decodeModeIndices(modeEncoding)) {
+            if (modeIndex < 0 || modeIndex >= spreeCost.modeManaCosts().size()) {
+                throw new IllegalStateException("Spree mode has no matching additional cost");
+            }
+            selectedCost.append(spreeCost.modeManaCosts().get(modeIndex));
+        }
+        return selectedCost.toString();
     }
 
     private boolean isModalModeAffordable(GameData gameData, Card card,
-                                          ChooseOneEffect.ChooseOneOption option,
+                                          int modeEncoding,
                                           ManaPool virtualPool) {
-        if (option.manaCost() == null
-                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)) {
+        String selectedModeManaCost = selectedModalManaCost(card, modeEncoding);
+        String spreeManaCost = selectedSpreeManaCost(card, modeEncoding);
+        if (selectedModeManaCost == null && spreeManaCost.isEmpty()) {
+            return true;
+        }
+        boolean freeCast = castingCostService.hasAlternativeZeroCostFromBattlefield(
+                gameData, aiPlayer.getId(), card);
+        String manaCost = freeCast
+                ? spreeManaCost
+                : manaCostForSpell(card, modeEncoding);
+        if (manaCost == null || manaCost.isEmpty()) {
             return true;
         }
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(option.manaCost()));
+                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         return cost.canPay(virtualPool, costModifier)
                 && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier));
@@ -3101,13 +3142,13 @@ public abstract class AiDecisionEngine {
         // Choose-one and "choose one or more": pick the first valid single mode (avoids escalate).
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
-            if (!isModalModeValid(gameData, card, option)
-                    || !isModalModeAffordable(gameData, card, option, virtualPool)) {
-                continue;
-            }
             int encoded = coe.variableModeCount()
                     ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
                     : i;
+            if (!isModalModeValid(gameData, card, option)
+                    || !isModalModeAffordable(gameData, card, encoded, virtualPool)) {
+                continue;
+            }
 
             if (option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack)) continue;
 
