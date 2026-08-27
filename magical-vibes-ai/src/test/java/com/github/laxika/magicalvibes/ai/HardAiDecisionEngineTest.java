@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -469,6 +470,37 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Hard AI collects evidence for Urgent Necropsy's targets")
+    void castsUrgentNecropsyWithTargetEvidence() {
+        pinLibrariesAndHands();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears evidence = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(evidence));
+        UrgentNecropsy necropsy = new UrgentNecropsy();
+        // Ensure this integration test reaches the shared cast path without changing production scoring.
+        necropsy.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(player1, List.of(necropsy));
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(necropsy);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(evidence);
     }
 
     @Test

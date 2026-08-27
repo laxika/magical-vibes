@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 
@@ -518,6 +519,35 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
         // Should target the Air Elemental (biggest threat)
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI collects evidence for Urgent Necropsy's targets")
+    void castsUrgentNecropsyWithTargetEvidence() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(human.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        GrizzlyBears evidence = new GrizzlyBears();
+        harness.setGraveyard(aiPlayer, List.of(evidence));
+        UrgentNecropsy necropsy = new UrgentNecropsy();
+        // Ensure this integration test reaches the shared cast path without changing production scoring.
+        necropsy.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(aiPlayer, List.of(necropsy));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(necropsy);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).containsExactly(evidence);
     }
 
     @Test

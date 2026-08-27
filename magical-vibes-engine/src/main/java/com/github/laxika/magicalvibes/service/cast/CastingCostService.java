@@ -1335,6 +1335,13 @@ public class CastingCostService {
                 .anyMatch(cost -> graveyardManaValue >= cost.minimumManaValue());
     }
 
+    /** Resolves a collect-evidence threshold that depends on the spell's announced targets. */
+    public int resolveCollectEvidenceMinimumManaValue(GameData gameData, CollectEvidenceCost cost,
+                                                      UUID targetId, List<UUID> targetIds) {
+        return additionalSpellCostService.resolveCollectEvidenceMinimumManaValue(
+                gameData, cost, targetId, targetIds);
+    }
+
     /**
      * Returns true if the card's {@link AlternateHandCast} casting option (e.g. Demon of Death's
      * Gate) exists and all of its costs (life, sacrifices, taps, mana) are currently payable.

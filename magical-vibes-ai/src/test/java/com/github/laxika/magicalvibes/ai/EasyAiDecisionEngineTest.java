@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
@@ -709,6 +710,27 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getTargetId()).isNull();
             assertThat(testGd.stack.getFirst().getTargetIds())
                     .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI collects evidence for Urgent Necropsy's targets")
+        void castsUrgentNecropsyWithTargetEvidence() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.COLORLESS, 2);
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            GrizzlyBears evidence = new GrizzlyBears();
+            testHarness.setGraveyard(aiTestPlayer, List.of(evidence));
+            UrgentNecropsy necropsy = new UrgentNecropsy();
+            testHarness.setHand(aiTestPlayer, List.of(necropsy));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(necropsy);
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId())).containsExactly(evidence);
         }
 
         @Test

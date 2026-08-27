@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
@@ -2331,6 +2332,72 @@ public abstract class AiDecisionEngine {
         }
     }
 
+    private record CollectEvidenceCastPlan(UUID targetId, List<UUID> targetIds,
+                                           List<Integer> graveyardCardIndices) {
+    }
+
+    private CollectEvidenceCastPlan planCollectEvidenceCast(GameData gameData, Card card,
+                                                            UUID targetId, List<UUID> targetIds,
+                                                            List<Integer> existingGraveyardCardIndices) {
+        CollectEvidenceCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null || cost.optional()) {
+            return new CollectEvidenceCastPlan(targetId, targetIds, existingGraveyardCardIndices);
+        }
+
+        List<UUID> plannedTargetIds = targetIds == null ? null : new ArrayList<>(targetIds);
+        UUID plannedTargetId = targetId;
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+        int availableManaValue = graveyard.stream().mapToInt(Card::getManaValue).sum();
+        int requiredManaValue = castingCostService.resolveCollectEvidenceMinimumManaValue(
+                gameData, cost, plannedTargetId, plannedTargetIds);
+        boolean mayChooseFewerTargets = card.getMinTargets() == 0 && !card.isAura();
+
+        while (cost.usesTargetManaValue() && requiredManaValue > availableManaValue
+                && mayChooseFewerTargets) {
+            if (plannedTargetIds != null && !plannedTargetIds.isEmpty()) {
+                plannedTargetIds.removeLast();
+            } else if (plannedTargetId != null) {
+                plannedTargetId = null;
+            } else {
+                break;
+            }
+            requiredManaValue = castingCostService.resolveCollectEvidenceMinimumManaValue(
+                    gameData, cost, plannedTargetId, plannedTargetIds);
+        }
+
+        List<Integer> evidenceIndices = selectCollectEvidenceIndices(graveyard, requiredManaValue);
+        return new CollectEvidenceCastPlan(
+                plannedTargetId, plannedTargetIds,
+                evidenceIndices != null ? evidenceIndices : List.of());
+    }
+
+    private List<Integer> selectCollectEvidenceIndices(List<Card> graveyard, int requiredManaValue) {
+        if (requiredManaValue == 0) {
+            return List.of();
+        }
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            candidates.add(i);
+        }
+        candidates.sort(Comparator.comparingInt(
+                (Integer index) -> graveyard.get(index).getManaValue()).reversed());
+
+        List<Integer> selected = new ArrayList<>();
+        int selectedManaValue = 0;
+        for (int index : candidates) {
+            selected.add(index);
+            selectedManaValue += graveyard.get(index).getManaValue();
+            if (selectedManaValue >= requiredManaValue) {
+                return selected;
+            }
+        }
+        return null;
+    }
+
     /**
      * Builds the common spell cast request, including the selected object for any behold cost.
      * The other additional-cost fields mirror the request shape used by all AI spell paths.
@@ -2364,12 +2431,16 @@ public abstract class AiDecisionEngine {
             effectiveXValue = 1;
         }
         CardSubtype chosenAdditionalCostCreatureType = chooseAdditionalCostCreatureType(card);
-        CardSubtype chosenCreatureType = chooseCastTimeCreatureType(gameData, card, targetId, targetIds);
+        CollectEvidenceCastPlan collectEvidencePlan = planCollectEvidenceCast(
+                gameData, card, targetId, targetIds, exileGraveyardCardIndices);
+        CardSubtype chosenCreatureType = chooseCastTimeCreatureType(
+                gameData, card, collectEvidencePlan.targetId(), collectEvidencePlan.targetIds());
         return new PlayCardRequest(
-                cardIndex, effectiveXValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                cardIndex, effectiveXValue, collectEvidencePlan.targetId(), damageAssignments,
+                collectEvidencePlan.targetIds(), convokeCreatureIds,
                 null, sacrificePermanentId, null, null, alternateCostSacrificePermanentIds, null,
                 exileGraveyardCardIndex,
-                exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
+                collectEvidencePlan.graveyardCardIndices(), null, null, null, discardHandCardIndex,
                 discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                 List.of(), null,
                 null, selection.permanentId(), selection.handCardIndex(), null, null, null,
