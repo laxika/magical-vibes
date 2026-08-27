@@ -77,12 +77,21 @@ class MultiPermanentChoiceAiStrategyTest {
     }
 
     @Test
-    @DisplayName("Empty valid ids: does not answer")
-    void ignoresEmptyValidIds() throws Exception {
+    @DisplayName("No valid permanents or players: does not answer")
+    void ignoresChoiceWithNoValidTargets() throws Exception {
         strategy.answer(multiChoice(aiPlayerId, List.of(), 2), context());
 
         verify(gameActions, never()).answerInteraction(
                 org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Player-only choice: selects valid players up to maxCount")
+    void selectsValidPlayersWhenNoPermanentsAreValid() throws Exception {
+        strategy.answer(multiChoice(
+                aiPlayerId, List.of(), List.of(opponentId, aiPlayerId), 2), context());
+
+        assertChosen(List.of(opponentId, aiPlayerId));
     }
 
     @Test
@@ -171,8 +180,13 @@ class MultiPermanentChoiceAiStrategyTest {
 
     private static PendingInteraction.MultiPermanentChoice multiChoice(
             UUID playerId, List<UUID> validIds, int maxCount) {
+        return multiChoice(playerId, validIds, List.of(), maxCount);
+    }
+
+    private static PendingInteraction.MultiPermanentChoice multiChoice(
+            UUID playerId, List<UUID> validIds, List<UUID> validPlayerIds, int maxCount) {
         return new PendingInteraction.MultiPermanentChoice(
-                playerId, validIds, maxCount,
+                playerId, validIds, validPlayerIds, maxCount,
                 new MultiPermanentChoiceContext.ExileDamagedPlayerControls(),
                 "Choose permanents.");
     }
