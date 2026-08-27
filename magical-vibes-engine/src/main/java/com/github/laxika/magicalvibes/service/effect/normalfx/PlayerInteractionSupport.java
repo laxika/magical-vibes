@@ -86,12 +86,26 @@ public class PlayerInteractionSupport {
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
-                null, null);
+                null, null, null);
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
                                           int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
                                           CardEffect thenEffect, CardPredicate thenCondition) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
+                thenEffect, thenCondition, null);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
+                                          UUID sourceEquipmentCardId, UUID sourceCardId, UUID blockingAttackerId) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
+                null, null, blockingAttackerId);
+    }
+
+    private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
+                                           int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
+                                           CardEffect thenEffect, CardPredicate thenCondition,
+                                           UUID blockingAttackerId) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -122,6 +136,9 @@ public class PlayerInteractionSupport {
                 : effect.enterTapped() ? " tapped"
                 : effect.enterAttacking() ? " attacking"
                 : "";
+        if (effect.enterBlocking()) {
+            tappedSuffix += " blocking that creature";
+        }
         boolean repeats = effect.drawAndRepeat() || effect.putAnyNumber();
         String prompt = effect.cloaked()
                 ? "Choose a card from your hand to cloak."
@@ -142,7 +159,7 @@ public class PlayerInteractionSupport {
                 repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
                 effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
                 returnExiledSourceCardId, effect.returnToHandAtEndStep(), effect.cloaked(),
-                thenEffect, thenCondition, effect.enterTappedAndAttackingIf());
+                thenEffect, thenCondition, effect.enterTappedAndAttackingIf(), blockingAttackerId);
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {

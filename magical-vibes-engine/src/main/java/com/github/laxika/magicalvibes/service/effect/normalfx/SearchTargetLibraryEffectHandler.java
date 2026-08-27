@@ -46,9 +46,13 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        SearchTargetLibraryEffect e = (SearchTargetLibraryEffect) effect;
+        resolveForTargetPlayer(gameData, entry, (SearchTargetLibraryEffect) effect, entry.getTargetId());
+    }
+
+    void resolveForTargetPlayer(GameData gameData, StackEntry entry, SearchTargetLibraryEffect effect,
+                                UUID targetPlayerId) {
+        SearchTargetLibraryEffect e = effect;
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetId();
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 

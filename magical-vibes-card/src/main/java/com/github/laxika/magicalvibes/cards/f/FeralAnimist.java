@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "70")
+@CardRegistration(set = "GPT", collectorNumber = "112")
 public class FeralAnimist extends Card {
 
     public FeralAnimist() {

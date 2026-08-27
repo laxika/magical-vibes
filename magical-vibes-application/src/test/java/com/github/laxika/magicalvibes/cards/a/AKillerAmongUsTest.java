@@ -67,6 +67,7 @@ class AKillerAmongUsTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         harness.handleListChoice(player1, subtype.name());
+        harness.passBothPriorities();
         return findPermanent(player1, "A Killer Among Us");
     }
 

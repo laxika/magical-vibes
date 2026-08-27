@@ -1234,7 +1234,10 @@ public class StackResolutionService {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " is exiled with a dream counter."));
         } else {
-            graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            boolean enteredGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            if (enteredGraveyard) {
+                triggerCollectionService.collectSpellHauntTrigger(gameData, physicalCard, entry.getControllerId());
+            }
         }
     }
 

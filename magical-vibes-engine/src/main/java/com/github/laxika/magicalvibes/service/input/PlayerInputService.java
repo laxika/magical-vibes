@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -150,7 +151,7 @@ public class PlayerInputService {
                 attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
                 drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
                 faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
-                false, null, null, null);
+                false, null, null, null, null);
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
@@ -164,7 +165,7 @@ public class PlayerInputService {
                 attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
                 drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
                 faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
-                false, null, null, enterTappedAndAttackingIf);
+                false, null, null, enterTappedAndAttackingIf, null);
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
@@ -178,7 +179,21 @@ public class PlayerInputService {
                 attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
                 drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
                 faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
-                false, thenEffect, thenCondition, null);
+                false, thenEffect, thenCondition, null, null);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, UUID blockingAttackerId) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
+                faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
+                false, null, null, null, blockingAttackerId);
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
@@ -189,13 +204,14 @@ public class PlayerInputService {
                                 Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
                                 boolean returnToHandAtEndStep, boolean cloaked,
                                 CardEffect thenEffect, CardPredicate thenCondition,
-                                CardPredicate enterTappedAndAttackingIf) {
+                                CardPredicate enterTappedAndAttackingIf,
+                                UUID blockingAttackerId) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                 returnExiledSourceCardId, null, null, 0, returnToHandAtEndStep,
-                cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf));
+                cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
@@ -210,7 +226,7 @@ public class PlayerInputService {
                 sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, drawAndRepeat,
                 drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown,
                 faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
-                returnToHandAtEndStep, cloaked, thenEffect, thenCondition, null);
+                returnToHandAtEndStep, cloaked, thenEffect, thenCondition, null, null);
     }
 
     public void beginCardChoiceWithArtifactCounters(GameData gameData, UUID playerId, List<Integer> validIndices,
@@ -893,12 +909,20 @@ public class PlayerInputService {
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                    SubtypeChoiceOnEnterEffect choiceEffect) {
+        if (choiceEffect instanceof ChooseSubtypeForSourceEffect) {
+            beginSubtypeChoiceForSource(gameData, playerId, permanentId, choiceEffect.allowedSubtypes());
+            return;
+        }
         beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), false,
                 choiceEffect.choicePrompt());
     }
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                    SubtypeChoiceOnEnterEffect choiceEffect, boolean landPlay) {
+        if (choiceEffect instanceof ChooseSubtypeForSourceEffect) {
+            beginSubtypeChoiceForSource(gameData, playerId, permanentId, choiceEffect.allowedSubtypes());
+            return;
+        }
         beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), landPlay,
                 choiceEffect.choicePrompt());
     }

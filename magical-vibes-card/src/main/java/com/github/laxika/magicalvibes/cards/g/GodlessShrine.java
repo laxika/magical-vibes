@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 
 @CardRegistration(set = "GTC", collectorNumber = "242")
 @CardRegistration(set = "RNA", collectorNumber = "248")
+@CardRegistration(set = "GPT", collectorNumber = "157")
 public class GodlessShrine extends Card {
 
     public GodlessShrine() {

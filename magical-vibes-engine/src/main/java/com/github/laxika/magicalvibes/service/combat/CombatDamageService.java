@@ -1582,7 +1582,7 @@ public class CombatDamageService {
                         StackEntry se = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
-                                attackerId,
+                                ownerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 new ArrayList<>(effects),
                                 triggerTargetId,
@@ -2468,11 +2468,14 @@ public class CombatDamageService {
             if (data.damageDealt() <= 0) continue;
 
             for (CardEffect effect : data.combatDamageReceivedEffects()) {
-                if (effect.targetSpec().declaredTarget() != null) {
+                CardEffect effectToAdd = effect instanceof DamageSourceControllerAwareEffect aware
+                        ? aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt())
+                        : effect;
+                if (effectToAdd.targetSpec().declaredTarget() != null) {
                     TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
                             ? data.card().getTargetFilter() : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            data.card(), data.controllerId(), new ArrayList<>(List.of(effect)), false,
+                            data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)), false,
                             targetFilter, data.damageDealt(), data.permanentId()));
                     gameLogService.append(gameData,
                             GameLog.cardThen(data.card(), "'s combat-damage trigger fires — choose a target."));
@@ -2484,7 +2487,7 @@ public class CombatDamageService {
                         data.card(),
                         data.controllerId(),
                         data.card().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(List.of(effectToAdd)),
                         null,
                         data.permanentId()
                 );

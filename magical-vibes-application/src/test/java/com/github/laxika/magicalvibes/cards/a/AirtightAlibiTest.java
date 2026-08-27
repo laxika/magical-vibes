@@ -32,6 +32,7 @@ class AirtightAlibiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castEnchantment(player1, 0, enchanted.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(enchanted.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
@@ -58,6 +59,7 @@ class AirtightAlibiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new ConvenientTarget()));

@@ -92,7 +92,7 @@ class CeaseDesistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castModalInstant(player1, 0, FUSE, List.of(player2.getId()));
+        harness.castInstant(player1, 0, FUSE, player2.getId());
         harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
         harness.passBothPriorities();
 

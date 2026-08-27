@@ -60,6 +60,7 @@ class TheEmperorOfPalameciaTest extends BaseCardTest {
         for (int i = 0; i < 3; i++) {
             harness.castSorcery(player1, 0, 3);
             harness.passBothPriorities();
+            harness.passBothPriorities();
         }
 
         assertThat(emperor.isTransformed()).isTrue();

@@ -25,7 +25,8 @@ public class PutCardToBattlefieldEffectHandler implements NormalEffectHandlerBea
         // For "…and attach this Equipment to it" (Deathrender), the source Equipment is the trigger's card.
         java.util.UUID sourceEquipmentCardId = e.attachSourceEquipment() ? entry.getCard().getId() : null;
         playerInteractionSupport.applyPutCardToBattlefield(gameData, entry.getControllerId(), e, entry.getXValue(),
-                sourceEquipmentCardId, entry.getCard() == null ? null : entry.getCard().getId());
+                sourceEquipmentCardId, entry.getCard() == null ? null : entry.getCard().getId(),
+                e.enterBlocking() ? entry.getTargetId() : null);
 
     }
 }

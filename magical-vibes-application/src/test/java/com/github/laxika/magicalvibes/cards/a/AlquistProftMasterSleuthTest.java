@@ -42,11 +42,9 @@ class AlquistProftMasterSleuthTest extends BaseCardTest {
 
         Permanent proft = findPermanent(player1, "Alquist Proft, Master Sleuth");
         proft.setSummoningSick(false);
-        Permanent clue = findPermanent(player1, "Clue");
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 0, 2, null);
-        harness.handlePermanentChosen(player1, clue.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Clue")).isEmpty();

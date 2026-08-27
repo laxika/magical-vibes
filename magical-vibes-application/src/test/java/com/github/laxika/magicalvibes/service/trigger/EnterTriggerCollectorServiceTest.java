@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerCondi
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
@@ -49,6 +51,7 @@ import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -114,7 +117,8 @@ class EnterTriggerCollectorServiceTest {
                 targetLegalityService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 gameLogService, etbTokenTargetService,
-                new GrantedTriggeredAbilitySupport(gameQueryService));
+                new GrantedTriggeredAbilitySupport(gameQueryService),
+                new GraveyardTargetingSupport());
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -476,6 +480,23 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Any-creature life-loss trigger targets the entering creature's controller")
+    void anyCreatureLifeLossTargetsEnteringController() {
+        UUID player2Id = UUID.randomUUID();
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        addAllyCreatureTrigger(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+
+        service.checkAnyCreatureEntersTriggers(gd, player2Id, enteringCreature(2, 2));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
+                .isEqualTo(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
     }
 
     @Test

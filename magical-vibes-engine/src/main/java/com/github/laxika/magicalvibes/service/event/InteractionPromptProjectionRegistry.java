@@ -1335,6 +1335,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.NameCardMillGainLifeChoice
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
+                || context instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice
                 || context instanceof ChoiceContext.NameCardMillDrawChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
                 || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
