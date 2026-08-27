@@ -1188,14 +1188,17 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
-            ValidTargetsResponse validTargets = computeValidTargetsForSpell(
-                    gameData, card, controllerId, List.of(), maxXValue, kicked);
-            if (!validTargets.validGraveyardCardIds().isEmpty()) {
-                return true;
-            }
-            if (allowedTargets.contains(TargetType.EXILE)
-                    && !validTargets.validExiledCardIds().isEmpty()) {
-                return true;
+            for (int x = maxXValue == null ? 0 : maxXValue; x >= 0; x--) {
+                Integer xValue = maxXValue == null ? null : x;
+                ValidTargetsResponse validTargets = computeValidTargetsForSpell(
+                        gameData, card, controllerId, List.of(), xValue, kicked);
+                if (!validTargets.validGraveyardCardIds().isEmpty()) {
+                    return true;
+                }
+                if (allowedTargets.contains(TargetType.EXILE)
+                        && !validTargets.validExiledCardIds().isEmpty()) {
+                    return true;
+                }
             }
         } else if (allowedTargets.contains(TargetType.EXILE)) {
             ValidTargetsResponse validTargets = computeValidTargetsForSpell(
@@ -1564,8 +1567,7 @@ public class ValidTargetService {
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
-        return effect.targetSpec().declaredTarget() instanceof TargetPredicate.GraveyardCards graveyardCards
-                && predicateEvaluationService.matchesCardPredicate(c, graveyardCards.inner(), sourceCardId);
+        return effect.targetSpec().declaredTarget() instanceof TargetPredicate.GraveyardCards;
     }
 
     private boolean matchesReturnCardFilter(GameData gameData, ReturnCardFromGraveyardEffect effect,

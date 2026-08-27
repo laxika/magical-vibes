@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,13 +30,12 @@ class BasilicaStalkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
-        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        PendingInteraction.MayAbilityChoice surveil =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(surveil).isNotNull();
-        assertThat(surveil.cards()).containsExactly(topCard);
+        harness.handleMayAbilityChosen(player1, true);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
-
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(keptCard, topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(keptCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
     }
 

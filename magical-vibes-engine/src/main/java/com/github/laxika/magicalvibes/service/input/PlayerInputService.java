@@ -367,6 +367,14 @@ public class PlayerInputService {
                 minimumTotalManaValue, null));
     }
 
+    public void beginMultiGraveyardChoiceWithMaximumManaValue(GameData gameData, UUID playerId,
+                                                               List<Card> cards, int maxCount,
+                                                               int minCount, int maximumTotalManaValue,
+                                                               String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt, minCount, maximumTotalManaValue));
+    }
+
     public void beginAsEntersCounterTypeChoice(GameData gameData,
                                                 GraveyardTargetOperationState.AsEntersGraveyardExileContext context,
                                                 int exiledCardCount) {

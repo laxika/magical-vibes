@@ -59,6 +59,7 @@ class RakdosPatronOfChaosTest extends BaseCardTest {
         Permanent otherBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Forest drawn1 = new Forest();
         Forest drawn2 = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn1, drawn2));
 
         resolveTriggerToOpponentChoice(player2);
@@ -80,6 +81,7 @@ class RakdosPatronOfChaosTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Forest drawn1 = new Forest();
         Forest drawn2 = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn1, drawn2));
 
         advanceToEndStep(player1);

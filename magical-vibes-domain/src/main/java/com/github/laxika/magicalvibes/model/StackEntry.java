@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -1055,6 +1056,10 @@ public class StackEntry {
         if (group < 0) {
             return getTargetIds();
         }
+        if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
+            return List.of(targetId);
+        }
         if (targetIds.isEmpty()) {
             // On an aura the lone targetId is the enchant target (group 0), never a later
             // group's target — an effect bound to a later group simply has no target chosen.
@@ -1082,6 +1087,10 @@ public class StackEntry {
                 : targeting.getEffectTargetIndex(effect);
         if (group < 0) {
             return null;
+        }
+        if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
+            return List.of(targetId);
         }
         if (targetIds.isEmpty()) {
             if (entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura() && group != 0) {

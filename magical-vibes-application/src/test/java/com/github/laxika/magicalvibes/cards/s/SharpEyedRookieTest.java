@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BorderlandMarauder;
+import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.cards.g.GiantTortoise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SharpEyedRookie.class, BorderlandMarauder.class, GiantTortoise.class, GrizzlyBears.class})
+@CardUsed({SharpEyedRookie.class, CentaurCourser.class, GiantTortoise.class, GrizzlyBears.class})
 class SharpEyedRookieTest extends BaseCardTest {
 
     @Test
@@ -23,9 +23,9 @@ class SharpEyedRookieTest extends BaseCardTest {
     void triggersForGreaterPower() {
         Permanent rookie = harness.addToBattlefieldAndReturn(player1, new SharpEyedRookie());
 
-        harness.setHand(player1, List.of(new BorderlandMarauder()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new CentaurCourser()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 

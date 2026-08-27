@@ -40,7 +40,8 @@ class StolenUniformTest extends BaseCardTest {
         castStolenUniform(creature, equipment);
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gd.stack).hasSize(1);

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacemen
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -73,6 +74,9 @@ class DrawServiceTest {
 
     @Mock
     private DredgeSupport dredgeSupport;
+
+    @Mock
+    private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     @InjectMocks
     private DrawService sut;

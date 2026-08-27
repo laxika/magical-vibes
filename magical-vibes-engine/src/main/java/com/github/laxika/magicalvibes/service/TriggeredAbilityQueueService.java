@@ -1562,10 +1562,16 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.chapterName = pending.chapterName();
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards,
-                    Math.min(maxTargets, matchingCards.size()), minTargets,
-                    pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
-                            + " — Choose target " + filterLabel + " from your graveyard.");
+            String prompt = pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
+                    + " — Choose target " + filterLabel + " from your graveyard.";
+            if (anyNumber) {
+                playerInputService.beginMultiGraveyardChoiceWithMaximumManaValue(
+                        gameData, pending.controllerId(), matchingCards,
+                        Math.min(maxTargets, matchingCards.size()), minTargets, maxTotalManaValue, prompt);
+            } else {
+                playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards,
+                        Math.min(maxTargets, matchingCards.size()), minTargets, prompt);
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s chapter " + pending.chapterName() + " ability triggers — choose a graveyard target."));

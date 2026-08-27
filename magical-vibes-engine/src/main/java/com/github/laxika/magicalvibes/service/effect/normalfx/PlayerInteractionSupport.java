@@ -635,6 +635,12 @@ public class PlayerInteractionSupport {
 
         boolean effectiveOptional = optional || declineFallbackDiscardCount > 0 || declineEffect != null;
         UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null && entry.getTargetIds() != null) {
+            targetPlayerId = entry.getTargetIds().stream()
+                    .filter(gameData.playerIds::contains)
+                    .findFirst()
+                    .orElse(null);
+        }
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);

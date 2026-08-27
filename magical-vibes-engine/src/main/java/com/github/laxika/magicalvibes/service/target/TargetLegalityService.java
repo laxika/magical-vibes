@@ -1614,7 +1614,11 @@ public class TargetLegalityService {
             }
             return;
         }
-        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 1,
+        int firstPermanentGroupIndex = selectedEffects.stream()
+                .filter(effect -> card.getEffectTargetIndex(effect) == 0)
+                .anyMatch(EffectResolution::targetsSpellOnStack) ? 1 : 0;
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false,
+                firstPermanentGroupIndex,
                 selectedEffects);
     }
 
@@ -1708,6 +1712,9 @@ public class TargetLegalityService {
                     validatePlayerPredicate(gameData, controllerId, targetId, playerFilter.predicate(),
                             playerFilter.errorMessage());
                     continue;
+                }
+                if (playerSlotFilter != null) {
+                    throw new IllegalStateException("This spell cannot target players");
                 }
                 if (EffectResolution.needsTarget(card)) {
                     validatePlayerTargetable(gameData, targetId, controllerId, card);
@@ -2355,8 +2362,9 @@ public class TargetLegalityService {
                                     graveyardCard, graveyardFilter.predicate(), entry.getCard().getId());
                         }
                     }
-                } else if (secondaryTargetsAreOnStack
-                        || declaredTargetPositionTargetsSpell(gameData, entry, i)) {
+                } else if ((secondaryTargetsAreOnStack
+                        || declaredTargetPositionTargetsSpell(gameData, entry, i))
+                        && isSpellOnStack(gameData, targetId)) {
                     legal = checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked()).isEmpty();
                 } else {

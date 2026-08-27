@@ -2326,12 +2326,31 @@ public class SpellCastingService {
                 && !multipleSpellTargets && targetIds.isEmpty();
         boolean mixedSpellAndPermanentTargets = unwrappedNeedsSpellTarget && unwrappedNeedsTarget
                 && !multipleSpellTargets && !targetIds.isEmpty();
+        boolean firstDeclaredGroupTargetsSpell = card.getSpellTargets().stream()
+                .filter(group -> group.getIndex() == 0)
+                .findFirst()
+                .map(group -> targetingSpellEffects.stream()
+                        .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
+                        .anyMatch(EffectResolution::targetsSpellOnStack))
+                .orElse(false);
+        if (mixedSpellAndPermanentTargets && targetId == null) {
+            UUID selectedStackTargetId = targetIds.stream()
+                    .filter(candidateId -> targetLegalityService.isSpellOnStack(gameData, candidateId))
+                    .findFirst()
+                    .orElse(null);
+            if (selectedStackTargetId != null) {
+                targetId = selectedStackTargetId;
+                targetIds = targetIds.stream()
+                        .filter(candidateId -> !candidateId.equals(selectedStackTargetId))
+                        .toList();
+            }
+        }
         boolean targetingSpellOnStack = allSpellTargetsAlsoAllowPermanents
                 ? targetLegalityService.isSpellOnStack(gameData, targetId)
                 : mixedSpellOrPermanentTarget
                 ? targetLegalityService.isSpellOnStack(gameData, targetId)
                 : mixedSpellAndPermanentTargets
-                ? true
+                ? targetLegalityService.isSpellOnStack(gameData, targetId)
                 : unwrappedNeedsSpellTarget;
         if (mixedSpellOrPermanentTarget && targetId == null) {
             throw new IllegalStateException("Spell requires a target");
@@ -2715,6 +2734,8 @@ public class SpellCastingService {
             throw new IllegalStateException("Spell requires a target");
         }
 
+        UUID validatedTargetId = targetId;
+
         // Validate target if specified (can be a permanent or a player)
         if (targetId != null && !targetingSpellOnStack) {
             if (needsGraveyardOrExileTargeting) {
@@ -2728,7 +2749,7 @@ public class SpellCastingService {
                 if (exileReturnEffect != null && exileReturnEffect.ownedOnly()) {
                     boolean inControllersExile = gameData.getPlayerExiledCards(playerId)
                             .stream()
-                            .anyMatch(c -> c.getId().equals(targetId));
+                            .anyMatch(c -> c.getId().equals(validatedTargetId));
                     if (!inControllersExile) {
                         throw new IllegalStateException("Target must be an exiled card you own");
                     }
@@ -2741,7 +2762,7 @@ public class SpellCastingService {
                     boolean inControllersGraveyard = gameData.playerGraveyards
                             .getOrDefault(playerId, List.of())
                             .stream()
-                            .anyMatch(c -> c.getId().equals(targetId));
+                            .anyMatch(c -> c.getId().equals(validatedTargetId));
                     if (!inControllersGraveyard) {
                         throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
                     }
@@ -2749,7 +2770,7 @@ public class SpellCastingService {
                     boolean inControllersGraveyard = gameData.playerGraveyards
                             .getOrDefault(playerId, List.of())
                             .stream()
-                            .anyMatch(c -> c.getId().equals(targetId));
+                            .anyMatch(c -> c.getId().equals(validatedTargetId));
                     if (inControllersGraveyard) {
                         throw new IllegalStateException("Target must be in an opponent's graveyard");
                     }
@@ -2767,7 +2788,7 @@ public class SpellCastingService {
                 boolean inControllersGraveyard = gameData.playerGraveyards
                         .getOrDefault(playerId, List.of())
                         .stream()
-                        .anyMatch(c -> c.getId().equals(targetId));
+                        .anyMatch(c -> c.getId().equals(validatedTargetId));
                 if (targetsControllersGraveyardOnly) {
                     if (!inControllersGraveyard) {
                         throw new IllegalStateException("Target must be in your graveyard");
@@ -4235,7 +4256,8 @@ public class SpellCastingService {
                             filteredSpellEffects, resolvedXValue, targetId,
                             null, Map.of(), Zone.STACK, List.of(), targetIds
                     );
-                    entry.setPrimaryTargetStoredSeparately(true);
+                    entry.setPrimaryTargetStoredSeparately(
+                            firstDeclaredGroupTargetsSpell || allSpellTargetsAlsoAllowPermanents);
                     gameData.stack.add(entry);
                 } else {
                     gameData.stack.add(new StackEntry(
@@ -4300,7 +4322,7 @@ public class SpellCastingService {
                         List.of(), targetIds
                 );
                 entry.setPrimaryTargetStoredSeparately(
-                        mixedSpellAndPermanentTargets || allSpellTargetsAlsoAllowPermanents);
+                        firstDeclaredGroupTargetsSpell || allSpellTargetsAlsoAllowPermanents);
                 gameData.stack.add(entry);
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")

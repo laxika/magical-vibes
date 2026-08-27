@@ -17,10 +17,10 @@ class MeddlingYouthsTest extends BaseCardTest {
 
     @Test
     void investigatesWhenThreeCreaturesAttack() {
-        harness.addToBattlefield(player1, new MeddlingYouths());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new MeddlingYouths());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(1, 2, 3));
         harness.passBothPriorities();
@@ -33,9 +33,9 @@ class MeddlingYouthsTest extends BaseCardTest {
 
     @Test
     void doesNotInvestigateWhenFewerThanThreeCreaturesAttack() {
-        harness.addToBattlefield(player1, new MeddlingYouths());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new MeddlingYouths());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(1, 2));
         harness.passBothPriorities();

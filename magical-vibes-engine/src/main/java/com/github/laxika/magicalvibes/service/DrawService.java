@@ -1311,7 +1311,8 @@ public class DrawService {
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && perm.getCard().getEffectTargetIndex(effect) >= 0) {
+                        && (perm.getCard().getEffectTargetIndex(effect) >= 0
+                        || perm.getCard().getEffectTargetIndex(authoredEffect) >= 0)) {
                     // A permanent-target draw trigger (Mantle of Tides): choose the target as the
                     // ability is put on the stack, using the card's declared target filter.
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(

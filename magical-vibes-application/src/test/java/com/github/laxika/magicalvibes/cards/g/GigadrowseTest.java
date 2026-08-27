@@ -53,7 +53,7 @@ class GigadrowseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("permanent");
+                .hasMessageContaining("cannot target players");
     }
 
     private void castGigadrowse(Permanent target, List<String> replicatePayments) {
