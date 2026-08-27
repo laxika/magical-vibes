@@ -1713,9 +1713,6 @@ public class TargetLegalityService {
                             playerFilter.errorMessage());
                     continue;
                 }
-                if (playerSlotFilter != null) {
-                    throw new IllegalStateException("This spell cannot target players");
-                }
                 if (EffectResolution.needsTarget(card)) {
                     validatePlayerTargetable(gameData, targetId, controllerId, card);
                 }
@@ -2364,7 +2361,8 @@ public class TargetLegalityService {
                     }
                 } else if ((secondaryTargetsAreOnStack
                         || declaredTargetPositionTargetsSpell(gameData, entry, i))
-                        && isSpellOnStack(gameData, targetId)) {
+                        && (isSpellOnStack(gameData, targetId)
+                        || filterAdmitsAbilityTarget(targetFilter, entry.isKicked()))) {
                     legal = checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked()).isEmpty();
                 } else {

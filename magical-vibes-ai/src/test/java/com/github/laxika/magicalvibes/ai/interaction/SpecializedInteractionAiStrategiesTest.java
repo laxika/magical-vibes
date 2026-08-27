@@ -363,6 +363,22 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void exileCardFromHandAndCreateTokenCopyChoosesHighestManaValueEligibleCard() throws Exception {
+        Card cheap = card("Cheap", "{1}");
+        Card expensive = card("Expensive", "{5}");
+        Card invalid = card("Invalid", "{9}");
+        gameData.playerHands.get(aiPlayerId).addAll(List.of(cheap, expensive, invalid));
+
+        new ExileCardFromHandAndCreateTokenCopyChoiceAiStrategy().answer(
+                new PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice(
+                        aiPlayerId, List.of(0, 1), "Choose a card.", null),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardIndexChosen(1));
+    }
+
+    @Test
     void magesContestPassesTheBid() throws Exception {
         new MagesContestBidChoiceAiStrategy().answer(
                 new PendingInteraction.MagesContestBidChoice(
@@ -465,6 +481,7 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 PendingInteraction.TargetHandSpellCopyChoice.class,
                 PendingInteraction.TargetedHandBattlefieldChoice.class,
+                PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class,
                 PendingInteraction.MagesContestBidChoice.class,
                 PendingInteraction.TargetLibraryDestinationChoice.class,
                 PendingInteraction.VividCardChoice.class,

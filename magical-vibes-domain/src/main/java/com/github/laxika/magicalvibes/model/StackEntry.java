@@ -1057,6 +1057,7 @@ public class StackEntry {
             return getTargetIds();
         }
         if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && !targetIds.contains(targetId)
                 && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
             return List.of(targetId);
         }
@@ -1089,6 +1090,7 @@ public class StackEntry {
             return null;
         }
         if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && !targetIds.contains(targetId)
                 && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
             return List.of(targetId);
         }
