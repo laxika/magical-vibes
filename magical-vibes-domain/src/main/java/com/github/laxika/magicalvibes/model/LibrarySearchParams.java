@@ -54,6 +54,8 @@ public record LibrarySearchParams(
         boolean sourceSideboard,
         CardSubtype battlefieldIfChosenBeholdType,
         Integer battlefieldIfManaValueAtMost,
+        CardPredicate battlefieldIfChosenPredicate,
+        boolean battlefieldIfChosenTapped,
         boolean placeBattlefieldCardsSimultaneously,
         boolean allowCastFromLibraryWhileSearching,
         boolean grantExilePlayPermission,
@@ -86,6 +88,7 @@ public record LibrarySearchParams(
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                 placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
     }
@@ -100,6 +103,7 @@ public record LibrarySearchParams(
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                 placeBattlefieldCardsSimultaneously, allow,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
     }
@@ -145,6 +149,8 @@ public record LibrarySearchParams(
         private boolean sourceSideboard;
         private CardSubtype battlefieldIfChosenBeholdType;
         private Integer battlefieldIfManaValueAtMost;
+        private CardPredicate battlefieldIfChosenPredicate;
+        private boolean battlefieldIfChosenTapped;
         private boolean placeBattlefieldCardsSimultaneously;
         private boolean allowCastFromLibraryWhileSearching;
         private boolean grantExilePlayPermission = true;
@@ -347,6 +353,16 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder battlefieldIfChosenPredicate(CardPredicate battlefieldIfChosenPredicate) {
+            this.battlefieldIfChosenPredicate = battlefieldIfChosenPredicate;
+            return this;
+        }
+
+        public Builder battlefieldIfChosenTapped(boolean battlefieldIfChosenTapped) {
+            this.battlefieldIfChosenTapped = battlefieldIfChosenTapped;
+            return this;
+        }
+
         /** Holds selected battlefield cards until a bounded multi-pick flow completes. */
         public Builder placeBattlefieldCardsSimultaneously(boolean placeBattlefieldCardsSimultaneously) {
             this.placeBattlefieldCardsSimultaneously = placeBattlefieldCardsSimultaneously;
@@ -378,6 +394,7 @@ public record LibrarySearchParams(
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                     returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                    battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                     placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
                     grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
         }

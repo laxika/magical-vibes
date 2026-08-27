@@ -76,6 +76,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsKindredPredicate` | `()` | kindred permanents, including continuous card-type changes |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
+| `PermanentIsSuspectedPredicate` | `()` | permanents that have the suspected designation |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentAttacksPlayerWithMostLifePredicate` | `()` | attacking creatures whose direct player attack target is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
 | `PermanentAttacksWhileSourceControllerHasMostLifePredicate` | `()` | attacking creatures whose source controller is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
@@ -195,7 +196,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
 | `PermanentIsSourcePermanentPredicate` | `()` | the source **permanent** itself, matched by permanent id (so a second copy of the same card is not matched). Wrap in `PermanentNotPredicate` for "each **other** …" wording (Renegade Krasis) | `sourcePermanentSnapshot` |
-| `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence) | none |
+| `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence, Zenos yae Galvus) | none |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
 | `PermanentControlledByActivePlayerPredicate` | `()` | permanents controlled by the active player (`gameData.activePlayerId`) | `gameData` |
 | `PermanentControlledByDefendingPlayerPredicate` | `()` | permanents controlled by a defending player of the current combat (a player attacked directly or via one of their planeswalkers, per `GameQueryService.isPlayerBeingAttacked`). Matches nothing outside combat, so a spell using it is uncastable before attackers are declared. Yare | `gameData` |

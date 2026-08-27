@@ -36,6 +36,11 @@ public class PlayCardRequestDispatchService {
             gameService.foretellCard(gameData, player, request.cardIndex());
             return;
         }
+        if (Boolean.TRUE.equals(request.adventure())) {
+            gameService.playCardWithAdventure(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));
+            return;
+        }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
             gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
             return;

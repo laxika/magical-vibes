@@ -586,6 +586,8 @@ public class CombatBlockService {
             List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(
                     attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
             grantedBecomesBlockedEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
+            grantedBecomesBlockedEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                    gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED));
             if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()) {
                 List<CardEffect> blockerSpecificEffects = new ArrayList<>(becomesBlockedRegs.stream()
                         .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
@@ -1568,6 +1570,7 @@ public class CombatBlockService {
 
         token.setBlocking(true);
         token.addBlockingTargetId(attacker.getId());
+        attacker.setBlockedWithoutBlockers(false);
         UUID attackerControllerId = gameData.findControllerOf(attacker);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerControllerId);
         if (attackerBattlefield != null) {

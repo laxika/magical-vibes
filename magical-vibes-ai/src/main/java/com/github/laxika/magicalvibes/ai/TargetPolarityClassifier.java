@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffe
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -309,6 +310,9 @@ public class TargetPolarityClassifier {
                     ? TargetPolarity.BENEFICIAL
                     : null;
         }
+        if (effect instanceof SuspectEffect suspect) {
+            return suspect.scope() == GrantScope.TARGET ? TargetPolarity.NEUTRAL : null;
+        }
 
         // Base-P/T setters swing both ways: Diminish (1/1) shrinks the opponent's fatty,
         // Wings of Velis Vel (4/4 flying) upgrades the AI's own weenie. A small stat line
@@ -441,6 +445,7 @@ public class TargetPolarityClassifier {
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),
+            entry("AttachOneOfControlledEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachSourceEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
@@ -455,6 +460,7 @@ public class TargetPolarityClassifier {
             // Chandra's Ignition: the target is a creature you control and is only the damage
             // source — it takes no damage itself, so the AI should aim at its own board.
             entry("TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect", TargetPolarity.BENEFICIAL),
+            entry("TargetCreatureDealsPowerDamageToEachOtherCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("TapTargetThenEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
@@ -486,6 +492,7 @@ public class TargetPolarityClassifier {
 
             // Pack Hunt searches for cards named after the opposing creature it targets.
             entry("SearchLibraryForCardsWithTargetCreatureNameEffect", TargetPolarity.HARMFUL),
+            entry("SearchTargetPermanentControllerLibraryForSameNameToBattlefieldEffect", TargetPolarity.HARMFUL),
 
             // Deliberately directionless: copies, color/type tweaks, symmetric moves — and
             // Polymorph/Shape Anew-style upgrades that are usually aimed at the AI's own
@@ -520,6 +527,7 @@ public class TargetPolarityClassifier {
             entry("MoveCounterFromTargetCreatureToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("RemoveAllCountersFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SacrificeTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetColorEffect", TargetPolarity.NEUTRAL),

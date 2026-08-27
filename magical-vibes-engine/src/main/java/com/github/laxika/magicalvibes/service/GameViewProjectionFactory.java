@@ -170,7 +170,9 @@ public class GameViewProjectionFactory {
             messages.put(playerId, new GameStateMessage(
                     MessageType.GAME_STATE, gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
-                    applyFaceDownReveals(battlefields, faceDownReveals, playerId),
+                    applyFaceDownPermanentReveals(
+                            applyFaceDownReveals(battlefields, faceDownReveals, playerId),
+                            collectFaceDownPermanentReveals(gameData, playerId)),
                     stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableForetellIndices,
@@ -294,6 +296,42 @@ public class GameViewProjectionFactory {
             result.add(viewerSide);
         }
         return result;
+    }
+
+    /** Face-down battlefield creatures revealed to a player by a turn-scoped permission. */
+    Map<UUID, CardView> collectFaceDownPermanentReveals(GameData data, UUID viewerId) {
+        if (!data.playersWhoMayLookAtFaceDownCreaturesThisTurn.contains(viewerId)) {
+            return Map.of();
+        }
+
+        Map<UUID, CardView> reveals = new HashMap<>();
+        for (UUID pid : data.orderedPlayerIds) {
+            List<Permanent> battlefield = data.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!permanent.isFaceDown()
+                        || !gameQueryService.isCreature(data, permanent)
+                        || viewerId.equals(gameQueryService.findPermanentController(data, permanent.getId()))) {
+                    continue;
+                }
+                reveals.put(permanent.getId(), cardViewFactory.create(permanent.getCard()));
+            }
+        }
+        return reveals;
+    }
+
+    List<List<PermanentView>> applyFaceDownPermanentReveals(
+            List<List<PermanentView>> battlefields, Map<UUID, CardView> reveals) {
+        if (reveals.isEmpty()) {
+            return battlefields;
+        }
+        return battlefields.stream()
+                .map(side -> side.stream()
+                        .map(view -> reveals.containsKey(view.id())
+                                ? view.withCard(reveals.get(view.id()))
+                                : view)
+                        .toList())
+                .toList();
     }
 
     List<List<CardView>> getGraveyardViews(GameData data) {
@@ -568,6 +606,10 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.setSnowManaSpendableAsAnyColor(true);
             }
+            if (!card.hasType(CardType.CREATURE) && cardPool.getNoncreatureSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteNoncreatureSpellOnlyMana();
+            }
             if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
                     && cardPool.getCreatureOrEnchantmentSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -782,11 +824,16 @@ public class GameViewProjectionFactory {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, topCard, topCard.getParsedManaCost());
             ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaPool cardPool = pool;
+            if (!topCard.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(pool);
+                cardPool.promoteNoncreatureSpellOnlyMana();
+            }
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, topCard, 0, Zone.LIBRARY);
-            boolean canAfford = cost.canPay(pool, additionalCost);
+            boolean canAfford = cost.canPay(cardPool, additionalCost);
             if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
-                canAfford = cost.canPayAsGeneric(pool, 0, additionalCost);
+                canAfford = cost.canPayAsGeneric(cardPool, 0, additionalCost);
             }
             if (!canAfford) {
                 canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);

@@ -63,9 +63,9 @@ public class ExileCastTargetSupport {
 
     /**
      * Legal candidates for the next target slot (position = {@code chosenTargets.size()}) of a
-     * multi-target spell, reusing the normal cast path's per-slot validation. Permanent, player, and
-     * graveyard candidates are concatenated; already-chosen targets are excluded by the underlying
-     * validator.
+     * multi-target spell, reusing the normal cast path's per-slot validation. Permanent, player,
+     * graveyard, and exile candidates are concatenated; already-chosen targets are excluded by the
+     * underlying validator.
      */
     public List<UUID> nextSlotCandidates(GameData gameData, Card card, UUID controllerId, List<UUID> chosenTargets) {
         ValidTargetsResponse response =
@@ -74,6 +74,7 @@ public class ExileCastTargetSupport {
         candidates.addAll(response.validPermanentIds());
         candidates.addAll(response.validPlayerIds());
         candidates.addAll(response.validGraveyardCardIds());
+        candidates.addAll(response.validExiledCardIds());
         return candidates;
     }
 
@@ -142,6 +143,12 @@ public class ExileCastTargetSupport {
             validTargets.addAll(validTargetService
                     .computeValidTargetsForSpell(gameData, card, controllerId, List.of())
                     .validGraveyardCardIds());
+        }
+
+        if (allowedTargets.contains(TargetType.EXILE)) {
+            validTargets.addAll(validTargetService
+                    .computeValidTargetsForSpell(gameData, card, controllerId, List.of())
+                    .validExiledCardIds());
         }
 
         return validTargets;

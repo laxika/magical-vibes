@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -34,7 +35,7 @@ public class GraveyardTargetingSupport {
 
     public Target findTarget(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
-            CardEffect targetEffect = unwrapMay(effect);
+            CardEffect targetEffect = unwrapTargetingWrappers(effect);
             // A "you may [exile this, then return target cards]" bundle keeps its steps in a
             // SequenceEffect, so the targeting step lives one level deeper (Iname, Life Aspect).
             if (targetEffect instanceof SequenceEffect sequence) {
@@ -67,16 +68,19 @@ public class GraveyardTargetingSupport {
         return null;
     }
 
-    private CardEffect unwrapMay(CardEffect effect) {
-        if (effect == null) {
-            return null;
+    private CardEffect unwrapTargetingWrappers(CardEffect effect) {
+        CardEffect unwrapped = effect;
+        while (true) {
+            if (unwrapped instanceof MayEffect may) {
+                unwrapped = may.wrapped();
+            } else if (unwrapped instanceof ConditionalEffect conditional) {
+                unwrapped = conditional.wrapped();
+            } else if (unwrapped instanceof MayPayManaEffect mayPay) {
+                unwrapped = mayPay.wrapped();
+            } else {
+                return unwrapped;
+            }
         }
-        return switch (effect) {
-            case ConditionalEffect conditional -> unwrapMay(conditional.wrapped());
-            case MayEffect may -> unwrapMay(may.wrapped());
-            case MayPayManaEffect mayPay -> unwrapMay(mayPay.wrapped());
-            default -> effect;
-        };
     }
 
     private Target targetOf(CardEffect effect) {
@@ -98,14 +102,17 @@ public class GraveyardTargetingSupport {
             if (scope != null) {
                 boolean anyNumber = exile.scope()
                         == com.github.laxika.magicalvibes.model.effect.GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD;
-                int minTargets = anyNumber ? 0
-                        : exile.exactTargetCount() ? exile.count() : Math.min(1, exile.count());
+                int minTargets = exile.exactTargetCount() ? exile.count() : 0;
                 int maxTargets = anyNumber ? Integer.MAX_VALUE : exile.count();
                 return new Target(exile.filter(), scope, "to exile", maxTargets, minTargets);
             }
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
             return new Target(imprint.filter(), imprint.scope(), "to exile", 1, 1);
+        }
+        if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copy) {
+            GraveyardSearchScope scope = copy.targetSpec().graveyardScope().orElseThrow();
+            return new Target(copy.filter(), scope, "to exile and copy", 1, 0);
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect copy) {
             return new Target(copy.filter(), copy.scope(), "to exile", 1, 1);

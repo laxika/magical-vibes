@@ -217,15 +217,19 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     /**
-     * The remaining "search your library for a basic land card and put it into your hand" picks of a
-     * Cultivate-style search: how many picks are still owed and, when non-null, the land
-     * {@code subtype} the found cards must have.
+     * The remaining "search your library for a land card and put it into your hand" picks of a
+     * Cultivate-style search: how many picks are still owed, the land {@code subtype} the found
+     * cards must have, and whether they must be basic lands.
      */
-    public record BasicLandToHandPick(int count, CardSubtype subtype) {
+    public record BasicLandToHandPick(int count, CardSubtype subtype, boolean basicOnly) {
+
+        public BasicLandToHandPick(int count, CardSubtype subtype) {
+            this(count, subtype, true);
+        }
 
         /** The same pick with one card taken off the remaining count (null once none are left). */
         public BasicLandToHandPick decremented() {
-            return count <= 1 ? null : new BasicLandToHandPick(count - 1, subtype);
+            return count <= 1 ? null : new BasicLandToHandPick(count - 1, subtype, basicOnly);
         }
     }
 
@@ -356,12 +360,26 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 new SelectedCardFollowUp(predicate, effect));
     }
 
+    /** Runs a selected-card follow-up before putting the unchosen bounded-pick cards back randomly. */
+    public static LibrarySearchFollowUp forSelectedCardWithRandomRest(
+            CardPredicate predicate, CardEffect effect) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), SecondBoundedPick.terminal(true), null, List.of(), null,
+                null, null, List.of(), new SelectedCardFollowUp(predicate, effect));
+    }
+
     /**
      * {@code count} further basic land cards to hand, restricted to {@code subtype} when non-null
      * (Nissa's Pilgrimage searches for basic Forest cards only).
      */
     public static LibrarySearchFollowUp forBasicLandToHand(int count, CardSubtype subtype) {
         return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype), null, List.of(), false, null, null, List.of(), 0, false, List.of(), null, null,
+                List.of(), null, null, null);
+    }
+
+    /** Further land-subtype cards to hand, including nonbasic cards with that subtype. */
+    public static LibrarySearchFollowUp forLandSubtypeToHand(int count, CardSubtype subtype) {
+        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype, false), null, List.of(), false, null, null, List.of(), 0, false, List.of(), null, null,
                 List.of(), null, null, null);
     }
 

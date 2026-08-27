@@ -56,6 +56,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever a Case is solved by the controller. */
+    ON_ALLY_CASE_SOLVES,
     ON_CONTROLLER_FORETELLS,
     /** Triggers when the controller copies an instant or sorcery spell. */
     ON_CONTROLLER_COPIES_SPELL,
@@ -80,6 +82,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_PLAYS_LAND,
     ON_OPPONENT_CASTS_SPELL,
     ON_DEATH,
+    ON_HAUNTED_CREATURE_DIES,
     ON_ALLY_CREATURE_DIES,
     /**
      * A permanent that was a creature on the battlefield is put into this permanent's
@@ -157,6 +160,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever this permanent's controller collects evidence. */
+    ON_CONTROLLER_COLLECTS_EVIDENCE,
     /** Triggers whenever this permanent's controller completes a discover action. */
     ON_CONTROLLER_DISCOVERS,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
@@ -169,6 +174,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
+    /** Triggers whenever an opponent gains control of a permanent from this permanent's controller. */
+    ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT,
+    /** Triggers whenever an opponent sacrifices a permanent. */
+    ON_OPPONENT_PERMANENT_SACRIFICED,
     /** Triggers whenever any player sacrifices a permanent. */
     ON_ANY_PERMANENT_SACRIFICED,
     /** Triggers whenever an opponent sacrifices a nontoken permanent. */
@@ -556,6 +565,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. */
     SAGA_CHAPTER_III,
     SAGA_CHAPTER_IV,
+    /** Saga chapter V ability. Triggers when the fifth lore counter is placed. */
+    SAGA_CHAPTER_V,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,
@@ -612,6 +623,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controller's graveyard. Checked per-card inside
      *  {@code TriggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard}. */
     GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
+    /** Triggers whenever the controller sacrifices a permanent, while this card is in the
+     *  controller's graveyard. Checked per-card inside
+     *  {@code TriggerCollectionService.checkGraveyardAllyPermanentSacrificedTriggers}. */
+    GRAVEYARD_ON_CONTROLLER_PERMANENT_SACRIFICED,
     /** Triggers once for each creature card that leaves an opponent's graveyard, while this card is
      *  in its owner's graveyard. Fired per leaving card from
      *  {@code GraveyardService.notifyCardLeftGraveyard} (and the bulk clear path), which scans the
@@ -634,6 +649,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
      *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
     ON_SELF_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another permanent leaves the battlefield by any means. */
+    ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers whenever another creature (any player's) leaves the battlefield by any means
      *  (destruction, exile, bounce, sacrifice, tuck). Global watcher — fires on every permanent
      *  with this slot except the leaving creature itself. Checked in PermanentRemovalService via
@@ -785,6 +802,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
+    /** Triggers whenever one or more controlled creatures or creature cards in the controller's graveyard are exiled. */
+    ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED,
     /** Triggers during your turn whenever one or more cards are exiled from graveyards and/or the battlefield. */
     ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN,
     /** Triggers whenever this permanent's controller proliferates. */
@@ -889,6 +908,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_TURNED_FACE_UP,
     /** Fires when this creature or another creature its controller controls is turned face up. */
     ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP,
+    /** Fires when this permanent or another permanent its controller controls is turned face up. */
+    ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP,
     /** Triggers once per attacking creature whenever a creature attacks the controller of this
      *  permanent or a planeswalker they control. Fires on the defending player's permanents.
      *  The attacking creature's permanent ID is set as the (non-targeting) targetId on the stack

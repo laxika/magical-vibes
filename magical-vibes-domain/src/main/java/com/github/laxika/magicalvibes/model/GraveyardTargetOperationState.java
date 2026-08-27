@@ -14,6 +14,9 @@ public class GraveyardTargetOperationState {
     public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
     public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
     public boolean resolutionTimeExileThenMayBecomeCopyResume;
+    public boolean resolutionTimeKayaSpiritsJusticeResume;
+    /** Whether a resolution-time collect-evidence choice is awaiting completion. */
+    public boolean resolutionTimeCollectEvidenceResume;
     /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
     public boolean resolutionTimeReturnCardsToBattlefieldResume;
 
@@ -56,6 +59,10 @@ public class GraveyardTargetOperationState {
     public final Map<CardEffect, List<UUID>> spellGraveyardCardIdsByEffect = new IdentityHashMap<>();
     /** Whether the spell is being cast with flashback */
     public boolean flashback;
+    /** Physical hand card for an alternate-face spell whose cast face is stored in {@link #card}. */
+    public Card physicalCard;
+    /** Whether the pending spell was cast as an Adventure. */
+    public boolean castWithAdventure;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */
@@ -181,6 +188,12 @@ public class GraveyardTargetOperationState {
 
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {
     }
+
+    public record DeadlyCoverUpContext(UUID chosenCardId) {
+    }
+
+    /** Resolution-time choice state for Deadly Cover-Up's non-targeting graveyard exile. */
+    public DeadlyCoverUpContext resolutionTimeDeadlyCoverUp;
 
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {

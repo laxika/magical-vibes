@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -265,6 +267,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_TRANSFORMED),
@@ -514,11 +517,15 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
+        if (!mayInterveningIfIsMet(match, may)) {
+            return false;
+        }
         boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
         // "You may gain life equal to that creature's toughness" (e.g. Orchard Warden): read the
         // entering creature's toughness now, since the wrapped effect loses that context once queued.
@@ -560,6 +567,31 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} triggers for {} entering (may effect)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
+    }
+
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    private boolean handleTokenEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        if (!mayInterveningIfIsMet(match, may)) {
+            return false;
+        }
+
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    null, match.permanent().getId());
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for tokens entering (may effect)",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    private boolean mayInterveningIfIsMet(TriggerMatchContext match, MayEffect may) {
+        return !(may.wrapped() instanceof ConditionalEffect conditional)
+                || !conditional.interveningIf()
+                || conditionEvaluationService.isInterveningIfMet(
+                match.gameData(), conditional, match.permanent(), match.controllerId());
     }
 
     @CollectsTrigger(value = MayEffect.class,
@@ -767,6 +799,19 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = LoseLifeEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleLifeLossToEnteringController(TriggerMatchContext match,
+            LoseLifeEffect lifeLoss, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID targetPlayerId = lifeLoss.recipient() == LoseLifeRecipient.TARGET_PLAYER
+                ? pe.enteringControllerId()
+                : pe.defaultTargetPlayerId();
+        enqueue(match, lifeLoss, targetPlayerId, pe.perEffectTriggerCount());
+        logTriggered(match);
+        return true;
+    }
+
     /**
      * "Whenever a creature enters, its controller sacrifices a [permanent] of their choice" (Tainted
      * Aether). The authored effect already carries {@code SacrificeRecipient.TARGET_PLAYER}; here we
@@ -937,6 +982,8 @@ public class EnterTriggerCollectorService {
                     slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
                     slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
                     slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     })

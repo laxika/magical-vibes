@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesO
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
@@ -63,6 +64,11 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
@@ -124,6 +130,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Handles declare-attackers step: computing legal attackers, enforcing attack requirements
@@ -1195,6 +1202,11 @@ public class CombatAttackService {
                         continue;
                     }
                     filteredEffects.add(ce.wrapped());
+                } else if (effect instanceof ConditionalEffect ce && ce.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                        ConditionContext.forPermanent(perm, playerId)
+                                .withXValue(attackerIndices.size()))) {
+                    continue;
                 } else {
                     filteredEffects.add(effect);
                 }
@@ -1280,6 +1292,11 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
+                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof SourceAttackedThisCombat
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId)));
+
                 // The surviving attacks-alone conditionals are already satisfied, so unwrap them to
                 // their inner effect. This lets a wrapped "you may" (e.g. Angelic Benediction's
                 // "you may tap target creature") route through the may/mandatory split below.
@@ -1323,34 +1340,37 @@ public class CombatAttackService {
                                 attacker.getAttackTarget());
                     }
 
-                    boolean mandatoryNeedsTarget = mandatoryEffects.stream()
-                            .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                                    || perm.getCard().getEffectTargetIndex(e) >= 0);
-                    if (mandatoryNeedsTarget) {
-                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                perm.getCard(), playerId, mandatoryEffects, perm.getId(), playerId,
-                                attacker.getAttackTarget()));
-                    } else if (!mandatoryEffects.isEmpty()) {
-                        StackEntry attackTrigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s attack trigger",
-                                mandatoryEffects,
-                                null,
-                                perm.getId()
-                        );
-                        attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
-                        // Record the triggering attacker as a non-targeting reference so effects that
-                        // act on "that creature" (e.g. Shared Animosity's +1/+0 boost) can find it.
-                        // Non-targeting so this never fizzles triggers that ignore it (e.g. Hellrider).
-                        attackTrigger.setTargetId(attacker.getId());
-                        attackTrigger.setNonTargeting(true);
-                        if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
-                                && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect)) {
-                            attackTrigger.setEventValue(attacker.getCard().getManaValue());
+                    if (!mandatoryEffects.isEmpty()) {
+                        boolean needsTarget = mandatoryEffects.stream()
+                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                        || perm.getCard().getEffectTargetIndex(e) >= 0);
+                        UUID attackedTargetId = attacker.getAttackTarget();
+                        if (needsTarget) {
+                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                    perm.getCard(), playerId, mandatoryEffects, perm.getId(), playerId,
+                                    attackedTargetId, attacker.getId()));
+                        } else {
+                            StackEntry attackTrigger = new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s attack trigger",
+                                    mandatoryEffects,
+                                    null,
+                                    perm.getId()
+                            );
+                            attackTrigger.setAttackedTargetId(attackedTargetId);
+                            // Record the triggering attacker as a non-targeting reference so effects that
+                            // act on "that creature" can find it.
+                            attackTrigger.setTargetId(attacker.getId());
+                            attackTrigger.setNonTargeting(true);
+                            attackTrigger.setTriggeringPermanentId(attacker.getId());
+                            if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
+                                    && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect)) {
+                                attackTrigger.setEventValue(attacker.getCard().getManaValue());
+                            }
+                            gameData.stack.add(attackTrigger);
                         }
-                        gameData.stack.add(attackTrigger);
                     }
 
                     gameLogService.append(gameData,
@@ -1695,12 +1715,24 @@ public class CombatAttackService {
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
-                    if (effect instanceof ConditionalEffect conditional
-                            && (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
-                            || conditional.condition() instanceof OpponentAttacksPlaneswalker)
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
-                        continue;
+                    if (effect instanceof ConditionalEffect conditional) {
+                        if (conditional.condition() instanceof MinimumAttackers
+                                && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, permController)
+                                        .withXValue(attackerIndices.size()))) {
+                            continue;
+                        }
+                        if (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
+                                || conditional.condition() instanceof OpponentAttacksPlaneswalker) {
+                            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
+                                continue;
+                            }
+                        }
+                        if (conditional.condition() instanceof MinimumAttackers) {
+                            playerAttackEffects.add(conditional.wrapped());
+                            continue;
+                        }
                     }
                     playerAttackEffects.add(effect);
                 }
@@ -1714,9 +1746,9 @@ public class CombatAttackService {
                             permController,
                             perm.getCard().getName() + "'s trigger",
                             new ArrayList<>(playerAttackEffects),
-                            playerId,
-                            perm.getId()
-                    );
+                            attackerIndices.size(),
+                            perm.getId());
+                    playerAttackTrigger.setTargetId(playerId);
                     playerAttackTrigger.setNonTargeting(true);
                     gameData.stack.add(playerAttackTrigger);
                     gameLogService.append(gameData,
@@ -1733,6 +1765,7 @@ public class CombatAttackService {
         processDelayedNontokenAttackTokenTriggers(gameData, battlefield, attackerIndices);
         processDelayedAttackTokenCreationTriggers(gameData, playerId, attackerIndices);
         processDelayedAttackUntapTriggers(gameData, playerId, attackerIndices);
+        processDelayedVehicleAttackTriggers(gameData, battlefield, attackerIndices);
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
@@ -1874,6 +1907,59 @@ public class CombatAttackService {
 
         gameData.clearDelayedActions(DelayedAttackUntap.class,
                 action -> action.controllerId().equals(attackingPlayerId));
+    }
+
+    private void processDelayedVehicleAttackTriggers(GameData gameData, List<Permanent> battlefield,
+                                                      List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty() || gameData.combatPhasesThisTurn != 1
+                || !gameData.hasDelayedAction(DelayedVehicleAttack.class)) {
+            return;
+        }
+
+        Set<UUID> attackingPermanentIds = attackerIndices.stream()
+                .map(battlefield::get)
+                .map(Permanent::getId)
+                .collect(Collectors.toSet());
+        List<DelayedVehicleAttack> matchingActions = gameData.getDelayedActions(DelayedVehicleAttack.class).stream()
+                .filter(action -> attackingPermanentIds.contains(action.vehicleId()))
+                .toList();
+        if (matchingActions.isEmpty()) return;
+
+        for (DelayedVehicleAttack action : matchingActions) {
+            Permanent source = gameQueryService.findPermanentById(gameData, action.sourcePermanentId());
+            Permanent vehicle = gameQueryService.findPermanentById(gameData, action.vehicleId());
+            GameQueryService.StaticBonus sourceStaticBonus = source == null
+                    ? null : gameQueryService.computeStaticBonus(gameData, source);
+            if (source == null || vehicle == null
+                    || source.isLosesAllAbilitiesUntilEndOfTurn()
+                    || sourceStaticBonus.losesAllAbilities()
+                    || sourceStaticBonus.losesAllNonManaAbilities()
+                    || source.getCard().getEffects(EffectSlot.ON_CREWS_VEHICLE).stream()
+                    .noneMatch(RegisterDelayedVehicleAttackEffect.class::isInstance)
+                    || !gameQueryService.effectiveCreatureSubtypes(gameData, vehicle)
+                    .contains(CardSubtype.VEHICLE)) {
+                continue;
+            }
+
+            UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+            if (controllerId == null) continue;
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    action.sourceCard(),
+                    controllerId,
+                    action.sourceCard().getName() + "'s delayed trigger",
+                    List.of(action.effect()),
+                    null,
+                    action.sourcePermanentId());
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
+            log.info("Game {} - {} delayed Vehicle attack trigger fires", gameData.id,
+                    action.sourceCard().getName());
+        }
+
+        gameData.clearDelayedActions(DelayedVehicleAttack.class,
+                action -> attackingPermanentIds.contains(action.vehicleId()));
     }
 
     private void processDelayedAttackTokenCreationTriggers(GameData gameData, UUID attackingPlayerId,

@@ -73,6 +73,30 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        if (e.scope() == GrantScope.ALL_CREATURES
+                || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            SetBasePowerToughnessEffect individualEffect = new SetBasePowerToughnessEffect(
+                    e.power(), e.toughness(), GrantScope.TARGET, e.duration());
+            int count = 0;
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (!gameQueryService.isCreature(gameData, permanent)
+                            || (e.scope() == GrantScope.ALL_CREATURES
+                            && permanent.getId().equals(sourcePermanentId))) {
+                        continue;
+                    }
+                    applyEffect(gameData, entry, individualEffect, permanent);
+                    count++;
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" sets the base power and toughness of " + count
+                            + " other creature(s) to " + e.power() + "/" + e.toughness()
+                            + " until end of turn.").build());
+            return;
+        }
+
         // SELF scope ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter)
         // resolves against the source.
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

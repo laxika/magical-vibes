@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCou
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMaySearchLibraryForSameNameEffect;
@@ -86,6 +87,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -131,6 +133,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
@@ -1665,15 +1668,27 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
+        CardEffect resolved = conditional.wrapped();
+        boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
+        if (oncePerTurn) {
+            if (match.gameData().oncePerTurnTriggersFiredThisTurn.contains(match.permanent().getId())) {
+                return false;
+            }
+            resolved = ((OncePerTurnTriggerEffect) resolved).wrapped();
+        }
+
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
+                new ArrayList<>(List.of(resolved)),
                 null,
                 match.permanent().getId()
         ));
+        if (oncePerTurn) {
+            match.gameData().oncePerTurnTriggersFiredThisTurn.add(match.permanent().getId());
+        }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (controller's permanent put into graveyard from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -1968,6 +1983,49 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PutCountersOnTargetForEachDyingSourcePowerEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handlePutCountersOnTargetForEachDyingSourcePower(TriggerMatchContext match,
+            PutCountersOnTargetForEachDyingSourcePowerEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+
+        int power = Math.max(0, dyingPermanent.getEffectivePower());
+        match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                sd.dyingCard(), sd.controllerId(),
+                new ArrayList<>(List.of(new PutCountersOnTargetForEachDyingSourcePowerEffect(power)))
+        ));
+        return true;
+    }
+
+    @CollectsEmblemTrigger(EmblemCreatureDeathTriggerEffect.class)
+    boolean handleEmblemCreatureDeath(EmblemTriggerMatchContext match,
+            EmblemCreatureDeathTriggerEffect effect, TriggerContext ctx) {
+        Card source = match.emblem().sourceCard();
+        if (source == null) {
+            return false;
+        }
+
+        GameData gameData = match.gameData();
+        List<CardEffect> effects = new ArrayList<>(effect.effects());
+        if (effects.stream().anyMatch(cardEffect ->
+                cardEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || cardEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+            gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    source, match.controllerId(), effects, null, null, effect.targetFilter()));
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source,
+                    match.controllerId(),
+                    source.getName() + "'s emblem ability",
+                    effects));
+        }
+        return true;
+    }
+
     @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
@@ -2017,7 +2075,8 @@ public class DeathTriggerCollectorService {
         GameData gameData = match.gameData();
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    null, new Permanent(match.permanent())
             ));
         } else {
             gameData.stack.add(new StackEntry(
@@ -2450,6 +2509,30 @@ public class DeathTriggerCollectorService {
     boolean handleOpponentCreatureDeathMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        logOpponentCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSourceEqualToDyingPowerEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    boolean handleOpponentCreatureDeathPutCountersEqualToPower(TriggerMatchContext match,
+            PutCountersOnSourceEqualToDyingPowerEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        int power = Math.max(0, cd.dyingCreaturePower());
+        var counters = new PutCountersOnSourceEffect(effect.powerModifier(), effect.toughnessModifier(), power);
+        if (effect.optional()) {
+            var may = new MayEffect(counters, "Put " + power + " +1/+1 counter(s) on this creature?");
+            match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                    null, match.permanent().getId());
+        } else {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(counters)),
+                    null,
+                    match.permanent().getId()));
+        }
         logOpponentCreatureDeath(match);
         return true;
     }

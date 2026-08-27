@@ -53,11 +53,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         UUID choicePlayerId = switch (e.choicePlayer()) {
             case CONTROLLER -> entry.getControllerId();
             case ACTIVE_PLAYER -> entry.getActivePlayerId();
+            case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
             case TARGET_PERMANENT_CONTROLLER -> targetId == null
                     ? null
                     : gameQueryService.findPermanentController(gameData, targetId);
             case TARGET_SPELL_CONTROLLER -> findTargetSpellControllerId(gameData, targetId);
-            case TRIGGERING_PERMANENT_CONTROLLER -> targetId;
+            case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId() != null
+                    ? entry.getTriggeringPermanentControllerId() : targetId;
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetId == null
                     ? null
                     : gameData.playerIds.contains(targetId)

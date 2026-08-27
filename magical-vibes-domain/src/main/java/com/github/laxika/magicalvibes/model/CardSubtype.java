@@ -71,6 +71,7 @@ public enum CardSubtype {
     GRAVEBORN("Graveborn"),
     INKLING("Inkling"),
     AURA("Aura"),
+    CASE("Case"),
     RUNE("Rune"),
     NOMAD("Nomad"),
     ALLY("Ally"),
@@ -269,7 +270,11 @@ public enum CardSubtype {
     MITE("Mite"),
     OMEN("Omen"),
     FLAGBEARER("Flagbearer"),
-    ROBOT("Robot");
+    MOOGLE("Moogle"),
+    TOWN("Town"),
+    ROBOT("Robot"),
+    NEPHILIM("Nephilim"),
+    SAND("Sand");
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,

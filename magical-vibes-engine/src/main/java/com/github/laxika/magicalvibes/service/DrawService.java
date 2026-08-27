@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawIfEmptyLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
@@ -63,6 +64,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
@@ -96,6 +98,7 @@ public class DrawService {
     private final LifeSupport lifeSupport;
     private final GraveyardService graveyardService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
 
     public DrawService(GameQueryService gameQueryService,
@@ -108,6 +111,7 @@ public class DrawService {
                        @Lazy LifeSupport lifeSupport,
                        @Lazy GraveyardService graveyardService,
                        ConditionEvaluationService conditionEvaluationService,
+                       GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                        DredgeSupport dredgeSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
@@ -119,6 +123,7 @@ public class DrawService {
         this.lifeSupport = lifeSupport;
         this.graveyardService = graveyardService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.dredgeSupport = dredgeSupport;
     }
 
@@ -127,7 +132,7 @@ public class DrawService {
             return;
         }
 
-        if (isDrawSkipped(gameData)) {
+        if (isDrawSkipped(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
             log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
@@ -381,7 +386,7 @@ public class DrawService {
             return;
         }
 
-        if (isDrawSkipped(gameData)) {
+        if (isDrawSkipped(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
             log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
@@ -436,13 +441,18 @@ public class DrawService {
         return false;
     }
 
-    private boolean isDrawSkipped(GameData gameData) {
+    private boolean isDrawSkipped(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        boolean libraryEmpty = library == null || library.isEmpty();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(effect -> effect instanceof SkipDrawReplacementEffect);
+                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effect ->
+                        effect instanceof SkipDrawReplacementEffect
+                                || (libraryEmpty
+                                && pid.equals(playerId)
+                                && effect instanceof SkipDrawIfEmptyLibraryReplacementEffect));
                 if (skips) return true;
             }
         }
@@ -1229,7 +1239,9 @@ public class DrawService {
 
         for (Permanent perm : battlefield) {
             List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
-            if (drawEffects == null || drawEffects.isEmpty()) continue;
+            drawEffects = drawEffects == null ? new ArrayList<>() : new ArrayList<>(drawEffects);
+            drawEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot));
+            if (drawEffects.isEmpty()) continue;
 
             for (CardEffect authoredEffect : drawEffects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
@@ -1285,8 +1297,8 @@ public class DrawService {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
-                    // Any-target draw trigger (Niv-Mizzet, the Firemind): the controller must choose a
-                    // target before the ability goes on the stack.
+                    // Targeted draw trigger: the controller must choose a target before the ability
+                    // goes on the stack.
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
                             perm.getCard(),
                             drawingPlayerId,
@@ -1299,7 +1311,8 @@ public class DrawService {
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && perm.getCard().getEffectTargetIndex(effect) >= 0) {
+                        && (perm.getCard().getEffectTargetIndex(effect) >= 0
+                        || perm.getCard().getEffectTargetIndex(authoredEffect) >= 0)) {
                     // A permanent-target draw trigger (Mantle of Tides): choose the target as the
                     // ability is put on the stack, using the card's declared target filter.
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(

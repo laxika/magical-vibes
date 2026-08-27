@@ -12,12 +12,14 @@ package com.github.laxika.magicalvibes.model.amount;
  * parameterized with a {@code DynamicAmount} instead of one record per derivation.
  */
 public sealed interface DynamicAmount permits
+        ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,
         AttachmentsOnSource,
         AttachedPermanentColorCount,
         BasicLandTypesAmongControlledLands,
         CardTypesAmongControlledPermanents,
         CardTypesAmongCardsInGraveyard,
         CardsDrawnThisTurn,
+        DistinctColorPairsAmongControlledPermanents,
         DistinctManaCostsAmongCardsInGraveyard,
         DistinctManaValuesAmongStudyCounterCardsInExile,
         DistinctManaValuesAmongControlledPermanents,
@@ -98,6 +100,7 @@ public sealed interface DynamicAmount permits
         LandsMatchingImprintedName,
         LandsEnteredBattlefieldThisTurn,
         LastDiscardedCardManaValue,
+        GreatestDiscardedCardManaValue,
         LastMilledCardColorSymbols,
         LifeGainedThisTurn,
         LifeLostThisTurn,
@@ -109,6 +112,8 @@ public sealed interface DynamicAmount permits
         Max,
         Min,
         OpponentPoisonCounters,
+        OpponentsWithMoreCardsInHandThanController,
+        OpponentsWhoLostLifeThisTurn,
         OtherAttackersSharingCreatureTypeWithTarget,
         DistinctPermanentNamesCount,
         PermanentCount,
@@ -131,6 +136,7 @@ public sealed interface DynamicAmount permits
         TargetManaValue,
         TargetPermanentColorCount,
         TargetCardsManaValueSum,
+        TargetGroupCount,
         TargetSpellManaValue,
         TargetSpellPower,
         TargetToughness,
@@ -146,5 +152,6 @@ public sealed interface DynamicAmount permits
         UnspentMana,
         UntappedLandsAtTurnStart,
         WebSlingingReturnedCreatureManaValue,
-        XValue {
+        XValue,
+        CardTypesAmongCardsDiscardedThisResolution {
 }

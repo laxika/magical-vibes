@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -73,24 +75,47 @@ public class PermanentControlSupport {
      */
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                        String sourceSetCode, int power, int toughness) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
+                true, true, true);
+    }
+
+    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
+                                        String sourceSetCode, int power, int toughness,
+                                        boolean applyAdditionalReplacements, boolean applyTokenMultiplier,
+        boolean fireTokenTriggers) {
         List<UUID> createdIds = new ArrayList<>();
-        boolean isCreature = token.primaryType() == CardType.CREATURE;
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, isCreature);
+        boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
+        int tokenMultiplier = applyTokenMultiplier
+                ? gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature) : 1;
         int totalAmount = amount * tokenMultiplier;
-        int additionalMapTokenCount = TokenCreationReplacementSupport.additionalMapTokenCount(
-                gameData, controllerId, token, amount);
+        int additionalMapTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalMapTokenCount(
+                        gameData, controllerId, token, amount)
+                : 0;
+        CreateTokenEffect additionalFrog = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
+                        gameData, controllerId, token)
+                : null;
+        boolean addClueToken = applyAdditionalReplacements
+                && totalAmount > 0
+                && hasSolvedClueReplacement(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
-        List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(totalAmount + additionalMapTokenCount);
+        int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
+        List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
+                totalAmount + additionalMapTokenCount + additionalFrogTokenCount);
         CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         for (int i = 0; i < totalAmount; i++) {
             tokenBlueprints.add(evaluatedToken);
         }
         for (int i = 0; i < additionalMapTokenCount; i++) {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));
+        }
+        if (additionalFrogTokenCount > 0) {
+            tokenBlueprints.add(additionalFrog);
         }
 
         for (CreateTokenEffect tokenBlueprint : tokenBlueprints) {
@@ -171,13 +196,33 @@ public class PermanentControlSupport {
             }
         }
 
+        if (addClueToken) {
+            createdIds.addAll(applyCreateToken(gameData, controllerId, CreateTokenEffect.ofClueToken(1), 1,
+                    sourceSetCode, 0, 0, false, false, false));
+        }
+
         UUID tokenControllerId = createdIds.isEmpty()
                 ? controllerId
                 : gameQueryService.findPermanentController(gameData, createdIds.get(createdIds.size() - 1));
-        battlefieldEntryService.checkAllyTokenEntersTriggers(
-                gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds);
+        if (fireTokenTriggers) {
+            battlefieldEntryService.checkAllyTokenEntersTriggers(
+                    gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds);
+        }
 
-        log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);
+        log.info("Game {} - {} token(s) created for player {}", gameData.id, createdIds.size(), controllerId);
         return createdIds;
+    }
+
+    private boolean hasSolvedClueReplacement(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .filter(permanent -> permanent.isSolved()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && !permanent.isStaticEffectSuppressed(AddClueTokenToTokenCreationEffect.class))
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(AddClueTokenToTokenCreationEffect.class::isInstance);
     }
 }

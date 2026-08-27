@@ -18,10 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Resolves the mill-and-reanimate portion of Vorinclex // The Grand Evolution. The choice is
- * limited to cards that this resolution actually milled and that are still in the graveyard.
- */
+/** Resolves a mill followed by choosing a capped number of the milled creatures to reanimate. */
 @Component
 @RequiredArgsConstructor
 public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler

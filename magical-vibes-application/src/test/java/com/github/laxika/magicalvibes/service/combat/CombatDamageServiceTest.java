@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -1248,6 +1250,28 @@ class CombatDamageServiceTest {
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Attached triggering-player token effect uses the enchanted creature controller")
+        void attachedTriggeringPlayerTokenEffectUsesEnchantedCreatureController() {
+            Permanent creature = addAttacker("Enchanted creature", 3, 3);
+            Card auraCard = createCard("Curious Inquiry", 1, 1);
+            auraCard.setType(CardType.ENCHANTMENT);
+            auraCard.addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofClueToken(1)));
+            Permanent aura = new Permanent(auraCard);
+            aura.setAttachedTo(creature.getId());
+            gameData.playerBattlefields.get(player2Id).add(aura);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream()
+                            .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player1Id);
         }
 
         @Test

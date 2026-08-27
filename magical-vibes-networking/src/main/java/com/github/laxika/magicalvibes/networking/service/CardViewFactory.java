@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CastingOption;
@@ -20,6 +21,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -135,8 +138,18 @@ public class CardViewFactory {
                 : null;
 
         var altCastOpt = card.getCastingOption(AlternateHandCast.class).map(a -> (CastingOption) a)
+                .or(() -> card.getCastingOption(AdventureCast.class).map(a -> (CastingOption) a))
                 .or(() -> card.getCastingOption(BestowCast.class).map(b -> (CastingOption) b));
         boolean hasAlternateCastingCost = altCastOpt.isPresent();
+        CollectEvidenceCost collectEvidenceAlternativeCost = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(AlternativeCostForSpellsEffect.class::isInstance)
+                .map(AlternativeCostForSpellsEffect.class::cast)
+                .map(AlternativeCostForSpellsEffect::nonManaCost)
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        hasAlternateCastingCost = hasAlternateCastingCost || collectEvidenceAlternativeCost != null;
         int alternateCostLifePayment = altCastOpt.flatMap(a -> a.getCost(LifeCastingCost.class)).map(LifeCastingCost::amount).orElse(0);
         int alternateCostSacrificeCount = altCastOpt.flatMap(a -> a.getCost(SacrificePermanentsCost.class)).map(SacrificePermanentsCost::count).orElse(0);
         int alternateCostTapCount = altCastOpt.flatMap(a -> a.getCost(TapUntappedPermanentsCost.class)).map(TapUntappedPermanentsCost::count).orElse(0);
@@ -246,6 +259,8 @@ public class CardViewFactory {
                 0,
                 chooseCreatureTypeCost,
                 creatureTypeChoices,
+                collectEvidenceAlternativeCost != null,
+                collectEvidenceAlternativeCost != null ? collectEvidenceAlternativeCost.minimumManaValue() : 0,
                 prepareSpellView);
     }
 

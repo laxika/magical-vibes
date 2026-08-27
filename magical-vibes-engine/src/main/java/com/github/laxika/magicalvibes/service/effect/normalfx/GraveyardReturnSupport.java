@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -195,16 +196,18 @@ public class GraveyardReturnSupport {
         if (effect.attachToSource() && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (sourcePermanent == null || !canEnchant(gameData, targetCard, controllerId, sourcePermanent)) {
+            boolean isEquipment = targetCard.getSubtypes().contains(CardSubtype.EQUIPMENT);
+            if (sourcePermanent == null
+                    || !isEquipment && !canEnchant(gameData, targetCard, controllerId, sourcePermanent)) {
                 gameLogService.append(gameData, GameLog.textCardText(entry.getDescription()
                         + " fizzles (", targetCard, " can't be attached)."));
                 return;
             }
 
             permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
-            Permanent auraPermanent = new Permanent(targetCard);
-            auraPermanent.setAttachedTo(sourcePermanent.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPermanent);
+            Permanent attachedPermanent = new Permanent(targetCard);
+            attachedPermanent.setAttachedTo(sourcePermanent.getId());
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, attachedPermanent);
             gameLogService.append(gameData, GameLog.builder().card(targetCard)
                     .text(" enters the battlefield attached to ").card(sourcePermanent.getCard()).text(".").build());
             log.info("Game {} - {} enters the battlefield attached to {}", gameData.id,
@@ -1027,9 +1030,9 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, matchingIndices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
-                .mandatory(effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -1093,6 +1096,7 @@ public class GraveyardReturnSupport {
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, indices, effect.destination(), prompt)
                 .enterTapped(effect.enterTapped())
+                .mandatory(effect.mandatory())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
                 .cardPool(cardPool);
@@ -1780,15 +1784,15 @@ public class GraveyardReturnSupport {
                                          Integer powerOverride, Integer toughnessOverride) {
         createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, false, false,
-                new ArrayList<>(), additionalKeywords);
+                new ArrayList<>(), additionalKeywords, false);
     }
 
     /**
      * Variant for effects that create several token copies as one simultaneous event (Hour of
      * Eternity). {@code simultaneouslyEntered} accumulates every token this call places, and is
      * passed to the entry funnel so batch-mates cannot apply their own replacement or static
-     * abilities to each other (CR 614.12). Callers creating a single token pass a fresh list; the
-     * token-multiplier copies made inside one call are batched against each other regardless.
+     * abilities to each other. Callers creating a single token pass a fresh list; the token-multiplier
+     * copies made inside one call are batched against each other regardless.
      */
     public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
                                          List<CardSubtype> additionalSubtypes, boolean grantHaste,
@@ -1797,6 +1801,21 @@ public class GraveyardReturnSupport {
                                          boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
                                          List<Permanent> simultaneouslyEntered,
                                          Set<Keyword> additionalKeywords) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste, exileAtEndStep,
+                colorOverride, powerOverride, toughnessOverride, replaceSubtypes,
+                grantHasteUntilEndOfTurn, simultaneouslyEntered, additionalKeywords, false);
+    }
+
+    /**
+     * Variant that optionally makes each created token enter tapped.
+     */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride,
+                                         boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
+                                         List<Permanent> simultaneouslyEntered,
+                                         Set<Keyword> additionalKeywords, boolean enterTapped) {
         UUID controllerId = entry.getControllerId();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(
                 gameData, controllerId, sourceCard.hasType(CardType.CREATURE));
@@ -1867,6 +1886,9 @@ public class GraveyardReturnSupport {
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (grantHasteUntilEndOfTurn) {
                 tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
+            }
+            if (enterTapped) {
+                tokenPermanent.tap();
             }
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, simultaneouslyEntered);
@@ -2277,6 +2299,7 @@ public class GraveyardReturnSupport {
         }
 
         if (state.disposition() == CardPileDisposition.HAND
+                || state.disposition() == CardPileDisposition.HAND_AND_THOPTER
                 || state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
             // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.
             boolean chosenPileIsFaceDown = state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE
@@ -2295,12 +2318,23 @@ public class GraveyardReturnSupport {
                     }
                 }
             }
+            int cardsPutIntoGraveyard = 0;
             for (UUID cardId : otherPileCardIds) {
                 Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
                 if (card != null) {
                     gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+                    cardsPutIntoGraveyard++;
                     gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their graveyard."));
                 }
+            }
+            if (state.disposition() == CardPileDisposition.HAND_AND_THOPTER
+                    && gameData.pendingEffectResolutionEntry != null) {
+                createTokenEffectHandler.resolve(gameData, gameData.pendingEffectResolutionEntry,
+                        new CreateTokenEffect(
+                                CardType.CREATURE, 1, "Thopter", 0, 0, null, Set.of(),
+                                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
+                                false, false, Map.of(), List.of(), false, false, false,
+                                cardsPutIntoGraveyard, Set.of(), Set.of()));
             }
             return;
         }

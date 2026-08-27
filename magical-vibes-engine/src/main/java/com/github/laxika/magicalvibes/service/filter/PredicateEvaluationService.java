@@ -171,6 +171,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
@@ -851,6 +852,8 @@ public class PredicateEvaluationService {
                     permanent.isTapped();
             case PermanentIsRenownedPredicate ignored ->
                     permanent.isRenowned();
+            case PermanentIsSuspectedPredicate ignored ->
+                    permanent.isSuspected();
             case PermanentIsTokenPredicate ignored ->
                     permanent.getCard().isToken();
             case PermanentIsTransformedPredicate ignored ->
@@ -1848,6 +1851,12 @@ public class PredicateEvaluationService {
         }
         return switch (predicate) {
             case PermanentNotPredicate p -> !matchesStaticFilter(permanent, p.predicate(), context);
+            case PermanentControlledBySourceControllerPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                yield gameData != null && sourceControllerId != null
+                        && sourceControllerId.equals(gameData.findControllerOf(permanent));
+            }
             case PermanentOwnedBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
@@ -1972,15 +1981,6 @@ public class PredicateEvaluationService {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 yield source != null && source.getId().equals(permanent.getId());
             }
-            case PermanentControlledBySourceControllerPredicate ignored -> {
-                GameData gameData = context == null ? null : context.gameData();
-                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
-                if (gameData == null || sourceControllerId == null) {
-                    yield false;
-                }
-                List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
-                yield battlefield != null && battlefield.contains(permanent);
-            }
             case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
                 // Recursion-safe: both colour sets come from the in-flight layer state (or the
                 // permanents' own stored colours), never from computeStaticBonus. Konda's Banner.
@@ -2000,6 +2000,7 @@ public class PredicateEvaluationService {
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsPlaneswalkerPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsRenownedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsSuspectedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTransformedPredicate ignored -> matchesStaticLeaf(permanent, predicate);

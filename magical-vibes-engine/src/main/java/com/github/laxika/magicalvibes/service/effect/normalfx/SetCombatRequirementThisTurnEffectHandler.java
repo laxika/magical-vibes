@@ -45,7 +45,7 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
 
         UUID targetId = e.scope() == GrantScope.SELF
                 ? (entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId())
-                : entry.getTargetId();
+                : entry.targetsForEffect(effect).stream().findFirst().orElse(entry.getTargetId());
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -71,18 +72,17 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
 
         if (matching.size() <= e.maxCount()) {
             // Auto-return all matching cards — no choice needed
-            List<String> returnedNames = new ArrayList<>();
             graveyardService.beginGraveyardLeaveBatch(gameData);
             try {
                 for (Card card : matching) {
                     graveyard.remove(card);
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-                    graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, card);
-                    returnedNames.add(card.getName());
                 }
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);
             }
+            graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
+                    gameData, Map.of(controllerId, matching), e.enterTapped(), null);
             return;
         }
 

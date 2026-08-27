@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -19,8 +19,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AnimateReturnedPermanentsEffectHandler implements NormalEffectHandlerBean {
 
-    private final AmountEvaluationService amountEvaluationService;
     private final AnimationSupport animationSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,21 +29,31 @@ public class AnimateReturnedPermanentsEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        AnimatePermanentsEffect animation =
-                ((AnimateReturnedPermanentsEffect) effect).animation();
+        AnimatePermanentsEffect animation = ((AnimateReturnedPermanentsEffect) effect).animation();
         for (UUID returnedCardId : entry.getTargetCardIds()) {
             Permanent returnedPermanent = findPermanentByCardId(gameData, returnedCardId);
             if (returnedPermanent == null) {
                 continue;
             }
 
-            AmountContext amountContext = AmountContext.forStackEntry(entry, returnedPermanent);
-            int power = amountEvaluationService.evaluate(gameData, animation.power(), amountContext);
-            int toughness = amountEvaluationService.evaluate(gameData, animation.toughness(), amountContext);
-            animationSupport.animatePermanently(gameData, returnedPermanent, animation,
-                    power, toughness, entry.getCard().getName(), entry.getSourcePermanentId(),
-                    entry.getControllerId());
+            AmountContext context = AmountContext.forStackEntry(entry, returnedPermanent);
+            int power = animation.power() == null
+                    ? printedPower(returnedPermanent.getCard())
+                    : amountEvaluationService.evaluate(gameData, animation.power(), context);
+            int toughness = animation.toughness() == null
+                    ? printedToughness(returnedPermanent.getCard())
+                    : amountEvaluationService.evaluate(gameData, animation.toughness(), context);
+            animationSupport.animatePermanently(gameData, returnedPermanent, animation, power, toughness,
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
         }
+    }
+
+    private int printedPower(Card card) {
+        return card.getPower() == null ? 0 : card.getPower();
+    }
+
+    private int printedToughness(Card card) {
+        return card.getToughness() == null ? 0 : card.getToughness();
     }
 
     private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
@@ -52,10 +62,9 @@ public class AnimateReturnedPermanentsEffectHandler implements NormalEffectHandl
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                Card card = permanent.getCard();
-                if (cardId.equals(card.getId())
-                        || permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId())) {
+                if (cardId.equals(permanent.getCard().getId())
+                        || (permanent.getOriginalCard() != null
+                        && cardId.equals(permanent.getOriginalCard().getId()))) {
                     return permanent;
                 }
             }

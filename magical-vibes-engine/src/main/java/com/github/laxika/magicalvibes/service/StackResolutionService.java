@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -78,6 +80,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class StackResolutionService {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final SagaChapterService sagaChapterService;
     private final CloneService cloneService;
     private final GraveyardService graveyardService;
     private final LegendRuleService legendRuleService;
@@ -99,6 +102,7 @@ public class StackResolutionService {
     private final AuraCopyService auraCopyService;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
+                                  SagaChapterService sagaChapterService,
                                   CloneService cloneService,
                                   GraveyardService graveyardService,
                                   LegendRuleService legendRuleService,
@@ -119,6 +123,7 @@ public class StackResolutionService {
                                   AuraCopyService auraCopyService,
                                   @Lazy ParadigmService paradigmService) {
         this.battlefieldEntryService = battlefieldEntryService;
+        this.sagaChapterService = sagaChapterService;
         this.cloneService = cloneService;
         this.graveyardService = graveyardService;
         this.legendRuleService = legendRuleService;
@@ -182,6 +187,13 @@ public class StackResolutionService {
 
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         stateBasedActionService.performStateBasedActions(gameData);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
             triggerCollectionService.processNextPlotTrigger(gameData);
@@ -290,6 +302,8 @@ public class StackResolutionService {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         }
         perm.setCastFromZone(entry.getSourceZone());
+        entry.getEnteringCounters().forEach((counterType, count) ->
+                perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));
         perm.setAlternateCost(entry.isAlternateCost());
         perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
         perm.setEnteredFromZone(entry.getSourceZone());
@@ -478,6 +492,7 @@ public class StackResolutionService {
 
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
+        perm.setCollectEvidenceCostPaid(entry.isCollectEvidenceCostPaid());
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
@@ -739,12 +754,7 @@ public class StackResolutionService {
 
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (enteredCard.isSaga()) {
-                int loreCounters = gameQueryService.replaceCounters(gameData, enchPerm,
-                        CounterType.LORE, 1, controllerId);
-                enchPerm.setCounterCount(CounterType.LORE, loreCounters);
-                gameLogService.append(gameData, GameLog.cardThen(enteredCard, " gets a lore counter (1)."));
-                log.info("Game {} - {} enters with lore counter 1", gameData.id, enteredCard.getName());
-                triggerSagaChapter(gameData, enchPerm, enteredCard, controllerId, 1);
+                sagaChapterService.initializeSaga(gameData, enchPerm, enteredCard, controllerId);
             }
 
             // Check if enchantment has "as enters" color choice
@@ -1003,13 +1013,14 @@ public class StackResolutionService {
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
+                Card dispositionCard = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
                 if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
-                    gameData.playerDecks.get(entry.getOwnerId()).add(entry.getPhysicalCard());
+                    gameData.playerDecks.get(entry.getOwnerId()).add(dispositionCard);
                 } else if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
-                    exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
-                    gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
+                    exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
+                    gameLogService.append(gameData, GameLog.isExiled(dispositionCard));
                 } else {
-                    graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), entry.getCard());
+                    graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), dispositionCard);
                 }
             }
         } else {
@@ -1031,7 +1042,8 @@ public class StackResolutionService {
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
                 if (isNonCopySpell(entry)) {
-                    exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
+                    exileService.exileCard(gameData, entry.getOwnerId(), entry.isCastWithAdventure()
+                            ? entry.getPhysicalCard() : entry.getCard());
                 }
                 return;
             }
@@ -1068,6 +1080,12 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
+     * entry is an activated or triggered ability whose effects branch on {@code NthAbilityResolutionThisTurn}
+     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
+     * Counted at resolution (not activation), so copies of the ability count but activations
+     * countered on the stack do not; fizzled abilities never reach this point. Incremented before
+     * effect dispatch so the condition sees the count including the current resolution, and only
+     * here (not on async resume) so each resolution counts exactly once.
      * entry is an activated or triggered ability whose effects branch on
      * {@code NthAbilityResolutionThisTurn} ("if this is the Nth time this ability has resolved this
      * turn", e.g. Ashling the Pilgrim, Nissa, Resurgent Animist, and Vito, Fanatic of Aclazotz).
@@ -1080,14 +1098,22 @@ public class StackResolutionService {
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
         if ((entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                 && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                || entry.getSourcePermanentId() == null) {
+                || resolutionSourcePermanentId(entry) == null) {
             return;
         }
         boolean countsResolutions = entry.getEffectsToResolve().stream()
                 .anyMatch(CardEffect::hasAbilityResolutionCondition);
         if (countsResolutions) {
-            gameData.permanentAbilityResolutionsThisTurn.merge(entry.getSourcePermanentId(), 1, Integer::sum);
+            gameData.permanentAbilityResolutionsThisTurn.merge(
+                    resolutionSourcePermanentId(entry), 1, Integer::sum);
         }
+    }
+
+    private UUID resolutionSourcePermanentId(StackEntry entry) {
+        return entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId()
+                : entry.getSourcePermanentSnapshot() == null
+                        ? null : entry.getSourcePermanentSnapshot().getId();
     }
 
     /**
@@ -1095,6 +1121,9 @@ public class StackResolutionService {
      * Copies cease to exist per rule 707.10a and abilities have no card to dispose of.
      */
     private void handleSpellDisposition(GameData gameData, StackEntry entry) {
+        if (entry.isSpellDispositionHandled()) {
+            return;
+        }
         if (!isNonCopySpell(entry)) {
             return;
         }
@@ -1127,9 +1156,11 @@ public class StackResolutionService {
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
         } else if (entry.isCastWithAdventure()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
-            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with Adventure."));
+            gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
+            gameLogService.append(gameData, GameLog.cardThen(physicalCard,
+                    " is exiled with permission to cast its creature face."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
@@ -1203,7 +1234,10 @@ public class StackResolutionService {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " is exiled with a dream counter."));
         } else {
-            graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            boolean enteredGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            if (enteredGraveyard) {
+                triggerCollectionService.collectSpellHauntTrigger(gameData, physicalCard, entry.getControllerId());
+            }
         }
     }
 

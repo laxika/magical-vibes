@@ -18,6 +18,7 @@ public final class AiInteractionStrategies {
     static {
         register(new XValueChoiceAiStrategy());
         register(new AlternateCastXValueChoiceAiStrategy());
+        register(new TurnFaceUpXValueChoiceAiStrategy());
         register(new ScryAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
         register(new HandBottomExileChoiceAiStrategy());
@@ -37,6 +38,7 @@ public final class AiInteractionStrategies {
         register(new EyeOfTheStormCastChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
         register(new AssimilationAegisCopyChoiceAiStrategy());
+        register(new ExiledCreatureCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new TargetedHandBattlefieldChoiceAiStrategy());

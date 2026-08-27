@@ -109,6 +109,7 @@ import com.github.laxika.magicalvibes.model.effect.ExilePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ExileArtifactsWithTotalManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromSingleGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
@@ -133,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
@@ -2501,7 +2503,43 @@ public class AbilityActivationService {
                 .filter(ExileXCardsFromGraveyardCost.class::isInstance)
                 .map(ExileXCardsFromGraveyardCost.class::cast)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Activated ability no longer has the graveyard exile cost"));
+                .orElse(null);
+
+        CollectEvidenceCost collectEvidenceCost = ability.getEffects().stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (collectEvidenceCost != null) {
+            UUID playerId = player.getId();
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            validateCollectEvidenceSelection(gameData, playerId, collectEvidenceCost, selectedIds);
+            List<Integer> selectedIndices = selectedIds.stream()
+                    .map(cardId -> indexOfCard(graveyard, cardId))
+                    .toList();
+            gameData.interaction.clearAwaitingInput();
+            activateAbilityInternal(
+                    gameData,
+                    player,
+                    -1,
+                    choice.abilityIndex(),
+                    0,
+                    choice.targetId(),
+                    choice.targetZone(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    source,
+                    selectedIndices,
+                    null
+            );
+            return;
+        }
+
+        if (cost == null) {
+            throw new IllegalStateException("Activated ability no longer has the graveyard exile cost");
+        }
 
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -3142,6 +3180,31 @@ public class AbilityActivationService {
             }
         }
 
+        CollectEvidenceCost collectEvidenceCost = abilityEffects.stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (collectEvidenceCost != null && exileXGraveyardCardIndices == null) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            List<Card> validCards = graveyard == null ? List.of() : List.copyOf(graveyard);
+            interactionHandlerRegistry.begin(gameData,
+                    new PendingInteraction.ActivatedAbilityGraveyardExileCostChoice(
+                            playerId,
+                            permanent.getId(),
+                            effectiveIndex,
+                            targetId,
+                            targetZone,
+                            validCards,
+                            "Choose cards with total mana value at least "
+                                    + collectEvidenceCost.minimumManaValue()
+                                    + " from your graveyard to exile as an activation cost.",
+                            0,
+                            validCards.size(),
+                            false));
+            return;
+        }
+
         // Pay the loyalty cost only now that full legality, including targets, is confirmed
         // (CR 601.2: an illegal activation rewinds with no cost paid)
         if (ability.getLoyaltyCost() != null) {
@@ -3326,7 +3389,7 @@ public class AbilityActivationService {
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, permanent);
+            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, permanent, ability);
             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, permanent)
                     ? subtypeSpellOrAbilityContext : Set.of();
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
@@ -3438,6 +3501,16 @@ public class AbilityActivationService {
                 payGraveyardExileXCost(gameData, player, exileXGraveyardCostToPay, effectiveXValue, null,
                         permanent.getId());
             }
+        }
+
+        CollectEvidenceCost collectEvidenceCostToPay = abilityEffects.stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (collectEvidenceCostToPay != null) {
+            payCollectEvidenceCost(gameData, player, collectEvidenceCostToPay,
+                    exileXGraveyardCardIndices);
         }
 
         abilityEffects.stream()
@@ -4303,10 +4376,11 @@ public class AbilityActivationService {
                                       List<UUID> targetIds) {
         try {
             ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
+            int dryRunXValue = Math.max(0, ability.getMinimumXValue());
             int additionalGenericCost = getActivatedAbilityAdditionalGenericCost(
-                    gameData, playerId, permanent, ability, targetId, targetIds);
+                    gameData, playerId, permanent, ability, targetId, targetIds, dryRunXValue);
             validateActivationLegality(
-                    gameData, playerId, permanent, ability, abilityIndex, 0, manaPool,
+                    gameData, playerId, permanent, ability, abilityIndex, dryRunXValue, manaPool,
                     additionalGenericCost);
             return true;
         } catch (IllegalStateException | IllegalArgumentException e) {
@@ -4401,6 +4475,10 @@ public class AbilityActivationService {
                                            ManaPool manaPool, int additionalGenericCost,
                                            boolean discardCostAlreadyPaid) {
         List<CardEffect> abilityEffects = ability.getEffects();
+
+        if (xValue < ability.getMinimumXValue()) {
+            throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
+        }
 
         // Sen Triplets: a player locked out this turn can't activate any ability.
         if (gameData.playersCantActivateAbilitiesThisTurn.contains(playerId)) {
@@ -4603,7 +4681,7 @@ public class AbilityActivationService {
             }
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            Set<CardSubtype> soaCtx = effectiveSpellOrAbilitySubtypes(gameData, permanent);
+            Set<CardSubtype> soaCtx = effectiveSpellOrAbilitySubtypes(gameData, permanent, ability);
             Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, permanent)
                     ? soaCtx : Set.of();
             boolean powerstoneCtx = manaPool != null && manaPool.getPowerstoneOnlyColorless() > 0;
@@ -4718,6 +4796,20 @@ public class AbilityActivationService {
                 String typeName = graveyardExileFilterLabel(exileXGraveyardCost.requiredType(), null);
                 throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
                         + xValue + ")");
+            }
+        }
+
+        CollectEvidenceCost collectEvidenceCost = abilityEffects.stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (collectEvidenceCost != null) {
+            List<Card> gy = gameData.playerGraveyards.get(playerId);
+            int totalManaValue = gy == null ? 0 : gy.stream().mapToInt(Card::getManaValue).sum();
+            if (totalManaValue < collectEvidenceCost.minimumManaValue()) {
+                throw new IllegalStateException("Not enough mana value in graveyard to collect evidence (need "
+                        + collectEvidenceCost.minimumManaValue() + ")");
             }
         }
 
@@ -5795,8 +5887,14 @@ public class AbilityActivationService {
         return subtypes;
     }
 
-    private Set<CardSubtype> effectiveSpellOrAbilitySubtypes(GameData gameData, Permanent permanent) {
+    private Set<CardSubtype> effectiveSpellOrAbilitySubtypes(GameData gameData, Permanent permanent,
+                                                              ActivatedAbility ability) {
         Set<CardSubtype> subtypes = effectiveSubtypes(permanent);
+        if (ability.getEffects().stream().anyMatch(EquipEffect.class::isInstance)) {
+            subtypes.add(CardSubtype.EQUIPMENT);
+        } else {
+            subtypes.remove(CardSubtype.EQUIPMENT);
+        }
         if (!gameQueryService.getEffectiveColors(gameData, permanent).isEmpty()) {
             subtypes.remove(CardSubtype.ELDRAZI);
         }
@@ -6464,6 +6562,77 @@ public class AbilityActivationService {
                 gameData.id, player.getUsername(), toExile.size(), typeName);
     }
 
+    private void validateCollectEvidenceSelection(GameData gameData, UUID playerId,
+                                                  CollectEvidenceCost cost, List<UUID> cardIds) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            throw new IllegalStateException("Selected graveyard cards are no longer available");
+        }
+
+        int totalManaValue = 0;
+        for (UUID cardId : cardIds) {
+            int index = indexOfCard(graveyard, cardId);
+            if (index < 0) {
+                throw new IllegalStateException("Selected card is no longer a valid evidence cost");
+            }
+            totalManaValue += graveyard.get(index).getManaValue();
+        }
+        if (totalManaValue < cost.minimumManaValue()) {
+            throw new IllegalStateException("Selected cards do not have enough total mana value to collect evidence");
+        }
+    }
+
+    private int indexOfCard(List<Card> cards, UUID cardId) {
+        for (int i = 0; i < cards.size(); i++) {
+            if (cards.get(i).getId().equals(cardId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void payCollectEvidenceCost(GameData gameData, Player player, CollectEvidenceCost cost,
+                                        List<Integer> selectedIndices) {
+        int stackBefore = gameData.stack.size();
+        if (selectedIndices == null) {
+            throw new IllegalStateException("No cards selected for evidence cost");
+        }
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            throw new IllegalStateException("Selected graveyard cards are no longer available");
+        }
+
+        List<Card> toExile = new ArrayList<>();
+        for (int index : selectedIndices) {
+            if (index < 0 || index >= graveyard.size()) {
+                throw new IllegalStateException("Selected graveyard cards are no longer available");
+            }
+            toExile.add(graveyard.get(index));
+        }
+        if (new HashSet<>(toExile).size() != toExile.size()) {
+            throw new IllegalStateException("Duplicate graveyard card selection");
+        }
+        int totalManaValue = toExile.stream().mapToInt(Card::getManaValue).sum();
+        if (totalManaValue < cost.minimumManaValue()) {
+            throw new IllegalStateException("Selected cards do not have enough total mana value to collect evidence");
+        }
+
+        graveyard.removeAll(toExile);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
+        for (Card exiled : toExile) {
+            exileService.exileCard(gameData, playerId, exiled);
+        }
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles "
+                + toExile.size() + " cards from their graveyard to collect evidence."));
+        triggerCollectionService.checkCollectEvidenceTriggers(gameData, player.getId());
+        if (gameData.stack.size() > stackBefore) {
+            gameData.pendingActivatedAbilityCostTriggers.addAll(
+                    new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size())));
+            gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
+        }
+    }
+
     /**
      * Pays an "Exile the top card of your graveyard" activation cost. The top card is the one most
      * recently put into the graveyard, i.e. the last element of the append-ordered list.
@@ -6553,7 +6722,13 @@ public class AbilityActivationService {
         }
 
         Card exiled = graveyard.remove((int) exileCardIndex);
+        int stackBeforeCostTriggers = gameData.stack.size();
         graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiled);
+        if (gameData.stack.size() > stackBeforeCostTriggers) {
+            gameData.pendingActivatedAbilityCostTriggers.addAll(
+                    new ArrayList<>(gameData.stack.subList(stackBeforeCostTriggers, gameData.stack.size())));
+            gameData.stack.subList(stackBeforeCostTriggers, gameData.stack.size()).clear();
+        }
         exileService.exileCard(gameData, playerId, exiled);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));

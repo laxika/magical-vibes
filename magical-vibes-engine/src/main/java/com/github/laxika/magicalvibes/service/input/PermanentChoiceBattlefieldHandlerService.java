@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -60,6 +62,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAttachEquipmentSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
@@ -102,10 +105,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PermanentChoiceBattlefieldHandlerService {
     private final CreateTokensAndAttachEquipmentSupport createTokensAndAttachEquipmentSupport;
+    private final PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler sacrificedEquipmentSupport;
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final EquipSupport equipSupport;
+    private final AttachOneOfEquipmentToSamuraiSupport attachOneOfEquipmentToSamuraiSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final CloneService cloneService;
     private final TurnFaceUpCopyService turnFaceUpCopyService;
@@ -165,6 +170,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffectHandler anyOpponentSacrificeForTapAndGainLifeAndDrawHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureThenBoostOthersEffectHandler chooseOpponentCreatureThenBoostOthersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
@@ -345,6 +351,73 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
         // Begun from a library-search resume (Stonehewer Giant) while the search's stack entry is
         // still parked — the canonical epilogue resumes it.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAttachSacrificedEquipmentToTarget(
+            GameData gameData, UUID equipmentId,
+            PermanentChoiceContext.AttachSacrificedEquipmentToTarget context) {
+        sacrificedEquipmentSupport.attachChosenEquipment(gameData, equipmentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAttachControlledEquipmentToTargetCreature(
+            GameData gameData, UUID equipmentId,
+            PermanentChoiceContext.AttachControlledEquipmentToTargetCreature context) {
+        Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
+        Permanent creature = gameQueryService.findPermanentById(gameData, context.targetCreatureId());
+        boolean controlled = gameData.playerBattlefields
+                .getOrDefault(context.controllerId(), List.of()).stream()
+                .anyMatch(permanent -> permanent.getId().equals(equipmentId));
+        if (equipment != null && creature != null && controlled
+                && context.equipmentPermanentIds().contains(equipmentId)
+                && gameQueryService.isCreature(gameData, creature)
+                && equipSupport.attachEquipment(gameData, equipment, creature)) {
+            gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
+                    context.controllerId(), equipmentId, context.sourceCard()));
+            gameLogService.append(gameData,
+                    GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAttachEquipmentToSamurai(GameData gameData, UUID controllerId,
+                                               UUID samuraiId,
+                                               PermanentChoiceContext.AttachEquipmentToSamurai context) {
+        Permanent samurai = gameQueryService.findPermanentById(gameData, samuraiId);
+        if (samurai == null
+                || !attachOneOfEquipmentToSamuraiSupport.legalSamuraiIds(
+                gameData, controllerId, context.equipmentPermanentIds()).contains(samuraiId)) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<UUID> legalEquipmentIds = attachOneOfEquipmentToSamuraiSupport.legalEquipmentIds(
+                gameData, samurai, context.equipmentPermanentIds());
+        if (legalEquipmentIds.isEmpty()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (legalEquipmentIds.size() == 1) {
+            attachOneOfEquipmentToSamuraiSupport.attach(gameData, legalEquipmentIds.getFirst(), samuraiId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.AttachEquipmentToSamuraiTarget(
+                            samuraiId, legalEquipmentIds));
+            playerInputService.beginPermanentChoice(gameData, controllerId, legalEquipmentIds,
+                    "Choose an Equipment to attach.");
+        }
+    }
+
+    public void handleAttachEquipmentToSamuraiTarget(
+            GameData gameData, UUID controllerId, UUID equipmentId,
+            PermanentChoiceContext.AttachEquipmentToSamuraiTarget context) {
+        Permanent samurai = gameQueryService.findPermanentById(gameData, context.samuraiPermanentId());
+        if (samurai != null
+                && context.equipmentPermanentIds().contains(equipmentId)
+                && attachOneOfEquipmentToSamuraiSupport.legalEquipmentIds(
+                gameData, samurai, context.equipmentPermanentIds()).contains(equipmentId)) {
+            attachOneOfEquipmentToSamuraiSupport.attach(gameData, equipmentId, samurai.getId());
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -709,6 +782,13 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleOpponentChoosesCreatureTheyControlToCopy(GameData gameData, UUID permanentId,
             PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy context) {
         opponentChoosesCreatureTheyControlTokenCopyEffectHandler.completeChoice(gameData, permanentId, context);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChooseOpponentCreatureThenBoostOthers(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.ChooseOpponentCreatureThenBoostOthers context) {
+        chooseOpponentCreatureThenBoostOthersEffectHandler.completeChoice(gameData, permanentId, context);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -1853,9 +1933,18 @@ public class PermanentChoiceBattlefieldHandlerService {
                 return;
             }
             var targetSpec = ctx.thenEffect().targetSpec();
+            boolean needsGraveyardTarget = targetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
             boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                     || targetSpec.admits(TargetPredicate.Kind.PLAYER);
-            if (needsTarget) {
+            if (needsGraveyardTarget && !needsTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        ctx.sourceCard(), ctx.controllerId(), thenEffects));
+                triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            } else if (needsTarget) {
                 List<UUID> validPermanentTargets = new ArrayList<>();
                 if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
                     // The rider's own declared target decides which permanents are legal — Sorin's

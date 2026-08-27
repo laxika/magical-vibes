@@ -20,6 +20,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Disguise creature with face-down ward | `d/DefenestratedPhantom.java` | `addMorph(faceUpCost)` supplies the disguise alternate cost; wrap `CounterUnlessPaysEffect(2)` in `ConditionalEffect(new SourceIsFaceDown(), ...)` on `ON_BECOMES_TARGET_OF_OPPONENT_SPELL` so the ward exists only while face down. |
 | Tribute + conditional ETB | `o/Ornitharch.java` | STATIC `TributeEffect(N)` records the opponent's as-enters choice; wrap the conditional ETB in `TributeNotPaidEffect` so it is dropped when the full counter amount entered on the creature |
 | Infect creature | `b/BlackcleaveGoblin.java` | Haste + Infect auto-loaded from Scryfall. Infect deals damage as -1/-1 counters to creatures and poison counters to players. |
 | Infect + damage replacement | `p/PhyrexianHydra.java` | Infect from Scryfall + STATIC PreventDamageAndAddMinusCountersEffect. Prevents all damage to self and puts -1/-1 counters instead. |
@@ -49,6 +50,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB doubles the power of other creatures you control + vigilance | `g/GodEternalRhonas.java` | ON_ENTER_BATTLEFIELD `DoubleOtherOwnCreaturesPowerEffect()` followed by `GrantKeywordEffect(VIGILANCE, OWN_CREATURES)`; the first effect snapshots each other creature's current power independently and both effects exclude the source |
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
+| ETB draw for each artifact + first coin-flip replacement | `e/EdgarKingOfFigaro.java` | ON_ENTER_BATTLEFIELD `DrawCardEffect(PermanentCount(PermanentIsArtifactPredicate, CONTROLLER))` + STATIC `EdgarKingOfFigaroEffect`; coin flips route through `CoinFlipService`, which tracks the first coin-flip event for each player each turn and handles multiple coins flipped at once |
 | ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillEffect(4, CONTROLLER) — controller mills N cards, no target |
 | ETB target player + any-number graveyard shuffle | `l/LoamingShaman.java` | ON_ENTER_BATTLEFIELD `ShuffleTargetCardsFromGraveyardIntoLibraryEffect(null, Integer.MAX_VALUE)` — first chooses a player, then chooses any number of target cards from that player's graveyard; the shared ETB target and multi-graveyard choice flow stores both target kinds on the triggered ability |
 | ETB put a creature you control on top of library (non-targeted, self-inclusive) | `n/NulltreadGargantuan.java` | ON_ENTER_BATTLEFIELD PutControlledCreatureOnTopOfLibraryEffect() — "put a creature you control on top of its owner's library". No `target(...)`; the choice is made at resolution and the source itself is legal (forced when it's your only creature). One candidate auto-resolves; several prompt a `PutControlledCreatureOnTopOfLibrary` permanent choice |

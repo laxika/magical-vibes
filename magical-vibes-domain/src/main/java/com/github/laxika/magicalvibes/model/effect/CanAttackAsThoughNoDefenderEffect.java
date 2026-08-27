@@ -5,15 +5,21 @@ package com.github.laxika.magicalvibes.model.effect;
  * it is a continuous permission; in a resolving ability it grants the source
  * permanent that permission until end of turn.
  */
-public record CanAttackAsThoughNoDefenderEffect() implements NoDefenderAttackPermissionEffect {
+public record CanAttackAsThoughNoDefenderEffect(boolean targeted) implements NoDefenderAttackPermissionEffect {
+
+    public CanAttackAsThoughNoDefenderEffect() {
+        this(false);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(null, false, null, true, 1);
+        return targeted
+                ? TargetSpec.benign(TargetPredicates.creature())
+                : new TargetSpec(null, false, null, true, 1);
     }
 
     @Override
     public boolean grantsCarrierAttackAsThoughNoDefender() {
-        return true;
+        return !targeted;
     }
 }

@@ -119,6 +119,7 @@ combat damage step is processed.
 | Slot | Collector service | Pipeline |
 |---|---|---|
 | `ON_DEATH` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleDeathMayPayMana` + `handleLosesLifeEqualToPower` | Death |
+| `ON_HAUNTED_CREATURE_DIES` | `TriggerCollectionService.checkHauntedCreatureDeathTriggers` scans the tracked haunted-permanent relationships when a permanent enters a graveyard, then uses the death-trigger target queue for targeted effects | Death |
 | `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
 | `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
 | `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
@@ -219,7 +220,7 @@ permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the 
 `ON_CONTROLLER_DRAWS` (only the non–any-target flavour; the any-target variant is routed through the
 `DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
-`ON_ALLY_PERMANENT_SACRIFICED`, `ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
+`ON_ALLY_PERMANENT_SACRIFICED`, `ON_OPPONENT_PERMANENT_SACRIFICED` (carries the sacrificing player as a non-targeting player reference), `ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_CREWS_VEHICLE`,
 `ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
 `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
@@ -425,13 +426,15 @@ graveyard means the trigger is never put on the stack (CR 603.3c). As above, the
 `MayEffect` wrapper - the up-to-one pick can be left empty.
 
 **Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
-Ruin Rat) use the same trigger-time graveyard selection, but on the `ON_DEATH` path. `handleDeathDefault`
-routes any death effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` to a `DeathTriggerTarget` (alongside
-the permanent/player routing), and `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
-`ExileGraveyardCardsEffect` and calls `beginDeathGraveyardTarget`, which searches the graveyards the
-effect's declared `GraveyardSearchScope` names (`TargetSpec.graveyardScope()`) and prompts a
-`MultiGraveyardChoice`. With no legal target the death trigger is skipped, never put on the stack (CR
-603.3c). Use `ON_DEATH`, never `ON_SELF_LEAVES_BATTLEFIELD` (Offalsnout), for a "dies" trigger — the latter
+Ruin Rat) use the same trigger-time graveyard selection on `ON_DEATH` and `ON_ALLY_CREATURE_DIES`.
+`handleDeathDefault` and `TriggerCollectionService.checkAllyCreatureDeathTriggers` route any death
+effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` to a `DeathTriggerTarget` (alongside the
+permanent/player routing). `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
+graveyard target and calls `beginDeathGraveyardTarget`, which searches the declared scope and prompts a
+`MultiGraveyardChoice`. Optional up-to-one targets may be declined; a mandatory target with no legal
+card skips the trigger. An ally-death target may carry an excluded dying-card ID for an "other"
+restriction, so `CardNotPredicate(CardIsSelfPredicate())` is evaluated against the actual dying card.
+Use `ON_DEATH`, never `ON_SELF_LEAVES_BATTLEFIELD` (Offalsnout), for a "dies" trigger — the latter
 also fires on exile/bounce.
 
 If the card you are implementing needs one of these slots **and** a user target choice (either player
@@ -629,3 +632,8 @@ permanent id remains available so an Aura effect can re-derive its host at resol
 `ON_CONTROLLER_DRAWS_SECOND_CARD` is checked by `DrawService.checkControllerDrawTriggers` after
 the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target
 handling as `ON_CONTROLLER_DRAWS`, but does not fire on later draws in the same turn.
+
+`ON_ANY_CREATURE_DEALT_DAMAGE` also captures the damaged creature's controller as
+`triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`
+and `ExileTopCardsMayPlayUntilNextTurnEffect.forTriggeringPermanentController(...)` when a trigger says
+that creature's controller may use their library.

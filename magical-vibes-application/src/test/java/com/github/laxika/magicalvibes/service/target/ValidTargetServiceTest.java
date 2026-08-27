@@ -78,6 +78,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -138,8 +139,8 @@ class ValidTargetServiceTest {
         // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
         lenient().when(predicateEvaluationService.matchesCardPredicate(
-                        any(Card.class), any(CardPredicate.class), any(), eq(gameData), any(UUID.class),
-                        any(), any(), any()))
+                        any(Card.class), any(CardPredicate.class), nullable(UUID.class), eq(gameData),
+                        any(UUID.class), nullable(UUID.class), nullable(Integer.class), nullable(Integer.class)))
                 .thenAnswer(invocation -> new PredicateEvaluationService(gameQueryService)
                         .matchesCardPredicate(
                                 invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2),
@@ -1534,6 +1535,8 @@ class ValidTargetServiceTest {
         void returnsTrue_forGraveyardTargetingSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
+            gameData.playerGraveyards.put(player1Id, new ArrayList<>());
+            gameData.playerGraveyards.put(player2Id, new ArrayList<>(List.of(createCreatureCard())));
             CardEffect graveyardEffect = new CardEffect() {
                 @Override
                 public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)); }

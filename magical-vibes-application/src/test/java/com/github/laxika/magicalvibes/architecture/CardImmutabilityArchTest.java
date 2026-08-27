@@ -52,6 +52,7 @@ class CardImmutabilityArchTest {
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeCopyOfEnteringCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Unstable Shapeshifter)
+            "BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler", // name/legendary/hexproof/"this ability" on the fresh clone-copy card (Lazav, Dimir Mastermind)
             "BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler", // name/legendary/activated ability on the fresh clone-copy card
             "BecomeCopyOfTargetLandEffectHandler", // re-grants "except it has this ability" on the fresh clone-copy card (Thespian's Stage)

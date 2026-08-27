@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SuspectChosenOtherCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +38,10 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
     private final GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler grantChosenCreatureKeywordEffectHandler;
+    private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
     private final MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+    private final MemoriesReturningEffectHandler memoriesReturningEffectHandler;
+    private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
     private final InputCompletionService inputCompletionService;
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
@@ -73,6 +79,14 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCreateTokensAndAttachEquipment(gameData, permanentId, attachEquipment);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToCreature attachEquip) {
             battlefieldHandler.handleAttachEquipmentToCreature(gameData, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.AttachSacrificedEquipmentToTarget attachEquip) {
+            battlefieldHandler.handleAttachSacrificedEquipmentToTarget(gameData, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.AttachControlledEquipmentToTargetCreature attachEquip) {
+            battlefieldHandler.handleAttachControlledEquipmentToTargetCreature(gameData, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamurai attachEquip) {
+            battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamuraiTarget attachEquip) {
+            battlefieldHandler.handleAttachEquipmentToSamuraiTarget(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
         } else if (context instanceof PermanentChoiceContext.AttachAllAurasToAnotherPermanent attachAll) {
@@ -134,6 +148,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePermanentYouControlToExile(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.MurmursFromBeyondOpponentChoice murmursChoice) {
             murmursFromBeyondEffectHandler.completeOpponentChoice(gameData, permanentId, murmursChoice);
+        } else if (context instanceof PermanentChoiceContext.MemoriesReturningOpponentChoice memoriesChoice) {
+            memoriesReturningEffectHandler.completeOpponentChoice(gameData, permanentId, memoriesChoice);
+        } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy echoChamberChoice) {
+            battlefieldHandler.handleOpponentChoosesCreatureTheyControlToCopy(gameData, permanentId, echoChamberChoice);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentCreatureThenBoostOthers zenosChoice) {
+            battlefieldHandler.handleChooseOpponentCreatureThenBoostOthers(gameData, permanentId, zenosChoice);
         } else if (context instanceof PermanentChoiceContext.GuidedPassageOpponentChoice guidedPassageChoice) {
             guidedPassageEffectHandler.completeOpponentChoice(gameData, permanentId, guidedPassageChoice);
         } else if (context instanceof PermanentChoiceContext.MausoleumTurnkeyOpponentChoice mausoleumTurnkeyChoice) {
@@ -211,6 +231,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDeathTrigger(gameData, permanentId, dtt);
         } else if (context instanceof PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentId, slt);
+        } else if (context instanceof PermanentChoiceContext.KayaSpiritsJusticeTokenChoice kaya) {
+            triggerHandler.handleKayaSpiritsJusticeTokenChoice(gameData, permanentId, kaya);
         } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.GuardDogsPermanentChoice) {
@@ -291,6 +313,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleExileCastSpellTarget(gameData, permanentId, ect);
         } else if (context instanceof PermanentChoiceContext.ChandraTorchCastSpellTarget ctc) {
             spellHandler.handleChandraTorchCastSpellTarget(gameData, permanentId, ctc);
+        } else if (context instanceof PermanentChoiceContext.VaanCastSpellTarget vct) {
+            spellHandler.handleVaanCastSpellTarget(gameData, permanentId, vct);
         } else if (context instanceof PermanentChoiceContext.GraveyardCastSpellTarget gct) {
             spellHandler.handleGraveyardCastSpellTarget(gameData, permanentId, gct);
         } else if (context instanceof PermanentChoiceContext.HandCastSpellTarget hct) {
@@ -398,6 +422,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCuratorOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.ChooseOwnCreatureGrantKeyword grantKeyword) {
             grantChosenCreatureKeywordEffectHandler.completeChoice(gameData, permanentId, grantKeyword);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.SuspectChosenOtherCreature) {
+            suspectChosenOtherCreatureEffectHandler.completeChoice(gameData, permanentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.TurnOwnCreatureFaceUp) {
+            turnOwnCreatureFaceUpEffectHandler.completeChoice(gameData, permanentId);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);

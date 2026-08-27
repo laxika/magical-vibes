@@ -53,6 +53,7 @@ public class InteractionPromptProjectionRegistry {
 
         register(PendingInteraction.XValueChoice.class, this::projectXValueChoice);
         register(PendingInteraction.AlternateCastXValueChoice.class, this::projectAlternateCastXValueChoice);
+        register(PendingInteraction.TurnFaceUpXValueChoice.class, this::projectTurnFaceUpXValueChoice);
         register(PendingInteraction.Scry.class, this::projectScry);
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
@@ -70,6 +71,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
         register(PendingInteraction.AssimilationAegisCopyChoice.class,
                 this::projectAssimilationAegisCopyChoice);
+        register(PendingInteraction.ExiledCreatureCopyChoice.class,
+                this::projectExiledCreatureCopyChoice);
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
@@ -233,6 +236,12 @@ public class InteractionPromptProjectionRegistry {
                 interaction.prompt(), 0, interaction.maxValue(), interaction.cardName(), true);
     }
 
+    private InteractionPromptMessage projectTurnFaceUpXValueChoice(
+            GameData gameData, PendingInteraction.TurnFaceUpXValueChoice interaction) {
+        return InteractionPromptMessage.numberPick(
+                interaction.prompt(), 0, interaction.maxValue(), interaction.cardName(), true);
+    }
+
     private InteractionPromptMessage projectScry(
             GameData gameData, PendingInteraction.Scry interaction) {
         int count = interaction.cards().size();
@@ -353,6 +362,15 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 "Choose " + interaction.choiceDescription() + " exiled this way to copy "
                         + interaction.copies() + " times.");
+    }
+
+    private InteractionPromptMessage projectExiledCreatureCopyChoice(
+            GameData gameData, PendingInteraction.ExiledCreatureCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a creature card exiled with Lazav to copy until end of turn.");
     }
 
     private InteractionPromptMessage projectTargetHandSpellCopyChoice(
@@ -729,10 +747,20 @@ public class InteractionPromptProjectionRegistry {
                 .filter(card -> interaction.validCardIds().contains(card.getId()))
                 .map(cardViewFactory::create)
                 .toList();
+        if (interaction.includeGraveyard()) {
+            cardViews = new ArrayList<>(cardViews);
+            addMatchingCardViews(cardViews,
+                    gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of()),
+                    interaction.validCardIds());
+        }
+        String zoneDescription = interaction.includeGraveyard()
+                ? "from your hand and/or graveyard" : "from your hand";
+        String tappedDescription = interaction.enterTapped() ? " tapped" : "";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose up to " + interaction.maxCount()
-                        + " permanent cards from your hand to put onto the battlefield.");
+                        + " permanent cards " + zoneDescription + " to put onto the battlefield"
+                        + tappedDescription + ".");
     }
 
     private InteractionPromptMessage projectPutCardFromHandOrGraveyardChoice(
@@ -1309,6 +1337,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.NameCardMillGainLifeChoice
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
+                || context instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice
                 || context instanceof ChoiceContext.NameCardMillDrawChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
                 || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice

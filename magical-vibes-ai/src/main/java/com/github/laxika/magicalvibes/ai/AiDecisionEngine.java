@@ -325,6 +325,21 @@ public abstract class AiDecisionEngine {
         choiceHandler.handleActiveInteraction(gameData);
     }
 
+    /** Floats the full variable face-up cost before the strategy chooses a payable X. */
+    protected void handleTurnFaceUpXValueChoice(GameData gameData) {
+        PendingInteraction.TurnFaceUpXValueChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.TurnFaceUpXValueChoice.class);
+        if (choice != null && aiPlayer.getId().equals(choice.playerId())) {
+            ManaCost cost = new ManaCost(choice.manaCost());
+            int maxX = cost.calculateMaxX(gameData.playerManaPools.get(aiPlayer.getId()));
+            if (maxX < choice.maxValue()) {
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), choice.manaCost(),
+                        choice.maxValue(), manaTapAction(), true);
+            }
+        }
+        choiceHandler.handleActiveInteraction(gameData);
+    }
+
     /**
      * Floats mana for the active may-pay prompt when the choice is this AI's and carries a
      * mana cost — the engine pays may-costs from the actual pool, so the mana must be
@@ -422,6 +437,8 @@ public abstract class AiDecisionEngine {
             case PendingInteraction.XValueChoice ignored -> handleXValueChoice(gameData);
             case PendingInteraction.AlternateCastXValueChoice ignored ->
                     handleAlternateCastXValueChoice(gameData);
+            case PendingInteraction.TurnFaceUpXValueChoice ignored ->
+                    handleTurnFaceUpXValueChoice(gameData);
             case PendingInteraction.Scry ignored -> handleScry(gameData);
             case null -> { }
             default -> choiceHandler.handleActiveInteraction(gameData);

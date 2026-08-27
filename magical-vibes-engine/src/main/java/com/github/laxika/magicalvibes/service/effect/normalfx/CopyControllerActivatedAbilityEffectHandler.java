@@ -37,7 +37,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CopyControllerActivatedAbilityEffect) effect;
         StackEntry snapshot = e.abilitySnapshot();
-        if (snapshot == null) return;
+        if (snapshot == null || snapshot.getCard().isCantBeCopied()) return;
 
         UUID copyControllerId = e.activatingPlayerId();
         Card copyCard = copySupport.createCopyCard(snapshot.getCard());

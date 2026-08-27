@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToPermanentsWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
@@ -65,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
@@ -602,13 +604,15 @@ public class LayerSystemService {
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
      *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
      *     (cheap insurance — no L4-L6 input reads hands today);</li>
+     * <li>player life totals, which dynamic base P/T setters may read while producing layer-7b
+     *     entries;</li>
      * <li>{@code timestampCounter} as stamp-event insurance.</li>
      * </ul>
      *
      * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
      * every query and only the finished board is cached): emblems, the conditions of the
-     * conditional wrappers the pass did not collect, life totals, turn/step state, amount
-     * evaluation beyond the fields above. The wrappers the pass DOES collect are exactly those
+     * conditional wrappers the pass did not collect, turn/step state, amount evaluation beyond
+     * the fields above. The wrappers the pass DOES collect are exactly those
      * whose conditions read only what is hashed here — that is what
      * {@link ConditionBoardStability} decides, so widening it means widening this method too.
      *
@@ -621,6 +625,7 @@ public class LayerSystemService {
         h = mix(h, gameData.timestampCounter);
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
+            h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
@@ -690,9 +695,11 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isBasePowerOverriddenPermanently() ? 1 : 0);
         flags = flags << 1 | (p.isBaseToughnessOverriddenPermanently() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
+        flags = flags << 1 | (p.isSuspected() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllCreatureTypesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
         flags = flags << 1 | (p.isFaceDown() ? 1 : 0);
+        flags = flags << 1 | (p.isCloaked() ? 1 : 0);
         // Combat assignments feed static scopes ("creatures blocking or blocked by this creature
         // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
         // memoized board.
@@ -1493,6 +1500,16 @@ public class LayerSystemService {
                             null, false, false, null, grant.supertype()));
                 }
             }
+            case GrantSupertypeToAllNonlandPermanentsEffect grant -> {
+                manage(board, instance);
+                for (PermanentSlot target : slots) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (state == null || state.hasCardType(CardType.LAND)) continue;
+                    state.addSupertype(grant.supertype());
+                    record(board, instance, target, new L4Contribution(
+                            null, false, false, null, grant.supertype()));
+                }
+            }
             case GrantSupertypeToPermanentsWithCountersEffect grant -> {
                 manage(board, instance);
                 for (PermanentSlot target : slots) {
@@ -1504,7 +1521,7 @@ public class LayerSystemService {
             }
             case GrantSupertypeUntilEndOfTurnEffect grant -> {
                 if (instance.floating() == null) return;
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     if (grant.gained()) {
                         states.get(target.permanent().getId()).addSupertype(grant.supertype());
                     } else {
@@ -1514,19 +1531,19 @@ public class LayerSystemService {
             }
             case SetCardTypesUntilEndOfTurnEffect setTypes -> {
                 if (instance.floating() == null) return;
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
                 }
             }
             case SetCardTypesUntilYourNextTurnEffect setTypes -> {
                 if (instance.floating() == null) return;
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
                 }
             }
             case BecomeEnchantmentUntilCreatureSpellCastEffect ignored -> {
                 if (instance.floating() == null) return;
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(Set.of(CardType.ENCHANTMENT));
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
@@ -1776,14 +1793,14 @@ public class LayerSystemService {
             }
             case LoseAllCreatureTypesEffect ignored -> {
                 // Only reachable as a floating effect (the STATIC slot never carries it).
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
                     state.removeKeyword(Keyword.CHANGELING);
                 }
             }
             case RemoveCardTypeFromTargetPermanentEffect remove -> {
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).removeCardType(remove.cardType());
                 }
             }
@@ -1794,7 +1811,7 @@ public class LayerSystemService {
                 // EARLIER timestamp still boosts the target (no CR 613.8 dependency needed).
                 // The keyword itself is (re-)applied and removable in layer 6.
                 if (instance.floating() != null && grant.keywords().contains(Keyword.CHANGELING)) {
-                    for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                         states.get(target.permanent().getId()).addKeyword(Keyword.CHANGELING);
                     }
                 }
@@ -1913,7 +1930,7 @@ public class LayerSystemService {
                                              Map<UUID, PermanentSlot> slotsById,
                                              LayeredBoardState board) {
         if (instance.floating() != null) {
-            return floatingTargets(instance, slots, slotsById, board);
+            return floatingTargets(gameData, instance, slots, slotsById, board);
         }
         PermanentSlot source = instance.source();
         List<PermanentSlot> targets = new ArrayList<>();
@@ -2000,7 +2017,7 @@ public class LayerSystemService {
         return targets;
     }
 
-    private List<PermanentSlot> floatingTargets(EffectInstance instance, List<PermanentSlot> slots,
+    private List<PermanentSlot> floatingTargets(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
                                                 Map<UUID, PermanentSlot> slotsById,
                                                 LayeredBoardState board) {
         FloatingContinuousEffect floating = instance.floating();
@@ -2015,8 +2032,6 @@ public class LayerSystemService {
             List<PermanentSlot> targets = new ArrayList<>();
             PermanentSlot source = floating.sourcePermanentId() == null
                     ? null : slotsById.get(floating.sourcePermanentId());
-            Pass activePass = ACTIVE_PASS.get();
-            GameData gameData = activePass == null ? null : activePass.gameData;
             for (PermanentSlot slot : slots) {
                 if (matchesL4Filter(slot, floating.scope(), board, gameData,
                         source == null ? null : source.permanent(),
@@ -2068,7 +2083,7 @@ public class LayerSystemService {
                                     Permanent sourcePermanent, UUID sourceControllerId,
                                     UUID sourcePermanentId) {
         if (filter == null) return true;
-        FilterContext context = sourcePermanent == null ? null
+        FilterContext context = sourcePermanent == null && sourceControllerId == null ? null
                 : (gameData == null ? FilterContext.empty() : FilterContext.of(gameData))
                 .withSourceControllerId(sourceControllerId)
                 .withSourcePermanentSnapshot(sourcePermanent)
@@ -2241,7 +2256,7 @@ public class LayerSystemService {
             // carrying a full color set, applied as an override at its own timestamp.
             if (instance.effect() instanceof BecomeChosenColorsUntilEndOfTurnEffect becomes) {
                 if (becomes.colors().isEmpty()) return;
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideColors(Set.copyOf(becomes.colors()));
                     board.l56Touched().add(target.permanent().getId());
                 }
@@ -2252,7 +2267,7 @@ public class LayerSystemService {
             // no colors.
             if (instance.effect() instanceof BecomeColorlessUntilEndOfTurnEffect
                     || (instance.effect() instanceof SetTargetColorEffect colorless && colorless.color() == null)) {
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideColors(Set.of());
                     board.l56Touched().add(target.permanent().getId());
                 }
@@ -2266,7 +2281,7 @@ public class LayerSystemService {
             };
             if (color == null) return;
             boolean setting = LayerClassifier.classify(instance.effect(), false).colorSetting();
-            for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+            for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                 CharacteristicState state = states.get(target.permanent().getId());
                 if (setting) {
                     state.overrideColors(Set.of(color));
@@ -2319,7 +2334,7 @@ public class LayerSystemService {
                 applyFloatingStaticGrant(gameData, instance, grant, slotsById, board);
                 return;
             }
-            for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+            for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                 CharacteristicState state = states.get(target.permanent().getId());
                 switch (instance.effect()) {
                     case LosesAllAbilitiesEffect ignored -> {
@@ -2576,7 +2591,7 @@ public class LayerSystemService {
                                 instance.floating().controllerId());
                         int power = amountEvaluationService.evaluate(gameData, setPt.power(), context);
                         int toughness = amountEvaluationService.evaluate(gameData, setPt.toughness(), context);
-                        for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                        for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                             entries.add(new BasePtEntry(target.permanent().getId(), power, toughness,
                                     instance.timestamp(), instance.position(), provenanceSourceName(instance)));
                         }
@@ -2584,7 +2599,7 @@ public class LayerSystemService {
                 }
                 case SetBasePowerToughnessEffect setPt -> {
                     if (instance.floating() != null) {
-                        for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                        for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                             entries.add(new BasePtEntry(target.permanent().getId(), setPt.power(),
                                     setPt.toughness(), instance.timestamp(), instance.position(),
                                     provenanceSourceName(instance)));
@@ -2600,6 +2615,17 @@ public class LayerSystemService {
                         });
                     }
                 }
+                case SetBasePowerToughnessToAmountEffect ignored ->
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                                (target, harvested) -> {
+                                    if (harvested.isBasePTOverridden()) {
+                                        entries.add(new BasePtEntry(target.permanent().getId(),
+                                                harvested.getBasePowerOverride(),
+                                                harvested.getBaseToughnessOverride(),
+                                                instance.timestamp(), instance.position(),
+                                                provenanceSourceName(instance)));
+                                    }
+                                });
                 case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored ->
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {

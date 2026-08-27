@@ -45,6 +45,7 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
                 : graveyardService.takeMatchingGraveyardCardsForZoneChange(
                         gameData, targetPlayerId, filter,
                         entry.getCard() == null ? null : entry.getCard().getId());
+        entry.setEventValue(moving.size());
         if (moving.isEmpty()) {
             String logEntry = filter == null
                     ? playerName + "'s graveyard is empty. Library is shuffled."

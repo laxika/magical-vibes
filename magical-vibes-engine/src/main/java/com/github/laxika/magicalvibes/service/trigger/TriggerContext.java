@@ -93,6 +93,8 @@ public sealed interface TriggerContext {
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
 
+    /** Context for controller collect-evidence triggers. */
+    record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
 
@@ -260,6 +262,9 @@ public sealed interface TriggerContext {
     record PermanentTransforms(Permanent transformedPermanent, Card transformedCard, UUID controllerId)
             implements TriggerContext {}
 
+    /** Context for a permanent changing from one player's control to an opponent's control. */
+    record PermanentControlChanged(Permanent changedPermanent, UUID previousControllerId,
+                                   UUID newControllerId) implements TriggerContext {}
     /** Context for a change between the day and night designations. */
     record DayNightChange(DayNight previous, DayNight current) implements TriggerContext {}
 
@@ -560,6 +565,14 @@ public sealed interface TriggerContext {
 
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
+
+    /** Context for Kaya's creature and creature-card exile trigger. */
+    record ControllerCreaturesOrCreatureCardsExiled(UUID controllerId, int count,
+                                                     List<Card> creatureCards) implements TriggerContext {
+        public ControllerCreaturesOrCreatureCardsExiled {
+            creatureCards = List.copyOf(creatureCards);
+        }
+    }
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}

@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TormentState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -22,9 +25,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link TormentOfHailfireEffect}: "Repeat the following process N times. Each opponent
- * loses lifeLoss life unless that player sacrifices a nonland permanent of their choice or discards a
- * card." {@code N} is {@link TormentOfHailfireEffect#fixedIterations()} when non-null, otherwise the
- * stack entry's {@code xValue}.
+ * loses lifeLoss life unless that player sacrifices a matching permanent of their choice or discards
+ * a card." {@code N} is {@link TormentOfHailfireEffect#fixedIterations()} when non-null, otherwise the
+ * stack entry's {@code xValue}. The effect's optional predicate narrows the sacrifice choice; when
+ * absent, any nonland permanent is eligible.
  *
  * <p>The flow is driven one opponent at a time and re-runs on every choice completion (kept alive via
  * {@link GameData#rerunCurrentEffectAfterInteraction}), mirroring
@@ -46,6 +50,7 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
     private final DestructionSupport destructionSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,7 +72,7 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
                     ? torment.fixedIterations()
                     : entry.getXValue();
             state.remainingIterations = Math.max(0, iterations);
-            advance(gameData, entry, sourceName, lifeLoss);
+            advance(gameData, entry, sourceName, lifeLoss, torment.sacrificePredicate());
             return;
         }
 
@@ -75,12 +80,13 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             // The current opponent just picked a penalty option — apply it.
             String mode = state.chosenMode;
             state.chosenMode = null;
-            applyMode(gameData, entry, sourceName, lifeLoss, state.currentOpponentId, mode);
+            applyMode(gameData, entry, sourceName, lifeLoss, state.currentOpponentId, mode,
+                    torment.sacrificePredicate());
             return;
         }
 
         // Re-entry after a discard / sacrifice sub-choice completed — advance to the next opponent.
-        advance(gameData, entry, sourceName, lifeLoss);
+        advance(gameData, entry, sourceName, lifeLoss, torment.sacrificePredicate());
     }
 
     /**
@@ -88,7 +94,8 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
      * or the whole X-times process finishes. Opponents whose only option is to lose life take it
      * inline without a prompt; each new iteration refills the APNAP opponent queue.
      */
-    private void advance(GameData gameData, StackEntry entry, String sourceName, int lifeLoss) {
+    private void advance(GameData gameData, StackEntry entry, String sourceName, int lifeLoss,
+            PermanentPredicate sacrificePredicate) {
         TormentState state = gameData.torment;
         UUID controllerId = entry.getControllerId();
         while (true) {
@@ -112,7 +119,7 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             }
             state.currentOpponentId = opponentId;
 
-            List<String> options = availableOptions(gameData, opponentId, lifeLoss);
+            List<String> options = availableOptions(gameData, opponentId, lifeLoss, sacrificePredicate);
             if (options.size() == 1) {
                 // Only "lose life" is possible — no choice to make.
                 lifeSupport.applyLifeLoss(gameData, opponentId, lifeLoss, sourceName);
@@ -121,7 +128,8 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
 
             gameData.rerunCurrentEffectAfterInteraction = true;
             String prompt = sourceName + " — lose " + lifeLoss
-                    + " life unless you sacrifice a nonland permanent or discard a card.";
+                    + " life unless you sacrifice " + sacrificeDescription(sacrificePredicate)
+                    + " or discard a card.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     opponentId, null, null,
                     new ChoiceContext.TormentPenaltyChoice(opponentId, sourceName),
@@ -135,24 +143,24 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
      * (advancing on completion via the re-run); losing life applies immediately and continues.
      */
     private void applyMode(GameData gameData, StackEntry entry, String sourceName, int lifeLoss,
-            UUID opponentId, String mode) {
+            UUID opponentId, String mode, PermanentPredicate sacrificePredicate) {
         if (ChoiceContext.TormentPenaltyChoice.SACRIFICE.equals(mode)) {
-            List<UUID> nonlandIds = nonlandPermanentIds(gameData, opponentId);
-            if (nonlandIds.isEmpty()) {
-                advance(gameData, entry, sourceName, lifeLoss);
+            List<UUID> sacrificeableIds = sacrificeablePermanentIds(gameData, opponentId, sacrificePredicate);
+            if (sacrificeableIds.isEmpty()) {
+                advance(gameData, entry, sourceName, lifeLoss, sacrificePredicate);
                 return;
             }
             gameData.rerunCurrentEffectAfterInteraction = true;
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.TormentSacrifice(opponentId));
-            playerInputService.beginPermanentChoice(gameData, opponentId, nonlandIds,
-                    sourceName + " — choose a nonland permanent to sacrifice.");
+            playerInputService.beginPermanentChoice(gameData, opponentId, sacrificeableIds,
+                    sourceName + " — choose " + sacrificeDescription(sacrificePredicate) + " to sacrifice.");
             return;
         }
 
         if (ChoiceContext.TormentPenaltyChoice.DISCARD.equals(mode)) {
             List<Card> hand = gameData.playerHands.get(opponentId);
             if (hand == null || hand.isEmpty()) {
-                advance(gameData, entry, sourceName, lifeLoss);
+                advance(gameData, entry, sourceName, lifeLoss, sacrificePredicate);
                 return;
             }
             gameData.discardCausedByOpponent = !opponentId.equals(entry.getControllerId());
@@ -160,19 +168,20 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             playerInteractionSupport.resolveDiscardCards(gameData, opponentId, 1, DiscardFollowUp.NONE);
             if (!gameData.interaction.isAwaitingInput()) {
                 // Defensive: the hand emptied out from under us — just continue.
-                advance(gameData, entry, sourceName, lifeLoss);
+                advance(gameData, entry, sourceName, lifeLoss, sacrificePredicate);
             }
             return;
         }
 
         // "Lose N life": the player declined to sacrifice or discard.
         lifeSupport.applyLifeLoss(gameData, opponentId, lifeLoss, sourceName);
-        advance(gameData, entry, sourceName, lifeLoss);
+        advance(gameData, entry, sourceName, lifeLoss, sacrificePredicate);
     }
 
-    private List<String> availableOptions(GameData gameData, UUID opponentId, int lifeLoss) {
+    private List<String> availableOptions(GameData gameData, UUID opponentId, int lifeLoss,
+            PermanentPredicate sacrificePredicate) {
         List<String> options = new ArrayList<>();
-        if (!nonlandPermanentIds(gameData, opponentId).isEmpty()) {
+        if (!sacrificeablePermanentIds(gameData, opponentId, sacrificePredicate).isEmpty()) {
             options.add(ChoiceContext.TormentPenaltyChoice.SACRIFICE);
         }
         List<Card> hand = gameData.playerHands.get(opponentId);
@@ -183,9 +192,19 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
         return options;
     }
 
-    private List<UUID> nonlandPermanentIds(GameData gameData, UUID opponentId) {
+    private List<UUID> sacrificeablePermanentIds(GameData gameData, UUID opponentId,
+            PermanentPredicate sacrificePredicate) {
         return destructionSupport.collectPermanentIds(gameData, opponentId,
-                p -> !p.getCard().hasType(CardType.LAND));
+                p -> sacrificePredicate == null
+                        ? !p.getCard().hasType(CardType.LAND)
+                        : predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, p, sacrificePredicate));
+    }
+
+    private String sacrificeDescription(PermanentPredicate sacrificePredicate) {
+        return sacrificePredicate instanceof PermanentIsCreaturePredicate
+                ? "a creature"
+                : "a nonland permanent";
     }
 
     /** Opponents of {@code controllerId} in APNAP order (active player first). */

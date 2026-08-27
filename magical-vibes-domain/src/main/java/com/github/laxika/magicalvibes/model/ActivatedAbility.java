@@ -123,6 +123,8 @@ public class ActivatedAbility {
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
+    /** Minimum value that may be chosen for X in this ability's mana cost. */
+    private int minimumXValue;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
     private boolean modalChoiceAtActivation;
     /**
@@ -314,6 +316,7 @@ public class ActivatedAbility {
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
+        copy.minimumXValue = this.minimumXValue;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
@@ -327,6 +330,15 @@ public class ActivatedAbility {
     /** Restricts every mana spent on this ability's X cost to one color. */
     public ActivatedAbility withXColorRestriction(ManaColor color) {
         this.xColorRestrictions = EnumSet.of(color);
+        return this;
+    }
+
+    /** Sets the minimum value that may be chosen for X in this ability's mana cost. */
+    public ActivatedAbility withMinimumXValue(int minimumXValue) {
+        if (minimumXValue < 0) {
+            throw new IllegalArgumentException("Minimum X value cannot be negative");
+        }
+        this.minimumXValue = minimumXValue;
         return this;
     }
 

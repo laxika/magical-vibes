@@ -49,6 +49,15 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
+                                     List<ManaColor> fixedColorOptions,
+                                     ManaRestriction restriction) implements ChoiceContext {
+        public RestrictedManaColorChoice {
+            fixedColorOptions = List.copyOf(fixedColorOptions);
+        }
+    }
+
+    record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
@@ -606,6 +615,8 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record SourceSubtypeChoice(UUID permanentId) implements ChoiceContext {}
+
     /**
      * The controller chooses a creature type at resolution for a spell/ability that has no
      * permanent to store it on (e.g. Coordinated Barrage). The answer is stored on
@@ -916,6 +927,12 @@ public sealed interface ChoiceContext {
             this(controllerId, false);
         }
     }
+
+    /**
+     * Conjurer's Ban: the controller names a card; until their next turn, spells with that name
+     * can't be cast and lands with that name can't be played.
+     */
+    record SpellsAndLandsCantBePlayedUntilNextTurnChoice(UUID controllerId) implements ChoiceContext {}
 
     /**
      * The target player names a card, then reveals the top card of their library. If it matches
@@ -1298,7 +1315,8 @@ public sealed interface ChoiceContext {
 
     record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 UUID sourcePermanentId, boolean modesResetEachTurn,
-                                List<ChooseOneEffect.ChooseOneOption> chosenModes) implements ChoiceContext {
+                                List<ChooseOneEffect.ChooseOneOption> chosenModes,
+                                UUID triggeringCardId) implements ChoiceContext {
 
         public TriggeredModalChoice {
             chosenModes = List.copyOf(chosenModes);
@@ -1306,12 +1324,12 @@ public sealed interface ChoiceContext {
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, List.of());
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, List.of(), null);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, List.of());
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, List.of(), null);
         }
     }
 
