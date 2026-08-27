@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.cards.p.PedanticLearning;
 import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
+import com.github.laxika.magicalvibes.cards.q.QuandrixCommand;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
@@ -108,6 +109,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsQuandrixCommandWithOneCreatureForTwoTargetedModes() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent target = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        QuandrixCommand command = new QuandrixCommand();
+        harness.setHand(aiPlayer, List.of(command));
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(command.getId());
+            assertThat(gameData.stack.getFirst().getTargetIds())
+                    .containsExactly(target.getId(), target.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void targetsOpposingFlagbearerWhenCastingAura() {
