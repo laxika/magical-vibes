@@ -45,8 +45,10 @@ import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -502,10 +504,15 @@ public class ValidTargetService {
                 // (CR 115.4), so it offers players alongside creatures and planeswalkers and never
                 // another permanent type.
                 boolean unfiltered = positionFilter == null;
+                boolean effectsDeclareTarget = targetingEffects.stream()
+                        .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
                 PermanentPredicate declared = unfiltered
                         ? EffectResolution.declaredPermanentRestriction(targetingEffects).orElse(null)
                         : null;
-                if (unfiltered && EffectResolution.allowsPlayerTargets(targetingEffects)
+                boolean effectAllowsPlayerTargets = EffectResolution.allowsPlayerTargets(targetingEffects);
+                boolean filterAllowsPlayerTargets = targetFilterAllowsPlayer(ability.getTargetFilter());
+                if (unfiltered && (effectAllowsPlayerTargets
+                        || filterAllowsPlayerTargets && !effectsDeclareTarget)
                         && !gameQueryService.isPeaceTalksActive(gameData)) {
                     for (UUID playerId : gameData.playerIds) {
                         if (excludeIds.contains(playerId)) continue;
@@ -580,10 +587,20 @@ public class ValidTargetService {
                     ability.getEffectiveMaxTargets(effectiveTargetScalingValue), prompt);
         }
 
-        boolean targetsPlayer = targetingEffects.stream()
-                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean targetsPermanent = targetingEffects.stream()
-                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean effectsDeclareTarget = targetingEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+        boolean effectsAllowPlayerTargets = targetingEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean effectsAllowPermanentTargets = targetingEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean filterAllowsPlayerTargets = targetFilterAllowsPlayer(ability.getTargetFilter());
+        boolean filterAllowsPermanentTargets = targetFilterAllowsPermanent(ability.getTargetFilter());
+        boolean targetsPlayer = ability.getTargetFilter() == null
+                ? effectsAllowPlayerTargets
+                : filterAllowsPlayerTargets && (effectsAllowPlayerTargets || !effectsDeclareTarget);
+        boolean targetsPermanent = ability.getTargetFilter() == null
+                ? effectsAllowPermanentTargets
+                : filterAllowsPermanentTargets && (effectsAllowPermanentTargets || !effectsDeclareTarget);
         boolean targetsGraveyard = targetingEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean targetsBlockingThis = targetingEffects.stream()
@@ -992,6 +1009,18 @@ public class ValidTargetService {
         }
 
         return true;
+    }
+
+    private boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof PlayerPredicateTargetFilter;
+    }
+
+    private boolean targetFilterAllowsPermanent(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter
+                || targetFilter instanceof OwnedPermanentPredicateTargetFilter
+                || targetFilter instanceof PermanentPredicateTargetFilter;
     }
 
     public boolean isValidAbilityPermanentTargetForPosition(GameData gameData, Card sourceCard,

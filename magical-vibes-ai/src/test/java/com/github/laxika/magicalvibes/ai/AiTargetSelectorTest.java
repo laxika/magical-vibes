@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.m.MorbidBloom;
+import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.PathToExile;
@@ -1694,6 +1695,17 @@ class AiTargetSelectorTest {
                     "{T}: Deal 1 damage to any target.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(human.getId());
+        }
+
+        @Test
+        @DisplayName("Uses an ability's player filter when its effect is target-neutral")
+        void targetFilterOnlyAbilityTargetsPlayer() {
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new MishrasBauble());
+
+            UUID target = targetSelector.chooseAbilityTarget(
+                    gd, source.getCard().getActivatedAbilities().getFirst(), aiPlayer.getId(), source);
 
             assertThat(target).isEqualTo(human.getId());
         }

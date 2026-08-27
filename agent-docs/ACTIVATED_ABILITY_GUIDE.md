@@ -23,7 +23,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `requiredControlledSubtype` | `CardSubtype` | Subtype you must control N+ of to activate (e.g. `CardSubtype.VAMPIRE`). `null` for no restriction |
 | `requiredControlledSubtypeCount` | `int` | Minimum count of `requiredControlledSubtype` permanents you must control. `0` when unused |
 
-**Targeting is computed from effects** — `ActivatedAbility.isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. For Cards, use `EffectResolution.needsTarget(card)` / `EffectResolution.needsSpellTarget(card)` instead. Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` (category + `harmful` flag + optional predicate) — see `EFFECTS_INDEX.md`.
+**Targeting is computed from effects and ability filters** — `ActivatedAbility.isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. An ability-side `targetFilter` is itself targeting information, including when the effect is target-neutral (for example, looking at a target player's library). For Cards, use `EffectResolution.needsTarget(card)` / `EffectResolution.needsSpellTarget(card)` instead. Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` (category + `harmful` flag + optional predicate) — see `EFFECTS_INDEX.md`.
 
 ### ActivationTimingRestriction values
 

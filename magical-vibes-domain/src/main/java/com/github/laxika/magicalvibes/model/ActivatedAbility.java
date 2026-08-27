@@ -587,8 +587,14 @@ public class ActivatedAbility {
         return this;
     }
 
+    /**
+     * Whether this ability carries a target during activation. An ability-side target filter is
+     * itself a target declaration, even when its effect target specs are neutral (for example,
+     * an ability that looks at a target player's library).
+     */
     public boolean isNeedsTarget() {
-        return !multiTargetFilters.isEmpty()
+        return targetFilter != null
+                || !multiTargetFilters.isEmpty()
                 || effects.stream().anyMatch(e -> {
                     TargetSpec spec = e.targetSpec();
                     return spec.admits(TargetPredicate.Kind.PLAYER)

@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -861,6 +863,23 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        @DisplayName("returns player targets when only the ability filter declares targeting")
+        void returnsPlayerTargets_forFilterOnlyTargetingAbility() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new LookAtTopCardsOfTargetLibraryEffect(1, TargetLibraryAction.LOOK_ONLY)),
+                    "Look at the top card of target player's library",
+                    new PlayerPredicateTargetFilter(
+                            new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0);
+
+            assertThat(response.validPermanentIds()).isEmpty();
+            assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+        }
+
+        @Test
         @DisplayName("'dealt damage by this creature this turn' offers only the players that source damaged")
         void offersOnlySourceDamagedPlayers() {
             Card sourceCard = createCreatureCard();
@@ -1199,9 +1218,6 @@ class ValidTargetServiceTest {
                     List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage", filter);
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
-
-            doThrow(new IllegalStateException("invalid"))
-                    .when(predicateEvaluationService).validateTargetFilter(eq(filter), eq(creature), any(FilterContext.class));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);

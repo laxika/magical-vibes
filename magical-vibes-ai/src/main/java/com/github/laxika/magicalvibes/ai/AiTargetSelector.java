@@ -1255,8 +1255,21 @@ class AiTargetSelector {
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
 
-        boolean canTargetPlayer = nonCostEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean canTargetPermanent = nonCostEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean effectsDeclareTarget = nonCostEffects.stream()
+                .anyMatch(e -> e.targetSpec().declaredTarget() != null);
+        boolean effectsCanTargetPlayer = nonCostEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean effectsCanTargetPermanent = nonCostEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        TargetFilter targetFilter = ability.getTargetFilter();
+        boolean canTargetPlayer = targetFilter == null
+                ? effectsCanTargetPlayer
+                : targetFilterAllowsPlayer(targetFilter)
+                && (effectsCanTargetPlayer || !effectsDeclareTarget);
+        boolean canTargetPermanent = targetFilter == null
+                ? effectsCanTargetPermanent
+                : targetFilterAllowsPermanent(targetFilter)
+                && (effectsCanTargetPermanent || !effectsDeclareTarget);
 
         // Classify: is this ability beneficial to the target or harmful?
         boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
@@ -1272,6 +1285,8 @@ class AiTargetSelector {
                 // Target own best creature
                 UUID target = findBestOwnCreatureTarget(gameData, ability, aiPlayerId, source);
                 if (target != null) return target;
+                target = findBestOwnPermanentTarget(gameData, ability, aiPlayerId, opponentId, source);
+                if (target != null) return target;
             } else {
                 // Target opponent's best creature (for damage, destruction, bounce, tap, etc.)
                 UUID target = findBestOpponentTarget(gameData, ability, aiPlayerId, opponentId, nonCostEffects, source);
@@ -1279,13 +1294,9 @@ class AiTargetSelector {
             }
         }
 
-        // For "any target" damage, fall back to opponent's face. One effect allowing a player
-        // target doesn't make the player legal for the ability as a whole: a companion effect may
-        // require a permanent (Samite Alchemist's "prevent … to target creature you control. Tap
-        // that creature."), so the engine gets the final say here too.
-        if (canTargetPlayer && opponentId != null
-                && isValidAbilityTarget(gameData, ability, opponentId, aiPlayerId, source)) {
-            return opponentId;
+        if (canTargetPlayer) {
+            UUID target = findBestPlayerTarget(gameData, ability, aiPlayerId, opponentId, isBeneficial, source);
+            if (target != null) return target;
         }
 
         return null;
@@ -1300,6 +1311,17 @@ class AiTargetSelector {
                 .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
                 .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
                         + gameQueryService.getEffectiveToughness(gameData, p)))
+                .map(Permanent::getId)
+                .orElse(null);
+    }
+
+    private UUID findBestOwnPermanentTarget(GameData gameData, ActivatedAbility ability,
+                                            UUID aiPlayerId, UUID opponentId, Permanent source) {
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        return ownBattlefield.stream()
+                .filter(p -> !p.getId().equals(source.getId()))
+                .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
+                .max(Comparator.comparingDouble(p -> generalTargetPriority(gameData, p, aiPlayerId, opponentId)))
                 .map(Permanent::getId)
                 .orElse(null);
     }
@@ -1334,12 +1356,39 @@ class AiTargetSelector {
         }
 
         // General case: target opponent's highest-threat creature
-        return oppBattlefield.stream()
+        UUID creatureTarget = oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
                 .max(Comparator.comparingDouble(p -> threatScore(gameData, p, opponentId, aiPlayerId)))
                 .map(Permanent::getId)
                 .orElse(null);
+        if (creatureTarget != null) return creatureTarget;
+
+        return oppBattlefield.stream()
+                .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
+                .max(Comparator.comparingDouble(p -> generalTargetPriority(gameData, p, opponentId, aiPlayerId)))
+                .map(Permanent::getId)
+                .orElse(null);
+    }
+
+    private UUID findBestPlayerTarget(GameData gameData, ActivatedAbility ability,
+                                      UUID aiPlayerId, UUID opponentId, boolean beneficial, Permanent source) {
+        List<UUID> candidates = new ArrayList<>();
+        addPlayerCandidate(candidates, beneficial ? aiPlayerId : opponentId);
+        addPlayerCandidate(candidates, beneficial ? opponentId : aiPlayerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            addPlayerCandidate(candidates, playerId);
+        }
+        return candidates.stream()
+                .filter(targetId -> isValidAbilityTarget(gameData, ability, targetId, aiPlayerId, source))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void addPlayerCandidate(List<UUID> candidates, UUID playerId) {
+        if (playerId != null && !candidates.contains(playerId)) {
+            candidates.add(playerId);
+        }
     }
 
     /**
