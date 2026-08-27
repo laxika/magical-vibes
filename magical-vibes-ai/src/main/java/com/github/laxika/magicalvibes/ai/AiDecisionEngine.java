@@ -3020,12 +3020,11 @@ public abstract class AiDecisionEngine {
                     || !isModalModeAffordable(gameData, card, option, virtualPool)) {
                 continue;
             }
-            CardEffect effect = option.effect();
             int encoded = coe.variableModeCount()
                     ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
                     : i;
 
-            if (EffectResolution.targetsSpellOnStack(effect)) continue;
+            if (option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack)) continue;
 
             if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
                     || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
@@ -3042,7 +3041,7 @@ public abstract class AiDecisionEngine {
                 continue;
             }
 
-            if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
                 List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
                 if (!targets.isEmpty()) {
                     UUID target = targets.getFirst().getId();
@@ -3061,16 +3060,15 @@ public abstract class AiDecisionEngine {
 
     private List<UUID> findModalModeTargets(GameData gameData, Card card,
                                              ChooseOneEffect.ChooseOneOption option) {
-        CardEffect effect = option.effect();
         if (option.targetFilters() != null
-                && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                && modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)) {
             return findModalPermanentTargets(gameData, card, option);
         }
         if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
                 || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
             return findModalPlayerOrPermanentTargets(gameData, card, option);
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
             List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
             return targets.isEmpty() ? List.of() : List.of(targets.getFirst().getId());
         }
@@ -3084,13 +3082,12 @@ public abstract class AiDecisionEngine {
                 return false;
             }
         }
-        CardEffect effect = option.effect();
-        if (EffectResolution.targetsSpellOnStack(effect)) return false;
+        if (option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack)) return false;
         if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
                 || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
             return findModalModeTargets(gameData, card, option).size() >= requiredModalTargetCount(option);
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
             return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
         }
         return true;

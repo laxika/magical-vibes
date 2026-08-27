@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
@@ -101,6 +102,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsTargetlessModalDoubleFacedCardFace() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.RED, 4);
+        ToralfGodOfFury toralf = new ToralfGodOfFury();
+        harness.setHand(aiPlayer, List.of(toralf));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
+            assertThat(gameData.stack.getFirst().getXValue()).isZero();
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void suppliesTargetForNestedMillFollowUpSpell() {

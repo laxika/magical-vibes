@@ -929,7 +929,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private boolean isSingleEffectRemoval(CardEffect effect) {
         if (effect instanceof ChooseOneEffect coe) {
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                if (isSingleEffectRemoval(option.effect())) return true;
+                for (CardEffect modeEffect : option.effects()) {
+                    if (isSingleEffectRemoval(modeEffect)) return true;
+                }
             }
             return false;
         }
@@ -966,7 +968,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                                    Permanent creature) {
         if (effect instanceof ChooseOneEffect coe) {
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                if (canSingleEffectRemoveCreature(gameData, spell, option.effect(), creature)) return true;
+                for (CardEffect modeEffect : option.effects()) {
+                    if (canSingleEffectRemoveCreature(gameData, spell, modeEffect, creature)) return true;
+                }
             }
             return false;
         }

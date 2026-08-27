@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BasalThrull;
@@ -1640,6 +1641,21 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerBattlefields.get(human.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Medium AI casts a targetless modal double-faced card face")
+    void castsTargetlessModalDoubleFacedCardFace() {
+        giveAiPriority();
+        giveAiMountains(4);
+        ToralfGodOfFury toralf = new ToralfGodOfFury();
+        harness.setHand(aiPlayer, List.of(toralf));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isZero();
     }
 
     @Test

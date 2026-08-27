@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
@@ -2029,6 +2030,24 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Hard AI casts a targetless modal double-faced card face")
+    void castsTargetlessModalDoubleFacedCardFace() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        givePlayerMountains(player1, 4);
+        ToralfGodOfFury toralf = new ToralfGodOfFury();
+        harness.setHand(player1, List.of(toralf));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        assertThat(ai.tryCastSpell(gd)).isTrue();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isZero();
     }
 
     @Test

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
@@ -654,6 +655,21 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerBattlefields.get(human.getId()))
                     .extracting(permanent -> permanent.getCard().getName())
                     .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+        }
+
+        @Test
+        @DisplayName("Easy AI casts a targetless modal double-faced card face")
+        void castsTargetlessModalDoubleFacedCardFace() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            ToralfGodOfFury toralf = new ToralfGodOfFury();
+            testHarness.setHand(aiTestPlayer, List.of(toralf));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
+            assertThat(testGd.stack.getFirst().getXValue()).isZero();
         }
 
         @Test

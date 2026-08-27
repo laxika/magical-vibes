@@ -28,20 +28,22 @@ public final class InstantCategoryClassifier {
 
     public static InstantCategory classify(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            // Modal spells: classify each option's effect and return the highest-priority
+            // Modal spells: classify each option's effects and return the highest-priority
             // usable category. Counter modes are skipped because the AI can't target spells.
             if (effect instanceof ChooseOneEffect coe) {
                 boolean hasRemoval = false, hasCombatTrick = false;
                 boolean hasBurnToFace = false, hasCardAdvantage = false;
                 for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                    InstantCategory cat = classifySingleEffect(option.effect());
-                    if (cat == null) continue;
-                    switch (cat) {
-                        case REMOVAL -> hasRemoval = true;
-                        case COMBAT_TRICK -> hasCombatTrick = true;
-                        case BURN_TO_FACE -> hasBurnToFace = true;
-                        case CARD_ADVANTAGE -> hasCardAdvantage = true;
-                        default -> {} // COUNTERSPELL and OTHER skipped
+                    for (CardEffect modeEffect : option.effects()) {
+                        InstantCategory cat = classifySingleEffect(modeEffect);
+                        if (cat == null) continue;
+                        switch (cat) {
+                            case REMOVAL -> hasRemoval = true;
+                            case COMBAT_TRICK -> hasCombatTrick = true;
+                            case BURN_TO_FACE -> hasBurnToFace = true;
+                            case CARD_ADVANTAGE -> hasCardAdvantage = true;
+                            default -> {} // COUNTERSPELL and OTHER skipped
+                        }
                     }
                 }
                 if (hasRemoval) return InstantCategory.REMOVAL;
