@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LonghornSharpshooter;
 import com.github.laxika.magicalvibes.cards.l.LuminousRebuke;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LilianasIndignation;
@@ -163,6 +164,38 @@ class RandomAiDecisionEngineTest {
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
             assertThat(gameData.stack.getFirst().getXValue()).isZero();
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsPlotCardNormallyWhenOnlyManaCostIsAffordable() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 2);
+        LonghornSharpshooter sharpshooter = new LonghornSharpshooter();
+        harness.setHand(aiPlayer, List.of(sharpshooter));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(sharpshooter);
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
+            assertThat(gameData.getPlayerExiledCards(aiPlayer.getId())).isEmpty();
+            assertThat(gameData.plottedCardIds).doesNotContain(sharpshooter.getId());
+            assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
         } finally {
             watcher.uninstall();
         }

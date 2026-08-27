@@ -796,10 +796,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final List<UUID> finalImposedSacrificeIds = imposedSacrificeIds;
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
             final CostReductionPlan finalCostReductionPlan = costReductionPlan;
+            // For plot cards, a present empty list explicitly selects the alternate hand cast.
+            // Ordinary casts without a sacrifice-for-reduction selection must omit the field.
+            final List<UUID> finalAlternateCostSacrificeIds =
+                    finalCostReductionPlan.permanentIds().isEmpty()
+                            ? null
+                            : finalCostReductionPlan.permanentIds();
             final BeholdSelection finalBeholdSelection = beholdSelection;
             send(() -> gameActions.handlePlayCard(
                     buildSpellPlayCardRequest(gameData, card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
-                            finalMultiTargetIds, convokeCreatureIds, finalCostReductionPlan.permanentIds(),
+                            finalMultiTargetIds, convokeCreatureIds, finalAlternateCostSacrificeIds,
                             finalSacrificePermanentId,
                             finalExileGraveyardCardIndex, finalExileGraveyardCardIndices,
                             finalDiscardHandCardIndex, finalDiscardHandCardIndices,
