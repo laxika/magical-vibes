@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.cards.l.LilianasIndignation;
 import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.Mathemagics;
+import com.github.laxika.magicalvibes.cards.m.MagmaOpus;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
@@ -136,6 +137,46 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void castsMagmaOpusWithSeparateDamageAndTapTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        for (int i = 0; i < 2; i++) {
+            harness.addToBattlefield(opponent, new GrizzlyBears());
+        }
+        harness.addMana(aiPlayer, ManaColor.BLUE, 1);
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 6);
+        MagmaOpus magmaOpus = new MagmaOpus();
+        harness.setHand(aiPlayer, List.of(magmaOpus));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        StackEntry entry = gameData.stack.getFirst();
+        assertThat(entry.getCard()).isSameAs(magmaOpus);
+        assertThat(entry.getDamageAssignments()).hasSize(2);
+        assertThat(entry.getTargetGroupSizes()).containsExactly(2, 2);
+        assertThat(entry.getTargetIds()).hasSize(4);
+        assertThat(entry.targetsForGroup(0)).hasSize(2).doesNotHaveDuplicates();
+        assertThat(entry.targetsForGroup(1)).hasSize(2).doesNotHaveDuplicates();
     }
 
     @Test

@@ -2856,7 +2856,11 @@ public class SpellCastingService {
             targetLegalityService.validateSpellTargetGroupsAfterPrimary(
                     gameData, card, targetIds, playerId, effectiveXValue, true);
         } else if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
-            if (mixedSpellAndPermanentTargets) {
+            if (!dividedDamageTargetGroupSizes.isEmpty()) {
+                targetLegalityService.validateMultiSpellTargets(
+                        gameData, card, targetIds, playerId, effectiveXValue, kicked,
+                        targetingSpellEffects, dividedDamageTargetGroupSizes);
+            } else if (mixedSpellAndPermanentTargets) {
                 targetLegalityService.validateMixedSpellAndPermanentTargets(
                         gameData, card, targetIds, playerId, effectiveXValue, targetingSpellEffects);
             } else {

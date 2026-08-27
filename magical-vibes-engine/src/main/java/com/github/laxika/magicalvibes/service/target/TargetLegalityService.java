@@ -1564,7 +1564,19 @@ public class TargetLegalityService {
                                           UUID controllerId, int xValue, boolean kicked,
                                           List<CardEffect> selectedEffects) {
         validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0,
-                selectedEffects);
+                selectedEffects, null);
+    }
+
+    /**
+     * Validates multi-target spell targets when some groups have a separately recorded target
+     * count, such as a divided-damage assignment map followed by ordinary target IDs.
+     */
+    public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                          UUID controllerId, int xValue, boolean kicked,
+                                          List<CardEffect> selectedEffects,
+                                          List<Integer> targetGroupSizes) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0,
+                selectedEffects, targetGroupSizes);
     }
 
     /**
@@ -1637,6 +1649,14 @@ public class TargetLegalityService {
     private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                            UUID controllerId, int xValue, boolean kicked, int firstGroupIndex,
                                            List<CardEffect> selectedEffects) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked,
+                firstGroupIndex, selectedEffects, null);
+    }
+
+    private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                           UUID controllerId, int xValue, boolean kicked, int firstGroupIndex,
+                                           List<CardEffect> selectedEffects,
+                                           List<Integer> targetGroupSizes) {
         List<SpellTarget> targetGroups = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .toList();
@@ -1650,9 +1670,30 @@ public class TargetLegalityService {
                 .mapToInt(group -> effectiveGroupMaxTargets(
                         gameData, controllerId, null, group, xValue, kicked))
                 .sum();
+        if (targetGroupSizes != null && !targetGroupSizes.isEmpty()) {
+            int expectedTargetCount = 0;
+            for (SpellTarget group : targetGroups) {
+                int groupTargetCount = targetCountForGroup(group, targetGroupSizes);
+                int groupMinTargets = kicked ? group.getKickedMinTargets() : group.getMinTargets();
+                if (group.isXScaled()) {
+                    groupMinTargets = Math.min(xValue, groupMinTargets);
+                }
+                int groupMaxTargets = effectiveGroupMaxTargets(
+                        gameData, controllerId, null, group, xValue, kicked);
+                if (groupTargetCount < groupMinTargets || groupTargetCount > groupMaxTargets) {
+                    throw new IllegalStateException("Must target between " + groupMinTargets
+                            + " and " + groupMaxTargets + " targets in each target group");
+                }
+                expectedTargetCount += groupTargetCount;
+            }
+            if (targetIds == null || targetIds.size() != expectedTargetCount) {
+                throw new IllegalStateException("Target group sizes do not match the target list");
+            }
+        }
         validateMultiTargetCount(targetIds, minTargets, maxTargets, targetGroups, card.isAllowSharedTargets(),
                 card.getMultiTargetConstraint()
-                        == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER);
+                        == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
+                targetGroupSizes);
 
         if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_COLOR) {
             GraveyardCardPredicateTargetFilter ownGraveyardCards =
@@ -1669,12 +1710,12 @@ public class TargetLegalityService {
 
         List<TargetFilter> perPositionFilters = targetGroups.stream()
                 .flatMap(group -> java.util.stream.IntStream.range(0,
-                                Math.max(group.getMaxTargets(), group.getKickedMaxTargets()))
+                                targetPositionCount(group, targetGroupSizes))
                         .mapToObj(ignored -> group.getFilter()))
                 .toList();
         List<SpellTarget> perPositionGroups = targetGroups.stream()
                 .flatMap(group -> java.util.stream.IntStream.range(0,
-                                Math.max(group.getMaxTargets(), group.getKickedMaxTargets()))
+                                targetPositionCount(group, targetGroupSizes))
                         .mapToObj(ignored -> group))
                 .toList();
         int positionOffset = card.getSpellTargets().stream()
@@ -1697,7 +1738,10 @@ public class TargetLegalityService {
                             && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             // Player-targeting position
             if (gameData.playerIds.contains(targetId)) {
-                if (!card.doesPositionAllowPlayerTargets(positionOffset + i)) {
+                boolean playerTargetAllowed = targetGroupSizes != null && !targetGroupSizes.isEmpty()
+                        ? targetGroupAllowsPlayerTargets(targetGroup, groupEffects)
+                        : card.doesPositionAllowPlayerTargets(positionOffset + i);
+                if (!playerTargetAllowed) {
                     throw new IllegalStateException("This spell cannot target players");
                 }
                 TargetFilter playerSlotFilter = getPositionFilter(perPositionFilters, i);
@@ -3299,7 +3343,7 @@ public class TargetLegalityService {
      * By default, all targets must be globally unique across all groups — this matches the
      * common MTG pattern where separate "target" words imply distinct objects. Cards whose
      * oracle text does NOT use "another" and whose target filters can overlap must set
-     * {@code allowSharedTargets = true} to opt in to the CR 114.6c rule that allows the same
+     * {@code allowSharedTargets = true} to opt in to the CR 601.2c rule that allows the same
      * permanent across different target groups (within-group uniqueness is still enforced).
      */
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max,
@@ -3310,6 +3354,14 @@ public class TargetLegalityService {
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max,
                                           List<SpellTarget> spellTargets, boolean allowSharedTargets,
                                           boolean allowSharedTargetsWithinGroup) {
+        validateMultiTargetCount(targetIds, min, max, spellTargets, allowSharedTargets,
+                allowSharedTargetsWithinGroup, null);
+    }
+
+    private void validateMultiTargetCount(List<UUID> targetIds, int min, int max,
+                                          List<SpellTarget> spellTargets, boolean allowSharedTargets,
+                                          boolean allowSharedTargetsWithinGroup,
+                                          List<Integer> targetGroupSizes) {
         if (targetIds == null || targetIds.size() < min || targetIds.size() > max) {
             throw new IllegalStateException("Must target between " + min + " and " + max + " targets");
         }
@@ -3320,10 +3372,15 @@ public class TargetLegalityService {
             return;
         }
         if (allowSharedTargets && spellTargets != null && spellTargets.size() > 1) {
-            // CR 114.6c: same permanent allowed across groups; enforce within-group uniqueness only
+            // Shared targets are legal across groups; enforce uniqueness within each target group.
             int consumed = 0;
             for (SpellTarget group : spellTargets) {
-                int groupSize = Math.min(group.getMaxTargets(), targetIds.size() - consumed);
+                int groupSize = targetGroupSizes != null && group.getIndex() < targetGroupSizes.size()
+                        ? targetGroupSizes.get(group.getIndex())
+                        : Math.min(group.getMaxTargets(), targetIds.size() - consumed);
+                if (groupSize < 0 || consumed + groupSize > targetIds.size()) {
+                    throw new IllegalStateException("Target group sizes do not match the target list");
+                }
                 List<UUID> groupTargets = targetIds.subList(consumed, consumed + groupSize);
                 if (new HashSet<>(groupTargets).size() != groupTargets.size()) {
                     throw new IllegalStateException("All targets must be different");
@@ -3336,6 +3393,30 @@ public class TargetLegalityService {
                 throw new IllegalStateException("All targets must be different");
             }
         }
+    }
+
+    private int targetCountForGroup(SpellTarget group, List<Integer> targetGroupSizes) {
+        if (group.getIndex() >= targetGroupSizes.size()) {
+            throw new IllegalStateException("Target group sizes do not match the card's target groups");
+        }
+        int groupTargetCount = targetGroupSizes.get(group.getIndex());
+        if (groupTargetCount < 0) {
+            throw new IllegalStateException("Target group size cannot be negative");
+        }
+        return groupTargetCount;
+    }
+
+    private int targetPositionCount(SpellTarget group, List<Integer> targetGroupSizes) {
+        return targetGroupSizes == null || targetGroupSizes.isEmpty()
+                ? Math.max(group.getMaxTargets(), group.getKickedMaxTargets())
+                : targetCountForGroup(group, targetGroupSizes);
+    }
+
+    private boolean targetGroupAllowsPlayerTargets(SpellTarget group, List<CardEffect> groupEffects) {
+        return groupEffects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                || group.getFilter() instanceof AnyTargetPredicateTargetFilter
+                || group.getFilter() instanceof PlayerPredicateTargetFilter;
     }
 
     private void validatePlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate, String errorMessage) {

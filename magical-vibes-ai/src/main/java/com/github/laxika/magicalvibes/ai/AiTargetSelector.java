@@ -438,18 +438,51 @@ class AiTargetSelector {
      * a group's mandatory targets cannot be satisfied.
      */
     List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId) {
+        return chooseMultiTargets(gameData, card, aiPlayerId, Set.of(), 0, Set.of());
+    }
+
+    /**
+     * Selects the target groups that are not represented by an amount-assignment map. The
+     * assignment targets are reserved when cross-group sharing is not allowed, so the ordinary
+     * groups remain distinct from them when the engine combines both target channels for validation.
+     */
+    List<UUID> chooseMultiTargetsAfterDistribution(GameData gameData, Card card, UUID aiPlayerId,
+                                                    Map<UUID, Integer> distributionAssignments) {
+        Set<UUID> assignedTargets = distributionAssignments == null
+                ? Set.of() : distributionAssignments.keySet();
+        Set<Integer> assignedTargetGroups = new HashSet<>();
+        for (SpellTarget spellTarget : card.getSpellTargets()) {
+            if (findEffectsForTargetGroup(card, spellTarget.getIndex()).stream()
+                    .anyMatch(this::isAmountDistributionEffect)) {
+                assignedTargetGroups.add(spellTarget.getIndex());
+            }
+        }
+        Set<UUID> reservedTargets = card.isAllowSharedTargets() ? Set.of() : assignedTargets;
+        return chooseMultiTargets(gameData, card, aiPlayerId, reservedTargets,
+                assignedTargets.size(), assignedTargetGroups);
+    }
+
+    private List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId,
+                                           Set<UUID> reservedTargets,
+                                           int separatelySelectedTargetCount,
+                                           Set<Integer> skippedTargetGroups) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         List<SpellTarget> spellTargets = card.getSpellTargets();
         List<UUID> result = new ArrayList<>();
-        Set<UUID> alreadyChosen = new HashSet<>();
+        Set<UUID> alreadyChosen = new HashSet<>(reservedTargets);
         int maxTargetsAffordable = maxTargetsAffordableWithAdditionalLife(
                 gameData, card, aiPlayerId);
+        int maxAdditionalTargetsAffordable = Math.max(0,
+                maxTargetsAffordable - separatelySelectedTargetCount);
 
         for (SpellTarget st : spellTargets) {
+            if (skippedTargetGroups.contains(st.getIndex())) {
+                continue;
+            }
             int effectiveMaxTargets = targetLegalityService.getEffectiveMaxTargetsForGroup(
                     gameData, card, aiPlayerId, null, st);
             effectiveMaxTargets = Math.min(effectiveMaxTargets,
-                    Math.max(0, maxTargetsAffordable - result.size()));
+                    Math.max(0, maxAdditionalTargetsAffordable - result.size()));
             List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
 
             boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
@@ -506,6 +539,22 @@ class AiTargetSelector {
         }
 
         return result;
+    }
+
+    private boolean isAmountDistributionEffect(CardEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        if (EffectResolution.distributesAmountsAmongTargets(effect)) {
+            return true;
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return replacement.baseEffect() != null
+                    && replacement.upgradedEffect() != null
+                    && EffectResolution.distributesAmountsAmongTargets(replacement.baseEffect())
+                    && EffectResolution.distributesAmountsAmongTargets(replacement.upgradedEffect());
+        }
+        return false;
     }
 
     private int maxTargetsAffordableWithAdditionalLife(GameData gameData, Card card, UUID playerId) {

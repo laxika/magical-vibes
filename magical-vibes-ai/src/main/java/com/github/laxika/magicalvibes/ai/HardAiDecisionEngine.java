@@ -1045,7 +1045,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             targetId = selection.targetId();
             multiTargetIds = selection.targetIds();
         } else if (isMultiTarget && modalPlan == null) {
-            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+            multiTargetIds = EffectResolution.needsDamageDistribution(card)
+                    ? targetSelector.chooseMultiTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments)
+                    : targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return null;
             targetId = null;
         } else if (targetId == null && checkSpellTarget && modalPlan == null

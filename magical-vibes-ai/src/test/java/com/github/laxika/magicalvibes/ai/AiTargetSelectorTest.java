@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.m.MorbidBloom;
+import com.github.laxika.magicalvibes.cards.m.MagmaOpus;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
@@ -1162,6 +1163,24 @@ class AiTargetSelectorTest {
     @Nested
     @DisplayName("chooseMultiTargets")
     class ChooseMultiTargetsTests {
+
+        @Test
+        @DisplayName("Magma Opus keeps tap targets separate from damage assignments")
+        void keepsMagmaOpusTapTargetsSeparateFromDamageAssignments() {
+            for (int i = 0; i < 2; i++) {
+                harness.addToBattlefield(human, new GrizzlyBears());
+            }
+
+            MagmaOpus card = new MagmaOpus();
+            Map<UUID, Integer> damageAssignments = targetSelector.buildDamageAssignments(
+                    gd, card, aiPlayer.getId());
+            List<UUID> tapTargets = targetSelector.chooseMultiTargetsAfterDistribution(
+                    gd, card, aiPlayer.getId(), damageAssignments);
+
+            assertThat(damageAssignments).hasSize(2);
+            assertThat(tapTargets).hasSize(2).doesNotHaveDuplicates();
+            assertThat(tapTargets).allMatch(damageAssignments::containsKey);
+        }
 
         @Test
         @DisplayName("Karn's Temporal Sundering: picks self for extra turn + opponent's nonland permanent")

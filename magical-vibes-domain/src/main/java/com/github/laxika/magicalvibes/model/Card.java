@@ -173,7 +173,7 @@ public class Card {
      */
     private int additionalLifeCostPerTarget;
     /**
-     * When true, the same permanent may be chosen for different target groups (CR 114.6c).
+     * When true, the same permanent may be chosen for different target groups (CR 601.2c).
      * By default, targets across groups must be distinct — matching the common MTG pattern
      * where separate "target" instances imply "another". Set this for cards whose oracle text
      * does NOT use "another" and whose target filters can overlap (e.g. "target creature" +
