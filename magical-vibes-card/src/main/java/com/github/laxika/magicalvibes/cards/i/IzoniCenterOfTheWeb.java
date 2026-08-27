@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "209")
+@CardRegistration(set = "MKM", collectorNumber = "362")
 public class IzoniCenterOfTheWeb extends Card {
 
     public IzoniCenterOfTheWeb() {

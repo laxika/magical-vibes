@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "207")
+@CardRegistration(set = "MKM", collectorNumber = "416")
 public class IllTimedExplosion extends Card {
 
     public IllTimedExplosion() {

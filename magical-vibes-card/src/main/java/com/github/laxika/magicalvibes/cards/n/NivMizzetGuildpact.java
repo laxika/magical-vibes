@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "220")
+@CardRegistration(set = "MKM", collectorNumber = "319")
+@CardRegistration(set = "MKM", collectorNumber = "368")
 public class NivMizzetGuildpact extends Card {
 
     public NivMizzetGuildpact() {

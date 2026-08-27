@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "259")
+@CardRegistration(set = "MKM", collectorNumber = "324")
 public class CommercialDistrict extends Card {
 
     public CommercialDistrict() {

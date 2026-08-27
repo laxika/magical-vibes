@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MKM", collectorNumber = "313")
 @CardRegistration(set = "MKM", collectorNumber = "208")
 public class InsidiousRoots extends Card {
 

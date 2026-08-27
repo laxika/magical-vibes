@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "192")
+@CardRegistration(set = "MKM", collectorNumber = "311")
 public class CoercedToKill extends Card {
 
     public CoercedToKill() {

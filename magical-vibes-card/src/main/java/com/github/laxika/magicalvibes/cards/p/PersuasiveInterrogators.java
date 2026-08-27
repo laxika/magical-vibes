@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "98")
+@CardRegistration(set = "MKM", collectorNumber = "345")
 public class PersuasiveInterrogators extends Card {
 
     public PersuasiveInterrogators() {

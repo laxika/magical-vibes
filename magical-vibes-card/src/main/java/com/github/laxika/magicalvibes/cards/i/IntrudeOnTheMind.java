@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "61")
+@CardRegistration(set = "MKM", collectorNumber = "296")
 public class IntrudeOnTheMind extends Card {
 
     public IntrudeOnTheMind() {

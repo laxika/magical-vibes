@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "189")
+@CardRegistration(set = "MKM", collectorNumber = "413")
 public class BloodSpatterAnalysis extends Card {
 
     public BloodSpatterAnalysis() {

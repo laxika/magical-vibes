@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "74")
+@CardRegistration(set = "MKM", collectorNumber = "298")
 public class UnauthorizedExit extends Card {
 
     public UnauthorizedExit() {

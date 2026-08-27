@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "224")
+@CardRegistration(set = "MKM", collectorNumber = "320")
+@CardRegistration(set = "MKM", collectorNumber = "369")
+@CardRegistration(set = "MKM", collectorNumber = "387")
 public class RakdosPatronOfChaos extends Card {
 
     public RakdosPatronOfChaos() {

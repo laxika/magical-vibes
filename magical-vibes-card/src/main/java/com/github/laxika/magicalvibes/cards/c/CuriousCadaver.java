@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "194")
+@CardRegistration(set = "MKM", collectorNumber = "358")
 public class CuriousCadaver extends Card {
 
     public CuriousCadaver() {

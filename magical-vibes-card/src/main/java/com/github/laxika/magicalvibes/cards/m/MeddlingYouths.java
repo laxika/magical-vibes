@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "219")
+@CardRegistration(set = "MKM", collectorNumber = "367")
 public class MeddlingYouths extends Card {
 
     public MeddlingYouths() {

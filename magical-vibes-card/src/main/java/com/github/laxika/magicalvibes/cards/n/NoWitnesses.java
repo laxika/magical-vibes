@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerWithMostCreaturesIn
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "27")
+@CardRegistration(set = "MKM", collectorNumber = "390")
 public class NoWitnesses extends Card {
 
     public NoWitnesses() {

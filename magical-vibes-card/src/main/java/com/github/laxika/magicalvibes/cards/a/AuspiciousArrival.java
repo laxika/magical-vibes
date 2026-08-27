@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "5")
+@CardRegistration(set = "MKM", collectorNumber = "288")
 public class AuspiciousArrival extends Card {
 
     public AuspiciousArrival() {

@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "172")
+@CardRegistration(set = "MKM", collectorNumber = "352")
+@CardRegistration(set = "MKM", collectorNumber = "382")
 public class ThePrideOfHullClade extends Card {
 
     public ThePrideOfHullClade() {

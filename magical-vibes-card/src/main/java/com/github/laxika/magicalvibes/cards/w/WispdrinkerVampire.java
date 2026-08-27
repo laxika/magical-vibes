@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "243")
+@CardRegistration(set = "MKM", collectorNumber = "374")
 public class WispdrinkerVampire extends Card {
 
     private static final SequenceEffect SMALL_CREATURE_TRIGGER = SequenceEffect.of(

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "50")
+@CardRegistration(set = "MKM", collectorNumber = "394")
 public class CrypticCoat extends Card {
 
     public CrypticCoat() {

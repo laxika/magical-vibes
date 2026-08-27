@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "264")
+@CardRegistration(set = "MKM", collectorNumber = "328")
 public class MeticulousArchive extends Card {
 
     public MeticulousArchive() {

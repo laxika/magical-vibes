@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "236")
+@CardRegistration(set = "MKM", collectorNumber = "371")
 public class TolsimirMidnightsLight extends Card {
 
     public TolsimirMidnightsLight() {

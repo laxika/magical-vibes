@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "181")
+@CardRegistration(set = "MKM", collectorNumber = "411")
 public class UndergrowthRecon extends Card {
 
     public UndergrowthRecon() {

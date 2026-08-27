@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromOpponentGraveyar
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "83")
+@CardRegistration(set = "MKM", collectorNumber = "399")
 public class DeadlyCoverUp extends Card {
 
     public DeadlyCoverUp() {

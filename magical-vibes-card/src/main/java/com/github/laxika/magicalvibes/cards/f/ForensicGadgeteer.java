@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "57")
+@CardRegistration(set = "MKM", collectorNumber = "342")
 public class ForensicGadgeteer extends Card {
 
     public ForensicGadgeteer() {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "132")
+@CardRegistration(set = "MKM", collectorNumber = "349")
+@CardRegistration(set = "MKM", collectorNumber = "381")
 public class IncineratorOfTheGuilty extends Card {
 
     public IncineratorOfTheGuilty() {

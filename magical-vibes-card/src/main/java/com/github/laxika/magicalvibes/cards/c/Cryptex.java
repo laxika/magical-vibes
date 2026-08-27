@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "251")
+@CardRegistration(set = "MKM", collectorNumber = "422")
 public class Cryptex extends Card {
 
     public Cryptex() {

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "4")
+@CardRegistration(set = "MKM", collectorNumber = "336")
+@CardRegistration(set = "MKM", collectorNumber = "377")
 public class AureliasVindicator extends Card {
 
     public AureliasVindicator() {

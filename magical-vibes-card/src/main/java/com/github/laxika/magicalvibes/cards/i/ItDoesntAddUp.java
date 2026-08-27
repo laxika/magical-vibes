@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SuspectReturnedPermanentEffec
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "89")
+@CardRegistration(set = "MKM", collectorNumber = "299")
 public class ItDoesntAddUp extends Card {
 
     public ItDoesntAddUp() {

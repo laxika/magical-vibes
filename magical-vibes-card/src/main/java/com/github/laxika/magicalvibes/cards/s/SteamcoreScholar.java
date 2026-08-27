@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "71")
+@CardRegistration(set = "MKM", collectorNumber = "397")
 public class SteamcoreScholar extends Card {
 
     private static final CardPredicate ACCEPTABLE_DISCARD = new CardAnyOfPredicate(List.of(

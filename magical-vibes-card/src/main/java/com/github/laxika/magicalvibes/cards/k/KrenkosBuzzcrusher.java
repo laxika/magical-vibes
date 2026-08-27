@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToOneNonbasicLandPerPlayerThenSearchEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "136")
+@CardRegistration(set = "MKM", collectorNumber = "405")
 public class KrenkosBuzzcrusher extends Card {
 
     public KrenkosBuzzcrusher() {

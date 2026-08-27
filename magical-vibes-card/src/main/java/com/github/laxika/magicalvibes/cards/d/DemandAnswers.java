@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCa
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "122")
+@CardRegistration(set = "MKM", collectorNumber = "306")
 public class DemandAnswers extends Card {
 
     public DemandAnswers() {

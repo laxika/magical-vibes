@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "127")
+@CardRegistration(set = "MKM", collectorNumber = "348")
 public class FugitiveCodebreaker extends Card {
 
     public FugitiveCodebreaker() {

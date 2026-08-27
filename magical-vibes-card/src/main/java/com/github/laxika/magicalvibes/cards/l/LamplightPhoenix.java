@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "137")
+@CardRegistration(set = "MKM", collectorNumber = "406")
 public class LamplightPhoenix extends Card {
 
     public LamplightPhoenix() {

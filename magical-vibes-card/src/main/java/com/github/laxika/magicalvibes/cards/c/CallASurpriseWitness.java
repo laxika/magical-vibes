@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "6")
+@CardRegistration(set = "MKM", collectorNumber = "289")
 public class CallASurpriseWitness extends Card {
 
     public CallASurpriseWitness() {

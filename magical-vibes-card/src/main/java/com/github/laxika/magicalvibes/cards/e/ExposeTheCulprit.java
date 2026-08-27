@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TurnTargetFaceUpEffect;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "124")
+@CardRegistration(set = "MKM", collectorNumber = "307")
 public class ExposeTheCulprit extends Card {
 
     public ExposeTheCulprit() {

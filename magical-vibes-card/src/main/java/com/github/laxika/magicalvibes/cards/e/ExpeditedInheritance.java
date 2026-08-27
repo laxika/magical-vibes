@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "123")
+@CardRegistration(set = "MKM", collectorNumber = "404")
 public class ExpeditedInheritance extends Card {
 
     public ExpeditedInheritance() {

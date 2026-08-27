@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "97")
+@CardRegistration(set = "MKM", collectorNumber = "402")
 public class OutrageousRobbery extends Card {
 
     public OutrageousRobbery() {
