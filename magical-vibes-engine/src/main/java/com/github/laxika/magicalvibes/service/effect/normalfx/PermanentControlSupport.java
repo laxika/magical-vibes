@@ -74,25 +74,38 @@ public class PermanentControlSupport {
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                        String sourceSetCode, int power, int toughness) {
         List<UUID> createdIds = new ArrayList<>();
-        Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
         boolean isCreature = token.primaryType() == CardType.CREATURE;
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, isCreature);
         int totalAmount = amount * tokenMultiplier;
+        int additionalMapTokenCount = TokenCreationReplacementSupport.additionalMapTokenCount(
+                gameData, controllerId, token, amount);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
+        List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(totalAmount + additionalMapTokenCount);
+        CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         for (int i = 0; i < totalAmount; i++) {
-            Card tokenCard = TokenCardFactory.create(token, power, toughness, sourceSetCode);
+            tokenBlueprints.add(evaluatedToken);
+        }
+        for (int i = 0; i < additionalMapTokenCount; i++) {
+            tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));
+        }
+
+        for (CreateTokenEffect tokenBlueprint : tokenBlueprints) {
+            boolean blueprintIsCreature = tokenBlueprint.primaryType() == CardType.CREATURE;
+            int blueprintPower = fixedStat(tokenBlueprint.power(), tokenBlueprint);
+            int blueprintToughness = fixedStat(tokenBlueprint.toughness(), tokenBlueprint);
+            Card tokenCard = TokenCardFactory.create(tokenBlueprint, blueprintPower, blueprintToughness, sourceSetCode);
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                     gameData, controllerId, tokenCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            if (token.initialPlusOnePlusOneCounters() > 0
+            if (tokenBlueprint.initialPlusOnePlusOneCounters() > 0
                     && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, tokenPermanent, controllerId)) {
-                int initial = token.initialPlusOnePlusOneCounters();
-                if (isCreature) {
+                int initial = tokenBlueprint.initialPlusOnePlusOneCounters();
+                if (blueprintIsCreature) {
                     initial = gameQueryService.doublePlusOnePlusOneCounters(
                             gameData, tokenPermanent, controllerId, initial);
                 }
@@ -105,27 +118,28 @@ public class PermanentControlSupport {
             batch.add(tokenPermanent);
             createdIds.add(tokenPermanent.getId());
 
-            if (token.tappedAndAttacking()) {
+            if (tokenBlueprint.tappedAndAttacking()) {
                 tokenPermanent.tap();
                 tokenPermanent.setAttacking(true);
-            } else if (token.tapped()) {
+            } else if (tokenBlueprint.tapped()) {
                 tokenPermanent.tap();
             }
 
-            if (grantedKeywordsUntilEndOfTurn != null && !grantedKeywordsUntilEndOfTurn.isEmpty()) {
-                tokenPermanent.getGrantedKeywords().addAll(grantedKeywordsUntilEndOfTurn);
+            Set<Keyword> blueprintGrantedKeywords = tokenBlueprint.grantedKeywordsUntilEndOfTurn();
+            if (blueprintGrantedKeywords != null && !blueprintGrantedKeywords.isEmpty()) {
+                tokenPermanent.getGrantedKeywords().addAll(blueprintGrantedKeywords);
             }
 
-            if (token.exileAtEndOfCombat()) {
+            if (tokenBlueprint.exileAtEndOfCombat()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
             }
-            if (token.exileAtEndStep()) {
+            if (tokenBlueprint.exileAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
             }
 
             String colorDesc;
-            if (token.colors() != null && !token.colors().isEmpty()) {
-                colorDesc = token.colors().stream()
+            if (tokenBlueprint.colors() != null && !tokenBlueprint.colors().isEmpty()) {
+                colorDesc = tokenBlueprint.colors().stream()
                         .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
                         .reduce((a, b) -> a + " and " + b).orElse("");
                 colorDesc += " ";
@@ -133,9 +147,9 @@ public class PermanentControlSupport {
                 colorDesc = "";
             }
 
-            if (isCreature) {
-                String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : (token.tapped() ? " tapped" : "");
-                String logEntry = "A " + power + "/" + toughness + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
+            if (blueprintIsCreature) {
+                String tappedAttackingDesc = tokenBlueprint.tappedAndAttacking() ? " tapped and attacking" : (tokenBlueprint.tapped() ? " tapped" : "");
+                String logEntry = "A " + blueprintPower + "/" + blueprintToughness + " " + colorDesc + tokenBlueprint.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
                 gameLogService.append(gameData, GameLog.text(logEntry));
 
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
@@ -143,8 +157,8 @@ public class PermanentControlSupport {
                     legendRuleService.checkLegendRule(gameData, controllerId);
                 }
             } else {
-                String tokenTypeDesc = token.primaryType().name().charAt(0) + token.primaryType().name().substring(1).toLowerCase();
-                String logEntry = "A " + colorDesc + token.tokenName() + " " + tokenTypeDesc.toLowerCase() + " token enters the battlefield.";
+                String tokenTypeDesc = tokenBlueprint.primaryType().name().charAt(0) + tokenBlueprint.primaryType().name().substring(1).toLowerCase();
+                String logEntry = "A " + colorDesc + tokenBlueprint.tokenName() + " " + tokenTypeDesc.toLowerCase() + " token enters the battlefield.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
 
                 // Fire ally-artifact / equipment / etc. enters triggers (e.g. Voldaren Bloodcaster

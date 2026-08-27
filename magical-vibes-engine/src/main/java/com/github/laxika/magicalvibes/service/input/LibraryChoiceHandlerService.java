@@ -282,6 +282,10 @@ public class LibraryChoiceHandlerService {
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
                             librarySearch.sourcePermanentId());
+                    if (followUp != null && followUp.imprintSourcePermanentId() != null) {
+                        exileService.setImprintedCardOnPermanent(gameData,
+                                followUp.imprintSourcePermanentId(), chosenCard);
+                    }
                     if (librarySearch.grantExilePlayPermission()) {
                         gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
                         if (librarySearch.allowAnyManaType()) {
@@ -1030,6 +1034,9 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.EXILE_WITH_SOURCE) {
             UUID sourcePermanentId = librarySearch.sourcePermanentId();
             exileService.exileCard(gameData, deckOwnerId, chosenCard, sourcePermanentId);
+            if (requireDifferentNames) {
+                excludedCardNames.add(chosenCard.getName());
+            }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", chosenCard, "."));
             log.info("Game {} - {} exiles {} with source (any-number search)",
@@ -1039,8 +1046,14 @@ public class LibraryChoiceHandlerService {
             // declines (handled by the cardIndex == -1 branch above, which shuffles and finishes).
             List<Card> remainingMatches = filterPredicate != null
                     ? deck.stream().filter(c -> predicateEvaluationService.matchesCardPredicate(
-                            c, filterPredicate, null, gameData, deckOwnerId)).toList()
+                            c, filterPredicate, null, gameData, deckOwnerId)
+                            && (!requireDifferentNames || !excludedCardNames.contains(c.getName()))).toList()
                     : new ArrayList<>(deck);
+            if (requireDifferentNames && filterPredicate == null) {
+                remainingMatches = remainingMatches.stream()
+                        .filter(c -> !excludedCardNames.contains(c.getName()))
+                        .toList();
+            }
             if (remainingCount > 1 && !remainingMatches.isEmpty()) {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
@@ -1050,8 +1063,14 @@ public class LibraryChoiceHandlerService {
                                 .filterPredicate(filterPredicate)
                                 .sourcePermanentId(sourcePermanentId)
                                 .shuffleAfterSelection(shuffleAfterSelection)
+                                .requireDifferentNames(requireDifferentNames)
+                                .excludedCardNames(excludedCardNames)
                                 .build(),
-                        "Search your library for a card to exile (any number).", true));
+                        requireDifferentNames
+                                ? "Search your library for a card with a different name to exile ("
+                                        + (remainingCount - 1) + " remaining)."
+                                : "Search your library for a card to exile (any number).",
+                        true));
                 return;
             }
 

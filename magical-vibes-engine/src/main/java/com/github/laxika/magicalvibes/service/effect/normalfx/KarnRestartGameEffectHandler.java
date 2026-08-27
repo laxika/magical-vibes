@@ -214,6 +214,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearDelayedActions(EpicDelayedTrigger.class);
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.clear();
+        gameData.playersCantPlayCardsFromHandUntilControllerNextTurn.clear();
         gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.clear();
         gameData.cardTypeFlashGrantsUntilNextTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();

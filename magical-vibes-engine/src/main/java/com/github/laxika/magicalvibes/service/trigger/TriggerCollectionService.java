@@ -1311,8 +1311,8 @@ public class TriggerCollectionService {
                             ? (effect instanceof TriggeringCardConditionalEffect ? null : effect)
                             : unwrapTriggeringCardConditional(effect, discardedCard, gameData, playerId);
                     if (resolved == null) continue;
-                    var match = new TriggerMatchContext(gameData, perm, playerId, resolved);
-                    if (dispatch(match, EffectSlot.ON_OPPONENT_DISCARDS, resolved, ctx)) {
+                    if (dispatchSlotEffect(gameData, perm, playerId,
+                            EffectSlot.ON_OPPONENT_DISCARDS, ctx, resolved)) {
                         anyTriggered[0] = true;
                     }
                 }

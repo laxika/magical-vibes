@@ -77,7 +77,16 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     Card tokenCard = new Card();
                     tokenCard.setName(sourceCard.getName());
                     tokenCard.setType(sourceCard.getType());
-                    tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+                    EnumSet<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+                    if (sourceCard.getAdditionalTypes() != null) {
+                        additionalTypes.addAll(sourceCard.getAdditionalTypes());
+                    }
+                    if (e.additionalTypes() != null) {
+                        e.additionalTypes().stream()
+                                .filter(type -> type != sourceCard.getType())
+                                .forEach(additionalTypes::add);
+                    }
+                    tokenCard.setAdditionalTypes(additionalTypes);
                     // Embalm / Eternalize copies have no mana cost.
                     tokenCard.setManaCost(!e.removeManaCost() && sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
                     tokenCard.setToken(true);

@@ -102,6 +102,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.CounteredSpellLibraryDestinationChoice,
         PendingInteraction.SylvanLibraryChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
+        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice,
         PendingInteraction.ImprintFromHandChoice,
         PendingInteraction.ExileFromHandWithRefineCountersChoice,
         PendingInteraction.DiscardCostChoice,
@@ -2783,6 +2784,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer,
                     faceDown, returnOnSourceLeave, null);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /** Chooses a card to exile from hand before creating a token copy of that card. */
+    record ExileCardFromHandAndCreateTokenCopyChoice(
+            UUID playerId,
+            java.util.List<Integer> validIndices,
+            String prompt,
+            com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndCreateTokenCopyEffect effect)
+            implements PendingInteraction, HandChoice {
+
+        public ExileCardFromHandAndCreateTokenCopyChoice {
+            validIndices = java.util.List.copyOf(validIndices);
         }
 
         @Override

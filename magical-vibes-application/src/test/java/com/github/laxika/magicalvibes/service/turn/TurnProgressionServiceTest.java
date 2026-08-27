@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -565,6 +566,20 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceTurn(gd);
 
             assertThat(gd.activePlayerId).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Clears hand-play restrictions when their controller's next turn begins")
+        void clearsHandPlayRestrictionsAtControllerNextTurn() {
+            gd.activePlayerId = player2Id;
+            gd.playersCantPlayCardsFromHandUntilControllerNextTurn.put(
+                    player1Id, Set.of(player1Id, player2Id));
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.playersCantPlayCardsFromHandUntilControllerNextTurn)
+                    .doesNotContainKey(player1Id);
         }
 
         @Test

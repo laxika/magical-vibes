@@ -146,6 +146,32 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    /** Exile a selected hand card and create a token copy of it. */
+    @Component
+    public static class ExileCardFromHandAndCreateTokenCopyChoiceInteractionHandler
+            extends Base<PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public ExileCardFromHandAndCreateTokenCopyChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice> handledType() {
+            return PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handleExileCardFromHandAndCreateTokenCopyChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
     /** IMPRINT_FROM_HAND_CHOICE — exile a card from hand and imprint it on the source permanent. */
     @Component
     public static class ImprintFromHandChoiceInteractionHandler extends Base<PendingInteraction.ImprintFromHandChoice> {

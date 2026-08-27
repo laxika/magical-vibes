@@ -52,15 +52,33 @@ public class TokenCopySupport {
         }
 
         List<Permanent> tokens = new ArrayList<>();
+        Card artifactTokenTemplate = null;
         for (Card sourceCard : sourceCards) {
+            Card tokenTemplate = buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
             int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                    gameData, tokenControllerId, sourceCard.hasType(CardType.CREATURE));
+                    gameData, tokenControllerId, tokenTemplate.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
+                Card tokenCard = copy == 0
+                        ? tokenTemplate
+                        : buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
+                if (artifactTokenTemplate == null && tokenCard.hasType(CardType.ARTIFACT)) {
+                    artifactTokenTemplate = tokenCard;
+                }
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
                 tokens.add(new Permanent(tokenCard));
             }
+        }
+        int additionalMapTokenCount = TokenCreationReplacementSupport.additionalMapTokenCount(
+                gameData, tokenControllerId, artifactTokenTemplate, 1);
+        for (int map = 0; map < additionalMapTokenCount; map++) {
+            Card mapTokenCard = TokenCardFactory.create(
+                    TokenCreationReplacementSupport.additionalMapToken(
+                            effect.tapped(), effect.tappedAndAttacking()),
+                    0,
+                    0,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            tokens.add(new Permanent(mapTokenCard));
         }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);

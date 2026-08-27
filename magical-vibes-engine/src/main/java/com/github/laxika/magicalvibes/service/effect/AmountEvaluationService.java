@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
@@ -266,6 +267,8 @@ public class AmountEvaluationService {
                     countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
+            case CardTypesAmongControlledPermanents c ->
+                    countCardTypesAmongControlledPermanents(gameData, c, ctx);
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
@@ -893,6 +896,48 @@ public class AmountEvaluationService {
                     found.add(card.getType());
                 }
                 found.addAll(card.getAdditionalTypes());
+            }
+        }
+        return found.size();
+    }
+
+    private int countCardTypesAmongControlledPermanents(
+            GameData gameData, CardTypesAmongControlledPermanents amount, AmountContext ctx) {
+        boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
+        boolean ownershipNeedsBoard = staticEvaluation
+                && predicateEvaluationService.requiresGameDataForStaticFilter(amount.filter());
+        FilterContext filterContext = staticEvaluation && !ownershipNeedsBoard
+                ? FilterContext.empty() : FilterContext.of(gameData);
+        filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext
+                    .withSourceCardId(ctx.sourcePermanent().getCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent());
+        }
+
+        java.util.Set<CardType> found = java.util.EnumSet.noneOf(CardType.class);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (amount.excludeSource() && ctx.sourcePermanent() != null
+                        && permanent.getId().equals(ctx.sourcePermanent().getId())) {
+                    continue;
+                }
+                boolean matches = ownershipNeedsBoard
+                        ? predicateEvaluationService.matchesStaticFilter(permanent, amount.filter(), filterContext)
+                        : predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext);
+                if (!matches) continue;
+
+                if (staticEvaluation) {
+                    var state = LayerSystemService.activeStateFor(permanent.getId());
+                    if (state != null) {
+                        found.addAll(state.getCardTypes());
+                        continue;
+                    }
+                }
+                found.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
             }
         }
         return found.size();

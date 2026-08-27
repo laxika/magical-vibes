@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGravey
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentManaValueAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -249,7 +250,8 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        match.gameData().queueMayAbility(match.permanent().getCard(), as.sacrificingPlayerId(), mayPay, null);
+        MayPayManaEffect boundMayPay = (MayPayManaEffect) mayPay.boundToSacrificedPermanent(as.sacrificedCard());
+        match.gameData().queueMayAbility(match.permanent().getCard(), as.sacrificingPlayerId(), boundMayPay, null);
         return true;
     }
 
@@ -348,6 +350,9 @@ public class MiscTriggerCollectorService {
         }
         String cardName = match.permanent().getCard().getName();
         CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof SacrificedPermanentCardAwareEffect cardAware) {
+            wrapped = cardAware.boundToSacrificedPermanent(as.sacrificedCard());
+        }
         if (wrapped instanceof SacrificedPermanentManaValueAwareEffect manaValueAware) {
             wrapped = manaValueAware.boundToSacrificedPermanentManaValue(
                     as.sacrificedCard().getManaValue());

@@ -332,11 +332,18 @@ public class CastingPermissionService {
     }
 
     public boolean isLandPlayFromHandRestricted(GameData gameData, UUID playerId) {
-        return controlsStatic(gameData, playerId, ControllerCantPlayLandsFromHandEffect.class);
+        return isPlayingCardsFromHandRestricted(gameData, playerId)
+                || controlsStatic(gameData, playerId, ControllerCantPlayLandsFromHandEffect.class);
     }
 
     public boolean isSpellCastingFromHandRestricted(GameData gameData, UUID playerId) {
-        return controlsStatic(gameData, playerId, ControllerCantCastSpellsFromHandEffect.class);
+        return isPlayingCardsFromHandRestricted(gameData, playerId)
+                || controlsStatic(gameData, playerId, ControllerCantCastSpellsFromHandEffect.class);
+    }
+
+    private boolean isPlayingCardsFromHandRestricted(GameData gameData, UUID playerId) {
+        return gameData.playersCantPlayCardsFromHandUntilControllerNextTurn.values().stream()
+                .anyMatch(affectedPlayers -> affectedPlayers.contains(playerId));
     }
 
     private boolean hasActiveDampingEngine(GameData gameData) {

@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
@@ -505,6 +506,9 @@ public class DeathTriggerCollectorService {
     boolean handleDeathMayPayMana(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        if (mayPay instanceof SacrificedPermanentCardAwareEffect cardAware) {
+            mayPay = (MayPayManaEffect) cardAware.boundToSacrificedPermanent(sd.dyingCard());
+        }
         // CR 603.3d: the ability's target is chosen as the trigger goes on the stack even though
         // the "you may pay" happens on resolution (Drainpipe Vermin). Untargeted may-pay death
         // triggers (the Spellbomb cycle) skip the stack and prompt directly.

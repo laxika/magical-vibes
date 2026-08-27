@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -66,6 +67,13 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         if (matching.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     controllerName + " has no cards exiled with " + sourceName + "."));
+            return;
+        }
+
+        if (returnEffect.returnAtRandom()) {
+            Card chosen = matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
+            returnToBattlefield(gameData, controllerId, chosen, sourceName,
+                    returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking());
             return;
         }
 

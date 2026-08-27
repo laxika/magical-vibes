@@ -963,6 +963,10 @@ public class GameData {
     public final Map<UUID, Set<UUID>> playersCantCastNoncreatureSpellsUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
+    /** Players who can't play cards from their hand until the key player's next turn. */
+    public final Map<UUID, Set<UUID>> playersCantPlayCardsFromHandUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
     /** Card types all players can't cast until the end of the key player's next turn. */
     public final Map<UUID, Map<CardType, Integer>> playersCantCastSpellTypesUntilEndOfControllerNextTurn =
             new ConcurrentHashMap<>();
@@ -4404,6 +4408,8 @@ public class GameData {
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.playersCantPlayCardsFromHandUntilControllerNextTurn.forEach((k, v) ->
+                copy.playersCantPlayCardsFromHandUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);

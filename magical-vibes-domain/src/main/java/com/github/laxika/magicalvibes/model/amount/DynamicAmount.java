@@ -15,6 +15,7 @@ public sealed interface DynamicAmount permits
         AttachmentsOnSource,
         AttachedPermanentColorCount,
         BasicLandTypesAmongControlledLands,
+        CardTypesAmongControlledPermanents,
         CardTypesAmongCardsInGraveyard,
         CardsDrawnThisTurn,
         DistinctManaCostsAmongCardsInGraveyard,

@@ -86,6 +86,7 @@ class CostEffectClassificationTest {
             "RevealTwoCardsSharingColorCost",
             "RevealXCardsFromHandCost",
             "SacrificeAllMatchingPermanentsCost",
+            "SacrificeDistinctNamePermanentsCost",
             "SacrificePermanentsSequenceCost",
             "SacrificeSelfCost",
             "SacrificeSourceEquipmentCost",
