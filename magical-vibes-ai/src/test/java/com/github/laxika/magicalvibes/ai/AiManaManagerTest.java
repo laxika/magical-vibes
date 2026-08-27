@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
+import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -2489,6 +2490,22 @@ class AiManaManagerTest {
 
             int x = manager.calculateSmartX(gd, card, null, pool, 0);
             assertThat(x).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("caps X at the number of players in the game")
+        void capsAtPlayersInGame() {
+            gd.orderedPlayerIds.add(UUID.randomUUID());
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 5);
+
+            Card card = new Card();
+            card.setManaCost("{X}{G}");
+            card.setXValueCap(new PlayersInGame());
+
+            int x = manager.calculateSmartX(gd, player1Id, card, null, pool, 0);
+
+            assertThat(x).isEqualTo(2);
         }
 
         @Test

@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PullFromTheDeep;
@@ -1808,6 +1809,44 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.playerBattlefields.get(aiPlayer.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Island"))
                 .allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    void capsOpenTheWayAtTheNumberOfPlayers() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.GREEN, 4);
+        OpenTheWay openTheWay = new OpenTheWay();
+        harness.setHand(aiPlayer, List.of(openTheWay));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(openTheWay);
+            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(2);
+        } finally {
+            watcher.uninstall();
+        }
     }
 
     @Test

@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -2211,6 +2212,26 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
                 .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
         assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Medium AI caps X at the number of players")
+    void capsXAtTheNumberOfPlayers() {
+        giveAiPriority();
+        giveAiIslands(5);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+        EntrancingMelody capped = new EntrancingMelody();
+        capped.setXValueCap(new PlayersInGame());
+        harness.setHand(aiPlayer, List.of(capped));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(capped);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
     // ===== X value cap handling =====

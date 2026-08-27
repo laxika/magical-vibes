@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
@@ -2605,6 +2606,21 @@ class EasyAiDecisionEngineTest {
             easyAi.handleEvent(AiDecisionKind.GAME_STATE);
 
             assertThat(testGd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Easy AI caps Open the Way at the number of players")
+        void capsOpenTheWayAtTheNumberOfPlayers() {
+            giveAiPriorityLocal();
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 4);
+            OpenTheWay openTheWay = new OpenTheWay();
+            testHarness.setHand(aiTestPlayer, List.of(openTheWay));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(openTheWay);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
         }
 
         @Test

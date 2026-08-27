@@ -1446,19 +1446,7 @@ public class GameSimulator {
         } else {
             maxX = cost.calculateMaxX(virtualPool, costModifier);
         }
-        if (card.getXValueCap() != null) {
-            // Cap announced X (e.g. Winter's Chill: snow lands you control).
-            if (card.getXValueCap() instanceof com.github.laxika.magicalvibes.model.amount.PermanentCount pc
-                    && pc.scope() == com.github.laxika.magicalvibes.model.amount.CountScope.CONTROLLER) {
-                int cap = 0;
-                for (Permanent p : gd.playerBattlefields.getOrDefault(gd.activePlayerId, List.of())) {
-                    if (predicateEvaluationService.matchesPermanentPredicate(gd, p, pc.filter())) {
-                        cap++;
-                    }
-                }
-                maxX = Math.min(maxX, cap);
-            }
-        }
+        maxX = manaManager.clampByXValueCap(gd, gd.activePlayerId, card, maxX);
         if (maxX <= 0) {
             return 0;
         }
