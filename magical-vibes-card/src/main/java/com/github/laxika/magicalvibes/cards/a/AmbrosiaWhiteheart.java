@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "6")
+@CardRegistration(set = "FIN", collectorNumber = "325")
+@CardRegistration(set = "FIN", collectorNumber = "424")
 public class AmbrosiaWhiteheart extends Card {
 
     public AmbrosiaWhiteheart() {

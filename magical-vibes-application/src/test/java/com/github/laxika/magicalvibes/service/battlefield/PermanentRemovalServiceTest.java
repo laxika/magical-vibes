@@ -794,6 +794,20 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Ends source-controlled exile play permissions when source leaves")
+        void endsSourceControlledExilePlayPermissionsWhenSourceLeaves() {
+            Permanent source = addPermanent(player1Id, createCreature("Source"));
+            UUID exiledCardId = UUID.randomUUID();
+            gd.exilePlayPermissions.put(exiledCardId, player1Id);
+            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+
+            prs.removePermanentToExile(gd, source);
+
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
+        }
+
+        @Test
         @DisplayName("Returns false when permanent is not on any battlefield")
         void returnsFalseWhenNotOnBattlefield() {
             Permanent bears = new Permanent(createCreature("Grizzly Bears"));

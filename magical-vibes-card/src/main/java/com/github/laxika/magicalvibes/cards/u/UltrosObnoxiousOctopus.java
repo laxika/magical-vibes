@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "83")
+@CardRegistration(set = "FIN", collectorNumber = "442")
 public class UltrosObnoxiousOctopus extends Card {
 
     public UltrosObnoxiousOctopus() {

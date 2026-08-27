@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "249")
+@CardRegistration(set = "FIN", collectorNumber = "403")
+@CardRegistration(set = "FIN", collectorNumber = "515")
+@CardRegistration(set = "FIN", collectorNumber = "548")
 public class TheWanderingMinstrel extends Card {
 
     private static final Set<CardColor> ALL_COLORS = Set.of(

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "139")
+@CardRegistration(set = "FIN", collectorNumber = "338")
+@CardRegistration(set = "FIN", collectorNumber = "461")
 public class GilgameshMasterAtArms extends Card {
 
     public GilgameshMasterAtArms() {

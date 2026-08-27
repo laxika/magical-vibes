@@ -165,6 +165,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller selected Equipment they control to attach to the targeted creature. */
+    record AttachAnyNumberOfControlledEquipmentToTargetCreature(UUID targetCreatureId)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The defending player sacrifices the chosen attacking creatures. */
     record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }

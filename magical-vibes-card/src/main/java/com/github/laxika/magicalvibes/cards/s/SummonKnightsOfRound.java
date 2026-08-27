@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "36")
+@CardRegistration(set = "FIN", collectorNumber = "359")
 public class SummonKnightsOfRound extends Card {
 
     private static final PermanentAllOfPredicate OTHER_CREATURES = new PermanentAllOfPredicate(List.of(

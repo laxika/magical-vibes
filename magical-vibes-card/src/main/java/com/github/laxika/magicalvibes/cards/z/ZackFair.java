@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "45")
+@CardRegistration(set = "FIN", collectorNumber = "435")
+@CardRegistration(set = "FIN", collectorNumber = "580")
 public class ZackFair extends Card {
 
     public ZackFair() {

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "27")
+@CardRegistration(set = "FIN", collectorNumber = "326")
 public class MooglesValor extends Card {
 
     public MooglesValor() {

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "128")
+@CardRegistration(set = "FIN", collectorNumber = "336")
+@CardRegistration(set = "FIN", collectorNumber = "456")
 public class ZodiarkUmbralGod extends Card {
 
     public ZodiarkUmbralGod() {

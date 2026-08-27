@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "250")
+@CardRegistration(set = "FIN", collectorNumber = "404")
+@CardRegistration(set = "FIN", collectorNumber = "517")
+@CardRegistration(set = "FIN", collectorNumber = "549")
+@CardRegistration(set = "FIN", collectorNumber = "571")
 public class YunaHopeOfSpira extends Card {
 
     private static final Set<Keyword> TURN_KEYWORDS = Set.of(Keyword.TRAMPLE, Keyword.LIFELINK);

@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "231")
+@CardRegistration(set = "FIN", collectorNumber = "322")
+@CardRegistration(set = "FIN", collectorNumber = "398")
+@CardRegistration(set = "FIN", collectorNumber = "496")
+@CardRegistration(set = "FIN", collectorNumber = "543")
 public class KefkaCourtMage extends Card {
 
     public KefkaCourtMage() {

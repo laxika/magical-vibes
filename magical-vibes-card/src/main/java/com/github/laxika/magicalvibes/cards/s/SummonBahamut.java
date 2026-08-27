@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "1")
+@CardRegistration(set = "FIN", collectorNumber = "356")
 public class SummonBahamut extends Card {
 
     public SummonBahamut() {

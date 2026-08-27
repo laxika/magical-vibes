@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "33")
+@CardRegistration(set = "FIN", collectorNumber = "432")
 public class SnowVilliers extends Card {
 
     public SnowVilliers() {

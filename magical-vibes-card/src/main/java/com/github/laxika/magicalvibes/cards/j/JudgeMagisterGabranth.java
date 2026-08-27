@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "230")
+@CardRegistration(set = "FIN", collectorNumber = "495")
 public class JudgeMagisterGabranth extends Card {
 
     public JudgeMagisterGabranth() {

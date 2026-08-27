@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "206")
+@CardRegistration(set = "FIN", collectorNumber = "391")
+@CardRegistration(set = "FIN", collectorNumber = "473")
+@CardRegistration(set = "FIN", collectorNumber = "536")
+@CardRegistration(set = "FIN", collectorNumber = "567")
 public class TifaLockhart extends Card {
 
     public TifaLockhart() {

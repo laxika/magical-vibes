@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "228")
+@CardRegistration(set = "FIN", collectorNumber = "346")
+@CardRegistration(set = "FIN", collectorNumber = "493")
 public class JenovaAncientCalamity extends Card {
 
     public JenovaAncientCalamity() {

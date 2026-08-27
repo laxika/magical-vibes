@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "220")
+@CardRegistration(set = "FIN", collectorNumber = "485")
 public class ExdeathVoidWarlock extends Card {
 
     public ExdeathVoidWarlock() {

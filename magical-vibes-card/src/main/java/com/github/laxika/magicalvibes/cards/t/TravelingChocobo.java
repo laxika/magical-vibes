@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "210")
+@CardRegistration(set = "FIN", collectorNumber = "406")
+@CardRegistration(set = "FIN", collectorNumber = "551")
+@CardRegistration(set = "FIN", collectorNumber = "568")
 public class TravelingChocobo extends Card {
 
     public TravelingChocobo() {

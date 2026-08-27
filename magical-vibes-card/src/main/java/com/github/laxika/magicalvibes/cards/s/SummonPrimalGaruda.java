@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "37")
+@CardRegistration(set = "FIN", collectorNumber = "360")
 public class SummonPrimalGaruda extends Card {
 
     public SummonPrimalGaruda() {

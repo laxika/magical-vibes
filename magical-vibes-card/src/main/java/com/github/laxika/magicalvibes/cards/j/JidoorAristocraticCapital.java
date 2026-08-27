@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "284")
+@CardRegistration(set = "FIN", collectorNumber = "311")
 public class JidoorAristocraticCapital extends Card {
 
     public JidoorAristocraticCapital() {

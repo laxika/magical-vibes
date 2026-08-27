@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToDamagedPlayerUntilNextTurnEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "233")
+@CardRegistration(set = "FIN", collectorNumber = "320")
+@CardRegistration(set = "FIN", collectorNumber = "400")
+@CardRegistration(set = "FIN", collectorNumber = "498")
+@CardRegistration(set = "FIN", collectorNumber = "545")
 public class LightningArmyOfOne extends Card {
 
     public LightningArmyOfOne() {

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "196")
+@CardRegistration(set = "FIN", collectorNumber = "344")
+@CardRegistration(set = "FIN", collectorNumber = "566")
 public class ARealmReborn extends Card {
 
     public ARealmReborn() {

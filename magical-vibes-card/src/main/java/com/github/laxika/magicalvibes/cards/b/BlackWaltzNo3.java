@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "214")
+@CardRegistration(set = "FIN", collectorNumber = "478")
 public class BlackWaltzNo3 extends Card {
 
     public BlackWaltzNo3() {

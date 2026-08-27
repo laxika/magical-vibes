@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "135")
+@CardRegistration(set = "FIN", collectorNumber = "337")
 public class TheFireCrystal extends Card {
 
     public TheFireCrystal() {

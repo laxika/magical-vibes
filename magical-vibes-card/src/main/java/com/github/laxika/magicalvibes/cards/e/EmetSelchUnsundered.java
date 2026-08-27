@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "218")
+@CardRegistration(set = "FIN", collectorNumber = "394")
+@CardRegistration(set = "FIN", collectorNumber = "483")
+@CardRegistration(set = "FIN", collectorNumber = "539")
 public class EmetSelchUnsundered extends Card {
 
     public EmetSelchUnsundered() {

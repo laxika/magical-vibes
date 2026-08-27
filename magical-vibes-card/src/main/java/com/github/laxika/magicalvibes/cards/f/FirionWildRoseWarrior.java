@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 @CardRegistration(set = "FIN", collectorNumber = "137")
+@CardRegistration(set = "FIN", collectorNumber = "386")
+@CardRegistration(set = "FIN", collectorNumber = "459")
+@CardRegistration(set = "FIN", collectorNumber = "531")
 public class FirionWildRoseWarrior extends Card {
 
     public FirionWildRoseWarrior() {

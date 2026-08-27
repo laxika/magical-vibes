@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "29")
+@CardRegistration(set = "FIN", collectorNumber = "578")
 public class PhoenixDown extends Card {
 
     public PhoenixDown() {

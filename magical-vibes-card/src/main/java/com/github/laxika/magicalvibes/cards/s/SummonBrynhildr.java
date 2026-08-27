@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "160")
+@CardRegistration(set = "FIN", collectorNumber = "366")
 public class SummonBrynhildr extends Card {
 
     public SummonBrynhildr() {

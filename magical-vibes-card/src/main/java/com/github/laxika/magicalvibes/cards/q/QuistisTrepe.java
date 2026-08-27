@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "66")
+@CardRegistration(set = "FIN", collectorNumber = "440")
 public class QuistisTrepe extends Card {
 
     public QuistisTrepe() {

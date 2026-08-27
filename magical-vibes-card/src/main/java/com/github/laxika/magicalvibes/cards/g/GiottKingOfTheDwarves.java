@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "223")
+@CardRegistration(set = "FIN", collectorNumber = "488")
 public class GiottKingOfTheDwarves extends Card {
 
     public GiottKingOfTheDwarves() {

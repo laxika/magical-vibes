@@ -100,6 +100,9 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ExileAnyNumberOfPermanentsUntilSourceLeavesEffectHandler exileUntilSourceLeavesHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
+            attachAnyNumberOfControlledEquipmentHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .DestroyUpToOneAttachedPermanentEffectHandler destroyUpToOneAttachedPermanentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PutMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler;
     private final LifeSupport lifeSupport;
@@ -506,6 +509,9 @@ public class MultiPermanentChoiceHandlerService {
             handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAnyNumber ctx) {
             handleTransformAnyNumber(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledEquipmentToTargetCreature ctx) {
+            attachAnyNumberOfControlledEquipmentHandler.completeChoice(gameData, playerId, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {

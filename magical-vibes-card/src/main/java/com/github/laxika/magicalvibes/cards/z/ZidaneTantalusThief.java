@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "251")
+@CardRegistration(set = "FIN", collectorNumber = "405")
+@CardRegistration(set = "FIN", collectorNumber = "518")
+@CardRegistration(set = "FIN", collectorNumber = "550")
 public class ZidaneTantalusThief extends Card {
 
     public ZidaneTantalusThief() {

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "FIN", collectorNumber = "226")
+@CardRegistration(set = "FIN", collectorNumber = "396")
+@CardRegistration(set = "FIN", collectorNumber = "491")
+@CardRegistration(set = "FIN", collectorNumber = "541")
 public class HopeEstheim extends Card {
 
     public HopeEstheim() {

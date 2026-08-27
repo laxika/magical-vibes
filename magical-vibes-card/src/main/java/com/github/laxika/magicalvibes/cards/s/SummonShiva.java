@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "78")
+@CardRegistration(set = "FIN", collectorNumber = "362")
 public class SummonShiva extends Card {
 
     public SummonShiva() {

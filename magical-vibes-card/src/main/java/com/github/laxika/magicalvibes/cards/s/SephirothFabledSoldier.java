@@ -24,6 +24,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "115")
+@CardRegistration(set = "FIN", collectorNumber = "451")
+@CardRegistration(set = "FIN", collectorNumber = "317")
+@CardRegistration(set = "FIN", collectorNumber = "382")
+@CardRegistration(set = "FIN", collectorNumber = "527")
 public class SephirothFabledSoldier extends Card {
 
     static final PermanentAllOfPredicate ANOTHER_CREATURE = new PermanentAllOfPredicate(List.of(

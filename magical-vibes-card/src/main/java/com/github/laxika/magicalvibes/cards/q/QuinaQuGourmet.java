@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "194")
+@CardRegistration(set = "FIN", collectorNumber = "471")
 public class QuinaQuGourmet extends Card {
 
     public QuinaQuGourmet() {
