@@ -185,6 +185,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);

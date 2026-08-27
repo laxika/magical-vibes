@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "38")
+@CardRegistration(set = "FIN", collectorNumber = "328")
 public class Ultima extends Card {
 
     public Ultima() {

@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "54")
+@CardRegistration(set = "FIN", collectorNumber = "377")
+@CardRegistration(set = "FIN", collectorNumber = "437")
+@CardRegistration(set = "FIN", collectorNumber = "522")
 public class GogoMasterOfMimicry extends Card {
 
     public GogoMasterOfMimicry() {

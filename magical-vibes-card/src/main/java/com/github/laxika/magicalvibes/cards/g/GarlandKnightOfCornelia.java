@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "221")
+@CardRegistration(set = "FIN", collectorNumber = "486")
 public class GarlandKnightOfCornelia extends Card {
 
     public GarlandKnightOfCornelia() {

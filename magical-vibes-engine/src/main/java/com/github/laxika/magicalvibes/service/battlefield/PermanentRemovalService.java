@@ -1020,6 +1020,7 @@ public class PermanentRemovalService {
         auraCopyService.revertExpiredCopies(gameData,
                 gameData.expireFloatingEffectsForDepartedSource(target.getId()));
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
+        gameData.expireExilePlayPermissionsForSource(target.getId());
         creatureControlService.reconcileControl(gameData);
         untapLockReleaseService.releaseUntapLocks(gameData, target);
         handleSourceLinkedAnimationCleanup(gameData, target);

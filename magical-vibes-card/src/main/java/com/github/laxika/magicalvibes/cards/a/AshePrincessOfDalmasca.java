@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "7")
+@CardRegistration(set = "FIN", collectorNumber = "425")
 public class AshePrincessOfDalmasca extends Card {
 
     public AshePrincessOfDalmasca() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "191")
+@CardRegistration(set = "FIN", collectorNumber = "343")
 public class JumboCactuar extends Card {
 
     public JumboCactuar() {

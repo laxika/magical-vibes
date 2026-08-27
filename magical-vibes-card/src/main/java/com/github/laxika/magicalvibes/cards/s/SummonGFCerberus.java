@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastT
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "162")
+@CardRegistration(set = "FIN", collectorNumber = "368")
 public class SummonGFCerberus extends Card {
 
     public SummonGFCerberus() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "239")
+@CardRegistration(set = "FIN", collectorNumber = "504")
 public class RydiaSummonerOfMist extends Card {
 
     public RydiaSummonerOfMist() {

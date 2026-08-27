@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "16")
+@CardRegistration(set = "FIN", collectorNumber = "376")
+@CardRegistration(set = "FIN", collectorNumber = "428")
+@CardRegistration(set = "FIN", collectorNumber = "521")
 public class DionBahamut extends Card {
 
     public DionBahamut() {

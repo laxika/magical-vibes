@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "243")
+@CardRegistration(set = "FIN", collectorNumber = "402")
+@CardRegistration(set = "FIN", collectorNumber = "547")
 public class SquallSeeDMercenary extends Card {
 
     public SquallSeeDMercenary() {

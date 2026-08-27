@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "41")
+@CardRegistration(set = "FIN", collectorNumber = "579")
 public class WhiteAuracite extends Card {
 
     public WhiteAuracite() {

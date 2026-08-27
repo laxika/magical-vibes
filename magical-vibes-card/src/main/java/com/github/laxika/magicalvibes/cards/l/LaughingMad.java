@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "143")
+@CardRegistration(set = "FIN", collectorNumber = "585")
 public class LaughingMad extends Card {
 
     public LaughingMad() {

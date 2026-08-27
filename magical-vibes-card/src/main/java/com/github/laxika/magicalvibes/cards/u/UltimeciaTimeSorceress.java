@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "247")
+@CardRegistration(set = "FIN", collectorNumber = "513")
 public class UltimeciaTimeSorceress extends Card {
 
     public UltimeciaTimeSorceress() {

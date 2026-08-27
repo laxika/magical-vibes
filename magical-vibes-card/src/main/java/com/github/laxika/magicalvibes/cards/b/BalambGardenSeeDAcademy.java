@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "272")
+@CardRegistration(set = "FIN", collectorNumber = "354")
 public class BalambGardenSeeDAcademy extends Card {
 
     public BalambGardenSeeDAcademy() {

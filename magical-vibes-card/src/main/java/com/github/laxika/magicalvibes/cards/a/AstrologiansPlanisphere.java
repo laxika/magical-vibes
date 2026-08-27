@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "46")
+@CardRegistration(set = "FIN", collectorNumber = "581")
 public class AstrologiansPlanisphere extends Card {
 
     public AstrologiansPlanisphere() {

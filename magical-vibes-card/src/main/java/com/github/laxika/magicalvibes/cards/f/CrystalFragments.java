@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "13")
+@CardRegistration(set = "FIN", collectorNumber = "357")
 public class CrystalFragments extends Card {
 
     public CrystalFragments() {

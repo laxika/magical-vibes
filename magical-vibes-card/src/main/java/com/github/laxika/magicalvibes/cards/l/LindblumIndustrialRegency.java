@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "285")
+@CardRegistration(set = "FIN", collectorNumber = "312")
 public class LindblumIndustrialRegency extends Card {
 
     public LindblumIndustrialRegency() {

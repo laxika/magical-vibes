@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "146")
+@CardRegistration(set = "FIN", collectorNumber = "339")
 public class NibelheimAflame extends Card {
 
     public NibelheimAflame() {

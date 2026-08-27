@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "148")
+@CardRegistration(set = "FIN", collectorNumber = "387")
+@CardRegistration(set = "FIN", collectorNumber = "463")
+@CardRegistration(set = "FIN", collectorNumber = "532")
 public class PromptoArgentum extends Card {
 
     public PromptoArgentum() {

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "77")
+@CardRegistration(set = "FIN", collectorNumber = "361")
 public class SummonLeviathan extends Card {
 
     public SummonLeviathan() {

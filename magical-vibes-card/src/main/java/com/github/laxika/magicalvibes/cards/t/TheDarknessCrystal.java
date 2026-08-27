@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "96")
+@CardRegistration(set = "FIN", collectorNumber = "335")
 public class TheDarknessCrystal extends Card {
 
     public TheDarknessCrystal() {

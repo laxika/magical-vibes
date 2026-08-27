@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "224")
+@CardRegistration(set = "FIN", collectorNumber = "489")
 public class GladiolusAmicitia extends Card {
 
     public GladiolusAmicitia() {

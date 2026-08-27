@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "34")
+@CardRegistration(set = "FIN", collectorNumber = "327")
+@CardRegistration(set = "FIN", collectorNumber = "433")
+@CardRegistration(set = "FIN", collectorNumber = "565")
 public class StiltzkinMoogleMerchant extends Card {
 
     public StiltzkinMoogleMerchant() {

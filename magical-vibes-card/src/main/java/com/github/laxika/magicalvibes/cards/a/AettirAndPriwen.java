@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "253")
+@CardRegistration(set = "FIN", collectorNumber = "350")
 public class AettirAndPriwen extends Card {
 
     public AettirAndPriwen() {

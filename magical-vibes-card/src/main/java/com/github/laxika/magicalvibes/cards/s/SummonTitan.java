@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "204")
+@CardRegistration(set = "FIN", collectorNumber = "373")
 public class SummonTitan extends Card {
 
     public SummonTitan() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "184")
+@CardRegistration(set = "FIN", collectorNumber = "342")
 public class TheEarthCrystal extends Card {
 
     public TheEarthCrystal() {

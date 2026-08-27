@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "286")
+@CardRegistration(set = "FIN", collectorNumber = "313")
 public class MidgarCityOfMako extends Card {
 
     public MidgarCityOfMako() {

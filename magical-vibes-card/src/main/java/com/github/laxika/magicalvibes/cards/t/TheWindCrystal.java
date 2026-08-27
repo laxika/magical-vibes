@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "43")
+@CardRegistration(set = "FIN", collectorNumber = "330")
 public class TheWindCrystal extends Card {
 
     public TheWindCrystal() {

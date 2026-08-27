@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "105")
+@CardRegistration(set = "FIN", collectorNumber = "316")
+@CardRegistration(set = "FIN", collectorNumber = "449")
 public class KainTraitorousDragoon extends Card {
 
     public KainTraitorousDragoon() {

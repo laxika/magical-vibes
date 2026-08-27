@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "138")
+@CardRegistration(set = "FIN", collectorNumber = "460")
 public class FreyaCrescent extends Card {
 
     public FreyaCrescent() {

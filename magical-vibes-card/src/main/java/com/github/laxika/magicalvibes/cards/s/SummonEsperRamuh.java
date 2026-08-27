@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "161")
+@CardRegistration(set = "FIN", collectorNumber = "367")
 public class SummonEsperRamuh extends Card {
 
     private static final PermanentPredicate OPPONENT_CREATURE = new PermanentAllOfPredicate(List.of(

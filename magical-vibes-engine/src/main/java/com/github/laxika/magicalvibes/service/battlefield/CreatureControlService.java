@@ -218,6 +218,7 @@ public class CreatureControlService {
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
         expireSourceControllerDependentEffects(gameData, permanent);
+        gameData.expireExilePlayPermissionsForSource(permanent.getId());
     }
 
     private boolean queueControlLossUnattachTriggers(GameData gameData, Permanent permanent,

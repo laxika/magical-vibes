@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "113")
+@CardRegistration(set = "FIN", collectorNumber = "450")
 public class RenoAndRude extends Card {
 
     public RenoAndRude() {

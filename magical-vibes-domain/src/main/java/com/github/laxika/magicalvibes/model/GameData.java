@@ -1355,6 +1355,8 @@ public class GameData {
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps a source permanent to the latest card whose permission it granted. */
     public final Map<UUID, UUID> exilePlayPermissionSourceCards = new ConcurrentHashMap<>();
+    /** Maps a card with a source-controlled exile-play permission to its source permanent. */
+    public final Map<UUID, UUID> exilePlayPermissionSourcePermanents = new ConcurrentHashMap<>();
     /** Cost modifiers attached to cards that may be played from exile. */
     public final Map<UUID, ExilePlayCostModifier> exilePlayCostModifiers = new ConcurrentHashMap<>();
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
@@ -3447,6 +3449,7 @@ public class GameData {
             foretoldCardIds.remove(cardId);
             foretoldCardCosts.remove(cardId);
             exilePlayPermissionSourceCards.entrySet().removeIf(entry -> cardId.equals(entry.getValue()));
+            exilePlayPermissionSourcePermanents.remove(cardId);
             exileCastPermissionsUntilEndOfTurn.removeIf(permission -> permission.cardId().equals(cardId));
             antedCardIds.remove(cardId);
             stashCounterCardIds.remove(cardId);
@@ -3467,6 +3470,20 @@ public class GameData {
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
         }
         return removed;
+    }
+
+    /** Ends exile-play permissions granted while a source permanent was controlled. */
+    public void expireExilePlayPermissionsForSource(UUID sourcePermanentId) {
+        if (sourcePermanentId == null) {
+            return;
+        }
+        for (Map.Entry<UUID, UUID> entry : exilePlayPermissionSourcePermanents.entrySet()) {
+            UUID cardId = entry.getKey();
+            if (sourcePermanentId.equals(entry.getValue())
+                    && exilePlayPermissionSourcePermanents.remove(cardId, sourcePermanentId)) {
+                exilePlayPermissions.remove(cardId);
+            }
+        }
     }
 
     /** Finds an exiled card entry by card ID, or null if not found. */
@@ -3542,10 +3559,16 @@ public class GameData {
         removedIds.forEach(exiledCardRefineCounters::remove);
         removedIds.forEach(exiledCardsWithStudyCounters::remove);
         removedIds.forEach(antedCardIds::remove);
+        removedIds.forEach(cardId -> {
+            exilePlayPermissionSourcePermanents.remove(cardId);
+            exilePlayPermissions.remove(cardId);
+        });
     }
 
     /** Removes source tracking from exile entries (sets sourcePermanentId to null). Used by Karn restart. */
     public void clearAllSourceTracking() {
+        exilePlayPermissionSourcePermanents.keySet().forEach(exilePlayPermissions::remove);
+        exilePlayPermissionSourcePermanents.clear();
         List<ExiledCardEntry> updated = new ArrayList<>();
         var it = exiledCards.iterator();
         while (it.hasNext()) {
@@ -4573,6 +4596,7 @@ public class GameData {
         copy.libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll(this.libraryTopCardLifePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
+        copy.exilePlayPermissionSourcePermanents.putAll(this.exilePlayPermissionSourcePermanents);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);

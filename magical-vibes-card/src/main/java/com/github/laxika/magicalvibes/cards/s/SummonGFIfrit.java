@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "163")
+@CardRegistration(set = "FIN", collectorNumber = "369")
 public class SummonGFIfrit extends Card {
 
     public SummonGFIfrit() {

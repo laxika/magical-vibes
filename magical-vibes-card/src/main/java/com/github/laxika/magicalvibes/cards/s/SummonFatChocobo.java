@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "202")
+@CardRegistration(set = "FIN", collectorNumber = "371")
 public class SummonFatChocobo extends Card {
 
     public SummonFatChocobo() {

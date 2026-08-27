@@ -20,6 +20,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "248")
+@CardRegistration(set = "FIN", collectorNumber = "321")
+@CardRegistration(set = "FIN", collectorNumber = "514")
+@CardRegistration(set = "FIN", collectorNumber = "570")
 public class ViviOrnitier extends Card {
 
     public ViviOrnitier() {

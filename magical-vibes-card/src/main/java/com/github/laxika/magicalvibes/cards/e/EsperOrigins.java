@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "185")
+@CardRegistration(set = "FIN", collectorNumber = "370")
 public class EsperOrigins extends Card {
 
     public EsperOrigins() {
