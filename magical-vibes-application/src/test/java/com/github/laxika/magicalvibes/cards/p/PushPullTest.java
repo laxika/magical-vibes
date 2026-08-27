@@ -58,7 +58,7 @@ class PushPullTest extends BaseCardTest {
         assertThat(returned).hasSize(2);
         assertThat(returned).allMatch(permanent -> permanent.getGrantedKeywords().contains(Keyword.HASTE));
 
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

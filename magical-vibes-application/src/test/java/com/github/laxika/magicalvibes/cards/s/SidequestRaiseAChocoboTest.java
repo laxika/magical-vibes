@@ -70,6 +70,7 @@ class SidequestRaiseAChocoboTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(searchedForest);
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        resolveAllTriggers();
         Permanent searchedForestPermanent = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() == searchedForest)
                 .findFirst()
@@ -80,6 +81,8 @@ class SidequestRaiseAChocoboTest extends BaseCardTest {
         int firstBirdPower = gqs.getEffectivePower(gd, firstBird);
         int secondBirdPower = gqs.getEffectivePower(gd, secondBird);
         int thirdBirdPower = gqs.getEffectivePower(gd, thirdBird);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.playLand(player1, 0);
         resolveAllTriggers();
 

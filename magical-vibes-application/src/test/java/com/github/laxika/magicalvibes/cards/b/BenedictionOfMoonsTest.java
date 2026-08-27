@@ -38,6 +38,7 @@ class BenedictionOfMoonsTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Benediction of Moons"));
 
         destroyWithLightningBolt(creatureId);
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
     }

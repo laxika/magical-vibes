@@ -2046,6 +2046,7 @@ public class SpellCastingService {
         }
 
         Card physicalHandCard = gameData.playerHands.get(playerId).get(cardIndex);
+        boolean castingFaceDown = usingAlternateCost && physicalHandCard.getMorphCost() != null;
         boolean selectingModalBackFace = physicalHandCard.isModalDoubleFaced()
                 && physicalHandCard.getBackFaceCard() != null
                 && effectiveXValue == 1;
@@ -2061,7 +2062,7 @@ public class SpellCastingService {
         if (handCardForTiming.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from hand");
         }
-        if (handCardForTiming.hasType(CardType.LAND)
+        if (handCardForTiming.hasType(CardType.LAND) && !castingFaceDown
                 ? castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 : castingPermissionService.isSpellCastingFromHandRestricted(gameData, playerId)) {
             throw new IllegalStateException("Card is not playable");
@@ -3056,7 +3057,7 @@ public class SpellCastingService {
                 : costSelection;
         Card castCharacteristics = castModalBackFace ? card.getBackFaceCard() : card;
 
-        if (card.hasType(CardType.LAND)) {
+        if (card.hasType(CardType.LAND) && !castingFaceDown) {
             // Lands bypass the stack — go directly onto battlefield
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             if (landCopyOnEnterService.prepare(gameData, playerId, card, landFace,
@@ -3084,7 +3085,8 @@ public class SpellCastingService {
                     turnProgressionService.resolveAutoPass(gameData);
                 }
             }
-        } else if (castCharacteristics.hasType(CardType.CREATURE)
+        } else if (castingFaceDown
+                || castCharacteristics.hasType(CardType.CREATURE)
                 || castCharacteristics.hasType(CardType.ENCHANTMENT)
                 || gameQueryService.cardHasType(castCharacteristics, CardType.ARTIFACT, gameData, playerId)
                 || castCharacteristics.hasType(CardType.PLANESWALKER)
@@ -3097,7 +3099,9 @@ public class SpellCastingService {
             int stackX = effectiveXValue;
             UUID stackTarget = castCharacteristics.hasType(CardType.PLANESWALKER) ? null : targetId;
             Card stackCard = castModalBackFace ? castCharacteristics : card;
-            StackEntryType permanentEntryType = cardTypeToStackEntryType(castCharacteristics.getType());
+            StackEntryType permanentEntryType = castingFaceDown
+                    ? StackEntryType.CREATURE_SPELL
+                    : cardTypeToStackEntryType(castCharacteristics.getType());
 
             // CR 601.2h: a cast either completes or leaves the game state untouched — reject an
             // unpayable non-mana additional cost up front, before any cost is consumed. A throw
@@ -3281,7 +3285,7 @@ public class SpellCastingService {
             if (buyback && buybackEffect != null) {
                 entry.setBuyback(true);
             }
-            if (usingAlternateCost && card.getMorphCost() != null) {
+            if (castingFaceDown) {
                 entry.setCastFaceDown(true);
             }
             // Evoke (CR 702.75): a permanent cast for its alternate (evoke) cost is flagged so its
