@@ -553,7 +553,8 @@ class EasyAiDecisionEngineTest {
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard()).isSameAs(snare);
-            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
             assertThat(testGd.stack.getFirst().getChosenCreatureType()).isEqualTo(CardSubtype.BEAR);
 
             testHarness.passBothPriorities();

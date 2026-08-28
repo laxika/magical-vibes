@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -82,6 +83,12 @@ class AiTargetSelector {
     record SpellTargetSelection(UUID targetId, List<UUID> targetIds) {
         SpellTargetSelection {
             targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+        }
+    }
+
+    record XScaledTargetSelection(int xValue, List<UUID> targetIds) {
+        XScaledTargetSelection {
+            targetIds = List.copyOf(targetIds);
         }
     }
 
@@ -434,6 +441,27 @@ class AiTargetSelector {
                 .allMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
     }
 
+    boolean needsXScaledTargetSelection(Card card) {
+        return card.hasXScaledTargets()
+                && card.getParsedManaCost() != null
+                && card.getParsedManaCost().hasX();
+    }
+
+    XScaledTargetSelection chooseXScaledTargets(GameData gameData, Card card, UUID aiPlayerId,
+                                                 int preferredXValue) {
+        int maximumX = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(RepeatableAdditionalManaCost.class::isInstance)
+                ? 1
+                : preferredXValue;
+        for (int xValue = maximumX; xValue >= 1; xValue--) {
+            List<UUID> targets = chooseMultiTargets(gameData, card, aiPlayerId, xValue);
+            if (targets != null && (!targets.isEmpty() || !EffectResolution.needsTarget(card))) {
+                return new XScaledTargetSelection(xValue, targets);
+            }
+        }
+        return null;
+    }
+
     /**
      * Selects both target channels for spells that combine a graveyard target with ordinary
      * target groups. The engine stores the graveyard card in {@code targetId} and the ordinary
@@ -521,9 +549,12 @@ class AiTargetSelector {
                 continue;
             }
             int effectiveMaxTargets = targetLegalityService.getEffectiveMaxTargetsForGroup(
-                    gameData, card, aiPlayerId, null, st);
+                    gameData, card, aiPlayerId, null, st, xValue != null ? xValue : 0);
             effectiveMaxTargets = Math.min(effectiveMaxTargets,
                     Math.max(0, maxAdditionalTargetsAffordable - result.size()));
+            int effectiveMinTargets = st.isXScaled() && xValue != null
+                    ? Math.min(xValue, st.getMinTargets())
+                    : st.isXScaled() ? 0 : st.getMinTargets();
             List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
 
             boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
@@ -537,14 +568,14 @@ class AiTargetSelector {
                         : pickGraveyardTargetsForGroup(
                                 gameData, card, aiPlayerId, graveyardFilter, effectiveMaxTargets,
                                 alreadyChosen, xValue);
-                if (chosen.size() < st.getMinTargets()) {
+                if (chosen.size() < effectiveMinTargets) {
                     return null;
                 }
                 result.addAll(chosen);
                 alreadyChosen.addAll(chosen);
             } else if (wantsPlayer && !wantsPermanent) {
                 if (effectiveMaxTargets == 0) {
-                    if (st.getMinTargets() > 0) {
+                    if (effectiveMinTargets > 0) {
                         return null;
                     }
                     continue;
@@ -563,7 +594,7 @@ class AiTargetSelector {
                     }
                     chosen.add(player);
                 }
-                if (chosen.size() < st.getMinTargets()) {
+                if (chosen.size() < effectiveMinTargets) {
                     return null; // Mandatory targets cannot be satisfied
                 }
                 result.addAll(chosen);
@@ -571,7 +602,7 @@ class AiTargetSelector {
             } else if (wantsPermanent) {
                 List<UUID> chosen = pickPermanentTargetsForGroup(gameData, card, aiPlayerId, opponentId,
                         st, effectiveMaxTargets, alreadyChosen, groupEffects);
-                if (chosen.size() < st.getMinTargets() && wantsPlayer) {
+                if (chosen.size() < effectiveMinTargets && wantsPlayer) {
                     UUID player = pickPlayerTargetForGroup(
                             gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects,
                             alreadyChosen, card.isAllowSharedTargets());
@@ -580,12 +611,12 @@ class AiTargetSelector {
                         chosen.add(player);
                     }
                 }
-                if (chosen.size() < st.getMinTargets()) {
+                if (chosen.size() < effectiveMinTargets) {
                     return null; // Mandatory targets cannot be satisfied
                 }
                 result.addAll(chosen);
                 alreadyChosen.addAll(chosen);
-            } else if (st.getMinTargets() > 0) {
+            } else if (effectiveMinTargets > 0) {
                 return null; // Mandatory target cannot be satisfied
             }
         }

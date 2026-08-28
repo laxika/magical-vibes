@@ -181,6 +181,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())
+                && !targetSelector.needsXScaledTargetSelection(card)
                 && !hasPermanentManaValueEqualsXTarget(card)
                 && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
@@ -246,7 +247,17 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+        if (xValue != null && targetSelector.needsXScaledTargetSelection(card)) {
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (selection == null) {
+                return false;
+            }
+            xValue = selection.xValue();
+            targetId = null;
+            multiTargetIds = selection.targetIds();
+            targetingTax = computeTargetingTax(gameData, card, null, multiTargetIds);
+        } else if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
             multiTargetIds = targetSelector.chooseMultiTargets(
                     gameData, card, aiPlayer.getId(), xValue);
             if (multiTargetIds == null) {
@@ -404,6 +415,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             if (multiTargetIds == null) return false;
         } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())
+                && !targetSelector.needsXScaledTargetSelection(card)
                 && !hasPermanentManaValueEqualsXTarget(card)
                 && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
@@ -456,7 +468,17 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+        if (xValue != null && targetSelector.needsXScaledTargetSelection(card)) {
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (selection == null) {
+                return false;
+            }
+            xValue = selection.xValue();
+            targetId = null;
+            multiTargetIds = selection.targetIds();
+            targetingTax = computeTargetingTax(gameData, card, null, multiTargetIds);
+        } else if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
             multiTargetIds = targetSelector.chooseMultiTargets(
                     gameData, card, aiPlayer.getId(), xValue);
             if (multiTargetIds == null) {

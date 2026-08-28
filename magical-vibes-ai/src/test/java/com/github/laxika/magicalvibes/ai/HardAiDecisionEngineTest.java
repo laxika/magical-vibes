@@ -448,7 +448,8 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(snare);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
         assertThat(gd.stack.getFirst().getChosenCreatureType()).isEqualTo(CardSubtype.BEAR);
 
         harness.passBothPriorities();

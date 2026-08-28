@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.b.BalmOfRestoration;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.ChokingVines;
 import com.github.laxika.magicalvibes.cards.c.Cooperation;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
@@ -2534,6 +2535,53 @@ class RandomAiDecisionEngineTest {
             assertThat(entry.getTargetCardIds())
                     .hasSize(2)
                     .isSubsetOf(firstCreature.getId(), secondCreature.getId(), thirdCreature.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsChokingVinesAtAlreadyBlockedAttackerWithGroupedTarget() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player defender = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(defender, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTargetId(attacker.getId());
+
+        ChokingVines chokingVines = new ChokingVines();
+        harness.setHand(aiPlayer, List.of(chokingVines));
+        harness.addMana(aiPlayer, ManaColor.GREEN, 3);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            StackEntry entry = gameData.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(chokingVines);
+            assertThat(entry.getXValue()).isEqualTo(1);
+            assertThat(entry.getTargetId()).isNull();
+            assertThat(entry.getTargetIds()).containsExactly(attacker.getId());
         } finally {
             watcher.uninstall();
         }

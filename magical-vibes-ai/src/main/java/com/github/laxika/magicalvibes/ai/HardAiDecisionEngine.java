@@ -1062,6 +1062,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         } else if (targetId == null && modalPlan == null
                 && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())
+                && !targetSelector.needsXScaledTargetSelection(card)
                 && !hasPermanentManaValueEqualsXTarget(card)
                 && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
@@ -1130,7 +1131,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+        if (xValue != null && targetSelector.needsXScaledTargetSelection(card)) {
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (selection == null) {
+                return null;
+            }
+            xValue = selection.xValue();
+            targetId = null;
+            multiTargetIds = selection.targetIds();
+            targetingTax = computeTargetingTax(gameData, card, null, multiTargetIds);
+        } else if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
             multiTargetIds = targetSelector.chooseMultiTargets(
                     gameData, card, aiPlayer.getId(), xValue);
             if (multiTargetIds == null) {

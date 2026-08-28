@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.Befuddle;
 import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.c.CompellingDeterrence;
+import com.github.laxika.magicalvibes.cards.c.ChokingVines;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.d.Diminish;
@@ -1190,6 +1191,23 @@ class AiTargetSelectorTest {
     @Nested
     @DisplayName("chooseMultiTargets")
     class ChooseMultiTargetsTests {
+
+        @Test
+        @DisplayName("Exact-X targeting lowers X to the number of legal targets")
+        void exactXTargetingLowersXAndKeepsAlreadyBlockedAttacker() {
+            Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            attacker.setAttacking(true);
+            Permanent blocker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            blocker.setBlocking(true);
+            blocker.addBlockingTargetId(attacker.getId());
+
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gd, new ChokingVines(), aiPlayer.getId(), 2);
+
+            assertThat(selection).isNotNull();
+            assertThat(selection.xValue()).isEqualTo(1);
+            assertThat(selection.targetIds()).containsExactly(attacker.getId());
+        }
 
         @Test
         @DisplayName("Magma Opus keeps tap targets separate from damage assignments")

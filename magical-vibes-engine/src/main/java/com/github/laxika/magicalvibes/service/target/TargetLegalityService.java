@@ -1906,6 +1906,12 @@ public class TargetLegalityService {
         return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, 0);
     }
 
+    public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
+                                              Permanent sourcePermanent, SpellTarget group,
+                                              int xValue) {
+        return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, xValue);
+    }
+
     private int getEffectiveMaxTargets(GameData gameData, Card card, UUID controllerId,
                                        Permanent sourcePermanent, int xValue, boolean kicked) {
         return card.getSpellTargets().stream()
