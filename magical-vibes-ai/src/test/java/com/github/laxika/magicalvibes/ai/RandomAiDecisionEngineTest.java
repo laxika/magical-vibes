@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.cards.q.QuandrixCommand;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.r.RatsFeast;
+import com.github.laxika.magicalvibes.cards.r.RazorGolem;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.r.RiseFromTheWreck;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
@@ -1856,15 +1857,16 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
-    void reselectsSpellTargetRemovedWhileTappingMana() {
+    void keepsSpellTargetWhileStormCauldronTriggersWaitForTheCast() {
         GameTestHarness harness = new GameTestHarness();
         harness.skipMulligan();
         GameData gameData = harness.getGameData();
         Player opponent = harness.getPlayer1();
         Player aiPlayer = harness.getPlayer2();
 
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        harness.addToBattlefield(opponent, new GrizzlyBears());
         harness.addToBattlefield(aiPlayer, new StormCauldron());
+        harness.addToBattlefield(aiPlayer, new Island());
         harness.addToBattlefield(aiPlayer, new Island());
         harness.addToBattlefield(aiPlayer, new Island());
         for (int i = 0; i < 4; i++) {
@@ -1901,9 +1903,12 @@ class RandomAiDecisionEngineTest {
             engine.handleEvent(AiDecisionKind.GAME_STATE);
 
             assertThat(watcher.drainFailures()).isEmpty();
-            assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getCard().getName()).isEqualTo("Confiscate");
-            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(opponentCreature.getId());
+            assertThat(gameData.stack).hasSizeGreaterThan(1);
+            assertThat(gameData.stack)
+                    .filteredOn(entry -> entry.getCard().getName().equals("Confiscate"))
+                    .singleElement()
+                    .satisfies(entry -> assertThat(harness.getGameQueryService()
+                            .findPermanentById(gameData, entry.getTargetId())).isNotNull());
         } finally {
             watcher.uninstall();
         }
@@ -2154,6 +2159,35 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isEqualTo(2);
         assertThat(gameData.stack).isEmpty();
         assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void castsAffinitySpellBeforeStormCauldronReturnsTappedPlains() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(aiPlayer, new StormCauldron());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(aiPlayer, new Plains());
+        }
+        harness.setHand(aiPlayer, List.of(new RazorGolem()));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).anySatisfy(entry ->
+                    assertThat(entry.getCard().getName()).isEqualTo("Razor Golem"));
+        } finally {
+            watcher.uninstall();
+        }
     }
 
     @Test

@@ -2333,8 +2333,7 @@ public class TriggerCollectionService {
         boolean[] anyTriggered = {false};
         var ctx = new TriggerContext.LandTap(tappingPlayerId, tappedLandId);
 
-        // Snapshot each battlefield: a land-tap trigger may return the tapped land to hand
-        // (Storm Cauldron), mutating the list we would otherwise be iterating.
+        // Snapshot each battlefield so trigger collection remains stable if a collector mutates it.
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {

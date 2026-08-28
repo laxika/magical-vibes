@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandO
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapLandsThatCouldProduceSameManaAsTappedLandEffect;
@@ -536,12 +537,20 @@ public class LandTapTriggerCollectorService {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
-        // Null when another Storm Cauldron's trigger already returned this land to hand.
         if (tappedLand == null) return false;
-        if (!permanentRemovalService.removePermanentToHand(match.gameData(), tappedLand)) return false;
 
-        gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
-                " triggers — ", tappedLand.getCard(), " is returned to its owner's hand."));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(ReturnToHandEffect.triggering())),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentId(tappedLand.getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 
