@@ -270,6 +270,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once for each library-to-graveyard event in which one or more creature cards enter the
      *  controller's graveyard. */
     ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
+    /** Triggers once for each library-to-graveyard event in which one or more cards enter the
+     *  controller's graveyard. */
+    ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a creature card is put into any player's graveyard from a library. */
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
@@ -320,6 +323,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controlled by that permanent's controller (so it fires for an opponent's Aura too).
      *  Checked in {@code TriggerCollectionService.checkAuraAttachedTriggers}. Used by Brood Keeper. */
     ON_AURA_ATTACHED_TO_SELF,
+    /** Triggers whenever an Aura controlled by this permanent's controller becomes attached to a creature controlled by that player. */
+    ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE,
     /** Triggers on an Equipment whenever it becomes attached to a permanent. */
     ON_EQUIPMENT_ATTACHED,
     ON_ENCHANTED_PERMANENT_TAPPED,
@@ -545,6 +550,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_II,
     /** Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. */
     SAGA_CHAPTER_III,
+    /** Saga chapter IV ability. Triggers when the fourth lore counter is placed. */
+    SAGA_CHAPTER_IV,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,

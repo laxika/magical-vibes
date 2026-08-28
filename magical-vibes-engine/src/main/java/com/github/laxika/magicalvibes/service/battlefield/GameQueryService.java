@@ -1003,21 +1003,22 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the multiplier applied to mana the given player produces by tapping a permanent for
-     * mana, per any {@link ManaReflectionEffect} static effects they control (Mana Reflection). Each
-     * such effect doubles the mana produced, and multiple stack multiplicatively (2^count). Returns
-     * 1 when the player controls none.
+     * Returns the multiplier applied when the given player taps a permanent for mana, accounting
+     * for every {@link ManaReflectionEffect} static effect on the battlefield. These effects are
+     * global, and multiple instances stack multiplicatively. Returns 1 when none are present.
      */
     public int manaProductionMultiplier(GameData gameData, UUID playerId) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return 1;
-        int reflections = 0;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ManaReflectionEffect) reflections++;
+        int multiplier = 1;
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ManaReflectionEffect reflection) {
+                        multiplier *= reflection.multiplier();
+                    }
+                }
             }
         }
-        return 1 << reflections;
+        return multiplier;
     }
 
     /**
@@ -1934,6 +1935,44 @@ public class GameQueryService {
         colors.addAll(permanent.getGrantedColors());
         colors.addAll(bonus.grantedColors());
         return colors;
+    }
+
+    /** Returns the controller's current devotion to one color. */
+    public int getDevotionToColor(GameData gameData, UUID controllerId, ManaColor color) {
+        if (gameData == null || controllerId == null || color == null) {
+            return 0;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int devotion = 0;
+        for (Permanent permanent : battlefield) {
+            var manaCost = permanent.getCard().getParsedManaCost();
+            if (manaCost != null) {
+                devotion += manaCost.countColorSymbols(color);
+            }
+        }
+        return devotion + layerSystemService.devotionModifierFor(gameData, controllerId);
+    }
+
+    /** Returns the controller's current devotion to a color combination. */
+    public int getDevotionToColors(GameData gameData, UUID controllerId, Set<ManaColor> colors) {
+        if (gameData == null || controllerId == null || colors == null || colors.isEmpty()) {
+            return 0;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int devotion = 0;
+        for (Permanent permanent : battlefield) {
+            var manaCost = permanent.getCard().getParsedManaCost();
+            if (manaCost != null) {
+                devotion += manaCost.countSymbolsOfAnyColor(colors);
+            }
+        }
+        return devotion + layerSystemService.devotionModifierFor(gameData, controllerId);
     }
 
     /** Returns the permanent's current card types after continuous type-changing effects. */
@@ -4309,11 +4348,17 @@ public class GameQueryService {
      * and the source's mana value meets that threshold (e.g. Mistmeadow Skulk).
      */
     private boolean hasProtectionFromSourceManaValue(Permanent target, Card sourceCard) {
+        int chosenNumber = target.getChosenNumber();
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionGrantingEffect protection
-                    && protection.protectionFromManaValueAtLeast().isPresent()
-                    && sourceCard.getManaValue() >= protection.protectionFromManaValueAtLeast().getAsInt()) {
-                return true;
+            if (effect instanceof ProtectionGrantingEffect protection) {
+                if (protection.protectionFromManaValueAtLeast().isPresent()
+                        && sourceCard.getManaValue() >= protection.protectionFromManaValueAtLeast().getAsInt()) {
+                    return true;
+                }
+                if (protection.protectionFromManaValuesOtherThanChosen().contains(chosenNumber)
+                        && sourceCard.getManaValue() != chosenNumber) {
+                    return true;
+                }
             }
         }
         return false;
@@ -5321,7 +5366,7 @@ public class GameQueryService {
                 && gameData.playersCreatureSpellsCantBeCounteredThisTurn.contains(stackEntry.getControllerId())) {
             return true;
         }
-        if (stackEntry != null && controllerSpellsCantBeCountered(gameData, stackEntry.getControllerId(), card)) {
+        if (stackEntry != null && controllerSpellsCantBeCountered(gameData, stackEntry, card)) {
             return true;
         }
         if (anyBattlefieldHasStaticEffect(gameData, SpellsCantBeCounteredEffect.class)) {
@@ -5336,17 +5381,23 @@ public class GameQueryService {
         return controllerProtectsHighPowerCreatureSpell(gameData, card);
     }
 
-    private boolean controllerSpellsCantBeCountered(GameData gameData, UUID controllerId, Card card) {
+    private boolean controllerSpellsCantBeCountered(GameData gameData, StackEntry stackEntry, Card card) {
+        UUID controllerId = stackEntry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return false;
         }
         boolean creatureSpell = hasCardType(card, CardType.CREATURE);
+        int manaValue = card.getManaValue() + stackEntry.getXValue();
         return battlefield.stream()
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .filter(ControllerSpellsCantBeCounteredEffect.class::isInstance)
                 .map(ControllerSpellsCantBeCounteredEffect.class::cast)
-                .anyMatch(effect -> !effect.noncreatureOnly() || !creatureSpell);
+                .anyMatch(effect -> (!effect.noncreatureOnly() || !creatureSpell)
+                        && (effect.cardTypes().isEmpty()
+                        || effect.cardTypes().stream().anyMatch(card::hasType))
+                        && (effect.minimumManaValue() == null
+                        || manaValue >= effect.minimumManaValue()));
     }
 
     private boolean isSpellStackEntry(StackEntryType entryType) {

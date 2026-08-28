@@ -1639,7 +1639,13 @@ public class CombatAttackService {
                             ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
                         continue;
                     }
-                    playerAttackEffects.add(effect);
+                    if (effect instanceof ConditionalEffect conditional
+                            && (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
+                            || conditional.condition() instanceof OpponentAttacksPlaneswalker)) {
+                        playerAttackEffects.add(conditional.wrapped());
+                    } else {
+                        playerAttackEffects.add(effect);
+                    }
                 }
                 if (playerAttackEffects.isEmpty()) continue;
 

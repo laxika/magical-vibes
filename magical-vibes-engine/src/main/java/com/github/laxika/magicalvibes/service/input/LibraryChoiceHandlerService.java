@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
+import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
@@ -118,6 +119,8 @@ public class LibraryChoiceHandlerService {
     private SpellCastingService spellCastingService;
     @Autowired @Lazy
     private TargetLegalityService targetLegalityService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -1962,6 +1965,11 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PendingAllureOfTheUnknownChoice.class)) {
+            handleAllureOfTheUnknownRevealChoice(gameData, allRevealedCards, cardIds);
+            return;
+        }
+
         // Karn, Scion of Urza -1: controller chose which silver-counter card to return
         if (gameData.hasPendingInteraction(PendingKarnScionExileReturn.class)) {
             handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
@@ -2506,6 +2514,12 @@ public class LibraryChoiceHandlerService {
     private void handleMurmursFromBeyondRevealChoice(GameData gameData, List<Card> allRevealedCards,
                                                      List<UUID> selectedCardIds) {
         murmursFromBeyondEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
+        finishSearchAndResume(gameData);
+    }
+
+    private void handleAllureOfTheUnknownRevealChoice(GameData gameData, List<Card> allRevealedCards,
+                                                       List<UUID> selectedCardIds) {
+        allureOfTheUnknownEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
         finishSearchAndResume(gameData);
     }
 

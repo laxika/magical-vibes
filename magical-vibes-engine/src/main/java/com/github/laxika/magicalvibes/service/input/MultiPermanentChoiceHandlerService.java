@@ -443,6 +443,8 @@ public class MultiPermanentChoiceHandlerService {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets ctx) {
             triggerHandler.handleUpkeepAnyNumberPlayerTargets(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget ctx) {
+            triggerHandler.handleUpkeepOptionalPermanentTarget(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls ctx) {
             handleDealDamageToDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyDamagedPlayerControls ctx) {

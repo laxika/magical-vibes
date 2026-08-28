@@ -268,9 +268,11 @@ public class DestructionSupport {
 
     private void beginSimultaneousCreatureDeaths(GameData gameData, List<Permanent> dying) {
         for (Permanent perm : dying) {
-            if (!gameQueryService.isCreature(gameData, perm)) continue;
             UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
             if (controllerId == null) continue;
+            gameData.simultaneousDyingPermanents.put(perm.getId(), perm);
+            gameData.simultaneousDyingPermanentControllers.put(perm.getId(), controllerId);
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
             gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
         }
@@ -279,6 +281,8 @@ public class DestructionSupport {
     private void endSimultaneousCreatureDeaths(GameData gameData) {
         gameData.simultaneousDyingCreatures.clear();
         gameData.simultaneousDyingControllers.clear();
+        gameData.simultaneousDyingPermanents.clear();
+        gameData.simultaneousDyingPermanentControllers.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {

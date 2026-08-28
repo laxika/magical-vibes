@@ -139,6 +139,7 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DealtDamageByRedSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
+import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeastCardsInLibrary;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -370,6 +371,9 @@ public class ConditionEvaluationService {
                     isDeliriumMet(gameData, ctx);
             case DevotionToColorAtLeast c ->
                     devotionToColorAtLeast(gameData, ctx, c);
+            case DevotionToColorAtLeastCardsInLibrary c ->
+                    devotionToColorAtLeast(gameData, ctx,
+                            new DevotionToColorAtLeast(c.color(), countCardsInLibrary(gameData, ctx.controllerId())));
             case DevotionToColorsAtLeast c ->
                     devotionToColorsAtLeast(gameData, ctx, c);
             case Coven ignored ->
@@ -1530,32 +1534,14 @@ public class ConditionEvaluationService {
 
     private boolean devotionToColorAtLeast(GameData gameData, ConditionContext ctx,
                                            DevotionToColorAtLeast condition) {
-        if (ctx.controllerId() == null) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return false;
-        int devotion = 0;
-        for (Permanent permanent : battlefield) {
-            var manaCost = permanent.getCard().getParsedManaCost();
-            if (manaCost != null) {
-                devotion += manaCost.countColorSymbols(condition.color());
-            }
-        }
-        return devotion >= condition.threshold();
+        return gameQueryService.getDevotionToColor(gameData, ctx.controllerId(), condition.color())
+                >= condition.threshold();
     }
 
     private boolean devotionToColorsAtLeast(GameData gameData, ConditionContext ctx,
                                             DevotionToColorsAtLeast condition) {
-        if (ctx.controllerId() == null) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return false;
-        int devotion = 0;
-        for (Permanent permanent : battlefield) {
-            var manaCost = permanent.getCard().getParsedManaCost();
-            if (manaCost != null) {
-                devotion += manaCost.countSymbolsOfAnyColor(condition.colors());
-            }
-        }
-        return devotion >= condition.threshold();
+        return gameQueryService.getDevotionToColors(gameData, ctx.controllerId(), condition.colors())
+                >= condition.threshold();
     }
 
     private boolean isSourceEquipped(GameData gameData, ConditionContext ctx) {

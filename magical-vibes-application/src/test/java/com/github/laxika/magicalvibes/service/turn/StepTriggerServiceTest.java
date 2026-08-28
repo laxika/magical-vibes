@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
@@ -2309,6 +2310,26 @@ class StepTriggerServiceTest {
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (2).")));
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter II ability triggers.")));
+        }
+
+        @Test
+        @DisplayName("Queues a graveyard target choice for a precombat main trigger")
+        void queuesGraveyardTargetChoice() {
+            Card source = createCardWithName("Klothys, God of Destiny");
+            source.addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+                    new ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
+                            new CardTypePredicate(CardType.LAND),
+                            new GainLifeEffect(1),
+                            new GainLifeEffect(1)));
+            Card land = createCardWithName("Forest");
+            land.setType(CardType.LAND);
+            gd.playerGraveyards.get(player1Id).add(land);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
         }
     }
 

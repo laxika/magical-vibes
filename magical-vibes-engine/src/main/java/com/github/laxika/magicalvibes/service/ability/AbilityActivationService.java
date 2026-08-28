@@ -132,6 +132,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCr
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
@@ -270,7 +271,7 @@ public class AbilityActivationService {
         EnumMap<ManaColor, Integer> creatureManaBefore = snapshotCreatureManaColors(manaPool);
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
-        // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
+        // Static mana replacement effects multiply mana produced by tapping a permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
         boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)
                 && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()));
@@ -3215,6 +3216,11 @@ public class AbilityActivationService {
                 .map(e -> (RemoveCounterFromSourceCost) e)
                 .findFirst();
 
+        Optional<RemoveCounterFromGrantingPermanentCost> removeGrantingCounterCost = abilityEffects.stream()
+                .filter(RemoveCounterFromGrantingPermanentCost.class::isInstance)
+                .map(RemoveCounterFromGrantingPermanentCost.class::cast)
+                .findFirst();
+
         Optional<RemoveXCountersFromSourceCost> removeXCounterCost = abilityEffects.stream()
                 .filter(RemoveXCountersFromSourceCost.class::isInstance)
                 .map(RemoveXCountersFromSourceCost.class::cast)
@@ -3411,6 +3417,68 @@ public class AbilityActivationService {
             String counterWord = count == 1 ? "a " + counterTypeLabel + " counter" : count + " " + counterTypeLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
+        }
+
+        if (removeGrantingCounterCost.isPresent()) {
+            Permanent grantingPermanent = ability.getGrantSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (grantingPermanent == null) {
+                throw new IllegalStateException("The granting permanent is not on the battlefield");
+            }
+            int count = removeGrantingCounterCost.get().count();
+            CounterType ct = removeGrantingCounterCost.get().counterType();
+            int removedMinus = 0;
+            int removedPlus = 0;
+            switch (ct) {
+                case MINUS_ONE_MINUS_ONE -> {
+                    removedMinus = count;
+                    grantingPermanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                            grantingPermanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - count);
+                }
+                case PLUS_ONE_PLUS_ONE -> {
+                    removedPlus = count;
+                    grantingPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                            grantingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - count);
+                }
+                case ANY -> {
+                    removedMinus = Math.min(count, grantingPermanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
+                    grantingPermanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                            grantingPermanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - removedMinus);
+                    int remaining = count - removedMinus;
+                    if (remaining > 0) {
+                        removedPlus = Math.min(remaining, grantingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE));
+                        grantingPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                                grantingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - removedPlus);
+                        removeOtherPermanentCounters(gameData, grantingPermanent, remaining - removedPlus);
+                    }
+                }
+                case SILVER -> throw new IllegalStateException("Silver counters are not on permanents");
+                default -> grantingPermanent.setCounterCount(ct,
+                        grantingPermanent.getCounterCount(ct) - count);
+            }
+            if (ct == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(grantingPermanent, count);
+            }
+            String counterTypeLabel;
+            if (ct == CounterType.ANY) {
+                if (removedMinus > 0 && removedPlus == 0) {
+                    counterTypeLabel = "-1/-1";
+                } else if (removedPlus > 0 && removedMinus == 0) {
+                    counterTypeLabel = "+1/+1";
+                } else {
+                    counterTypeLabel = "";
+                }
+            } else if (ct == CounterType.MINUS_ONE_MINUS_ONE) {
+                counterTypeLabel = "-1/-1";
+            } else if (ct == CounterType.PLUS_ONE_PLUS_ONE) {
+                counterTypeLabel = "+1/+1";
+            } else {
+                counterTypeLabel = ct.name().toLowerCase().replace('_', ' ');
+            }
+            String counterWord = count == 1 ? "a " + counterTypeLabel + " counter" : count + " " + counterTypeLabel + " counters";
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " removes " + counterWord + " from ", grantingPermanent.getCard(), "."));
         }
 
         // Pay remove-X-counter cost (Night Dealings, Cruel Sadist): X counters of the declared type,
@@ -4552,6 +4620,11 @@ public class AbilityActivationService {
                 .filter(e -> e instanceof RemoveCounterFromSourceCost)
                 .map(e -> (RemoveCounterFromSourceCost) e)
                 .findFirst();
+
+        Optional<RemoveCounterFromGrantingPermanentCost> removeGrantingCounterCost = abilityEffects.stream()
+                .filter(RemoveCounterFromGrantingPermanentCost.class::isInstance)
+                .map(RemoveCounterFromGrantingPermanentCost.class::cast)
+                .findFirst();
         if (removeCounterCost.isPresent()) {
             int required = removeCounterCost.get().count();
             CounterType ct = removeCounterCost.get().counterType();
@@ -4559,6 +4632,25 @@ public class AbilityActivationService {
                 case SILVER -> 0; // Silver counters are on exiled cards, not permanents
                 case ANY -> countPermanentCounters(permanent);
                 default -> permanent.getCounterCount(ct);
+            };
+            if (available < required) {
+                throw new IllegalStateException("Not enough counters to remove (need " + required + ", have " + available + ")");
+            }
+        }
+
+        if (removeGrantingCounterCost.isPresent()) {
+            Permanent grantingPermanent = ability.getGrantSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (grantingPermanent == null) {
+                throw new IllegalStateException("The granting permanent is not on the battlefield");
+            }
+            int required = removeGrantingCounterCost.get().count();
+            CounterType ct = removeGrantingCounterCost.get().counterType();
+            int available = switch (ct) {
+                case SILVER -> 0;
+                case ANY -> countPermanentCounters(grantingPermanent);
+                default -> grantingPermanent.getCounterCount(ct);
             };
             if (available < required) {
                 throw new IllegalStateException("Not enough counters to remove (need " + required + ", have " + available + ")");

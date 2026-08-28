@@ -123,6 +123,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectExilePermanentsOrHandCardsChoice);
         register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
+        register(PendingInteraction.ReturnAurasFromGraveyardChoice.class,
+                this::projectReturnAurasFromGraveyardChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
@@ -792,6 +794,13 @@ public class InteractionPromptProjectionRegistry {
                 interaction.maxCount() == 1
                         ? "Choose an Aura to attach to " + interaction.sourceName() + "."
                         : "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
+    }
+
+    private InteractionPromptMessage projectReturnAurasFromGraveyardChoice(
+            GameData gameData, PendingInteraction.ReturnAurasFromGraveyardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.validCardIds().size(),
+                "Choose any number of Auras to return attached to creatures you control.");
     }
 
     private InteractionPromptMessage projectMultiPermanentChoice(

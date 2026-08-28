@@ -979,7 +979,7 @@ public class DamageSupport {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard(), entry.getControllerId())) continue;
             // Mark before the damage lands so lethal damage is replaced by exile straight away.
-            if (exileInsteadOfDie) {
+            if (exileInsteadOfDie && gameQueryService.isCreature(gameData, p)) {
                 p.setExileInsteadOfDieThisTurn(true);
             }
             int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));

@@ -96,7 +96,6 @@ public class GameViewProjectionFactory {
         List<List<PermanentView>> battlefields = getBattlefields(gameData);
         Map<UUID, FaceDownReveal> faceDownReveals = collectFaceDownReveals(gameData);
         List<StackEntryView> stack = getStackViews(gameData);
-        List<List<CardView>> graveyards = getGraveyardViews(gameData);
         List<Integer> deckSizes = getDeckSizes(gameData);
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
@@ -110,6 +109,7 @@ public class GameViewProjectionFactory {
             if (!recipientIds.contains(playerId)) {
                 continue;
             }
+            List<List<CardView>> graveyards = getGraveyardViews(gameData, playerId);
             List<CardSubtype> playerGranted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, playerId);
             List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
                     .stream().map(c -> createHandCardView(gameData, playerId, c, playerGranted)).toList();
@@ -297,6 +297,10 @@ public class GameViewProjectionFactory {
     }
 
     List<List<CardView>> getGraveyardViews(GameData data) {
+        return getGraveyardViews(data, null);
+    }
+
+    List<List<CardView>> getGraveyardViews(GameData data, UUID viewerId) {
         List<List<CardView>> graveyards = new ArrayList<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> gy = data.playerGraveyards.get(pid);
@@ -306,8 +310,15 @@ public class GameViewProjectionFactory {
                         List<CardSubtype> cardGranted = new ArrayList<>(granted);
                         cardGranted.addAll(gameQueryService.computeGrantedGraveyardSubtypesForOwnedCreatureCard(
                                 data, pid, c));
+                        var filteredPermission = viewerId != null && viewerId.equals(pid)
+                                ? castingPermissionService.findFilteredGraveyardPermission(data, pid, c)
+                                : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
                         return cardViewFactory.createForGraveyard(c, cardGranted,
-                                gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c));
+                                gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
+                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
+                                        .orElse(0),
+                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
+                                        .orElse(null));
                     }).toList()
                     : new ArrayList<>());
         }
@@ -859,7 +870,7 @@ public class GameViewProjectionFactory {
                 getPoisonCounters(data),
                 getEnergyCounters(data),
                 getStackViews(data),
-                getGraveyardViews(data),
+                getGraveyardViews(data, playerId),
                 getSpeeds(data),
                 data.dayNight
         );

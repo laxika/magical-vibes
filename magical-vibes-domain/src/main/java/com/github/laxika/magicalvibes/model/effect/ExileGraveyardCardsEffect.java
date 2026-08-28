@@ -33,7 +33,7 @@ import java.util.UUID;
 public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
         boolean exactTargetCount, boolean trackWithSource, boolean fromBattlefieldThisTurn,
-        CardPredicate eventValueFilter) implements CardEffect {
+        CardPredicate eventValueFilter) implements GraveyardCardChoosingEffect {
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
                                      UUID affectedPlayerId, boolean exactTargetCount,
@@ -80,6 +80,16 @@ public record ExileGraveyardCardsEffect(
     public static ExileGraveyardCardsEffect allPlayersMatchingFromBattlefieldThisTurn(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_PLAYERS,
                 filter, null, false, false, true, null);
+    }
+
+    @Override
+    public int graveyardChoiceMaxTargets() {
+        return count;
+    }
+
+    @Override
+    public CardPredicate graveyardChoiceFilter() {
+        return filter;
     }
 
     @Override

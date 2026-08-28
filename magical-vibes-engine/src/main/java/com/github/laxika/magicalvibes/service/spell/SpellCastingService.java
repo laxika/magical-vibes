@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileXCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
@@ -3538,15 +3539,22 @@ public class SpellCastingService {
                             .count();
                 }
                 int graveyardMaxTargets = exileFromGraveyardEffect.xScaled()
-                        ? resolvedXValue : exileFromGraveyardEffect.maxTargets();
+                        ? exileFromGraveyardEffect.maxTargetsForX(resolvedXValue)
+                        : exileFromGraveyardEffect.maxTargets();
                 if (exileFromGraveyardEffect.exactTargets() && graveyardMaxTargets > 0 && matchingCount == 0) {
                     throw new IllegalStateException("No legal graveyard cards to target");
                 }
                 if (matchingCount > 0 && graveyardMaxTargets > 0) {
                     gameData.graveyardTargetOperation.permanentTargetIds = new ArrayList<>(targetIds);
-                    graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(gameData, playerId, card,
-                            entryType, graveyardMaxTargets, exileFromGraveyardEffect.filter(), filteredSpellEffects,
-                            exileFromGraveyardEffect.exactTargets());
+                    if (exileFromGraveyardEffect.allGraveyardsForSpell()
+                            && !exileFromGraveyardEffect.exactTargets()) {
+                        graveyardTargetingService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
+                                entryType, exileFromGraveyardEffect.filter(), graveyardMaxTargets, filteredSpellEffects);
+                    } else {
+                        graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(gameData, playerId, card,
+                                entryType, graveyardMaxTargets, exileFromGraveyardEffect.filter(), filteredSpellEffects,
+                                exileFromGraveyardEffect.exactTargets());
+                    }
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No cards in any graveyard — put spell on stack with 0 targets (resolves doing nothing)
@@ -4962,6 +4970,57 @@ public class SpellCastingService {
         }
     }
 
+    private List<Integer> validateEscapeExileCost(GameData gameData, Player player, Card card,
+                                                   List<Card> sourceGraveyard, int sourceGraveyardIndex,
+                                                   int escapeExileCount, ExileNCardsFromGraveyardCost additionalCost,
+                                                   List<Integer> exileGraveyardCardIndices) {
+        List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
+        int additionalCostCount = additionalCost == null ? 0 : additionalCost.count();
+        int requiredCount = escapeExileCount + additionalCostCount;
+        if (indices.size() != requiredCount) {
+            throw new IllegalStateException("Must choose exactly " + requiredCount
+                    + " graveyard cards to pay the escape cost for " + card.getName());
+        }
+        if (indices.stream().distinct().count() != indices.size()) {
+            throw new IllegalStateException("Duplicate graveyard card indices");
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
+        if (graveyard == null) {
+            throw new IllegalStateException("Your graveyard is unavailable");
+        }
+        int excludedGraveyardIndex = sourceGraveyard == graveyard ? sourceGraveyardIndex : -1;
+        int effectiveSize = graveyard.size() - (excludedGraveyardIndex >= 0 ? 1 : 0);
+        if (effectiveSize < requiredCount) {
+            throw new IllegalStateException("Not enough other cards in graveyard to pay the escape cost");
+        }
+
+        int matchingAdditionalCostCards = 0;
+        for (int index : indices) {
+            if (index < 0 || index >= effectiveSize) {
+                throw new IllegalStateException("Invalid graveyard card chosen for the escape cost of "
+                        + card.getName());
+            }
+            int actualIndex = excludedGraveyardIndex >= 0 && index >= excludedGraveyardIndex
+                    ? index + 1 : index;
+            Card selected = graveyard.get(actualIndex);
+            if (selected.getId().equals(card.getId())) {
+                throw new IllegalStateException("A spell cannot exile itself for its escape cost");
+            }
+            if (additionalCost != null
+                    && (additionalCost.requiredType() == null || selected.hasType(additionalCost.requiredType()))
+                    && (additionalCost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(selected, additionalCost.predicate(), null))) {
+                matchingAdditionalCostCards++;
+            }
+        }
+        if (matchingAdditionalCostCards < additionalCostCount) {
+            throw new IllegalStateException("The selected cards do not satisfy the additional graveyard cost of "
+                    + card.getName());
+        }
+        return List.copyOf(indices);
+    }
+
     private void validateFlashbackGraveyardExileCost(GameData gameData, Player player, Card card,
                                                       List<Card> sourceGraveyard, int sourceGraveyardIndex,
                                                       Optional<FlashbackCast> flashbackOpt, int xValue,
@@ -5438,13 +5497,15 @@ public class SpellCastingService {
         }
 
         // Abandoned Sarcophagus: cast spells with cycling from graveyard (any number, normal cost)
-        Optional<UUID> filteredGraveyardPermissionSourceId =
+        Optional<CastingPermissionService.FilteredGraveyardPermission> filteredGraveyardPermission =
                 flashbackOpt.isEmpty() && !isDisturb && !isHarmonize
                         && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast
                         && !isGrantedGraveyardPlay && !isGraveyardCast && !isGrantedGraveyardCast
-                        ? castingPermissionService.findFilteredGraveyardPermissionSource(gameData, playerId, card)
+                        ? castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
                         : Optional.empty();
-        boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermissionSourceId.isPresent();
+        Optional<UUID> filteredGraveyardPermissionSourceId =
+                filteredGraveyardPermission.map(CastingPermissionService.FilteredGraveyardPermission::sourcePermanentId);
+        boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermission.isPresent();
 
         // Bösium Strip: cast the top instant/sorcery of your graveyard until end of turn
         boolean isMayCastTopInstantOrSorcery = flashbackOpt.isEmpty() && !isDisturb && !isHarmonize
@@ -5489,6 +5550,14 @@ public class SpellCastingService {
                     damageAssignments, dividedDamageEffect);
         }
         ExileNCardsFromGraveyardCost exileNCost = additionalCosts.exileNCardsCost();
+        List<Integer> escapeExileIndices = null;
+        if (isGrantedCyclingGraveyardCast) {
+            int escapeExileCount = filteredGraveyardPermission.get().permission().additionalGraveyardExileCount();
+            if (escapeExileCount > 0) {
+                escapeExileIndices = validateEscapeExileCost(gameData, player, card, graveyard,
+                        graveyardCardIndex, escapeExileCount, exileNCost, exileGraveyardCardIndices);
+            }
+        }
         // Exile-N, fixed tap-multiple, and sacrifice-a-creature costs are handled below; reject
         // unsupported costs rather than silently skipping them.
         boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCreatures()
@@ -5516,7 +5585,7 @@ public class SpellCastingService {
             additionalSpellCostService.validateChooseXValueCost(
                     castHalf, additionalCosts.chooseXValueCost(), effectiveXValue);
         }
-        if (exileNCost != null) {
+        if (exileNCost != null && escapeExileIndices == null) {
             int excludedGraveyardIndex = graveyard == gameData.playerGraveyards.get(playerId)
                     ? graveyardCardIndex : -1;
             additionalSpellCostService.validateExileNCardsFromGraveyardCost(gameData, player, card, exileNCost,
@@ -5622,8 +5691,8 @@ public class SpellCastingService {
             throw new IllegalStateException("Cannot pay flashback life cost");
         }
         if (isGraveyardCast) {
-            validateGraveyardCastAdditionalCosts(gameData, playerId, graveyardCastOpt.orElseThrow(),
-                    retraceDiscardHandCardIndex);
+            validateGraveyardCastAdditionalCosts(gameData, playerId, card, graveyardCastOpt.orElseThrow(),
+                    retraceDiscardHandCardIndex, exileGraveyardCardIndices);
         }
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
@@ -5643,7 +5712,7 @@ public class SpellCastingService {
                 flashbackOpt, effectiveXValue, exileGraveyardCardIndices);
         if (isGraveyardCast) {
             payGraveyardCastAdditionalCosts(gameData, player, card, graveyardCastOpt.orElseThrow(),
-                    retraceDiscardHandCardIndex);
+                    retraceDiscardHandCardIndex, exileGraveyardCardIndices);
         }
         payTargetingLifeCost(gameData, player, card, targetingLifeTax);
         payRemoveCountersFromControlledCreaturesCost(
@@ -5672,7 +5741,12 @@ public class SpellCastingService {
 
         // Pay exile-N-cards-from-graveyard cost if present (validated above; the spell has left
         // the graveyard now, so the caller's indices apply directly)
-        payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
+        if (escapeExileIndices != null) {
+            payExileNCardsFromGraveyardCost(gameData, player, card,
+                    new ExileNCardsFromGraveyardCost(escapeExileIndices.size(), null), escapeExileIndices);
+        } else {
+            payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
+        }
         // Pay sacrifice-a-creature additional cast cost (Finish / aftermath half). Use castHalf so
         // tracking flags on the back-face cost are found (parent split has no SPELL-slot costs).
         if (additionalCosts.sacrificeCreature() || additionalCosts.sacrificePermanentCost() != null) {
@@ -5722,6 +5796,14 @@ public class SpellCastingService {
                     List.of(), 0, targetId, null
             );
             stackEntry.setSourceZone(Zone.GRAVEYARD);
+                    if ((isGraveyardCast && graveyardCastOpt.orElseThrow().escape())
+                            || (isGrantedCyclingGraveyardCast
+                            && filteredGraveyardPermission.orElseThrow().permission().escape())) {
+                stackEntry.setCastWithEscape(true);
+            }
+            if (isGraveyardCast && graveyardCastOpt.orElseThrow().exileAfterResolution()) {
+                stackEntry.setExileInsteadOfGraveyard(true);
+            }
             stackEntry.setEntersTapped(gameData.graveyardCardsEnterTapped.remove(card.getId()));
             preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
             gameData.stack.add(stackEntry);
@@ -5794,6 +5876,11 @@ public class SpellCastingService {
                 );
             }
             stackEntry.setSourceZone(Zone.GRAVEYARD);
+                    if ((isGraveyardCast && graveyardCastOpt.orElseThrow().escape())
+                            || (isGrantedCyclingGraveyardCast
+                            && filteredGraveyardPermission.orElseThrow().permission().escape())) {
+                stackEntry.setCastWithEscape(true);
+            }
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().alternateManaCost() != null) {
                 stackEntry.setAlternateCost(true);
             }
@@ -5905,9 +5992,17 @@ public class SpellCastingService {
                     .count();
             if (matchingCount > 0) {
                 gameData.graveyardTargetOperation.permanentTargetIds = new ArrayList<>(targetIds);
-                graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(
-                        gameData, playerId, card, entryType, exileFromGraveyardEffect.maxTargets(),
-                        exileFromGraveyardEffect.filter(), spellEffects, exileFromGraveyardEffect.exactTargets());
+                int graveyardMaxTargets = exileFromGraveyardEffect.maxTargetsForX(effectiveXValue);
+                if (exileFromGraveyardEffect.allGraveyardsForSpell()
+                        && !exileFromGraveyardEffect.exactTargets()) {
+                    graveyardTargetingService.handleUpToNAllGraveyardsSpellTargeting(
+                            gameData, playerId, card, entryType, exileFromGraveyardEffect.filter(),
+                            graveyardMaxTargets, spellEffects);
+                } else {
+                    graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(
+                            gameData, playerId, card, entryType, graveyardMaxTargets,
+                            exileFromGraveyardEffect.filter(), spellEffects, exileFromGraveyardEffect.exactTargets());
+                }
                 gameData.graveyardTargetOperation.flashback = true;
                 return;
             }
@@ -8322,9 +8417,10 @@ public class SpellCastingService {
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
     }
 
-    private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId,
+    private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId, Card card,
                                                        GraveyardCast graveyardCast,
-                                                       Integer discardHandCardIndex) {
+                                                       Integer discardHandCardIndex,
+                                                       List<Integer> exileGraveyardCardIndices) {
         graveyardCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
             if (gameData.getLife(playerId) < lifeCost.amount()) {
                 throw new IllegalStateException("Not enough life to pay graveyard cast cost");
@@ -8338,12 +8434,45 @@ public class SpellCastingService {
                 throw new IllegalStateException("Must discard a card to cast from the graveyard");
             }
         }
+        graveyardCast.getCost(ExileNCardsFromGraveyardCastingCost.class).ifPresent(exileCost -> {
+            List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
+            if (indices.size() != exileCost.count()) {
+                throw new IllegalStateException("Must exile exactly " + exileCost.count()
+                        + " cards from your graveyard to cast " + card.getName() + " from the graveyard");
+            }
+            if (indices.stream().distinct().count() != indices.size()) {
+                throw new IllegalStateException("Duplicate cards chosen for the graveyard cast of " + card.getName());
+            }
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+            for (int index : indices) {
+                if (index < 0 || index >= graveyard.size()) {
+                    throw new IllegalStateException("Invalid graveyard card chosen for the cost of " + card.getName());
+                }
+                Card selected = graveyard.get(index);
+                if (selected.getId().equals(card.getId())) {
+                    throw new IllegalStateException("A spell cannot exile itself for its graveyard cast cost");
+                }
+                if (exileCost.predicate() != null
+                        && !predicateEvaluationService.matchesCardPredicate(
+                        selected, exileCost.predicate(), selected.getId())) {
+                    String label = exileCost.label() == null ? "a matching" : "a " + exileCost.label();
+                    throw new IllegalStateException("Each card exiled for the graveyard cast cost must be " + label);
+                }
+            }
+        });
     }
 
     private void payGraveyardCastAdditionalCosts(GameData gameData, Player player, Card card,
                                                   GraveyardCast graveyardCast,
-                                                  Integer discardHandCardIndex) {
+                                                  Integer discardHandCardIndex,
+                                                  List<Integer> exileGraveyardCardIndices) {
         UUID playerId = player.getId();
+        ExileNCardsFromGraveyardCastingCost exileCost =
+                graveyardCast.getCost(ExileNCardsFromGraveyardCastingCost.class).orElse(null);
+        if (exileCost != null) {
+            validateGraveyardCastAdditionalCosts(gameData, playerId, card, graveyardCast,
+                    discardHandCardIndex, exileGraveyardCardIndices);
+        }
         graveyardCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
             gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - lifeCost.amount());
             gameData.lifeLostThisTurn.merge(playerId, lifeCost.amount(), Integer::sum);
@@ -8361,6 +8490,32 @@ public class SpellCastingService {
                     .text(" from the graveyard.")
                     .build());
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        }
+        if (exileCost != null) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            List<Integer> sortedDescending = exileGraveyardCardIndices.stream()
+                    .sorted(java.util.Comparator.reverseOrder()).toList();
+            List<Card> exiledCards = new ArrayList<>();
+            graveyardService.beginGraveyardLeaveBatch(gameData);
+            try {
+                for (int index : sortedDescending) {
+                    Card exiledCard = graveyard.remove(index);
+                    graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
+                    exiledCards.add(exiledCard);
+                }
+            } finally {
+                graveyardService.endGraveyardLeaveBatch(gameData);
+            }
+            for (Card exiledCard : exiledCards) {
+                gameData.addToExile(playerId, exiledCard);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(exiledCard)
+                        .text(" from graveyard to cast ")
+                        .card(card)
+                        .text(" from the graveyard.")
+                        .build());
+            }
         }
     }
 
@@ -8693,7 +8848,8 @@ public class SpellCastingService {
                 }
             } else if (!(cost instanceof LifeCastingCost)
                     && !(cost instanceof DiscardCardCastingCost)
-                    && !(cost instanceof RemoveCountersFromControlledCreaturesCastingCost)) {
+                    && !(cost instanceof RemoveCountersFromControlledCreaturesCastingCost)
+                    && !(cost instanceof ExileNCardsFromGraveyardCastingCost)) {
                 throw new IllegalStateException("Cannot pay this graveyard cast cost");
             }
         }

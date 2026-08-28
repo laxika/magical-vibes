@@ -62,6 +62,8 @@ public class StackEntry {
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
+    /** Whether this spell was cast using an escape permission. */
+    @Setter private boolean castWithEscape;
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
     @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
@@ -559,6 +561,7 @@ public class StackEntry {
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.castWithEscape = source.castWithEscape;
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =

@@ -498,6 +498,8 @@ public class Permanent {
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
     @Setter private boolean evoked;
+    /** Whether this permanent was cast using an escape permission. */
+    @Setter private boolean escaped;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
     /** Whether this permanent was cast by paying an alternate cost. */
@@ -809,6 +811,7 @@ public class Permanent {
         this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
         this.kicked = source.kicked;
         this.evoked = source.evoked;
+        this.escaped = source.escaped;
         this.prowl = source.prowl;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;

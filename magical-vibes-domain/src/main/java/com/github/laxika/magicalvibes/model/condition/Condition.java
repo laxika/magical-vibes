@@ -132,6 +132,7 @@ public sealed interface Condition permits
         DefendingPlayerPoisoned,
         Delirium,
         DevotionToColorAtLeast,
+        DevotionToColorAtLeastCardsInLibrary,
         DevotionToColorsAtLeast,
         DevouredCreature,
         DidntActivateLoyaltyAbilityThisTurn,

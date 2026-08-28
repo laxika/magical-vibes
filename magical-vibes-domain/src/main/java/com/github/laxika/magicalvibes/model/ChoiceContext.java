@@ -481,6 +481,9 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId)
+            implements ChoiceContext {}
+
     /**
      * The controller chose a card name; {@code targetPlayerId} reveals their hand, the source deals
      * {@code damagePerCard} damage per revealed copy, then every copy in their hand/graveyard/library
@@ -630,7 +633,8 @@ public sealed interface ChoiceContext {
      * Choosing how many {@code counterType} counters to remove from {@code permanentId} as a
      * storage land's mana ability resolves (0..the count present). On resume the chosen number of
      * counters is removed and that much mana of {@code color} is added to {@code playerId}'s pool
-     * (times {@code manaMultiplier} for Mana Reflection; {@code fromCreature} marks creature mana).
+     * (times {@code manaMultiplier} for static mana replacement effects; {@code fromCreature}
+     * marks creature mana).
      * Used by the storage-land cycle via {@code RemoveCountersForManaEffect}.
      */
     record RemoveCountersForManaChoice(UUID playerId, UUID permanentId, List<ManaColor> colors,

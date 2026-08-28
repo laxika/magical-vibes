@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -57,6 +58,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -1019,34 +1021,53 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             PermanentChoiceContext.LifeGainTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
 
-            // Collect valid targets: all creatures on all battlefields + all players
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)) {
-                        validPermanentTargets.add(p.getId());
+            TargetFilter targetFilter = pending.sourceCard().getTargetFilter();
+            List<UUID> validPermanentTargets;
+            List<UUID> validPlayerTargets;
+            String prompt;
+            if (targetFilter != null) {
+                TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                        gameData,
+                        pending.effects(),
+                        targetFilter,
+                        pending.controllerId(),
+                        pending.sourceCard(),
+                        TriggerTargetCollector.Options.ATTACK);
+                validPermanentTargets = result.validTargets().stream()
+                        .filter(id -> !gameData.playerIds.contains(id))
+                        .toList();
+                validPlayerTargets = result.validTargets().stream()
+                        .filter(gameData.playerIds::contains)
+                        .toList();
+                prompt = pending.sourceCard().getName() + "'s ability - Choose a target permanent.";
+            } else {
+                // Collect valid targets: all creatures on all battlefields + all players
+                validPermanentTargets = new ArrayList<>();
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (gameQueryService.isCreature(gameData, p)) {
+                            validPermanentTargets.add(p.getId());
+                        }
                     }
                 }
+                validPlayerTargets = pending.creaturesOnly()
+                        ? List.of()
+                        : new ArrayList<>(gameData.orderedPlayerIds);
+                prompt = pending.creaturesOnly()
+                        ? pending.sourceCard().getName() + "'s ability - Choose target creature."
+                        : pending.sourceCard().getName() + "'s ability - Choose target creature or player.";
             }
 
             // "Target creature" abilities (Cradle of Vitality) offer no player targets; if no creature
             // is a legal target the ability has no legal target and is removed without going on the stack.
-            if (pending.creaturesOnly() && validPermanentTargets.isEmpty()) {
+            if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
-                log.info("Game {} - {} life gain trigger skipped (no legal creature target)",
+                log.info("Game {} - {} life gain trigger skipped (no legal target)",
                         gameData.id, pending.sourceCard().getName());
                 continue;
             }
-
-            List<UUID> validPlayerTargets = pending.creaturesOnly()
-                    ? List.of()
-                    : new ArrayList<>(gameData.orderedPlayerIds);
-
-            String prompt = pending.creaturesOnly()
-                    ? pending.sourceCard().getName() + "'s ability - Choose target creature."
-                    : pending.sourceCard().getName() + "'s ability - Choose target creature or player.";
 
             // There are always valid targets (at least the players, or the checked creatures)
             gameData.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
@@ -1434,7 +1455,16 @@ public class TriggeredAbilityQueueService {
             int minTargets = 1;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             for (CardEffect effect : pending.effects()) {
-                if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+                if (effect instanceof GraveyardCardChoosingEffect choosingEffect) {
+                    filter = choosingEffect.graveyardChoiceFilter();
+                    maxTargets = choosingEffect.graveyardChoiceMaxTargets();
+                    minTargets = 0;
+                    scope = effect.targetSpec().graveyardScope().orElse(
+                            choosingEffect.singleGraveyard()
+                                    ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                                    : GraveyardSearchScope.ALL_GRAVEYARDS);
+                    break;
+                } else if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
                     scope = returnEffect.source();
                     break;
@@ -1469,8 +1499,29 @@ public class TriggeredAbilityQueueService {
             gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class);
 
             if (matchingCards.isEmpty()) {
-                log.info("Game {} - {} chapter {} graveyard-target skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                if (minTargets == 0) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            pending.sourceCard(),
+                            pending.controllerId(),
+                            pending.sourceCard().getName() + "'s chapter " + pending.chapterName() + " ability",
+                            new ArrayList<>(pending.effects()),
+                            0,
+                            null,
+                            pending.sourcePermanentId(),
+                            Map.of(),
+                            null,
+                            List.of(),
+                            List.of()
+                    ));
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s chapter " + pending.chapterName() + " ability triggers with no graveyard targets."));
+                    log.info("Game {} - {} chapter {} graveyard-target trigger pushed with no targets",
+                            gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                } else {
+                    log.info("Game {} - {} chapter {} graveyard-target skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                }
                 continue;
             }
 

@@ -149,6 +149,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
@@ -462,7 +463,8 @@ public class PredicateEvaluationService {
             case CardMaxManaValueXPredicate ignored ->
                     xValue == null || card.getManaValue() <= xValue;
             case CardMinManaValuePredicate p ->
-                    card.getManaValue() >= p.minManaValue();
+                    card.getManaValue() + (p.includeXValue() && xValue != null ? xValue : 0)
+                            >= p.minManaValue();
             case CardPowerAtLeastPredicate p ->
                     card.getPower() != null && card.getPower() >= p.minPower();
             case CardPowerAtMostPredicate p ->
@@ -675,6 +677,8 @@ public class PredicateEvaluationService {
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            case PermanentIsEnchantedBySourceControllerAuraPredicate ignored ->
+                    hasAuraControlledBySourceControllerAttachedTo(gameData, permanent, sourceControllerId);
             case PermanentIsEquippedPredicate ignored ->
                     gameData != null && gameQueryService.isEquipped(gameData, permanent);
             case PermanentIsModifiedPredicate ignored -> isModified(gameData, permanent, filterContext);
@@ -1673,6 +1677,9 @@ public class PredicateEvaluationService {
         if (predicate instanceof PermanentIsModifiedPredicate) {
             return true;
         }
+        if (predicate instanceof PermanentIsEnchantedBySourceControllerAuraPredicate) {
+            return true;
+        }
         if (predicate instanceof PermanentNotPredicate notPredicate) {
             return requiresGameDataForStaticFilter(notPredicate.predicate());
         }
@@ -1764,6 +1771,10 @@ public class PredicateEvaluationService {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameQueryService.isEnchanted(gameData, permanent);
             }
+            case PermanentIsEnchantedBySourceControllerAuraPredicate ignored ->
+                    hasAuraControlledBySourceControllerAttachedTo(
+                            context == null ? null : context.gameData(), permanent,
+                            context == null ? null : context.sourceControllerId());
             case PermanentControllerControlsPermanentPredicate p ->
                     controllerControlsMatchingStatic(permanent, p, context);
             case PermanentControllerControlsPermanentCountAtMostPredicate p ->
@@ -1979,6 +1990,25 @@ public class PredicateEvaluationService {
                         && aura.isAttached()
                         && aura.getAttachedTo().equals(permanent.getId())
                         && effectiveControllerId.equals(gameData.findControllerOf(aura)));
+    }
+
+    private boolean hasAuraControlledBySourceControllerAttachedTo(
+            GameData gameData, Permanent permanent, UUID sourceControllerId) {
+        if (gameData == null || permanent == null || sourceControllerId == null) {
+            return false;
+        }
+        if (gameData.anyPermanentMatches(aura -> aura.getCard().isAura()
+                && aura.isAttached()
+                && aura.getAttachedTo().equals(permanent.getId())
+                && sourceControllerId.equals(gameData.findControllerOf(aura)))) {
+            return true;
+        }
+        return gameData.simultaneousDyingCreatures.entrySet().stream()
+                .filter(entry -> entry.getValue().getCard().isAura())
+                .filter(entry -> entry.getValue().isAttached())
+                .filter(entry -> entry.getValue().getAttachedTo().equals(permanent.getId()))
+                .anyMatch(entry -> sourceControllerId.equals(
+                        gameData.simultaneousDyingControllers.get(entry.getKey())));
     }
 
     /**

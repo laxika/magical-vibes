@@ -228,6 +228,7 @@ public enum CardSubtype {
     PLANT("Plant"),
     PRISM("Prism"),
     KRAKEN("Kraken"),
+    TENTACLE("Tentacle"),
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),
     TYVAR("Tyvar"),

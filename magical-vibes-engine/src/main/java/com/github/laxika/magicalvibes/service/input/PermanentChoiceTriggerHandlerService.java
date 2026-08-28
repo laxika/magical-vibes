@@ -291,6 +291,9 @@ public class PermanentChoiceTriggerHandlerService {
                 slt.sourcePermanentId()
         );
         entry.setTargetId(targetId);
+        if (slt.eventValue() != null) {
+            entry.setEventValue(slt.eventValue());
+        }
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);
@@ -1778,6 +1781,34 @@ public class PermanentChoiceTriggerHandlerService {
         log.info("Game {} - {} upkeep permanent-target trigger targets {}",
                 gameData.id, uptt.sourceCard().getName(), targetName);
 
+        continueUpkeepPermanentTargetProcessing(gameData);
+    }
+
+    public void handleUpkeepOptionalPermanentTarget(GameData gameData, List<UUID> chosenIds,
+            MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget context) {
+        UUID chosenId = chosenIds.isEmpty() ? null : chosenIds.getFirst();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s upkeep ability",
+                new ArrayList<>(context.effects()),
+                chosenId,
+                context.sourcePermanentId());
+        pushTriggeredEntry(gameData, entry);
+
+        if (chosenId == null) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(context.sourceCard(), "'s ability has no target."));
+        } else {
+            String targetName = getTargetDisplayName(gameData, chosenId);
+            gameLogService.append(gameData,
+                    GameLog.builder().card(context.sourceCard()).text("'s ability targets " + targetName + ".").build());
+        }
+        continueUpkeepPermanentTargetProcessing(gameData);
+    }
+
+    private void continueUpkeepPermanentTargetProcessing(GameData gameData) {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
             turnProgressionService.processNextUpkeepPermanentTarget(gameData);
             return;

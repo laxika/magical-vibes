@@ -1114,7 +1114,8 @@ public class GameActionAvailabilityService {
                 isGrantedGraveyardCast = CastingPermissionService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
-            boolean isGrantedCyclingGraveyardCast = flashback.isEmpty()
+            Optional<CastingPermissionService.FilteredGraveyardPermission> filteredGraveyardPermission =
+                    flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
                     && !grantedFlashback
@@ -1123,7 +1124,9 @@ public class GameActionAvailabilityService {
                     && !isGrantedGraveyardPlay
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
-                    && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
+                    ? castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
+                    : Optional.empty();
+            boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermission.isPresent();
 
             boolean isJumpStart = card.getCastingOption(JumpStartCast.class).isPresent()
                     && flashback.isEmpty()
@@ -1246,6 +1249,14 @@ public class GameActionAvailabilityService {
             }
             if (!canPayMana) {
                 continue;
+            }
+
+            if (isGrantedCyclingGraveyardCast) {
+                int escapeExileCount = filteredGraveyardPermission.get().permission().additionalGraveyardExileCount();
+                long availableCards = graveyard.stream().filter(c -> c != card).count();
+                if (availableCards < escapeExileCount) {
+                    continue;
+                }
             }
 
             if (flashback.isPresent() && !castingCostService.canPayFlashbackPermanentCosts(

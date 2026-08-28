@@ -110,6 +110,7 @@ public sealed interface DynamicAmount permits
         PermanentManaValueSum,
         RepeatedAdditionalCostCount,
         Scaled,
+        SacrificedPermanentManaValue,
         SacrificedPermanentPower,
         SacrificedPermanentToughness,
         SourceCardPower,

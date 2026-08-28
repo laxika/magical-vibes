@@ -51,6 +51,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Attach the source Aura to the chosen permanent after a resolving effect pauses for input. */
     record AttachSourceAuraToChosenPermanent(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** Attach one selected graveyard Aura to the chosen creature and continue the selection. */
+    record AttachReturnedAuraToCreature(UUID controllerId, UUID auraCardId,
+                                        List<UUID> remainingAuraCardIds)
+            implements PermanentChoiceContext {
+        public AttachReturnedAuraToCreature {
+            remainingAuraCardIds = List.copyOf(remainingAuraCardIds);
+        }
+    }
+
     /** A resolving effect asks its controller to choose one permanent to transform. */
     record TransformChosenPermanent() implements PermanentChoiceContext {}
 
@@ -163,6 +172,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record MurmursFromBeyondOpponentChoice(UUID controllerId, List<Card> revealedCards)
             implements PermanentChoiceContext {
         public MurmursFromBeyondOpponentChoice {
+            revealedCards = List.copyOf(revealedCards);
+        }
+    }
+
+    /** Allure of the Unknown: the controller chooses which opponent makes the revealed-card choice. */
+    record AllureOfTheUnknownOpponentChoice(UUID controllerId, List<Card> revealedCards)
+            implements PermanentChoiceContext {
+        public AllureOfTheUnknownOpponentChoice {
             revealedCards = List.copyOf(revealedCards);
         }
     }
@@ -359,14 +376,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Targeted ability whose source permanent triggered, with the target chosen as it is put on the stack. */
     record SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                      String eventDescription, UUID sourcePermanentId) implements PermanentChoiceContext {
+                                      String eventDescription, UUID sourcePermanentId,
+                                      Integer eventValue) implements PermanentChoiceContext {
         public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, "leaves-the-battlefield", null);
+            this(sourceCard, controllerId, effects, "leaves-the-battlefield", null, null);
         }
 
         public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           String eventDescription) {
-            this(sourceCard, controllerId, effects, eventDescription, null);
+            this(sourceCard, controllerId, effects, eventDescription, null, null);
+        }
+
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, null);
         }
     }
 

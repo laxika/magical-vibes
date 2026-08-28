@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -87,6 +88,7 @@ public class GraveyardReturnSupport {
     private final CreateTokenEffectHandler createTokenEffectHandler;
     private final ConditionEvaluationService conditionEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
+    private final AuraAttachmentService auraAttachmentService;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -206,6 +208,43 @@ public class GraveyardReturnSupport {
                     .text(" enters the battlefield attached to ").card(sourcePermanent.getCard()).text(".").build());
             log.info("Game {} - {} enters the battlefield attached to {}", gameData.id,
                     targetCard.getName(), sourcePermanent.getCard().getName());
+            return;
+        }
+
+        if (effect.chooseAuraAttachment() && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            List<UUID> attachTargetIds = new ArrayList<>();
+            for (UUID battlefieldPlayerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldPlayerId);
+                if (battlefield == null) {
+                    continue;
+                }
+                for (Permanent permanent : battlefield) {
+                    if (auraAttachmentService.canEnchant(gameData, targetCard, controllerId, permanent)) {
+                        attachTargetIds.add(permanent.getId());
+                    }
+                }
+            }
+
+            List<UUID> attachPlayerIds = new ArrayList<>();
+            if (targetCard.isEnchantPlayer()) {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    if (auraAttachmentService.canEnchantPlayer(gameData, targetCard, controllerId, playerId)) {
+                        attachPlayerIds.add(playerId);
+                    }
+                }
+            }
+
+            if (attachTargetIds.isEmpty() && attachPlayerIds.isEmpty()) {
+                gameLogService.append(gameData, GameLog.textCardText(entry.getDescription() + " leaves ",
+                        targetCard, " in the graveyard because it cannot legally enchant anything."));
+                return;
+            }
+
+            permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+            gameData.interaction.setPendingAuraCard(targetCard);
+            gameData.interaction.setPendingAuraOwnerId(controllerId);
+            playerInputService.beginAnyTargetChoice(gameData, controllerId, attachTargetIds, attachPlayerIds,
+                    "Choose a permanent or player for " + targetCard.getName() + " to enchant.");
             return;
         }
 

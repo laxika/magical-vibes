@@ -25,6 +25,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingOpponentChoosesCardToHandRestToGraveyard,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingMurmursFromBeyondChoice,
+        PendingAllureOfTheUnknownChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
@@ -77,7 +78,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
         PendingInteraction.BeholdChoice,
-        PendingInteraction.AttachAurasChoice,
+        PendingInteraction.AttachAurasChoice, PendingInteraction.ReturnAurasFromGraveyardChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
         PendingInteraction.SpectersShriekChoice,
@@ -1412,6 +1413,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** Select any number of Aura cards that can be returned attached to creatures you control. */
+    record ReturnAurasFromGraveyardChoice(UUID playerId, java.util.List<Card> cards)
+            implements PendingInteraction {
+
+        public ReturnAurasFromGraveyardChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, validCardIds().size());
         }
     }
 

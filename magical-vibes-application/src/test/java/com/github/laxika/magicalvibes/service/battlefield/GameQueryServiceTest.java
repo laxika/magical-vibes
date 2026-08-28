@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfCombatDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -1751,6 +1752,61 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("threshold controller protection applies at the mana-value boundary")
+        void thresholdControllerProtectionAppliesAtBoundary() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Thryx", 4, 5, CardColor.BLUE, new ControllerSpellsCantBeCounteredEffect(5)));
+            Card highSpell = spellOnStack("High spell", "{4}{U}", player1Id, 0);
+            Card lowSpell = spellOnStack("Low spell", "{3}{U}", player1Id, 0);
+
+            assertThat(gqs.isUncounterable(gd, highSpell)).isTrue();
+            assertThat(gqs.isUncounterable(gd, lowSpell)).isFalse();
+        }
+
+        @Test
+        @DisplayName("threshold controller protection includes an announced X value")
+        void thresholdControllerProtectionIncludesAnnouncedX() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Thryx", 4, 5, CardColor.BLUE, new ControllerSpellsCantBeCounteredEffect(5)));
+            Card xSpell = spellOnStack("X spell", "{X}{U}", player1Id, 4);
+
+            assertThat(gqs.isUncounterable(gd, xSpell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("threshold controller protection does not affect an opponent's spell")
+        void thresholdControllerProtectionDoesNotAffectOpponent() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Thryx", 4, 5, CardColor.BLUE, new ControllerSpellsCantBeCounteredEffect(5)));
+            Card opponentSpell = spellOnStack("Opponent spell", "{4}{U}", player2Id, 0);
+
+            assertThat(gqs.isUncounterable(gd, opponentSpell)).isFalse();
+        }
+
+        @Test
+        @DisplayName("type-restricted controller protection matches only the listed card types")
+        void typeRestrictedControllerProtection() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Destiny Spinner", 2, 3, CardColor.GREEN,
+                    new ControllerSpellsCantBeCounteredEffect(Set.of(CardType.CREATURE, CardType.ENCHANTMENT))));
+            Card creature = creatureOnStack("Creature spell", 2, player1Id);
+            Card enchantment = new Card();
+            enchantment.setName("Enchantment spell");
+            enchantment.setType(CardType.ENCHANTMENT);
+            gd.stack.add(new StackEntry(StackEntryType.ENCHANTMENT_SPELL, enchantment,
+                    player1Id, "Enchantment spell", new ArrayList<>()));
+            Card instant = new Card();
+            instant.setName("Instant spell");
+            instant.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, instant,
+                    player1Id, "Instant spell", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+            assertThat(gqs.isUncounterable(gd, enchantment)).isTrue();
+            assertThat(gqs.isUncounterable(gd, instant)).isFalse();
+        }
+
+        @Test
         @DisplayName("returns true when CreatureSpellsCantBeCounteredEffect on battlefield")
         void returnsTrueWithEffect() {
             addPermanent(player1Id, createCreatureWithStaticEffect("Gaea's Herald", 1, 1, CardColor.GREEN, new CreatureSpellsCantBeCounteredEffect()));
@@ -1849,6 +1905,16 @@ class GameQueryServiceTest {
             gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, creature, controllerId,
                     name, new ArrayList<>()));
             return creature;
+        }
+
+        private Card spellOnStack(String name, String manaCost, UUID controllerId, int xValue) {
+            Card spell = new Card();
+            spell.setName(name);
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost(manaCost);
+            gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, spell, controllerId,
+                    name, new ArrayList<>(), xValue));
+            return spell;
         }
     }
 
@@ -3159,6 +3225,37 @@ class GameQueryServiceTest {
 
             assertThat(gqs.canPlayerGainLife(gd, player1Id)).isTrue();
             assertThat(gqs.canPlayerGainLife(gd, player2Id)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("manaProductionMultiplier")
+    class ManaProductionMultiplier {
+
+        @Test
+        @DisplayName("returns one when no mana replacement effect is present")
+        void returnsOneWithoutReplacementEffect() {
+            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("applies a mana replacement effect globally")
+        void appliesGlobally() {
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Mana Reflection",
+                    new ManaReflectionEffect()));
+
+            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("combines configured multipliers multiplicatively")
+        void combinesMultiplicatively() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Nyxbloom Ancient",
+                    new ManaReflectionEffect(3)));
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Mana Reflection",
+                    new ManaReflectionEffect()));
+
+            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(6);
         }
     }
 

@@ -496,6 +496,12 @@ Reasoning behind the non-obvious mappings:
 - **Ability grants are L6 regardless of the granted ability's content**:
   `GrantEffectEffect`, `GrantActivatedAbilityEffect`, `GrantEquipByManaValueEffect` add an
   ability to the object; what that ability later does is the ability's business.
+- **Devotion modifiers use a special board-wide query value**: `IncreaseDevotionEffect` is
+  classified with the static-effect registry so its self handler is collected after text changes,
+  then its controller modifier is stored on `LayeredBoardState` before other characteristic
+  changes are evaluated. `GameQueryService.getDevotionToColor` and
+  `getDevotionToColors` are the only devotion reads that add this modifier; dynamic amounts and
+  devotion conditions must use those helpers.
 - **Wrappers classify by what they wrap.** `ConditionalEffect` delegates to `wrapped()`
   (passing `fromOwnStaticSlot` through); `EnchantedPermanentConditionalEffect` unions both
   branches, since which branch applies is game-state-dependent. Their declared

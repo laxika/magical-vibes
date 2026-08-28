@@ -488,6 +488,10 @@ public sealed interface TriggerContext {
     record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount)
             implements TriggerContext {}
 
+    /** Context for ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
+    record CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount)
+            implements TriggerContext {}
+
     /** Context for ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}

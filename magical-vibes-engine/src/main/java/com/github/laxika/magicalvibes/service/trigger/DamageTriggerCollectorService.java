@@ -1246,7 +1246,7 @@ public class DamageTriggerCollectorService {
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                     sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
-                    "deals damage", sourcePermanentId));
+                    "deals damage", sourcePermanentId, sd.totalDamage()));
 
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger awaits target ({} damage)",

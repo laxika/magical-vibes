@@ -70,6 +70,8 @@ public record CardView(
         boolean alternateCostDiscardsHandCard,
         boolean alternateCostRevealsHandCard,
         boolean graveyardCastRequiresDiscard,
+        int graveyardCastExileCount,
+        String graveyardCastExileLabel,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         List<ActivatedAbilityView> handActivatedAbilities,
         List<ActivatedAbilityView> exileActivatedAbilities,

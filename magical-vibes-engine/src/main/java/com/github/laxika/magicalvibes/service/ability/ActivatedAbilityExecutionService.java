@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTri
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
@@ -656,6 +657,9 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new TargetPermanentControllerGainsControlOfGrantingEquipmentEffect(
                         gainControl.duration(), gainControl.excludedSourceSubtype(),
                         ability.getGrantSourcePermanentId(), sourceHadExcludedSubtype));
+            } else if (effect instanceof DestroyGrantingPermanentIfNoCountersEffect destroy) {
+                snapshotEffects.add(new DestroyGrantingPermanentIfNoCountersEffect(
+                        destroy.counterType(), ability.getGrantSourcePermanentId()));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof MustBlockSourceEffect) {
@@ -719,7 +723,7 @@ public class ActivatedAbilityExecutionService {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
 
-        // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
+        // Static mana replacement effects multiply mana produced by tapping a permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
 
         boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)

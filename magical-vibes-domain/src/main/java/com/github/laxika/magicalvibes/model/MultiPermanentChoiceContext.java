@@ -49,6 +49,15 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Selects zero or one permanent for an optional upkeep target. */
+    record UpkeepOptionalPermanentTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+
+        public UpkeepOptionalPermanentTarget {
+            effects = List.copyOf(effects);
+        }
+    }
+
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, CounterType counterType, int total)
             implements MultiPermanentChoiceContext {

@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -1312,6 +1313,33 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             assertThat(perm.getCounterCount(CounterType.BRICK)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("RemoveCounterFromGrantingPermanentCost removes a counter from the granting permanent")
+        void removeCounterFromGrantingPermanent() {
+            Card card = createCreatureCard("Test Creature", 2, 2);
+            Permanent creature = addReadyPermanent(player1Id, card);
+            Permanent aura = addReadyPermanent(player2Id, createCreatureCard("Test Aura", 0, 0));
+            aura.setCounterCount(CounterType.TASK, 2);
+            ActivatedAbility ability = new ActivatedAbility(
+                    true,
+                    null,
+                    List.of(new RemoveCounterFromGrantingPermanentCost(1, CounterType.TASK)),
+                    "Remove a task counter from the granting Aura"
+            ).withGrantSource(aura.getId());
+            card.addActivatedAbility(ability);
+
+            when(gameQueryService.computeStaticBonus(gameData, creature)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(creature), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.findPermanentById(gameData, aura.getId())).thenReturn(aura);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            assertThat(creature.isTapped()).isTrue();
+            assertThat(aura.getCounterCount(CounterType.TASK)).isEqualTo(1);
         }
     }
 

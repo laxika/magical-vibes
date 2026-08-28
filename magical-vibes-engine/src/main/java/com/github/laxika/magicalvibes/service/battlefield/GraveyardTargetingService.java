@@ -1202,6 +1202,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.entryType = entryType;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.singleGraveyard = false;
         String filterLabel = CardPredicateUtils.describeFilter(filter);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from graveyards.");

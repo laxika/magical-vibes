@@ -15,6 +15,7 @@ on what the mana may pay for.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Counter each opponent spell and ability unless its controller pays | `w/WhirlwindDenial.java` | SPELL CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect(4) — snapshots opponent-controlled spells and activated/triggered abilities, offers payment choices in active-player order, and counters unpaid objects after all choices |
 | Controller-scoped land animation with first strike | `n/NaturalEmergence.java` | ETB `ReturnPermanentControlledByPlayerToHandEffect` filtered to red or green enchantments + STATIC `AllLandsAreCreaturesEffect(2, 2, null, null, GrantScope.OWN_LANDS)` + `GrantKeywordEffect(FIRST_STRIKE, GrantScope.OWN_LANDS)` |
 | Basic land | `f/Forest.java` | `addEffect(ON_TAP, AwardManaEffect(color))` |
 | Pain land | `s/SulfurousSprings.java` | 3 activated abilities: colorless + 2x colored with DealDamageToController |
@@ -105,7 +106,7 @@ on what the mana may pay for.
 | Buyback with life and random discard | `f/FlowstoneFlood.java` | STATIC `new BuybackEffect(new PayLifeCost(3), 1, true)` + SPELL `ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell())`; the random discard is paid automatically from hand when buyback is announced |
 | Buyback with a sacrifice cost | `c/ConstantMists.java` | STATIC `new BuybackEffect(new PermanentIsLandPredicate(), "a land")` + the same `BuybackPaid` return effect; pass the chosen permanent through `sacrificePermanentId` when announcing buyback. Counted costs use `new BuybackEffect(count, predicate, description)` and pass selected ids through `additionalCostSacrificePermanentIds` (Walk the Aeons) |
 | Damage all creatures | `p/Pyroclasm.java` | MassDamageEffect |
-| Each creature deals its power to itself | `w/WaveOfReckoning.java` | `EachCreatureDealsPowerDamageToItselfEffect()` — non-targeting; each creature is its own damage source |
+| Each creature deals its power to itself | `w/WaveOfReckoning.java` | `EachCreatureDealsPowerDamageToItselfEffect()` — non-targeting; each creature is its own damage source. Pass a `PermanentPredicate` for filtered variants such as tapped creatures |
 | Remove all counters + exile all tokens | `a/AetherSnap.java` | SPELL `RemoveAllCountersFromAllPermanentsEffect` followed by `ExileAllPermanentsEffect(PermanentIsTokenPredicate)` |
 | Modal spell (choose one) | `s/Slagstorm.java` | ChooseOneEffect wrapping multiple CardEffects (e.g. MassDamageEffect + DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER)). Mode chosen at cast time via `xValue` parameter (0-based index). Test with `castSorcery(player, idx, modeIndex)` |
 | Modal charm (mixed targeting / non-targeting modes) | `b/BorosCharm.java` | ChooseOneEffect with a player-or-planeswalker damage mode (`DealDamageToTargetPlayerOrPlaneswalkerEffect` + `PermanentPredicateTargetFilter(PermanentIsPlaneswalkerPredicate)`), a non-targeting `GrantKeywordEffect(INDESTRUCTIBLE, OWN_PERMANENTS)` mode, and a `GrantKeywordEffect(DOUBLE_STRIKE, TARGET)` creature mode. Test with `castInstant(player, idx, modeIndex, targetId)` (null target for the non-targeting mode) |

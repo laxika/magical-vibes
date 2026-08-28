@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+
+import java.util.UUID;
 
 public interface CardEffect {
 
@@ -79,4 +82,17 @@ public interface CardEffect {
      * trigger. Effects without such a condition remain unchanged.
      */
     default CardEffect resolveForActivatedAbility(ActivatedAbility ability) { return this; }
+
+    /**
+     * Resolves a trigger-only condition that depends on the ability that caused a creature to
+     * become the target of a spell or ability. Effects without such a condition remain unchanged.
+     */
+    default CardEffect resolveForBecomesTargetOfSpellOrAbility(
+            StackEntry triggeringEntry,
+            UUID watcherPermanentId,
+            UUID targetedPermanentId,
+            UUID watcherControllerId,
+            UUID triggeringSourceControllerId) {
+        return this;
+    }
 }

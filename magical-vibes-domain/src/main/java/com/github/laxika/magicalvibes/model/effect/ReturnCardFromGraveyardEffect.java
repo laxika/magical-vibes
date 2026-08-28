@@ -28,7 +28,8 @@ import java.util.Set;
  * <ol>
  *   <li><b>Pre-targeted</b> — the card was targeted during casting or ability activation
  *       ({@link #targetGraveyard} is {@code true} and the stack entry has a graveyard target).
- *       Supports optional aura attachment via {@link #attachmentTarget}.</li>
+ *       Supports optional aura attachment via {@link #attachmentTarget} or
+ *       {@link #chooseAuraAttachment}.</li>
  *   <li><b>Return all</b> — returns every matching card without player choice
  *       ({@link #returnAll} is {@code true}). Optionally restricted to cards that entered the
  *       graveyard from the battlefield this turn via {@link #thisTurnOnly}.</li>
@@ -92,6 +93,8 @@ import java.util.Set;
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
  *                             permanent matching this predicate after entering the battlefield; the
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
+ * @param chooseAuraAttachment {@code true} when a returned Aura's controller chooses any legal
+ *                             permanent or player for it to enchant as it enters the battlefield
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
  * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned
@@ -259,6 +262,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
         boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
+        boolean chooseAuraAttachment,
         boolean gainLifeEqualToManaValue,
         boolean loseLifeEqualToManaValue,
         boolean attachToSource,

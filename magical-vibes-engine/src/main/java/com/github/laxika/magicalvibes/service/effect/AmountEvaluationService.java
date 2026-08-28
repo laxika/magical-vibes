@@ -117,6 +117,7 @@ import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
@@ -222,6 +223,9 @@ public class AmountEvaluationService {
                     (int) ctx.repeatedAdditionalCosts().stream().filter(a.manaCost()::equals).count();
             case Scaled s ->
                     s.factor() * evaluate(gameData, s.amount(), ctx);
+            case SacrificedPermanentManaValue ignored ->
+                    ctx.stackEntry() == null || ctx.stackEntry().getSacrificedPermanentSnapshot() == null
+                            ? 0 : Math.max(0, ctx.stackEntry().getSacrificedPermanentSnapshot().getCard().getManaValue());
             case SacrificedPermanentPower ignored ->
                     Math.max(0, ctx.sacrificedPower());
             case SacrificedPermanentToughness ignored ->
@@ -519,7 +523,7 @@ public class AmountEvaluationService {
                 ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                 ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, ctx.madness(), false,
                 null, ctx.xValue(), ctx.targetPermanentId(), null, ctx.staticEvaluation(), false,
-                null, null, null);
+                null, null, null).withEventValue(ctx.eventValue());
     }
 
     private int chosenPermanentEffectivePower(GameData gameData, AmountContext ctx) {
@@ -903,16 +907,7 @@ public class AmountEvaluationService {
 
     private int countColorManaSymbolsAmongControlledPermanents(
             GameData gameData, ColorManaSymbolsAmongControlledPermanents amount, AmountContext ctx) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return 0;
-        int total = 0;
-        for (Permanent permanent : battlefield) {
-            ManaCost cost = permanent.getCard().getParsedManaCost();
-            if (cost != null) {
-                total += cost.countColorSymbols(amount.color());
-            }
-        }
-        return total;
+        return gameQueryService.getDevotionToColor(gameData, ctx.controllerId(), amount.color());
     }
 
     private int colorManaPairsSpentToCast(

@@ -455,6 +455,8 @@ public class GameData {
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
      */
     public final List<UUID> eachPlayerDamageUnlessPaysRemaining = new ArrayList<>();
+    /** Progress state for Whirlwind Denial's opponent-by-opponent pay-or-counter sequence. */
+    public final WhirlwindDenialState whirlwindDenial = new WhirlwindDenialState();
     /**
      * RevealHandDiscardMatchingCardsUnlessPaysLife: ids of the revealed cards still to be offered the
      * pay-or-discard prompt after the one currently being decided. Cleared when the queue drains.
@@ -541,6 +543,8 @@ public class GameData {
             new EachPlayerMayExileGraveyardCardsState();
     /** Progress state for Creeping Dread's each-player discard comparison. */
     public final CreepingDreadState creepingDread = new CreepingDreadState();
+    /** Progress state for Kroxa's opponent discard and nonland comparison. */
+    public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
     /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
     public final DispersalState dispersal = new DispersalState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
@@ -1638,6 +1642,8 @@ public class GameData {
      */
     public final Map<UUID, Permanent> simultaneousDyingCreatures = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> simultaneousDyingControllers = new ConcurrentHashMap<>();
+    public final Map<UUID, Permanent> simultaneousDyingPermanents = new ConcurrentHashMap<>();
+    public final Map<UUID, UUID> simultaneousDyingPermanentControllers = new ConcurrentHashMap<>();
 
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
      *  Maps source permanent UUID → set of subtypes the creature had at the time of dealing damage.
@@ -3589,6 +3595,11 @@ public class GameData {
         copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
         this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
                 copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
+        copy.kroxaDiscard.active = this.kroxaDiscard.active;
+        copy.kroxaDiscard.controllerId = this.kroxaDiscard.controllerId;
+        copy.kroxaDiscard.currentPlayerId = this.kroxaDiscard.currentPlayerId;
+        copy.kroxaDiscard.remaining.addAll(this.kroxaDiscard.remaining);
+        copy.kroxaDiscard.discardedNonland.putAll(this.kroxaDiscard.discardedNonland);
         copy.dispersal.active = this.dispersal.active;
         copy.dispersal.remainingOpponentIds.addAll(this.dispersal.remainingOpponentIds);
         copy.dispersal.currentOpponentId = this.dispersal.currentOpponentId;
@@ -3914,6 +3925,8 @@ public class GameData {
         copy.pendingTokenCreationReplacement = this.pendingTokenCreationReplacement;
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
         copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
+        copy.simultaneousDyingPermanents.putAll(this.simultaneousDyingPermanents);
+        copy.simultaneousDyingPermanentControllers.putAll(this.simultaneousDyingPermanentControllers);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
@@ -4034,6 +4047,7 @@ public class GameData {
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
+        copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
         copy.bounceUnlessPaysRemaining.addAll(this.bounceUnlessPaysRemaining);

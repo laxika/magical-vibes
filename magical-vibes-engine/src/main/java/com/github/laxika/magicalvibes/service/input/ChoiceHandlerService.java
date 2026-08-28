@@ -211,6 +211,10 @@ public class ChoiceHandlerService {
             handleCardNameChosen(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameAtResolutionChoice ctx) {
+            handleChooseCardNameAtResolutionChosen(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CardTypeOnEnterChoice ctx) {
             handleCardTypeOnEnterChosen(gameData, player, colorName, ctx);
             return;
@@ -1192,6 +1196,22 @@ public class ChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    private void handleChooseCardNameAtResolutionChosen(GameData gameData, Player player, String cardName,
+                                                        ChoiceContext.ChooseCardNameAtResolutionChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        if (ctx.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            if (source != null) {
+                source.setChosenName(cardName);
+            }
+        }
+
+        gameLogService.append(gameData,
+                GameLog.playerChoosesForCard(player.getUsername(), cardName, ctx.sourceCard()));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleCardTypeOnEnterChosen(GameData gameData, Player player, String typeName,
@@ -3094,7 +3114,7 @@ public class ChoiceHandlerService {
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null && chosen > 0) {
             // Storage land: remove the chosen counters (the ability's cost) and add that much mana
-            // of the given color (times the Mana Reflection multiplier).
+            // of the given color (times the static mana replacement multiplier).
             int available = perm.getCounterCount(ctx.counterType());
             int removed = Math.min(chosen, available);
             perm.setCounterCount(ctx.counterType(), available - removed);

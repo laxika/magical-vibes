@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
@@ -1865,6 +1866,16 @@ public class CastingCostService {
                                 FilterContext.of(gameData).withSourceControllerId(playerId)))
                         .count();
                 if (matchingCount < sacrificeCost.count()) {
+                    return false;
+                }
+            } else if (cost instanceof ExileNCardsFromGraveyardCastingCost exileCost) {
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(graveyardCard -> !graveyardCard.getId().equals(card.getId()))
+                        .filter(graveyardCard -> exileCost.predicate() == null
+                                || predicateEvaluationService.matchesCardPredicate(
+                                graveyardCard, exileCost.predicate(), graveyardCard.getId()))
+                        .count();
+                if (matchingCount < exileCost.count()) {
                     return false;
                 }
             } else {

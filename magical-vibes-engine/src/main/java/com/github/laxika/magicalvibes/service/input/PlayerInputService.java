@@ -1768,6 +1768,11 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, interaction);
     }
 
+    public void beginReturnAurasFromGraveyardChoice(
+            GameData gameData, PendingInteraction.ReturnAurasFromGraveyardChoice interaction) {
+        interactionHandlerRegistry.begin(gameData, interaction);
+    }
+
     public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID sourcePermanentId) {
         beginImprintFromHandChoice(gameData, playerId, validIndices, prompt, sourcePermanentId, false);
     }

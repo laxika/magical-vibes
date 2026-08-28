@@ -118,6 +118,7 @@ public enum CounterType {
     SOUL,
     STORAGE,
     STUDY,
+    TASK,
     STUN,
     THEFT,
     TIDE,

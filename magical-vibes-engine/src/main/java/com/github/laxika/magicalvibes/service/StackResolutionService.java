@@ -291,6 +291,7 @@ public class StackResolutionService {
         }
         perm.setCastFromZone(entry.getSourceZone());
         perm.setAlternateCost(entry.isAlternateCost());
+        perm.setEscaped(entry.isCastWithEscape());
         perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
         perm.setEnteredFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
@@ -383,7 +384,8 @@ public class StackResolutionService {
         Card physicalCard = entry.getPhysicalCard();
         if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
             gameData.playerDecks.get(ownerId).add(physicalCard);
-        } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
+        } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb()
+                || entry.isCastWithEscape() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
             graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
@@ -589,7 +591,6 @@ public class StackResolutionService {
                 .build());
         log.info("Game {} - {} reanimates {} for {}", gameData.id, card.getName(), creature.getCard().getName(), playerName);
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, auraPerm, creature.getId());
     }
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
@@ -669,8 +670,6 @@ public class StackResolutionService {
                         .text(" under " + playerName + "'s control.")
                         .build());
                 log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, characteristics.getName(), target.getCard().getName(), playerName);
-
-                triggerCollectionService.checkAuraAttachedTriggers(gameData, perm, target.getId());
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
@@ -905,7 +904,7 @@ public class StackResolutionService {
                 .filter(e -> e instanceof NumberChoiceEffect)
                 .map(e -> (NumberChoiceEffect) e)
                 .findFirst().orElse(null);
-        if (numberChoice != null) {
+        if (numberChoice != null && !numberChoice.chooseRandomly()) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginNumberChoice(gameData, controllerId, justEntered.getId(),
@@ -1005,7 +1004,8 @@ public class StackResolutionService {
             if (isNonCopySpell(entry)) {
                 if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.playerDecks.get(entry.getOwnerId()).add(entry.getPhysicalCard());
-                } else if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
+                } else if (entry.isCastWithFlashback() || entry.isCastWithEscape()
+                        || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
                     gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
                 } else {
@@ -1117,6 +1117,10 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
+        } else if (entry.isCastWithEscape()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addToExile(ownerId, physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (escape)."));
         } else if (entry.isCastWithOmen()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.playerDecks.get(ownerId).add(physicalCard);
@@ -1248,6 +1252,7 @@ public class StackResolutionService {
             case 1 -> EffectSlot.SAGA_CHAPTER_I;
             case 2 -> EffectSlot.SAGA_CHAPTER_II;
             case 3 -> EffectSlot.SAGA_CHAPTER_III;
+            case 4 -> EffectSlot.SAGA_CHAPTER_IV;
             default -> null;
         };
         if (chapterSlot == null) return;
@@ -1259,6 +1264,7 @@ public class StackResolutionService {
             case 1 -> "I";
             case 2 -> "II";
             case 3 -> "III";
+            case 4 -> "IV";
             default -> String.valueOf(loreCount);
         };
 

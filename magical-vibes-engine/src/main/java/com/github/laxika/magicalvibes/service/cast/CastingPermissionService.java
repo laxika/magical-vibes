@@ -95,6 +95,10 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class CastingPermissionService {
 
+    public record FilteredGraveyardPermission(UUID sourcePermanentId,
+                                               CastSpellsFromGraveyardPermission permission) {
+    }
+
     private static final Set<CardType> WARD_OF_BONES_SPELL_TYPES =
             Set.of(CardType.CREATURE, CardType.ARTIFACT, CardType.ENCHANTMENT);
 
@@ -1077,7 +1081,7 @@ public class CastingPermissionService {
      * (Abandoned Sarcophagus). Lands that are not also another permanent type are not spells.
      */
     public boolean canCastViaFilteredGraveyardPermission(GameData gameData, UUID playerId, Card card) {
-        return findFilteredGraveyardPermissionSource(gameData, playerId, card).isPresent();
+        return findFilteredGraveyardPermission(gameData, playerId, card).isPresent();
     }
 
     /**
@@ -1087,6 +1091,15 @@ public class CastingPermissionService {
      * permanent's use for the turn is unspent; the returned id keys that per-instance tracking.
      */
     public Optional<UUID> findFilteredGraveyardPermissionSource(GameData gameData, UUID playerId, Card card) {
+        return findFilteredGraveyardPermission(gameData, playerId, card)
+                .map(FilteredGraveyardPermission::sourcePermanentId);
+    }
+
+    /**
+     * Returns the first applicable filtered graveyard-cast permission and its source permanent.
+     */
+    public Optional<FilteredGraveyardPermission> findFilteredGraveyardPermission(
+            GameData gameData, UUID playerId, Card card) {
         if (!isCastableSpellCard(card)) {
             return Optional.empty();
         }
@@ -1105,7 +1118,7 @@ public class CastingPermissionService {
                             || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
                     continue;
                 }
-                return Optional.of(perm.getId());
+                return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
             }
         }
         return Optional.empty();

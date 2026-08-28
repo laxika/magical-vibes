@@ -278,8 +278,12 @@ public class StateBasedActionService {
 
         try {
             for (DeathEntry entry : toDie) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                if (controllerId != null) {
+                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), entry.permanent());
+                    gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
+                }
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
@@ -315,6 +319,8 @@ public class StateBasedActionService {
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPermanents.clear();
+            gameData.simultaneousDyingPermanentControllers.clear();
         }
 
         if (!toDie.isEmpty()) {

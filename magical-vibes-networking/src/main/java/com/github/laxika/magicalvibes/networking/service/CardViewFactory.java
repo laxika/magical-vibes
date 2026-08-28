@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CastingOption;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -159,6 +160,10 @@ public class CardViewFactory {
         boolean graveyardCastRequiresDiscard = card.getCastingOption(GraveyardCast.class)
                 .flatMap(castingOption -> castingOption.getCost(DiscardCardCastingCost.class))
                 .isPresent();
+        var graveyardCastExileCost = card.getCastingOption(GraveyardCast.class)
+                .flatMap(castingOption -> castingOption.getCost(ExileNCardsFromGraveyardCastingCost.class));
+        int graveyardCastExileCount = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::count).orElse(0);
+        String graveyardCastExileLabel = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::label).orElse(null);
 
         BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof BuybackEffect)
@@ -227,6 +232,8 @@ public class CardViewFactory {
                 alternateCostDiscardsHandCard,
                 alternateCostRevealsHandCard,
                 graveyardCastRequiresDiscard,
+                graveyardCastExileCount,
+                graveyardCastExileLabel,
                 graveyardAbilityViews,
                 handAbilityViews,
                 exileAbilityViews,
@@ -259,6 +266,25 @@ public class CardViewFactory {
             return base;
         }
         return base.toBuilder().needsTarget(true).build();
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       int additionalGraveyardExileCount,
+                                       String additionalGraveyardExileLabel) {
+        CardView base = createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities);
+        if (additionalGraveyardExileCount <= 0) {
+            return base;
+        }
+        String label = base.graveyardCastExileCount() == 0
+                ? additionalGraveyardExileLabel
+                : base.graveyardCastExileLabel() == null
+                ? additionalGraveyardExileLabel
+                : base.graveyardCastExileLabel() + " and " + additionalGraveyardExileLabel;
+        return base.toBuilder()
+                .graveyardCastExileCount(base.graveyardCastExileCount() + additionalGraveyardExileCount)
+                .graveyardCastExileLabel(label)
+                .build();
     }
 
     private static boolean disturbBackFaceNeedsTarget(Card card) {

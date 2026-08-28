@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,7 @@ public class CombatTriggerService {
 
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
 
     /**
@@ -107,6 +110,14 @@ public class CombatTriggerService {
                                 autoTargetOpponent = true;
                             }
                             // If subtype doesn't match, skip this effect
+                        } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
+                                && conditional.combatOpponent()) {
+                            if (combatOpponent != null
+                                    && predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, combatOpponent, conditional.predicate())) {
+                                effectsForStack.add(conditional.wrapped());
+                                autoTargetOpponent = true;
+                            }
                         } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                             // "blocks or becomes blocked by a [filter] creature, ... that creature"
                             // (e.g. Venom). Auto-target the combat opponent; the effect's handler
@@ -254,6 +265,13 @@ public class CombatTriggerService {
                                     autoTargetBlocker = true;
                                 }
                                 // If subtype doesn't match, skip this effect for this blocker
+                            } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
+                                    && conditional.combatOpponent()) {
+                                if (predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, blocker, conditional.predicate())) {
+                                    transformedEffects.add(conditional.wrapped());
+                                    autoTargetBlocker = true;
+                                }
                             } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                                 // Auto-target this blocker; the handler re-checks the filter (Venom).
                                 transformedEffects.add(effect);

@@ -1081,6 +1081,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `SAGA_CHAPTER_I` | Saga chapter I (first lore counter placed, on ETB and precombat main) |
 | `SAGA_CHAPTER_II` | Saga chapter II (second lore counter) |
 | `SAGA_CHAPTER_III` | Saga chapter III (third lore counter, saga sacrificed after) |
+| `SAGA_CHAPTER_IV` | Saga chapter IV (fourth lore counter, saga sacrificed after) |
 | `BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on controller's turn |
 | `EACH_BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of each combat (any player's turn) |
 | `OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on each opponent's turn only (never the controller's) — Sentinel of the Eternal Watch |

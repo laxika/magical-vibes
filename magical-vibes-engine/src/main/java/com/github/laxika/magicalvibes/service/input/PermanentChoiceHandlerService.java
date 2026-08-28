@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class PermanentChoiceHandlerService {
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
     private final AbilityActivationService abilityActivationService;
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
+    private final AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
     private final GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler grantChosenCreatureKeywordEffectHandler;
@@ -39,6 +42,8 @@ public class PermanentChoiceHandlerService {
     private final InputCompletionService inputCompletionService;
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
+    private final ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler
+            returnAurasFromGraveyardAttachedToCreaturesEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -81,6 +86,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.AttachSourceAuraToChosenPermanent attachAura) {
             battlefieldHandler.handleAttachSourceAuraToChosenPermanent(gameData, permanentId, attachAura);
+        } else if (context instanceof PermanentChoiceContext.AttachReturnedAuraToCreature attachAura) {
+            returnAurasFromGraveyardAttachedToCreaturesEffectHandler.completeCreatureChoice(
+                    gameData, permanentId, attachAura);
         } else if (context instanceof PermanentChoiceContext.TransformChosenPermanent) {
             battlefieldHandler.handleTransformChosenPermanent(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.AttachTargetAuraToAnotherPermanentOfSameType attachAura) {
@@ -134,6 +142,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePermanentYouControlToExile(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.MurmursFromBeyondOpponentChoice murmursChoice) {
             murmursFromBeyondEffectHandler.completeOpponentChoice(gameData, permanentId, murmursChoice);
+        } else if (context instanceof PermanentChoiceContext.AllureOfTheUnknownOpponentChoice allureChoice) {
+            allureOfTheUnknownEffectHandler.completeOpponentChoice(gameData, permanentId, allureChoice);
         } else if (context instanceof PermanentChoiceContext.GuidedPassageOpponentChoice guidedPassageChoice) {
             guidedPassageEffectHandler.completeOpponentChoice(gameData, permanentId, guidedPassageChoice);
         } else if (context instanceof PermanentChoiceContext.MausoleumTurnkeyOpponentChoice mausoleumTurnkeyChoice) {

@@ -710,6 +710,24 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainPutCounterOnTarget(TriggerMatchContext match,
+            PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+
+        gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                sourceCard,
+                match.controllerId(),
+                List.of(effect),
+                match.permanent().getId()));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on life gain (put counter on target)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = SurveilEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainSurveil(TriggerMatchContext match,
             SurveilEffect effect, TriggerContext ctx) {
@@ -1003,7 +1021,9 @@ public class MiscTriggerCollectorService {
             @CollectsTrigger(value = CardEffect.class,
                     slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
             @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+                    slot = EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     })
     private boolean handleCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

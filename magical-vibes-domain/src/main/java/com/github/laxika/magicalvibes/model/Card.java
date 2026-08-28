@@ -1234,6 +1234,7 @@ public class Card {
      * Returns 0 if the card has no chapter abilities.
      */
     public int getSagaFinalChapter() {
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_II).isEmpty()) return 2;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_I).isEmpty()) return 1;
