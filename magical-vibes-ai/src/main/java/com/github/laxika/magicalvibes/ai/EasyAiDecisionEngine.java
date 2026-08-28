@@ -190,8 +190,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Check targeting tax (e.g. Kopala, Warden of Waves)
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+        int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+        if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
             return false;
         }
 
@@ -410,8 +411,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Check targeting tax (e.g. Kopala, Warden of Waves)
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+        int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+        if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
             return false;
         }
 

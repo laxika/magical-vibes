@@ -1073,8 +1073,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             targetId = null;
         }
         // 4. Targeting tax
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+        int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+        if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
             return null;
         }
 

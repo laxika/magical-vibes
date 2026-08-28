@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.r.RiseFromTheWreck;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
@@ -84,6 +85,7 @@ import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
 import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
+import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
@@ -118,6 +120,46 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void leavesManaUnspentWhenChosenTargetAddsOwnSurcharge() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        Card relicCard = new Card();
+        relicCard.setName("Relic");
+        relicCard.setType(CardType.ARTIFACT);
+        harness.addToBattlefield(opponent, relicCard);
+        harness.addToBattlefield(opponent, new SerraAngel());
+        VanishIntoEternity vanish = new VanishIntoEternity();
+
+        harness.setHand(aiPlayer, List.of(vanish));
+        harness.addMana(aiPlayer, ManaColor.WHITE, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(vanish);
+            assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotalAllMana()).isEqualTo(3);
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void castsNahirisWarcraftingAtPermanentInsteadOfPlayer() {

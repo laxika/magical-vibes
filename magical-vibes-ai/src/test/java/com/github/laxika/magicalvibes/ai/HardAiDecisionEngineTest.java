@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
+import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -2442,6 +2443,34 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
                 .allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    @DisplayName("Hard AI leaves mana untapped when its chosen target adds an unaffordable surcharge")
+    void leavesManaUntappedWhenChosenTargetAddsOwnSurcharge() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        Card relicCard = new Card();
+        relicCard.setName("Relic");
+        relicCard.setType(CardType.ARTIFACT);
+        harness.addToBattlefield(player2, relicCard);
+        harness.addToBattlefield(player2, new SerraAngel());
+        VanishIntoEternity vanish = new VanishIntoEternity();
+        harness.setHand(player1, List.of(vanish));
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(vanish);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
     }
 
     @Test

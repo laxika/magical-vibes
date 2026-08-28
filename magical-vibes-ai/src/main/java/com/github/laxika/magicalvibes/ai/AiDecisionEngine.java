@@ -2207,12 +2207,16 @@ public abstract class AiDecisionEngine {
                     gameData, card, validationCost, virtualPool, xValue, costModifier);
         }
 
-        if (card.getManaCost() == null || !castingCostService.hasTargetBasedCastCostReduction(card)) {
+        boolean hasTargetBasedCostReduction = castingCostService.hasTargetBasedCastCostReduction(card);
+        boolean hasTargetBasedCostIncrease = castingCostService.hasTargetBasedCostIncrease(card);
+        if (card.getManaCost() == null
+                || !hasTargetBasedCostReduction && !hasTargetBasedCostIncrease) {
             return true;
         }
 
-        if (castingCostService.computeTargetBasedCostReduction(
-                gameData, aiPlayer.getId(), card, costReductionTargetIds) > 0) {
+        int targetReduction = castingCostService.computeTargetBasedCostReduction(
+                gameData, aiPlayer.getId(), card, costReductionTargetIds);
+        if (!hasTargetBasedCostIncrease && targetReduction > 0) {
             return true;
         }
 
@@ -2221,17 +2225,19 @@ public abstract class AiDecisionEngine {
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
         return canPayManaCostWithDelve(
-                gameData, card, validationCost, virtualPool, xValue, costModifier + targetingTax);
+                gameData, card, validationCost, virtualPool, xValue,
+                costModifier + targetingTax - targetReduction);
     }
 
     /**
-     * Computes the targeting tax for a spell based on the chosen target(s).
-     * Effects like Kopala, Warden of Waves increase the cost of spells that
-     * target permanents with certain subtypes; Kaervek's Torch taxes spells that
-     * target it while it is on the stack.
+     * Computes the net target-dependent cost modifier for a spell's chosen target(s).
+     * This includes battlefield taxes and reductions, costs carried by the spell itself,
+     * and costs carried by a targeted spell on the stack.
      */
-    protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
-        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds, false)
+    protected int computeTargetingTax(GameData gameData, Card card, UUID targetId,
+                                      List<UUID> multiTargetIds) {
+        return castingCostService.getTargetingSpellCostModifier(
+                gameData, aiPlayer.getId(), card, targetId, multiTargetIds)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, multiTargetIds);
     }
 

@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
+import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
@@ -3132,6 +3133,29 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
                     .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
                     .allMatch(Permanent::isTapped);
+        }
+
+        @Test
+        @DisplayName("Easy AI leaves mana untapped when its chosen target adds an unaffordable surcharge")
+        void leavesManaUntappedWhenChosenTargetAddsOwnSurcharge() {
+            giveAiPriorityLocal();
+            giveAiPlainsLocal(3);
+
+            Card relicCard = new Card();
+            relicCard.setName("Relic");
+            relicCard.setType(CardType.ARTIFACT);
+            testHarness.addToBattlefield(human, relicCard);
+            testHarness.addToBattlefield(human, new SerraAngel());
+            VanishIntoEternity vanish = new VanishIntoEternity();
+            testHarness.setHand(aiTestPlayer, List.of(vanish));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(vanish);
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(permanent -> !permanent.isTapped());
         }
 
         @Test

@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
+import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 
@@ -2551,6 +2552,29 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
                 .allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Medium AI leaves mana untapped when its chosen target adds an unaffordable surcharge")
+    void leavesManaUntappedWhenChosenTargetAddsOwnSurcharge() {
+        giveAiPriority();
+        giveAiPlains(3);
+
+        Card relicCard = new Card();
+        relicCard.setName("Relic");
+        relicCard.setType(CardType.ARTIFACT);
+        harness.addToBattlefield(human, relicCard);
+        harness.addToBattlefield(human, new SerraAngel());
+        VanishIntoEternity vanish = new VanishIntoEternity();
+        harness.setHand(aiPlayer, List.of(vanish));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(vanish);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     @Test

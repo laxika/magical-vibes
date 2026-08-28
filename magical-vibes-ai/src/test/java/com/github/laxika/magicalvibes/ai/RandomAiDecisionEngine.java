@@ -511,8 +511,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
 
             // Check targeting tax (e.g. Kopala, Warden of Waves)
-            int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-            if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+            int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+            if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                    && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
                 telemetry.recordSkip("spell: targeting tax unaffordable", card.getName());
                 continue; // Can't afford with targeting tax, try next spell
             }
@@ -729,10 +730,15 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     }
                     targetId = unattemptedTargets.get(rng.nextInt(unattemptedTargets.size()));
                     attemptedTargets.add(targetId);
-                    int refreshedTargetingTax = computeTargetingTax(gameData, targetId, null);
+                    int refreshedTargetingTax = computeTargetingTax(gameData, card, targetId, null);
                     ManaPool refreshedVirtualPool = manaManager.buildVirtualManaPool(
                             gameData, aiPlayer.getId());
-                    if (!canAffordSpell(gameData, card, refreshedVirtualPool, refreshedTargetingTax)) {
+                    boolean refreshedTargetAffordable = castingCostService.hasTargetBasedCostIncrease(card)
+                            ? canAffordSelectedSpellTarget(
+                                    gameData, card, refreshedVirtualPool, targetId, null,
+                                    refreshedTargetingTax, xValue)
+                            : canAffordSpell(gameData, card, refreshedVirtualPool, refreshedTargetingTax);
+                    if (!refreshedTargetAffordable) {
                         telemetry.recordSkip("spell: refreshed targeting tax unaffordable", card.getName());
                         targetId = null;
                         break;
