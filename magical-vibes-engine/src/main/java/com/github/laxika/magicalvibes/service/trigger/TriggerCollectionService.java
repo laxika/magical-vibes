@@ -6942,7 +6942,8 @@ public class TriggerCollectionService {
                 dyingPermanent);
 
         gameData.forEachPermanent((playerId, perm) -> {
-            dispatchAnyCreatureDeathTriggersForWatcher(gameData, playerId, perm, dyingPermanent, dyingCreatureControllerId, ctx);
+            dispatchAnyCreatureDeathTriggersForWatcher(
+                    gameData, playerId, perm, dyingPermanent, dyingCreatureControllerId, ctx, false);
         });
 
         // Last-known watchers dying in the same simultaneous event (CR 603.6c / 603.10). Skip self
@@ -6955,7 +6956,7 @@ public class TriggerCollectionService {
             UUID controllerId = gameData.simultaneousDyingControllers.get(watcherId);
             if (controllerId == null) continue;
             dispatchAnyCreatureDeathTriggersForWatcher(
-                    gameData, controllerId, watcher, dyingPermanent, dyingCreatureControllerId, ctx);
+                    gameData, controllerId, watcher, dyingPermanent, dyingCreatureControllerId, ctx, true);
         }
 
         collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_CREATURE_DIES,
@@ -7038,10 +7039,14 @@ public class TriggerCollectionService {
     }
 
     private void dispatchAnyCreatureDeathTriggersForWatcher(GameData gameData, UUID playerId, Permanent perm,
-            Permanent dyingPermanent, UUID dyingCreatureControllerId, TriggerContext.CreatureDeath ctx) {
+            Permanent dyingPermanent, UUID dyingCreatureControllerId, TriggerContext.CreatureDeath ctx,
+            boolean lastKnownWatcher) {
         List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES));
+        effects.addAll(lastKnownWatcher
+                ? gameData.simultaneousDyingGrantedCreatureDeathEffects.getOrDefault(
+                        perm.getId(), List.of())
+                : grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES));
         if (effects.isEmpty()) return;
 
         Card dyingCard = dyingPermanent.getCard();

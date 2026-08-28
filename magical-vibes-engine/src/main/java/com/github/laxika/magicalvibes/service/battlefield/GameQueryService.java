@@ -5635,7 +5635,12 @@ public class GameQueryService {
      * death batch are included because one of them may be the source of the suppression.
      */
     public boolean areCreatureDeathTriggersSuppressed(GameData gameData, Permanent dyingPermanent) {
-        if (gameData == null || dyingPermanent == null || !isCreature(gameData, dyingPermanent)) {
+        if (gameData == null || dyingPermanent == null) {
+            return false;
+        }
+        boolean creatureInDeathBatch =
+                gameData.simultaneousDyingCreatures.containsKey(dyingPermanent.getId());
+        if (!creatureInDeathBatch && !isCreature(gameData, dyingPermanent)) {
             return false;
         }
         if (anyBattlefieldHasStaticEffect(gameData, CreatureDyingDontCauseTriggersEffect.class)) {

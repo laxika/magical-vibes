@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -274,6 +275,9 @@ public class DestructionSupport {
             gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
             gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                    perm.getId(), List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                            gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES)));
         }
     }
 
@@ -281,6 +285,7 @@ public class DestructionSupport {
         gameData.simultaneousDyingCreatures.clear();
         gameData.simultaneousDyingControllers.clear();
         gameData.simultaneousDyingPowers.clear();
+        gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {

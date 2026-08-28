@@ -286,6 +286,10 @@ public class StateBasedActionService {
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                                entry.permanent().getId(),
+                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
                     }
                 }
             }
@@ -319,6 +323,7 @@ public class StateBasedActionService {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
             gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {

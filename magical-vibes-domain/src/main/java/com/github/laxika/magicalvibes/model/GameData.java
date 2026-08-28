@@ -1779,6 +1779,9 @@ public class GameData {
     public final Map<UUID, UUID> simultaneousDyingControllers = new ConcurrentHashMap<>();
     /** Last-known effective powers of creatures in the current simultaneous death event. */
     public final Map<UUID, Integer> simultaneousDyingPowers = new ConcurrentHashMap<>();
+    /** Last-known continuously granted ON_ANY_CREATURE_DIES effects for the current death event. */
+    public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedCreatureDeathEffects =
+            new ConcurrentHashMap<>();
 
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
      *  Maps source permanent UUID → set of subtypes the creature had at the time of dealing damage.
@@ -4191,6 +4194,9 @@ public class GameData {
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
         copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
         copy.simultaneousDyingPowers.putAll(this.simultaneousDyingPowers);
+        this.simultaneousDyingGrantedCreatureDeathEffects.forEach((permanentId, effects) ->
+                copy.simultaneousDyingGrantedCreatureDeathEffects.put(
+                        permanentId, List.copyOf(effects)));
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
