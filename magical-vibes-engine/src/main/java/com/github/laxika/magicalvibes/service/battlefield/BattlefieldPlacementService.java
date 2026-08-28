@@ -480,8 +480,9 @@ public class BattlefieldPlacementService {
             return false;
         }
         if (!card.isToken()) {
-            UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
-            gameData.addToExile(ownerId, card);
+            Card physicalCard = permanent.getOriginalCard();
+            UUID ownerId = physicalCard.getOwnerId() != null ? physicalCard.getOwnerId() : controllerId;
+            gameData.addToExile(ownerId, physicalCard);
         }
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of entering the battlefield."));
         log.info("Game {} - {} exiled instead of entering (it wasn't cast)", gameData.id, card.getName());
