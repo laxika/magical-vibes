@@ -92,6 +92,29 @@ class AiDecisionSchedulerTest {
     }
 
     @Test
+    void awaitTerminationWaitsForDecisionRunningAtClose() throws Exception {
+        AiDecisionEngine engine = mock(AiDecisionEngine.class);
+        CountDownLatch decisionStarted = new CountDownLatch(1);
+        CountDownLatch releaseDecision = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            decisionStarted.countDown();
+            assertThat(releaseDecision.await(2, TimeUnit.SECONDS)).isTrue();
+            return null;
+        }).when(engine).handleEvent(AiDecisionKind.GAME_STATE);
+
+        AiDecisionScheduler scheduler = new AiDecisionScheduler("test", engine, 0);
+        scheduler.scheduleDecision(AiDecisionKind.GAME_STATE);
+        assertThat(decisionStarted.await(1, TimeUnit.SECONDS)).isTrue();
+
+        scheduler.close();
+        assertThat(scheduler.awaitTermination(50, TimeUnit.MILLISECONDS)).isFalse();
+
+        releaseDecision.countDown();
+        assertThat(scheduler.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
+        verify(engine).handleEvent(AiDecisionKind.GAME_STATE);
+    }
+
+    @Test
     void combatDecisionFactsWakeTheAiIndependentlyAndInOrder() throws Exception {
         AiDecisionEngine engine = mock(AiDecisionEngine.class);
         CountDownLatch handled = new CountDownLatch(3);

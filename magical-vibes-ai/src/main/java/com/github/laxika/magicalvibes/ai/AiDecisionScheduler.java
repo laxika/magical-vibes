@@ -161,6 +161,11 @@ public class AiDecisionScheduler {
         executor.shutdown();
     }
 
+    /** Waits for any decision already executing when {@link #close()} was called to finish. */
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+        return executor.awaitTermination(timeout, unit);
+    }
+
     public String diagnosticSummary() {
         synchronized (gameStateLock) {
             return "open=" + open.get()
