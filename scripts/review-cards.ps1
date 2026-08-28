@@ -159,21 +159,18 @@ $reviewJob = {
     }
 }
 
-$completed = 0
+$index = 0
 
 foreach ($cardId in $From..$To) {
+    $index++
+    $startedAt = Get-Date -Format "yyyy-MM-dd HH:mm"
     Write-Host ""
     Write-Host "############################################################"
-    Write-Host "# Starting [$($completed + 1)/$total] review-card $SetCode $cardId"
+    Write-Host "# [$startedAt] [$index/$total] review-card $SetCode $cardId"
     Write-Host "############################################################"
 
     $result = & $reviewJob $Runner $Model $Effort $repositoryRoot $SetCode $cardId $systemPrompt
-    $completed++
 
-    Write-Host ""
-    Write-Host "############################################################"
-    Write-Host "# Completed [$completed/$total] review-card $SetCode $($result.CardId)"
-    Write-Host "############################################################"
     foreach ($line in @($result.Output)) {
         Write-Host $line
     }
