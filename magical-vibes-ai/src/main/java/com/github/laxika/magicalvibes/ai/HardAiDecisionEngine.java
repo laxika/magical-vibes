@@ -1188,7 +1188,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return false;
         }
         Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                plan.targetId, plan.multiTargetIds, plan.damageAssignments,
+                plan.card, plan.targetId, plan.multiTargetIds, plan.damageAssignments,
                 plan.sacrificePermanentId, plan.beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax,
                 delveReduction, costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
@@ -2873,7 +2873,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             UUID sacrificePermanentId = selectSacrificeTarget(gameData, burnCard);
             Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                    opponentId, null, null,
+                    burnCard, opponentId, null, null,
                     sacrificePermanentId, beholdSelection, costReductionPlan);
             if (!canPayManaForSpell(gameData, burnCard, null, 0, delveReduction,
                     costReductionPlan.reduction(), reservedPaymentPermanentIds)) {

@@ -704,7 +704,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
             Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                    targetId, multiTargetIds, damageAssignments,
+                    card, targetId, multiTargetIds, damageAssignments,
                     sacrificePermanentId, beholdSelection, costReductionPlan);
             if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
                     costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
@@ -771,7 +771,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     }
                     costReductionPlan = refreshedCostReductionPlan;
                     reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                            targetId, multiTargetIds, damageAssignments,
+                            card, targetId, multiTargetIds, damageAssignments,
                             sacrificePermanentId, beholdSelection, costReductionPlan);
                     if (!canPayManaForSpell(gameData, card, xValue, refreshedTargetingTax,
                             delveReduction, costReductionPlan.reduction(), reservedPaymentPermanentIds)) {

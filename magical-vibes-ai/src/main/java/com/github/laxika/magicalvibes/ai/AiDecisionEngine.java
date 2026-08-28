@@ -3650,19 +3650,23 @@ public abstract class AiDecisionEngine {
 
     /**
      * Returns permanents that must remain unchanged while the AI prepares a spell cast, including
-     * announced targets and permanents selected for additional costs or cost reductions.
+     * announced cast-time targets and permanents selected for additional costs or cost reductions.
+     * Targets belonging only to an enter-the-battlefield ability are not reserved because tapping
+     * one for mana does not change whether the spell itself can be cast.
      */
     protected Set<UUID> reservedSpellPaymentPermanentIds(
-            UUID targetId, List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+            Card card, UUID targetId, List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
             UUID sacrificePermanentId, BeholdSelection beholdSelection,
             CostReductionPlan costReductionPlan) {
         Set<UUID> reservedIds = new HashSet<>(reservedSpellCostPermanentIds(
                 sacrificePermanentId, beholdSelection, costReductionPlan));
-        if (targetId != null) {
-            reservedIds.add(targetId);
-        }
-        if (targetIds != null) {
-            reservedIds.addAll(targetIds);
+        if (EffectResolution.needsSpellCastTarget(card)) {
+            if (targetId != null) {
+                reservedIds.add(targetId);
+            }
+            if (targetIds != null) {
+                reservedIds.addAll(targetIds);
+            }
         }
         if (damageAssignments != null) {
             reservedIds.addAll(damageAssignments.keySet());

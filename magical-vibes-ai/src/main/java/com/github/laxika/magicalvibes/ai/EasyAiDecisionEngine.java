@@ -299,7 +299,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             return false;
         }
         Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                targetId, multiTargetIds, damageAssignments,
+                card, targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
                 costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
@@ -523,7 +523,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             return false;
         }
         Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                targetId, multiTargetIds, damageAssignments,
+                card, targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
                 costReductionPlan.reduction(), reservedPaymentPermanentIds)) {

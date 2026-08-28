@@ -704,7 +704,8 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
             assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
-            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(creature.getId());
             assertThat(testGd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
         }
 

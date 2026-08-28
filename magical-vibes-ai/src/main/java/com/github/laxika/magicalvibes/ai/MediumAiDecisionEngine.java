@@ -302,7 +302,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
         Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                targetId, multiTargetIds, damageAssignments,
+                card, targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
                 costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
@@ -565,7 +565,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", value), gameId);
         Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
-                targetId, multiTargetIds, damageAssignments,
+                card, targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
                 costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
