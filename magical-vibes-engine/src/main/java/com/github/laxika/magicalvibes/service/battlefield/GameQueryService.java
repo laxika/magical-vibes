@@ -1114,11 +1114,13 @@ public class GameQueryService {
     }
 
     /**
-     * Fixed color {@code permanent} produces under Infernal Darkness-style replacement
-     * ({@link LandManaProducesFixedColorEffect}). Null when inactive. Global — not
-     * controller-scoped. Amount is unchanged; only the type is replaced.
+     * Fixed color {@code permanent} produces under a land-mana replacement such as
+     * {@link LandManaProducesFixedColorEffect}. Null when inactive. Amount is unchanged; only the
+     * type is replaced.
      *
-     * <p>A turn-scoped, nonbasic-land replacement recorded in
+     * <p>A player-scoped replacement recorded in {@code GameData.landManaFixedColorThisTurn}
+     * applies to lands that player currently controls and takes precedence. A turn-scoped,
+     * nonbasic-land replacement recorded in
      * {@code GameData.nonbasicLandsFixedManaColorThisTurn} takes precedence over the
      * subtype-scoped replacement. The subtype-scoped replacement recorded in
      * {@code GameData.landSubtypeFixedManaColorThisTurn} (Chaos Moon's even branch) takes
@@ -1127,6 +1129,13 @@ public class GameQueryService {
      * Gemstone).
      */
     public ManaColor fixedLandManaColor(GameData gameData, Permanent permanent) {
+        if (permanent != null && !gameData.landManaFixedColorThisTurn.isEmpty()) {
+            UUID controllerId = findPermanentController(gameData, permanent.getId());
+            ManaColor controllerFixedColor = gameData.landManaFixedColorThisTurn.get(controllerId);
+            if (controllerFixedColor != null) {
+                return controllerFixedColor;
+            }
+        }
         if (permanent != null
                 && gameData.nonbasicLandsFixedManaColorThisTurn != null
                 && !hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC)) {

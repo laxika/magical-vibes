@@ -134,6 +134,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RandomAiDecisionEngineTest {
 
     @Test
+    void castsSpellUsingManaColorReplacedForItsLandsThisTurn() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Card blueSpell = new Card();
+        blueSpell.setName("Blue test spell");
+        blueSpell.setType(CardType.CREATURE);
+        blueSpell.setManaCost("{U}");
+
+        Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
+        harness.setHand(aiPlayer, List.of(blueSpell));
+        gameData.landManaFixedColorThisTurn.put(aiPlayer.getId(), ManaColor.BLUE);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).singleElement()
+                    .satisfies(entry -> assertThat(entry.getCard()).isSameAs(blueSpell));
+            assertThat(swamp.isTapped()).isTrue();
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
     void preservesUntappedSpellTargetWhilePayingMana() {
         GameTestHarness harness = new GameTestHarness();
         harness.skipMulligan();

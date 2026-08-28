@@ -164,6 +164,29 @@ class GameQueryServiceTest {
                 creature, new CardTypePredicate(CardType.LAND), UUID.randomUUID())).isFalse();
     }
 
+    @Test
+    @DisplayName("Player-scoped land mana replacement follows the land's current controller")
+    void playerScopedLandManaReplacementFollowsCurrentController() {
+        Card firstLandCard = new Card();
+        firstLandCard.setType(CardType.LAND);
+        Permanent firstPlayersLand = new Permanent(firstLandCard);
+        gd.playerBattlefields.get(player1Id).add(firstPlayersLand);
+
+        Card secondLandCard = new Card();
+        secondLandCard.setType(CardType.LAND);
+        Permanent secondPlayersLand = new Permanent(secondLandCard);
+        gd.playerBattlefields.get(player2Id).add(secondPlayersLand);
+        gd.landManaFixedColorThisTurn.put(player1Id, ManaColor.BLUE);
+
+        assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isEqualTo(ManaColor.BLUE);
+        assertThat(gqs.fixedLandManaColor(gd, secondPlayersLand)).isNull();
+
+        gd.playerBattlefields.get(player1Id).remove(firstPlayersLand);
+        gd.playerBattlefields.get(player2Id).add(firstPlayersLand);
+
+        assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isNull();
+    }
+
     private static final class CountingLayerSystemService extends LayerSystemService {
         private int beginPassCount;
 
