@@ -517,7 +517,8 @@ public class EtbTriggerService {
                 .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect).toList();
         // Separate effects that first target a player and then choose cards from that player's graveyard.
         List<CardEffect> targetPlayerGraveyardChoiceEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof GraveyardCardChoosingEffect
+                .filter(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
+                        && choosingEffect.choosesGraveyardCards()
                         && e.targetSpec().admits(TargetPredicate.Kind.PLAYER)).toList();
         // Separate controller-graveyard shuffle-into-library effects (multi-target at trigger time)
         List<CardEffect> graveyardShuffleIntoLibraryEffects = mandatoryEffects.stream()

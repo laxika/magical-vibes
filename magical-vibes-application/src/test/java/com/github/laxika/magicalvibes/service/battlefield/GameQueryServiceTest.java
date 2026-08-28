@@ -3322,12 +3322,12 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("applies a mana replacement effect globally")
-        void appliesGlobally() {
+        @DisplayName("ignores a mana replacement effect controlled by an opponent")
+        void ignoresOpponentsReplacementEffect() {
             addPermanent(player2Id, createEnchantmentWithStaticEffect("Mana Reflection",
                     new ManaReflectionEffect()));
 
-            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(2);
+            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(1);
         }
 
         @Test
@@ -3335,7 +3335,7 @@ class GameQueryServiceTest {
         void combinesMultiplicatively() {
             addPermanent(player1Id, createEnchantmentWithStaticEffect("Nyxbloom Ancient",
                     new ManaReflectionEffect(3)));
-            addPermanent(player2Id, createEnchantmentWithStaticEffect("Mana Reflection",
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Mana Reflection",
                     new ManaReflectionEffect()));
 
             assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(6);

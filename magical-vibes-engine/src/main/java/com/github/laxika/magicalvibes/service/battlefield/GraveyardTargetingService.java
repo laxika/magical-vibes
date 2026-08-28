@@ -490,7 +490,10 @@ public class GraveyardTargetingService {
                 .map(e -> e.targetSpec().graveyardScope().orElse(null))
                 .filter(java.util.Objects::nonNull)
                 .findFirst()
-                .orElseGet(() -> effects.stream().anyMatch(GraveyardCardChoosingEffect.class::isInstance)
+                .orElseGet(() -> effects.stream()
+                        .filter(GraveyardCardChoosingEffect.class::isInstance)
+                        .map(GraveyardCardChoosingEffect.class::cast)
+                        .anyMatch(GraveyardCardChoosingEffect::choosesGraveyardCards)
                         ? GraveyardSearchScope.ALL_GRAVEYARDS : null);
         if (scope == null) {
             return;

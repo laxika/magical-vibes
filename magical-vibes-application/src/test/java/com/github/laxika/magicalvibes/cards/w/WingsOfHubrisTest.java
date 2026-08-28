@@ -32,7 +32,7 @@ class WingsOfHubrisTest extends BaseCardTest {
         Permanent wings = addWingsReady(player1);
         wings.setAttachedTo(creature.getId());
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(creature.isCantBeBlocked()).isTrue();
@@ -47,7 +47,7 @@ class WingsOfHubrisTest extends BaseCardTest {
         Permanent wings = addWingsReady(player1);
         wings.setAttachedTo(creature.getId());
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

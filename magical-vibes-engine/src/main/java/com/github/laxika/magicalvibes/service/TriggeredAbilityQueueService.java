@@ -1516,7 +1516,8 @@ public class TriggeredAbilityQueueService {
             boolean anyNumber = false;
             int maxTotalManaValue = 0;
             for (CardEffect effect : pending.effects()) {
-                if (effect instanceof GraveyardCardChoosingEffect choosingEffect) {
+                if (effect instanceof GraveyardCardChoosingEffect choosingEffect
+                        && choosingEffect.choosesGraveyardCards()) {
                     filter = choosingEffect.graveyardChoiceFilter();
                     maxTargets = choosingEffect.graveyardChoiceMaxTargets();
                     minTargets = 0;

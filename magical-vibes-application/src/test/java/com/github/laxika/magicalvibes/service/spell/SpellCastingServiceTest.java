@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -46,6 +47,7 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -90,6 +92,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -543,8 +546,10 @@ class SpellCastingServiceTest {
         void appliesSpellCastingRestrictionsToGraveyardSpells() {
             Card instant = createInstant("Test Instant", "{R}");
             gd.playerGraveyards.get(player1Id).add(instant);
-            when(castingPermissionService.findFilteredGraveyardPermissionSource(gd, player1Id, instant))
-                    .thenReturn(Optional.of(UUID.randomUUID()));
+            var permission = mock(CastSpellsFromGraveyardPermission.class);
+            when(castingPermissionService.findFilteredGraveyardPermission(gd, player1Id, instant))
+                    .thenReturn(Optional.of(new CastingPermissionService.FilteredGraveyardPermission(
+                            UUID.randomUUID(), permission)));
             when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, instant)).thenReturn(false);
 
             assertThatThrownBy(() -> svc.playFlashbackSpell(gd, player1, 0, null, null))

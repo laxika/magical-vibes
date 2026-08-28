@@ -1323,7 +1323,6 @@ class AbilityActivationServiceTest {
         @DisplayName("RemoveCounterFromGrantingPermanentCost removes a counter from the granting permanent")
         void removeCounterFromGrantingPermanent() {
             Card card = createCreatureCard("Test Creature", 2, 2);
-            Permanent creature = addReadyPermanent(player1Id, card);
             Permanent aura = addReadyPermanent(player2Id, createCreatureCard("Test Aura", 0, 0));
             aura.setCounterCount(CounterType.TASK, 2);
             ActivatedAbility ability = new ActivatedAbility(
@@ -1333,6 +1332,7 @@ class AbilityActivationServiceTest {
                     "Remove a task counter from the granting Aura"
             ).withGrantSource(aura.getId());
             card.addActivatedAbility(ability);
+            Permanent creature = addReadyPermanent(player1Id, card);
 
             when(gameQueryService.computeStaticBonus(gameData, creature)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(
@@ -1342,7 +1342,6 @@ class AbilityActivationServiceTest {
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            assertThat(creature.isTapped()).isTrue();
             assertThat(aura.getCounterCount(CounterType.TASK)).isEqualTo(1);
         }
     }

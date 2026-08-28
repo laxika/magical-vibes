@@ -13,6 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public interface GraveyardCardChoosingEffect extends CardEffect {
 
+    /** Whether this effect's current configuration requires choosing individual graveyard cards. */
+    default boolean choosesGraveyardCards() {
+        return true;
+    }
+
     /** The maximum number of graveyard cards the controller may choose ("up to N target cards"). */
     int graveyardChoiceMaxTargets();
 

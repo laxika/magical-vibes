@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
+import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
@@ -59,6 +60,7 @@ class PendingInteractionContractTest {
     /** Records that only wait in the queue and are serviced by beginning a promptable kind. */
     private static final Set<Class<?>> QUEUE_ONLY_CARRIERS = Set.of(
             PermanentChoiceContext.class,
+            PendingAllureOfTheUnknownChoice.class,
             PendingSphinxAmbassadorChoice.class,
             PendingCapriciousEfreetState.class,
             PendingKarnScionRevealChoice.class,

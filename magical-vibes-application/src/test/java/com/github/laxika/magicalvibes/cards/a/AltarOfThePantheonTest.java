@@ -22,14 +22,14 @@ class AltarOfThePantheonTest extends BaseCardTest {
     void increasesGreenDevotionUsedByAnEtbAbility() {
         harness.addToBattlefield(player1, new AltarOfThePantheon());
         harness.setHand(player1, List.of(new NyleasDisciple()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         int lifeBefore = gd.getLife(player1.getId());
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
     }
 
     @Test

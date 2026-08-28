@@ -23,13 +23,13 @@ class NyxbloomAncientTest extends BaseCardTest {
     }
 
     @Test
-    void triplesManaFromAnOpponentsPermanent() {
+    void doesNotTripleManaFromAnOpponentsPermanent() {
         harness.addToBattlefield(player1, new NyxbloomAncient());
         harness.addToBattlefield(player2, new Forest());
 
         harness.tapPermanent(player2, 0);
 
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test

@@ -72,6 +72,7 @@ public final class AiInteractionStrategies {
         register(new ExilePermanentsOrHandCardsChoiceAiStrategy());
         register(new BeholdChoiceAiStrategy());
         register(new AttachAurasChoiceAiStrategy());
+        register(new ReturnAurasFromGraveyardChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
         register(new ExiledCardChoiceAiStrategy());

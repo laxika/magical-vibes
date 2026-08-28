@@ -99,6 +99,15 @@ public record ExileGraveyardCardsEffect(
     }
 
     @Override
+    public boolean choosesGraveyardCards() {
+        return switch (scope) {
+            case TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_OPPONENT_GRAVEYARD,
+                    TARGET_CARDS_CONTROLLER_GRAVEYARD -> true;
+            default -> false;
+        };
+    }
+
+    @Override
     public int graveyardChoiceMaxTargets() {
         return count;
     }

@@ -1288,6 +1288,7 @@ public class CombatBlockService {
             GraveyardCardChoosingEffect graveyardChoice = effects.stream()
                     .filter(GraveyardCardChoosingEffect.class::isInstance)
                     .map(GraveyardCardChoosingEffect.class::cast)
+                    .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
                     .findFirst()
                     .orElse(null);
             if (graveyardChoice != null) {

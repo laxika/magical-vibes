@@ -173,7 +173,8 @@ public class ETBTokenTargetService {
     public boolean handleETBTokenTargetChosen(GameData gameData, UUID targetId,
             PermanentChoiceContext.ETBTokenTargetTrigger pending) {
         GraveyardCardChoosingEffect choosingEffect = pending.effects().stream()
-                .filter(e -> e instanceof GraveyardCardChoosingEffect
+                .filter(e -> e instanceof GraveyardCardChoosingEffect candidate
+                        && candidate.choosesGraveyardCards()
                         && e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
                 .map(GraveyardCardChoosingEffect.class::cast)
                 .findFirst()

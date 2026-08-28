@@ -2592,6 +2592,7 @@ public abstract class AiDecisionEngine {
         GraveyardCardChoosingEffect exactXGraveyardChoice = spellEffects.stream()
                 .filter(GraveyardCardChoosingEffect.class::isInstance)
                 .map(GraveyardCardChoosingEffect.class::cast)
+                .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
                 .filter(effect -> effect.graveyardChoiceMaxTargets() == 0)
                 .filter(GraveyardCardChoosingEffect::graveyardChoiceExactTargets)
                 .findFirst().orElse(null);

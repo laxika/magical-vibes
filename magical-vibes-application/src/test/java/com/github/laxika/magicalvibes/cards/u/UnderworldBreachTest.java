@@ -28,8 +28,8 @@ class UnderworldBreachTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
-        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
-        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4);
+        harness.assertNotInGraveyard(player1, "Shock");
     }
 
     @Test
