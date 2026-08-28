@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
@@ -150,6 +151,17 @@ class GameQueryServiceTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    @Test
+    void matchesCardPredicatesThroughSharedEvaluator() {
+        Card creature = new Card();
+        creature.setType(CardType.CREATURE);
+
+        assertThat(gqs.matchesCardPredicate(
+                creature, new CardTypePredicate(CardType.CREATURE), UUID.randomUUID())).isTrue();
+        assertThat(gqs.matchesCardPredicate(
+                creature, new CardTypePredicate(CardType.LAND), UUID.randomUUID())).isFalse();
     }
 
     private static final class CountingLayerSystemService extends LayerSystemService {

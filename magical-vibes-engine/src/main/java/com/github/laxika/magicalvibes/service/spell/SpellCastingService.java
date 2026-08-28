@@ -3778,6 +3778,21 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, targetGraveyardOwner,
                         null, Map.of(), null, List.of(), List.of()
                 ));
+            } else if (oneOfEachFilterGraveyardEffect != null) {
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> oneOfEachFilterGraveyardEffect.filters().stream().anyMatch(filter ->
+                                predicateEvaluationService.matchesCardPredicate(c, filter, card.getId())))
+                        .count();
+                if (matchingCount > 0) {
+                    graveyardTargetingService.handleUpToOneOfEachFilterGraveyardSpellTargeting(
+                            gameData, playerId, card, entryType, oneOfEachFilterGraveyardEffect, filteredSpellEffects);
+                    return;
+                }
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
             } else if (independentGraveyardTargets != null) {
                 gameData.graveyardTargetOperation.card = card;
                 gameData.graveyardTargetOperation.controllerId = playerId;
@@ -3807,21 +3822,6 @@ public class SpellCastingService {
                 gameData.graveyardTargetOperation.independentTargetCardIds.clear();
                 gameData.graveyardTargetOperation.independentTargetGroupSizes.clear();
                 gameData.stack.add(spellEntry);
-            } else if (oneOfEachFilterGraveyardEffect != null) {
-                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                        .filter(c -> oneOfEachFilterGraveyardEffect.filters().stream().anyMatch(filter ->
-                                predicateEvaluationService.matchesCardPredicate(c, filter, card.getId())))
-                        .count();
-                if (matchingCount > 0) {
-                    graveyardTargetingService.handleUpToOneOfEachFilterGraveyardSpellTargeting(
-                            gameData, playerId, card, entryType, oneOfEachFilterGraveyardEffect, filteredSpellEffects);
-                    return;
-                }
-                gameData.stack.add(new StackEntry(
-                        entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, 0, null,
-                        null, Map.of(), null, List.of(), List.of()
-                ));
             } else if (graveyardToHandEffect != null && graveyardToHandEffect.xScaled()) {
                 // "Return X target creature cards from your graveyard to your hand" (Shattered
                 // Crypt): exactly X targets, chosen before the spell goes on the stack. X rides on

@@ -631,6 +631,11 @@ public class GameQueryService {
         return findInGraveyards(gameData, cardId, (playerId, c) -> c);
     }
 
+    /** Evaluates a card predicate with the engine's canonical predicate semantics. */
+    public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId) {
+        return predicateEvaluationService.matchesCardPredicate(card, predicate, sourceCardId);
+    }
+
     /**
      * Finds the owner (player ID) of a card in a graveyard by the card's unique ID.
      *

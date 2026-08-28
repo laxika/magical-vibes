@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,7 +21,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Answers multi-graveyard card selections: the AI takes the first legal cards up to the maximum.
+ * Answers multi-graveyard card selections: the AI takes legal cards up to the maximum. Choices
+ * with overlapping target filters use a maximum one-to-one card/filter assignment.
  * When the choice must come from a single graveyard ("... from a single graveyard", Scarab Feast)
  * the AI confines its picks to one graveyard — the one holding the most selectable cards.
  */
@@ -54,6 +59,10 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         if (maxCount <= 0) {
             return List.of();
         }
+        IndependentlyTargetedGraveyardCardsEffect independentTargets = independentTargets(ctx.gameData());
+        if (independentTargets != null && independentTargets.requiresDistinctTargets()) {
+            return chooseCardsForDistinctFilters(validIds, maxCount, independentTargets, ctx);
+        }
         Set<CardType> maxOnePerCardType = maxOnePerCardType(ctx.gameData());
         if (maxOnePerCardType.isEmpty()) {
             return validIds.stream().limit(maxCount).toList();
@@ -79,6 +88,61 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         return chosen;
     }
 
+    private List<UUID> chooseCardsForDistinctFilters(
+            List<UUID> validIds,
+            int maxCount,
+            IndependentlyTargetedGraveyardCardsEffect effect,
+            AiInteractionContext ctx) {
+        Map<UUID, Card> cardsById = new LinkedHashMap<>();
+        for (UUID cardId : validIds) {
+            Card card = ctx.gameQueryService().findCardInGraveyardById(ctx.gameData(), cardId);
+            if (card != null) {
+                cardsById.put(cardId, card);
+            }
+        }
+
+        List<CardPredicate> filters = effect.targetFilters();
+        UUID[] cardIdsByFilter = new UUID[filters.size()];
+        UUID sourceCardId = ctx.gameData().graveyardTargetOperation.card == null
+                ? null
+                : ctx.gameData().graveyardTargetOperation.card.getId();
+        for (UUID cardId : cardsById.keySet()) {
+            assignCardToFilter(cardId, cardsById, filters, cardIdsByFilter,
+                    new boolean[filters.size()], sourceCardId, ctx);
+        }
+        return Arrays.stream(cardIdsByFilter)
+                .filter(java.util.Objects::nonNull)
+                .limit(maxCount)
+                .toList();
+    }
+
+    private boolean assignCardToFilter(
+            UUID cardId,
+            Map<UUID, Card> cardsById,
+            List<CardPredicate> filters,
+            UUID[] cardIdsByFilter,
+            boolean[] visitedFilters,
+            UUID sourceCardId,
+            AiInteractionContext ctx) {
+        Card card = cardsById.get(cardId);
+        for (int filterIndex = 0; filterIndex < filters.size(); filterIndex++) {
+            if (visitedFilters[filterIndex]
+                    || !ctx.gameQueryService().matchesCardPredicate(
+                    card, filters.get(filterIndex), sourceCardId)) {
+                continue;
+            }
+            visitedFilters[filterIndex] = true;
+            UUID assignedCardId = cardIdsByFilter[filterIndex];
+            if (assignedCardId == null
+                    || assignCardToFilter(assignedCardId, cardsById, filters, cardIdsByFilter,
+                    visitedFilters, sourceCardId, ctx)) {
+                cardIdsByFilter[filterIndex] = cardId;
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean hasReachedTypeLimit(Card card, Set<CardType> maxOnePerCardType,
                                         Map<CardType, Integer> selectedCounts) {
         return maxOnePerCardType.stream()
@@ -98,6 +162,21 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                 .findFirst()
                 .map(types -> Set.copyOf(types))
                 .orElseGet(Set::of);
+    }
+
+    private IndependentlyTargetedGraveyardCardsEffect independentTargets(GameData gameData) {
+        CardEffect activeEffect = gameData.graveyardTargetOperation.activeSpellGraveyardChoiceEffect;
+        List<CardEffect> effects = activeEffect == null
+                ? gameData.graveyardTargetOperation.effects
+                : List.of(activeEffect);
+        if (effects == null) {
+            return null;
+        }
+        return effects.stream()
+                .filter(IndependentlyTargetedGraveyardCardsEffect.class::isInstance)
+                .map(IndependentlyTargetedGraveyardCardsEffect.class::cast)
+                .findFirst()
+                .orElse(null);
     }
 
     /** Keep only the cards belonging to whichever graveyard holds the most selectable cards. */

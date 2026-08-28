@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.cards.q.QuandrixCommand;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
+import com.github.laxika.magicalvibes.cards.r.RiseFromTheWreck;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
@@ -2313,6 +2314,44 @@ class RandomAiDecisionEngineTest {
 
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void assignsRiseFromTheWreckCardsToDistinctTargetGroups() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Card firstCreature = new GrizzlyBears();
+        Card secondCreature = new HillGiant();
+        Card thirdCreature = new TolarianScholar();
+        RiseFromTheWreck spell = new RiseFromTheWreck();
+
+        harness.setGraveyard(aiPlayer, List.of(firstCreature, secondCreature, thirdCreature));
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+            engine.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+            assertThat(gameData.stack).hasSize(1);
+            StackEntry entry = gameData.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(spell);
+            assertThat(entry.getTargetCardIds())
+                    .hasSize(2)
+                    .isSubsetOf(firstCreature.getId(), secondCreature.getId(), thirdCreature.getId());
+        } finally {
+            watcher.uninstall();
+        }
     }
 
     /**
