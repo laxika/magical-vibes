@@ -816,7 +816,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand (e.g. Explore revealing a land), masking a
             // successful cast.
-            if (hand.contains(card)) {
+            if (!spellCastStarted(gameData, hand, card)) {
                 ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
                 log.warn("Random AI: PlayCard failed silently in game {}. Card='{}' index={} step={} activePlayer={} isActive={} stackEmpty={} actualPool={} virtualPool={} priorityPassed={}",
                         gameId, card.getName(), cardIndex, gameData.currentStep,

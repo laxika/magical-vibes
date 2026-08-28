@@ -1209,7 +1209,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         fMultiSacrificeIds, plan.beholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
-        if (hand.contains(plan.card)) {
+        if (!spellCastStarted(gameData, hand, plan.card)) {
             ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
             log.warn("{}: PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
                     logLabel, gameId, plan.card.getName(), idx,

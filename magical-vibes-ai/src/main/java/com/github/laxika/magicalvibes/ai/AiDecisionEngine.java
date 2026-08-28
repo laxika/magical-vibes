@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -2448,6 +2449,19 @@ public abstract class AiDecisionEngine {
                 null, selection.permanentId(), selection.handCardIndex(), null, null, null,
                 chosenAdditionalCostCreatureType == null ? null : chosenAdditionalCostCreatureType.name(), null,
                 chosenCreatureType == null ? null : chosenCreatureType.name());
+    }
+
+    /**
+     * Returns whether a hand cast either moved the card out of hand or opened the cast-time
+     * opponent-choice prompt that must finish before the spell can move to the stack.
+     */
+    protected boolean spellCastStarted(GameData gameData, List<Card> hand, Card card) {
+        if (!hand.contains(card)) {
+            return true;
+        }
+        return gameData.interaction.permanentChoiceContext()
+                instanceof PermanentChoiceContext.OpponentChosenSpellTarget pending
+                && pending.cardToCast().getId().equals(card.getId());
     }
 
     private CardSubtype chooseAdditionalCostCreatureType(Card card) {

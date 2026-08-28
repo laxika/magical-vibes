@@ -1192,9 +1192,8 @@ public class SpellCastingService {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
-        if (attempted != null && targetId != null && gameData.playerIds.contains(targetId)
-                && isOpponentChosenTargetSpell(attempted)) {
-            beginOpponentChosenTargetChoice(gameData, player, cardIndex, xValue, attempted, buyback);
+        if (beginOpponentChosenTargetChoiceIfNeeded(
+                gameData, player, cardIndex, xValue, targetId, attempted, buyback)) {
             return;
         }
         try {
@@ -1228,6 +1227,17 @@ public class SpellCastingService {
                 .filter(GainControlOfTargetEffect.class::isInstance)
                 .map(GainControlOfTargetEffect.class::cast)
                 .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget);
+    }
+
+    private boolean beginOpponentChosenTargetChoiceIfNeeded(
+            GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+            Card attempted, boolean buyback) {
+        if (attempted == null || targetId == null || !gameData.playerIds.contains(targetId)
+                || !isOpponentChosenTargetSpell(attempted)) {
+            return false;
+        }
+        beginOpponentChosenTargetChoice(gameData, player, cardIndex, xValue, attempted, buyback);
+        return true;
     }
 
     private void beginOpponentChosenTargetChoice(GameData gameData, Player player, int cardIndex,
@@ -1278,6 +1288,10 @@ public class SpellCastingService {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
+        if (beginOpponentChosenTargetChoiceIfNeeded(
+                gameData, player, cardIndex, xValue, targetId, attempted, buyback)) {
+            return;
+        }
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
                     convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,

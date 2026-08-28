@@ -130,6 +130,17 @@ class AiTargetSelector {
         // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
         // Use base-mode targeting since AI never kicks spells
         Set<TargetType> allowedTargets = computeBaseAllowedTargets(card);
+        ValidTargetsResponse legalTargets = validTargetService.computeValidTargetsForSpell(
+                gameData, card, aiPlayerId, List.of());
+        if (!allowedTargets.contains(TargetType.PLAYER)
+                && legalTargets.validPermanentIds().isEmpty()
+                && legalTargets.validGraveyardCardIds().isEmpty()
+                && legalTargets.validExiledCardIds().isEmpty()
+                && !legalTargets.validPlayerIds().isEmpty()) {
+            return legalTargets.validPlayerIds().contains(opponentId)
+                    ? opponentId
+                    : legalTargets.validPlayerIds().getFirst();
+        }
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
             if (opponentId != null
                     && !gameQueryService.playerHasShroud(gameData, opponentId)

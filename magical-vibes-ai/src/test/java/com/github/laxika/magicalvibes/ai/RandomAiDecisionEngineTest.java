@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
@@ -109,6 +110,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void startsEvangelizeByChoosingTheOpponent() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(opponent, new GrizzlyBears());
+        Evangelize evangelize = new Evangelize();
+        harness.setHand(aiPlayer, List.of(evangelize));
+        harness.addMana(aiPlayer, ManaColor.WHITE, 5);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            PendingInteraction.PermanentChoice choice =
+                    gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice.playerId()).isEqualTo(aiPlayer.getId());
+            assertThat(choice.validIds()).containsExactly(opponent.getId());
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(evangelize);
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void castsQuandrixCommandWithOneCreatureForTwoTargetedModes() {

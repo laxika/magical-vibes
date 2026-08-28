@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -242,6 +243,25 @@ class MediumAiDecisionEngineTest {
         card.setToughness(2);
         card.addEffect(EffectSlot.SPELL, new ChooseCreatureTypeCost());
         return card;
+    }
+
+    @Test
+    @DisplayName("Medium AI starts Evangelize by choosing the opponent")
+    void startsEvangelizeWithOpponentChoice() {
+        giveAiPriority();
+        giveAiPlains(5);
+        harness.addToBattlefield(human, new GrizzlyBears());
+        Evangelize evangelize = new Evangelize();
+        harness.setHand(aiPlayer, List.of(evangelize));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(aiPlayer.getId());
+        assertThat(choice.validIds()).containsExactly(human.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(evangelize);
     }
 
     @Test

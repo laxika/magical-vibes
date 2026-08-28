@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
@@ -175,6 +176,31 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @Tag("scryfall")
 class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
+
+    @Test
+    @DisplayName("Hard AI starts Evangelize by choosing the opponent")
+    void startsEvangelizeWithOpponentChoice() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Evangelize evangelize = new Evangelize();
+        harness.setHand(player1, List.of(evangelize));
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactly(player2.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(evangelize);
+    }
 
     @Test
     @DisplayName("Hard AI limits Phyrexian Purge targets to its available life")

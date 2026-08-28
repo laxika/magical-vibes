@@ -320,7 +320,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
-        if (hand.contains(card)) {
+        if (!spellCastStarted(gameData, hand, card)) {
             ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
             log.warn("AI (Easy): PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
                     gameId, card.getName(), cardIndex,
@@ -519,7 +519,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                         finalBeholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
-        if (hand.contains(card)) {
+        if (!spellCastStarted(gameData, hand, card)) {
             log.warn("AI: Instant cast failed silently in game {}", gameId);
             return false;
         }
