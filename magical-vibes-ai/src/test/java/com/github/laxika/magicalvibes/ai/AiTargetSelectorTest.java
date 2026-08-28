@@ -121,6 +121,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
@@ -1011,7 +1013,8 @@ class AiTargetSelectorTest {
         void setUp() {
             mockGqs = mock(GameQueryService.class);
             mockTvs = mock(TargetValidationService.class);
-            unitSelector = new AiTargetSelector(mockGqs, mockTvs, null);
+            TargetLegalityService mockTls = mock(TargetLegalityService.class);
+            unitSelector = new AiTargetSelector(mockGqs, mockTvs, mockTls);
 
             aiId = UUID.randomUUID();
             opponentId = UUID.randomUUID();
@@ -1024,6 +1027,8 @@ class AiTargetSelectorTest {
             unitGd.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>()));
 
             lenient().when(mockTvs.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+            lenient().when(mockTls.getEffectiveMaxTargets(any(), any(), any(), anyInt(), anyBoolean()))
+                    .thenAnswer(invocation -> ((Card) invocation.getArgument(1)).getMaxTargets());
         }
 
         private Card makePlayerOnlySpell() {

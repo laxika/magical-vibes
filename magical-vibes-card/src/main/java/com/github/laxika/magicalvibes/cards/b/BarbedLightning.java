@@ -7,9 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -29,8 +32,9 @@ public class BarbedLightning extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Barbed Lightning deals 3 damage to target player or planeswalker",
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(3),
-                        new PermanentPredicateTargetFilter(
+                        new AnyTargetPredicateTargetFilter(
                                 new PermanentIsPlaneswalkerPredicate(),
+                                new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player or planeswalker."))
         )));
     }
