@@ -244,6 +244,14 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+            multiTargetIds = targetSelector.chooseMultiTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (multiTargetIds == null) {
+                return false;
+            }
+        }
+
         if (exileXCost != null && castCost.hasX() && modalPlan == null) {
             exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
             if (exileGraveyardCardIndices == null) {
@@ -481,6 +489,14 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) return false;
                 xValue = smartX;
+            }
+        }
+
+        if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+            multiTargetIds = targetSelector.chooseMultiTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (multiTargetIds == null) {
+                return false;
             }
         }
 

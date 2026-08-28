@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PullFromTheDeep;
@@ -66,6 +68,7 @@ import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
 import com.github.laxika.magicalvibes.cards.s.StandardBearer;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -172,6 +175,39 @@ class RandomAiDecisionEngineTest {
             assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(command.getId());
             assertThat(gameData.stack.getFirst().getTargetIds())
                     .containsExactly(target.getId(), target.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsFinaleOfPromiseWithTargetsLegalForItsRandomX() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        Opportunity tooExpensive = new Opportunity();
+        Shock affordable = new Shock();
+        harness.setGraveyard(aiPlayer, List.of(tooExpensive, affordable));
+        FinaleOfPromise finale = new FinaleOfPromise();
+        harness.setHand(aiPlayer, List.of(finale));
+        harness.addMana(aiPlayer, ManaColor.RED, 4);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(finale);
+            assertThat(gameData.stack.getFirst().getXValue()).isBetween(1, 2);
+            assertThat(gameData.stack.getFirst().getTargetId()).isNull();
+            assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(affordable.getId());
         } finally {
             watcher.uninstall();
         }

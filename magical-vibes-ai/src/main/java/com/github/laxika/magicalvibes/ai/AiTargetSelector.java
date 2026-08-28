@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -417,8 +418,20 @@ class AiTargetSelector {
      * ordinary spell-target groups.
      */
     boolean hasSeparateGraveyardTarget(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        boolean hasGroupedGraveyardTarget = card.getSpellTargets().stream()
+                .anyMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
+        return !hasGroupedGraveyardTarget && card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+    }
+
+    /**
+     * Returns whether every declared spell-target group selects graveyard cards. These targets
+     * must be recomputed after an X value is chosen because their filters may depend on X.
+     */
+    boolean hasOnlyGroupedGraveyardTargets(Card card) {
+        return !card.getSpellTargets().isEmpty()
+                && card.getSpellTargets().stream()
+                .allMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
     }
 
     /**
@@ -460,7 +473,12 @@ class AiTargetSelector {
      * a group's mandatory targets cannot be satisfied.
      */
     List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId) {
-        return chooseMultiTargets(gameData, card, aiPlayerId, Set.of(), 0, Set.of());
+        return chooseMultiTargets(gameData, card, aiPlayerId, null);
+    }
+
+    /** Selects multi-target groups using the announced X for X-dependent target filters. */
+    List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId, Integer xValue) {
+        return chooseMultiTargets(gameData, card, aiPlayerId, Set.of(), 0, Set.of(), xValue);
     }
 
     /**
@@ -481,13 +499,14 @@ class AiTargetSelector {
         }
         Set<UUID> reservedTargets = card.isAllowSharedTargets() ? Set.of() : assignedTargets;
         return chooseMultiTargets(gameData, card, aiPlayerId, reservedTargets,
-                assignedTargets.size(), assignedTargetGroups);
+                assignedTargets.size(), assignedTargetGroups, null);
     }
 
     private List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId,
                                            Set<UUID> reservedTargets,
                                            int separatelySelectedTargetCount,
-                                           Set<Integer> skippedTargetGroups) {
+                                           Set<Integer> skippedTargetGroups,
+                                           Integer xValue) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         List<SpellTarget> spellTargets = card.getSpellTargets();
         List<UUID> result = new ArrayList<>();
@@ -512,7 +531,18 @@ class AiTargetSelector {
             boolean wantsPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     || targetFilterAllowsPermanent(st.getFilter());
 
-            if (wantsPlayer && !wantsPermanent) {
+            if (st.getFilter() instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                List<UUID> chosen = xValue == null
+                        ? List.of()
+                        : pickGraveyardTargetsForGroup(
+                                gameData, card, aiPlayerId, graveyardFilter, effectiveMaxTargets,
+                                alreadyChosen, xValue);
+                if (chosen.size() < st.getMinTargets()) {
+                    return null;
+                }
+                result.addAll(chosen);
+                alreadyChosen.addAll(chosen);
+            } else if (wantsPlayer && !wantsPermanent) {
                 if (effectiveMaxTargets == 0) {
                     if (st.getMinTargets() > 0) {
                         return null;
@@ -561,6 +591,37 @@ class AiTargetSelector {
         }
 
         return result;
+    }
+
+    private List<UUID> pickGraveyardTargetsForGroup(
+            GameData gameData,
+            Card card,
+            UUID aiPlayerId,
+            GraveyardCardPredicateTargetFilter filter,
+            int maxTargets,
+            Set<UUID> alreadyChosen,
+            Integer xValue) {
+        if (maxTargets <= 0 || !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return List.of();
+        }
+
+        List<Card> candidates = getGraveyardCandidates(
+                gameData, filter.scope(), aiPlayerId, AiUtils.getOpponentId(gameData, aiPlayerId)).stream()
+                .filter(candidate -> card.isAllowSharedTargets() || !alreadyChosen.contains(candidate.getId()))
+                .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(
+                        gameData, candidate, aiPlayerId))
+                .filter(candidate -> filter.predicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        candidate, filter.predicate(), card.getId(), gameData,
+                        gameQueryService.findGraveyardOwnerById(gameData, candidate.getId()),
+                        null, null, xValue))
+                .sorted(Comparator.comparingInt(Card::getManaValue).reversed())
+                .toList();
+
+        return candidates.stream()
+                .limit(maxTargets)
+                .map(Card::getId)
+                .toList();
     }
 
     private boolean isAmountDistributionEffect(CardEffect effect) {

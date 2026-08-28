@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
+import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.FlameblastDragon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
@@ -61,6 +63,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
@@ -988,6 +991,26 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getCard()).isSameAs(torrentOfSouls);
             assertThat(testGd.stack.getFirst().getTargetId()).isNull();
             assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(human.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI limits Finale of Promise graveyard targets to the announced X")
+        void castsFinaleOfPromiseWithAffordableGraveyardTargets() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            Opportunity tooExpensive = new Opportunity();
+            Shock affordable = new Shock();
+            testHarness.setGraveyard(aiTestPlayer, List.of(tooExpensive, affordable));
+            FinaleOfPromise finale = new FinaleOfPromise();
+            testHarness.setHand(aiTestPlayer, List.of(finale));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(finale);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(affordable.getId());
         }
 
         @Test

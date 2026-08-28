@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
+import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -65,7 +66,9 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
@@ -1950,6 +1953,27 @@ class MediumAiDecisionEngineTest {
         assertThat(selection).isNotNull();
         assertThat(selection.targetId()).isNull();
         assertThat(selection.targetIds()).containsExactly(human.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI limits Finale of Promise graveyard targets to the announced X")
+    void castsFinaleOfPromiseWithAffordableGraveyardTargets() {
+        giveAiPriority();
+        giveAiMountains(4);
+        Opportunity tooExpensive = new Opportunity();
+        Shock affordable = new Shock();
+        harness.setGraveyard(aiPlayer, List.of(tooExpensive, affordable));
+        FinaleOfPromise finale = new FinaleOfPromise();
+        finale.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        harness.setHand(aiPlayer, List.of(finale));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(finale);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(affordable.getId());
     }
 
     @Test

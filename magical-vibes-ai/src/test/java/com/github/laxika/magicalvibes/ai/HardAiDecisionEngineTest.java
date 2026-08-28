@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
+import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
@@ -85,6 +86,7 @@ import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
@@ -673,6 +675,33 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
         assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(tooExpensive.getId());
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hard AI limits Finale of Promise graveyard targets to the announced X")
+    void castsFinaleOfPromiseWithAffordableGraveyardTargets() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        givePlayerMountains(player1, 4);
+        Opportunity tooExpensive = new Opportunity();
+        Shock affordable = new Shock();
+        harness.setGraveyard(player1, List.of(tooExpensive, affordable));
+        FinaleOfPromise finale = new FinaleOfPromise();
+        harness.setHand(player1, List.of(finale));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(finale);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(affordable.getId());
     }
 
     private void givePlayerSwamps(Player player, int count) {

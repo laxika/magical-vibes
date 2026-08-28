@@ -1129,6 +1129,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+            multiTargetIds = targetSelector.chooseMultiTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (multiTargetIds == null) {
+                return null;
+            }
+        }
+
         if (exileXCost != null && castCost.hasX() && modalPlan == null) {
             exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
             if (exileGraveyardCardIndices == null) {
