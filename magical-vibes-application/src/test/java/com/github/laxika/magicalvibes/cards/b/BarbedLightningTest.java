@@ -33,6 +33,14 @@ class BarbedLightningTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Player mode can target the controller")
+    void playerModeCanDamageController() {
+        cast(new int[]{1}, List.of(player1.getId()));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
     @DisplayName("Entwine pays {2} and resolves both modes")
     void entwinedResolvesBothModes() {
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new AirElemental());
