@@ -511,7 +511,8 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
         assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 

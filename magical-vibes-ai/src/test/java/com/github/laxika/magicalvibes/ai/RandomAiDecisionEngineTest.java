@@ -1012,7 +1012,8 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
         assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
-        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
+        assertThat(gameData.stack.getFirst().getTargetId()).isNull();
+        assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(creature.getId());
         assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 
