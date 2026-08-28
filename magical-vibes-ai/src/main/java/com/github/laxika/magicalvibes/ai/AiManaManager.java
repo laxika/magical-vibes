@@ -123,7 +123,12 @@ public class AiManaManager {
 
     boolean canPayCost(GameData gameData, UUID playerId, String manaCostStr, int costModifier,
                        boolean creaturesOnly, Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        return canPayCost(gameData, playerId, new ManaCost(manaCostStr), costModifier,
+                creaturesOnly, excludedPermanentIds);
+    }
+
+    boolean canPayCost(GameData gameData, UUID playerId, ManaCost cost, int costModifier,
+                       boolean creaturesOnly, Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(playerId);
         if (currentPool == null) {
             return false;
@@ -141,7 +146,13 @@ public class AiManaManager {
     boolean canPayCostWithConvoke(GameData gameData, UUID playerId, String manaCostStr,
                                   int additionalGenericCost, Set<UUID> excludedPermanentIds,
                                   Map<UUID, ManaColor> convokeContributions) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        return canPayCostWithConvoke(gameData, playerId, new ManaCost(manaCostStr),
+                additionalGenericCost, excludedPermanentIds, convokeContributions);
+    }
+
+    boolean canPayCostWithConvoke(GameData gameData, UUID playerId, ManaCost cost,
+                                  int additionalGenericCost, Set<UUID> excludedPermanentIds,
+                                  Map<UUID, ManaColor> convokeContributions) {
         ManaPool currentPool = gameData.playerManaPools.get(playerId);
         if (currentPool == null) {
             return false;
@@ -181,7 +192,12 @@ public class AiManaManager {
 
     boolean canPayXCost(GameData gameData, UUID playerId, Card card, String manaCostStr,
                         int xValue, int costModifier, Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        return canPayXCost(gameData, playerId, card, new ManaCost(manaCostStr), xValue,
+                costModifier, excludedPermanentIds);
+    }
+
+    boolean canPayXCost(GameData gameData, UUID playerId, Card card, ManaCost cost,
+                        int xValue, int costModifier, Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(playerId);
         if (currentPool == null) {
             return false;
@@ -253,7 +269,13 @@ public class AiManaManager {
     void tapLandsForCostExcluding(GameData gameData, UUID aiPlayerId, String manaCostStr,
                                   int costModifier, ManaTapAction action, boolean skipChoiceSources,
                                   Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        tapLandsForCostExcluding(gameData, aiPlayerId, new ManaCost(manaCostStr),
+                costModifier, action, skipChoiceSources, excludedPermanentIds);
+    }
+
+    void tapLandsForCostExcluding(GameData gameData, UUID aiPlayerId, ManaCost cost,
+                                  int costModifier, ManaTapAction action, boolean skipChoiceSources,
+                                  Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
         Set<UUID> excludedIds = excludedPermanentIds == null
                 ? Set.of()
@@ -342,7 +364,13 @@ public class AiManaManager {
     void tapCreaturesForCostExcluding(GameData gameData, UUID aiPlayerId, String manaCostStr,
                                       int costModifier, ManaTapAction action,
                                       Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        tapCreaturesForCostExcluding(gameData, aiPlayerId, new ManaCost(manaCostStr),
+                costModifier, action, excludedPermanentIds);
+    }
+
+    void tapCreaturesForCostExcluding(GameData gameData, UUID aiPlayerId, ManaCost cost,
+                                      int costModifier, ManaTapAction action,
+                                      Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
         Set<UUID> excludedIds = excludedPermanentIds == null
                 ? Set.of()
@@ -398,7 +426,13 @@ public class AiManaManager {
     void tapLandsForXSpellExcluding(GameData gameData, UUID aiPlayerId, Card card,
                                     String manaCostString, int xValue, int costModifier,
                                     ManaTapAction action, Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostString);
+        tapLandsForXSpellExcluding(gameData, aiPlayerId, card, new ManaCost(manaCostString),
+                xValue, costModifier, action, excludedPermanentIds);
+    }
+
+    void tapLandsForXSpellExcluding(GameData gameData, UUID aiPlayerId, Card card,
+                                    ManaCost cost, int xValue, int costModifier,
+                                    ManaTapAction action, Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
         Set<UUID> excludedIds = excludedPermanentIds == null
                 ? Set.of()

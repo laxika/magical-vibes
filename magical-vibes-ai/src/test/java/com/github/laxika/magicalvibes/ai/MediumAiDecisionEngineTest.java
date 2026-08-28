@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
+import com.github.laxika.magicalvibes.cards.d.Derelor;
 import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -1356,6 +1357,25 @@ class MediumAiDecisionEngineTest {
                 .filter(Permanent::isTapped)
                 .count();
         assertThat(tappedCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI taps enough mana to pay a colored spell-cost increase")
+    void paysColoredSpellCostIncrease() {
+        giveAiPriority();
+        harness.addToBattlefield(aiPlayer, new Derelor());
+        List<Permanent> manaSources = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            manaSources.add(harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()));
+        }
+        DauthiMercenary mercenary = new DauthiMercenary();
+        harness.setHand(aiPlayer, List.of(mercenary));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(manaSources).allMatch(Permanent::isTapped);
     }
 
     // ===== tryCastSpell silent failure recovery =====

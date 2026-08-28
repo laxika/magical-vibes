@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
+import com.github.laxika.magicalvibes.cards.d.Derelor;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
+import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -946,6 +948,31 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         assertThat(engine).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI taps enough mana to pay a colored spell-cost increase")
+    void paysColoredSpellCostIncrease() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addToBattlefield(player1, new Derelor());
+        List<Permanent> manaSources = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            manaSources.add(harness.addToBattlefieldAndReturn(player1, new Swamp()));
+        }
+        FaithOfTheDevoted faith = new FaithOfTheDevoted();
+        harness.setHand(player1, List.of(faith));
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(faith);
+        assertThat(manaSources).allMatch(Permanent::isTapped);
     }
 
     @Test

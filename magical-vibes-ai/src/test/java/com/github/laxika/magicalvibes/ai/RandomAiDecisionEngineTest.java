@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.c.Cooperation;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
+import com.github.laxika.magicalvibes.cards.d.Derelor;
 import com.github.laxika.magicalvibes.cards.d.DeathsDuet;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
@@ -113,6 +115,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void paysColoredSpellCostIncrease() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(aiPlayer, new Derelor());
+        List<Permanent> manaSources = List.of(
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()),
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()),
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()),
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()));
+        FaithOfTheDevoted faith = new FaithOfTheDevoted();
+        harness.setHand(aiPlayer, List.of(faith));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(faith);
+            assertThat(manaSources).allMatch(Permanent::isTapped);
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void startsEvangelizeByChoosingTheOpponent() {

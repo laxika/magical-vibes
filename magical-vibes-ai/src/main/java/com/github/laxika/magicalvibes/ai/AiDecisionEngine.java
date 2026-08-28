@@ -2098,8 +2098,7 @@ public abstract class AiDecisionEngine {
         if (manaCost == null) {
             return false;
         }
-        ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 1) : 0;
         int costModifier = xValue == null
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
@@ -2199,8 +2198,7 @@ public abstract class AiDecisionEngine {
             }
             int targetReduction = castingCostService.computeTargetBasedCostReduction(
                     gameData, aiPlayer.getId(), card, costReductionTargetIds);
-            ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
-                    gameData, aiPlayer.getId(), card, new ManaCost(selectedModeManaCost));
+            ManaCost validationCost = effectiveManaCost(gameData, card, selectedModeManaCost);
             int costModifier = xValue == null
                     ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                     : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
@@ -2218,8 +2216,7 @@ public abstract class AiDecisionEngine {
             return true;
         }
 
-        ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(card.getManaCost()));
+        ManaCost validationCost = effectiveManaCost(gameData, card, card.getManaCost());
         int costModifier = xValue == null
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
@@ -2970,8 +2967,7 @@ public abstract class AiDecisionEngine {
             return null;
         }
 
-        ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 0) : 0;
         int costModifier = xValue == null
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
@@ -3050,6 +3046,11 @@ public abstract class AiDecisionEngine {
         return baseManaCost + spreeManaCost;
     }
 
+    private ManaCost effectiveManaCost(GameData gameData, Card card, String manaCost) {
+        return castingCostService.applyColoredManaCostReductions(
+                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+    }
+
     private String selectedSpreeManaCost(Card card, Integer modeEncoding) {
         if (modeEncoding == null) {
             return "";
@@ -3092,8 +3093,7 @@ public abstract class AiDecisionEngine {
         if (manaCost == null || manaCost.isEmpty()) {
             return true;
         }
-        ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         return cost.canPay(virtualPool, costModifier)
                 && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier));
@@ -3455,7 +3455,7 @@ public abstract class AiDecisionEngine {
 
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction;
-        ManaCost cost = new ManaCost(manaCost);
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         List<Permanent> creatures = gameData.playerBattlefields
                 .getOrDefault(aiPlayer.getId(), List.of())
                 .stream()
@@ -3530,13 +3530,13 @@ public abstract class AiDecisionEngine {
         if (manaCost == null) {
             return false;
         }
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction - costReduction;
         if (card.isRequiresCreatureMana()) {
-            return manaManager.canPayCost(gameData, aiPlayer.getId(), manaCost, costModifier,
+            return manaManager.canPayCost(gameData, aiPlayer.getId(), cost, costModifier,
                     true, excludedPermanentIds);
         }
-        ManaCost cost = new ManaCost(manaCost);
         if (hasConvokeAbility(gameData, card)) {
             Map<UUID, ManaColor> convokeContributions = new LinkedHashMap<>();
             for (Permanent permanent : gameData.playerBattlefields
@@ -3547,14 +3547,14 @@ public abstract class AiDecisionEngine {
             }
             int additionalGenericCost = costModifier
                     + (cost.hasX() && xValue != null ? xValue : 0);
-            return manaManager.canPayCostWithConvoke(gameData, aiPlayer.getId(), manaCost,
+            return manaManager.canPayCostWithConvoke(gameData, aiPlayer.getId(), cost,
                     additionalGenericCost, excludedPermanentIds, convokeContributions);
         }
         if (cost.hasX() && xValue != null) {
-            return manaManager.canPayXCost(gameData, aiPlayer.getId(), card, manaCost, xValue,
+            return manaManager.canPayXCost(gameData, aiPlayer.getId(), card, cost, xValue,
                     costModifier, excludedPermanentIds);
         }
-        return manaManager.canPayCost(gameData, aiPlayer.getId(), manaCost, costModifier,
+        return manaManager.canPayCost(gameData, aiPlayer.getId(), cost, costModifier,
                 false, excludedPermanentIds);
     }
 
@@ -3566,23 +3566,23 @@ public abstract class AiDecisionEngine {
         }
         String manaCost = manaCostForSpell(card, xValue);
         if (manaCost == null) return false;
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction - costReduction;
         AiManaManager.ManaTapAction tap = manaTapAction();
         int stackSizeBeforePayment = gameData.stack.size();
 
         if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+            manaManager.tapCreaturesForCostExcluding(gameData, aiPlayer.getId(), cost,
                     costModifier, tap, excludedPermanentIds);
             return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
         }
 
-        ManaCost cost = new ManaCost(manaCost);
         if (cost.hasX() && xValue != null) {
-            manaManager.tapLandsForXSpellExcluding(gameData, aiPlayer.getId(), card, manaCost,
+            manaManager.tapLandsForXSpellExcluding(gameData, aiPlayer.getId(), card, cost,
                     xValue, costModifier, tap, excludedPermanentIds);
         } else {
-            manaManager.tapLandsForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+            manaManager.tapLandsForCostExcluding(gameData, aiPlayer.getId(), cost,
                     costModifier, tap, false, excludedPermanentIds);
         }
         return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
@@ -3621,7 +3621,7 @@ public abstract class AiDecisionEngine {
 
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax;
-        ManaCost cost = new ManaCost(manaCost);
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int additionalGenericCost = costModifier
                 + (cost.hasX() && xValue != null ? xValue : 0) - delveReduction;
         List<ManaColor> contributions = new ArrayList<>();
