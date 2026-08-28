@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RatsFeast;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
@@ -2012,6 +2013,22 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
                 .allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast Rats' Feast with positive X when graveyards are empty")
+    void doesNotCastRatsFeastWithoutGraveyardTargets() {
+        giveAiPriority();
+        giveAiSwamps(2);
+        RatsFeast ratsFeast = new RatsFeast();
+        harness.setHand(aiPlayer, List.of(ratsFeast));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(ratsFeast);
     }
 
     @Test

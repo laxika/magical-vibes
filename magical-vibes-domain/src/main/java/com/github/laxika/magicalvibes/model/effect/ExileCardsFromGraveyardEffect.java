@@ -108,4 +108,9 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
     public boolean singleGraveyard() {
         return singleGraveyard;
     }
+
+    @Override
+    public boolean graveyardChoiceExactTargets() {
+        return exactTargets;
+    }
 }

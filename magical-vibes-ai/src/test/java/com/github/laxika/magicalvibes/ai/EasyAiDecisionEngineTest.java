@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RatsFeast;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SufferThePast;
@@ -1062,6 +1063,22 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
                     .allMatch(permanent -> !permanent.isTapped());
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(sufferThePast);
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Rats' Feast with positive X when graveyards are empty")
+        void doesNotCastRatsFeastWithoutGraveyardTargets() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 2);
+            RatsFeast ratsFeast = new RatsFeast();
+            testHarness.setHand(aiTestPlayer, List.of(ratsFeast));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(ratsFeast);
         }
 
         @Test

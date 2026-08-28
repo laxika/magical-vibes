@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Capability interface for effects that pick "up to N target cards" out of a graveyard as their
- * ability goes on the stack — a multi-card graveyard selection that a single {@link TargetSpec}
+ * Capability interface for effects that pick target cards out of a graveyard as their ability
+ * goes on the stack — a multi-card graveyard selection that a single {@link TargetSpec}
  * (one target, one category) cannot describe.
  *
  * <p>Descriptive only: it states facts drawn from the record's existing components. Trigger
@@ -23,6 +23,11 @@ public interface GraveyardCardChoosingEffect extends CardEffect {
 
     /** Whether all selected cards must come from one graveyard. */
     default boolean singleGraveyard() {
+        return false;
+    }
+
+    /** Whether the controller must choose exactly the maximum number of graveyard cards. */
+    default boolean graveyardChoiceExactTargets() {
         return false;
     }
 }

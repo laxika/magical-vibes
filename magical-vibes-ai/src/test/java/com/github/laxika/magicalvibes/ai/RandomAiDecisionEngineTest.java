@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.q.QuandrixCommand;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RatsFeast;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.r.RiseFromTheWreck;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
@@ -2065,6 +2066,35 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isEqualTo(2);
         assertThat(gameData.stack).isEmpty();
         assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotCastRatsFeastWithPositiveXWhenGraveyardsAreEmpty() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        RatsFeast ratsFeast = new RatsFeast();
+
+        harness.setHand(aiPlayer, List.of(ratsFeast));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(ratsFeast);
+        assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test

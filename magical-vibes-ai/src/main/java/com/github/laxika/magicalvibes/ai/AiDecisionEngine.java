@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -2518,9 +2519,9 @@ public abstract class AiDecisionEngine {
      * {@link ExileXCardsFromGraveyardCost}, it cannot exceed the number of matching cards; for cards with
      * {@link ReturnTargetCardsFromGraveyardToBattlefieldEffect} (Return to the Ranks), it cannot
      * exceed the number of graveyard cards matching that effect's filter. The same cap applies to
-     * X-scaled return-to-hand effects. These mirror the engine's own cast-time validation in
-     * {@code SpellCastingService}, so the AI never proposes an X the server refuses. Returns
-     * {@link Integer#MAX_VALUE} if the card has no such requirement.
+     * X-scaled return-to-hand effects and exact X-card graveyard choices. These mirror the engine's
+     * own cast-time validation in {@code SpellCastingService}, so the AI never proposes an X the
+     * server refuses. Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
      */
     protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
@@ -2539,8 +2540,14 @@ public abstract class AiDecisionEngine {
                 .filter(ExileXCardsFromGraveyardCost.class::isInstance)
                 .map(ExileXCardsFromGraveyardCost.class::cast)
                 .findFirst().orElse(null);
+        GraveyardCardChoosingEffect exactXGraveyardChoice = spellEffects.stream()
+                .filter(GraveyardCardChoosingEffect.class::isInstance)
+                .map(GraveyardCardChoosingEffect.class::cast)
+                .filter(effect -> effect.graveyardChoiceMaxTargets() == 0)
+                .filter(GraveyardCardChoosingEffect::graveyardChoiceExactTargets)
+                .findFirst().orElse(null);
         if (!needsGraveyardCreatures && returnEffect == null
-                && xScaledToHandEffect == null && exileXCost == null) {
+                && xScaledToHandEffect == null && exileXCost == null && exactXGraveyardChoice == null) {
             return Integer.MAX_VALUE;
         }
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
@@ -2568,7 +2575,38 @@ public abstract class AiDecisionEngine {
                             c, xScaledToHandEffect.filter(), card.getId()))
                     .count());
         }
+        if (exactXGraveyardChoice != null) {
+            maxX = Math.min(maxX,
+                    getMaxXForExactGraveyardChoice(gameData, card, exactXGraveyardChoice));
+        }
         return maxX;
+    }
+
+    private int getMaxXForExactGraveyardChoice(GameData gameData, Card card,
+                                                GraveyardCardChoosingEffect effect) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return 0;
+        }
+        if (effect.singleGraveyard()) {
+            return gameData.orderedPlayerIds.stream()
+                    .mapToInt(playerId -> countLegalGraveyardChoices(gameData, card, effect, playerId))
+                    .max()
+                    .orElse(0);
+        }
+        return gameData.orderedPlayerIds.stream()
+                .mapToInt(playerId -> countLegalGraveyardChoices(gameData, card, effect, playerId))
+                .sum();
+    }
+
+    private int countLegalGraveyardChoices(GameData gameData, Card card,
+                                            GraveyardCardChoosingEffect effect, UUID playerId) {
+        return (int) gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .filter(candidate -> effect.graveyardChoiceFilter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        candidate, effect.graveyardChoiceFilter(), card.getId()))
+                .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(
+                        gameData, candidate, aiPlayer.getId()))
+                .count();
     }
 
     /**
