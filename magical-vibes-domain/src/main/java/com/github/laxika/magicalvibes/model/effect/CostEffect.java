@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -42,6 +43,30 @@ public interface CostEffect extends CardEffect {
      */
     default PermanentPredicate consumedPermanentFilter() {
         return null;
+    }
+
+    /**
+     * The number of untapped permanents chosen through {@link #consumedPermanentFilter()} that
+     * paying this cost taps, or {@code null} when the cost does not tap chosen permanents.
+     */
+    default DynamicAmount tappedPermanentCount() {
+        return null;
+    }
+
+    /**
+     * True when permanents tapped through {@link #tappedPermanentCount()} must be creatures in
+     * addition to matching {@link #consumedPermanentFilter()}.
+     */
+    default boolean tappedPermanentMustBeCreature() {
+        return false;
+    }
+
+    /**
+     * True when the ability's source cannot be chosen through
+     * {@link #consumedPermanentFilter()} to pay this cost.
+     */
+    default boolean excludesSourceFromConsumedPermanents() {
+        return false;
     }
 
     /**
