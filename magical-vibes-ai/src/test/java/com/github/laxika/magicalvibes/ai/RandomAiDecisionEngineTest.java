@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.cards.m.MagmaOpus;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.NahirisWarcrafting;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
+import com.github.laxika.magicalvibes.cards.t.TilonallisSummoner;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
 import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
@@ -109,8 +111,9 @@ import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -120,6 +123,47 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void paysAffordableTilonallisSummonerXWhileHoldingCastableSpell() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent summoner = harness.addToBattlefieldAndReturn(aiPlayer, new TilonallisSummoner());
+        summoner.setSummoningSick(false);
+        List<Permanent> mountains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            mountains.add(harness.addToBattlefieldAndReturn(aiPlayer, new Mountain()));
+        }
+        LightningBolt heldSpell = new LightningBolt();
+        harness.setHand(aiPlayer, List.of(heldSpell));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        int summonerIndex = gameData.playerBattlefields.get(aiPlayer.getId()).indexOf(summoner);
+        harness.getGameService().declareAttackers(gameData, aiPlayer, List.of(summonerIndex));
+        harness.passBothPriorities();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+            assertThat(gameData.playerBattlefields.get(aiPlayer.getId()))
+                    .filteredOn(permanent -> "Elemental".equals(permanent.getCard().getName()))
+                    .hasSize(2);
+            assertThat(mountains).filteredOn(Permanent::isTapped).hasSize(3);
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(heldSpell);
+            assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void leavesManaUnspentWhenChosenTargetAddsOwnSurcharge() {
