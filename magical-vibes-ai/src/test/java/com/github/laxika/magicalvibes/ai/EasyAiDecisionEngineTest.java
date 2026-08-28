@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
+import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
@@ -69,6 +70,7 @@ import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SpiritFlare;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
@@ -225,6 +227,56 @@ class EasyAiDecisionEngineTest {
                         Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                         new com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService(gameQueryService)));
         return engine;
+    }
+
+    @Test
+    @DisplayName("Easy AI preserves Spirit Flare's untapped target while paying mana")
+    void preservesUntappedSpellTargetWhilePayingMana() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player human = testHarness.getPlayer1();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+        testHarness.clearMessages();
+
+        FakeConnection aiConn = new FakeConnection("ai-easy-target-payment-test");
+        testHarness.getSessionManager().registerPlayer(aiConn, testAiPlayer.getId(), "Bob");
+        EasyAiDecisionEngine easyAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(),
+                testHarness.getGameService(), testHarness.getGameQueryService(),
+                testHarness.getBlockLegalityService(), testHarness.getCombatAttackService(),
+                testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(),
+                testHarness.getCastingPermissionService(), testHarness.getTargetValidationService(),
+                testHarness.getTargetLegalityService());
+
+        Permanent clearcutter = testHarness.addToBattlefieldAndReturn(testAiPlayer, new CradleClearcutter());
+        clearcutter.setSummoningSick(false);
+        List<Permanent> plains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            plains.add(testHarness.addToBattlefieldAndReturn(testAiPlayer, new Plains()));
+        }
+        Permanent attacker = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        SpiritFlare spiritFlare = new SpiritFlare();
+        testHarness.setHand(testAiPlayer, List.of(spiritFlare));
+
+        testHarness.forceActivePlayer(human);
+        testHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+        testGameData.priorityPassedBy.add(human.getId());
+
+        easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(spiritFlare);
+        assertThat(testGameData.stack.getFirst().getTargetIds())
+                .containsExactly(clearcutter.getId(), attacker.getId());
+        assertThat(clearcutter.isTapped()).isFalse();
+        assertThat(plains).allMatch(Permanent::isTapped);
     }
 
     private Card whitePlainsCreature() {

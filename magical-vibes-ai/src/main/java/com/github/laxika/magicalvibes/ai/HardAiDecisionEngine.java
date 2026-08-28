@@ -1189,14 +1189,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (costReductionPlan == null) {
             return false;
         }
-        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+        Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                plan.targetId, plan.multiTargetIds, plan.damageAssignments,
                 plan.sacrificePermanentId, plan.beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax,
-                delveReduction, costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                delveReduction, costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return false;
         }
         if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return true;
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -2873,16 +2874,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
             UUID sacrificePermanentId = selectSacrificeTarget(gameData, burnCard);
-            Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+            Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                    opponentId, null, null,
                     sacrificePermanentId, beholdSelection, costReductionPlan);
             if (!canPayManaForSpell(gameData, burnCard, null, 0, delveReduction,
-                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                 continue;
             }
 
             // Cast the burn spell targeting the opponent player
             if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction,
-                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                 return true; // Mana ability triggered a pending choice
             }
             List<UUID> imposedSacrificeIds = selectImposedSacrificePermanentIds(

@@ -3648,6 +3648,28 @@ public abstract class AiDecisionEngine {
         return Set.copyOf(reservedIds);
     }
 
+    /**
+     * Returns permanents that must remain unchanged while the AI prepares a spell cast, including
+     * announced targets and permanents selected for additional costs or cost reductions.
+     */
+    protected Set<UUID> reservedSpellPaymentPermanentIds(
+            UUID targetId, List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+            UUID sacrificePermanentId, BeholdSelection beholdSelection,
+            CostReductionPlan costReductionPlan) {
+        Set<UUID> reservedIds = new HashSet<>(reservedSpellCostPermanentIds(
+                sacrificePermanentId, beholdSelection, costReductionPlan));
+        if (targetId != null) {
+            reservedIds.add(targetId);
+        }
+        if (targetIds != null) {
+            reservedIds.addAll(targetIds);
+        }
+        if (damageAssignments != null) {
+            reservedIds.addAll(damageAssignments.keySet());
+        }
+        return Set.copyOf(reservedIds);
+    }
+
     protected boolean canPayManaForSpell(GameData gameData, Card card, Integer xValue,
                                           int targetingTax, int delveReduction, int costReduction,
                                           Set<UUID> excludedPermanentIds) {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
@@ -99,6 +100,10 @@ import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -117,6 +122,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
@@ -215,6 +221,44 @@ class MediumAiDecisionEngineTest {
             mountain.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(mountain);
         }
+    }
+
+    @Test
+    @DisplayName("Medium AI preserves an untapped spell target while paying mana")
+    void preservesUntappedSpellTargetWhilePayingMana() {
+        Permanent clearcutter = harness.addToBattlefieldAndReturn(aiPlayer, new CradleClearcutter());
+        clearcutter.setSummoningSick(false);
+        List<Permanent> plains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            plains.add(harness.addToBattlefieldAndReturn(aiPlayer, new Plains()));
+        }
+        Card spell = new Card();
+        spell.setName("Targeted Inspiration");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{3}{W}");
+        spell.target(new ControlledPermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
+                "Target must be an untapped creature you control"))
+                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1))
+                .addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(aiPlayer, List.of(spell));
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(clearcutter.getId());
+        assertThat(clearcutter.isTapped()).isFalse();
+        assertThat(plains).allMatch(Permanent::isTapped);
     }
 
     private Card fixedCountRepeatableModalSpell() {

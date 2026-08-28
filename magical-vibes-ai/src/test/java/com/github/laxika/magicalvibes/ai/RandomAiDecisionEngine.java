@@ -698,10 +698,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 telemetry.recordSkip("spell: sacrifice-for-reduction cost unpayable", card.getName());
                 continue;
             }
-            Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+            Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                    targetId, multiTargetIds, damageAssignments,
                     sacrificePermanentId, beholdSelection, costReductionPlan);
             if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                 telemetry.recordSkip("spell: mana unavailable after reserving cast costs", card.getName());
                 continue;
             }
@@ -719,7 +720,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
             if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                 return true; // Mana ability triggered a pending choice; will resume after it resolves
             }
             if (targetId != null
@@ -764,16 +765,17 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         break;
                     }
                     costReductionPlan = refreshedCostReductionPlan;
-                    reservedCostPermanentIds = reservedSpellCostPermanentIds(
+                    reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                            targetId, multiTargetIds, damageAssignments,
                             sacrificePermanentId, beholdSelection, costReductionPlan);
                     if (!canPayManaForSpell(gameData, card, xValue, refreshedTargetingTax,
-                            delveReduction, costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                            delveReduction, costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                         telemetry.recordSkip("spell: refreshed mana unavailable after reserving cast costs", card.getName());
                         targetId = null;
                         break;
                     }
                     if (tapManaForSpell(gameData, card, xValue, refreshedTargetingTax, delveReduction,
-                            costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                            costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                         return true;
                     }
                     currentTargets = findRandomTargets(gameData, card);

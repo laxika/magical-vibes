@@ -297,14 +297,15 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
-        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+        Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return false;
         }
         if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -557,14 +558,15 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Medium): Casting instant {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", value), gameId);
-        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+        Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return false;
         }
         if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChokingVines;
 import com.github.laxika.magicalvibes.cards.c.Cooperation;
+import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.o.Opportunity;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PullFromTheDeep;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
@@ -78,6 +80,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
+import com.github.laxika.magicalvibes.cards.s.SpiritFlare;
 import com.github.laxika.magicalvibes.cards.s.StandardBearer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
@@ -127,6 +130,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void preservesUntappedSpellTargetWhilePayingMana() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent clearcutter = harness.addToBattlefieldAndReturn(aiPlayer, new CradleClearcutter());
+        clearcutter.setSummoningSick(false);
+        List<Permanent> plains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            plains.add(harness.addToBattlefieldAndReturn(aiPlayer, new Plains()));
+        }
+        Permanent attacker = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        SpiritFlare spiritFlare = new SpiritFlare();
+        harness.setHand(aiPlayer, List.of(spiritFlare));
+
+        harness.forceActivePlayer(opponent);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gameData.priorityPassedBy.add(opponent.getId());
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(spiritFlare);
+        assertThat(gameData.stack.getFirst().getTargetIds())
+                .containsExactly(clearcutter.getId(), attacker.getId());
+        assertThat(clearcutter.isTapped()).isFalse();
+        assertThat(plains).allMatch(Permanent::isTapped);
+    }
 
     @Test
     void castsFireWithModalDamageAssignments() {
