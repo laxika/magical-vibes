@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -21,8 +22,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Answers multi-graveyard card selections: the AI takes legal cards up to the maximum. Choices
- * with overlapping target filters use a maximum one-to-one card/filter assignment.
+ * Answers multi-card selections routed through the graveyard interaction flow. The AI takes legal
+ * cards up to the maximum, including zone-specific caps for mixed battlefield/graveyard choices.
+ * Choices with overlapping target filters use a maximum one-to-one card/filter assignment.
  * When the choice must come from a single graveyard ("... from a single graveyard", Scarab Feast)
  * the AI confines its picks to one graveyard — the one holding the most selectable cards.
  */
@@ -51,13 +53,17 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
 
         List<UUID> chosen = chooseCards(validIds, interaction.maxCount(), ctx);
 
-        log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), ctx.gameId());
+        log.info("AI: Choosing {} cards from graveyard choice in game {}", chosen.size(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 
     private List<UUID> chooseCards(List<UUID> validIds, int maxCount, AiInteractionContext ctx) {
         if (maxCount <= 0) {
             return List.of();
+        }
+        BattlefieldAndGraveyardCardChoosingEffect mixedZoneTargets = mixedZoneTargets(ctx.gameData());
+        if (mixedZoneTargets != null) {
+            return chooseMixedZoneCards(validIds, maxCount, mixedZoneTargets, ctx);
         }
         IndependentlyTargetedGraveyardCardsEffect independentTargets = independentTargets(ctx.gameData());
         if (independentTargets != null && independentTargets.requiresDistinctTargets()) {
@@ -81,6 +87,36 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                     selectedCounts.merge(cardType, 1, Integer::sum);
                 }
             }
+            if (chosen.size() == maxCount) {
+                break;
+            }
+        }
+        return chosen;
+    }
+
+    private List<UUID> chooseMixedZoneCards(
+            List<UUID> validIds,
+            int maxCount,
+            BattlefieldAndGraveyardCardChoosingEffect effect,
+            AiInteractionContext ctx) {
+        int battlefieldTargets = 0;
+        int graveyardTargets = 0;
+        List<UUID> chosen = new ArrayList<>();
+        for (UUID cardId : validIds) {
+            boolean inGraveyard = ctx.gameQueryService()
+                    .findCardInGraveyardById(ctx.gameData(), cardId) != null;
+            if (inGraveyard) {
+                if (graveyardTargets >= effect.mixedZoneMaxGraveyardTargets()) {
+                    continue;
+                }
+                graveyardTargets++;
+            } else {
+                if (battlefieldTargets >= effect.mixedZoneMaxBattlefieldTargets()) {
+                    continue;
+                }
+                battlefieldTargets++;
+            }
+            chosen.add(cardId);
             if (chosen.size() == maxCount) {
                 break;
             }
@@ -175,6 +211,17 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         return effects.stream()
                 .filter(IndependentlyTargetedGraveyardCardsEffect.class::isInstance)
                 .map(IndependentlyTargetedGraveyardCardsEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private BattlefieldAndGraveyardCardChoosingEffect mixedZoneTargets(GameData gameData) {
+        if (gameData.graveyardTargetOperation.effects == null) {
+            return null;
+        }
+        return gameData.graveyardTargetOperation.effects.stream()
+                .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
+                .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
                 .findFirst()
                 .orElse(null);
     }
