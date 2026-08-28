@@ -324,10 +324,7 @@ public class PlayerInputService {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
         int remaining = context.total() - assigned;
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
-        int maxForTarget = remaining - (remainingTargets - 1);
-        List<String> options = IntStream.rangeClosed(1, maxForTarget)
-                .mapToObj(Integer::toString)
-                .toList();
+        List<String> options = counterAssignmentOptions(remaining, remainingTargets);
         String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options,
@@ -339,14 +336,19 @@ public class PlayerInputService {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
         int remaining = context.total() - assigned;
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
-        int maxForTarget = remaining - (remainingTargets - 1);
-        List<String> options = java.util.stream.IntStream.rangeClosed(1, maxForTarget)
-                .mapToObj(Integer::toString)
-                .toList();
+        List<String> options = counterAssignmentOptions(remaining, remainingTargets);
         String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options,
                 "Choose how many " + counterLabel + " counters to put on the target creature."));
+    }
+
+    private static List<String> counterAssignmentOptions(int remaining, int remainingTargets) {
+        int minForTarget = remainingTargets == 1 ? remaining : 1;
+        int maxForTarget = remaining - (remainingTargets - 1);
+        return IntStream.rangeClosed(minForTarget, maxForTarget)
+                .mapToObj(Integer::toString)
+                .toList();
     }
 
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
