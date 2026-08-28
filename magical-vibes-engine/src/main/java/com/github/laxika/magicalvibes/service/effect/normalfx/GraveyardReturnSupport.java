@@ -2292,6 +2292,10 @@ public class GraveyardReturnSupport {
                     .map(cardId -> allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
+            if (chosenPile.isEmpty()) {
+                bottomTruthOrTaleCards(gameData, controllerId, otherCards);
+                return;
+            }
             gameData.queueInteraction(new PendingTruthOrTaleCardChoice(controllerId, chosenPile, otherCards));
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, chosenPile, 1, 1,
                     "Choose one card from the chosen pile to put into your hand.");
@@ -2388,9 +2392,14 @@ public class GraveyardReturnSupport {
         state.chosenPileCards().stream()
                 .filter(card -> !card.getId().equals(selectedCardId))
                 .forEach(toBottom::add);
+        bottomTruthOrTaleCards(gameData, controllerId, toBottom);
+    }
+
+    private void bottomTruthOrTaleCards(GameData gameData, UUID controllerId, List<Card> toBottom) {
         if (toBottom.isEmpty()) {
             return;
         }
+        String controllerName = gameData.playerIdToName.get(controllerId);
         if (toBottom.size() == 1) {
             gameData.playerDecks.get(controllerId).add(toBottom.getFirst());
             gameLogService.append(gameData, GameLog.textCardText(
