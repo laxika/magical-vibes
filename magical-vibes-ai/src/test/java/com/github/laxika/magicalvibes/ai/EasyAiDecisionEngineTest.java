@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.FlameblastDragon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -751,6 +752,25 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerBattlefields.get(human.getId()))
                     .extracting(permanent -> permanent.getCard().getName())
                     .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+        }
+
+        @Test
+        @DisplayName("Easy AI announces Fire's divided damage for its selected mode")
+        void castsFireWithModalDamageAssignments() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 2);
+            FireIce fireIce = new FireIce();
+            testHarness.setHand(aiTestPlayer, List.of(fireIce));
+            int lifeBefore = testGd.getLife(human.getId());
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(fireIce.getId());
+            assertThat(testGd.stack.getFirst().getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 2));
+            testHarness.passBothPriorities();
+            assertThat(testGd.getLife(human.getId())).isEqualTo(lifeBefore - 2);
         }
 
         @Test

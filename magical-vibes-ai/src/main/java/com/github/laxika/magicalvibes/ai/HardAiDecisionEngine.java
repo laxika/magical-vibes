@@ -1031,7 +1031,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         // 2. Damage distribution
-        Map<UUID, Integer> damageAssignments = null;
+        Map<UUID, Integer> damageAssignments = modalPlan != null ? modalPlan.damageAssignments() : null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return null;

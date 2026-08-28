@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinBarrage;
@@ -123,6 +124,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsFireWithModalDamageAssignments() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        FireIce fireIce = new FireIce();
+
+        harness.setHand(aiPlayer, List.of(fireIce));
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(fireIce.getId());
+            assertThat(gameData.stack.getFirst().getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(opponent.getId(), 2));
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void paysAffordableTilonallisSummonerXWhileHoldingCastableSpell() {

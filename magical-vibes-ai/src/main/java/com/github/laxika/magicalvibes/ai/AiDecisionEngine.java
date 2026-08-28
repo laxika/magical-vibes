@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -3000,16 +3002,22 @@ public abstract class AiDecisionEngine {
 
     /**
      * Internal record for modal spell casting: holds the selected mode encoding
-     * (used as xValue in PlayCardRequest), the legacy single target, and any
-     * target-slot targets declared by multi-mode or variable-count modes.
+     * (used as xValue in PlayCardRequest), the legacy single target, any target-slot targets,
+     * and any amount division announced for the selected mode.
      */
-    protected record ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds) {
+    protected record ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds,
+                                   Map<UUID, Integer> damageAssignments) {
         protected ModalCastPlan {
             targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? null : Map.copyOf(damageAssignments);
+        }
+
+        protected ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds) {
+            this(modeIndex, targetId, targetIds, null);
         }
 
         protected ModalCastPlan(int modeIndex, UUID targetId) {
-            this(modeIndex, targetId, List.of());
+            this(modeIndex, targetId, List.of(), null);
         }
     }
 
@@ -3181,6 +3189,14 @@ public abstract class AiDecisionEngine {
                 if (targets.size() < requiredModalTargetCount(option)) {
                     continue;
                 }
+                if (EffectResolution.needsDamageDistribution(option.effects())) {
+                    Map<UUID, Integer> assignments = buildModalDamageAssignments(option, targets);
+                    if (assignments == null) {
+                        continue;
+                    }
+                    return new ModalCastPlan(encoded, null,
+                            List.copyOf(assignments.keySet()), assignments);
+                }
                 if (usesModalTargetSlots(coe, option)) {
                     return new ModalCastPlan(encoded, null, targets);
                 }
@@ -3205,6 +3221,22 @@ public abstract class AiDecisionEngine {
             return new ModalCastPlan(encoded, null);
         }
         return null;
+    }
+
+    private Map<UUID, Integer> buildModalDamageAssignments(
+            ChooseOneEffect.ChooseOneOption option, List<UUID> targets) {
+        DealDividedDamageEffect dividedDamage = option.effects().stream()
+                .filter(DealDividedDamageEffect.class::isInstance)
+                .map(DealDividedDamageEffect.class::cast)
+                .filter(effect -> effect.mode() == DivisionMode.CHOSEN
+                        && !effect.etbAssignments())
+                .findFirst()
+                .orElse(null);
+        if (dividedDamage == null || !(dividedDamage.totalDamage() instanceof Fixed fixed)
+                || fixed.value() <= 0 || targets.isEmpty()) {
+            return null;
+        }
+        return Map.of(targets.getFirst(), fixed.value());
     }
 
     private List<UUID> findModalModeTargets(GameData gameData, Card card,

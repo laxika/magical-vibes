@@ -2243,6 +2243,34 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @DisplayName("Hard AI announces divided damage for a selected modal mode")
+    void castsModalModeWithDamageAssignments() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        givePlayerMountains(player1, 2);
+        Card modalSpell = new Card();
+        modalSpell.setName("Modal divided damage");
+        modalSpell.setType(CardType.SORCERY);
+        modalSpell.setManaCost("{1}{R}");
+        modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption(
+                        "Deal 2 damage divided among one or two targets",
+                        List.of(DealDividedDamageEffect.chosenAmongAnyTargets(2)),
+                        null, null, 1, 2, false, null))));
+        modalSpell.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        harness.setHand(player1, List.of(modalSpell));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        assertThat(ai.tryCastSpell(gd)).isTrue();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(modalSpell.getId());
+        assertThat(gd.stack.getFirst().getDamageAssignments())
+                .containsExactlyEntriesOf(java.util.Map.of(player2.getId(), 2));
+    }
+
+    @Test
     @DisplayName("Hard AI pays the selected spree mode's additional mana cost")
     void castsSpreeModeWithItsAdditionalManaCost() {
         pinLibrariesAndHands();

@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -1732,6 +1733,28 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerBattlefields.get(human.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Medium AI announces Fire's divided damage for its selected mode")
+    void castsFireWithModalDamageAssignments() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiMountains(2);
+        FireIce fireIce = new FireIce();
+        harness.setHand(aiPlayer, List.of(fireIce));
+        int lifeBefore = gd.getLife(human.getId());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(fireIce.getId());
+        assertThat(gd.stack.getFirst().getDamageAssignments())
+                .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 2));
+        harness.passBothPriorities();
+        assertThat(gd.getLife(human.getId())).isEqualTo(lifeBefore - 2);
     }
 
     @Test

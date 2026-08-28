@@ -150,7 +150,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Build damage assignments for divided damage spells
-        Map<UUID, Integer> damageAssignments = null;
+        Map<UUID, Integer> damageAssignments = modalPlan != null ? modalPlan.damageAssignments() : null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) {
@@ -380,7 +380,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             return false;
         }
 
-        Map<UUID, Integer> damageAssignments = null;
+        Map<UUID, Integer> damageAssignments = modalPlan != null ? modalPlan.damageAssignments() : null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return false;
