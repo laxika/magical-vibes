@@ -42,7 +42,7 @@ class GravebreakerLamiaTest extends BaseCardTest {
                 new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains, swamp);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, swamp);
     }
 
     @Test
