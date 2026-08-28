@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -271,11 +272,7 @@ public class EtbTriggerService {
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
                 .filter(e -> !(e instanceof SubtypeChoiceOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
-                .filter(e -> !(e instanceof ReplacementEffect))
-                // Conditional as-enters replacements ("if kicked, enters with N counters") are
-                // handled during entry, not by the triggered-ability pipeline.
-                .filter(e -> !(e instanceof ConditionalEffect conditional
-                        && conditional.wrapped() instanceof ReplacementEffect))
+                .filter(e -> !isEntryReplacementEffect(e))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
             // Extract per-mode targetFilter from ChooseOneEffect (if present)
@@ -379,6 +376,22 @@ public class EtbTriggerService {
         }
 
         processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
+    }
+
+    /** Returns whether every possible branch is handled during entry instead of as a trigger. */
+    private boolean isEntryReplacementEffect(CardEffect effect) {
+        if (effect instanceof ReplacementEffect) {
+            return true;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return isEntryReplacementEffect(conditional.wrapped());
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return (replacement.baseEffect() == null || isEntryReplacementEffect(replacement.baseEffect()))
+                    && (replacement.upgradedEffect() == null
+                    || isEntryReplacementEffect(replacement.upgradedEffect()));
+        }
+        return false;
     }
 
     private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,
