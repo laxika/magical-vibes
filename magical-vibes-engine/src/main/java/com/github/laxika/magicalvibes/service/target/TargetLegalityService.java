@@ -3413,10 +3413,13 @@ public class TargetLegalityService {
     }
 
     private boolean targetGroupAllowsPlayerTargets(SpellTarget group, List<CardEffect> groupEffects) {
+        TargetFilter filter = group.getFilter();
+        if (filter != null) {
+            return filter instanceof AnyTargetPredicateTargetFilter
+                    || filter instanceof PlayerPredicateTargetFilter;
+        }
         return groupEffects.stream().anyMatch(effect ->
-                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                || group.getFilter() instanceof AnyTargetPredicateTargetFilter
-                || group.getFilter() instanceof PlayerPredicateTargetFilter;
+                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
     }
 
     private void validatePlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate, String errorMessage) {

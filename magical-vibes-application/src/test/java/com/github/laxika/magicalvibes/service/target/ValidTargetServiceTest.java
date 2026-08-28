@@ -475,6 +475,22 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        @DisplayName("explicit permanent target group excludes players allowed by a bound effect")
+        void explicitPermanentGroupOverridesBoundEffectPlayerCapability() {
+            Card spell = createCard();
+            spell.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
+                    .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of());
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        @Test
         @DisplayName("returns only players for player-only targeting spell")
         void returnsOnlyPlayers_forPlayerOnlySpell() {
             Card spell = createCard();

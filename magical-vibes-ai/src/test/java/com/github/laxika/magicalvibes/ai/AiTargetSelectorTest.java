@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.cards.s.SplendidAgony;
 import com.github.laxika.magicalvibes.cards.s.Stun;
 import com.github.laxika.magicalvibes.cards.s.SynchronizedStrike;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
+import com.github.laxika.magicalvibes.cards.w.WinterBlast;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1416,6 +1417,18 @@ class AiTargetSelectorTest {
             // …but neither player is a target the engine would accept for this cast.
             assertThat(targetSelector.isValidPlayerTarget(gd, card, aiPlayer.getId(), aiPlayer.getId())).isFalse();
             assertThat(targetSelector.isValidPlayerTarget(gd, card, human.getId(), aiPlayer.getId())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Winter Blast legal targets exclude players")
+        void winterBlastLegalTargetsExcludePlayers() {
+            Permanent creature = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+            List<UUID> targets = targetSelector.findLegalSingleSpellTargets(
+                    gd, new WinterBlast(), aiPlayer.getId());
+
+            assertThat(targets).containsExactly(creature.getId());
+            assertThat(targets).doesNotContain(aiPlayer.getId(), human.getId());
         }
 
         @Test
