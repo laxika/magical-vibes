@@ -24,6 +24,7 @@ import java.util.UUID;
 /**
  * Answers multi-card selections routed through the graveyard interaction flow. The AI takes legal
  * cards up to the maximum, including zone-specific caps for mixed battlefield/graveyard choices.
+ * Aggregate mana-value caps are applied while choosing so an optional selection remains legal.
  * Choices with overlapping target filters use a maximum one-to-one card/filter assignment.
  * When the choice must come from a single graveyard ("... from a single graveyard", Scarab Feast)
  * the AI confines its picks to one graveyard — the one holding the most selectable cards.
@@ -51,27 +52,33 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
             validIds = confineToSingleGraveyard(validIds, ctx);
         }
 
-        List<UUID> chosen = chooseCards(validIds, interaction.maxCount(), ctx);
+        List<UUID> chosen = chooseCards(validIds, interaction, ctx);
 
         log.info("AI: Choosing {} cards from graveyard choice in game {}", chosen.size(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 
-    private List<UUID> chooseCards(List<UUID> validIds, int maxCount, AiInteractionContext ctx) {
+    private List<UUID> chooseCards(
+            List<UUID> validIds,
+            PendingInteraction.MultiGraveyardChoice interaction,
+            AiInteractionContext ctx) {
+        int maxCount = interaction.maxCount();
         if (maxCount <= 0) {
             return List.of();
         }
         BattlefieldAndGraveyardCardChoosingEffect mixedZoneTargets = mixedZoneTargets(ctx.gameData());
         if (mixedZoneTargets != null) {
-            return chooseMixedZoneCards(validIds, maxCount, mixedZoneTargets, ctx);
+            return applyMaximumTotalManaValue(
+                    chooseMixedZoneCards(validIds, maxCount, mixedZoneTargets, ctx), interaction);
         }
         IndependentlyTargetedGraveyardCardsEffect independentTargets = independentTargets(ctx.gameData());
         if (independentTargets != null && independentTargets.requiresDistinctTargets()) {
-            return chooseCardsForDistinctFilters(validIds, maxCount, independentTargets, ctx);
+            return applyMaximumTotalManaValue(
+                    chooseCardsForDistinctFilters(validIds, maxCount, independentTargets, ctx), interaction);
         }
         Set<CardType> maxOnePerCardType = maxOnePerCardType(ctx.gameData());
         if (maxOnePerCardType.isEmpty()) {
-            return validIds.stream().limit(maxCount).toList();
+            return applyMaximumTotalManaValue(validIds, interaction);
         }
 
         Map<CardType, Integer> selectedCounts = new EnumMap<>(CardType.class);
@@ -88,6 +95,35 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                 }
             }
             if (chosen.size() == maxCount) {
+                break;
+            }
+        }
+        return applyMaximumTotalManaValue(chosen, interaction);
+    }
+
+    private List<UUID> applyMaximumTotalManaValue(
+            List<UUID> candidateIds,
+            PendingInteraction.MultiGraveyardChoice interaction) {
+        Integer maximumTotalManaValue = interaction.maxTotalManaValue();
+        if (maximumTotalManaValue == null) {
+            return candidateIds.stream().limit(interaction.maxCount()).toList();
+        }
+
+        Map<UUID, Card> cardsById = new LinkedHashMap<>();
+        for (Card card : interaction.cards()) {
+            cardsById.put(card.getId(), card);
+        }
+
+        int selectedManaValue = 0;
+        List<UUID> chosen = new ArrayList<>();
+        for (UUID candidateId : candidateIds) {
+            Card card = cardsById.get(candidateId);
+            if (card == null || selectedManaValue + card.getManaValue() > maximumTotalManaValue) {
+                continue;
+            }
+            chosen.add(candidateId);
+            selectedManaValue += card.getManaValue();
+            if (chosen.size() == interaction.maxCount()) {
                 break;
             }
         }

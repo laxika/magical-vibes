@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -83,9 +84,50 @@ class MultiGraveyardChoiceAiStrategyTest {
         assertChosen(firstGraveyardCard.getId(), battlefieldCard.getId());
     }
 
+    @Test
+    @DisplayName("Choice does not exceed its maximum total mana value")
+    void choiceDoesNotExceedMaximumTotalManaValue() throws Exception {
+        Card sixManaCard = cardWithManaValue(6);
+        Card threeManaCard = cardWithManaValue(3);
+        gameData.graveyardTargetOperation.effects = new ArrayList<>();
+
+        strategy.answer(choiceWithMaximumManaValue(List.of(sixManaCard, threeManaCard), 6), context());
+
+        assertChosen(sixManaCard.getId());
+    }
+
+    @Test
+    @DisplayName("Choice considers later cards that fit its maximum total mana value")
+    void choiceConsidersLaterCardsWithinMaximumTotalManaValue() throws Exception {
+        Card fourManaCard = cardWithManaValue(4);
+        Card threeManaCard = cardWithManaValue(3);
+        Card twoManaCard = cardWithManaValue(2);
+        gameData.graveyardTargetOperation.effects = new ArrayList<>();
+
+        strategy.answer(
+                choiceWithMaximumManaValue(List.of(fourManaCard, threeManaCard, twoManaCard), 6),
+                context());
+
+        assertChosen(fourManaCard.getId(), twoManaCard.getId());
+    }
+
     private PendingInteraction.MultiGraveyardChoice choice(List<Card> cards) {
         return new PendingInteraction.MultiGraveyardChoice(
                 aiPlayerId, cards, 2, "Choose up to two cards.");
+    }
+
+    private PendingInteraction.MultiGraveyardChoice choiceWithMaximumManaValue(
+            List<Card> cards,
+            int maximumTotalManaValue) {
+        return new PendingInteraction.MultiGraveyardChoice(
+                aiPlayerId, cards, 2, "Choose up to two cards.", 0, maximumTotalManaValue);
+    }
+
+    private Card cardWithManaValue(int manaValue) {
+        Card card = mock(Card.class);
+        when(card.getId()).thenReturn(UUID.randomUUID());
+        when(card.getManaValue()).thenReturn(manaValue);
+        return card;
     }
 
     private AiInteractionContext context() {
