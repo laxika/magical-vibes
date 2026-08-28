@@ -117,7 +117,7 @@ class AiTargetSelector {
 
     List<UUID> findLegalSingleSpellTargets(GameData gameData, Card card, UUID controllerId) {
         ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
-                gameData, card, controllerId, List.of());
+                gameData, card, controllerId, List.of(), null, false);
         List<UUID> targets = new ArrayList<>();
         targets.addAll(response.validPermanentIds());
         targets.addAll(response.validPlayerIds());
@@ -132,7 +132,7 @@ class AiTargetSelector {
         // Use base-mode targeting since AI never kicks spells
         Set<TargetType> allowedTargets = computeBaseAllowedTargets(card);
         ValidTargetsResponse legalTargets = validTargetService.computeValidTargetsForSpell(
-                gameData, card, aiPlayerId, List.of());
+                gameData, card, aiPlayerId, List.of(), null, false);
         if (!allowedTargets.contains(TargetType.PLAYER)
                 && legalTargets.validPermanentIds().isEmpty()
                 && legalTargets.validGraveyardCardIds().isEmpty()
@@ -942,20 +942,20 @@ class AiTargetSelector {
                 result.add(TargetType.PERMANENT);
             }
         }
-        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
-            CardEffect effectToCheck = e;
-            if (e instanceof ConditionalReplacementEffect replacement) {
-                effectToCheck = replacement.baseEffect();
-            }
-            TargetSpec spec = effectToCheck.targetSpec();
+        List<CardEffect> baseSpellEffects = EffectResolution.resolveEffects(
+                card.getEffects(EffectSlot.SPELL), false, null);
+        for (CardEffect effect : baseSpellEffects) {
+            TargetSpec spec = effect.targetSpec();
             if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
             if (spec.admits(TargetPredicate.Kind.PERMANENT)) result.add(TargetType.PERMANENT);
-            if (EffectResolution.targetsSpellOnStack(effectToCheck)) result.add(TargetType.SPELL_ON_STACK);
+            if (EffectResolution.targetsSpellOnStack(effect)) result.add(TargetType.SPELL_ON_STACK);
             if (spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) result.add(TargetType.GRAVEYARD);
             if (spec.admits(TargetPredicate.Kind.EXILED_CARD)) result.add(TargetType.EXILE);
         }
-        for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            TargetSpec spec = e.targetSpec();
+        List<CardEffect> baseEtbEffects = EffectResolution.resolveEffects(
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), false, null);
+        for (CardEffect effect : baseEtbEffects) {
+            TargetSpec spec = effect.targetSpec();
             if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
             if (spec.admits(TargetPredicate.Kind.PERMANENT)) result.add(TargetType.PERMANENT);
         }

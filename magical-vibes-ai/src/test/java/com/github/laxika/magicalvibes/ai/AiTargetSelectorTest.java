@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.f.FertileGround;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantAmbushBeetle;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GoblinBarrage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -268,6 +269,18 @@ class AiTargetSelectorTest {
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
         assertThat(target).isEqualTo(ownElves.getId());
+    }
+
+    @Test
+    @DisplayName("Non-kicked Goblin Barrage targets only creatures")
+    void nonKickedGoblinBarrageExcludesKickerPlayerTarget() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+        List<UUID> targets = targetSelector.findLegalSingleSpellTargets(
+                gd, new GoblinBarrage(), aiPlayer.getId());
+
+        assertThat(targets).containsExactly(opponentCreature.getId());
+        assertThat(targets).doesNotContain(aiPlayer.getId(), human.getId());
     }
 
     // ===== chooseTarget: bounce removal =====
@@ -1083,6 +1096,14 @@ class AiTargetSelectorTest {
 
             assertThat(allowed).contains(TargetType.PERMANENT);
             assertThat(allowed).doesNotContain(TargetType.PLAYER);
+        }
+
+        @Test
+        @DisplayName("Conditional kicker rider does not add targets to the base cast")
+        void conditionalKickerEffectIsExcludedFromBaseTargets() {
+            Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(new GoblinBarrage());
+
+            assertThat(allowed).containsExactly(TargetType.PERMANENT);
         }
 
         @Test
