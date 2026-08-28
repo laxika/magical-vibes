@@ -192,7 +192,8 @@ class RandomAiFuzzTest {
             }
 
             String fingerprint = computeFingerprint(gd, player1.getId(), player2.getId());
-            if (fingerprint.equals(lastFingerprint)) {
+            boolean aiHasPendingWork = aiConn1.hasPendingWork() || aiConn2.hasPendingWork();
+            if (fingerprint.equals(lastFingerprint) && !aiHasPendingWork) {
                 sameCount++;
 
                 if (sameCount >= MAX_SAME_STATE_COUNT) {

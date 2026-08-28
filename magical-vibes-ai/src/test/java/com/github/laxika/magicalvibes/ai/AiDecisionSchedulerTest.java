@@ -20,6 +20,31 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class AiDecisionSchedulerTest {
 
     @Test
+    void reportsPendingWorkWhileDecisionIsRunning() throws Exception {
+        AiDecisionEngine engine = mock(AiDecisionEngine.class);
+        CountDownLatch decisionStarted = new CountDownLatch(1);
+        CountDownLatch releaseDecision = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            decisionStarted.countDown();
+            assertThat(releaseDecision.await(2, TimeUnit.SECONDS)).isTrue();
+            return null;
+        }).when(engine).handleEvent(AiDecisionKind.GAME_STATE);
+
+        AiDecisionScheduler scheduler = new AiDecisionScheduler("test", engine, 0);
+        assertThat(scheduler.hasPendingWork()).isFalse();
+
+        scheduler.scheduleDecision(AiDecisionKind.GAME_STATE);
+        assertThat(decisionStarted.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(scheduler.hasPendingWork()).isTrue();
+
+        releaseDecision.countDown();
+        verify(engine, timeout(1_000)).handleEvent(AiDecisionKind.GAME_STATE);
+        Thread.sleep(50);
+        assertThat(scheduler.hasPendingWork()).isFalse();
+        scheduler.close();
+    }
+
+    @Test
     void coalescesGameStatesAndRetainsOneFollowUpDecision() throws Exception {
         AiDecisionEngine engine = mock(AiDecisionEngine.class);
         CountDownLatch firstDecisionStarted = new CountDownLatch(1);

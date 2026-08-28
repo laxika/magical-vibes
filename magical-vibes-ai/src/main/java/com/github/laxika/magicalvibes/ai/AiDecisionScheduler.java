@@ -55,6 +55,17 @@ public class AiDecisionScheduler {
         return open.get();
     }
 
+    /** Whether a decision is queued, delayed, executing, or waiting for a coalesced follow-up. */
+    public boolean hasPendingWork() {
+        synchronized (gameStateLock) {
+            return activeDecisionKind != null
+                    || gameStateTaskScheduled
+                    || gameStateDirty
+                    || executor.getActiveCount() > 0
+                    || !executor.getQueue().isEmpty();
+        }
+    }
+
     public void scheduleDecision(AiDecisionKind kind) {
         if (!open.get()) {
             return;
