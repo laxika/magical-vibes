@@ -1339,7 +1339,7 @@ public class AbilityActivationService {
 
         // Discard-card(s) cost: enter interactive discard-choice mode. The source card may already have
         // been exiled above, so the suspended activation is resumed via handleActivatedAbilityDiscardCostChosen.
-        if (discardCardTypeCost != null) {
+        if (discardCardTypeCost != null && discardCardTypeCost.requiredCount(xValue) > 0) {
             List<Integer> validDiscardIndices = collectDiscardIndices(gameData, playerId,
                     gameData.playerHands.get(playerId), discardCardTypeCost, xValue);
             gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(
@@ -3289,7 +3289,7 @@ public class AbilityActivationService {
                 .map(HandCardCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (discardCardTypeCost != null) {
+        if (discardCardTypeCost != null && discardCardTypeCost.requiredCount(effectiveXValue) > 0) {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Integer> validDiscardIndices = collectDiscardIndices(gameData, playerId, hand,
                     discardCardTypeCost, effectiveXValue);
