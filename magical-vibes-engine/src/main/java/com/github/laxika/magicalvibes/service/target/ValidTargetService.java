@@ -976,6 +976,10 @@ public class ValidTargetService {
 
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
                                         UUID sourcePermanentId, Card sourceCard) {
+        if (targetFilter != null && !targetFilterAllowsPlayer(targetFilter)) {
+            return false;
+        }
+
         // Player shroud
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
             return false;

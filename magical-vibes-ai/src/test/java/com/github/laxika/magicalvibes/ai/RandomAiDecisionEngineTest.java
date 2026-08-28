@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.cards.m.MagmaOpus;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
+import com.github.laxika.magicalvibes.cards.n.NahirisWarcrafting;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.o.Opportunity;
@@ -117,6 +118,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsNahirisWarcraftingAtPermanentInsteadOfPlayer() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent target = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        NahirisWarcrafting warcrafting = new NahirisWarcrafting();
+
+        harness.setHand(aiPlayer, List.of(warcrafting));
+        harness.addMana(aiPlayer, ManaColor.RED, 3);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(warcrafting);
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void castsNonKickedGoblinBarrageAtCreature() {
