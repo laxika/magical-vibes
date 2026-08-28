@@ -1751,7 +1751,6 @@ public class MultiPermanentChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(logEntry));
         } else {
             List<Permanent> targetBattlefield = gameData.playerBattlefields.get(targetPlayerId);
-            List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
             List<String> bouncedNames = new ArrayList<>();
 
             for (UUID permId : permanentIds) {
@@ -1762,9 +1761,7 @@ public class MultiPermanentChoiceHandlerService {
                         break;
                     }
                 }
-                if (toReturn != null) {
-                    targetBattlefield.remove(toReturn);
-                    targetHand.add(toReturn.getCard());
+                if (toReturn != null && permanentRemovalService.removePermanentToHand(gameData, toReturn)) {
                     bouncedNames.add(toReturn.getCard().getName());
                 }
             }
