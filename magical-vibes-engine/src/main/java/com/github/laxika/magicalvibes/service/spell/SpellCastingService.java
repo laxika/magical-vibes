@@ -9184,25 +9184,6 @@ public class SpellCastingService {
         if (graveyardCast.getCost(DiscardCardCastingCost.class).isPresent()) {
             validateGraveyardDiscardSelection(gameData, playerId, discardHandCardIndex);
         }
-    }
-
-    private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId,
-                                                       List<CastingCost> additionalCosts,
-                                                       Integer discardHandCardIndex) {
-        for (CastingCost cost : additionalCosts) {
-            if (cost instanceof LifeCastingCost lifeCost) {
-                if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
-                    throw new IllegalStateException("Cannot pay life as a cost");
-                }
-                if (gameData.getLife(playerId) < lifeCost.amount()) {
-                    throw new IllegalStateException("Not enough life to pay graveyard cast cost");
-                }
-            } else if (cost instanceof DiscardCardCastingCost) {
-                validateGraveyardDiscardSelection(gameData, playerId, discardHandCardIndex);
-            } else {
-                throw new IllegalStateException("Cannot pay this graveyard cast cost");
-            }
-        }
         graveyardCast.getCost(ExileNCardsFromGraveyardCastingCost.class).ifPresent(exileCost -> {
             List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
             if (indices.size() != exileCost.count()) {
@@ -9229,6 +9210,25 @@ public class SpellCastingService {
                 }
             }
         });
+    }
+
+    private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId,
+                                                       List<CastingCost> additionalCosts,
+                                                       Integer discardHandCardIndex) {
+        for (CastingCost cost : additionalCosts) {
+            if (cost instanceof LifeCastingCost lifeCost) {
+                if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+                    throw new IllegalStateException("Cannot pay life as a cost");
+                }
+                if (gameData.getLife(playerId) < lifeCost.amount()) {
+                    throw new IllegalStateException("Not enough life to pay graveyard cast cost");
+                }
+            } else if (cost instanceof DiscardCardCastingCost) {
+                validateGraveyardDiscardSelection(gameData, playerId, discardHandCardIndex);
+            } else {
+                throw new IllegalStateException("Cannot pay this graveyard cast cost");
+            }
+        }
     }
 
     private void validateGraveyardDiscardSelection(GameData gameData, UUID playerId,
