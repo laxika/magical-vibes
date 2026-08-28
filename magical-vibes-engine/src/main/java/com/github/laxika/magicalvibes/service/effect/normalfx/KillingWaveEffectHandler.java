@@ -156,12 +156,13 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
                 }
                 continue;
             }
+            int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
             int currentLife = gameData.getLife(playerId);
-            gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
-            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, lifeCost);
+            gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, lifeLoss);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " pays " + lifeCost + " life (" + sourceName + ")."));
+                    playerName + " pays " + lifeLoss + " life (" + sourceName + ")."));
             log.info("Game {} - {} pays {} life for Killing Wave", gameData.id, playerName, lifeCost);
         }
 

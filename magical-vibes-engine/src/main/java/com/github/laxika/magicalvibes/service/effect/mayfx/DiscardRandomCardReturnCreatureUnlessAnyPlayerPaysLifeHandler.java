@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -25,6 +26,7 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
 
     private final DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler effectHandler;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -42,14 +44,16 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
                 .orElseThrow();
 
         if (accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost())) {
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
             gameData.playerLifeTotals.put(player.getId(),
-                    gameData.getLife(player.getId()) - effect.lifeCost());
-            triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), effect.lifeCost());
+                    gameData.getLife(player.getId()) - lifeLoss);
+            triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (",
+                    player.getUsername() + " pays " + lifeLoss + " life. (",
                     ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to prevent {}'s discarded creature from returning",
-                    gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                    gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }

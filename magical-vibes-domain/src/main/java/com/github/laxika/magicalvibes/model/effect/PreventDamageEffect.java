@@ -23,6 +23,7 @@ import java.util.Set;
  * @param sourceColors    the prevented source colors for color-based prevention scopes
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
      * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
+     *                        or {@link PreventionScope#ALL_TO_CONTROLLED_MATCHING_PERMANENTS}
      *                        or all combat damage to which is prevented for
      *                        {@link PreventionScope#ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS};
  *                        for {@link PreventionScope#NEXT_TO_TARGET_CREATURE} an optional narrowing of the legal target
@@ -87,6 +88,7 @@ public record PreventDamageEffect(
             throw new IllegalArgumentException("exemptPredicate is exactly the ALL_COMBAT_EXCEPT parameter: " + scope);
         }
         boolean acceptsVictimPredicate = scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE;
         if (victimPredicate != null && !acceptsVictimPredicate) {
@@ -94,6 +96,7 @@ public record PreventDamageEffect(
                     "victimPredicate is only a matching-permanent or NEXT_TO_TARGET_CREATURE parameter: " + scope);
         }
         if (victimPredicate == null && (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS)) {
             throw new IllegalArgumentException(scope + " requires a victimPredicate");
         }
@@ -216,6 +219,12 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt to [permanents matching {@code victimPredicate}] this turn" (Ethersworn Shieldmage). */
     public static PreventDamageEffect allToMatchingPermanents(PermanentPredicate victimPredicate) {
         return new PreventDamageEffect(PreventionScope.ALL_TO_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);
+    }
+
+    /** "Prevent all damage that would be dealt this turn to matching permanents you control." */
+    public static PreventDamageEffect allToControlledMatchingPermanents(PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);
     }
 
     /** "Prevent all combat damage that would be dealt this turn to matching permanents you control." */

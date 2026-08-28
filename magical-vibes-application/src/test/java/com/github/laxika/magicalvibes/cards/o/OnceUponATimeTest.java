@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -32,11 +31,11 @@ class OnceUponATimeTest extends BaseCardTest {
         harness.castInstantWithAlternateCost(player1, 0, null, List.of());
         harness.passBothPriorities();
 
-        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search.params().cards()).containsExactly(creature, land);
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(creature.getId(), land.getId());
 
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(search.params().cards().indexOf(creature)));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, filler1, filler2, filler3);
@@ -46,7 +45,7 @@ class OnceUponATimeTest extends BaseCardTest {
     void freeAlternateCostIsUnavailableAfterCastingAnotherSpell() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0);
+        harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new OnceUponATime()));

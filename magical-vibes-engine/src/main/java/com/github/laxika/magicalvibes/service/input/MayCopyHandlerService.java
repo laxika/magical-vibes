@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,11 +57,30 @@ public class MayCopyHandlerService {
     private final TargetLegalityService targetLegalityService;
     private final TriggerCollectionService triggerCollectionService;
     private final ValidTargetService validTargetService;
+    private final LandCopyOnEnterService landCopyOnEnterService;
 
     public void handleCopyPermanentOnEnterChoice(GameData gameData, Player player, boolean accepted,
                                                   PendingMayAbility ability, CopyPermanentOnEnterEffect copyEffect) {
         String typeLabel = copyEffect.typeLabel();
         if (accepted) {
+            if (copyEffect.cardFilter() != null) {
+                List<Card> validCards = new ArrayList<>();
+                for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
+                    for (Card graveyardCard : gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of())) {
+                        if (predicateEvaluationService.matchesCardPredicate(
+                                graveyardCard, copyEffect.cardFilter(), null, gameData, graveyardOwnerId)) {
+                            validCards.add(graveyardCard);
+                        }
+                    }
+                }
+                playerInputService.beginMultiGraveyardChoice(gameData, ability.controllerId(), validCards, 1, 1,
+                        "Choose a " + typeLabel + " to copy.");
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " accepts — choosing a " + typeLabel + " to copy."));
+                log.info("Game {} - {} accepts copy {}", gameData.id, player.getUsername(), typeLabel);
+                return;
+            }
+
             // Collect valid targets (the copying permanent is NOT on the battlefield yet)
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceControllerId(ability.controllerId());
@@ -107,6 +128,24 @@ public class MayCopyHandlerService {
 
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
+    }
+
+    public void handleCopyLandFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                                   PendingMayAbility ability,
+                                                   CopyLandFromGraveyardOnEnterEffect copyEffect) {
+        if (accepted) {
+            landCopyOnEnterService.beginGraveyardChoice(gameData, ability.controllerId());
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " accepts — choosing a land card in a graveyard to copy."));
+            log.info("Game {} - {} accepts copy from a graveyard", gameData.id, player.getUsername());
+            return;
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " declines to copy a land card from a graveyard. ",
+                ability.sourceCard(), " It enters without copying."));
+        log.info("Game {} - {} declines copy from a graveyard", gameData.id, player.getUsername());
+        landCopyOnEnterService.complete(gameData, null);
     }
 
     public void handleCopyCreatureCardInGraveyardOnEnterChoice(
@@ -352,10 +391,21 @@ public class MayCopyHandlerService {
      */
     public void handleCopyTriggeredAbilityRetargetChoice(GameData gameData, Player player, boolean accepted,
                                                          PendingMayAbility ability) {
+        handleCopyAbilityRetargetChoice(gameData, player, accepted, ability, "triggered ability");
+    }
+
+    /** Recomputes legal targets for a copied activated or triggered ability on the stack. */
+    public void handleCopyAbilityRetargetChoice(GameData gameData, Player player, boolean accepted,
+                                                PendingMayAbility ability) {
+        handleCopyAbilityRetargetChoice(gameData, player, accepted, ability, "ability");
+    }
+
+    private void handleCopyAbilityRetargetChoice(GameData gameData, Player player, boolean accepted,
+                                                 PendingMayAbility ability, String abilityType) {
         if (!accepted) {
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " keeps the original target for the copy."));
-            log.info("Game {} - {} declines to retarget triggered ability copy", gameData.id, player.getUsername());
+            log.info("Game {} - {} declines to retarget {} copy", gameData.id, player.getUsername(), abilityType);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -369,7 +419,7 @@ public class MayCopyHandlerService {
             }
         }
         if (copyEntry == null) {
-            log.info("Game {} - Triggered ability copy no longer on stack for retarget", gameData.id);
+            log.info("Game {} - Ability copy no longer on stack for retarget", gameData.id);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -404,7 +454,7 @@ public class MayCopyHandlerService {
 
         if (validTargets.isEmpty()) {
             gameLogService.append(gameData, GameLog.text("No valid new targets available for the copy."));
-            log.info("Game {} - No valid targets for triggered ability copy retarget", gameData.id);
+            log.info("Game {} - No valid targets for {} copy retarget", gameData.id, abilityType);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -412,7 +462,7 @@ public class MayCopyHandlerService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copyEntry.getCard().getName()
-                        + "'s triggered ability.");
+                        + "'s " + abilityType + ".");
     }
 
     public void handleRedirectRetargetChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

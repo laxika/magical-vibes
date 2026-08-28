@@ -126,6 +126,13 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         this(new Fixed(amount), restriction, null, false, false, false, false, false, false, Set.of(), false);
     }
 
+    /** "Add N mana in any combination of colors" with a spending restriction. */
+    public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction,
+                                   boolean anyColorCombination) {
+        this(new Fixed(amount), restriction, null, false, false, false, false,
+                anyColorCombination, false, Set.of(), false);
+    }
+
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype) {
         this(new Fixed(amount), restriction, subtype, false, false, false, false, false, false, Set.of(), false);
     }
@@ -183,14 +190,15 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     @Override
     public int estimatedWildcardMana() {
         return switch (restriction) {
-            case NONE, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
+            case NONE, SPELL_ONLY, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
                  CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
-            case ABILITIES, IMPRINTED_CARD_COLORS, SOURCE_PERMANENT_COLORS, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY,
-                 ARTIFACT_SPELLS_OR_ABILITIES, FLASHBACK_ONLY, EXILED_SPELL_ONLY, GRAVEYARD_SPELL_ONLY,
+            case ABILITIES, IMPRINTED_CARD_COLORS, EXILED_CARD_COLORS, SOURCE_PERMANENT_COLORS,
+                 INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, ARTIFACT_SPELLS_OR_ABILITIES,
+                 FLASHBACK_ONLY, EXILED_SPELL_ONLY, GRAVEYARD_SPELL_ONLY,
                  CHOSEN_SUBTYPE_SPELL_OR_ABILITY, SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY,
                  CHOSEN_SUBTYPE_CREATURE_SOURCE_SPELL_OR_ABILITY,
-                 CREATURE_SPELLS_OR_ABILITIES, MANA_VALUE_AT_LEAST_FOUR,
+                 CREATURE_SPELLS_OR_ABILITIES, CREATURE_COLORS_ABILITIES, MANA_VALUE_AT_LEAST_FOUR,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS -> 0;
         };
     }

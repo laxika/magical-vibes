@@ -25,6 +25,7 @@ class PlanarChaosTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         boolean won = coinFlipWasWon();
         if (won) {

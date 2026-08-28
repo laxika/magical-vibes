@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,7 +53,8 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
         }
 
         Card sourceCard = enchanted.getCard();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
                     sourceCard, new CreateTokenCopyOfTargetPermanentEffect());

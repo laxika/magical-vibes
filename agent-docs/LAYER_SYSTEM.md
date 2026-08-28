@@ -201,8 +201,8 @@ Off-battlefield targets (AI hypothetical scoring) have no state and fall back to
 intrinsic reconstruction. **Unmanaged L5/L6 sources stay legacy-additive outside timestamp
 order:** conditional wrappers (`ConditionalEffect`, `EnchantedPermanentConditionalEffect`) and
 emblems. Since step 14 this is ENFORCED at collection: `LayerSystemService.collectInstances`
-skips conditional wrappers, because their conditions read volatile game state — life totals,
-active player, poison, top of library — that the §10 board fingerprint deliberately does not
+skips conditional wrappers, because their conditions read volatile game state — active player,
+poison, top of library — that the §10 board fingerprint deliberately does not
 cover; the assembly evaluates the condition fresh on every query
 (`conditionalStaticGrantsToggleWithoutInvalidatingTheBoard` in `LayeredBoardCacheTest`).
 Step 17 narrowed that skip rather than removing it: `admitsConditionalWrapper` admits a
@@ -713,8 +713,10 @@ fingerprint of every input the board computation reads and reuses the cached boa
 the fingerprint is unchanged. What is **NOT cached**: the per-target `StaticBonus` assembly
 (and the per-`Pass` `bonusMemo`) still runs on every external query — assembly reads inputs the
 fingerprint deliberately does not cover (emblems, the conditions of the conditional wrappers the
-pass did not collect, life totals, turn/step state, amount evaluation), so caching it would be
-dishonest; shrinking scope to the board only is the correctness-first trade. The wrappers the
+pass did not collect, turn/step state, amount evaluation), so caching it would be dishonest;
+shrinking scope to the board only is the correctness-first trade. Dynamic amounts used by
+layer-7b base P/T setters are evaluated during board construction, so player life totals are part
+of the board fingerprint. The wrappers the
 pass DOES collect (§5, step 17) are exactly those whose conditions read only fingerprinted state
 — that is what `ConditionBoardStability` decides, so widening it means widening
 `computeBoardFingerprint` too.
@@ -740,7 +742,7 @@ There is **no mutation counter to bump** — this is a deliberate deviation from
 writers with no funnel (bucket-only keyword grants, animation flags, ...), and tests
 (SevenLayerTest included) mutate battlefield lists and permanents directly. The honest scheme
 is to **re-derive validity from the inputs themselves on every query**: the fingerprint hashes
-battlefield composition/order, every pass-read `Permanent` field (tap state, attachments,
+battlefield composition/order, player life totals, every pass-read `Permanent` field (tap state, attachments,
 counters, chosen values, P/T modifiers/overrides, animation state, granted/removed
 keywords/colors/subtypes/types, lose-all flags, text replacements, persistent granted
 activated abilities), the current `Card` identity (L1 copy swaps) plus printed values
@@ -753,7 +755,7 @@ A stale fingerprint can only produce a false MISS (safe recompute); a false HIT 
 
 The flip side of the contract: **anything the fingerprint does not cover must not be read by
 the board computation.** Conditional wrappers are the enforced case (step 14): their
-conditions read life totals/active player/poison/top-of-library, so `collectInstances`
+conditions read active player/poison/top-of-library, so `collectInstances`
 excludes them from the pass entirely and the per-query assembly evaluates them — baking a
 condition's result into the cached board is exactly the staleness the seven step-14 card-test
 failures exposed (Serra Ascendant, Village Survivors, Viridian Betrayers, Vampire Nocturnus,

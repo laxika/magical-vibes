@@ -77,12 +77,21 @@ class MultiPermanentChoiceAiStrategyTest {
     }
 
     @Test
-    @DisplayName("Empty valid ids: does not answer")
-    void ignoresEmptyValidIds() throws Exception {
+    @DisplayName("No valid permanents or players: does not answer")
+    void ignoresChoiceWithNoValidTargets() throws Exception {
         strategy.answer(multiChoice(aiPlayerId, List.of(), 2), context());
 
         verify(gameActions, never()).answerInteraction(
                 org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Player-only choice: selects valid players up to maxCount")
+    void selectsValidPlayersWhenNoPermanentsAreValid() throws Exception {
+        strategy.answer(multiChoice(
+                aiPlayerId, List.of(), List.of(opponentId, aiPlayerId), 2), context());
+
+        assertChosen(List.of(opponentId, aiPlayerId));
     }
 
     @Test
@@ -156,6 +165,51 @@ class MultiPermanentChoiceAiStrategyTest {
         assertChosen(List.of(a.getId(), b.getId()));
     }
 
+    @Test
+    @DisplayName("Power-limited keep choice does not exceed the effective power limit")
+    void powerLimitedKeepChoiceStaysWithinLimit() throws Exception {
+        Permanent strongestLegal = creature("Strongest legal", 4);
+        Permanent extra = creature("Extra", 1);
+        gameData.playerBattlefields.get(aiPlayerId).addAll(List.of(strongestLegal, extra));
+
+        when(gameQueryService.getEffectivePower(gameData, strongestLegal)).thenReturn(4);
+        when(gameQueryService.getEffectivePower(gameData, extra)).thenReturn(1);
+
+        strategy.answer(powerLimitedChoice(
+                List.of(strongestLegal.getId(), extra.getId()), 4), context());
+
+        assertChosen(List.of(strongestLegal.getId()));
+    }
+
+    @Test
+    @DisplayName("Power-limited keep choice may keep no creatures")
+    void powerLimitedKeepChoiceCanBeEmpty() throws Exception {
+        Permanent tooLarge = creature("Too large", 5);
+        gameData.playerBattlefields.get(aiPlayerId).add(tooLarge);
+
+        when(gameQueryService.getEffectivePower(gameData, tooLarge)).thenReturn(5);
+
+        strategy.answer(powerLimitedChoice(List.of(tooLarge.getId()), 4), context());
+
+        assertChosen(List.of());
+    }
+
+    @Test
+    @DisplayName("Negative effective power expands a power-limited keep choice")
+    void negativePowerExpandsPowerLimitedKeepChoice() throws Exception {
+        Permanent negative = creature("Negative", -1);
+        Permanent fivePower = creature("Five power", 5);
+        gameData.playerBattlefields.get(aiPlayerId).addAll(List.of(negative, fivePower));
+
+        when(gameQueryService.getEffectivePower(gameData, negative)).thenReturn(-1);
+        when(gameQueryService.getEffectivePower(gameData, fivePower)).thenReturn(5);
+
+        strategy.answer(powerLimitedChoice(
+                List.of(negative.getId(), fivePower.getId()), 4), context());
+
+        assertChosen(List.of(negative.getId(), fivePower.getId()));
+    }
+
     private void assertChosen(List<UUID> expectedIds) throws Exception {
         ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
         verify(gameActions).answerInteraction(captor.capture());
@@ -171,10 +225,23 @@ class MultiPermanentChoiceAiStrategyTest {
 
     private static PendingInteraction.MultiPermanentChoice multiChoice(
             UUID playerId, List<UUID> validIds, int maxCount) {
+        return multiChoice(playerId, validIds, List.of(), maxCount);
+    }
+
+    private static PendingInteraction.MultiPermanentChoice multiChoice(
+            UUID playerId, List<UUID> validIds, List<UUID> validPlayerIds, int maxCount) {
         return new PendingInteraction.MultiPermanentChoice(
-                playerId, validIds, maxCount,
+                playerId, validIds, validPlayerIds, maxCount,
                 new MultiPermanentChoiceContext.ExileDamagedPlayerControls(),
                 "Choose permanents.");
+    }
+
+    private PendingInteraction.MultiPermanentChoice powerLimitedChoice(List<UUID> validIds, int maxPower) {
+        return new PendingInteraction.MultiPermanentChoice(
+                aiPlayerId, validIds, List.of(), validIds.size(),
+                new MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice(
+                        aiPlayerId, maxPower, List.of(), List.of(), "Power-limited choice"),
+                "Choose creatures to keep.");
     }
 
     private static Permanent creature(String name, int power) {

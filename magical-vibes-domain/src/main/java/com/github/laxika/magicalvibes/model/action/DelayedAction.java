@@ -45,6 +45,7 @@ public sealed interface DelayedAction permits
         RemoveCounterFromPermanentAtNextEndStep,
         DelayedUntapPermanents,
         DelayedCreateToken,
+        DelayedCreateTokenCopy,
         DelayedExileCreatedPermanentsAtEndStep,
         DelayedNontokenAttackTokenCreation,
         DelayedAttackTokenCreation,
@@ -105,5 +106,8 @@ public sealed interface DelayedAction permits
         ReboundAtNextUpkeep,
         PendingExileReturn,
         EachPlayerHandExileReturnAtNextEndStep,
-        TargetPlayerHandExileReturnAtNextTurnEndStep {
+        TargetPlayerHandExileReturnAtNextTurnEndStep,
+        DelayedDamageDoubling,
+        DelayedVehicleAttack,
+        UnattachEquipmentAtNextEndStep {
 }

@@ -51,7 +51,11 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (CreateTokenEffect) effect;
+        resolveForController(gameData, entry, (CreateTokenEffect) effect, entry.getControllerId());
+    }
+
+    public void resolveForController(GameData gameData, StackEntry entry, CreateTokenEffect e,
+                                     UUID controllerId) {
         // Source-relative amounts use the live source permanent when it is still on the
         // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
         Permanent source = entry.getSourcePermanentId() != null
@@ -60,13 +64,13 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        AmountContext context = AmountContext.forStackEntry(entry, source);
+        AmountContext context = AmountContext.forStackEntry(entry, source).withControllerId(controllerId);
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), context);
         if (amount <= 0) {
             return;
         }
         if (e.subtypes().contains(CardSubtype.CLUE)) {
-            triggerCollectionService.checkInvestigateTriggers(gameData, entry.getControllerId());
+            triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
         }
         int power = amountEvaluationService.evaluate(gameData, e.power(), context);
         int toughness = amountEvaluationService.evaluate(gameData, e.toughness(), context);
@@ -88,7 +92,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 toughness = pending.toughness();
             }
         } else {
-            Permanent crown = availableMirrormindCrown(gameData, entry.getControllerId());
+            Permanent crown = availableMirrormindCrown(gameData, controllerId);
             if (crown != null) {
                 gameData.tokenCreationReplacementUsedThisTurn.add(crown.getId());
                 gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
@@ -96,7 +100,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 gameData.resolvingMayEffectFromStack = true;
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         crown.getCard(),
-                        entry.getControllerId(),
+                        controllerId,
                         List.of(new CreateTokenCopyOfEquippedCreatureEffect(
                                 amount, false, false, crown.getId())),
                         crown.getCard().getName()
@@ -106,7 +110,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         }
 
         entry.getCreatedPermanentIds().addAll(
-                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), bindDeathReturn(e, entry), amount,
+                permanentControlSupport.applyCreateToken(gameData, controllerId, bindDeathReturn(e, entry), amount,
                         entry.getCard().getSetCode(), power, toughness));
     }
 

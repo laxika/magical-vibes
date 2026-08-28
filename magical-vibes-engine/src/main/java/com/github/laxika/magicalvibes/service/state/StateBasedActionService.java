@@ -185,6 +185,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
@@ -287,6 +288,12 @@ public class StateBasedActionService {
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
+                        gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
+                                gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                                entry.permanent().getId(),
+                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
                     }
                 }
             }
@@ -321,6 +328,8 @@ public class StateBasedActionService {
             gameData.simultaneousDyingControllers.clear();
             gameData.simultaneousDyingPermanents.clear();
             gameData.simultaneousDyingPermanentControllers.clear();
+            gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {

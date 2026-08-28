@@ -45,6 +45,7 @@ class HarmoniousArchonTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         List<Permanent> tokens = findPermanents(player1, "Human");
         assertThat(tokens).hasSize(2);

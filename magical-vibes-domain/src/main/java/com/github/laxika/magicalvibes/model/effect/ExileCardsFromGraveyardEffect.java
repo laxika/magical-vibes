@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                      once for each exiled card matching {@code conditionalFilter}
  * @param singleGraveyard whether all selected cards must come from one graveyard
  * @param trackWithSource whether the exiled cards are tracked with the source permanent
+ * @param ownGraveyardOnly whether ETB targeting is restricted to the controller's graveyard
  * @param exactTargets whether a spell-cast selection must contain exactly {@code maxTargets}
  *                     cards instead of allowing any number up to that limit
  * @param xTargetMultiplier multiplier applied to the paid X value when {@code maxTargets} is zero
@@ -38,6 +39,7 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                             boolean singleGraveyard,
                                             boolean conditionalLifePerMatchingCard,
                                             boolean trackWithSource,
+                                            boolean ownGraveyardOnly,
                                             boolean exactTargets,
                                             int xTargetMultiplier,
                                             boolean allGraveyardsForSpell)
@@ -51,31 +53,32 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain) {
         this(maxTargets, lifeGain, false, null, false, null, 0, 0,
-                false, false, false, false, 1, false);
+                false, false, false, false, false, 1, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean singleGraveyard) {
         this(maxTargets, lifeGain, false, null, false, null, 0, 0,
-                singleGraveyard, false, false, false, 1, false);
+                singleGraveyard, false, false, false, false, 1, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean singleGraveyard,
                                          boolean exactTargets) {
         this(maxTargets, lifeGain, false, null, false, null, 0, 0,
-                singleGraveyard, false, false, exactTargets, 1, false);
+                singleGraveyard, false, false, false, exactTargets, 1, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
                                          CardPredicate filter, boolean assignNoCombatDamage) {
         this(maxTargets, lifeGain, lifeGainPerExiledCard, filter, assignNoCombatDamage,
-                null, 0, 0, false, false, false, false, 1, false);
+                null, 0, 0, false, false, false, false, false, 1, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate conditionalFilter,
                                          int conditionalLifeLossEachOpponent, int conditionalLifeGain,
                                          boolean singleGraveyard) {
         this(maxTargets, 0, false, null, false, conditionalFilter,
-                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard, false, false, false, 1, false);
+                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard,
+                false, false, false, false, 1, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate conditionalFilter,
@@ -83,20 +86,27 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
                                          boolean singleGraveyard, boolean conditionalLifePerMatchingCard) {
         this(maxTargets, 0, false, null, false, conditionalFilter,
                 conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard,
-                conditionalLifePerMatchingCard, false, false, 1, false);
+                conditionalLifePerMatchingCard, false, false, false, 1, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, boolean singleGraveyard,
                                          boolean trackWithSource) {
         this(maxTargets, 0, false, null, false, null, 0, 0,
-                singleGraveyard, false, trackWithSource, false, 1, false);
+                singleGraveyard, false, trackWithSource, false, false, 1, false);
     }
 
     /** Creates a spell effect whose up-to target limit is the paid X multiplied by the factor. */
     public static ExileCardsFromGraveyardEffect upToXTimesCardsFromAllGraveyards(int xTargetMultiplier) {
         return new ExileCardsFromGraveyardEffect(
                 0, 0, false, null, false, null, 0, 0, false, false, false, false,
-                xTargetMultiplier, true);
+                false, xTargetMultiplier, true);
+    }
+
+    public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate filter,
+                                         boolean singleGraveyard, boolean trackWithSource,
+                                         boolean ownGraveyardOnly) {
+        this(maxTargets, 0, false, filter, false, null, 0, 0, singleGraveyard, false,
+                trackWithSource, ownGraveyardOnly, false, 1, false);
     }
 
     /** Whether the maximum target count is supplied by the ability's X value. */
@@ -126,5 +136,10 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
     @Override
     public boolean singleGraveyard() {
         return singleGraveyard;
+    }
+
+    @Override
+    public boolean graveyardChoiceExactTargets() {
+        return exactTargets;
     }
 }

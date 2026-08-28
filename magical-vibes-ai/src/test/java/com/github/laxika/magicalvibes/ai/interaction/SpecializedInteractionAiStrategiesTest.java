@@ -162,6 +162,22 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void craftMaterialChoiceChoosesTheRequiredCards() throws Exception {
+        Card first = card("First", "{1}");
+        Card second = card("Second", "{2}");
+
+        new CraftMaterialChoiceAiStrategy().answer(
+                new PendingInteraction.CraftMaterialChoice(
+                        aiPlayerId, UUID.randomUUID(), 0, 0, null, null, List.of(),
+                        java.util.Map.of(), List.of(first, second), 1, 1,
+                        "Choose an artifact to exile."),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first.getId())));
+    }
+
+    @Test
     void graveyardExileCostChoosesAnAffordableCardWhenTheAbilityPaysItsManaCost() throws Exception {
         UUID sourceId = UUID.randomUUID();
         Permanent source = mock(Permanent.class);
@@ -219,6 +235,34 @@ class SpecializedInteractionAiStrategiesTest {
                 context);
 
         assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(4));
+    }
+
+    @Test
+    void turnFaceUpXValueChoiceReservesFixedManaComponents() throws Exception {
+        ManaPool manaPool = new ManaPool();
+        manaPool.add(ManaColor.WHITE, 4);
+        gameData.playerManaPools.put(aiPlayerId, manaPool);
+
+        new TurnFaceUpXValueChoiceAiStrategy().answer(
+                new PendingInteraction.TurnFaceUpXValueChoice(
+                        aiPlayerId, UUID.randomUUID(), "{X}{W}", 7,
+                        "Choose X.", "Aurelia's Vindicator"),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(3));
+    }
+
+    @Test
+    void exiledCreatureCopyChoiceChoosesAnEligibleCard() throws Exception {
+        UUID first = UUID.randomUUID();
+
+        new ExiledCreatureCopyChoiceAiStrategy().answer(
+                new PendingInteraction.ExiledCreatureCopyChoice(
+                        aiPlayerId, UUID.randomUUID(), List.of(first, UUID.randomUUID())),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first)));
     }
 
     @Test
@@ -299,6 +343,39 @@ class SpecializedInteractionAiStrategiesTest {
 
         assertThat(capturedAnswer())
                 .isEqualTo(new InteractionAnswer.CardsChosen(List.of(expensive.getId())));
+    }
+
+    @Test
+    void targetedHandBattlefieldChoiceChoosesHighestManaValueEligibleCard() throws Exception {
+        UUID opponentId = UUID.randomUUID();
+        Card cheap = card("Cheap", "{1}");
+        Card expensive = card("Expensive", "{5}");
+        Card invalid = card("Invalid", "{9}");
+        gameData.playerHands.put(opponentId, new ArrayList<>(List.of(cheap, expensive, invalid)));
+
+        new TargetedHandBattlefieldChoiceAiStrategy().answer(
+                new PendingInteraction.TargetedHandBattlefieldChoice(
+                        aiPlayerId, opponentId, List.of(0, 1), "Choose a card.", false, false),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardIndexChosen(1));
+    }
+
+    @Test
+    void exileCardFromHandAndCreateTokenCopyChoosesHighestManaValueEligibleCard() throws Exception {
+        Card cheap = card("Cheap", "{1}");
+        Card expensive = card("Expensive", "{5}");
+        Card invalid = card("Invalid", "{9}");
+        gameData.playerHands.get(aiPlayerId).addAll(List.of(cheap, expensive, invalid));
+
+        new ExileCardFromHandAndCreateTokenCopyChoiceAiStrategy().answer(
+                new PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice(
+                        aiPlayerId, List.of(0, 1), "Choose a card.", null),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardIndexChosen(1));
     }
 
     @Test
@@ -403,6 +480,8 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.ExiledCardMayPlayChoice.class,
                 PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 PendingInteraction.TargetHandSpellCopyChoice.class,
+                PendingInteraction.TargetedHandBattlefieldChoice.class,
+                PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class,
                 PendingInteraction.MagesContestBidChoice.class,
                 PendingInteraction.TargetLibraryDestinationChoice.class,
                 PendingInteraction.VividCardChoice.class,

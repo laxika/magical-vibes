@@ -1686,7 +1686,8 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard) { t.cancelBehold(); return true; }
     if (t.selectingGraveyardCastDiscard) { t.cancelGraveyardCastDiscard(); return true; }
     if (t.selectingGraveyardCastExile) { t.cancelGraveyardCastExile(); return true; }
-    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard) { t.cancelAlternateCost(); return true; }
+    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard
+        || t.selectingAlternateCostGraveyardCards) { t.cancelAlternateCost(); return true; }
     if (t.selectingExileCounterCost) { t.cancelExileCounterCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
     if (t.convoking) { t.cancelConvoke(); return true; }
@@ -1717,7 +1718,8 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent
       || t.choosingBuyback || t.choosingBuybackSacrifice || t.choosingBuybackDiscard
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
-      || t.selectingAlternateCostHandCard || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost
+      || t.selectingAlternateCostHandCard || t.selectingAlternateCostGraveyardCards
+      || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost
       || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard
       || t.targetingGraveyard || t.targetingExile;
   }

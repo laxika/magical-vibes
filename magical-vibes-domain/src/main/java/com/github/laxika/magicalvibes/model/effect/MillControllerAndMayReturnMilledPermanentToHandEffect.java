@@ -8,19 +8,31 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * resolution for return to its owner's hand, up to {@code maxCount} cards. The offers are represented by
  * {@link ReturnMilledPermanentToHandEffect} marker effects.
  */
-public record MillControllerAndMayReturnMilledPermanentToHandEffect(int count, CardPredicate filter, int maxCount)
+public record MillControllerAndMayReturnMilledPermanentToHandEffect(
+        int count, CardPredicate filter, int maxCount,
+        CardPredicate bonusFilter, int bonusLife)
         implements CardEffect {
 
     public MillControllerAndMayReturnMilledPermanentToHandEffect(int count, CardPredicate filter) {
-        this(count, filter, 1);
+        this(count, filter, 1, null, 0);
     }
 
     public MillControllerAndMayReturnMilledPermanentToHandEffect(int count) {
-        this(count, new CardIsPermanentPredicate(), 1);
+        this(count, new CardIsPermanentPredicate(), 1, null, 0);
     }
 
     public MillControllerAndMayReturnMilledPermanentToHandEffect(int count, int maxCount) {
-        this(count, new CardIsPermanentPredicate(), maxCount);
+        this(count, new CardIsPermanentPredicate(), maxCount, null, 0);
+    }
+
+    public MillControllerAndMayReturnMilledPermanentToHandEffect(
+            int count, CardPredicate filter, CardPredicate bonusFilter, int bonusLife) {
+        this(count, filter, 1, bonusFilter, bonusLife);
+    }
+
+    public MillControllerAndMayReturnMilledPermanentToHandEffect(
+            int count, CardPredicate filter, int maxCount) {
+        this(count, filter, maxCount, null, 0);
     }
 
     public MillControllerAndMayReturnMilledPermanentToHandEffect {

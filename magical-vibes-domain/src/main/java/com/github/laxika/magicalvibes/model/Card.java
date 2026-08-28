@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -172,7 +173,7 @@ public class Card {
      */
     private int additionalLifeCostPerTarget;
     /**
-     * When true, the same permanent may be chosen for different target groups (CR 114.6c).
+     * When true, the same permanent may be chosen for different target groups (CR 601.2c).
      * By default, targets across groups must be distinct — matching the common MTG pattern
      * where separate "target" instances imply "another". Set this for cards whose oracle text
      * does NOT use "another" and whose target filters can overlap (e.g. "target creature" +
@@ -192,7 +193,7 @@ public class Card {
     @Getter(AccessLevel.NONE)
     private final List<SpellTarget> spellTargets = new ArrayList<>();
     @Getter(AccessLevel.NONE)
-    private final Map<CardEffect, Integer> effectTargetIndexMap = new IdentityHashMap<>();
+    private final Map<CardEffect, List<Integer>> effectTargetIndexMap = new IdentityHashMap<>();
     // Runtime override set by modal spells (ChooseOneEffect) at cast time — only ever written on
     // an unfrozen runtime copy (see SpellCastingService's modal copy-on-cast)
     private TargetFilter castTimeTargetFilter;
@@ -203,6 +204,8 @@ public class Card {
     private List<CastingOption> castingOptions = new ArrayList<>();
     /** Morph's face-up cost; the face-down cast uses the standard {3} alternate cost. */
     private String morphCost;
+    /** Optional dynamic generic reduction applied to the morph/disguise face-up cost. */
+    private DynamicAmount morphCostReduction;
     /** Optional card-reveal component of a morph face-up cost. */
     private RevealCardsFromHandCastingCost morphRevealCost;
     /** Optional permanent-return component of a morph face-up cost. */
@@ -278,6 +281,14 @@ public class Card {
         }
     }
 
+    /** Creates an immutable synthetic card used only to identify a runtime stack entry. */
+    public static Card namedRuntimePlaceholder(String name) {
+        Card card = new Card();
+        card.name = name;
+        card.freeze();
+        return card;
+    }
+
     /**
      * Copy constructor backing {@link #createRuntimeCopy()}. Copies every field, including the
      * id, but not {@link #frozen} — the copy starts mutable. Collection fields are copied into
@@ -327,13 +338,15 @@ public class Card {
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
-        this.effectTargetIndexMap.putAll(source.effectTargetIndexMap);
+        source.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                this.effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         this.castTimeTargetFilter = source.castTimeTargetFilter;
         this.watermark = source.watermark;
         this.backFaceCard = source.backFaceCard;
         this.modalDoubleFaced = source.modalDoubleFaced;
         this.castingOptions = new ArrayList<>(source.castingOptions);
         this.morphCost = source.morphCost;
+        this.morphCostReduction = source.morphCostReduction;
         this.morphRevealCost = source.morphRevealCost;
         this.morphAdditionalCost = source.morphAdditionalCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
@@ -408,11 +421,13 @@ public class Card {
         this.spellTargets.clear();
         this.spellTargets.addAll(face.spellTargets);
         this.effectTargetIndexMap.clear();
-        this.effectTargetIndexMap.putAll(face.effectTargetIndexMap);
+        face.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                this.effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         this.castTimeTargetFilter = face.castTimeTargetFilter;
         this.watermark = face.watermark;
         this.castingOptions = new ArrayList<>(face.castingOptions);
         this.morphCost = face.morphCost;
+        this.morphCostReduction = face.morphCostReduction;
         this.morphRevealCost = face.morphRevealCost;
         this.spellCastTimingRestriction = face.spellCastTimingRestriction;
         this.castCondition = face.castCondition;
@@ -615,7 +630,7 @@ public class Card {
             return;
         }
         assertMutable();
-        effectTargetIndexMap.put(effect, targetIndex);
+        effectTargetIndexMap.computeIfAbsent(effect, ignored -> new ArrayList<>()).add(targetIndex);
         switch (effect) {
             case ConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case ConditionalReplacementEffect e -> {
@@ -623,6 +638,7 @@ public class Card {
                 registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
             }
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case MayPayManaEffect e -> {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
@@ -684,8 +700,9 @@ public class Card {
                     sourceTarget.getDynamicMaxTargets());
             spellTargets.add(target);
         }
-        source.effectTargetIndexMap.forEach((effect, targetIndex) ->
-                registerEffectTargetIndex(effect, targetIndexOffset + targetIndex));
+        source.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                targetIndices.forEach(targetIndex ->
+                        registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
     }
 
     /**
@@ -811,7 +828,29 @@ public class Card {
      * Returns the target index for the given effect instance, or -1 if not mapped.
      */
     public int getEffectTargetIndex(CardEffect effect) {
-        return effectTargetIndexMap.getOrDefault(effect, -1);
+        return getEffectTargetIndex(effect, 0);
+    }
+
+    /**
+     * Returns the target index for a particular occurrence of an effect instance. Repeatable modal
+     * spells can insert the same immutable effect object more than once, with a distinct target
+     * group for each selection.
+     */
+    public int getEffectTargetIndex(CardEffect effect, int occurrence) {
+        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        if (targetIndices == null || occurrence < 0 || occurrence >= targetIndices.size()) {
+            return -1;
+        }
+        return targetIndices.get(occurrence);
+    }
+
+    public boolean hasEffectTargetIndex(CardEffect effect) {
+        return effectTargetIndexMap.containsKey(effect);
+    }
+
+    public boolean isEffectBoundToTargetGroup(CardEffect effect, int groupIndex) {
+        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        return targetIndices != null && targetIndices.contains(groupIndex);
     }
 
     /**
@@ -821,16 +860,15 @@ public class Card {
      * second group); such a group is never a gated-out trigger group.
      */
     public boolean bindsEffectToTargetGroup(int groupIndex) {
-        return effectTargetIndexMap.containsValue(groupIndex);
+        return effectTargetIndexMap.values().stream().anyMatch(indices -> indices.contains(groupIndex));
     }
 
     /**
      * Returns true if the target group at the given expanded position allows player targets.
      * Used by the valid target service to determine per-position player targeting in multi-target spells.
      *
-     * <p>Bound effects win when their {@code targetSpec()} includes players. Bare positional groups
-     * (no bound effect — e.g. Injury's creature + player/planeswalker slots feeding
-     * {@code DealDamageToEachTargetEffect}) fall back to the group's declared filter.
+     * <p>An explicit group filter defines the legal target kind. Only an unfiltered group inherits
+     * player targeting from the effects bound to it.
      */
     public boolean doesPositionAllowPlayerTargets(int expandedPosition) {
         if (spellTargets.isEmpty()) return false;
@@ -838,15 +876,19 @@ public class Card {
         for (SpellTarget st : spellTargets) {
             cumulative += st.getMaxTargets();
             if (expandedPosition < cumulative) {
+                TargetFilter filter = st.getFilter();
+                if (filter != null) {
+                    return filter instanceof PlayerPredicateTargetFilter
+                            || filter instanceof AnyTargetPredicateTargetFilter;
+                }
                 int groupIndex = st.getIndex();
-                for (Map.Entry<CardEffect, Integer> entry : effectTargetIndexMap.entrySet()) {
-                    if (entry.getValue() == groupIndex && entry.getKey().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                for (Map.Entry<CardEffect, List<Integer>> entry : effectTargetIndexMap.entrySet()) {
+                    if (entry.getValue().contains(groupIndex)
+                            && entry.getKey().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         return true;
                     }
                 }
-                TargetFilter filter = st.getFilter();
-                return filter instanceof PlayerPredicateTargetFilter
-                        || filter instanceof AnyTargetPredicateTargetFilter;
+                return false;
             }
         }
         return false;
@@ -862,7 +904,8 @@ public class Card {
                     st.getKickedMinTargets(), st.getKickedMaxTargets(), st.getIndex(), st.isXScaled(),
                     st.getDynamicMinTargets(), st.getDynamicMaxTargets()));
         }
-        effectTargetIndexMap.putAll(original.effectTargetIndexMap);
+        original.effectTargetIndexMap.forEach((effect, targetIndices) ->
+                effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         castTimeTargetFilter = original.castTimeTargetFilter;
     }
 
@@ -931,6 +974,16 @@ public class Card {
     public void addMorph(String morphCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
+        this.morphRevealCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph/disguise with a dynamic generic reduction to its face-up cost. */
+    public void addMorph(String morphCost, DynamicAmount morphCostReduction) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphCostReduction = morphCostReduction;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
@@ -940,6 +993,7 @@ public class Card {
     public void addMorph(String morphCost, CardPredicate revealPredicate, String revealLabel) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(
@@ -960,6 +1014,7 @@ public class Card {
     public void addMorphWithRevealCost(CardPredicate revealPredicate, String revealLabel) {
         assertMutable();
         this.morphCost = "{0}";
+        this.morphCostReduction = null;
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
         this.morphAdditionalCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
@@ -1234,6 +1289,7 @@ public class Card {
      * Returns 0 if the card has no chapter abilities.
      */
     public int getSagaFinalChapter() {
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_V).isEmpty()) return 5;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_II).isEmpty()) return 2;

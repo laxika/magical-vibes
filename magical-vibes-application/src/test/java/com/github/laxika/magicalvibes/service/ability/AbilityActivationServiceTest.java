@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
@@ -54,6 +56,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,6 +108,7 @@ class AbilityActivationServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private ExileService exileService;
     @Mock private AmountEvaluationService amountEvaluationService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
@@ -1693,6 +1697,46 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("Returns false when craft materials do not cover every required subtype")
+        void falseWhenCraftMaterialsDoNotCoverRequiredSubtypes() {
+            Card card = createArtifactWithCraftAbility();
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerGraveyards.get(player1Id).addAll(List.of(
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.DINOSAUR)));
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns true when craft materials cover every required subtype")
+        void trueWhenCraftMaterialsCoverRequiredSubtypes() {
+            Card card = createArtifactWithCraftAbility();
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerGraveyards.get(player1Id).addAll(List.of(
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.MERFOLK),
+                    createCraftMaterial(CardSubtype.PIRATE),
+                    createCraftMaterial(CardSubtype.VAMPIRE)));
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isTrue();
+        }
+
+        @Test
         @DisplayName("Returns false for an invalid ability index")
         void falseForInvalidAbilityIndex() {
             Card card = createArtifactWithTapAbility("Lux Cannon");
@@ -2010,6 +2054,30 @@ class AbilityActivationServiceTest {
         card.addActivatedAbility(new ActivatedAbility(
                 false, manaCost, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "Pay mana to add counter"
         ));
+        return card;
+    }
+
+    private Card createArtifactWithCraftAbility() {
+        Card card = new Card();
+        card.setName("Test Craft Artifact");
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost("{0}");
+        card.addActivatedAbility(new ActivatedAbility(
+                false,
+                null,
+                List.of(CraftMaterialCost.withRequiredSubtypes(
+                        CardSubtype.DINOSAUR, CardSubtype.MERFOLK,
+                        CardSubtype.PIRATE, CardSubtype.VAMPIRE)),
+                "Test craft ability"
+        ));
+        return card;
+    }
+
+    private Card createCraftMaterial(CardSubtype subtype) {
+        Card card = new Card();
+        card.setName("Test " + subtype.name());
+        card.setType(CardType.CREATURE);
+        card.setSubtypes(List.of(subtype));
         return card;
     }
 

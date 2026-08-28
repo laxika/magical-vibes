@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -300,5 +301,21 @@ class EtbEffectResolverTest {
 
         gameData.playersDeclaredAttackersThisTurn.add(controllerId);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+    }
+
+    @Test
+    @DisplayName("Collect-evidence gate keeps the ETB effect only when evidence was paid")
+    void collectEvidenceGate() {
+        ConditionalEffect effect = new ConditionalEffect(
+                new CollectEvidenceCostPaid(), new DrawCardEffect(1));
+        Permanent source = new Permanent(card);
+        EtbEffectContext sourceContext = new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, source);
+
+        source.setCollectEvidenceCostPaid(true);
+        assertThat(resolver.resolve(sourceContext, effect)).isSameAs(effect);
+
+        source.setCollectEvidenceCostPaid(false);
+        assertThat(resolver.resolve(sourceContext, effect)).isNull();
     }
 }

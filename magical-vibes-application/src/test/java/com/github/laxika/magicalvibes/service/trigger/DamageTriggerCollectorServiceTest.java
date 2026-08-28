@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -48,6 +50,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -90,6 +93,9 @@ class DamageTriggerCollectorServiceTest {
 
     @Mock
     private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+
+    @Mock
+    private TapUntapSupport tapUntapSupport;
 
     @InjectMocks
     private DamageTriggerCollectorService sut;
@@ -358,6 +364,25 @@ class DamageTriggerCollectorServiceTest {
     class CreateTokensOnEnchantedCreatureDamage {
 
         @Test
+        @DisplayName("queues a self-sacrifice trigger for damage to an enchanted creature")
+        void queuesSelfSacrificeForEnchantedCreatureDamage() {
+            Permanent aura = createPermanent("Sleep Magic");
+            Permanent creature = createPermanent("Hill Giant");
+            var effect = new SacrificeSelfEffect();
+            var ctx = new TriggerContext.DamageToCreature(creature, 2, player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
         @DisplayName("queues a generic effect and records damage")
         void queuesGenericEffect() {
             Permanent aura = createPermanent("Soul Link");
@@ -623,6 +648,26 @@ class DamageTriggerCollectorServiceTest {
                     any(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class),
                     eq(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT),
                     any(), any());
+        }
+
+        @Test
+        @DisplayName("untaps the trigger permanent when the effect requests it")
+        void untapsWhenRequested() {
+            Permanent triggerPerm = createPermanent("Contested Game Ball");
+            Permanent sourcePerm = createPermanent("Grizzly Bears");
+            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true, true);
+            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
+
+            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
+            when(gameQueryService.isCreature(gd, sourcePerm)).thenReturn(true);
+            when(gameQueryService.findPermanentController(gd, sourcePerm.getId())).thenReturn(player2Id);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(tapUntapSupport).untapPermanent(gd, triggerPerm);
         }
 
         @Test
@@ -1002,6 +1047,51 @@ class DamageTriggerCollectorServiceTest {
         verify(conditionEvaluationService).isMet(eq(gd), eq(condition), contextCaptor.capture());
         assertThat(contextCaptor.getValue().sourcePermanent()).isNull();
         assertThat(contextCaptor.getValue().sourceCard()).isSameAs(source.getCard());
+    }
+
+    @Nested
+    @DisplayName("ON_DEALT_DAMAGE — ConditionalEffect")
+    class DealtDamageConditional {
+
+        @Test
+        @DisplayName("queues the trigger when the damage event meets the threshold")
+        void queuesWhenDamageMeetsThreshold() {
+            Permanent damagedCreature = createPermanent("Innocent Bystander");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition, new DrawCardEffect());
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(3)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect), EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("does not queue the trigger when the damage event is below the threshold")
+        void skipsWhenDamageIsBelowThreshold() {
+            Permanent damagedCreature = createPermanent("Innocent Bystander");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition, new DrawCardEffect());
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(2)))
+                    .thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect), EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     // ===== ON_DEALT_DAMAGE — default handler =====

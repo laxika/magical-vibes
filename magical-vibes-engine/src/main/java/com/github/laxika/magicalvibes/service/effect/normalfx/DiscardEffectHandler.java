@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,8 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         // Clear the last-discarded snapshot so a trailing LastDiscardedCardManaValue on the same
         // spell reads this discard only, and stays 0 when nothing is discarded (empty hand).
         gameData.lastDiscardedCardManaValue = 0;
+        gameData.greatestDiscardedCardManaValue = 0;
+        gameData.lastDiscardedCardTypes = Set.of();
 
         // Source-relative amounts (e.g. CountersOnSource for Shrine of Limitless Power) use the
         // live source permanent when still on the battlefield, else the last-known snapshot

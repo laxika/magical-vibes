@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
@@ -234,6 +236,18 @@ public class AsEntersInteractionService {
             return;
         }
 
+        PowerToughnessFormChoiceEffect powerToughnessChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(PowerToughnessFormChoiceEffect.class::isInstance)
+                .map(PowerToughnessFormChoiceEffect.class::cast)
+                .findFirst().orElse(null);
+        if (powerToughnessChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginPowerToughnessFormChoice(gameData, controllerId, justEntered.getId(),
+                    powerToughnessChoice.forms(), false);
+            return;
+        }
+
         ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseColorEffect)
                 .map(e -> (ChooseColorEffect) e)
@@ -276,16 +290,15 @@ public class AsEntersInteractionService {
 
         // "As this creature enters, choose a creature type" — a choice made during entry
         // (CR 614.1c), before ETB triggers; the choice handler resumes them once made.
-        ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
-                .map(ChooseSubtypeOnEnterEffect.class::cast)
+        SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
         if (subtypeChoice != null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
-                    subtypeChoice.allowedSubtypes());
+            playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(), subtypeChoice);
             return;
         }
 

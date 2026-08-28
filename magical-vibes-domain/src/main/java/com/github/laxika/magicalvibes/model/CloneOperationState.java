@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ public class CloneOperationState {
     public boolean entersTapped;
     public boolean landPlay;
     public int xValue;
+    public CardPredicate copyCardFilter;
     public boolean graveyardCopyChoicePending;
     public boolean exileCopiedGraveyardCardAfterEntry;
 }

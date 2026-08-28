@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * {@link CardPileDisposition#HAND} sends the unchosen pile to the controller's graveyard (Fact or
  * Fiction; the enters trigger on Unesh, Criosphinx Sovereign), while
  * {@link CardPileDisposition#HAND_WITH_FACE_DOWN_PILE} supports Curator of Destinies and Fortune's
- * Favor by keeping one pile face down and using the same final destinations, and
+ * Favor by keeping one pile face down and using the same final destinations,
+ * {@link CardPileDisposition#HAND_AND_THOPTER} adds Intrude on the Mind's Thopter after the
+ * graveyard pile is moved, and
  * {@link CardPileDisposition#HAND_AND_BOTTOM} sends it to the bottom of their library in any order
  * (Jace, Architect of Thought's −2).
  *

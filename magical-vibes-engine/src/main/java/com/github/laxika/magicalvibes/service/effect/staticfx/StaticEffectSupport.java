@@ -85,6 +85,10 @@ public class StaticEffectSupport {
             CardSubtype.BOLAS
     );
 
+    static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
+    }
+
     /**
      * Returns true if the target matches the given creature-centric scope.
      * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, and OWN_PERMANENTS.
@@ -164,6 +168,7 @@ public class StaticEffectSupport {
     }
 
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
+        if (permanent.isFaceDown()) return true;
         if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;

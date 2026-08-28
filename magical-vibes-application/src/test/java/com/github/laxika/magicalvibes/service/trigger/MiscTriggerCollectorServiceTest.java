@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -179,6 +181,39 @@ class MiscTriggerCollectorServiceTest {
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("exactly-one life-loss sequence trigger queues once")
+    void exactlyOneLifeLossSequenceTriggerQueuesOnce() {
+        Permanent perm = createPermanent("Ob Nixilis, Captive Kingpin");
+        var effect = SequenceEffect.of(
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new ExileTopCardsMayPlayUntilNextEndStepEffect(1));
+
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_OPPONENT_LOSES_LIFE,
+                effect,
+                new TriggerContext.LifeLoss(player2Id, 1))).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("exactly-one life-loss sequence trigger ignores larger losses")
+    void exactlyOneLifeLossSequenceTriggerIgnoresLargerLosses() {
+        Permanent perm = createPermanent("Ob Nixilis, Captive Kingpin");
+        var effect = SequenceEffect.of(
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new ExileTopCardsMayPlayUntilNextEndStepEffect(1));
+
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_OPPONENT_LOSES_LIFE,
+                effect,
+                new TriggerContext.LifeLoss(player2Id, 2))).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -436,7 +471,7 @@ class MiscTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AllySacrificed(player1Id, clue);
 
             when(predicateEvaluationService.matchesPermanentPredicate(
-                    any(GameData.class), any(Permanent.class), any(PermanentPredicate.class)))
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(

@@ -137,7 +137,7 @@ public class ETBTokenTargetService {
             TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
                     gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
                     pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
-                    pending.triggeringPermanentId() == null
+                    pending.sourcePermanentId() == null
                             ? null
                             : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
             List<UUID> validPlayerTargets = targets.validTargets().stream()
@@ -215,7 +215,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -232,7 +232,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -310,7 +310,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -421,6 +421,7 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        etbEntry.setTriggeringCardId(pending.triggeringCardId());
         if (pending.sourcePermanentId() != null) {
             etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
             Permanent sourcePermanent = gameQueryService.findPermanentById(

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -183,6 +184,27 @@ class GameSimulatorTest {
         List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
 
         assertThat(actions).noneMatch(SimulationAction.PlayCard.class::isInstance);
+    }
+
+    @Test
+    @DisplayName("Open the Way is enumerated with X capped at the number of players")
+    void enumeratesOpenTheWayWithPlayerCountCap() {
+        OpenTheWay openTheWay = new OpenTheWay();
+        harness.setHand(player1, List.of(openTheWay));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        SimulationAction.PlayCard cast = actionsForHandCard(0).getFirst();
+
+        assertThat(cast.xValue()).isEqualTo(2);
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(), cast);
+
+        assertThat(copy.stack).hasSize(1);
+        assertThat(copy.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
     @Test

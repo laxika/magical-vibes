@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLa
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
@@ -33,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandO
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapLandsThatCouldProduceSameManaAsTappedLandEffect;
@@ -146,8 +149,10 @@ public class LandTapTriggerCollectorService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change."));
             } else {
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, tappingPlayerId);
                 gameData.playerLifeTotals.put(tappingPlayerId,
-                        gameQueryService.lifeAfterDamage(gameData, tappingPlayerId, effectiveDamage));
+                        gameQueryService.lifeAfterDamage(gameData, tappingPlayerId, lifeLoss));
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage,
@@ -469,6 +474,41 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = AddManaWhenLandOfColorTappedForManaEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddManaWhenColorLandTapped(TriggerMatchContext match,
+            AddManaWhenLandOfColorTappedForManaEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
+
+        var gameData = match.gameData();
+        Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
+        if (tappedLand == null || !landProducesManaColor(gameData, tappedLand, trigger.color())) return false;
+
+        gameData.playerManaPools.get(lt.tappingPlayerId()).add(trigger.color());
+        gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + gameData.playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana."));
+        return true;
+    }
+
+    private boolean landProducesManaColor(com.github.laxika.magicalvibes.model.GameData gameData,
+                                           Permanent land, ManaColor color) {
+        boolean printedAbilityProducesColor = land.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                .filter(ManaProducingEffect.class::isInstance)
+                .map(ManaProducingEffect.class::cast)
+                .anyMatch(mana -> mana.estimatedManaColor() == color);
+        if (printedAbilityProducesColor) return true;
+
+        return gameQueryService.computeStaticBonus(gameData, land).grantedActivatedAbilities().stream()
+                .filter(ActivatedAbility::isRequiresTap)
+                .filter(ActivatedAbility::isManaAbility)
+                .flatMap(ability -> ability.getEffects().stream())
+                .filter(ManaProducingEffect.class::isInstance)
+                .map(ManaProducingEffect.class::cast)
+                .anyMatch(mana -> mana.estimatedManaColor() == color);
+    }
+
     @CollectsTrigger(value = AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect.class,
             slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddRestrictedManaWhenSubtypeLandTapped(TriggerMatchContext match,
@@ -497,12 +537,20 @@ public class LandTapTriggerCollectorService {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
-        // Null when another Storm Cauldron's trigger already returned this land to hand.
         if (tappedLand == null) return false;
-        if (!permanentRemovalService.removePermanentToHand(match.gameData(), tappedLand)) return false;
 
-        gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
-                " triggers — ", tappedLand.getCard(), " is returned to its owner's hand."));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(ReturnToHandEffect.triggering())),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentId(tappedLand.getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

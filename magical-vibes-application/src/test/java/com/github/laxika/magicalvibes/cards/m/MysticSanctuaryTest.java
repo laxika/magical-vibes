@@ -66,7 +66,8 @@ class MysticSanctuaryTest extends BaseCardTest {
         playSanctuary();
 
         harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
-        harness.activateAbility(player1, 0, 0, null, null);
+        int sanctuaryIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findSanctuary(player1));
+        harness.activateAbility(player1, sanctuaryIndex, 0, null, null);
 
         assertThat(findSanctuary(player1).isTapped()).isTrue();
         harness.passBothPriorities();

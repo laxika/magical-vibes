@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         return TokenCopySupport.buildTokenCopyCard(sourceCard, effect);
@@ -34,7 +38,9 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
         List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
         if (targetIds == null) {
-            targetIds = !entry.getTargetCardIds().isEmpty()
+            targetIds = !entry.getTargetIds().isEmpty()
+                    ? entry.getTargetIds()
+                    : !entry.getTargetCardIds().isEmpty()
                     ? entry.getTargetCardIds()
                     : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()
@@ -42,13 +48,26 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             targetIds = List.of(entry.getTargetId());
         }
 
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int copyCount = amountEvaluationService.evaluate(
+                gameData, copyEffect.amount(), AmountContext.forStackEntry(entry, sourcePermanent));
+        if (copyCount <= 0) {
+            return;
+        }
+
         for (UUID targetId : targetIds) {
-            resolveForTarget(gameData, entry, copyEffect, targetId);
+            resolveForTarget(gameData, entry, copyEffect, targetId, copyCount);
         }
     }
 
     void resolveForTarget(GameData gameData, StackEntry entry,
                           CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId) {
+        resolveForTarget(gameData, entry, effect, targetId, 1);
+    }
+
+    void resolveForTarget(GameData gameData, StackEntry entry,
+                          CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId, int copyCount) {
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
         if (targetPermanent == null) {
             return;
@@ -62,7 +81,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 tokenControllerId = targetControllerId;
             }
         }
-        tokenCopySupport.createTokenCopies(gameData, entry, List.of(targetPermanent.getCard()),
+        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, targetPermanent.getCard()),
                 sourcePermanent, tokenControllerId, effect);
     }
 }

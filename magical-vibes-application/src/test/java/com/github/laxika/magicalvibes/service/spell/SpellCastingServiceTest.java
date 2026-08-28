@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -162,6 +163,9 @@ class SpellCastingServiceTest {
     private LifeSupport lifeSupport;
 
     @Mock
+    private LandCopyOnEnterService landCopyOnEnterService;
+
+    @Mock
     private PlayerInputService playerInputService;
 
     private SpellCastingService svc;
@@ -174,6 +178,7 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
         svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
@@ -183,7 +188,7 @@ class SpellCastingServiceTest {
                 permanentRemovalService, triggerCollectionService,
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
-                mutationCoordinator, stateBasedActionService, lifeSupport, playerInputService);
+                mutationCoordinator, stateBasedActionService, lifeSupport, landCopyOnEnterService, playerInputService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -1218,7 +1223,7 @@ class SpellCastingServiceTest {
             // Card not playable without convoke, but playable with 1 convoke creature
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
-            when(castingCostService.getCastCostModifier(gd, player1Id, convokeCard, 0)).thenReturn(0);
+            when(castingCostService.getCastCostModifier(gd, player1Id, convokeCard, 0, null, false)).thenReturn(0);
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null, null, List.of(helperId), false, null);
@@ -1256,7 +1261,7 @@ class SpellCastingServiceTest {
             addMana(player1Id, ManaColor.BLUE, 5);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
-            when(castingCostService.getCastCostModifier(gd, player1Id, improviseCard, 0)).thenReturn(0);
+            when(castingCostService.getCastCostModifier(gd, player1Id, improviseCard, 0, null, false)).thenReturn(0);
             when(gameQueryService.isArtifact(eq(gd), any(Permanent.class))).thenReturn(true);
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
 

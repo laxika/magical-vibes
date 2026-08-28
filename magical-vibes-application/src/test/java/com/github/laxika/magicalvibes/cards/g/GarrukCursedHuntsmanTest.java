@@ -55,6 +55,8 @@ class GarrukCursedHuntsmanTest extends BaseCardTest {
         Permanent garruk = addReadyGarruk(player1, new GarrukCursedHuntsman(), 5);
         Permanent ownOtherGarruk = addReadyGarruk(player1, new GarrukApexPredator(), 3);
         Permanent opponentGarruk = addReadyGarruk(player2, new GarrukApexPredator(), 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();

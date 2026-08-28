@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -71,6 +72,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
@@ -97,6 +99,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
@@ -108,6 +111,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControl
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
@@ -211,6 +215,15 @@ class PredicateEvaluationServiceTest {
         card.setName(name);
         card.setType(CardType.ARTIFACT);
         card.setManaCost("{1}");
+        return card;
+    }
+
+    private static Card createPlaneswalker(String name, String manaCost) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.PLANESWALKER);
+        card.setManaCost(manaCost);
+        card.setLoyalty(3);
         return card;
     }
 
@@ -325,6 +338,25 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesCardPredicate(eligible, predicate, sourceCard.getId(), gd, player1Id))
                     .isTrue();
             assertThat(evaluator.matchesCardPredicate(tooExpensive, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueLessThanSourcePowerPredicate is strict")
+        void cardManaValueLessThanSourcePowerPredicateIsStrict() {
+            Card sourceCard = createCreature("Narset", 3, 4, CardColor.WHITE);
+            addPermanent(player1Id, sourceCard);
+
+            Card belowPower = createCreature("Below Power", 2, 2, CardColor.BLUE);
+            belowPower.setManaCost("{2}");
+            Card equalToPower = createCreature("Equal to Power", 3, 3, CardColor.BLUE);
+            equalToPower.setManaCost("{3}");
+            CardManaValueLessThanSourcePowerPredicate predicate =
+                    new CardManaValueLessThanSourcePowerPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(belowPower, predicate, sourceCard.getId(), gd, player1Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(equalToPower, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
         }
 
@@ -681,6 +713,23 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createLand("Forest"));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsCreaturePredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsSuspectedPredicate matches only suspected permanents")
+        void suspectedPredicateMatchesOnlySuspectedPermanents() {
+            Permanent suspected = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Skeleton", 2, 1, CardColor.BLACK,
+                            List.of(CardSubtype.SKELETON)));
+            Permanent unsuspected = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Skeleton", 2, 1, CardColor.BLACK,
+                            List.of(CardSubtype.SKELETON)));
+            suspected.setSuspected(true);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, suspected,
+                    new PermanentIsSuspectedPredicate())).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, unsuspected,
+                    new PermanentIsSuspectedPredicate())).isFalse();
         }
 
         @Test
@@ -1197,6 +1246,23 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(1))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentToughnessGreaterThanPowerPredicate matches only strict toughness superiority")
+        void toughnessGreaterThanPowerPredicateMatchesStrictly() {
+            Permanent greaterToughness = addPermanent(player1Id,
+                    createCreature("Giant Spider", 2, 4, CardColor.GREEN));
+            Permanent equalPowerToughness = addPermanent(player1Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent greaterPower = addPermanent(player1Id,
+                    createCreature("Goblin Piker", 2, 1, CardColor.RED));
+
+            PermanentToughnessGreaterThanPowerPredicate predicate =
+                    new PermanentToughnessGreaterThanPowerPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, greaterToughness, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, equalPowerToughness, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, greaterPower, predicate)).isFalse();
         }
 
         @Test
@@ -1950,6 +2016,21 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("controller predicate accounts for current permanent control")
+        void controllerPredicateAccountsForCurrentControl() {
+            Permanent controlled = addPermanent(player1Id,
+                    createCreature("Controlled Creature", 2, 2, CardColor.GREEN));
+            Permanent opponentControlled = addPermanent(player2Id,
+                    createCreature("Opponent Controlled Creature", 2, 2, CardColor.GREEN));
+            FilterContext sourceContext = ctx().withSourceControllerId(player1Id);
+
+            PermanentControlledBySourceControllerPredicate controllerPredicate =
+                    new PermanentControlledBySourceControllerPredicate();
+            assertThat(evaluator.matchesStaticFilter(controlled, controllerPredicate, sourceContext)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(opponentControlled, controllerPredicate, sourceContext)).isFalse();
+        }
+
+        @Test
         @DisplayName("the source-permanent predicate uses the source snapshot or explicit source ID")
         void sourcePermanentUsesContextIdentity() {
             Permanent source = addPermanent(player1Id, createEnchantment("Sterling Grove"));
@@ -2070,6 +2151,23 @@ class PredicateEvaluationServiceTest {
                     new PermanentHasGreatestManaValueAmongAllCreaturesPredicate();
             assertThat(evaluator.matchesStaticFilter(big, greatest, ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(small, greatest, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("greatest mana value compares a controller's creatures and planeswalkers as one group")
+        void greatestManaValueCombinesControllerCreaturesAndPlaneswalkers() {
+            Permanent smallCreature = addPermanent(player2Id,
+                    createCreature("Small Creature", 2, 2, CardColor.GREEN));
+            Permanent planeswalker = addPermanent(player2Id,
+                    createPlaneswalker("Planeswalker", "{4}"));
+            addPermanent(player1Id, createCreature("Unrelated Large Creature", 6, 6, CardColor.RED));
+
+            PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate greatest =
+                    new PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, planeswalker, greatest)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, smallCreature, greatest)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(planeswalker, greatest, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(smallCreature, greatest, ctx())).isFalse();
         }
 
         @Test

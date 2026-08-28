@@ -86,10 +86,13 @@ public record CardView(
         int modalChoicesRequired,
         int modalChoicesMax,
         boolean modalOptional,
+        boolean modalModesMayRepeat,
         List<ModalOptionView> modalOptions,
         int exileCastCounterCost,
         boolean additionalChooseCreatureType,
         List<String> additionalCreatureTypeChoices,
+        boolean alternateCostCollectEvidence,
+        int alternateCostCollectEvidenceAmount,
         CardView prepareSpell
 ) {
 }

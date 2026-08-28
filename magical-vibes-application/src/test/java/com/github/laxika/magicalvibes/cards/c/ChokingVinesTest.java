@@ -84,6 +84,22 @@ class ChokingVinesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("X=2 requires exactly two attacking creature targets")
+    void requiresExactlyXTargets() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackers(List.of(0));
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        giveSpell(3);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player2, 0, 2, List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must target between 2 and 2 targets");
+    }
+
+    @Test
     @DisplayName("Cannot be cast outside the declare blockers step")
     void cannotCastOutsideDeclareBlockers() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());

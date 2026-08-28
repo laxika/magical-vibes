@@ -16,12 +16,17 @@ public enum ManaSpendRestriction {
     /** No rider — "Add N mana of any one color" lands in the ordinary pool (Birds of Paradise). */
     NONE,
 
+    /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
+    SPELL_ONLY,
+
     /** Spendable only to pay activated ability costs (Thran Turbine). */
     ABILITIES,
 
     /** Choose from the colors of the source permanent's imprinted card (Chrome Mox). */
     IMPRINTED_CARD_COLORS,
 
+    /** Choose from the colors of cards exiled with the source permanent (Pit of Offerings). */
+    EXILED_CARD_COLORS,
     /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
     SOURCE_PERMANENT_COLORS,
 
@@ -57,6 +62,9 @@ public enum ManaSpendRestriction {
 
     /** Spendable only to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
     CREATURE_SPELLS_OR_ABILITIES,
+
+    /** Spendable only to activate abilities of creatures, with colors chosen from the source creature. */
+    CREATURE_COLORS_ABILITIES,
 
     /**
      * Spendable only to cast creature spells of the type chosen as the source entered

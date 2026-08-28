@@ -142,8 +142,7 @@ public class AttackLegalityService {
         // stored as floating effects affecting this creature.
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                if (floating.effect() instanceof NoDefenderAttackPermissionEffect permission
-                        && permission.grantsCarrierAttackAsThoughNoDefender()
+                if (floating.effect() instanceof NoDefenderAttackPermissionEffect
                         && creature.getId().equals(floating.affectedPermanentId())) {
                     return true;
                 }
@@ -229,8 +228,11 @@ public class AttackLegalityService {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (restriction.restrictedAttackerId() == null
+                            || restriction.restrictedAttackerId().equals(
+                            gameData.findControllerOf(attacker)))
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                                    attacker, restriction.exemptionPredicate(), context)) {
+                            attacker, restriction.exemptionPredicate(), context)) {
                         return false;
                     }
                 }
@@ -242,8 +244,11 @@ public class AttackLegalityService {
                     CardEffect effect = fe.effect();
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (restriction.restrictedAttackerId() == null
+                            || restriction.restrictedAttackerId().equals(
+                            gameData.findControllerOf(attacker)))
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, attacker, restriction.exemptionPredicate())) {
+                            gameData, attacker, restriction.exemptionPredicate())) {
                         return false;
                     }
                 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+
 /**
  * Replacement behavior that modifies how a face-down permanent is turned face up.
  *
@@ -7,5 +9,5 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public interface TurnFaceUpReplacementEffect extends ReplacementEffect {
 
-    int counterCount();
+    DynamicAmount counterAmount();
 }

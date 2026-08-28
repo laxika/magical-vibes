@@ -49,7 +49,8 @@ class WildwoodTrackerTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking with another non-Human creature gives Wildwood Tracker +1/+1")
     void blockWithAnotherNonHumanCreatureBoostsTracker() {
-        addCreatureReady(player1, new LlanowarElves());
+        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
+        attacker.setAttacking(true);
         Permanent tracker = addCreatureReady(player2, new WildwoodTracker());
         addCreatureReady(player2, new GrizzlyBears());
 
@@ -66,7 +67,8 @@ class WildwoodTrackerTest extends BaseCardTest {
     @Test
     @DisplayName("A Human creature does not satisfy Wildwood Tracker when blocking")
     void humanCreatureDoesNotBoostTrackerWhenBlocking() {
-        addCreatureReady(player1, new LlanowarElves());
+        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
+        attacker.setAttacking(true);
         Permanent tracker = addCreatureReady(player2, new WildwoodTracker());
         addCreatureReady(player2, new SteadfastCathar());
 

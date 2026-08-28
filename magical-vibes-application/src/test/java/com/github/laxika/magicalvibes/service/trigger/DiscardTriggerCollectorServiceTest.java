@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18,7 +19,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -100,6 +104,7 @@ class DiscardTriggerCollectorServiceTest {
         lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
                 .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
                         - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
@@ -691,6 +696,31 @@ class DiscardTriggerCollectorServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — ExileTopCardsMayPlayUntilNextEndStepEffect")
+    class ControllerDiscardEventExileTopCard {
+
+        @Test
+        @DisplayName("queues one top-card exile trigger for the discard event")
+        void queuesTopCardExileTrigger() {
+            Permanent inti = createPermanent("Inti, Seneschal of the Sun");
+            var effect = new ExileTopCardsMayPlayUntilNextEndStepEffect(1);
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(inti, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(inti.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
     // ===== ON_CONTROLLER_DISCARDS — SequenceEffect =====
 
     @Nested
@@ -715,6 +745,33 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(survivor.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(SequenceEffect.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DISCARDS — SequenceEffect")
+    class OpponentDiscardSequence {
+
+        @Test
+        @DisplayName("queues one atomic triggered ability for an opponent discard")
+        void queuesSequenceTrigger() {
+            Permanent nocturnus = createPermanent("Abyssal Nocturnus");
+            var effect = SequenceEffect.of(
+                    new BoostSelfEffect(2, 2),
+                    new GrantKeywordEffect(Keyword.FEAR, GrantScope.SELF));
+            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(nocturnus, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(nocturnus.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
         }
     }
 

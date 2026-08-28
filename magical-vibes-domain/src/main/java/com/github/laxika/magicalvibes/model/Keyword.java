@@ -12,6 +12,7 @@ public enum Keyword {
     FLASH,
     SPLIT_SECOND,
     FADING,
+    VANISHING,
     VIGILANCE,
     BACKUP,
     SHROUD,
@@ -42,6 +43,7 @@ public enum Keyword {
     SCRY,
     FLASHBACK,
     AFTERMATH,
+    HAUNT,
     TRANSFORM,
     DAYBOUND,
     NIGHTBOUND,
@@ -58,7 +60,9 @@ public enum Keyword {
     SHADOW,
     FLANKING,
     CONSPIRE,
+    REPLICATE,
     RETRACE,
+    JUMP,
     JUMP_START,
     BANDING,
     EMERGE,
@@ -103,7 +107,9 @@ public enum Keyword {
     CAMOUFLAGE,
     DOUBLE,
     PLOT,
-    AMASS;
+    AMASS,
+    BLOW_UP,
+    DISGUISE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

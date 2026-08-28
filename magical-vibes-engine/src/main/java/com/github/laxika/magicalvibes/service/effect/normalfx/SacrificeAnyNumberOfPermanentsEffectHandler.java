@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -43,9 +44,13 @@ public class SacrificeAnyNumberOfPermanentsEffectHandler implements NormalEffect
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         List<UUID> eligibleIds = new ArrayList<>();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId());
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.filter())) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), filterContext)) {
                     eligibleIds.add(permanent.getId());
                 }
             }
@@ -53,6 +58,9 @@ public class SacrificeAnyNumberOfPermanentsEffectHandler implements NormalEffect
 
         if (eligibleIds.isEmpty()) {
             entry.setEventValue(0);
+            if (e.recordSacrificedPower()) {
+                entry.setSacrificedPower(0);
+            }
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId) + " has no matching permanents to sacrifice."));
             log.info("Game {} - {} has no matching permanents to sacrifice for {}",
@@ -61,7 +69,8 @@ public class SacrificeAnyNumberOfPermanentsEffectHandler implements NormalEffect
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
-                new MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount(entry),
+                new MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount(
+                        entry, e.recordSacrificedPower()),
                 "Choose any number of permanents to sacrifice.");
     }
 }

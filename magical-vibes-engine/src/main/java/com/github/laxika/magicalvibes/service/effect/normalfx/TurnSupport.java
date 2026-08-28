@@ -81,6 +81,7 @@ public class TurnSupport {
         gameData.currentStep = TurnStep.CLEANUP;
         turnCleanupService.resetEndOfTurnModifiers(gameData);
         creatureControlService.reconcileControl(gameData);
+        gameData.controlLossUnattachTriggers.clear();
         gameData.priorityPassedBy.clear();
     }
 

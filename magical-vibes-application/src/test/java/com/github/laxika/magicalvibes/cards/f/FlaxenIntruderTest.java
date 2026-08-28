@@ -83,8 +83,8 @@ class FlaxenIntruderTest extends BaseCardTest {
     @Test
     void combatDamageTargetChoiceOnlyAllowsArtifactsAndEnchantments() {
         Permanent validTarget = harness.addToBattlefieldAndReturn(player2, new ZuranOrb());
-        Permanent invalidTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         addCreatureReady(player1, new FlaxenIntruder());
+        Permanent invalidTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         resolveCombat();

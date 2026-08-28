@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 public enum CardSubtype {
 
@@ -13,6 +15,7 @@ public enum CardSubtype {
     PLAINS("Plains"),
     SWAMP("Swamp"),
     DESERT("Desert"),
+    CAVE("Cave"),
     LAIR("Lair"),
     ANGEL("Angel"),
     ARCHON("Archon"),
@@ -68,6 +71,7 @@ public enum CardSubtype {
     GRAVEBORN("Graveborn"),
     INKLING("Inkling"),
     AURA("Aura"),
+    CASE("Case"),
     RUNE("Rune"),
     NOMAD("Nomad"),
     ALLY("Ally"),
@@ -87,6 +91,7 @@ public enum CardSubtype {
     EYE("Eye"),
     FAERIE("Faerie"),
     FISH("Fish"),
+    SHARK("Shark"),
     FROG("Frog"),
     FUNGUS("Fungus"),
     OTTER("Otter"),
@@ -170,6 +175,7 @@ public enum CardSubtype {
     THRULL("Thrull"),
     EQUIPMENT("Equipment"),
     LIZARD("Lizard"),
+    LLAMA("Llama"),
     LHURGOYF("Lhurgoyf"),
     LICID("Licid"),
     SCOUT("Scout"),
@@ -235,6 +241,7 @@ public enum CardSubtype {
     TREASURE("Treasure"),
     CLUE("Clue"),
     BLOOD("Blood"),
+    MAP("Map"),
     FOOD("Food"),
     POWERSTONE("Powerstone"),
     SHARD("Shard"),
@@ -264,7 +271,19 @@ public enum CardSubtype {
     MITE("Mite"),
     OMEN("Omen"),
     FLAGBEARER("Flagbearer"),
-    ROBOT("Robot");
+    MOOGLE("Moogle"),
+    TOWN("Town"),
+    ROBOT("Robot"),
+    NEPHILIM("Nephilim"),
+    SAND("Sand");
+
+    private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
+            AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
+            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, SAMUT, YANLING);
+
+    public static List<CardSubtype> planeswalkerTypes() {
+        return PLANESWALKER_TYPES;
+    }
 
     @Getter
     private final String displayName;

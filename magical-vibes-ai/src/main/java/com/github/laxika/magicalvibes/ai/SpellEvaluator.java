@@ -333,7 +333,9 @@ public class SpellEvaluator {
     private boolean isDrawEffect(CardEffect effect) {
         if (effect instanceof CardDrawingEffect) return true;
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isDrawEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isDrawEffect);
         }
         return false;
     }
@@ -350,7 +352,9 @@ public class SpellEvaluator {
             return true;
         }
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isBoardWipeEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isBoardWipeEffect);
         }
         return false;
     }
@@ -425,7 +429,9 @@ public class SpellEvaluator {
         // check must read the amount or it would score every reveal as a lifegain spell.
         if (effect instanceof LifeGainEffect gain) return !gain.gainsNoLife();
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isLifeGainEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isLifeGainEffect);
         }
         return false;
     }
@@ -449,7 +455,10 @@ public class SpellEvaluator {
         if (effect instanceof ChooseOneEffect coe) {
             double bestValue = 0;
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                double optionValue = evaluateEtbEffect(gameData, card, option.effect(), aiPlayerId, opponentId);
+                double optionValue = option.effects().stream()
+                        .mapToDouble(modeEffect -> evaluateEtbEffect(
+                                gameData, card, modeEffect, aiPlayerId, opponentId))
+                        .sum();
                 bestValue = Math.max(bestValue, optionValue);
             }
             return bestValue;
@@ -524,7 +533,7 @@ public class SpellEvaluator {
         if (effect instanceof ChooseOneEffect coe) {
             double bestValue = 0;
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                double optionValue = evaluateSingleEffect(gameData, card, option.effect(),
+                double optionValue = evaluateEffects(gameData, card, option.effects(),
                         aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
                 bestValue = Math.max(bestValue, optionValue);
             }
@@ -1396,7 +1405,9 @@ public class SpellEvaluator {
 
     private boolean isRemovalEffect(CardEffect effect) {
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isRemovalEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isRemovalEffect);
         }
         // Single-target removal (destroy/exile/bounce) or creature-hitting damage counts as
         // removal; player-only damage (canDamageCreatures() == false) does not, matching the

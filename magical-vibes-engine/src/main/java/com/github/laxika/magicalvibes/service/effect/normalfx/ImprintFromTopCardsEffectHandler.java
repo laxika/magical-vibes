@@ -54,17 +54,25 @@ public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean
         }
 
         List<Card> sourceCards = new ArrayList<>(topCards);
+        boolean randomizeRest = e.randomizeRest();
+        LibrarySearchDestination destination = randomizeRest
+                ? LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                : LibrarySearchDestination.EXILE_IMPRINT;
+        String remainderText = randomizeRest
+                ? "in a random order"
+                : "in any order";
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
                 .sourceCards(sourceCards)
                 .reorderRemainingToBottom(true)
                 .shuffleAfterSelection(false)
-                .prompt("Exile one card face down (imprint). The rest go to the bottom of your library.")
-                .destination(LibrarySearchDestination.EXILE_IMPRINT)
+                .prompt("Exile one card face down (imprint). The rest go to the bottom of your library " + remainderText + ".")
+                .destination(destination)
+                .grantExilePlayPermission(false)
                 .followUp(com.github.laxika.magicalvibes.model.LibrarySearchFollowUp.imprint(entry.getSourcePermanentId()))
                 .build(),
-                "Exile one card face down (imprint). The rest go to the bottom of your library.",
+                "Exile one card face down (imprint). The rest go to the bottom of your library " + remainderText + ".",
                 false));
     
     }

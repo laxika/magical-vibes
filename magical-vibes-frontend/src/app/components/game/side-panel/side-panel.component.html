@@ -283,7 +283,9 @@
         <span class="side-prompt-text">Cast {{ choice.targeting.alternateCostCardName }} &mdash; choose how to pay:</span>
         <div class="side-prompt-buttons side-prompt-buttons-stacked">
           <button class="btn-side-prompt" (click)="choice.targeting.choosePayMana()">Pay Mana</button>
-          @if (choice.targeting.alternateCostSacrificeCount > 0) {
+          @if (choice.targeting.alternateCostCollectEvidence) {
+            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Collect evidence {{ choice.targeting.alternateCostCollectEvidenceAmount }}</button>
+          } @else if (choice.targeting.alternateCostSacrificeCount > 0) {
             <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
           } @else if (choice.targeting.alternateCostTapCount > 0) {
             <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Tap {{ choice.targeting.alternateCostTapCount }} Artifact</button>
@@ -477,7 +479,7 @@
             <button class="btn-side-prompt mode-option"
                     [class.mode-option-selected]="choice.targeting.isModeSelected($index)"
                     (click)="choice.targeting.toggleMode($index)">
-              {{ option.label }}@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
+              {{ option.label }}@if (choice.targeting.modeModesMayRepeat && choice.targeting.modeSelectionCount($index) > 1) { <span> (×{{ choice.targeting.modeSelectionCount($index) }})</span> }@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
             </button>
           }
           <button class="btn-side-prompt"

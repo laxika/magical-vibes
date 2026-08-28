@@ -8,11 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the Nightmare token's attack and block trigger. */
+import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class ExileTopCardsOfEachOpponentEffectHandler implements NormalEffectHandlerBean {
@@ -37,7 +36,6 @@ public class ExileTopCardsOfEachOpponentEffectHandler implements NormalEffectHan
             if (opponentId.equals(controllerId)) {
                 continue;
             }
-
             var library = gameData.playerDecks.get(opponentId);
             if (library == null || library.isEmpty()) {
                 continue;

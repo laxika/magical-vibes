@@ -31,6 +31,21 @@ class ExcruciatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevent all combat damage still prevents damage from other sources")
+    void preventAllCombatDamageStillPreventsOtherSources() {
+        addExcruciatorReady(player1);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        gd.preventAllCombatDamage = true;
+
+        declareAttackers(List.of(0, 1));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
     @DisplayName("Its combat damage to a blocking creature can't be prevented")
     void combatDamageToBlockerCantBePrevented() {
         addExcruciatorReady(player1);

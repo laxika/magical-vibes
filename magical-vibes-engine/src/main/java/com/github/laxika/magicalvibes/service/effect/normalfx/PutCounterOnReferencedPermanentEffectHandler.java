@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,7 +57,9 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
             return;
         }
 
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, referenced, e.counterType(), e.count());
+        int count = amountEvaluationService.evaluate(gameData, e.count(),
+                AmountContext.forStackEntry(entry, referenced));
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, referenced, e.counterType(), count);
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

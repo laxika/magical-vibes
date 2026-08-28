@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -61,7 +62,9 @@ public class SacrificeSelfThenEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        dispatch(gameData, entry, e.thenEffect());
+        dispatch(gameData, entry, e.reflexive()
+                ? new QueueReflexiveAbilityEffect(e.thenEffect())
+                : e.thenEffect());
     }
 
     /**

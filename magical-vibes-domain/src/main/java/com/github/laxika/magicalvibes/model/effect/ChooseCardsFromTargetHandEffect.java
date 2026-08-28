@@ -25,6 +25,8 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               boolean grantPlayPermission,
                                               boolean returnAtNextEndStep,
                                               int exilePlayOpponentTax,
+                                              CardPredicate chosenCardCondition,
+                                              CardEffect chosenCardThenEffect,
                                               CardEffect declineEffect)
         implements CombatDamageTriggerContextEffect {
 
@@ -43,7 +45,8 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            int exilePlayOpponentTax) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
                 declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
-                revealHand, grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, null);
+                revealHand, grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
+                null, null, null);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -135,6 +138,15 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                 0, true, false, false, true, true, false, exilePlayOpponentTax);
     }
 
+    /** Adds a follow-up effect when any chosen card matches the supplied predicate. */
+    public ChooseCardsFromTargetHandEffect withChosenCardThen(CardPredicate condition,
+                                                               CardEffect thenEffect) {
+        return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
+                returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
+                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                returnAtNextEndStep, exilePlayOpponentTax, condition, thenEffect, null);
+    }
+
     /** "You may choose a card; if you don't, that player discards N cards." */
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,
                                            HandChoiceDestination destination,
@@ -147,7 +159,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            HandChoiceDestination destination,
                                            CardEffect declineEffect) {
         this(new Fixed(count), List.of(), includedTypes, destination, false, null,
-                0, true, false, false, true, false, false, 0, declineEffect);
+                0, true, false, false, true, false, false, 0, null, null, declineEffect);
     }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,

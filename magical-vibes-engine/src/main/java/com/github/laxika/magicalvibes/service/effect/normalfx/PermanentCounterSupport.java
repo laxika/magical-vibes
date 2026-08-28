@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -57,10 +58,16 @@ public class PermanentCounterSupport {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private TriggerCollectionService triggerCollectionService;
+    private SagaChapterService sagaChapterService;
 
     @Autowired
     void setTriggerCollectionService(@Lazy TriggerCollectionService triggerCollectionService) {
         this.triggerCollectionService = triggerCollectionService;
+    }
+
+    @Autowired
+    void setSagaChapterService(@Lazy SagaChapterService sagaChapterService) {
+        this.sagaChapterService = sagaChapterService;
     }
 
     public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target, int amount) {
@@ -110,6 +117,7 @@ public class PermanentCounterSupport {
             case STUDY -> self.setCounterCount(CounterType.STUDY, 0);
             case RITUAL -> self.setCounterCount(CounterType.RITUAL, 0);
             case WISH -> self.setCounterCount(CounterType.WISH, 0);
+            case BORE -> self.setCounterCount(CounterType.BORE, 0);
             case PLUS_ONE_PLUS_ONE -> self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
             case MINUS_ONE_MINUS_ONE -> self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
@@ -255,6 +263,8 @@ public class PermanentCounterSupport {
                                        CounterType counterType, int count) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
+        int previousLoreCount = counterType == CounterType.LORE
+                ? target.getCounterCount(CounterType.LORE) : 0;
         int previousCount = target.getCounterCount(counterType);
         count = gameQueryService.replaceCounters(gameData, target, counterType, count,
                 placingPlayerId(gameData, entry, target));
@@ -365,6 +375,7 @@ public class PermanentCounterSupport {
             case AIM -> { target.setCounterCount(CounterType.AIM, target.getCounterCount(CounterType.AIM) + count); yield "aim"; }
             case ARROW -> { target.setCounterCount(CounterType.ARROW, target.getCounterCount(CounterType.ARROW) + count); yield "arrow"; }
             case BLAZE -> { target.setCounterCount(CounterType.BLAZE, target.getCounterCount(CounterType.BLAZE) + count); yield "blaze"; }
+            case BLIGHT -> { target.setCounterCount(CounterType.BLIGHT, target.getCounterCount(CounterType.BLIGHT) + count); yield "blight"; }
             case BLOOD -> { target.setCounterCount(CounterType.BLOOD, target.getCounterCount(CounterType.BLOOD) + count); yield "blood"; }
             case BOUNTY -> { target.setCounterCount(CounterType.BOUNTY, target.getCounterCount(CounterType.BOUNTY) + count); yield "bounty"; }
             case BRIBERY -> { target.setCounterCount(CounterType.BRIBERY, target.getCounterCount(CounterType.BRIBERY) + count); yield "bribery"; }
@@ -460,13 +471,17 @@ public class PermanentCounterSupport {
         log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
                 sourceCard.getName(), count, counterName, card.getName());
 
+        // Lore counters on Sagas trigger each chapter crossed by the placement.
         if (counterType == CounterType.LOYALTY) {
             fireLoyaltyCountersPutOnPlaneswalkerTriggers(gameData, target, count);
         }
 
         // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
         if (entry != null && counterType == CounterType.LORE && card.isSaga()) {
-            triggerSagaChapter(gameData, entry, target);
+            int finalLoreCount = target.getCounterCount(CounterType.LORE);
+            for (int loreCount = previousLoreCount + 1; loreCount <= finalLoreCount; loreCount++) {
+                triggerSagaChapter(gameData, entry, target, loreCount);
+            }
         }
 
         // Flourishing Defenses etc.: "whenever a -1/-1 counter is put on a creature." The placing player
@@ -555,15 +570,20 @@ public class PermanentCounterSupport {
                 permanent.getCard(), " removes " + counterText + "."));
     }
 
-    private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga) {
+    private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga, int loreCount) {
         Card card = saga.getCard();
-        int loreCount = saga.getCounterCount(CounterType.LORE);
+
+        if (sagaChapterService != null) {
+            sagaChapterService.triggerSagaChapter(gameData, saga, card, entry.getControllerId(), loreCount);
+            return;
+        }
 
         EffectSlot chapterSlot = switch (loreCount) {
             case 1 -> EffectSlot.SAGA_CHAPTER_I;
             case 2 -> EffectSlot.SAGA_CHAPTER_II;
             case 3 -> EffectSlot.SAGA_CHAPTER_III;
             case 4 -> EffectSlot.SAGA_CHAPTER_IV;
+            case 5 -> EffectSlot.SAGA_CHAPTER_V;
             default -> null;
         };
         if (chapterSlot == null) return;
@@ -576,6 +596,7 @@ public class PermanentCounterSupport {
             case 2 -> "II";
             case 3 -> "III";
             case 4 -> "IV";
+            case 5 -> "V";
             default -> String.valueOf(loreCount);
         };
 

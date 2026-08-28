@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
+import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
+import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -207,6 +209,17 @@ class AiManaManagerTest {
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
         lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
+    }
+
+    private void attachManaChoiceAura(Permanent land) {
+        Card auraCard = new Card();
+        auraCard.setName("Mana Aura");
+        auraCard.setType(CardType.ENCHANTMENT);
+        auraCard.addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+                new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
+        Permanent aura = new Permanent(auraCard);
+        aura.setAttachedTo(land.getId());
+        gd.playerBattlefields.get(player1Id).add(aura);
     }
 
     private Permanent addTappedLand(ManaColor color) {
@@ -1050,6 +1063,15 @@ class AiManaManagerTest {
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
             assertThat(pool.getTotal()).isEqualTo(1);
         }
+
+        @Test
+        @DisplayName("excludes a land whose attached mana aura would prompt for a color")
+        void excludesLandWithAttachedManaChoiceTrigger() {
+            Permanent island = addUntappedLand("Island", ManaColor.BLUE);
+            attachManaChoiceAura(island);
+
+            assertThat(manager.buildSafeVirtualManaPool(gd, player1Id).getTotal()).isZero();
+        }
     }
 
     // ── isFreeTapManaAbility ────────────────────────────────────────
@@ -1664,6 +1686,26 @@ class AiManaManagerTest {
             manager.tapLandsForCost(gd, player1Id, "{2}", 0, action, true);
 
             assertThat(tappedIndices).containsExactly(gd.playerBattlefields.get(player1Id).indexOf(plains));
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
+        }
+
+        @Test
+        @DisplayName("skips a land with a choice-triggering mana aura during attack tax payment")
+        void skipsLandWithAttachedManaChoiceTriggerDuringAttackTaxPayment() {
+            Permanent island = addUntappedLand("Island", ManaColor.BLUE);
+            attachManaChoiceAura(island);
+            addUntappedLand("Mountain", ManaColor.RED);
+
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1Id));
+            List<Integer> tappedIndices = new ArrayList<>();
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                tappedIndices.add(permanentIndex);
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED);
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action, true);
+
+            assertThat(tappedIndices).containsExactly(2);
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
         }
 
@@ -2489,6 +2531,22 @@ class AiManaManagerTest {
 
             int x = manager.calculateSmartX(gd, card, null, pool, 0);
             assertThat(x).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("caps X at the number of players in the game")
+        void capsAtPlayersInGame() {
+            gd.orderedPlayerIds.add(UUID.randomUUID());
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 5);
+
+            Card card = new Card();
+            card.setManaCost("{X}{G}");
+            card.setXValueCap(new PlayersInGame());
+
+            int x = manager.calculateSmartX(gd, player1Id, card, null, pool, 0);
+
+            assertThat(x).isEqualTo(2);
         }
 
         @Test

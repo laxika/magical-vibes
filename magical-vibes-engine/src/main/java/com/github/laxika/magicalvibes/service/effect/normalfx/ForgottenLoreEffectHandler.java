@@ -24,9 +24,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link ForgottenLoreEffect}: the targeted opponent chooses a card in the controller's
- * graveyard, then the controller may pay {G} to repeat the process with that card (and every card
- * chosen before it) off the table. When the controller declines, can't pay, or no unchosen card is
- * left, the last chosen card goes to the controller's hand.
+ * graveyard, then the controller may pay the effect's configured mana cost to repeat the process
+ * with that card (and every card chosen before it) off the table. When the controller declines,
+ * can't pay, or no unchosen card is left, the last chosen card goes to the controller's hand.
  *
  * <p>Both halves pause resolution: the graveyard pick completes in
  * {@code GraveyardChoiceHandlerService.handleGraveyardCardChosen} (via
@@ -37,8 +37,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
-
-    private static final String COST = "{G}";
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PermanentRemovalService permanentRemovalService;
@@ -51,6 +49,8 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ForgottenLoreEffect loreEffect = (ForgottenLoreEffect) effect;
+        String repeatManaCost = loreEffect.repeatManaCost();
         ForgottenLoreState state = gameData.forgottenLore;
         UUID controllerId = entry.getControllerId();
         UUID opponentId = entry.getTargetId();
@@ -59,7 +59,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
         if (!state.active) {
             state.reset();
             state.active = true;
-            promptChoice(gameData, entry, controllerId, opponentId, sourceName);
+            promptChoice(gameData, entry, controllerId, opponentId, sourceName, repeatManaCost);
             return;
         }
 
@@ -67,15 +67,16 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
             state.lastChosenCardId = state.pendingChosenCardId;
             state.chosenCardIds.add(state.pendingChosenCardId);
             state.pendingChosenCardId = null;
-            promptPayment(gameData, controllerId, sourceName);
+            promptPayment(gameData, controllerId, sourceName, repeatManaCost);
             return;
         }
 
         if (state.chosenMode != null) {
             String mode = state.chosenMode;
             state.chosenMode = null;
-            if (ChoiceContext.ForgottenLorePaymentChoice.PAY.equals(mode) && pay(gameData, controllerId)) {
-                promptChoice(gameData, entry, controllerId, opponentId, sourceName);
+            if (ChoiceContext.ForgottenLorePaymentChoice.payOption(repeatManaCost).equals(mode)
+                    && pay(gameData, controllerId, repeatManaCost)) {
+                promptChoice(gameData, entry, controllerId, opponentId, sourceName, repeatManaCost);
                 return;
             }
             finish(gameData, controllerId, sourceName);
@@ -92,7 +93,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
      * to be chosen.
      */
     private void promptChoice(GameData gameData, StackEntry entry, UUID controllerId, UUID opponentId,
-            String sourceName) {
+            String sourceName, String repeatManaCost) {
         ForgottenLoreState state = gameData.forgottenLore;
         UUID sourceCardId = entry.getCard().getId();
         List<Card> eligible = new ArrayList<>();
@@ -113,7 +114,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
             if (state.lastChosenCardId == null) {
                 finish(gameData, controllerId, sourceName);
             } else {
-                promptPayment(gameData, controllerId, sourceName);
+                promptPayment(gameData, controllerId, sourceName, repeatManaCost);
             }
             return;
         }
@@ -129,10 +130,11 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
                 .build());
     }
 
-    /** Offers the controller the optional {G} that repeats the process; unaffordable means no prompt. */
-    private void promptPayment(GameData gameData, UUID controllerId, String sourceName) {
+    /** Offers the controller the optional payment that repeats the process; unaffordable means no prompt. */
+    private void promptPayment(GameData gameData, UUID controllerId, String sourceName,
+            String repeatManaCost) {
         ManaPool pool = gameData.playerManaPools.get(controllerId);
-        if (pool == null || !new ManaCost(COST).canPay(pool)) {
+        if (pool == null || !new ManaCost(repeatManaCost).canPay(pool)) {
             finish(gameData, controllerId, sourceName);
             return;
         }
@@ -140,10 +142,10 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
         gameData.rerunCurrentEffectAfterInteraction = true;
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 controllerId, null, null,
-                new ChoiceContext.ForgottenLorePaymentChoice(controllerId, sourceName),
-                List.of(ChoiceContext.ForgottenLorePaymentChoice.PAY,
+                new ChoiceContext.ForgottenLorePaymentChoice(controllerId, sourceName, repeatManaCost),
+                List.of(ChoiceContext.ForgottenLorePaymentChoice.payOption(repeatManaCost),
                         ChoiceContext.ForgottenLorePaymentChoice.DECLINE),
-                sourceName + " — pay {G} to have your opponent choose another card?"));
+                sourceName + " — pay " + repeatManaCost + " to have your opponent choose another card?"));
     }
 
     /** Puts the last chosen card into the controller's hand and clears the loop state. */
@@ -172,9 +174,9 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
                 sourceName + " returns ", card, " from the graveyard to its owner's hand."));
     }
 
-    private boolean pay(GameData gameData, UUID playerId) {
+    private boolean pay(GameData gameData, UUID playerId, String repeatManaCost) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        ManaCost cost = new ManaCost(COST);
+        ManaCost cost = new ManaCost(repeatManaCost);
         if (pool == null || !cost.canPay(pool)) {
             return false;
         }

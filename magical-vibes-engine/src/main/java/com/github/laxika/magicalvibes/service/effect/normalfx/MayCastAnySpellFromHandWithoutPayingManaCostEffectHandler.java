@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Component;
 public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,9 +45,14 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
         UUID controllerId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) return;
+        int maxManaValue = e.maxManaValue() == null
+                ? Integer.MAX_VALUE
+                : amountEvaluationService.evaluate(gameData, e.maxManaValue(),
+                        AmountContext.forStackEntry(entry, null));
 
         List<Card> eligible = hand.stream()
                 .filter(c -> !c.hasType(CardType.LAND))
+                .filter(c -> c.getManaValue() <= maxManaValue)
                 .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.spellFilter(), null))
                 .toList();
 

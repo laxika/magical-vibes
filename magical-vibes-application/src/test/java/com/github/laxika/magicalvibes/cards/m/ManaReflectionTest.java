@@ -48,14 +48,14 @@ class ManaReflectionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Mana Reflection also doubles an opponent's mana")
-    void manaReflectionIsGlobal() {
+    @DisplayName("Mana Reflection does not double an opponent's mana")
+    void manaReflectionOnlyAffectsItsController() {
         addForest(player1);
         addManaReflection(player2);
 
         gs.tapPermanent(gd, player1, 0);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     private Permanent addForest(Player player) {
