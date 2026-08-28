@@ -4752,6 +4752,11 @@ public class AbilityActivationService {
             throw new IllegalStateException("No instant or sorcery spell you control to exile from the stack");
         }
 
+        if (abilityEffects.stream().anyMatch(PutCardExiledWithSourceIntoGraveyardCost.class::isInstance)
+                && gameData.getCardsExiledByPermanent(permanent.getId()).isEmpty()) {
+            throw new IllegalStateException("No card is exiled with this permanent");
+        }
+
         // Exile-N-cards-from-graveyard cost (e.g. Immortal Coil "Exile two cards from your graveyard")
         // needs at least N cards in the graveyard.
         ExileNCardsFromGraveyardCost exileNGraveyardCost = abilityEffects.stream()
