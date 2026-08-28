@@ -475,6 +475,37 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         return card;
     }
 
+    private Card fixedCountRepeatableModalSpell() {
+        Card card = new Card();
+        card.setName("Repeatable modal draw");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{G}");
+        card.addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw first", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw second", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw third", new DrawCardEffect(1))
+        ), 3));
+        return card;
+    }
+
+    @Test
+    @DisplayName("Hard AI casts a fixed-count modal spell whose modes may repeat")
+    void castsFixedCountRepeatableModalSpell() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Card spell = fixedCountRepeatableModalSpell();
+        harness.setHand(player1, List.of(spell));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        assertThat(ai.tryCastSpell(gd)).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
     @Test
     @DisplayName("Hard AI uses the base X when paying no repeatable additional cost")
     void castsRepeatableTargetSpellWithItsBaseTargetCount() {

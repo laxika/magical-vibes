@@ -213,6 +213,19 @@ class MediumAiDecisionEngineTest {
         }
     }
 
+    private Card fixedCountRepeatableModalSpell() {
+        Card card = new Card();
+        card.setName("Repeatable modal draw");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{G}");
+        card.addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw first", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw second", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw third", new DrawCardEffect(1))
+        ), 3));
+        return card;
+    }
+
     private void giveAiSwamps(int count) {
         for (int i = 0; i < count; i++) {
             Permanent swamp = new Permanent(new Swamp());
@@ -1782,6 +1795,22 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI casts a fixed-count modal spell whose modes may repeat")
+    void castsFixedCountRepeatableModalSpell() {
+        giveAiPriority();
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        Card spell = fixedCountRepeatableModalSpell();
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).hasSize(3);
     }
 
     @Test

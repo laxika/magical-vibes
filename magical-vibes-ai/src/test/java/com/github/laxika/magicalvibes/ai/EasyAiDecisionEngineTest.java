@@ -488,6 +488,35 @@ class EasyAiDecisionEngineTest {
             }
         }
 
+        private Card fixedCountRepeatableModalSpell() {
+            Card card = new Card();
+            card.setName("Repeatable modal draw");
+            card.setType(CardType.SORCERY);
+            card.setManaCost("{G}");
+            card.addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Draw first", new DrawCardEffect(1)),
+                    new ChooseOneEffect.ChooseOneOption("Draw second", new DrawCardEffect(1)),
+                    new ChooseOneEffect.ChooseOneOption("Draw third", new DrawCardEffect(1))
+            ), 3));
+            return card;
+        }
+
+        @Test
+        @DisplayName("Easy AI casts a fixed-count modal spell whose modes may repeat")
+        void castsFixedCountRepeatableModalSpell() {
+            giveAiPriority();
+            giveManaSources(Forest::new, 1);
+            Card spell = fixedCountRepeatableModalSpell();
+            testHarness.setHand(aiTestPlayer, List.of(spell));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
+            testHarness.passBothPriorities();
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).hasSize(3);
+        }
+
         @Test
         @DisplayName("Easy AI starts Evangelize by choosing the opponent")
         void startsEvangelizeWithOpponentChoice() {

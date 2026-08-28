@@ -3144,8 +3144,11 @@ public abstract class AiDecisionEngine {
                     }
                     if (validModes.size() == coe.choicesRequired()) {
                         int[] modeIndices = validModes.stream().mapToInt(Integer::intValue).toArray();
+                        int modeEncoding = coe.modesMayRepeat()
+                                ? ChooseOneEffect.encodeRepeatedModeSelection(coe.options().size(), modeIndices)
+                                : ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices);
                         return new ModalCastPlan(
-                                ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices),
+                                modeEncoding,
                                 targetId, targetIds);
                     }
                 }
