@@ -107,16 +107,16 @@ if ($gradleExitCode -eq 0 -and $logShowsSuccess -and -not $logShowsFailure) {
 }
 
 Write-Warning "The fuzz run failed or did not reach its success marker (Gradle exit code $gradleExitCode)."
-$lastGameId = $null
-$gameIdPattern = '(?i)\bgame (?<id>[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12})\b'
-Select-String -LiteralPath $logPath -Pattern $gameIdPattern | ForEach-Object {
-    $lastGameId = $_.Matches[-1].Groups['id'].Value
+$failedGameIndex = $null
+$gameIndexPattern = '^=== Game #(?<index>[0-9]+)/[0-9]+ ===$'
+Select-String -LiteralPath $logPath -Pattern $gameIndexPattern | ForEach-Object {
+    $failedGameIndex = $_.Matches[-1].Groups['index'].Value
 }
-if ($lastGameId) {
-    Write-Warning "Last played game ID: $lastGameId"
+if ($failedGameIndex) {
+    Write-Warning "Game #$failedGameIndex failed."
 }
 else {
-    Write-Warning "The last played game ID could not be determined from $logPath."
+    Write-Warning "The failed game index could not be determined from $logPath."
 }
 Write-Host "Relevant log lines:"
 Select-String -LiteralPath $logPath -Pattern '^FAILURE:|^BUILD FAILED|^RandomAiFuzzTest > .* FAILED$|^> Task :magical-vibes-ai:test FAILED$|^All [0-9]+ fuzz games passed\.$' |
