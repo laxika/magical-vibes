@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -255,10 +256,67 @@ public class PotentialManaService {
     }
 
     /**
-     * Builds a virtual mana pool excluding mana sources whose activated abilities
-     * would trigger an interactive choice (e.g. AwardAnyColorManaEffect on Birds of Paradise).
-     * Used when computing affordable attackers for attack tax, to avoid activating
-     * choice-triggering abilities during ATTACKER_DECLARATION.
+     * Returns whether tapping this source for mana would open a choice interaction. Combat-cost
+     * payment must remain inside its existing declaration prompt, so the AI excludes these sources
+     * rather than replacing that prompt before the declaration is submitted.
+     */
+    public boolean wouldTapForManaOpenChoice(GameData gameData, Permanent permanent) {
+        if (hasAttachedManaChoiceTrigger(gameData, permanent)) {
+            return true;
+        }
+
+        List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
+        ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
+                ? gameQueryService.fixedLandManaColor(gameData, permanent)
+                : null;
+        if (fixedLandColor == null && permanent.getCard().hasType(CardType.LAND)) {
+            if (gameQueryService.basicLandManaProducesAnyColor(gameData, permanent)) {
+                return true;
+            }
+            Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, permanent);
+            if (twisted.size() > 1 || (twisted.isEmpty() && overriddenColors.size() > 1)) {
+                return true;
+            }
+        }
+        if (fixedLandColor != null || overriddenColors.size() == 1) {
+            return false;
+        }
+
+        Card card = permanent.getCard();
+        if (hasLivePrintedTapMana(gameData, permanent)) {
+            return card.getEffects(EffectSlot.ON_TAP).stream()
+                    .anyMatch(PotentialManaService::manaEffectOpensChoice);
+        }
+        return wouldManaAbilityTriggerChoice(card);
+    }
+
+    private static boolean hasAttachedManaChoiceTrigger(GameData gameData, Permanent manaSource) {
+        boolean[] found = {false};
+        gameData.forEachPermanent((controllerId, attachment) -> {
+            if (found[0] || !attachment.isAttached()
+                    || !manaSource.getId().equals(attachment.getAttachedTo())) {
+                return;
+            }
+            found[0] = attachment.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+                    .filter(AddManaOnEnchantedLandTapEffect.class::isInstance)
+                    .map(AddManaOnEnchantedLandTapEffect.class::cast)
+                    .map(AddManaOnEnchantedLandTapEffect::mana)
+                    .anyMatch(PotentialManaService::manaEffectOpensChoice);
+        });
+        return found[0];
+    }
+
+    private static boolean manaEffectOpensChoice(CardEffect effect) {
+        return effect instanceof AwardAnyColorManaEffect
+                || (effect instanceof AwardManaOfColorsEffect ofColors && ofColors.colors().size() > 1)
+                || effect instanceof AwardManaOfColorsLandsCouldProduceEffect;
+    }
+
+    /**
+     * Builds a virtual mana pool excluding sources whose mana tap would open an interactive
+     * choice, whether from the source itself, a replacement, or an attached mana trigger.
+     * Used when computing affordable attackers for attack tax, to keep the declaration prompt
+     * active while mana abilities are activated.
      */
     public VirtualManaPool buildSafeVirtualManaPool(GameData gameData, UUID playerId) {
         VirtualManaPool virtual = new VirtualManaPool();
@@ -276,6 +334,9 @@ public class PotentialManaService {
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
                 if (perm.isTapped()) {
+                    continue;
+                }
+                if (wouldTapForManaOpenChoice(gameData, perm)) {
                     continue;
                 }
                 boolean isCreature = gameQueryService.isCreature(gameData, perm);
@@ -582,10 +643,7 @@ public class PotentialManaService {
                 continue;
             }
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof AwardAnyColorManaEffect
-                        || (effect instanceof AwardManaOfColorsEffect ofColors
-                        && ofColors.colors().size() > 1)
-                        || effect instanceof AwardManaOfColorsLandsCouldProduceEffect) {
+                if (manaEffectOpensChoice(effect)) {
                     return true;
                 }
             }

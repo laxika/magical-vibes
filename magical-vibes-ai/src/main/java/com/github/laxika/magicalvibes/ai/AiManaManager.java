@@ -676,11 +676,11 @@ public class AiManaManager {
     private List<ManaOption> manaOptionsForPermanent(GameData gameData, UUID playerId,
                                                       Permanent permanent,
                                                       boolean skipChoiceSources) {
+        if (skipChoiceSources && potentialManaService.wouldTapForManaOpenChoice(gameData, permanent)) {
+            return List.of();
+        }
         Card card = permanent.getCard();
         Set<ManaColor> replacementColors = effectiveLandManaColors(gameData, permanent);
-        if (skipChoiceSources && replacementColors.size() > 1) {
-            return List.of(); // Tapping would prompt for which replacement color to add
-        }
         boolean printedTapMana = potentialManaService.hasLivePrintedTapMana(gameData, permanent);
         int triggerCost = attachedTapTriggerCost(gameData, permanent);
         List<ManaColor> overriddenLandColors = card.hasType(CardType.LAND)
@@ -703,10 +703,6 @@ public class AiManaManager {
                     card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false,
                     permanent, gameData));
         }
-        if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
-            return List.of();
-        }
-
         List<ManaOption> options = new ArrayList<>();
         List<ActivatedAbility> abilities = potentialManaService.activatedAbilitiesFor(gameData, permanent, card);
         for (int i = 0; i < abilities.size(); i++) {
@@ -896,11 +892,11 @@ public class AiManaManager {
             }
 
             Card card = perm.getCard();
+            if (skipChoiceSources && potentialManaService.wouldTapForManaOpenChoice(gameData, perm)) {
+                continue;
+            }
             boolean hasOnTap = potentialManaService.hasLivePrintedTapMana(gameData, perm);
             if (!hasOnTap) {
-                if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
-                    continue;
-                }
                 Integer abilityIndex = chooseBestManaAbilityIndex(card, cost, currentPool, perm, gameData, aiPlayerId);
                 if (abilityIndex == null) {
                     continue;
@@ -1104,22 +1100,12 @@ public class AiManaManager {
     }
 
     /**
-     * Builds a virtual mana pool excluding mana sources whose activated abilities
-     * would trigger an interactive choice (e.g. AwardAnyColorManaEffect on Birds of Paradise).
-     * Used when computing affordable attackers for attack tax, to avoid activating
-     * choice-triggering abilities during ATTACKER_DECLARATION.
+     * Builds a virtual mana pool excluding sources whose mana tap would open an interactive
+     * choice. Used when computing affordable attackers for attack tax so payment cannot replace
+     * the active declaration prompt.
      */
     public VirtualManaPool buildSafeVirtualManaPool(GameData gameData, UUID aiPlayerId) {
         return potentialManaService.buildSafeVirtualManaPool(gameData, aiPlayerId);
-    }
-
-    /**
-     * Returns true if the card's activated mana abilities would trigger an interactive
-     * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise).
-     * Cards with ON_TAP effects are always safe — they produce mana without choices.
-     */
-    static boolean wouldManaAbilityTriggerChoice(Card card) {
-        return PotentialManaService.wouldManaAbilityTriggerChoice(card);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
