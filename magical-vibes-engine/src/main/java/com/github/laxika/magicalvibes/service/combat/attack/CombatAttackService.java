@@ -208,6 +208,25 @@ public class CombatAttackService {
     }
 
     /**
+     * Returns whether the given attacker group leaves enough eligible creatures to pay every
+     * creature-tap combat cost in the declaration.
+     */
+    public boolean canPayAttackTapCosts(GameData gameData, UUID playerId, List<Integer> attackerIndices) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return attackerIndices.isEmpty();
+        }
+        List<Permanent> attackers = new ArrayList<>(attackerIndices.size());
+        for (int index : attackerIndices) {
+            if (index < 0 || index >= battlefield.size()) {
+                return false;
+            }
+            attackers.add(battlefield.get(index));
+        }
+        return combatTapCostService.canPayAttackCosts(gameData, playerId, attackers);
+    }
+
+    /**
      * Returns the attackable creatures that can attack the specified player or planeswalker.
      * The ordinary attackable-creature query includes creatures with at least one legal attack
      * target, and this method narrows that result to the specified defender.

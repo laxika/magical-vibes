@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
+import com.github.laxika.magicalvibes.cards.h.HollowWarrior;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BasalThrull;
@@ -2325,6 +2326,34 @@ class EasyAiDecisionEngineTest {
             assertThat(combatGd.getLife(opponent.getId())).isEqualTo(16);
             assertThat(combatGd.gameLog.stream().map(entry -> entry.plainText()))
                     .anyMatch(log -> log.contains("declares 2 attackers."));
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI keeps an attacker group payable when one attacker has a creature-tap cost")
+        void keepsCreatureTapAttackCostPayable() {
+            Permanent warrior = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HollowWarrior());
+            warrior.setSummoningSick(false);
+            Permanent support = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            support.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendAttackerDeclaration(new DeclareAttackersRequest(List.of(0, 1), null));
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(warrior.isAttackedThisTurn()).isTrue();
+            assertThat(support.isTapped()).isTrue();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
                     .isNull();
         }

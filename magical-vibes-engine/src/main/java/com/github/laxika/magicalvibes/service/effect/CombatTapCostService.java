@@ -34,6 +34,12 @@ public class CombatTapCostService {
                 >= requiredTapCount(attacker);
     }
 
+    public boolean canPayAttackCosts(GameData gameData, UUID playerId, Collection<Permanent> attackers) {
+        Set<UUID> declaredIds = idsOf(attackers);
+        int required = attackers.stream().mapToInt(this::requiredTapCount).sum();
+        return availableTapSourceCount(gameData, playerId, declaredIds) >= required;
+    }
+
     public boolean canPayBlockCost(GameData gameData, Permanent blocker) {
         Set<UUID> declaredIds = new HashSet<>();
         gameData.forEachPermanent((ignored, permanent) -> {
@@ -47,9 +53,9 @@ public class CombatTapCostService {
     }
 
     public void validateAttackCosts(GameData gameData, UUID playerId, List<Permanent> attackers) {
-        Set<UUID> declaredIds = idsOf(attackers);
-        int required = attackers.stream().mapToInt(this::requiredTapCount).sum();
-        validateAvailable(gameData, playerId, declaredIds, required, "attack");
+        if (!canPayAttackCosts(gameData, playerId, attackers)) {
+            throw new IllegalStateException("Not enough untapped creatures to attack");
+        }
     }
 
     public void payAttackCosts(GameData gameData, UUID playerId, List<Permanent> attackers) {

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEff
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
@@ -1181,6 +1182,7 @@ public abstract class AiDecisionEngine {
         DeclareAttackersRequest combatLimitLegalRequest =
                 capAttackersToCombatMaximum(gameData, restrictionLegalRequest);
         combatLimitLegalRequest = removeUnmetAttackRestrictions(gameData, combatLimitLegalRequest);
+        combatLimitLegalRequest = fitAttackersToTapCosts(gameData, combatLimitLegalRequest);
         if (combatLimitLegalRequest.attackerIndices().isEmpty()
                 && combatAttackService.isOpponentForcedToAttack(
                         gameData, activeDecisionPlayerId(gameData))) {
@@ -1206,7 +1208,54 @@ public abstract class AiDecisionEngine {
         fallback = removeUnmetAttackRestrictions(gameData, fallback);
         fallback = capAttackersToCombatMaximum(gameData, fallback);
         fallback = removeUnmetAttackRestrictions(gameData, fallback);
+        fallback = fitAttackersToTapCosts(gameData, fallback);
         return fallback;
+    }
+
+    /**
+     * Keeps an ordered subset whose declaration-wide creature-tap costs can be paid.
+     * Required attackers are considered first so an optional attacker cannot consume the creature
+     * needed to pay a required attacker's cost.
+     */
+    private DeclareAttackersRequest fitAttackersToTapCosts(
+            GameData gameData, DeclareAttackersRequest request) {
+        if (request.attackerIndices().isEmpty()) {
+            return request;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(attackingPlayerId);
+        if (battlefield == null || request.attackerIndices().stream()
+                .filter(index -> index >= 0 && index < battlefield.size())
+                .map(battlefield::get)
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .noneMatch(CombatTapCostEffect.class::isInstance)) {
+            return request;
+        }
+
+        Set<Integer> requested = new HashSet<>(request.attackerIndices());
+        LinkedHashSet<Integer> ordered = new LinkedHashSet<>();
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null) {
+            declaration.mustAttackIndices().stream()
+                    .filter(requested::contains)
+                    .forEach(ordered::add);
+        }
+        ordered.addAll(request.attackerIndices());
+
+        List<Integer> fitted = new ArrayList<>(ordered.size());
+        for (int attackerIndex : ordered) {
+            List<Integer> candidate = new ArrayList<>(fitted);
+            candidate.add(attackerIndex);
+            if (combatAttackService.canPayAttackTapCosts(gameData, attackingPlayerId, candidate)) {
+                fitted.add(attackerIndex);
+            }
+        }
+        if (fitted.equals(request.attackerIndices())) {
+            return request;
+        }
+        return new DeclareAttackersRequest(fitted, request.attackTargets(), request.bands());
     }
 
     private DeclareAttackersRequest enforceAttackerDeclarationRequirements(
