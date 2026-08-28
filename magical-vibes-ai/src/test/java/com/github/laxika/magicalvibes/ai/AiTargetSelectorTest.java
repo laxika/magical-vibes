@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.d.Diminish;
 import com.github.laxika.magicalvibes.cards.f.FeelingOfDread;
 import com.github.laxika.magicalvibes.cards.f.Fireball;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.FulgentDistraction;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
@@ -1443,11 +1444,27 @@ class AiTargetSelectorTest {
             assertThat(targetSelector.needsMultiTargetSelection(new FulgentDistraction())).isTrue();
             assertThat(targetSelector.needsMultiTargetSelection(new AgonyWarp())).isTrue();
             assertThat(targetSelector.needsMultiTargetSelection(new SynchronizedStrike())).isTrue();
+            assertThat(targetSelector.needsMultiTargetSelection(new FieryJustice())).isFalse();
             assertThat(targetSelector.needsMultiTargetSelection(new Stun())).isFalse();
             // Fireball charges {1} per extra target — priced by neither the AI's affordability
             // check nor its mana tapping, so it stays on the single-target line.
             assertThat(targetSelector.needsMultiTargetSelection(new Fireball())).isFalse();
             assertThat(targetSelector.needsMultiTargetSelection(new SetessanTactics())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Divided damage and a separate target may choose the same opponent")
+        void selectsOpponentForBothFieryJusticeTargetInstances() {
+            FieryJustice card = new FieryJustice();
+            Map<UUID, Integer> damageAssignments = targetSelector.buildDamageAssignments(
+                    gd, card, aiPlayer.getId());
+
+            AiTargetSelector.SpellTargetSelection otherTargets = targetSelector.chooseTargetsAfterDistribution(
+                    gd, card, aiPlayer.getId(), damageAssignments);
+
+            assertThat(damageAssignments).containsExactlyEntriesOf(Map.of(human.getId(), 5));
+            assertThat(otherTargets.targetId()).isEqualTo(human.getId());
+            assertThat(otherTargets.targetIds()).isEmpty();
         }
 
         @Test

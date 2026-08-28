@@ -1041,18 +1041,20 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : initialTargetId;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
-                && targetSelector.hasSeparateGraveyardTarget(card)) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments);
+            if (selection == null) return null;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
             AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
                     gameData, card, aiPlayer.getId());
             if (selection == null) return null;
             targetId = selection.targetId();
             multiTargetIds = selection.targetIds();
         } else if (isMultiTarget && modalPlan == null) {
-            multiTargetIds = EffectResolution.needsDamageDistribution(card)
-                    ? targetSelector.chooseMultiTargetsAfterDistribution(
-                    gameData, card, aiPlayer.getId(), damageAssignments)
-                    : targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return null;
             targetId = null;
         } else if (targetId == null && checkSpellTarget && modalPlan == null
@@ -1069,10 +1071,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (targetId == null) return null;
         }
 
-        // Damage distribution spells don't use a single targetId
-        if (damageAssignments != null) {
-            targetId = null;
-        }
         // 4. Targeting tax
         int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
         if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)

@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -2368,6 +2369,43 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(modalSpell.getId());
         assertThat(gd.stack.getFirst().getDamageAssignments())
                 .containsExactlyEntriesOf(java.util.Map.of(player2.getId(), 2));
+    }
+
+    @Test
+    @DisplayName("Hard AI supplies a separate opponent target beside divided damage")
+    void castsDividedDamageWithSeparateOpponentTarget() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+        Card spell = new Card();
+        spell.setName("Divided damage with a separate opponent target");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{R}{G}{W}");
+        spell.setAllowSharedTargets(true);
+        spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(5));
+        spell.target(new PlayerPredicateTargetFilter(
+                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                        "Target must be an opponent"))
+                .addEffect(EffectSlot.SPELL, new TargetPlayerGainsLifeEffect(5));
+        // Exercise target routing independently of the evaluator's divided-damage scoring.
+        spell.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        harness.setHand(player1, List.of(spell));
+        int lifeBefore = gd.getLife(player2.getId());
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        assertThat(ai.tryCastSpell(gd)).isTrue();
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getCard()).isSameAs(spell);
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
+        assertThat(entry.getDamageAssignments())
+                .containsExactlyEntriesOf(java.util.Map.of(player2.getId(), 5));
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
     }
 
     @Test

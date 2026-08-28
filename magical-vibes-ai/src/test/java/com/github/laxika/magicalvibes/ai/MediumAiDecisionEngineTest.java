@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -1829,6 +1830,31 @@ class MediumAiDecisionEngineTest {
                 .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 2));
         harness.passBothPriorities();
         assertThat(gd.getLife(human.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies Fiery Justice's separate opponent target")
+    void castsFieryJusticeWithOpponentAsBothTargets() {
+        giveAiPriority();
+        harness.addToBattlefield(aiPlayer, new Mountain());
+        harness.addToBattlefield(aiPlayer, new Forest());
+        harness.addToBattlefield(aiPlayer, new Plains());
+        FieryJustice fieryJustice = new FieryJustice();
+        // Exercise target routing independently of the evaluator's divided-damage scoring.
+        fieryJustice.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        harness.setHand(aiPlayer, List.of(fieryJustice));
+        int lifeBefore = gd.getLife(human.getId());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getCard()).isSameAs(fieryJustice);
+        assertThat(entry.getTargetId()).isEqualTo(human.getId());
+        assertThat(entry.getDamageAssignments())
+                .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 5));
+        harness.passBothPriorities();
+        assertThat(gd.getLife(human.getId())).isEqualTo(lifeBefore);
     }
 
     @Test

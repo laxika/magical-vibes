@@ -472,15 +472,23 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
-            // Determine target if needed (skip for modal and damage distribution spells)
+            // Determine any targets not already selected by a modal plan.
             UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
             List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
             // Shared classifier, same as every other engine: a single "up to N" group (Synchronized
             // Strike) also belongs on the multi-target path — routing it to the single-target one
             // submits one target and can offer a player the spell can't legally target.
             boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-            if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
-                    && targetSelector.hasSeparateGraveyardTarget(card)) {
+            if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+                AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                        gameData, card, aiPlayer.getId(), damageAssignments);
+                if (selection == null) {
+                    telemetry.recordSkip("spell: targets outside damage distribution unsatisfiable", card.getName());
+                    continue;
+                }
+                targetId = selection.targetId();
+                multiTargetIds = selection.targetIds();
+            } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
                 AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
                         gameData, card, aiPlayer.getId());
                 if (selection == null) {
@@ -490,10 +498,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 targetId = selection.targetId();
                 multiTargetIds = selection.targetIds();
             } else if (isMultiTarget && modalPlan == null) {
-                multiTargetIds = EffectResolution.needsDamageDistribution(card)
-                        ? targetSelector.chooseMultiTargetsAfterDistribution(
-                        gameData, card, aiPlayer.getId(), damageAssignments)
-                        : targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+                multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
                 if (multiTargetIds == null) {
                     telemetry.recordSkip("spell: multi-target requirements unsatisfiable", card.getName());
                     continue; // Can't satisfy mandatory targets, try next spell

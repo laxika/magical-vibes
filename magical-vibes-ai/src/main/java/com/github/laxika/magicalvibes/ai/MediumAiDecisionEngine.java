@@ -159,12 +159,19 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        // Determine target if needed (skip for modal and damage distribution spells)
+        // Determine any targets not already selected by a modal plan.
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
-                && targetSelector.hasSeparateGraveyardTarget(card)) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments);
+            if (selection == null) {
+                return false;
+            }
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
             AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
                     gameData, card, aiPlayer.getId());
             if (selection == null) {
@@ -173,10 +180,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             targetId = selection.targetId();
             multiTargetIds = selection.targetIds();
         } else if (isMultiTarget && modalPlan == null) {
-            multiTargetIds = EffectResolution.needsDamageDistribution(card)
-                    ? targetSelector.chooseMultiTargetsAfterDistribution(
-                    gameData, card, aiPlayer.getId(), damageAssignments)
-                    : targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) {
                 return false;
             }
@@ -439,18 +443,20 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
-                && targetSelector.hasSeparateGraveyardTarget(card)) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments);
+            if (selection == null) return false;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
             AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
                     gameData, card, aiPlayer.getId());
             if (selection == null) return false;
             targetId = selection.targetId();
             multiTargetIds = selection.targetIds();
         } else if (isMultiTarget && modalPlan == null) {
-            multiTargetIds = EffectResolution.needsDamageDistribution(card)
-                    ? targetSelector.chooseMultiTargetsAfterDistribution(
-                    gameData, card, aiPlayer.getId(), damageAssignments)
-                    : targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return false;
         } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())

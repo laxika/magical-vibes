@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
 import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinBarrage;
@@ -199,6 +200,46 @@ class RandomAiDecisionEngineTest {
             assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(fireIce.getId());
             assertThat(gameData.stack.getFirst().getDamageAssignments())
                     .containsExactlyEntriesOf(java.util.Map.of(opponent.getId(), 2));
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsFieryJusticeWithOpponentAsBothTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        FieryJustice fieryJustice = new FieryJustice();
+
+        harness.setHand(aiPlayer, List.of(fieryJustice));
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int lifeBefore = gameData.getLife(opponent.getId());
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            StackEntry entry = gameData.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(fieryJustice);
+            assertThat(entry.getTargetId()).isEqualTo(opponent.getId());
+            assertThat(entry.getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(opponent.getId(), 5));
+
+            harness.passBothPriorities();
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.getLife(opponent.getId())).isEqualTo(lifeBefore);
         } finally {
             watcher.uninstall();
         }

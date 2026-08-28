@@ -395,8 +395,9 @@ class AiTargetSelector {
      * single-target {@link #chooseTarget}: either it declares several target groups, or its
      * one group accepts more than one target ("up to N" spells like Feeling of Dread, which
      * previously took the single-target path and always submitted just one target).
-     * X-scaled targeting (target count decided with X elsewhere), divided-damage spells
-     * (damage-assignment path), and stack-targeting spells keep their existing paths.
+     * X-scaled targeting (target count decided with X elsewhere), the assignment group of a
+     * divided-damage spell, and stack-targeting spells keep their existing paths. A divided-damage
+     * spell whose separate group accepts multiple targets still uses this path for that group.
      *
      * <p>So does a spell that charges mana per extra target (Fireball's {@code
      * additionalCostPerExtraTarget} or Setessan Tactics's {@code additionalManaCostPerExtraTarget}):
@@ -409,6 +410,12 @@ class AiTargetSelector {
         List<SpellTarget> groups = card.getSpellTargets();
         if (groups.size() > 1) {
             return true;
+        }
+        if (groups.size() == 1 && EffectResolution.needsDamageDistribution(card)) {
+            SpellTarget group = groups.getFirst();
+            boolean separateFromDistribution = findEffectsForTargetGroup(card, group.getIndex()).stream()
+                    .noneMatch(this::isAmountDistributionEffect);
+            return separateFromDistribution && card.getMaxTargets() > 1;
         }
         return groups.size() == 1
                 && card.getMaxTargets() > 1
@@ -528,6 +535,25 @@ class AiTargetSelector {
         Set<UUID> reservedTargets = card.isAllowSharedTargets() ? Set.of() : assignedTargets;
         return chooseMultiTargets(gameData, card, aiPlayerId, reservedTargets,
                 assignedTargets.size(), assignedTargetGroups, null);
+    }
+
+    /**
+     * Selects target groups outside an amount assignment and places them in the channel expected by
+     * the engine: one ordinary target uses {@code targetId}, while multiple groups or a group that
+     * accepts multiple targets uses {@code targetIds}.
+     */
+    SpellTargetSelection chooseTargetsAfterDistribution(GameData gameData, Card card, UUID aiPlayerId,
+                                                         Map<UUID, Integer> distributionAssignments) {
+        List<UUID> selectedTargets = chooseMultiTargetsAfterDistribution(
+                gameData, card, aiPlayerId, distributionAssignments);
+        if (selectedTargets == null) {
+            return null;
+        }
+        if (needsMultiTargetSelection(card) || selectedTargets.size() > 1) {
+            return new SpellTargetSelection(null, selectedTargets);
+        }
+        UUID targetId = selectedTargets.isEmpty() ? null : selectedTargets.getFirst();
+        return new SpellTargetSelection(targetId, List.of());
     }
 
     private List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId,

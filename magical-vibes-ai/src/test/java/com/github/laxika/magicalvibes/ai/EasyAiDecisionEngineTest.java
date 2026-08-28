@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
 import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.FlameblastDragon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -826,6 +827,29 @@ class EasyAiDecisionEngineTest {
                     .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 2));
             testHarness.passBothPriorities();
             assertThat(testGd.getLife(human.getId())).isEqualTo(lifeBefore - 2);
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies Fiery Justice's separate opponent target")
+        void castsFieryJusticeWithOpponentAsBothTargets() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.RED, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.WHITE, 1);
+            FieryJustice fieryJustice = new FieryJustice();
+            testHarness.setHand(aiTestPlayer, List.of(fieryJustice));
+            int lifeBefore = testGd.getLife(human.getId());
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            StackEntry entry = testGd.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(fieryJustice);
+            assertThat(entry.getTargetId()).isEqualTo(human.getId());
+            assertThat(entry.getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 5));
+            testHarness.passBothPriorities();
+            assertThat(testGd.getLife(human.getId())).isEqualTo(lifeBefore);
         }
 
         @Test
