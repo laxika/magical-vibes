@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LivingInferno;
 import com.github.laxika.magicalvibes.cards.l.LonghornSharpshooter;
 import com.github.laxika.magicalvibes.cards.l.LuminousRebuke;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -801,6 +802,37 @@ class RandomAiDecisionEngineTest {
 
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(opponent.getId());
+    }
+
+    @Test
+    void skipsActivatedAbilityThatRequiresDamageAssignments() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent inferno = harness.addToBattlefieldAndReturn(aiPlayer, new LivingInferno());
+        inferno.setSummoningSick(false);
+        harness.addToBattlefield(opponent, new GrizzlyBears());
+        harness.setHand(aiPlayer, List.of());
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(inferno.isTapped()).isFalse();
+        assertThat(gameData.priorityPassedBy).containsExactly(aiPlayer.getId());
     }
 
     @Test

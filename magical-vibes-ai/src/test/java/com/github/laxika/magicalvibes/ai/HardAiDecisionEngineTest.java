@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.cards.h.HollowWarrior;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LivingInferno;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RatsFeast;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
@@ -191,6 +192,23 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @Tag("scryfall")
 class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
+
+    @Test
+    @DisplayName("Hard AI skips activated abilities that require damage assignments")
+    void skipsActivatedAbilityThatRequiresDamageAssignments() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        Permanent inferno = harness.addToBattlefieldAndReturn(player1, new LivingInferno());
+        inferno.setSummoningSick(false);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(inferno.isTapped()).isFalse();
+        assertThat(gd.priorityPassedBy).containsExactly(player1.getId());
+    }
 
     @Test
     @DisplayName("Hard AI preserves an untapped spell target while paying mana")

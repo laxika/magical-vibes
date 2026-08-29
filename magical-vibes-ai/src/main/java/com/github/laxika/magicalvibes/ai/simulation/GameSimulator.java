@@ -567,6 +567,7 @@ public class GameSimulator {
                 ActivatedAbility ability = abilities.get(abilityIndex);
                 if (AbilityActivationService.isManaAbility(ability)
                         || ability.isVariableLoyaltyCost()
+                        || EffectResolution.needsDamageDistribution(ability.getEffects())
                         || ability.isMultiTarget()
                         || ability.isNeedsSpellTarget()) {
                     continue;

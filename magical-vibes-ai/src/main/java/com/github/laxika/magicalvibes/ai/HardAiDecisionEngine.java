@@ -2016,6 +2016,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Skip variable loyalty cost abilities (-X, too complex)
                 if (ability.isVariableLoyaltyCost()) continue;
 
+                // Assignment-backed abilities require a per-target amount map that this path
+                // does not model. Treating them as ordinary single-target abilities produces an
+                // incomplete activation announcement even when only one target is selected.
+                if (EffectResolution.needsDamageDistribution(ability.getEffects())) continue;
+
                 // Skip multi-target abilities (rare for activated abilities)
                 if (ability.isMultiTarget()) continue;
 
