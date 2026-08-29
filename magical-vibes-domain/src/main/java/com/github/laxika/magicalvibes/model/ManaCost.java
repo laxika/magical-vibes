@@ -291,6 +291,34 @@ public class ManaCost {
     }
 
     /**
+     * Returns the mana choices represented by this cost when an effect adds mana equal to it.
+     * Generic and snow symbols produce colorless mana, X symbols produce no mana, and hybrid or
+     * Phyrexian symbols retain the colors from which the produced mana may be chosen.
+     */
+    public List<Set<ManaColor>> getManaProductionChoices() {
+        List<Set<ManaColor>> choices = new ArrayList<>();
+        for (int i = 0; i < genericCost + snowCost; i++) {
+            choices.add(Set.of(ManaColor.COLORLESS));
+        }
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                choices.add(Set.of(entry.getKey()));
+            }
+        }
+        for (Map.Entry<ManaColor, Integer> entry : phyrexianCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                choices.add(Set.of(entry.getKey()));
+            }
+        }
+        for (HybridSymbol hybrid : hybridCosts) {
+            choices.add(hybrid.colors().isEmpty()
+                    ? Set.of(ManaColor.COLORLESS)
+                    : Set.copyOf(hybrid.colors()));
+        }
+        return List.copyOf(choices);
+    }
+
+    /**
      * X-cost-only colorless mana (Rosheen Meanderer) available to pay this cost. It is usable only
      * when the cost contains an {X} symbol, and only for generic portions (it is colorless).
      */

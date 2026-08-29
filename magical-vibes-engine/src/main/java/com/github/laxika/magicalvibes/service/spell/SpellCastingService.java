@@ -188,6 +188,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -2497,6 +2498,9 @@ public class SpellCastingService {
                 ManaPool.NoncreatureSpellManaState noncreatureMana = !card.hasType(CardType.CREATURE)
                         ? pool.promoteNoncreatureSpellOnlyMana()
                         : null;
+                ManaPool.MulticoloredSpellManaState multicoloredMana =
+                        gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                                ? pool.promoteMulticoloredSpellOnlyMana() : null;
                 int faceDownCostReduction = card.getMorphCost() != null
                         ? castingCostService.getCastCostModifierForFaceDownSpell(gameData, playerId, card) : 0;
                 ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana = card.getMorphCost() != null
@@ -2514,6 +2518,9 @@ public class SpellCastingService {
                     }
                     if (restrictedMana != null) {
                         pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
+                    }
+                    if (multicoloredMana != null) {
+                        pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
                     }
                 }
                 if (!canPay) {
@@ -2552,6 +2559,9 @@ public class SpellCastingService {
             ManaPool.NoncreatureSpellManaState noncreatureMana = !card.hasType(CardType.CREATURE)
                     ? pool.promoteNoncreatureSpellOnlyMana()
                     : null;
+            ManaPool.MulticoloredSpellManaState multicoloredMana =
+                    gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                            ? pool.promoteMulticoloredSpellOnlyMana() : null;
             try {
                 String manaCostString = card.getManaCost() != null
                         ? card.getManaCost() + perTargetManaCost + escalateManaSuffix : escalateManaSuffix;
@@ -2629,6 +2639,9 @@ public class SpellCastingService {
                 if (noncreatureMana != null) {
                     pool.restorePromotedNoncreatureSpellOnlyMana(noncreatureMana);
                 }
+                if (multicoloredMana != null) {
+                    pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
+                }
             }
         } else if (!usingAlternateCost && !escalateManaSuffix.isEmpty()) {
             // Free cast from battlefield (e.g. As Foretold): mana cost is waived, but escalate is still paid.
@@ -2637,9 +2650,12 @@ public class SpellCastingService {
                     gameData, playerId, card, effectiveXValue, null, collectEvidenceCostPaid)
                     + targetingTax;
             ManaCost escalateOnly = new ManaCost(escalateManaSuffix);
-            if (!escalateOnly.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
-                throw new IllegalStateException("Not enough mana to pay escalate cost");
-            }
+            withMulticoloredSpellMana(gameData, playerId, card, () -> {
+                if (!escalateOnly.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay escalate cost");
+                }
+                return null;
+            });
         }
 
         // Validate spell target (targeting a spell on the stack)
@@ -7158,26 +7174,29 @@ public class SpellCastingService {
         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, false);
         boolean powerstoneContext = gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, playerId)
                 && pool.getPowerstoneOnlyColorless() > 0;
-        if (!freeCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost,
-                flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
-                flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
-                flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
-                flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
-                flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
-                flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                flags.subtypeSpellOnlyContext())) {
-            throw new IllegalStateException("Not enough mana to pay spell cost increase");
-        }
-        int before = pool.getTotalAllMana();
-        freeCost.payWithAdditionalGenericCost(pool, 0, additionalCost,
-                flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
-                flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
-                flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
-                flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
-                flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
-                flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                flags.subtypeSpellOnlyContext());
-        gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
+        int manaSpent = withMulticoloredSpellMana(gameData, playerId, card, () -> {
+            if (!freeCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost,
+                    flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
+                    flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                    flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                    flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                    flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
+                    flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
+                    flags.subtypeSpellOnlyContext())) {
+                throw new IllegalStateException("Not enough mana to pay spell cost increase");
+            }
+            int before = pool.getTotalAllMana();
+            freeCost.payWithAdditionalGenericCost(pool, 0, additionalCost,
+                    flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
+                    flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                    flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                    flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                    flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
+                    flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
+                    flags.subtypeSpellOnlyContext());
+            return before - pool.getTotalAllMana();
+        });
+        gameData.addSpellCastManaSpent(card.getId(), manaSpent);
     }
 
     /** Commits a successful cast by moving the card out of exile and consuming its permissions. */
@@ -7602,9 +7621,12 @@ public class SpellCastingService {
                 new ManaCost(webSlinging.manaCost() + (additionalManaCost == null ? "" : additionalManaCost)));
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card)
                 + targetingTax + additionalGenericCost;
-        if (!cost.canPay(gameData.playerManaPools.get(playerId), additionalCost)) {
-            throw new IllegalStateException("Not enough mana to pay web-slinging cost");
-        }
+        withMulticoloredSpellMana(gameData, playerId, card, () -> {
+            if (!cost.canPay(gameData.playerManaPools.get(playerId), additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay web-slinging cost");
+            }
+            return null;
+        });
     }
 
     private int payWebSlingingCost(GameData gameData, Player player, Card card,
@@ -7621,7 +7643,10 @@ public class SpellCastingService {
                 + targetingTax + additionalGenericCost;
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         int before = pool.getTotalAllMana();
-        cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
+        withMulticoloredSpellMana(gameData, player.getId(), card, () -> {
+            cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
+            return null;
+        });
         gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
         if (!permanentRemovalService.removePermanentToHand(gameData, toReturn)) {
             throw new IllegalStateException("Could not return the web-slinging creature to its owner's hand");
@@ -7658,12 +7683,30 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax;
         ManaCost escalateOnly = new ManaCost(escalateManaSuffix);
-        if (!escalateOnly.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
-            throw new IllegalStateException("Not enough mana to pay escalate cost");
+        int manaSpent = withMulticoloredSpellMana(gameData, playerId, card, () -> {
+            if (!escalateOnly.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay escalate cost");
+            }
+            int before = pool.getTotalAllMana();
+            escalateOnly.payWithAdditionalGenericCost(pool, 0, additionalCost);
+            return before - pool.getTotalAllMana();
+        });
+        gameData.addSpellCastManaSpent(card.getId(), manaSpent);
+    }
+
+    private <T> T withMulticoloredSpellMana(GameData gameData, UUID playerId, Card card,
+                                             Supplier<T> action) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        ManaPool.MulticoloredSpellManaState state =
+                gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                        ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        try {
+            return action.get();
+        } finally {
+            if (state != null) {
+                pool.restorePromotedMulticoloredSpellOnlyMana(state);
+            }
         }
-        int before = pool.getTotalAllMana();
-        escalateOnly.payWithAdditionalGenericCost(pool, 0, additionalCost);
-        gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
     }
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions) {
@@ -8033,6 +8076,9 @@ public class SpellCastingService {
         ManaPool.NoncreatureSpellManaState noncreatureMana = !card.hasType(CardType.CREATURE)
                 ? pool.promoteNoncreatureSpellOnlyMana()
                 : null;
+        ManaPool.MulticoloredSpellManaState multicoloredMana =
+                gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                        ? pool.promoteMulticoloredSpellOnlyMana() : null;
         try {
             if (!card.hasType(CardType.CREATURE)) {
                 return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
@@ -8063,6 +8109,9 @@ public class SpellCastingService {
             }
             if (subtypeOrLegendaryMana != null) {
                 pool.restorePromotedSubtypeOrLegendaryCreatureMana(subtypeOrLegendaryMana);
+            }
+            if (multicoloredMana != null) {
+                pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
             }
         }
     }
@@ -8832,25 +8881,34 @@ public class SpellCastingService {
             }
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            if (kickerCost.hasX() && kickerEffect.hasXColorRestriction()) {
-                if (kickerEffect.xUsesEachColorAtMostOnce()
-                        && xValue > countAvailableColors(pool, kickerEffect.xColorRestrictions())) {
-                    throw new IllegalStateException("No more than one mana of each color may be spent on kicker X");
+            ManaPool.MulticoloredSpellManaState multicoloredMana =
+                    gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                            ? pool.promoteMulticoloredSpellOnlyMana() : null;
+            try {
+                if (kickerCost.hasX() && kickerEffect.hasXColorRestriction()) {
+                    if (kickerEffect.xUsesEachColorAtMostOnce()
+                            && xValue > countAvailableColors(pool, kickerEffect.xColorRestrictions())) {
+                        throw new IllegalStateException("No more than one mana of each color may be spent on kicker X");
+                    }
+                    if (!kickerCost.canPay(pool, xValue, kickerEffect.xColorRestrictions(), 0)) {
+                        throw new IllegalStateException("Not enough colored mana to pay kicker X");
+                    }
+                    kickerCost.pay(pool, xValue, kickerEffect.xColorRestrictions(), 0);
+                } else if (pool.getKickedOnlyGreen() > 0) {
+                    if (!kickerCost.canPay(pool, xValue, false, false, false, true)) {
+                        throw new IllegalStateException("Not enough mana to pay kicker cost");
+                    }
+                    kickerCost.pay(pool, xValue, false, false, false, true);
+                } else {
+                    if (!kickerCost.canPay(pool, xValue)) {
+                        throw new IllegalStateException("Not enough mana to pay kicker cost");
+                    }
+                    kickerCost.pay(pool, xValue);
                 }
-                if (!kickerCost.canPay(pool, xValue, kickerEffect.xColorRestrictions(), 0)) {
-                    throw new IllegalStateException("Not enough colored mana to pay kicker X");
+            } finally {
+                if (multicoloredMana != null) {
+                    pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
                 }
-                kickerCost.pay(pool, xValue, kickerEffect.xColorRestrictions(), 0);
-            } else if (pool.getKickedOnlyGreen() > 0) {
-                if (!kickerCost.canPay(pool, xValue, false, false, false, true)) {
-                    throw new IllegalStateException("Not enough mana to pay kicker cost");
-                }
-                kickerCost.pay(pool, xValue, false, false, false, true);
-            } else {
-                if (!kickerCost.canPay(pool, xValue)) {
-                    throw new IllegalStateException("Not enough mana to pay kicker cost");
-                }
-                kickerCost.pay(pool, xValue);
             }
             manaSpent = before - pool.getTotalAllMana();
         }
@@ -9187,10 +9245,13 @@ public class SpellCastingService {
             int reduction = harmonizeTapPower(gameData, tapPermanentIds);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            if (!cost.canPayFromGraveyard(pool, effectiveXValue, additionalCost - reduction)) {
-                throw new IllegalStateException("Not enough mana to pay harmonize cost");
-            }
-            cost.payFromGraveyard(pool, effectiveXValue, additionalCost - reduction);
+            withMulticoloredSpellMana(gameData, playerId, card, () -> {
+                if (!cost.canPayFromGraveyard(pool, effectiveXValue, additionalCost - reduction)) {
+                    throw new IllegalStateException("Not enough mana to pay harmonize cost");
+                }
+                cost.payFromGraveyard(pool, effectiveXValue, additionalCost - reduction);
+                return null;
+            });
             manaSpent = before - pool.getTotalAllMana();
             payHarmonizeTapCost(gameData, player, card, tapPermanentIds);
             gameData.addSpellCastManaSpent(card.getId(), manaSpent);
@@ -9202,10 +9263,13 @@ public class SpellCastingService {
                     gameData, playerId, card, new ManaCost(graveyardAlternateManaCost));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            if (!cost.canPayFromGraveyard(pool, effectiveXValue + additionalCost)) {
-                throw new IllegalStateException("Not enough mana to pay graveyard cast cost");
-            }
-            cost.payFromGraveyard(pool, effectiveXValue + additionalCost);
+            withMulticoloredSpellMana(gameData, playerId, card, () -> {
+                if (!cost.canPayFromGraveyard(pool, effectiveXValue + additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay graveyard cast cost");
+                }
+                cost.payFromGraveyard(pool, effectiveXValue + additionalCost);
+                return null;
+            });
             manaSpent = before - pool.getTotalAllMana();
             if (isRetrace) {
                 payRetraceDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
@@ -9231,10 +9295,13 @@ public class SpellCastingService {
                     gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost()));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            if (!cost.canPayForDisturbFromGraveyard(pool, effectiveXValue, additionalCost)) {
-                throw new IllegalStateException("Not enough mana to pay disturb cost");
-            }
-            cost.payForDisturbFromGraveyard(pool, effectiveXValue, additionalCost);
+            withMulticoloredSpellMana(gameData, playerId, card, () -> {
+                if (!cost.canPayForDisturbFromGraveyard(pool, effectiveXValue, additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay disturb cost");
+                }
+                cost.payForDisturbFromGraveyard(pool, effectiveXValue, additionalCost);
+                return null;
+            });
             manaSpent = before - pool.getTotalAllMana();
             gameData.addSpellCastManaSpent(card.getId(), manaSpent);
             return effectiveXValue;
@@ -9250,23 +9317,26 @@ public class SpellCastingService {
             boolean anyManaType = grantedGraveyardCardCast
                     && castingPermissionService.hasAnyManaTypePermission(
                     gameData, playerId, card.getId());
-            if (anyManaType) {
-                if (!cost.canPayAsGeneric(pool, effectiveXValue, additionalCost)) {
-                    throw new IllegalStateException("Not enough mana to pay casting cost");
+            withMulticoloredSpellMana(gameData, playerId, card, () -> {
+                if (anyManaType) {
+                    if (!cost.canPayAsGeneric(pool, effectiveXValue, additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay casting cost");
+                    }
+                    cost.payAsGeneric(pool, effectiveXValue, additionalCost);
+                } else if (cardHasFlashback) {
+                    int manaXValue = cost.hasX() ? effectiveXValue : 0;
+                    if (!cost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay flashback cost");
+                    }
+                    cost.payFlashbackFromGraveyard(pool, manaXValue + additionalCost);
+                } else {
+                    if (!cost.canPayFromGraveyard(pool, effectiveXValue + additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay casting cost");
+                    }
+                    cost.payFromGraveyard(pool, effectiveXValue + additionalCost);
                 }
-                cost.payAsGeneric(pool, effectiveXValue, additionalCost);
-            } else if (cardHasFlashback) {
-                int manaXValue = cost.hasX() ? effectiveXValue : 0;
-                if (!cost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost)) {
-                    throw new IllegalStateException("Not enough mana to pay flashback cost");
-                }
-                cost.payFlashbackFromGraveyard(pool, manaXValue + additionalCost);
-            } else {
-                if (!cost.canPayFromGraveyard(pool, effectiveXValue + additionalCost)) {
-                    throw new IllegalStateException("Not enough mana to pay casting cost");
-                }
-                cost.payFromGraveyard(pool, effectiveXValue + additionalCost);
-            }
+                return null;
+            });
             manaSpent = before - pool.getTotalAllMana();
         } else {
             FlashbackCast flashback = flashbackOpt.orElseThrow(() -> new IllegalStateException("Flashback has no cost"));
@@ -9277,10 +9347,13 @@ public class SpellCastingService {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int before = pool.getTotalAllMana();
                 int manaXValue = cost.hasX() ? effectiveXValue : 0;
-                if (!cost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost)) {
-                    throw new IllegalStateException("Not enough mana to pay flashback cost");
-                }
-                cost.payFlashbackFromGraveyard(pool, manaXValue + additionalCost);
+                withMulticoloredSpellMana(gameData, playerId, card, () -> {
+                    if (!cost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay flashback cost");
+                    }
+                    cost.payFlashbackFromGraveyard(pool, manaXValue + additionalCost);
+                    return null;
+                });
                 manaSpent = before - pool.getTotalAllMana();
             }
 
@@ -9514,9 +9587,12 @@ public class SpellCastingService {
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
                 gameData, playerId, card, new ManaCost(manaCost.manaCost()));
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax;
-        if (!cost.canPay(gameData.playerManaPools.get(playerId), additionalCost)) {
-            throw new IllegalStateException("Not enough mana to pay bestow cost");
-        }
+        withMulticoloredSpellMana(gameData, playerId, card, () -> {
+            if (!cost.canPay(gameData.playerManaPools.get(playerId), additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay bestow cost");
+            }
+            return null;
+        });
     }
 
     private void payBestowCastingCost(GameData gameData, Player player, Card card, int targetingTax) {
@@ -9528,7 +9604,10 @@ public class SpellCastingService {
         int before = pool.getTotalAllMana();
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
                 gameData, player.getId(), card, new ManaCost(manaCost.manaCost()));
-        cost.pay(pool, castingCostService.getCastCostModifier(gameData, player.getId(), card) + targetingTax);
+        withMulticoloredSpellMana(gameData, player.getId(), card, () -> {
+            cost.pay(pool, castingCostService.getCastCostModifier(gameData, player.getId(), card) + targetingTax);
+            return null;
+        });
         gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " pays " + manaCost.manaCost() + " for ", card, "."));
@@ -9824,6 +9903,9 @@ public class SpellCastingService {
                 gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost()));
         ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana = card.getMorphCost() != null
                 ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : null;
+        ManaPool.MulticoloredSpellManaState multicoloredMana =
+                gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                        ? pool.promoteMulticoloredSpellOnlyMana() : null;
         try {
             if (altCast.reduceManaBySacrificedManaCost()) {
                 cost.payAfterReduction(pool, sacrificedManaCost);
@@ -9835,6 +9917,9 @@ public class SpellCastingService {
         } finally {
             if (restrictedMana != null) {
                 pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
+            }
+            if (multicoloredMana != null) {
+                pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
             }
         }
         int manaSpent = before - pool.getTotalAllMana();

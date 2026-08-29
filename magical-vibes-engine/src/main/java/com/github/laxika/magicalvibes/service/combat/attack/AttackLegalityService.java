@@ -138,6 +138,11 @@ public class AttackLegalityService {
         if (gameQueryService.hasAuraWithEffect(gameData, creature, CanAttackAsThoughNoDefenderEffect.class)) {
             return true;
         }
+        if (gameQueryService.getGrantedEffects(gameData, creature).stream()
+                .anyMatch(effect -> effect instanceof NoDefenderAttackPermissionEffect permission
+                        && permission.grantsCarrierAttackAsThoughNoDefender())) {
+            return true;
+        }
         // Until-end-of-turn grants from a resolved activated ability (e.g. Wall of Wonder),
         // stored as floating effects affecting this creature.
         synchronized (gameData.floatingEffects) {

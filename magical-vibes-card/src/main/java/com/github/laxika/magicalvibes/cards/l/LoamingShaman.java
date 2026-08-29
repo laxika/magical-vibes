@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "180")
+@CardRegistration(set = "DIS", collectorNumber = "87")
 public class LoamingShaman extends Card {
 
     public LoamingShaman() {

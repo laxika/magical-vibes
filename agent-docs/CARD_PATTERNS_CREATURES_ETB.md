@@ -137,6 +137,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB discard hand + opponent edict per card | `m/Malfegor.java` | DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect() — discard your hand, each opponent sacrifices a creature of their choice for each card discarded this way (sacrifice count = cards discarded) |
 | ETB each player sacrifices a creature or planeswalker, otherwise discards | `p/Plaguecrafter.java` | EachPlayerSacrificesPermanentOrDiscardsEffect(creature OR planeswalker) — APNAP sacrifice choices and simultaneous sacrifice, followed by APNAP discard choices and simultaneous discards |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
+| ETB drawback (discard two) | `a/AvatarOfDiscord.java` | `SacrificeUnlessDiscardCardTypeEffect(null, 2)` — sacrifice unless the controller discards two cards |
 | ETB drawback (exile unless discard) | `b/BodySnatcher.java` | ExileUnlessDiscardCardTypeEffect |
 | ETB drawback (discard at random) | `p/PillagingHorde.java` | SacrificeUnlessDiscardCardTypeEffect(null, true) — sacrifice unless you discard a card at random |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |

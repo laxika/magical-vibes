@@ -50,6 +50,8 @@ public enum PreventionScope {
     ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS,
     /** "Prevent all [combat] damage that would be dealt to target creature(s) this turn" (Foxfire, Redeem). */
     ALL_TO_TARGET_CREATURES,
+    /** "Prevent all damage that would be dealt to target creature(s) this turn; put a +1/+1 counter on it for each 1 damage prevented" (Brace for Impact). */
+    ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS,
     /** "Prevent all [combat] damage target creature(s) would deal this turn" (Soul Parry, Resistance Fighter). */
     ALL_BY_TARGET_CREATURES,
     /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1).

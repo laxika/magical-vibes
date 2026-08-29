@@ -121,6 +121,7 @@ public sealed interface DynamicAmount permits
         PlayersInGame,
         RepeatedAdditionalCostCount,
         Scaled,
+        SacrificedPermanentColorCount,
         SacrificedPermanentPower,
         SacrificedPermanentToughness,
         SourceCardPower,

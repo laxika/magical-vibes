@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrifi
 import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -1088,6 +1090,57 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect), EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DEALT_DAMAGE — ConditionalEffect")
+    class OpponentDealtDamageConditional {
+
+        @Test
+        @DisplayName("queues the trigger with the damaged player when the damage reaches the threshold")
+        void queuesWhenDamageMeetsThreshold() {
+            gd.playerIds.add(player1Id);
+            gd.playerIds.add(player2Id);
+            Permanent watcher = createPermanent("Pain Magnification");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition,
+                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 3, UUID.randomUUID());
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(3)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect), EffectSlot.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("does not queue the trigger below the damage threshold")
+        void skipsWhenDamageIsBelowThreshold() {
+            gd.playerIds.add(player1Id);
+            gd.playerIds.add(player2Id);
+            Permanent watcher = createPermanent("Pain Magnification");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition,
+                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, UUID.randomUUID());
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(2)))
+                    .thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect), EffectSlot.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();

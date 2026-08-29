@@ -1669,7 +1669,22 @@ public class PlayerInputService {
     public void beginChooseNameRevealHandDiscardChoice(GameData gameData, UUID choosingPlayerId,
                                                        UUID targetPlayerId, List<CardType> excludedTypes) {
         ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext =
-                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId);
+                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId, false);
+        beginChooseNameRevealHandDiscardChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes,
+                choiceContext);
+    }
+
+    public void beginChooseNameRevealHandDiscardOneOrDrawChoice(GameData gameData, UUID choosingPlayerId,
+                                                                UUID targetPlayerId, List<CardType> excludedTypes) {
+        ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext =
+                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId, true);
+        beginChooseNameRevealHandDiscardChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes,
+                choiceContext);
+    }
+
+    private void beginChooseNameRevealHandDiscardChoice(
+            GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<CardType> excludedTypes,
+            ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext) {
         List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
         String excludedLabel = excludedTypes.stream()
                 .map(type -> type.name().toLowerCase())
@@ -1703,6 +1718,28 @@ public class PlayerInputService {
                 controllerId, null, null, new ChoiceContext.AssemblyHallCreatureCardChoice(controllerId),
                 creatureNames, "Choose a creature card in your hand to reveal."));
         log.info("Game {} - Awaiting {} to choose a creature card in hand for Assembly Hall",
+                gameData.id, playerName);
+    }
+
+    /** Begins Infernal Tutor's choice of a card name from the controller's hand. */
+    public void beginInfernalTutorCardChoice(GameData gameData, UUID controllerId) {
+        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
+        List<String> cardNames = hand.stream()
+                .map(Card::getName)
+                .distinct()
+                .sorted()
+                .toList();
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        if (cardNames.isEmpty()) {
+            log.info("Game {} - {} has no card in hand for Infernal Tutor", gameData.id, playerName);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, new ChoiceContext.InfernalTutorCardChoice(controllerId),
+                cardNames, "Choose a card in your hand to reveal."));
+        log.info("Game {} - Awaiting {} to choose a card in hand for Infernal Tutor",
                 gameData.id, playerName);
     }
 

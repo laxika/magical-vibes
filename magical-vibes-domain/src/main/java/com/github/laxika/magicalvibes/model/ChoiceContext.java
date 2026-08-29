@@ -76,8 +76,41 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record MulticoloredSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                             boolean anyColorCombination, UUID recipientPlayerId,
+                                             boolean fromSnowSource, boolean fromCaveSource)
+            implements ChoiceContext {
+
+        public MulticoloredSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                                boolean anyColorCombination) {
+            this(playerId, fromCreature, amount, anyColorCombination, null, false, false);
+        }
+
+        public MulticoloredSpellManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new MulticoloredSpellManaColorChoice(playerId, fromCreature, amount,
+                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource);
+        }
+
+        public MulticoloredSpellManaColorChoice withSnowSource(boolean fromSnowSource) {
+            return new MulticoloredSpellManaColorChoice(playerId, fromCreature, amount,
+                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource);
+        }
+
+        public MulticoloredSpellManaColorChoice withCaveSource(boolean fromCaveSource) {
+            return new MulticoloredSpellManaColorChoice(playerId, fromCreature, amount,
+                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource);
+        }
+    }
+
     record ChosenPlayerManaColorChoice(UUID playerId, UUID sourceControllerId, UUID recipientPlayerId,
                                        boolean fromCreature, int amount) implements ChoiceContext {}
+
+    record EnchantedManaCostChoice(UUID playerId, List<Set<ManaColor>> choices,
+                                   boolean fromCreature) implements ChoiceContext {
+        public EnchantedManaCostChoice {
+            choices = choices.stream().map(Set::copyOf).toList();
+        }
+    }
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
@@ -546,6 +579,9 @@ public sealed interface ChoiceContext {
     /** Assembly Hall: choose the name of a creature card currently in your hand to reveal. */
     record AssemblyHallCreatureCardChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Infernal Tutor: choose the name of any card currently in your hand to reveal. */
+    record InfernalTutorCardChoice(UUID controllerId) implements ChoiceContext {}
+
     /**
      * First half of Mindblaze: the controller picks a card name. The answer chains into
      * {@link RevealLibraryNumberGuessChoice}, which asks for the number.
@@ -979,8 +1015,19 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /** The controller names a card; the target reveals their hand and discards matching cards. */
-    record ChooseNameRevealHandDiscardChoice(UUID controllerId, UUID targetPlayerId)
-            implements ChoiceContext {}
+    record ChooseNameRevealHandDiscardChoice(UUID controllerId, UUID targetPlayerId,
+                                              boolean discardOnlyOneAndDrawIfNoMatch)
+            implements ChoiceContext {
+
+        public ChooseNameRevealHandDiscardChoice(UUID controllerId, UUID targetPlayerId) {
+            this(controllerId, targetPlayerId, false);
+        }
+    }
+
+    /** The controller names a card; the damaged player reveals their hand and a matching name
+     * inserts the follow-up effect into the paused resolution. */
+    record ChooseCardNameRevealHandThenChoice(UUID controllerId, UUID targetPlayerId,
+                                               CardEffect followUpEffect) implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),

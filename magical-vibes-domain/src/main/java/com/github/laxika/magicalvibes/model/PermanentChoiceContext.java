@@ -86,6 +86,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Enchantment Alteration: move the targeted Aura to another permanent of the same type. */
     record AttachTargetAuraToAnotherPermanentOfSameType(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** Simic Guildmage: move the targeted Aura to another permanent controlled by its host's controller. */
+    record AttachTargetAuraToAnotherPermanentWithSameController(UUID auraPermanentId)
+            implements PermanentChoiceContext {}
+
     record LegendRule(String cardName) implements PermanentChoiceContext {}
 
     record BounceCreature(UUID bouncingPlayerId, PermanentPredicate thenCondition, CardEffect thenEffect)
@@ -116,6 +120,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
+
+    /** A targeted player chooses a permanent to sacrifice before taking mana-value damage. */
+    record TargetPlayerSacrificesPermanentThenDealsManaValueDamage(
+            UUID sacrificingPlayerId, StackEntry resolvingEntry, PermanentPredicate filter)
+            implements PermanentChoiceContext {}
 
     /** Kethek: the controller is choosing another creature to sacrifice before the library reveal. */
     record SacrificeOtherCreatureThenRevealUntilLowerManaValue(
@@ -803,7 +812,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
             implements PermanentChoiceContext {}
 
-    /** Polymorphous Rush: choose the creature whose copiable characteristics will be used. */
+    /** Choose the creature whose copiable characteristics will be used. */
     record PolymorphousRushCreatureChoice(UUID controllerId,
                                            MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect)
             implements PermanentChoiceContext {}

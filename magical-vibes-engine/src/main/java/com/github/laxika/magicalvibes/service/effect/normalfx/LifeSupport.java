@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -59,6 +60,17 @@ public class LifeSupport {
      */
     public void applyGainLife(GameData gameData, UUID controllerId, int amount, String source,
                               Card sourceCard, StackEntryType sourceEntryType) {
+        applyGainLife(gameData, controllerId, amount, source, sourceCard, sourceEntryType,
+                resolveSpellOrAbilityControllerId(gameData));
+    }
+
+    /**
+     * Applies life gain while preserving the controller of the spell or ability that caused it.
+     * The explicit source controller is used by abilities resolved outside the normal stack loop.
+     */
+    public void applyGainLife(GameData gameData, UUID controllerId, int amount, String source,
+                              Card sourceCard, StackEntryType sourceEntryType,
+                              UUID sourceControllerId) {
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
@@ -75,9 +87,10 @@ public class LifeSupport {
             }
             return;
         }
-        // Tainted Remedy turns the whole gain event into an equal life loss. Per CR 119.10 a gain of
-        // 0 is not a life-gain event, so there is nothing to replace.
-        if (amount > 0 && gameQueryService.lifeGainBecomesLifeLoss(gameData, controllerId)) {
+        // Tainted Remedy and Rain of Gore turn the whole gain event into an equal life loss.
+        if (amount > 0 && (gameQueryService.lifeGainBecomesLifeLoss(gameData, controllerId)
+                || gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
+                        gameData, controllerId, sourceControllerId))) {
             applyLifeLoss(gameData, controllerId, amount, source != null ? source : "replaced life gain");
             return;
         }
@@ -131,7 +144,9 @@ public class LifeSupport {
                 }
                 return true;
             }
-            if (gameQueryService.lifeGainBecomesLifeLoss(gameData, playerId)) {
+            if (gameQueryService.lifeGainBecomesLifeLoss(gameData, playerId)
+                    || gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
+                            gameData, playerId, resolveSpellOrAbilityControllerId(gameData))) {
                 applyLifeLoss(gameData, playerId, newLife - currentLife, "replaced life gain");
                 return true;
             }
@@ -219,6 +234,14 @@ public class LifeSupport {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         return battlefield != null && battlefield.stream().anyMatch(permanent ->
                 permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
+                .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
+    }
+
+    private UUID resolveSpellOrAbilityControllerId(GameData gameData) {
+        if (gameData.currentlyResolvingControllerId != null) {
+            return gameData.currentlyResolvingControllerId;
+        }
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        return pendingEntry != null ? pendingEntry.getControllerId() : null;
     }
 }

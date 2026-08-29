@@ -101,6 +101,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAt
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
@@ -420,6 +421,14 @@ public class CombatAttackService {
             }
         }
 
+        if (hasOpponentCreaturesAttackTogetherEffect(gameData, playerId)) {
+            for (int idx : attackableIndices) {
+                if (attackingIndices.add(idx)) {
+                    mustAttack.add(idx);
+                }
+            }
+        }
+
         Set<CounterType> attackTogetherCounterTypes = getAttackTogetherCounterTypes(gameData);
         boolean addedCounterBearer;
         do {
@@ -445,6 +454,25 @@ public class CombatAttackService {
             }
         } while (addedCounterBearer);
         return new ArrayList<>(mustAttack);
+    }
+
+    private boolean hasOpponentCreaturesAttackTogetherEffect(GameData gameData, UUID playerId) {
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            if (sourceControllerId.equals(playerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OpponentCreaturesAttackTogetherEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private Set<CounterType> getAttackTogetherCounterTypes(GameData gameData) {
@@ -556,6 +584,10 @@ public class CombatAttackService {
 
         // Ekundu Cyclops: "if a creature you control attacks, this creature also attacks if able"
         validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices);
+
+        // War's Toll: if one of the active player's creatures attacks, all of that player's
+        // creatures attack if able.
+        validateOpponentCreaturesAttackTogether(gameData, playerId, attackable, uniqueIndices);
 
         // Magnetic Web: "if a creature with a magnet counter attacks, all creatures with magnet
         // counters attack if able"
@@ -1631,6 +1663,10 @@ public class CombatAttackService {
                     for (CardEffect effect : anyAttackEffects) {
                         CardEffect matchingEffect = effect;
                         boolean matches = true;
+                        FilterContext sourceContext = FilterContext.of(gameData)
+                                .withSourceCardId(perm.getOriginalCard().getId())
+                                .withSourceControllerId(permController)
+                                .withSourcePermanentId(perm.getId());
                         while (matches) {
                             if (matchingEffect instanceof TriggeringPermanentControllerConditionalEffect controllerConditional) {
                                 if (!permController.equals(gameQueryService.findPermanentController(gameData, attacker.getId()))) {
@@ -1639,8 +1675,8 @@ public class CombatAttackService {
                                     matchingEffect = controllerConditional.wrapped();
                                 }
                             } else if (matchingEffect instanceof TriggeringPermanentConditionalEffect permConditional) {
-                                if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
-                                        permConditional.predicate())) {
+                                if (!predicateEvaluationService.matchesPermanentPredicate(attacker,
+                                        permConditional.predicate(), sourceContext)) {
                                     matches = false;
                                 } else {
                                     matchingEffect = permConditional.wrapped();
@@ -2101,6 +2137,25 @@ public class CombatAttackService {
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
             if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)) {
                 throw new IllegalStateException(creature.getCard().getName()
+                        + " must also attack when another creature you control attacks");
+            }
+        }
+    }
+
+    private void validateOpponentCreaturesAttackTogether(GameData gameData, UUID playerId,
+                                                         List<Integer> attackableIndices,
+                                                         Set<Integer> declaredAttackerIndices) {
+        if (declaredAttackerIndices.isEmpty()
+                || castingCostService.getAttackPaymentPerCreature(gameData, playerId) > 0
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()
+                || !hasOpponentCreaturesAttackTogetherEffect(gameData, playerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        for (int idx : attackableIndices) {
+            if (!declaredAttackerIndices.contains(idx)) {
+                throw new IllegalStateException(battlefield.get(idx).getCard().getName()
                         + " must also attack when another creature you control attacks");
             }
         }

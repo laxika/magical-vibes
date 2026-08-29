@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NEM", collectorNumber = "70")
+@CardRegistration(set = "DIS", collectorNumber = "53")
 public class SealOfDoom extends Card {
 
     public SealOfDoom() {

@@ -186,6 +186,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
+        register(PendingInteraction.ShuffleCardsFromOutsideGameChoice.class,
+                this::projectShuffleCardsFromOutsideGameChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
                 this::projectFaceUpExiledCardChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
@@ -1126,6 +1128,16 @@ public class InteractionPromptProjectionRegistry {
                         + " from outside the game or choose one in face-up exile.");
     }
 
+    private InteractionPromptMessage projectShuffleCardsFromOutsideGameChoice(
+            GameData gameData, PendingInteraction.ShuffleCardsFromOutsideGameChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                Math.min(interaction.maxCount(), interaction.pool().size()),
+                "Choose up to " + interaction.maxCount()
+                        + " cards you own from outside the game to shuffle into your library.");
+    }
+
     private InteractionPromptMessage projectAssimilationAegisCopyChoice(
             GameData gameData, PendingInteraction.AssimilationAegisCopyChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
@@ -1342,7 +1354,9 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
                 || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
                 || context instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
-                || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice;
+                || context instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice
+                || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice
+                || context instanceof ChoiceContext.InfernalTutorCardChoice;
     }
 
     private <T extends PendingInteraction> void register(

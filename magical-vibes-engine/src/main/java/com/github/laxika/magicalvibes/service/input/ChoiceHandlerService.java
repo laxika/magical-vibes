@@ -157,6 +157,10 @@ public class ChoiceHandlerService {
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid card name: " + colorName);
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice
+                && !colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid card name: " + colorName);
+        }
 
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
             handleDevotionManaColorChosen(gameData, player, colorName, ctx);
@@ -198,8 +202,18 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.MulticoloredSpellManaColorChoice ctx) {
+            handleMulticoloredSpellManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.ChosenPlayerManaColorChoice ctx) {
             handleChosenPlayerManaColorChosen(gameData, player, colorName, colorChoice, ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.EnchantedManaCostChoice ctx) {
+            handleEnchantedManaCostColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
             return;
         }
 
@@ -273,6 +287,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.AssemblyHallCreatureCardChoice ctx) {
             handleAssemblyHallCreatureCardChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.InfernalTutorCardChoice ctx) {
+            handleInfernalTutorCardChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.RevealLibraryNameGuessChoice ctx) {
@@ -512,7 +530,15 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
-            handleChooseNameRevealHandDiscardChoice(gameData, player, colorName, ctx);
+            if (ctx.discardOnlyOneAndDrawIfNoMatch()) {
+                handleChooseNameRevealHandDiscardOneOrDrawChoice(gameData, player, colorName, ctx);
+            } else {
+                handleChooseNameRevealHandDiscardChoice(gameData, player, colorName, ctx);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice ctx) {
+            handleChooseCardNameRevealHandThenChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
@@ -763,6 +789,44 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
                 + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
                 + colorName.toLowerCase() + " mana (spells only)."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleMulticoloredSpellManaColorChosen(
+            GameData gameData, Player player, String colorName,
+            ChoiceContext.MulticoloredSpellManaColorChoice ctx) {
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
+        ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
+        int amount = ctx.anyColorCombination() ? 1 : ctx.amount();
+        manaPool.addMulticoloredSpellOnlyMana(manaColor, amount);
+        if (ctx.fromSnowSource()) {
+            manaPool.addSnowManaTag(manaColor, amount);
+        }
+        if (ctx.fromCaveSource()) {
+            manaPool.addCaveManaTag(manaColor, amount);
+        }
+
+        int remaining = ctx.amount() - 1;
+        if (ctx.anyColorCombination() && remaining > 0) {
+            ChoiceContext.MulticoloredSpellManaColorChoice nextContext =
+                    new ChoiceContext.MulticoloredSpellManaColorChoice(
+                            ctx.playerId(), ctx.fromCreature(), remaining, true,
+                            ctx.recipientPlayerId(), ctx.fromSnowSource(), ctx.fromCaveSource());
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    ctx.playerId(), null, null, nextContext,
+                    List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"),
+                    "Choose a color of mana to add (multicolored spells only)."));
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
+                + colorName.toLowerCase() + " mana (multicolored spells only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1130,6 +1194,41 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEnchantedManaCostColorChosen(GameData gameData, Player player, String colorName,
+                                                    List<String> options,
+                                                    ChoiceContext.EnchantedManaCostChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor chosenColor = ManaColor.valueOf(colorName);
+        ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool pool = gameData.playerManaPools.get(ctx.playerId());
+        pool.add(effectiveColor, 1);
+        if (ctx.fromCreature()) {
+            pool.addCreatureMana(effectiveColor, 1);
+        }
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds one "
+                + effectiveColor.getCode() + "."));
+
+        List<Set<ManaColor>> remainingChoices = ctx.choices().subList(1, ctx.choices().size());
+        if (!remainingChoices.isEmpty()) {
+            ChoiceContext.EnchantedManaCostChoice nextContext =
+                    new ChoiceContext.EnchantedManaCostChoice(
+                            ctx.playerId(), remainingChoices, ctx.fromCreature());
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    ctx.playerId(), null, null, nextContext,
+                    remainingChoices.getFirst().stream().map(Enum::name).toList(),
+                    "Choose a color of mana to add."));
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -4006,6 +4105,37 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleChooseCardNameRevealHandThenChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseCardNameRevealHandThenChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
+        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+
+        boolean nameWasRevealed = hand != null && hand.stream()
+                .anyMatch(card -> card.getName().equals(cardName));
+        if (nameWasRevealed) {
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            if (pendingEntry == null) {
+                throw new IllegalStateException("No pending effect resolution entry");
+            }
+            pendingEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(ctx.followUpEffect()));
+        } else {
+            gameLogService.append(gameData, GameLog.text(targetName + " has no card named \""
+                    + cardName + "\" in their hand."));
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleChooseNameRevealHandDiscardChoice(
             GameData gameData, Player player, String cardName,
             ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
@@ -4054,6 +4184,44 @@ public class ChoiceHandlerService {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseNameRevealHandDiscardOneOrDrawChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
+        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+
+        List<Integer> matchingIndices = new ArrayList<>();
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getName().equals(cardName)) {
+                    matchingIndices.add(i);
+                }
+            }
+        }
+
+        if (matchingIndices.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " has no card named \""
+                    + cardName + "\" to discard. " + controllerName + " draws a card."));
+            drawService.resolveDrawCard(gameData, controllerId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                targetPlayerId, targetPlayerId, matchingIndices, 1, true, false,
+                List.of(), null, "Choose a card named \"" + cardName + "\" to discard.", false, false));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -4774,6 +4942,37 @@ public class ChoiceHandlerService {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
         if (entry == null) {
             throw new IllegalStateException("No effect resolution is waiting for Assembly Hall's choice");
+        }
+        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                List.of(new SearchLibraryEffect(new CardNamedPredicate(cardName), LibrarySearchDestination.HAND)));
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleInfernalTutorCardChoice(GameData gameData, String cardName,
+                                                ChoiceContext.InfernalTutorCardChoice ctx) {
+        PendingInteraction.ColorChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (choice == null || !choice.options().contains(cardName)) {
+            throw new IllegalArgumentException("Invalid Infernal Tutor card name: " + cardName);
+        }
+
+        List<Card> hand = gameData.playerHands.getOrDefault(ctx.controllerId(), List.of());
+        Card revealed = hand.stream()
+                .filter(card -> card.getName().equals(cardName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Chosen card is no longer in hand"));
+
+        gameData.interaction.clearAwaitingInput();
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData,
+                GameLog.textCardText(playerName + " reveals ", revealed, " from their hand."));
+        cardRevealService.revealToAllPlayers(gameData, ctx.controllerId(),
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
+                List.of(revealed));
+
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No effect resolution is waiting for Infernal Tutor's choice");
         }
         entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                 List.of(new SearchLibraryEffect(new CardNamedPredicate(cardName), LibrarySearchDestination.HAND)));

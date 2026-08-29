@@ -2809,7 +2809,7 @@ public class StepTriggerService {
                     .filter(effect -> !playerTargetEffects.contains(effect))
                     .toList();
             if (!nonPlayerTargetEffects.isEmpty()) {
-                gameData.stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         activePlayerId,
@@ -2817,7 +2817,15 @@ public class StepTriggerService {
                         new ArrayList<>(nonPlayerTargetEffects),
                         null,
                         perm.getId()
-                ));
+                );
+                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                if (perm.isAttached()) {
+                    Permanent attached = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+                    if (attached != null) {
+                        entry.setAttachedPermanentSnapshot(new Permanent(attached));
+                    }
+                }
+                gameData.stack.add(entry);
             }
 
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -3671,7 +3679,8 @@ public class StepTriggerService {
                         gameData, sacrificingPlayerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.isSacrificed(permanent.getCard()));
                 lifeSupport.applyGainLife(gameData, action.controllerId(), toughness,
-                        action.sourceCard().getName(), action.sourceCard(), StackEntryType.TRIGGERED_ABILITY);
+                        action.sourceCard().getName(), action.sourceCard(), StackEntryType.TRIGGERED_ABILITY,
+                        action.controllerId());
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }

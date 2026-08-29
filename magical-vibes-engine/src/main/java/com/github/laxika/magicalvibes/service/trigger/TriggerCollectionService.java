@@ -100,10 +100,12 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEff
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.BatchedCreatureDeathTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
@@ -1936,9 +1938,14 @@ public class TriggerCollectionService {
      * source's controller.
      */
     public void checkOpponentDealtDamageTriggers(GameData gameData, UUID damagedPlayerId, int amount) {
+        checkOpponentDealtDamageTriggers(gameData, damagedPlayerId, null, amount);
+    }
+
+    public void checkOpponentDealtDamageTriggers(GameData gameData, UUID damagedPlayerId,
+            UUID sourcePermanentId, int amount) {
         if (amount <= 0 || damagedPlayerId == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount);
+        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, sourcePermanentId);
         gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
             if (watcherPlayerId.equals(damagedPlayerId)) return;
 
@@ -2459,6 +2466,37 @@ public class TriggerCollectionService {
     }
 
     // ── Ally-permanent-sacrificed triggers ──────────────────────────────
+
+    /**
+     * Handles {@link EffectSlot#ON_CONTROLLER_PERMANENT_RETURNED_TO_HAND} — "Whenever a permanent
+     * is returned to your hand, ...". The watcher is checked before the returned permanent leaves,
+     * so the returned permanent itself can trigger.
+     */
+    public void checkControllerPermanentReturnedToHandTriggers(GameData gameData,
+                                                                UUID returnedToPlayerId) {
+        if (returnedToPlayerId == null) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(returnedToPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : new ArrayList<>(battlefield)) {
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_PERMANENT_RETURNED_TO_HAND)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        returnedToPlayerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+                log.info("Game {} - {} triggers on a permanent returned to its controller's hand",
+                        gameData.id, perm.getCard().getName());
+            }
+        }
+    }
 
     public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
         checkAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, null);
@@ -6221,6 +6259,9 @@ public class TriggerCollectionService {
                 if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware
                         && dyingCard != null) {
                     resolvedEffect = aware.boundToDyingCard(dyingCard.getId());
+                }
+                if (resolvedEffect instanceof GainLifeEqualToDyingCreatureToughnessEffect) {
+                    resolvedEffect = new GainLifeEffect(Math.max(0, dyingPermanent.getEffectiveToughness()));
                 }
 
                 if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)

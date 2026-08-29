@@ -1097,6 +1097,7 @@ public class DrawService {
 
         checkControllerDrawTriggers(gameData, playerId, drawn);
         checkOpponentDrawTriggers(gameData, playerId);
+        checkEnchantedPlayerDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
         checkRevealFirstDrawTriggers(gameData, playerId, drawn);
         breathstealersCryptDrawReplacementHandler.afterDraw(gameData, playerId, drawn);
@@ -1414,6 +1415,44 @@ public class DrawService {
 
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
+                }
+            }
+        });
+    }
+
+    public void checkEnchantedPlayerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        gameData.forEachBattlefield((auraControllerId, battlefield) -> {
+            if (auraControllerId.equals(drawingPlayerId)) return;
+
+            for (Permanent perm : battlefield) {
+                if (!perm.isAttached() || !drawingPlayerId.equals(perm.getAttachedTo())) continue;
+
+                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PLAYER_DRAWS);
+                if (drawEffects == null || drawEffects.isEmpty()) continue;
+
+                for (CardEffect authoredEffect : drawEffects) {
+                    CardEffect effect = authoredEffect;
+                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                        if (effect == null) continue;
+                    }
+                    if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(perm.getCard(), auraControllerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                auraControllerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(effect)),
+                                drawingPlayerId,
+                                perm.getId()
+                        ));
+                    }
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} triggers on enchanted player draw", gameData.id, perm.getCard().getName());
                 }
             }
         });

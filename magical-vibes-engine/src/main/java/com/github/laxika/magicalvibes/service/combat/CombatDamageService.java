@@ -1077,7 +1077,8 @@ public class CombatDamageService {
                 if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof GainLifeEqualToDamageDealtEffect) {
-                            lifeSupport.applyGainLife(gameData, playerId, damageDealt, perm.getCard().getName());
+                            lifeSupport.applyGainLife(gameData, playerId, damageDealt, perm.getCard().getName(),
+                                    perm.getCard(), StackEntryType.TRIGGERED_ABILITY, playerId);
                         }
                     }
                 }
@@ -1100,7 +1101,8 @@ public class CombatDamageService {
                     if (effect instanceof GainLifeEqualToControlledCreatureCombatDamageEffect) {
                         UUID enchantmentControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
                         if (controllerId.equals(enchantmentControllerId)) {
-                            lifeSupport.applyGainLife(gameData, controllerId, damageDealt, perm.getCard().getName());
+                            lifeSupport.applyGainLife(gameData, controllerId, damageDealt, perm.getCard().getName(),
+                                    perm.getCard(), StackEntryType.TRIGGERED_ABILITY, controllerId);
                         }
                     }
                 }
@@ -1601,6 +1603,10 @@ public class CombatDamageService {
     }
 
     private void setCombatDamageEventValue(StackEntry entry, CardEffect effect, int damageDealt) {
+        if (effect instanceof ConditionalEffect conditional) {
+            setCombatDamageEventValue(entry, conditional.wrapped(), damageDealt);
+            return;
+        }
         if (effect instanceof MayEffect may) {
             setCombatDamageEventValue(entry, may.wrapped(), damageDealt);
             if (may.elseEffect() != null) {
@@ -2841,7 +2847,12 @@ public class CombatDamageService {
             }
             gameData.recordCombatDamageToPlayer(defenderId, damageDealt);
             gameData.recordDamageToPlayer(defenderId, damageDealt, Math.min(damageDealt, artifactDamage));
-            triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defenderId, damageDealt);
+            for (var sourceDamage : state.combatDamageDealtToPlayer.entrySet()) {
+                if (sourceDamage.getValue() > 0) {
+                    triggerCollectionService.checkOpponentDealtDamageTriggers(
+                            gameData, defenderId, sourceDamage.getKey().getId(), sourceDamage.getValue());
+                }
+            }
         }
     }
 
@@ -2934,7 +2945,8 @@ public class CombatDamageService {
                     gameData.recordDamageToPlayer(targetId, redirectEffective,
                             artifactSource ? redirectEffective : 0);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
-                    triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
+                    triggerCollectionService.checkOpponentDealtDamageTriggers(
+                            gameData, targetId, redirect.damageSourceId(), redirectEffective);
                 }
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
@@ -3004,7 +3016,8 @@ public class CombatDamageService {
                 }
                 gameData.recordDamageToPlayer(targetId, effective,
                         reflection.eyeCard().hasType(CardType.ARTIFACT) ? effective : 0);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, effective);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(
+                        gameData, targetId, null, effective);
             }
         }
     }

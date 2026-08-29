@@ -2275,6 +2275,21 @@ public class TargetLegalityService {
         }
     }
 
+    private UUID controllerForMultiTargetConstraint(GameData gameData, UUID targetId) {
+        if (gameData.playerIds.contains(targetId)) {
+            return targetId;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        return controllerId != null ? controllerId : gameQueryService.findGraveyardOwnerById(gameData, targetId);
+    }
+
+    private MultiTargetConstraint multiTargetConstraintForResolution(StackEntry entry) {
+        if (entry.getMultiTargetConstraint() != null) {
+            return entry.getMultiTargetConstraint();
+        }
+        return entry.getCard() == null ? null : entry.getCard().getMultiTargetConstraint();
+    }
+
     private void validateAttachedToFirstTarget(GameData gameData, List<UUID> targetIds) {
         if (targetIds.size() < 2) {
             return;
@@ -2369,8 +2384,8 @@ public class TargetLegalityService {
                 }
             }
 
-            if (entry.getCard() != null
-                    && entry.getCard().getMultiTargetConstraint() == MultiTargetConstraint.ATTACHED_TO_FIRST_TARGET) {
+            MultiTargetConstraint multiTargetConstraint = multiTargetConstraintForResolution(entry);
+            if (multiTargetConstraint == MultiTargetConstraint.ATTACHED_TO_FIRST_TARGET) {
                 Permanent firstTarget = declaredTargetIds.isEmpty()
                         ? null
                         : gameQueryService.findPermanentById(gameData, declaredTargetIds.getFirst());
@@ -2378,6 +2393,17 @@ public class TargetLegalityService {
                     Permanent target = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
                     if (targetLegal[i] && (!targetLegal[0] || firstTarget == null
                             || !firstTarget.getId().equals(target.getAttachedTo()))) {
+                        targetLegal[i] = false;
+                        entry.markTargetIllegal(i);
+                    }
+                }
+            }
+            if (multiTargetConstraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
+                    && targetLegal.length > 0 && targetLegal[0]) {
+                UUID requiredControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.getFirst());
+                for (int i = 1; i < declaredTargetIds.size(); i++) {
+                    UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
+                    if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
                         targetLegal[i] = false;
                         entry.markTargetIllegal(i);
                     }

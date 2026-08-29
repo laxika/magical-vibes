@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "240")
+@CardRegistration(set = "DIS", collectorNumber = "173")
 public class GhostQuarter extends Card {
 
     public GhostQuarter() {

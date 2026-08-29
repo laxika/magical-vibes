@@ -46,6 +46,8 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
                 Card creatureCard = createCard("Grizzly Bears");
                 creatureCard.setType(CardType.CREATURE);
                 gd.playerHands.get(player1Id).add(creatureCard);
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(creatureCard), any(), eq(card.getId()), eq(gd), eq(player1Id))).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -55,13 +57,48 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
 
             @Test
             @DisplayName("Does nothing when source already left battlefield and no valid cards")
-            void doesNothingWhenSourceGoneAndNoValidCards() {
-                Card card = createCard("Zombie Infestation");
-                SacrificeUnlessDiscardCardTypeEffect effect = new SacrificeUnlessDiscardCardTypeEffect(CardType.CREATURE);
-                StackEntry entry = createEntry(card, player1Id, List.of(effect));
+    void doesNothingWhenSourceGoneAndNoValidCards() {
+        Card card = createCard("Zombie Infestation");
+        SacrificeUnlessDiscardCardTypeEffect effect = new SacrificeUnlessDiscardCardTypeEffect(CardType.CREATURE);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
                 resolveEffect(gd, entry, effect);
 
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-            }
+        verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+    }
+
+    @Test
+    @DisplayName("Sacrifices immediately when fewer than the required cards are in hand")
+    void sacrificesWhenFewerThanRequiredCards() {
+        Card card = createCard("Zombie Infestation");
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+        SacrificeUnlessDiscardCardTypeEffect effect = new SacrificeUnlessDiscardCardTypeEffect(null, 2);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        gd.playerHands.get(player1Id).add(createCard("Grizzly Bears"));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Presents the required number of cards when enough are in hand")
+    void presentsMayWhenEnoughCardsAvailable() {
+        Card card = createCard("Zombie Infestation");
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+        SacrificeUnlessDiscardCardTypeEffect effect = new SacrificeUnlessDiscardCardTypeEffect(null, 2);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        gd.playerHands.get(player1Id).add(createCard("Grizzly Bears"));
+        gd.playerHands.get(player1Id).add(createCard("Mountain"));
+        when(predicateEvaluationService.matchesCardPredicate(
+                any(), isNull(), eq(card.getId()), eq(gd), eq(player1Id))).thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+    }
 }
