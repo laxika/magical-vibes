@@ -1317,6 +1317,17 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record ExileFreeCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
+                                   StackEntryType spellType, List<Integer> chosenModeIndices,
+                                   List<Integer> offeredModeIndices, int maximumChoices,
+                                   boolean copy) implements ChoiceContext {
+
+        public ExileFreeCastModeChoice {
+            chosenModeIndices = List.copyOf(chosenModeIndices);
+            offeredModeIndices = List.copyOf(offeredModeIndices);
+        }
+    }
+
     record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 UUID sourcePermanentId, boolean modesResetEachTurn,
                                 List<ChooseOneEffect.ChooseOneOption> chosenModes,

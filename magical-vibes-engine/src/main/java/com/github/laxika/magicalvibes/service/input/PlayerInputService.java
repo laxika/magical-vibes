@@ -773,6 +773,31 @@ public class PlayerInputService {
                 cardToCast.getName());
     }
 
+    public void beginExileFreeCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
+            List<Integer> chosenModeIndices, List<Integer> offeredModeIndices,
+            int maximumChoices, boolean copy) {
+        ChoiceContext.ExileFreeCastModeChoice ctx = new ChoiceContext.ExileFreeCastModeChoice(
+                cardToCast, controllerId, effect, spellType, chosenModeIndices,
+                offeredModeIndices, maximumChoices, copy);
+        List<String> optionLabels = new java.util.ArrayList<>(offeredModeIndices.stream()
+                .map(effect.options()::get)
+                .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
+                .toList());
+        if (chosenModeIndices.size() >= effect.choicesRequired()) {
+            optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
+        }
+        String prompt = maximumChoices > 1
+                ? cardToCast.getName() + " - Choose modes, or Done."
+                : cardToCast.getName() + " - Choose one.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, optionLabels, prompt));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a free-cast mode for {}", gameData.id, playerName,
+                cardToCast.getName());
+    }
+
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId) {
         beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId, false);

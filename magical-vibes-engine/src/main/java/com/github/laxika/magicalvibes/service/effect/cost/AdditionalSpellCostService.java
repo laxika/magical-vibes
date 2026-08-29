@@ -207,13 +207,16 @@ public class AdditionalSpellCostService {
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
+            return hasNonEscalateCost() || hasEscalate();
+        }
+
+        /** True when the spell has an additional cost that is not charged per extra mode. */
+        public boolean hasNonEscalateCost() {
             return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreature
                     || sacrificePermanentCost != null || exileCreatureCost != null
                     || sacrificeMultiplePermanentsCost != null
                     || sacrificePermanentOrPayManaCost != null
                     || sacrificePermanentOrDiscardCardCost != null
-                    || escalateSacrificeCost != null
-                    || escalateTapCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || tapMultipleCost != null || returnAnyNumberCost != null
                     || returnPermanentToHand != null
@@ -225,7 +228,6 @@ public class AdditionalSpellCostService {
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardCardOrPayLifeCost != null
                     || discardHand || discardXCardsCost != null
-                    || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
                     || revealCardCost != null || chooseCreatureTypeCost != null

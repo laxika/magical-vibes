@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -59,6 +61,30 @@ public class ExileCastTargetSupport {
         return card.getMaxTargets() > 1
                 ? nextSlotCandidates(gameData, card, controllerId, List.of())
                 : flatSingleTargetCandidates(gameData, card, controllerId);
+    }
+
+    /** Candidates for a prepared modal spell, filtered against its already-unwrapped effects. */
+    public List<UUID> firstSlotCandidates(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                          UUID controllerId) {
+        if (card.getMaxTargets() > 1) {
+            return nextSlotCandidates(gameData, card, controllerId, List.of());
+        }
+
+        Set<UUID> candidates = new LinkedHashSet<>(flatSingleTargetCandidates(gameData, card, controllerId));
+        candidates.addAll(gameData.orderedPlayerIds);
+        gameData.forEachPermanent((ignored, permanent) -> candidates.add(permanent.getId()));
+
+        List<UUID> legal = new ArrayList<>();
+        for (UUID candidate : candidates) {
+            try {
+                targetLegalityService.validateSpellTargeting(
+                        gameData, card, spellEffects, candidate, null, controllerId, true, 0);
+                legal.add(candidate);
+            } catch (IllegalStateException ignored) {
+                // This candidate does not satisfy the selected mode's target declaration.
+            }
+        }
+        return legal;
     }
 
     /**

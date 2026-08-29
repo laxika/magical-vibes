@@ -133,6 +133,10 @@ public class ChoiceHandlerService {
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
 
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport
+            exileFreeCastQueueSupport;
+
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
             throw new IllegalStateException("Not awaiting color choice");
@@ -573,6 +577,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.LibraryCastModeChoice ctx) {
             libraryChoiceHandlerService.handleLibraryCastModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ExileFreeCastModeChoice ctx) {
+            exileFreeCastQueueSupport.handleModeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
