@@ -1328,6 +1328,11 @@ public class DamagePreventionService {
             if (shield.combatOnly() && !combatDamage) continue;
             // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
             if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
+            if (!gameData.playerIds.contains(shield.redirectTargetId())
+                    && gameQueryService.findPermanentById(gameData, shield.redirectTargetId()) == null) {
+                it.remove();
+                continue;
+            }
 
             if (shield.isNextEvent()) {
                 // Next-event (Jade Monolith, Mirrorwood Treefolk): redirect all of this one damage event,

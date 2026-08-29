@@ -465,18 +465,30 @@ public class ETBTokenTargetService {
                 .filter(effect -> effect.mode() == DivisionMode.CHOSEN)
                 .findFirst()
                 .orElse(null);
+        Map<UUID, Integer> counterAssignments = Map.of();
         if (counterDistribution != null
                 && counterDistribution.total() instanceof Fixed fixed
                 && fixed.value() > 0
                 && !pending.chosenTargetsSoFar().isEmpty()) {
-            playerInputService.beginCounterDistributionAssignmentChoice(
-                    gameData,
-                    pending.controllerId(),
-                    new ChoiceContext.CounterDistributionAssignment(
-                            card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                            counterDistribution.counterType(), pending.chosenTargetsSoFar(), Map.of(),
-                            fixed.value(), 0));
-            return;
+            Map<UUID, Integer> presetAssignments = gameData.pendingETBDamageAssignments;
+            boolean validPreset = presetAssignments != null
+                    && !presetAssignments.isEmpty()
+                    && pending.chosenTargetsSoFar().containsAll(presetAssignments.keySet())
+                    && presetAssignments.values().stream().allMatch(amount -> amount != null && amount > 0)
+                    && presetAssignments.values().stream().mapToInt(Integer::intValue).sum() == fixed.value();
+            if (validPreset) {
+                counterAssignments = Map.copyOf(presetAssignments);
+                gameData.pendingETBDamageAssignments = Map.of();
+            } else {
+                playerInputService.beginCounterDistributionAssignmentChoice(
+                        gameData,
+                        pending.controllerId(),
+                        new ChoiceContext.CounterDistributionAssignment(
+                                card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
+                                counterDistribution.counterType(), pending.chosenTargetsSoFar(), Map.of(),
+                                fixed.value(), 0));
+                return;
+            }
         }
         // Shared by ETB token copies, ON_SELF_CAST, and multi-target ON_ATTACK — keep the label generic.
         String abilityLabel = card.getName() + "'s ability";
@@ -493,7 +505,7 @@ public class ETBTokenTargetService {
                 pending.xValue(),
                 null,
                 pending.sourcePermanentId(),
-                Map.of(),
+                counterAssignments,
                 targetZone,
                 List.of(),
                 new ArrayList<>(pending.chosenTargetsSoFar())

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.Set;
 
 /**
  * Resolves {@link PutCounterOnCombatOpponentAtEndOfCombatEffect}: if the referenced combat opponent
@@ -26,6 +28,7 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +41,22 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
                 (PutCounterOnCombatOpponentAtEndOfCombatEffect) effect;
 
         UUID targetId = entry.getTargetId();
-        if (targetId == null || counterEffect.amount() <= 0) {
+        if (counterEffect.amount() <= 0) {
+            return;
+        }
+        if (targetId == null && gameData.currentStep == TurnStep.END_OF_COMBAT) {
+            Set<UUID> combatOpponentIds = gameData.combatBlockOpponentIdsThisCombat
+                    .getOrDefault(entry.getSourcePermanentId(), Set.of());
+            for (UUID combatOpponentId : combatOpponentIds) {
+                Permanent combatOpponent = gameQueryService.findPermanentById(gameData, combatOpponentId);
+                if (combatOpponent != null && gameQueryService.isCreature(gameData, combatOpponent)) {
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, entry, combatOpponent,
+                            counterEffect.counterType(), counterEffect.amount());
+                }
+            }
+            return;
+        }
+        if (targetId == null) {
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);

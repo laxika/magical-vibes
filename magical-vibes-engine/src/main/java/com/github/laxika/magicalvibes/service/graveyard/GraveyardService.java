@@ -1206,15 +1206,19 @@ public class GraveyardService {
         // Tracks all non-token cards (any type) put into the graveyard from the battlefield this turn.
         Set<UUID> allTracked = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                 .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet());
-        if (sourceZone == Zone.BATTLEFIELD && !card.isToken()) {
-            allTracked.add(card.getId());
-            if (card.hasType(CardType.CREATURE)) {
+        if (sourceZone == Zone.BATTLEFIELD) {
+            if (!card.isToken()) {
+                allTracked.add(card.getId());
+            } else {
+                allTracked.remove(card.getId());
+            }
+            if (card.hasType(CardType.CREATURE) && !card.isToken()) {
                 tracked.add(card.getId());
-                if (!creatureDeathTriggersSuppressed) {
-                    triggerDamagedCreatureDiesAbilities(gameData, card, ownerId, battlefieldSnapshot);
-                }
             } else {
                 tracked.remove(card.getId());
+            }
+            if (card.hasType(CardType.CREATURE) && !creatureDeathTriggersSuppressed) {
+                triggerDamagedCreatureDiesAbilities(gameData, card, ownerId, battlefieldSnapshot);
             }
         } else {
             tracked.remove(card.getId());

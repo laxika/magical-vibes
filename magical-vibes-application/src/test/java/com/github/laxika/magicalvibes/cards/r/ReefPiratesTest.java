@@ -89,7 +89,7 @@ class ReefPiratesTest extends BaseCardTest {
         attachHermeticStudy(pirates);
 
         harness.activateAbility(player1, 0, null, player1.getId());
-        resolveAllTriggers();
+        harness.passBothPriorities();
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(harness.getGameData().playerDecks.get(player1.getId())).containsExactly(topCard);

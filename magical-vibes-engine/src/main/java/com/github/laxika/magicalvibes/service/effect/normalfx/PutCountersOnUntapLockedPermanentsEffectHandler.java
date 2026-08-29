@@ -5,23 +5,23 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnUntapLockedPermanentsEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
  * Resolves {@link PutCountersOnUntapLockedPermanentsEffect}: places the counters on every permanent
- * the source currently holds a {@code WHILE_SOURCE_TAPPED} untap lock on. No-op when the source has
- * left the battlefield or untapped (an untapped source holds no locks).
+ * snapshotted as locked when the draw-step trigger was created. The snapshot lets the trigger
+ * resolve normally if the source leaves the battlefield or untaps afterward.
  */
 @Component
 @RequiredArgsConstructor
 public class PutCountersOnUntapLockedPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentCounterSupport permanentCounterSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,19 +31,12 @@ public class PutCountersOnUntapLockedPermanentsEffectHandler implements NormalEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCountersOnUntapLockedPermanentsEffect) effect;
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null) {
-            return;
-        }
-
-        List<Permanent> locked = new ArrayList<>();
-        gameData.forEachPermanent((playerId, p) -> {
-            if (p.getUntapPreventedByPermanentIds().contains(sourcePermanentId)) {
-                locked.add(p);
+        for (UUID permanentId : entry.getEventCardIds()) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null) {
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, entry, permanent, e.counterType(), e.count());
             }
-        });
-        for (Permanent p : locked) {
-            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, p, e.counterType(), e.count());
         }
     }
 }

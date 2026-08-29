@@ -40,7 +40,8 @@ class BoundDeterminedTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, swallower.getId());
 
-        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), island.getId()));
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))

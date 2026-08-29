@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,6 +32,8 @@ class GreaterWerewolfTest extends BaseCardTest {
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(firstBlocker.getId(), 2));
         leaveEndOfCombat();
 
         assertThat(firstBlocker.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isEqualTo(1);
@@ -76,6 +81,9 @@ class GreaterWerewolfTest extends BaseCardTest {
         addCreatureReady(player1, new GreaterWerewolf());
         Permanent oyster = addCreatureReady(player2, new GiantOyster());
 
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(StepTriggerService.class).handleEndOfCombatTriggers(gd));
         leaveEndOfCombat();
 
         assertThat(oyster.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isZero();
@@ -100,8 +108,9 @@ class GreaterWerewolfTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        if (gd.currentStep != TurnStep.END_OF_COMBAT) {
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        }
         harness.passBothPriorities();
     }
 }
