@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -1181,11 +1182,16 @@ public class GameSimulator {
             if (effect instanceof CostEffect cost && cost.consumedGraveyardCardCount() > 0) {
                 int count = cost.consumedGraveyardCardCount();
                 CardType requiredType = cost.consumedGraveyardCardType();
+                ExileNCardsFromGraveyardCost exactCost = effect instanceof ExileNCardsFromGraveyardCost e
+                        ? e : null;
                 List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
                 List<Integer> matchingIndices = new ArrayList<>();
                 for (int i = 0; i < graveyard.size(); i++) {
                     Card c = graveyard.get(i);
-                    if (requiredType == null || c.hasType(requiredType)) {
+                    if ((requiredType == null || c.hasType(requiredType))
+                            && (exactCost == null || exactCost.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            c, exactCost.predicate(), c.getId()))) {
                         matchingIndices.add(i);
                     }
                 }

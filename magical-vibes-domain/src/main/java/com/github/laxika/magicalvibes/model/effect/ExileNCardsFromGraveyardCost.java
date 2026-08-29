@@ -29,8 +29,4 @@ public record ExileNCardsFromGraveyardCost(int count, CardType requiredType, Car
         return requiredType;
     }
 
-    @Override
-    public CardPredicate consumedGraveyardCardPredicate() {
-        return predicate;
-    }
 }

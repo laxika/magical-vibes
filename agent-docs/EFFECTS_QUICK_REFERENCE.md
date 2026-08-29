@@ -553,7 +553,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   "sacrifice a creature"), `lifePaid(currentLife)`, `sourceCountersRemoved()`,
   `consumedGraveyardCardCount()` + `consumedGraveyardCardType()`. Read by `GameSimulator`
   (payment-planning: find a sacrifice target / graveyard cards to exile) and
-  `HardAiDecisionEngine.evaluateAbilityCosts` (score the cost). Overridden by `SacrificeCreatureCost`,
+  `SpellEvaluator.evaluateAbilityCosts` (score the cost). Overridden by `SacrificeCreatureCost`,
   `SacrificePermanentCost`, `SacrificePermanentOrPayManaCost`,
   `ReturnCreatureToHandCost`, `ReturnPermanentToHandCost`, `PutCounterOnControlledCreatureCost`, `SacrificeSelfCost`, `PayLifeCost`,
   `RemoveCounterFromSourceCost`, `ExileNCardsFromGraveyardCost`, `ExileNCardsFromSingleGraveyardCost`, `ExileCreatureCost`; all other cost records inherit

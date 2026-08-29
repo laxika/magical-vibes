@@ -968,7 +968,8 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectActivatedAbilityGraveyardExileCostChoice(
             GameData gameData, PendingInteraction.ActivatedAbilityGraveyardExileCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
-                interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.minimumCards(),
+                interaction.maximumCards(), interaction.prompt());
     }
 
     private InteractionPromptMessage projectCraftMaterialChoice(

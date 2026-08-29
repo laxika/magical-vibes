@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -107,14 +106,6 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
-     * True when paying this cost must preserve the sacrificed permanent's last-known
-     * characteristics for a later effect in the same ability.
-     */
-    default boolean recordsSacrificedPermanentSnapshot() {
-        return false;
-    }
-
-    /**
      * The life paid to satisfy this cost given the payer's current life total (a fixed amount,
      * or "half your life rounded up"), or {@code 0} when this cost costs no life.
      */
@@ -147,11 +138,4 @@ public interface CostEffect extends CardEffect {
         return null;
     }
 
-    /**
-     * An additional predicate the graveyard cards consumed by this cost must match, or
-     * {@code null} when the type facet is sufficient.
-     */
-    default CardPredicate consumedGraveyardCardPredicate() {
-        return null;
-    }
 }
