@@ -42,6 +42,7 @@ class TollsOfWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         Permanent ally = findPermanents(player1, "Ally").getFirst();
@@ -61,8 +62,10 @@ class TollsOfWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        harness.passBothPriorities();
         resolveAllTriggers();
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ally")).hasSize(1);
@@ -81,6 +84,7 @@ class TollsOfWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ally")).isEmpty();

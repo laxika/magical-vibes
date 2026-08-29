@@ -239,6 +239,9 @@ public class TriggerTargetCollector {
             boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
+            if (effectPredicate != null) {
+                creaturesOnly = false;
+            }
 
             // Effects that declare a cross-kind target — CR 115.4's anyTarget() (Flameblast Dragon
             // attack trigger, Form of the Dragon upkeep) or playerOrPlaneswalker() (Scalding Tongs)

@@ -38,8 +38,9 @@ class TophHardheadedTeacherTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(shock);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shock);

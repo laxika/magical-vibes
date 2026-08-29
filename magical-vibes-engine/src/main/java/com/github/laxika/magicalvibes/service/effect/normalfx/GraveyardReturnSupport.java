@@ -182,7 +182,9 @@ public class GraveyardReturnSupport {
 
         if (targetCard == null
                 || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId))
+                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId,
+                entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getXValue()))
                 || (effect.targetNotPutIntoGraveyardThisCombat()
                 && targetOwnerId != null
                 && gameData.cardsPutIntoGraveyardThisCombat
@@ -377,7 +379,9 @@ public class GraveyardReturnSupport {
                 : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         return effect.filter() == null
                 || predicateEvaluationService.matchesCardPredicate(
-                card, effect.filter(), sourceCardId, gameData, cardOwnerId);
+                card, effect.filter(), sourceCardId, gameData, cardOwnerId,
+                entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getXValue());
     }
 
     private CardSubtype findSourceChosenSubtype(GameData gameData, StackEntry entry, UUID sourceCardId) {

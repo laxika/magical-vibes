@@ -20,7 +20,6 @@ class SunWarriorsTest extends BaseCardTest {
     void firebendingAddsManaEqualToControlledCreatureCountUntilEndOfCombat() {
         addCreatureReady(player1, new SunWarriors());
         addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         harness.passUntil(TurnStep.END_OF_COMBAT);

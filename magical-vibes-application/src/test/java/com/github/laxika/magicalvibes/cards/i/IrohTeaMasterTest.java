@@ -29,6 +29,7 @@ class IrohTeaMasterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Food")).hasSize(1);
     }

@@ -342,6 +342,7 @@ public class PermanentRemovalService {
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
         triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
+        target.setAttachedTo(null);
         return true;
     }
 
