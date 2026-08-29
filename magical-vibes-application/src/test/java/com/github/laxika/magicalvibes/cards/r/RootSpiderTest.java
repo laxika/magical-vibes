@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RootSpider.class, BeastWalkers.class})
 class RootSpiderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Blocking gives Root Spider +1/+0 and first strike")
     void blockingBoostsAndGrantsFirstStrike() {
-        addReadyBears(player1).setAttacking(true);
-        Permanent spider = addReadySpider(player2);
+        addCreatureReady(player1, new BeastWalkers()).setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new RootSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -27,35 +29,42 @@ class RootSpiderTest extends BaseCardTest {
 
         assertThat(spider.getPowerModifier()).isEqualTo(1);
         assertThat(spider.getToughnessModifier()).isZero();
-        assertThat(spider.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
     @DisplayName("Becoming blocked does not trigger Root Spider")
     void becomingBlockedDoesNothing() {
-        Permanent spider = addReadySpider(player1);
+        Permanent spider = addCreatureReady(player1, new RootSpider());
         spider.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new BeastWalkers());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(spider.getPowerModifier()).isZero();
-        assertThat(spider.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isFalse();
     }
 
-    private Permanent addReadySpider(Player player) {
-        Permanent permanent = new Permanent(new RootSpider());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("The blocking boost and first strike wear off at end of turn")
+    void blockingBoostAndFirstStrikeExpireAtEndOfTurn() {
+        addCreatureReady(player1, new BeastWalkers()).setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new RootSpider());
 
-    private Permanent addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(spider.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(spider.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

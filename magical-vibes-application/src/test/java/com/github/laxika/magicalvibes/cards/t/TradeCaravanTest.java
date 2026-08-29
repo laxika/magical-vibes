@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.l.LandCap;
+import com.github.laxika.magicalvibes.cards.a.AysenAbbey;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TradeCaravan.class, Plains.class, AysenAbbey.class})
 class TradeCaravanTest extends BaseCardTest {
 
     private void enterOpponentUpkeep() {
@@ -61,6 +63,43 @@ class TradeCaravanTest extends BaseCardTest {
 
         assertThat(plains.isTapped()).isFalse();
         assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing currency counters is an activation cost")
+    void removesCurrencyCountersOnActivation() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        caravan.setCounterCount(CounterType.CURRENCY, 2);
+        plains.tap();
+
+        enterOpponentUpkeep();
+        harness.activateAbility(player1, 0, 0, null, plains.getId());
+
+        assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isZero();
+        assertThat(plains.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(plains.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can untap an opponent's basic land without tapping Trade Caravan")
+    void untapsOpponentsBasicLandWithoutTappingCaravan() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        caravan.setCounterCount(CounterType.CURRENCY, 2);
+        caravan.tap();
+        plains.tap();
+
+        enterOpponentUpkeep();
+        harness.activateAbility(player1, 0, 0, null, plains.getId());
+        harness.passBothPriorities();
+
+        assertThat(plains.isTapped()).isFalse();
+        assertThat(caravan.isTapped()).isTrue();
+        assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isZero();
     }
 
     @Test
@@ -116,14 +155,14 @@ class TradeCaravanTest extends BaseCardTest {
     @DisplayName("Cannot target a nonbasic land")
     void cannotTargetNonbasicLand() {
         Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
-        Permanent landCap = harness.addToBattlefieldAndReturn(player1, new LandCap());
+        Permanent aysenAbbey = harness.addToBattlefieldAndReturn(player1, new AysenAbbey());
         caravan.setCounterCount(CounterType.CURRENCY, 2);
-        landCap.tap();
+        aysenAbbey.tap();
 
         enterOpponentUpkeep();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, landCap.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, aysenAbbey.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(landCap.isTapped()).isTrue();
+        assertThat(aysenAbbey.isTapped()).isTrue();
     }
 }

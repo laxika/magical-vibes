@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.a.AlibansTower;
+import com.github.laxika.magicalvibes.cards.c.Chandler;
+import com.github.laxika.magicalvibes.cards.l.LeapingLizard;
+import com.github.laxika.magicalvibes.cards.r.RysorianBadger;
+import com.github.laxika.magicalvibes.cards.s.Shrink;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,45 +18,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Narwhal.class, Chandler.class, LeapingLizard.class, AlibansTower.class,
+        RysorianBadger.class, Shrink.class})
 class NarwhalTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Red creature cannot block Narwhal")
     void redCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new Narwhal());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new Narwhal());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player2, new Chandler());
 
-        Permanent blocker = new Permanent(createCreature("Goblin Raider", 2, 1, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -66,19 +39,11 @@ class NarwhalTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature can block Narwhal")
     void greenCreatureCanBlock() {
-        Permanent attacker = new Permanent(new Narwhal());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new Narwhal());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        Permanent blocker = addCreatureReady(player2, new LeapingLizard());
 
-        Permanent blocker = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -88,66 +53,71 @@ class NarwhalTest extends BaseCardTest {
     @Test
     @DisplayName("Narwhal takes no combat damage from a red attacker")
     void takesNoDamageFromRed() {
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 3, 3, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new Chandler());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new Narwhal());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new Narwhal());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
+        assertThat(blocker.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Narwhal");
     }
 
     @Test
     @DisplayName("Cannot be targeted by a red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent narwhal = new Permanent(new Narwhal());
-        narwhal.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(narwhal);
+        Permanent attacker = addCreatureReady(player1, new LeapingLizard());
+        attacker.setAttacking(true);
 
-        Permanent other = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        other.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(other);
+        Permanent narwhal = addCreatureReady(player2, new Narwhal());
+        Permanent otherBlocker = addCreatureReady(player2, new LeapingLizard());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        harness.setHand(player1, List.of(new AlibansTower()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, narwhal.getId(), null))
+        assertThat(narwhal.isBlocking()).isTrue();
+        assertThat(otherBlocker.isBlocking()).isTrue();
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, narwhal.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
 
     @Test
+    @DisplayName("Can be targeted by a non-red instant")
+    void canBeTargetedByNonRedInstant() {
+        Permanent narwhal = addCreatureReady(player1, new Narwhal());
+
+        harness.setHand(player1, List.of(new Shrink()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, narwhal.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shrink");
+    }
+
+    @Test
     @DisplayName("First strike kills a 2/2 blocker before it deals damage")
     void firstStrikeKillsBlockerFirst() {
-        Permanent attacker = new Permanent(new Narwhal());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new Narwhal());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new RysorianBadger());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player1, "Narwhal");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Rysorian Badger");
     }
 }

@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LabyrinthMinotaur.class, DwarvenTrader.class})
 class LabyrinthMinotaurTest extends BaseCardTest {
 
     @Test
@@ -23,7 +24,8 @@ class LabyrinthMinotaurTest extends BaseCardTest {
         Permanent minotaur = addReadyBlocker(player2);
         Permanent attacker = addReadyAttacker(player1);
 
-        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -39,10 +41,46 @@ class LabyrinthMinotaurTest extends BaseCardTest {
         addReadyBlocker(player2);
         Permanent attacker = addReadyAttacker(player1);
 
-        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two block triggers affect only the next untap step")
+    void multipleBlockTriggersAffectOnlyNextUntapStep() {
+        addReadyBlocker(player2);
+        addReadyBlocker(player2);
+        Permanent attacker = addReadyBlocker(player1);
+        attacker.setAttacking(true);
+        attacker.tap();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        resolveAllTriggers();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("No block means no block trigger")
+    void doesNotTriggerWithoutBlock() {
+        addReadyBlocker(player2);
+        addReadyAttacker(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -51,7 +89,8 @@ class LabyrinthMinotaurTest extends BaseCardTest {
         addReadyBlocker(player2);
         addReadyAttacker(player1);
 
-        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         gd.playerBattlefields.get(player1.getId()).clear();
 
         harness.passBothPriorities();
@@ -60,25 +99,12 @@ class LabyrinthMinotaurTest extends BaseCardTest {
     }
 
     private Permanent addReadyBlocker(Player player) {
-        Permanent perm = new Permanent(new LabyrinthMinotaur());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LabyrinthMinotaur());
     }
 
     private Permanent addReadyAttacker(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new DwarvenTrader());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void declareBlockers(List<BlockerAssignment> assignments) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player2, assignments);
     }
 }
