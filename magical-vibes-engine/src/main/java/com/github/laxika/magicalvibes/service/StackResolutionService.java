@@ -305,6 +305,9 @@ public class StackResolutionService {
         entry.getEnteringCounters().forEach((counterType, count) ->
                 perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));
         perm.setAlternateCost(entry.isAlternateCost());
+        if (entry.isAlternateCost() && card.getKeywords().contains(Keyword.DASH)) {
+            perm.getGrantedKeywords().add(Keyword.HASTE);
+        }
         perm.setEscaped(entry.isCastWithEscape());
         perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
         perm.setEnteredFromZone(entry.getSourceZone());
@@ -499,6 +502,7 @@ public class StackResolutionService {
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
         }
+        gameData.transferCardsExiledByPermanent(entry.getPhysicalCard().getId(), perm.getId());
         registerBeheldCardReturn(gameData, entry, perm);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
@@ -1157,6 +1161,16 @@ public class StackResolutionService {
             gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
             gameLogService.append(gameData, GameLog.cardThen(physicalCard,
                     " is exiled with permission to cast its creature face."));
+        } else if (entry.getSourceZone() == Zone.HAND
+                && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
+                && gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
+                .getOrDefault(entry.getControllerId(), 0) > 0) {
+            gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.compute(
+                    entry.getControllerId(), (ignored, count) -> count == null || count <= 1 ? null : count - 1);
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addCardToHand(ownerId, physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " is returned to its owner's hand instead of going to the graveyard."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);

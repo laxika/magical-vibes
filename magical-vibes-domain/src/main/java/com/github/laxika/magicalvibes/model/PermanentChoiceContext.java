@@ -1558,6 +1558,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Bend or Break: a player chooses which opponent will choose one of their land piles. */
     record BendOrBreakOpponentChoice(UUID playerId) implements PermanentChoiceContext {}
 
+    record OpponentChoosesCardFromGraveyardToHand() implements PermanentChoiceContext {}
+
     /** Curator of Destinies: the controller chooses which opponent chooses between the two piles. */
     record CuratorOpponentChoice() implements PermanentChoiceContext {}
 

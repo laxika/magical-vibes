@@ -2693,6 +2693,7 @@ export class TargetingChoiceService {
       type: MessageType.PLAY_CARD,
       cardIndex: this.alternateCostCardIndex,
       alternateCostSacrificePermanentIds: [],
+      alternateCost: true,
       morph: this.gameSignal()?.hand?.[this.alternateCostCardIndex]?.keywords?.includes('MORPH') ?? false
     });
     this.resetAlternateCostState();

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGravey
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsWhileAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
@@ -243,6 +244,26 @@ public class CastingPermissionService {
 
         // Dosan the Falling Leaf: players can cast spells only during their own turns.
         if (gameQueryService.isLockedOutByOwnTurnOnlySpellRestriction(gameData, playerId)) return true;
+
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!permanent.isAttacking()
+                        || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .noneMatch(DefendingPlayerCantCastSpellsWhileAttackingEffect.class::isInstance)) {
+                    continue;
+                }
+                UUID attackedTargetId = permanent.getAttackTarget();
+                UUID defendingPlayerId = attackedTargetId != null && gameData.playerIds.contains(attackedTargetId)
+                        ? attackedTargetId
+                        : attackedTargetId == null
+                                ? gameData.orderedPlayerIds.stream()
+                                .filter(id -> !id.equals(controllerId)).findFirst().orElse(null)
+                                : gameData.findControllerOf(gameQueryService.findPermanentById(gameData, attackedTargetId));
+                if (playerId.equals(defendingPlayerId)) return true;
+            }
+        }
 
         boolean playerAttackedThisTurn = gameData.playersDeclaredAttackersThisTurn.contains(playerId);
         if (!playerAttackedThisTurn) return false;

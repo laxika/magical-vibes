@@ -626,9 +626,10 @@ public class GraveyardReturnSupport {
                     trackedIds.remove(card.getId());
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                     if (toBattlefield) {
-                        putCardOntoBattlefield(gameData, controllerId, card,
-                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
+                        Permanent returnedPermanent = putCardOntoBattlefield(gameData, controllerId, card,
+                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), false, null);
                         applyBattlefieldReturnRiders(gameData, controllerId, card, effect);
+                        queueNextUpkeepExile(gameData, entry, effect, controllerId, returnedPermanent);
                     } else {
                         permanentRemovalService.addCardToHandFromGraveyard(
                                 gameData, controllerId, controllerId, card);
@@ -693,17 +694,21 @@ public class GraveyardReturnSupport {
                         gameData.playerDecks.get(targetPlayerId).addFirst(card);
                     } else if (effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
                         gameData.playerDecks.get(targetPlayerId).addLast(card);
-                    } else if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
-                            || effect.sacrificeAtEndStep()) {
-                        putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
-                                effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
-                                effect.exileAtYourNextEndStep());
-                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     } else {
-                        putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
-                                effect.enterTapped(), effect.enterAttacking());
+                        Permanent returnedPermanent;
+                        if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                                || effect.sacrificeAtEndStep()) {
+                            returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
+                                    effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
+                                    effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
+                                    effect.exileAtYourNextEndStep());
+                        } else {
+                            returnedPermanent = putCardOntoBattlefield(gameData, targetPlayerId, card,
+                                    effect.grantColor(), effect.grantSubtype(), effect.enterTapped(),
+                                    effect.enterAttacking(), null);
+                        }
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
+                        queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
                     }
                     returnedCards.add(card);
                 }
@@ -730,6 +735,15 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, builder.build());
         log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 returnedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse(""), destName);
+    }
+
+    private void queueNextUpkeepExile(GameData gameData, StackEntry entry,
+                                      ReturnCardFromGraveyardEffect effect, UUID controllerId,
+                                      Permanent returnedPermanent) {
+        if (effect.exileAtNextUpkeep() && returnedPermanent != null) {
+            gameData.queueDelayedAction(new ExilePermanentAtNextUpkeep(
+                    controllerId, returnedPermanent.getId(), entry.getCard()));
+        }
     }
 
     private void resolveReturnAllWithAttachments(GameData gameData, StackEntry entry,

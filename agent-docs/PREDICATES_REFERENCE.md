@@ -223,6 +223,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntrySharesColorOrManaValueWithImprintedCardPredicate` | `()` | source-aware spell-cast trigger predicate: matches when the cast spell shares a color or effective mana value with the card imprinted on the evaluating source permanent (Thought Prison); evaluated by `TargetLegalityService` with the source |
 | `StackEntryTypeInPredicate` | `(Set<StackEntryType>)` | spells of specific types |
 | `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
+| `StackEntryIsMulticoloredPredicate` | `()` | stack entries whose cards have two or more effective colors; Neutralizing Blast uses it to restrict a counterspell target |
 | `StackEntryCardTypeInPredicate` | `(Set<CardType>)` | stack entries whose card has any of the given card types. On an activated/triggered ability entry the card is the ability's **source**, so `Set.of(CardType.ARTIFACT)` + `StackEntryTypeInPredicate(ACTIVATED_ABILITY)` is "activated ability from an artifact source" (Brown Ouphe) |
 | `StackEntrySubtypeInPredicate` | `(Set<CardSubtype>)` | spells whose card has any of the given subtypes. Wrap in `StackEntryNotPredicate` for "non-[subtype] spell" (e.g. Faerie Trickery: counter target non-Faerie spell) |
 | `StackEntrySupertypeInPredicate` | `(Set<CardSupertype>)` | stack entries whose card has any of the given supertypes. Combine with `StackEntryTypeInPredicate` to restrict a target to legendary spells without admitting abilities from legendary permanents |

@@ -729,6 +729,21 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Uses the card owner when no stolen-permanent record exists")
+        void usesCardOwnerWhenOwnershipRecordIsAbsent() {
+            Card card = createCreature("Grizzly Bears");
+            card.setOwnerId(player2Id);
+            Permanent permanent = addPermanent(player1Id, card);
+
+            prs.removePermanentToHand(gd, permanent);
+
+            assertThat(gd.playerHands.get(player2Id))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.playerHands.get(player1Id))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
+
+        @Test
         @DisplayName("Exiled card returns to battlefield when source permanent is bounced")
         void exileReturnOnLeave() {
             Permanent source = addPermanent(player1Id, createCreature("Serra Angel"));

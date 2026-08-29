@@ -121,6 +121,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Delve", Keyword.DELVE);
         KEYWORD_MAP.put("Dredge", Keyword.DREDGE);
         KEYWORD_MAP.put("Modular", Keyword.MODULAR);
+        KEYWORD_MAP.put("Prowess", Keyword.PROWESS);
+        KEYWORD_MAP.put("Dash", Keyword.DASH);
         KEYWORD_MAP.put("Sunburst", Keyword.SUNBURST);
         KEYWORD_MAP.put("Prototype", Keyword.PROTOTYPE);
         KEYWORD_MAP.put("Rebound", Keyword.REBOUND);

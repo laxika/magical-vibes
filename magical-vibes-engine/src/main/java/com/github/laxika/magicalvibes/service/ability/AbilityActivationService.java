@@ -1066,18 +1066,13 @@ public class AbilityActivationService {
                 sourceEntry.getCard().getName());
     }
 
-    /** Activates an ability printed on a card while that card is suspended in exile. */
+    /** Activates an exile-only ability printed on a card in its owner's exile zone. */
     public void activateExiledAbility(GameData gameData, Player player, UUID exiledCardId,
                                       Integer abilityIndex, Integer xValue, UUID targetId) {
         ExiledCardEntry exileEntry = gameData.findExiledCard(exiledCardId);
         if (exileEntry == null || !player.getId().equals(exileEntry.ownerId())) {
             throw new IllegalStateException("That card is not in your exile zone");
         }
-        Integer timeCounters = gameData.exiledCardTimeCounters.get(exiledCardId);
-        if (timeCounters == null || timeCounters <= 0) {
-            throw new IllegalStateException("That card is not suspended");
-        }
-
         Card card = exileEntry.card();
         List<ActivatedAbility> exileAbilities = card.getActivatedAbilities().stream()
                 .filter(ActivatedAbility::isExileOnly)
@@ -1716,6 +1711,88 @@ public class AbilityActivationService {
      * <p>Validates targeting before any cost is paid (CR 601.2c), pays the mana cost, discards
      * the source card to the graveyard, then pushes the ability onto the stack.</p>
      */
+    /** Activates an ability printed on a card while that card is in exile. */
+    public void activateExileAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex,
+                                     Integer xValue, UUID targetId) {
+        UUID playerId = player.getId();
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
+        if (exiledEntry == null || !playerId.equals(exiledEntry.ownerId())) {
+            throw new IllegalStateException("Invalid exiled card");
+        }
+        if (exiledEntry.faceDown()) {
+            throw new IllegalStateException("That card has no accessible abilities in exile");
+        }
+
+        Card card = exiledEntry.card();
+        List<ActivatedAbility> abilities = card.getActivatedAbilities().stream()
+                .filter(ActivatedAbility::isExileOnly)
+                .toList();
+        if (abilities.isEmpty()) {
+            throw new IllegalStateException("Card has no exile-activated ability");
+        }
+
+        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+        if (gameData.playersCantActivateAbilitiesThisTurn.contains(playerId)) {
+            throw new IllegalStateException("You can't activate abilities this turn");
+        }
+
+        int idx = abilityIndex != null ? abilityIndex : 0;
+        if (idx < 0 || idx >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        ActivatedAbility ability = abilities.get(idx);
+        int effectiveXValue = xValue != null ? xValue : 0;
+
+        targetLegalityService.validateActivatedAbilityTargeting(
+                gameData, playerId, ability, ability.getEffects(), targetId, null, card, effectiveXValue);
+        validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
+
+        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
+            for (Permanent perm : gameData.playerBattlefields.get(opponentId)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect
+                            && perm.getChosenName() != null
+                            && perm.getChosenName().equals(card.getName())) {
+                        throw new IllegalStateException("Activated abilities of " + card.getName()
+                                + " can't be activated (Pithing Needle)");
+                    }
+                }
+            }
+        }
+
+        validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
+        validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
+        validateNotBlockedByCombatActionLock(gameData, ability);
+
+        if (ability.getManaCost() != null) {
+            payManaCost(gameData, playerId, ability.getManaCost(), effectiveXValue, false, false);
+        }
+
+        List<CardEffect> snapshotEffects = ability.getEffects().stream()
+                .filter(effect -> !(effect instanceof CostEffect))
+                .toList();
+        StackEntry stackEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s ability",
+                snapshotEffects,
+                effectiveXValue,
+                targetId,
+                Map.of());
+        stackEntry.setSourceZone(Zone.EXILE);
+        stackEntry.setTargetFilter(ability.getTargetFilter());
+        gameData.stack.add(stackEntry);
+        flushActivatedAbilityCostTriggers(gameData);
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " activates ", card, "'s ability from exile."));
+        log.info("Game {} - {} activates {}'s exile ability", gameData.id, player.getUsername(), card.getName());
+        gameData.priorityPassedBy.clear();
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
     public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId) {
         activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, null);
     }

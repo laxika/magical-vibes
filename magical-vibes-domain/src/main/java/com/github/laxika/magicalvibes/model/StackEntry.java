@@ -98,6 +98,8 @@ public class StackEntry {
     /** Whether a permanent resolved from this spell enters the battlefield tapped. */
     @Setter private boolean entersTapped;
     @Setter private Zone sourceZone;
+    /** Cards exiled from the graveyard to pay this spell's delve cost. */
+    @Setter private List<UUID> delvedCardIds = List.of();
     /**
      * Overrides the card's disposition owner when this spell is controlled by someone other than its
      * owner (e.g. cast from an opponent's hand via Sen Triplets). Null for the overwhelming majority of
@@ -602,6 +604,7 @@ public class StackEntry {
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
+        this.delvedCardIds = source.delvedCardIds.isEmpty() ? List.of() : new ArrayList<>(source.delvedCardIds);
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
         this.buyback = source.buyback;

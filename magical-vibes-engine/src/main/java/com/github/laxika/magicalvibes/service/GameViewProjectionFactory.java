@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -650,6 +651,14 @@ public class GameViewProjectionFactory {
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+            boolean hasExileAbility = card.getActivatedAbilities().stream()
+                    .anyMatch(ActivatedAbility::isExileOnly);
+            if (hasExileAbility && !hasPermission && !hasExileCast) {
+                if (canActivateExileAbilityNow(gameData, playerId, card, pool, isActivePlayer, isMainPhase, stackEmpty)) {
+                    playable.add(exileCardView(gameData, playerId, card));
+                }
+                continue;
+            }
             if (!hasPermission && !hasExileCast) {
                 continue;
             }
@@ -737,6 +746,25 @@ public class GameViewProjectionFactory {
         }
 
         return playable;
+    }
+
+    private boolean canActivateExileAbilityNow(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                                boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
+        for (ActivatedAbility ability : card.getActivatedAbilities().stream()
+                .filter(ActivatedAbility::isExileOnly)
+                .toList()) {
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                    && (!isActivePlayer || !isMainPhase || !stackEmpty)) {
+                continue;
+            }
+            if (ability.getManaCost() == null) {
+                return true;
+            }
+            if (pool != null && new ManaCost(ability.getManaCost()).canPay(pool, 0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean canPayWaterbendFromExile(GameData gameData, UUID playerId, int amount) {

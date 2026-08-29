@@ -27,7 +27,8 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                               Boolean foretell,
                               Boolean waterbendPaid,
                               Boolean payLifeForAdditionalCost,
-                              Boolean adventure) {
+                              Boolean adventure,
+                              Boolean alternateCost) {
 
     public PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                            List<UUID> targetIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,
@@ -51,7 +52,7 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                 additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
                 sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex,
                 beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds,
-                beholdCreatureType, morph, chosenCreatureType, null, null, null, null);
+                beholdCreatureType, morph, chosenCreatureType, null, null, null, null, null);
     }
 
     public PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
@@ -70,7 +71,8 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                 flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop,
                 chosenGraveyardType, discardHandCardIndex, discardHandCardIndices,
                 imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
-                repeatedAdditionalCosts, buyback, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                repeatedAdditionalCosts, buyback, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
     }
 
     /** Convenience for the overwhelming majority of casts, which pay no repeatable additional cost. */
@@ -88,6 +90,6 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                 flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop,
                 chosenGraveyardType, discardHandCardIndex, discardHandCardIndices,
                 imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, List.of(), null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

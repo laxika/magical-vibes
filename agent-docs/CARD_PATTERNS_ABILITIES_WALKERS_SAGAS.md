@@ -3,6 +3,10 @@
 
 All paths relative to `cards/`.
 
+## Library and manifest effects
+
+| Manifest the top card, then put counters on it | `f/FierceInvocation.java` / `w/Wildcall.java` | `ManifestTopCardAndPutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)` / `ManifestTopCardAndPutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())` |
+
 | 3-chapter double-faced Saga with a delayed X-payment combat trigger on its back face | `t/TheRiseOfSozin.java` / `f/FireLordSozin.java` | Front: chapter I destroys all creatures, chapter II targets an opponent and uses `ChooseCardNameAndExileFromZonesEffect(..., 4)`, and chapter III uses `ExileSelfAndReturnTransformedEffect()`. Back: `ON_COMBAT_DAMAGE_TO_PLAYER` uses `PayXManaReanimateCreaturesWithTotalManaValueXEffect()` |
 
 ## Activated abilities

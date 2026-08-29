@@ -1589,6 +1589,11 @@ public class GameTestHarness {
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null, targetId);
     }
 
+    public void activateExileAbility(Player player, UUID cardId) {
+        ensurePriority(player);
+        gameService.activateExiledAbility(gameData, player, cardId, 0, null, null);
+    }
+
     public void activateHandAbility(Player player, int handCardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId);

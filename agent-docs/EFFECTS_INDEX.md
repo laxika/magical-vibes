@@ -1,4 +1,23 @@
 # EFFECTS_INDEX
+| `ControlsCreatureWithGreatestToughness` | `()` | condition that is true when the controller controls a creature tied for the greatest effective toughness on the battlefield. Used by Abzan Beastmaster |
+| `BecomeAuraManifestTopCardEffect` | `()` | manifests the controller's top card, then turns the resolving source into an Aura attached to that manifested permanent. Used by the FRF Form enchantments |
+| `BolsterEffect` | `(DynamicAmount amount)` / `(int amount)` | puts the evaluated number of +1/+1 counters on a creature the controller controls with the least toughness; the controller chooses among ties |
+| `ChannelHarmEffect` | `()` | prevents damage to the controller and their permanents for the turn, offering a may ability for each prevented event to deal that much damage to the targeted creature |
+| `DefendingPlayerCantCastSpellsWhileAttackingEffect` | `()` | static restriction that prevents the relevant defending player from casting spells while the source creature is attacking |
+| `EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect` | `()` | Aura death trigger whose collector snapshots the enchanted creature's toughness and resolves matching life gain followed by card draw |
+| `ExileCreaturesFromTargetGraveyardThenManifestEffect` | `()` | exiles all creature cards from the targeted player's graveyard face down, randomizes them, then manifests them under the controller's control |
+| `ExileSelfAndTopCardThenManifestEffect` | `()` | combat-damage trigger that exiles the source and the controller's top library card face down, randomizes those cards, then manifests both |
+| `ExileTargetCreatureThenManifestEffect` | `()` | exiles target creature, then manifests the top card of that creature's controller's library |
+| `ManifestOneOfTopTwoEffect` | `()` | privately looks at the top two cards, manifests the chosen card, then lets the controller put the other on top or bottom |
+| `ManifestTopCardEffect` | `()` | manifests the top card of the controller's library through the shared manifest service |
+| `OpponentChoosesCardFromGraveyardToHandEffect` | `(CardPredicate filter)` | controller chooses an opponent, then that opponent chooses a matching card from the controller's graveyard to return to hand; neither choice targets |
+| `PlayerChoosesUpToPermanentsThenSacrificesRestEffect` | `(int maxCount, PermanentPredicate filter)` | the affected player chooses up to the limit of matching permanents to keep and sacrifices the rest |
+| `RegisterDelayedWatchedCreatureDealtDamageEffect` | `(List<CardEffect> effects)` | watches the targeted creature for the rest of the turn and resolves the nested effects whenever it is dealt damage. Used by Arcbond |
+| `ReturnNextInstantOrSorceryCastFromHandToHandThisTurnEffect` | `()` | one-shot turn registration that returns the next instant or sorcery the controller casts from hand to its owner's hand as it resolves |
+| `ReturnSelfToHandIfDashCostPaidEffect` | `()` | entry marker that grants the dash haste behavior and schedules the source to return to hand at the next end step when its alternate cost was paid |
+| `ReturnTargetCreatureToHandAndCreateTokenCopyEffect` | `()` | returns target creature to its owner's hand, then creates a token copy using the target's captured card characteristics |
+| `RevealRandomCardFromTargetPermanentControllerHandRecordManaValueEffect` | `()` | reveals a random card from the targeted permanent's controller's hand and records its mana value for following effects on the same entry |
+| `TargetCreaturesDealToughnessDamageToEachOtherEffect` | `()` / `(int firstTargetGroup, int secondTargetGroup)` | the two targeted creatures deal damage to each other equal to their toughnesses; unlike fight, the amount does not use power |
 | `ExileSelfAndReturnUnderOpponentControlEffect` | `()` | Exiles the source permanent and immediately returns it as a new permanent under an opponent chosen by the ability controller. Reuses the immediate `FlickerEffectHandler` path and the normal player-choice interaction for multiplayer games. |
 | `TargetPlayerGainsControlOfTargetPermanentThenEffect` | `(CardEffect thenEffect)` | first target player gains permanent control of the second target permanent, then the supplied effect is put on the stack as a reflexive ability only after the control change succeeds |
 | `PutCountersOnTargetForEachLeavingSourceCountersEffect` | `()` / `(PermanentPredicate)` | leaves-the-battlefield trigger: snapshots every concrete counter type on the leaving source and puts the same counts on the target creature |

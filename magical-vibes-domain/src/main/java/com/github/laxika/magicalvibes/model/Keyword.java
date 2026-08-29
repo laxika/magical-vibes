@@ -91,6 +91,8 @@ public enum Keyword {
     DELVE,
     DREDGE,
     MODULAR,
+    PROWESS,
+    DASH,
     SUNBURST,
     PROTOTYPE,
     REBOUND,

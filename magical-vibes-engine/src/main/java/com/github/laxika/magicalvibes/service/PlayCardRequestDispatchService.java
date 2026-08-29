@@ -72,6 +72,11 @@ public class PlayCardRequestDispatchService {
             }
             return;
         }
+        if (Boolean.TRUE.equals(request.alternateCost())) {
+            gameService.playCardWithAlternateCost(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));
+            return;
+        }
         if (Boolean.TRUE.equals(request.morph())) {
             gameService.playCardWithMorph(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                     request.damageAssignments(), listOrEmpty(request.targetIds()), request.discardHandCardIndex());

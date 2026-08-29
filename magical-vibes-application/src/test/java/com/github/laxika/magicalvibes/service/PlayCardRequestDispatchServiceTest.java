@@ -85,7 +85,7 @@ class PlayCardRequestDispatchServiceTest {
                 8, List.of(9, 10), List.of(imposedSacrifice), List.of(multiSacrifice),
                 List.of("{1}{G}"), true, null,
                 beholdPermanent, 11, List.of(multiBeholdPermanent), List.of(12, 13),
-                null, "ELF", false, "GOBLIN");
+                null, "ELF", false, "GOBLIN", null, true, true, false, null);
 
         dispatchService.dispatch(gameData, player, request);
 
@@ -95,7 +95,7 @@ class PlayCardRequestDispatchServiceTest {
                 eq(List.of(9, 10)), eq(List.of(imposedSacrifice)), eq(List.of(multiSacrifice)),
                 eq(List.of("{1}{G}")), eq(true), eq(beholdPermanent), eq(11),
                 eq(List.of(multiBeholdPermanent)), eq(List.of(12, 13)), eq(CardSubtype.ELF),
-                eq(CardSubtype.GOBLIN), eq(true), isNull());
+                eq(CardSubtype.GOBLIN), eq(true), eq(true));
         verifyNoMoreInteractions(gameService);
     }
 
@@ -113,6 +113,22 @@ class PlayCardRequestDispatchServiceTest {
                 isNull(), isNull(), eq(false), isNull(), isNull(), isNull(), isNull(), eq(List.of()),
                 eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull(), isNull(),
                 eq(false), isNull());
+        verifyNoMoreInteractions(gameService);
+    }
+
+    @Test
+    @DisplayName("Explicit alternate cost routes to playCardWithAlternateCost")
+    void alternateCostRoutes() {
+        PlayCardRequest request = new PlayCardRequest(
+                2, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, true);
+
+        dispatchService.dispatch(gameData, player, request);
+
+        verify(gameService).playCardWithAlternateCost(
+                eq(gameData), eq(player), eq(2), isNull(), isNull(), isNull(), eq(List.of()));
         verifyNoMoreInteractions(gameService);
     }
 

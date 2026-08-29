@@ -77,7 +77,8 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         // Excess-damage tracking for companion effects (e.g. Archaic's Agony exiles cards equal to
         // the excess damage dealt to the target). The excess is stored on the entry's event value,
         // which a later EventValue amount reads back — so only snapshot it when such an effect asks.
-        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
+        boolean tracksExcess = !amountEvaluationService.referencesEventValue(e.damage())
+                && entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
         Permanent target = tracksExcess
                 ? gameQueryService.findPermanentById(gameData, entry.getTargetId())
                 : null;

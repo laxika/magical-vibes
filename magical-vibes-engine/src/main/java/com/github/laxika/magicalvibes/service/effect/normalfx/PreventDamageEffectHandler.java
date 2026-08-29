@@ -186,6 +186,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                     exemptPredicate = new PermanentIsSpecificPermanentPredicate(entry.getSourcePermanentId());
                 }
                 gameData.combatDamageExemptPredicate = exemptPredicate;
+                gameData.combatDamageExemptControllerId = entry.getControllerId();
                 gameLogService.append(gameData, GameLog.text(
                         "Combat damage from creatures that don't match the exemption will be prevented this turn."));
             }

@@ -5937,7 +5937,7 @@ public class SpellCastingService {
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
         for (Card exiledCard : exiledCards) {
-            gameData.addToExile(playerId, exiledCard);
+            gameData.addToExile(playerId, exiledCard, card.getId());
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " exiles ")
                     .card(exiledCard)

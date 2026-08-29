@@ -1118,10 +1118,13 @@ public class GameService {
                 throw new IllegalStateException("Permanent can't be turned face up during this turn");
             }
             boolean cloaked = permanent.isCloaked();
+            boolean manifestedOrCloaked = permanent.isManifested() || cloaked;
             String morphCost = permanent.getCard().getMorphCost();
-            String faceUpCost = cloaked ? permanent.getCard().getManaCost() : morphCost;
-            if ((!cloaked && morphCost == null) || (cloaked && (faceUpCost == null
-                    || !permanent.getCard().hasType(CardType.CREATURE)))
+            String faceUpCost = manifestedOrCloaked ? permanent.getCard().getManaCost() : morphCost;
+            if (manifestedOrCloaked && !permanent.getCard().hasType(CardType.CREATURE)) {
+                throw new IllegalStateException("Face-down permanent is not a creature card");
+            }
+            if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
                     || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                 throw new IllegalStateException("Permanent cannot be turned face up");
@@ -1134,7 +1137,7 @@ public class GameService {
                         gameData, player, morphAdditionalCost, additionalCostPermanentIds);
             }
             RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
-            if (!cloaked && morphRevealCost != null) {
+            if (!manifestedOrCloaked && morphRevealCost != null) {
                 List<Card> hand = gameData.playerHands.get(player.getId());
                 if (revealedHandCardIndex == null || hand == null
                         || revealedHandCardIndex < 0 || revealedHandCardIndex >= hand.size()) {
@@ -1154,7 +1157,7 @@ public class GameService {
             } else {
                 ManaCost cost = new ManaCost(faceUpCost);
                 DynamicAmount morphCostReduction = permanent.getCard().getMorphCostReduction();
-                if (!cloaked && morphCostReduction != null && amountEvaluationService != null) {
+                if (!manifestedOrCloaked && morphCostReduction != null && amountEvaluationService != null) {
                     int reduction = amountEvaluationService.evaluate(gameData, morphCostReduction,
                             AmountContext.forCasting(player.getId()));
                     cost = cost.reducedBy(new ManaCost("{" + reduction + "}"));

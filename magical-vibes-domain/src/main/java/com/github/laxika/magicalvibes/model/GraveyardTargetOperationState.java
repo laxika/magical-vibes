@@ -159,6 +159,12 @@ public class GraveyardTargetOperationState {
     public UUID scroungeChosenCardId;
     /** Whether a resolution-time target-opponent graveyard choice is awaiting an answer. */
     public boolean resolutionTimeScroungeResume;
+    /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
+    public boolean resolutionTimeOpponentChoosesCardToHandResume;
+    /** Opponent selected by the controller for the resolution-time graveyard choice. */
+    public UUID opponentChoosesCardToHandChosenOpponentId;
+    /** Card selected by the opponent for the resolution-time graveyard choice. */
+    public UUID opponentChoosesCardToHandChosenCardId;
     /**
      * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
      * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the

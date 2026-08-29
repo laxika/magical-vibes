@@ -37,12 +37,24 @@ public class FightSupport {
         if (first == null || second == null) {
             return;
         }
-        dealFightDamage(gameData, entry, first, second);
-        dealFightDamage(gameData, entry, second, first);
+        dealMutualDamage(gameData, entry, first, second, true);
+        dealMutualDamage(gameData, entry, second, first, true);
     }
 
-    private void dealFightDamage(GameData gameData, StackEntry entry, Permanent source, Permanent recipient) {
-        int power = gameQueryService.getPowerBasedDamage(gameData, source);
+    public void dealToughnessDamageToEachOther(GameData gameData, StackEntry entry,
+                                               Permanent first, Permanent second) {
+        if (first == null || second == null) {
+            return;
+        }
+        dealMutualDamage(gameData, entry, first, second, false);
+        dealMutualDamage(gameData, entry, second, first, false);
+    }
+
+    private void dealMutualDamage(GameData gameData, StackEntry entry, Permanent source,
+                                  Permanent recipient, boolean usePower) {
+        int baseDamage = usePower
+                ? gameQueryService.getPowerBasedDamage(gameData, source)
+                : Math.max(0, gameQueryService.getEffectiveToughness(gameData, source));
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, source)) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage is prevented."));
             return;
@@ -51,7 +63,7 @@ public class FightSupport {
             gameLogService.append(gameData, GameLog.cardTextCard(recipient.getCard(), " has protection — damage from ", source.getCard(), " prevented."));
             return;
         }
-        int damage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
+        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage, entry);
         int markedDamageBefore = recipient.getMarkedDamage();
         int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, recipient, damage, source);
         UUID recipientControllerId = gameQueryService.findPermanentController(gameData, recipient.getId());

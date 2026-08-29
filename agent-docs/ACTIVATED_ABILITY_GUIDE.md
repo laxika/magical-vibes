@@ -620,6 +620,28 @@ addGraveyardActivatedAbility(new ActivatedAbility(
 
 Cards: `MagmaPhoenix`
 
+### 12a. Exile activated ability
+
+```java
+addActivatedAbility(new ActivatedAbility(
+    false, "{3}{B/G}{B/G}",
+    List.of(new ReturnSourceCardFromExileToBattlefieldEffect(true)),
+    "{3}{B/G}{B/G}: Put this card from exile onto the battlefield tapped. Activate only as a sorcery.",
+    ActivationTimingRestriction.SORCERY_SPEED).withExileOnly());
+```
+
+**Use when:** The card has an ability that functions while the card is in exile. These abilities use
+`ActivatedAbility.withExileOnly()` and are activated by card id, not an exile list index, because the
+exile zone is unified and can contain cards owned by different players.
+
+- The ability is stored in `Card.getActivatedAbilities()` and exposed through `CardView.exileActivatedAbilities`
+- Activation is routed through `AbilityActivationService.activateExiledAbility()` and the
+  `ACTIVATE_EXILED_ABILITY` message
+- The source card remains in exile until the ability resolves, so the return effect does nothing if it
+  has moved elsewhere in response
+
+Card: `TorrentElemental`
+
 **Targeted graveyard abilities** (e.g. Gryff's Boon "{cost}: Return this card … attached to target creature") use an effect with a non-`NONE` `targetSpec()` plus an optional `TargetFilter` on the `ActivatedAbility`. Activation accepts `targetId` via `activateGraveyardAbility(..., xValue, targetId)` / wire `ActivateGraveyardAbilityRequest.targetId`. The stack entry carries the target and `ability.getTargetFilter()` so illegal targets fizzle on resolution.
 
 **Graveyard abilities targeting graveyard cards** (Soul of Innistrad "{3}{B}{B}, Exile this card from your graveyard: Return up to three target creature cards from your graveyard to your hand") pass a list of card ids: `activateGraveyardAbility(..., xValue, targetId, graveyardTargetIds)` / `ActivateGraveyardAbilityRequest.graveyardCardIds` / harness `activateGraveyardAbilityWithGraveyardTargets(player, graveyardCardIndex, abilityIndex, ids)`. The ids are validated by `TargetLegalityService.validateMultiTargetGraveyardAbility` **before** any cost is paid (CR 601.2c), so a self-exiling ability may legally target its own source card — that target is simply gone by resolution. They ride on the stack entry as `targetCardIds` with `Zone.GRAVEYARD`, the same shape the battlefield path uses (`activateAbility(..., Zone.GRAVEYARD, targetIds)`).
@@ -1095,6 +1117,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `SAGA_CHAPTER_III` | Saga chapter III (third lore counter, saga sacrificed after) |
 | `SAGA_CHAPTER_IV` | Saga chapter IV (fourth lore counter, saga sacrificed after) |
 | `BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on controller's turn |
+| `GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on the card owner's turn while the card is in their graveyard |
 | `EACH_BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of each combat (any player's turn) |
 | `OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on each opponent's turn only (never the controller's) — Sentinel of the Eternal Watch |
 | `END_OF_COMBAT_TRIGGERED` | "At end of combat" — as the end of combat step begins (CR 511.2), every combat, any player's turn |

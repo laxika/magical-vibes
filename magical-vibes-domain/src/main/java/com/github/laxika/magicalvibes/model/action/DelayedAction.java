@@ -73,6 +73,7 @@ public sealed interface DelayedAction permits
         DelayedWatchedCreaturesCombatDamage,
         DelayedNamedCreatureCombatDamage,
         DelayedWatchedCreatureDealsDamage,
+        DelayedWatchedCreatureDealtDamage,
         DelayedControllerSpellCastTrigger,
         EpicDelayedTrigger,
         DelayedUnblockedAttackerPowerDamage,
