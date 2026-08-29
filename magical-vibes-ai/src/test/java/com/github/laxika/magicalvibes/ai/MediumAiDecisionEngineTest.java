@@ -1052,6 +1052,41 @@ class MediumAiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("Medium AI reserves a creature to pay Hollow Warrior's block cost")
+    void reservesCreatureForBlockTapCost() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent warrior = harness.addToBattlefieldAndReturn(aiPlayer, new HollowWarrior());
+        warrior.setSummoningSick(false);
+        Permanent support = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        support.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int attackerIndex = gd.playerBattlefields.get(human.getId()).indexOf(attacker);
+        int warriorIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(warrior);
+        int supportIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(support);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(warriorIndex, attackerIndex),
+                    new BlockerAssignment(supportIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(warrior.isBlocking()).isTrue();
+        assertThat(support.isBlocking()).isFalse();
+        assertThat(support.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
     @DisplayName("Medium AI reassigns an existing blocker to a Lure attacker")
     void reassignsExistingBlockerToLureAttacker() {
         Permanent lureAttacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());

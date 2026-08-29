@@ -1784,6 +1784,42 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @DisplayName("Hard AI reserves a creature to pay Hollow Warrior's block cost")
+    void reservesCreatureForBlockTapCost() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new HollowWarrior());
+        warrior.setSummoningSick(false);
+        Permanent support = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        support.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player2);
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int warriorIndex = gd.playerBattlefields.get(player2.getId()).indexOf(warrior);
+        int supportIndex = gd.playerBattlefields.get(player2.getId()).indexOf(support);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(warriorIndex, attackerIndex),
+                    new BlockerAssignment(supportIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(warrior.isBlocking()).isTrue();
+        assertThat(support.isBlocking()).isFalse();
+        assertThat(support.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
     @DisplayName("Hard AI reassigns an existing blocker to a Lure attacker")
     void reassignsExistingBlockerToLureAttacker() {
         Permanent lureAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

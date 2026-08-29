@@ -52,6 +52,19 @@ public class CombatTapCostService {
                 >= requiredTapCount(blocker);
     }
 
+    /**
+     * Returns whether the complete blocker group leaves enough uninvolved untapped creatures to
+     * pay all of its creature-tap combat costs.
+     */
+    public boolean canPayBlockCosts(GameData gameData, UUID playerId,
+                                    Collection<Permanent> attackingPermanents,
+                                    Collection<Permanent> blockers) {
+        Set<UUID> declaredIds = idsOf(attackingPermanents);
+        blockers.forEach(blocker -> declaredIds.add(blocker.getId()));
+        int required = uniquePermanents(blockers).stream().mapToInt(this::requiredTapCount).sum();
+        return availableTapSourceCount(gameData, playerId, declaredIds) >= required;
+    }
+
     public void validateAttackCosts(GameData gameData, UUID playerId, List<Permanent> attackers) {
         if (!canPayAttackCosts(gameData, playerId, attackers)) {
             throw new IllegalStateException("Not enough untapped creatures to attack");
@@ -66,10 +79,9 @@ public class CombatTapCostService {
 
     public void validateBlockCosts(GameData gameData, UUID playerId, List<Permanent> attackingPermanents,
                                    Collection<Permanent> blockers) {
-        Set<UUID> declaredIds = idsOf(attackingPermanents);
-        blockers.forEach(blocker -> declaredIds.add(blocker.getId()));
-        int required = uniquePermanents(blockers).stream().mapToInt(this::requiredTapCount).sum();
-        validateAvailable(gameData, playerId, declaredIds, required, "block");
+        if (!canPayBlockCosts(gameData, playerId, attackingPermanents, blockers)) {
+            throw new IllegalStateException("Not enough untapped creatures to block");
+        }
     }
 
     public void payBlockCosts(GameData gameData, UUID playerId, List<Permanent> attackingPermanents,
@@ -78,13 +90,6 @@ public class CombatTapCostService {
         blockers.forEach(blocker -> declaredIds.add(blocker.getId()));
         int required = uniquePermanents(blockers).stream().mapToInt(this::requiredTapCount).sum();
         tapSources(gameData, playerId, declaredIds, required, "block");
-    }
-
-    private void validateAvailable(GameData gameData, UUID playerId, Set<UUID> declaredIds,
-                                   int required, String action) {
-        if (availableTapSourceCount(gameData, playerId, declaredIds) < required) {
-            throw new IllegalStateException("Not enough untapped creatures to " + action);
-        }
     }
 
     private void tapSources(GameData gameData, UUID playerId, Set<UUID> declaredIds,

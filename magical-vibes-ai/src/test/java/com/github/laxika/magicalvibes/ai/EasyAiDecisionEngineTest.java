@@ -2010,6 +2010,42 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Easy AI reserves a creature to pay Hollow Warrior's block cost")
+        void reservesCreatureForBlockTapCost() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent warrior = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HollowWarrior());
+            warrior.setSummoningSick(false);
+            Permanent support = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            support.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            int warriorIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(warrior);
+            int supportIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(support);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(warriorIndex, attackerIndex),
+                        new BlockerAssignment(supportIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(warrior.isBlocking()).isTrue();
+            assertThat(support.isBlocking()).isFalse();
+            assertThat(support.isTapped()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
         @DisplayName("Easy AI reassigns an existing blocker to a Lure attacker")
         void reassignsExistingBlockerToLureAttacker() {
             Permanent lureAttacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());

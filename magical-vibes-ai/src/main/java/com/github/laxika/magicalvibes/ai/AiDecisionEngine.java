@@ -1546,11 +1546,17 @@ public abstract class AiDecisionEngine {
                     capBlockersToLegalMaximum(gameData, requirementLegal.blockerAssignments()));
             requirementLegal = new DeclareBlockersRequest(
                     normalizeBlockerAssignments(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    fitBlockersToTapCosts(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    normalizeBlockerAssignments(gameData, requirementLegal.blockerAssignments()));
         }
         DeclareBlockersRequest affordable = gameData == null
                 ? requirementLegal
                 : new DeclareBlockersRequest(prepareBlockersForTax(gameData, requirementLegal.blockerAssignments()));
         if (gameData != null) {
+            affordable = new DeclareBlockersRequest(
+                    fitBlockersToTapCosts(gameData, affordable.blockerAssignments()));
             affordable = new DeclareBlockersRequest(
                     normalizeBlockerAssignments(gameData, affordable.blockerAssignments()));
         }
@@ -1581,7 +1587,10 @@ public abstract class AiDecisionEngine {
                 : enforceBlockRequirements(gameData, List.of());
         if (gameData != null) {
             fallbackAssignments = capBlockersToLegalMaximum(gameData, fallbackAssignments);
+            fallbackAssignments = fitBlockersToTapCosts(gameData, fallbackAssignments);
+            fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
             fallbackAssignments = prepareBlockersForTax(gameData, fallbackAssignments);
+            fallbackAssignments = fitBlockersToTapCosts(gameData, fallbackAssignments);
             fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
         }
         try {
@@ -1634,6 +1643,56 @@ public abstract class AiDecisionEngine {
             }
         }
         return assignments.stream().filter(kept::contains).toList();
+    }
+
+    /**
+     * Keeps an ordered subset of blocker groups whose declaration-wide creature-tap costs can be
+     * paid. Every assignment for one blocker is considered together because a creature that can
+     * block multiple attackers pays its combat cost only once.
+     */
+    private List<BlockerAssignment> fitBlockersToTapCosts(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty() || gameData.activePlayerId == null) {
+            return assignments;
+        }
+        PendingInteraction.BlockerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        UUID defenderId = pending == null
+                ? gameQueryService.getOpponentId(gameData, gameData.activePlayerId)
+                : pending.defenderId();
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null || assignments.stream().anyMatch(assignment ->
+                !isIndexInRange(assignment.blockerIndex(), defenderBattlefield))) {
+            return assignments;
+        }
+
+        LinkedHashSet<Integer> blockerIndices = assignments.stream()
+                .map(BlockerAssignment::blockerIndex)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        boolean hasTapCost = blockerIndices.stream()
+                .map(defenderBattlefield::get)
+                .flatMap(blocker -> blocker.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(CombatTapCostEffect.class::isInstance);
+        if (!hasTapCost) {
+            return assignments;
+        }
+
+        List<BlockerAssignment> fitted = new ArrayList<>();
+        for (int blockerIndex : blockerIndices) {
+            List<BlockerAssignment> candidate = new ArrayList<>(fitted);
+            assignments.stream()
+                    .filter(assignment -> assignment.blockerIndex() == blockerIndex)
+                    .forEach(candidate::add);
+            List<Permanent> candidateBlockers = candidate.stream()
+                    .map(BlockerAssignment::blockerIndex)
+                    .distinct()
+                    .map(defenderBattlefield::get)
+                    .toList();
+            if (blockLegalityService.canPayBlockTapCosts(gameData, defenderId, candidateBlockers)) {
+                fitted = candidate;
+            }
+        }
+        return fitted;
     }
 
     private int maximumLegalBlockersForAttacker(
