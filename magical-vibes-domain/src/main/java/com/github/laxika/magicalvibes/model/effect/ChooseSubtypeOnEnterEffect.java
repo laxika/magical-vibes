@@ -8,7 +8,7 @@ import java.util.List;
  * Marker effect placed in ON_ENTER_BATTLEFIELD to indicate that this permanent
  * requires a creature type choice as it enters the battlefield ("As ~ enters, choose a creature type.").
  */
-public record ChooseSubtypeOnEnterEffect(List<CardSubtype> allowedSubtypes) implements CardEffect {
+public record ChooseSubtypeOnEnterEffect(List<CardSubtype> allowedSubtypes) implements SubtypeChoiceOnEnterEffect {
 
     public ChooseSubtypeOnEnterEffect() {
         this(List.of());

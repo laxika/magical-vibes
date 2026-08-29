@@ -170,6 +170,12 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 null, null, null, null, null, null, 0, null, false, 0, false);
     }
 
+    /** Draws cards and gives the source +power/+toughness until end of turn once the discard completes. */
+    public static DiscardFollowUp rummageAndBoost(int drawCount, UUID permanentId, int power, int toughness) {
+        return new DiscardFollowUp(drawCount, null, List.of(), null, 0, 0, List.of(), permanentId, power, toughness,
+                null, null, null, null, null, null, 0, null, false, 0, false);
+    }
+
     /** Put a fixed number of +1/+1 counters on a permanent once the discard completes. */
     public static DiscardFollowUp plusOnePlusOneCounters(UUID permanentId, int amount) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
@@ -277,6 +283,21 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     public static DiscardFollowUp enteringPermanent(Permanent permanent, UUID controllerId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
                 null, null, null, permanent, controllerId, null, 0, null, false, 0, false);
+    }
+
+    public DiscardFollowUp withSourceContext(UUID sourcePermanentId,
+                                             Permanent sourcePermanentSnapshot,
+                                             int eventValue) {
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards,
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition, enteringPermanent, enteringControllerId,
+                plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount,
+                thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount,
+                thenEffectUsesDiscardedManaValue, rummageDrawPlayerId,
+                thenEffectAlternateCardType, thenEffectAlternate,
+                targetOpponentsDiscardThenDraw, sourcePermanentId,
+                sourcePermanentSnapshot, eventValue);
     }
 
     /**

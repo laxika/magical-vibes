@@ -64,7 +64,8 @@ class AvatarAangTest extends BaseCardTest {
         Permanent firstSource = addReadyCreature(player1);
         Permanent secondSource = addReadyCreature(player1);
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        FireSages fireSages = addReadyCreature(player1, new FireSages());
+        Permanent fireSages = harness.addToBattlefieldAndReturn(player1, new FireSages());
+        fireSages.setSummoningSick(false);
         harness.setLibrary(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),

@@ -30,6 +30,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | modal, choose one, fight, bite | CARD_PATTERNS_LANDS_SPELLS.md |
+| Case, solve, solved | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | steal, threaten, extra turn | CARD_PATTERNS_LANDS_SPELLS.md |
 | auction, bid life | CARD_PATTERNS_LANDS_SPELLS.md |
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
@@ -41,10 +42,13 @@ This index has been split into smaller files for faster lookup. Each file is und
 | kicker, alternate casting cost | CARD_PATTERNS_CREATURES_ETB.md |
 | buyback, return spell to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | attack trigger, death trigger, upkeep trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| face-down permanent turns face up | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| suspect a creature / clear suspected creatures | `SuspectEffect(GrantScope.TARGET)` + `UnsuspectAllCreaturesEffect`; for optional non-targeted selection use `MayEffect(SuspectChosenOtherCreatureEffect())` |
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | aura, enchant creature, pacifism | CARD_PATTERNS_PERMANENTS_STATIC.md |

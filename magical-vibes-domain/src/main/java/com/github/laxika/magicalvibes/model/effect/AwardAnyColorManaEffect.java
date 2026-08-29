@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,10 +40,30 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       boolean anyColorCombination,
                                       boolean grantsAdditionalPlusOneCounter,
                                       Set<CardSubtype> spellOnlySubtypes,
-                                      boolean differentColors) implements ManaProducingEffect {
+                                      boolean differentColors,
+                                      List<ManaColor> allowedColors) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect {
         spellOnlySubtypes = spellOnlySubtypes == null ? Set.of() : Set.copyOf(spellOnlySubtypes);
+        allowedColors = allowedColors == null || allowedColors.isEmpty()
+                ? ManaColor.COLORS : List.copyOf(allowedColors);
+    }
+
+    public AwardAnyColorManaEffect(DynamicAmount amount,
+                                   ManaSpendRestriction restriction,
+                                   CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn,
+                                   boolean targetsPlayer,
+                                   boolean manaRecipientIsTargetPlayer,
+                                   boolean markSourceAsHavingAddedManaThisTurn,
+                                   boolean anyColorCombination,
+                                   boolean grantsAdditionalPlusOneCounter,
+                                   Set<CardSubtype> spellOnlySubtypes,
+                                   boolean differentColors) {
+        this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
+                targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
+                anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
+                differentColors, ManaColor.COLORS);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount,
@@ -104,6 +126,13 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         this(new Fixed(amount), restriction, null, false, false, false, false, false, false, Set.of(), false);
     }
 
+    /** "Add N mana in any combination of colors" with a spending restriction. */
+    public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction,
+                                   boolean anyColorCombination) {
+        this(new Fixed(amount), restriction, null, false, false, false, false,
+                anyColorCombination, false, Set.of(), false);
+    }
+
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype) {
         this(new Fixed(amount), restriction, subtype, false, false, false, false, false, false, Set.of(), false);
     }
@@ -143,6 +172,13 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         return new AwardAnyColorManaEffect(amount, ManaSpendRestriction.SUBTYPE_SPELL, subtypes);
     }
 
+    /** "Add one mana of one of these colors. Spend this mana only to cast a spell with one of these subtypes." */
+    public static AwardAnyColorManaEffect forSpellSubtypes(int amount, Set<CardSubtype> subtypes,
+                                                            List<ManaColor> allowedColors) {
+        return new AwardAnyColorManaEffect(new Fixed(amount), ManaSpendRestriction.SUBTYPE_SPELL, null,
+                false, false, false, false, false, false, subtypes, false, allowedColors);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
@@ -161,14 +197,15 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     @Override
     public int estimatedWildcardMana() {
         return switch (restriction) {
-            case NONE, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
+            case NONE, SPELL_ONLY, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
                  CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
-            case ABILITIES, IMPRINTED_CARD_COLORS, SOURCE_PERMANENT_COLORS, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY,
-                 ARTIFACT_SPELLS_OR_ABILITIES, FLASHBACK_ONLY, EXILED_SPELL_ONLY, GRAVEYARD_SPELL_ONLY,
+            case ABILITIES, IMPRINTED_CARD_COLORS, EXILED_CARD_COLORS, SOURCE_PERMANENT_COLORS,
+                 INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, ARTIFACT_SPELLS_OR_ABILITIES,
+                 FLASHBACK_ONLY, EXILED_SPELL_ONLY, GRAVEYARD_SPELL_ONLY,
                  CHOSEN_SUBTYPE_SPELL_OR_ABILITY, SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY,
                  CHOSEN_SUBTYPE_CREATURE_SOURCE_SPELL_OR_ABILITY,
-                 CREATURE_SPELLS_OR_ABILITIES, MANA_VALUE_AT_LEAST_FOUR,
+                 CREATURE_SPELLS_OR_ABILITIES, CREATURE_COLORS_ABILITIES, MANA_VALUE_AT_LEAST_FOUR,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS -> 0;
         };
     }

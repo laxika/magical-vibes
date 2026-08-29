@@ -48,8 +48,9 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean
     }
 
     @Override
-    public boolean countsAbilityResolution() {
-        return condition instanceof NthAbilityResolutionThisTurn || wrapped.countsAbilityResolution();
+    public boolean hasAbilityResolutionCondition() {
+        return condition instanceof NthAbilityResolutionThisTurn
+                || wrapped.hasAbilityResolutionCondition();
     }
 
     @Override

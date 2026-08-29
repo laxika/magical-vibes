@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -32,9 +31,8 @@ public class AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler imp
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final MaySacrificeForCounterSupport maySacrificeForCounterSupport;
+    private final AnyOpponentMaySacrificeCreatureSupport anyOpponentMaySacrificeCreatureSupport;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final DestructionSupport destructionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,7 +55,7 @@ public class AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler imp
 
     /** The creatures {@code playerId} controls, i.e. what they could sacrifice. */
     public List<UUID> creatureIds(GameData gameData, UUID playerId) {
-        return maySacrificeForCounterSupport.matchingPermanentIds(gameData, playerId, new PermanentIsCreaturePredicate());
+        return anyOpponentMaySacrificeCreatureSupport.creatureIds(gameData, playerId);
     }
 
     /**
@@ -83,11 +81,7 @@ public class AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler imp
 
     /** Sacrifices {@code permanentId} for {@code sacrificingPlayerId}. */
     public void sacrifice(GameData gameData, UUID sacrificingPlayerId, UUID permanentId) {
-        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
-        if (toSacrifice == null) {
-            return;
-        }
-        destructionSupport.sacrificeAndLog(gameData, toSacrifice, sacrificingPlayerId);
+        anyOpponentMaySacrificeCreatureSupport.sacrifice(gameData, sacrificingPlayerId, permanentId);
     }
 
     /**

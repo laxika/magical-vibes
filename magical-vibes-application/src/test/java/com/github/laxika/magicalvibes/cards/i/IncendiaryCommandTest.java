@@ -42,6 +42,19 @@ class IncendiaryCommandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage-player mode can target the controller")
+    void damagePlayerModeCanDamageController() {
+        harness.setHand(player1, List.of(new IncendiaryCommand()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castModalSorceryWithModes(
+                player1, 0, 2, new int[]{0, 1}, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
     @DisplayName("Damage-planeswalker + destroy-land: two target slots bind to the right effects")
     void damagePlaneswalkerAndDestroyLand() {
         Permanent chandra = new Permanent(new ChandraNalaar());

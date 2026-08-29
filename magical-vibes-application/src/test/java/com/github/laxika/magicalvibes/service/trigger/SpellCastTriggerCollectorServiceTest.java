@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBatt
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
@@ -806,6 +807,53 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — CopySpellForEachOtherCreatureEffect")
+    class AnyPlayerCopySpellForEachOtherCreature {
+
+        @Test
+        @DisplayName("puts triggered ability on stack when spell targets only the source permanent")
+        void triggersWhenSpellTargetsOnlySource() {
+            Permanent source = createPermanent("Ink-Treader Nephilim");
+            var effect = new CopySpellForEachOtherCreatureEffect();
+            Card spellCard = createInstant("Lightning Bolt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            StackEntry spellOnStack = new StackEntry(spellCard, player2Id);
+            spellOnStack.setTargetId(source.getId());
+            gd.stack.add(spellOnStack);
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        }
+
+        @Test
+        @DisplayName("returns false when spell targets a different permanent")
+        void returnsFalseWhenTargetIsNotSource() {
+            Permanent source = createPermanent("Ink-Treader Nephilim");
+            Permanent other = createPermanent("Grizzly Bears");
+            var effect = new CopySpellForEachOtherCreatureEffect();
+            Card spellCard = createInstant("Lightning Bolt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            StackEntry spellOnStack = new StackEntry(spellCard, player2Id);
+            spellOnStack.setTargetId(other.getId());
+            gd.stack.add(spellOnStack);
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).hasSize(1);
+        }
+    }
+
     // ===== ON_ANY_PLAYER_CASTS_SPELL — CopySpellForEachOtherSubtypePermanentEffect =====
 
     @Nested
@@ -1362,6 +1410,12 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(gd.pendingInteractions)
                     .filteredOn(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
                     .hasSize(1);
+            var pending = gd.pendingInteractions.stream()
+                    .filter(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                    .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
         }
 
         @Test

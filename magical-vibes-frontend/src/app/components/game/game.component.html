@@ -659,7 +659,7 @@
     @if (choice.choosingGraveyardCards) {
       <div class="reveal-hand-overlay">
         <div class="reveal-hand-card">
-          <h2>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMaxCount }} selected)</h2>
+          <h2>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMinCount > 0 ? choice.graveyardChoiceMinCount + '–' : '' }}{{ choice.graveyardChoiceMaxCount }} selected)</h2>
           <div class="reveal-hand-cards">
             @for (card of choice.multiGraveyardCards; track $index) {
               <app-card-display
@@ -671,7 +671,30 @@
                 (mouseleave)="onCardHoverEnd()" />
             }
           </div>
-          <button class="btn-keep" (click)="choice.confirmGraveyardCardChoice()">Confirm</button>
+          <button class="btn-keep" (click)="choice.confirmGraveyardCardChoice()"
+            [disabled]="choice.graveyardChoiceSelectedIds().size < choice.graveyardChoiceMinCount">Confirm</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.selectingAlternateCostGraveyardCards) {
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+          <h2>Collect evidence {{ choice.targeting.alternateCostCollectEvidenceAmount }} ({{ choice.targeting.alternateCostSelectedGraveyardManaValue() }} mana value selected)</h2>
+          <div class="reveal-hand-cards">
+            @for (card of myGraveyard; track $index) {
+              <app-card-display
+                [card]="card"
+                class="graveyard-choice-card"
+                [class.selected-graveyard-card]="choice.targeting.isAlternateCostGraveyardCardSelected($index)"
+                (click)="choice.targeting.toggleAlternateCostGraveyardCard($index)"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          </div>
+          <button class="btn-keep" (click)="choice.targeting.confirmAlternateCostGraveyardCards()"
+                  [disabled]="choice.targeting.alternateCostSelectedGraveyardManaValue() < choice.targeting.alternateCostCollectEvidenceAmount">Cast</button>
+          <button class="btn-keep" (click)="choice.targeting.cancelAlternateCostGraveyardCards()">Cancel</button>
         </div>
       </div>
     }
@@ -792,6 +815,28 @@
           }
         </div>
         <button class="btn-cancel-combat" (click)="choice.targeting.cancelExileTargeting()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (choice.targeting.selectingGraveyardCastExile) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>Exile {{ choice.targeting.graveyardCastExileCount }} {{ choice.targeting.graveyardCastExileLabel || 'other cards' }} to cast {{ choice.targeting.graveyardCastExileCardName }}.</h2>
+        <div class="reveal-hand-cards">
+          @for (entry of choice.targeting.graveyardCastExileChoices; track entry.index) {
+            <app-card-display [card]="entry.card"
+              [class.alternate-cost-selected]="choice.targeting.isGraveyardCastExileSelected(entry.index)"
+              class="choosable-card"
+              (click)="choice.targeting.toggleGraveyardCastExile(entry.index)"
+              (mouseenter)="onCardHover(entry.card)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+        <button class="btn-keep"
+          [disabled]="choice.targeting.graveyardCastExileSelectedIndices().length !== choice.targeting.graveyardCastExileCount"
+          (click)="choice.targeting.confirmGraveyardCastExile()">Confirm</button>
+        <button class="btn-cancel-combat" (click)="choice.targeting.cancelGraveyardCastExile()">Cancel</button>
       </div>
     </div>
   }

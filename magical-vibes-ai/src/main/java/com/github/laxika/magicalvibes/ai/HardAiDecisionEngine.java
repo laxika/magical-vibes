@@ -929,7 +929,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private boolean isSingleEffectRemoval(CardEffect effect) {
         if (effect instanceof ChooseOneEffect coe) {
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                if (isSingleEffectRemoval(option.effect())) return true;
+                for (CardEffect modeEffect : option.effects()) {
+                    if (isSingleEffectRemoval(modeEffect)) return true;
+                }
             }
             return false;
         }
@@ -966,7 +968,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                                    Permanent creature) {
         if (effect instanceof ChooseOneEffect coe) {
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                if (canSingleEffectRemoveCreature(gameData, spell, option.effect(), creature)) return true;
+                for (CardEffect modeEffect : option.effects()) {
+                    if (canSingleEffectRemoveCreature(gameData, spell, modeEffect, creature)) return true;
+                }
             }
             return false;
         }
@@ -1027,7 +1031,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         // 2. Damage distribution
-        Map<UUID, Integer> damageAssignments = null;
+        Map<UUID, Integer> damageAssignments = modalPlan != null ? modalPlan.damageAssignments() : null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return null;
@@ -1037,8 +1041,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : initialTargetId;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
-                && targetSelector.hasSeparateGraveyardTarget(card)) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments);
+            if (selection == null) return null;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
             AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
                     gameData, card, aiPlayer.getId());
             if (selection == null) return null;
@@ -1055,19 +1064,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         } else if (targetId == null && modalPlan == null
                 && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())
+                && !targetSelector.needsXScaledTargetSelection(card)
                 && !hasPermanentManaValueEqualsXTarget(card)
                 && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return null;
         }
 
-        // Damage distribution spells don't use a single targetId
-        if (damageAssignments != null) {
-            targetId = null;
-        }
         // 4. Targeting tax
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+        int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+        if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
             return null;
         }
 
@@ -1122,6 +1129,24 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (xValue != null && targetSelector.needsXScaledTargetSelection(card)) {
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (selection == null) {
+                return null;
+            }
+            xValue = selection.xValue();
+            targetId = null;
+            multiTargetIds = selection.targetIds();
+            targetingTax = computeTargetingTax(gameData, card, null, multiTargetIds);
+        } else if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+            multiTargetIds = targetSelector.chooseMultiTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (multiTargetIds == null) {
+                return null;
+            }
+        }
+
         if (exileXCost != null && castCost.hasX() && modalPlan == null) {
             exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
             if (exileGraveyardCardIndices == null) {
@@ -1162,14 +1187,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (costReductionPlan == null) {
             return false;
         }
-        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+        Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                plan.card, plan.targetId, plan.multiTargetIds, plan.damageAssignments,
                 plan.sacrificePermanentId, plan.beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax,
-                delveReduction, costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                delveReduction, costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return false;
         }
         if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return true;
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -1202,7 +1228,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         fMultiSacrificeIds, plan.beholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
-        if (hand.contains(plan.card)) {
+        if (!spellCastStarted(gameData, hand, plan.card)) {
             ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
             log.warn("{}: PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
                     logLabel, gameId, plan.card.getName(), idx,
@@ -1989,6 +2015,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
                 // Skip variable loyalty cost abilities (-X, too complex)
                 if (ability.isVariableLoyaltyCost()) continue;
+
+                // Assignment-backed abilities require a per-target amount map that this path
+                // does not model. Treating them as ordinary single-target abilities produces an
+                // incomplete activation announcement even when only one target is selected.
+                if (EffectResolution.needsDamageDistribution(ability.getEffects())) continue;
 
                 // Skip multi-target abilities (rare for activated abilities)
                 if (ability.isMultiTarget()) continue;
@@ -2846,16 +2877,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
             UUID sacrificePermanentId = selectSacrificeTarget(gameData, burnCard);
-            Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+            Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                    burnCard, opponentId, null, null,
                     sacrificePermanentId, beholdSelection, costReductionPlan);
             if (!canPayManaForSpell(gameData, burnCard, null, 0, delveReduction,
-                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                 continue;
             }
 
             // Cast the burn spell targeting the opponent player
             if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction,
-                    costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                 return true; // Mana ability triggered a pending choice
             }
             List<UUID> imposedSacrificeIds = selectImposedSacrificePermanentIds(

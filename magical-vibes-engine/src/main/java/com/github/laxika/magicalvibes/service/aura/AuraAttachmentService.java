@@ -28,9 +28,11 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,6 +59,7 @@ public class AuraAttachmentService {
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final TargetLegalityService targetLegalityService;
 
     /**
      * A card that was put into the graveyard as an orphaned aura, along with the controller
@@ -250,6 +253,10 @@ public class AuraAttachmentService {
      * @param auraControllerId the controller of the Aura, for controller-relative enchant filters
      */
     public boolean canEnchant(GameData gameData, Card auraCard, UUID auraControllerId, Permanent host) {
+        if (!auraCard.isAura()
+                || gameQueryService.hasProtectionFromSource(gameData, host, auraCard, auraControllerId)) {
+            return false;
+        }
         TargetFilter filter = auraCard.getDeclaredTargetFilter();
         if (filter == null) {
             return gameQueryService.isCreature(gameData, host);
@@ -258,6 +265,31 @@ public class AuraAttachmentService {
                 .withSourceCardId(auraCard.getId())
                 .withSourceControllerId(auraControllerId);
         return predicateEvaluationService.checkTargetFilter(filter, host, context).isEmpty();
+    }
+
+    /**
+     * Whether {@code auraCard} could legally enchant {@code playerId}. This is the player
+     * counterpart to {@link #canEnchant(GameData, Card, UUID, Permanent)} for Curse-style Auras
+     * and other Auras whose enchant ability refers to a player.
+     */
+    public boolean canEnchantPlayer(GameData gameData, Card auraCard, UUID auraControllerId, UUID playerId) {
+        if (!auraCard.isEnchantPlayer()) {
+            return false;
+        }
+        TargetFilter filter = auraCard.getDeclaredTargetFilter();
+        if (filter == null) {
+            return true;
+        }
+        if (!(filter instanceof PlayerPredicateTargetFilter playerFilter)
+                || !targetLegalityService.matchesPlayerPredicate(
+                gameData, auraControllerId, playerId, playerFilter.predicate())) {
+            return false;
+        }
+        return !gameQueryService.playerHasProtectionFromEverything(gameData, playerId)
+                && gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
+                .noneMatch(color -> gameQueryService.playerHasProtectionFromColor(gameData, playerId, color))
+                && !gameQueryService.playerHasProtectionFromChosenName(
+                gameData, playerId, auraCard.getName());
     }
 
     /**
@@ -276,6 +308,9 @@ public class AuraAttachmentService {
             if (isAura) {
                 if (gameQueryService.playerHasProtectionFromEverything(gameData, attachedTo)) {
                     return "enchanted player has protection from everything";
+                }
+                if (gameQueryService.playerHasProtectionFromOpponents(gameData, attachedTo, controllerId)) {
+                    return "enchanted player has protection from the Aura's controller";
                 }
                 for (CardColor color : gameQueryService.getEffectiveColors(gameData, attachment)) {
                     if (gameQueryService.playerHasProtectionFromColor(gameData, attachedTo, color)) {

@@ -28,6 +28,7 @@ public record LibrarySearchParams(
         boolean shuffleAfterSelection,
         String prompt,
         LibrarySearchDestination destination,
+        Integer discoverValue,
         Set<CardType> filterCardTypes,
         List<Card> accumulatedCards,
         String filterCardName,
@@ -53,6 +54,8 @@ public record LibrarySearchParams(
         boolean sourceSideboard,
         CardSubtype battlefieldIfChosenBeholdType,
         Integer battlefieldIfManaValueAtMost,
+        CardPredicate battlefieldIfChosenPredicate,
+        boolean battlefieldIfChosenTapped,
         boolean placeBattlefieldCardsSimultaneously,
         boolean allowCastFromLibraryWhileSearching,
         boolean grantExilePlayPermission,
@@ -78,13 +81,14 @@ public record LibrarySearchParams(
     public LibrarySearchParams withCards(List<Card> newCards) {
         return new LibrarySearchParams(playerId, newCards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                 placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
     }
@@ -92,13 +96,14 @@ public record LibrarySearchParams(
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
         return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                 placeBattlefieldCardsSimultaneously, allow,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
     }
@@ -118,6 +123,7 @@ public record LibrarySearchParams(
         private boolean shuffleAfterSelection = true;
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
+        private Integer discoverValue;
         private Set<CardType> filterCardTypes;
         private List<Card> accumulatedCards = List.of();
         private String filterCardName;
@@ -143,6 +149,8 @@ public record LibrarySearchParams(
         private boolean sourceSideboard;
         private CardSubtype battlefieldIfChosenBeholdType;
         private Integer battlefieldIfManaValueAtMost;
+        private CardPredicate battlefieldIfChosenPredicate;
+        private boolean battlefieldIfChosenTapped;
         private boolean placeBattlefieldCardsSimultaneously;
         private boolean allowCastFromLibraryWhileSearching;
         private boolean grantExilePlayPermission = true;
@@ -211,6 +219,11 @@ public record LibrarySearchParams(
 
         public Builder destination(LibrarySearchDestination destination) {
             this.destination = destination;
+            return this;
+        }
+
+        public Builder discoverValue(Integer discoverValue) {
+            this.discoverValue = discoverValue;
             return this;
         }
 
@@ -340,6 +353,16 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder battlefieldIfChosenPredicate(CardPredicate battlefieldIfChosenPredicate) {
+            this.battlefieldIfChosenPredicate = battlefieldIfChosenPredicate;
+            return this;
+        }
+
+        public Builder battlefieldIfChosenTapped(boolean battlefieldIfChosenTapped) {
+            this.battlefieldIfChosenTapped = battlefieldIfChosenTapped;
+            return this;
+        }
+
         /** Holds selected battlefield cards until a bounded multi-pick flow completes. */
         public Builder placeBattlefieldCardsSimultaneously(boolean placeBattlefieldCardsSimultaneously) {
             this.placeBattlefieldCardsSimultaneously = placeBattlefieldCardsSimultaneously;
@@ -364,13 +387,14 @@ public record LibrarySearchParams(
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     battlefieldControllerId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
                     returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                    battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                     placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
                     grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
         }

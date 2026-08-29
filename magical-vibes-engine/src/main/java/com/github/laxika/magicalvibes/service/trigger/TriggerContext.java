@@ -95,6 +95,10 @@ public sealed interface TriggerContext {
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
 
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
+    /** Context for controller collect-evidence triggers. */
+    record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
+    /** Context for controller-discover triggers. */
+    record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
@@ -106,6 +110,9 @@ public sealed interface TriggerContext {
      * (ON_CONTROLLER_TAPS_CREATURE_FOR_MANA).
      */
     record CreatureTapForMana(UUID tappingPlayerId, UUID tappedCreatureId) implements TriggerContext {}
+
+    /** Context for a creature's mana ability resolving, including the mana it produced. */
+    record ManaAbilityResolved(UUID activatingPlayerId, int manaProduced) implements TriggerContext {}
 
     /**
      * Context for damage-dealt-to-controller triggers (ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).
@@ -201,8 +208,13 @@ public sealed interface TriggerContext {
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
 
+    /** Context for a controller untapping one or more permanents during their untap step. */
+    record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
+    /** Context for removing a time counter from a suspended card in exile. */
+    record TimeCounterRemovedFromExile(int remainingCounters) implements TriggerContext {}
 
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
@@ -252,6 +264,9 @@ public sealed interface TriggerContext {
     record PermanentTransforms(Permanent transformedPermanent, Card transformedCard, UUID controllerId)
             implements TriggerContext {}
 
+    /** Context for a permanent changing from one player's control to an opponent's control. */
+    record PermanentControlChanged(Permanent changedPermanent, UUID previousControllerId,
+                                   UUID newControllerId) implements TriggerContext {}
     /** Context for a change between the day and night designations. */
     record DayNightChange(DayNight previous, DayNight current) implements TriggerContext {}
 
@@ -491,6 +506,10 @@ public sealed interface TriggerContext {
     record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount)
             implements TriggerContext {}
 
+    /** Context for ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
+    record CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount)
+            implements TriggerContext {}
+
     /** Context for ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}
@@ -518,9 +537,14 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
      */
-    record SelfLeaves(UUID controllerId, Zone destination) implements TriggerContext {
+    record SelfLeaves(UUID controllerId, Zone destination, boolean exiledWhileActivatingCraftAbility)
+            implements TriggerContext {
         public SelfLeaves(UUID controllerId) {
-            this(controllerId, Zone.GRAVEYARD);
+            this(controllerId, Zone.GRAVEYARD, false);
+        }
+
+        public SelfLeaves(UUID controllerId, Zone destination) {
+            this(controllerId, destination, false);
         }
     }
 
@@ -547,6 +571,14 @@ public sealed interface TriggerContext {
 
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
+
+    /** Context for Kaya's creature and creature-card exile trigger. */
+    record ControllerCreaturesOrCreatureCardsExiled(UUID controllerId, int count,
+                                                     List<Card> creatureCards) implements TriggerContext {
+        public ControllerCreaturesOrCreatureCardsExiled {
+            creatureCards = List.copyOf(creatureCards);
+        }
+    }
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}

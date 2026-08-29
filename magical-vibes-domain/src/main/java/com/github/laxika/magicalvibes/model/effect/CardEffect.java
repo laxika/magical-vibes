@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+
+import java.util.UUID;
 
 public interface CardEffect {
 
@@ -88,14 +91,33 @@ public interface CardEffect {
     default boolean resolvesWhenTargetIllegal() { return false; }
 
     /**
-     * Returns {@code true} when this effect or one of its nested effects uses the
-     * resolution-count condition for the ability containing it.
+     * Returns whether an enter-trigger collector should bind the entering permanent as the
+     * hidden reference used by this effect.
      */
-    default boolean countsAbilityResolution() { return false; }
+    default boolean usesEnteringPermanentReference() { return false; }
+
+    /**
+     * Returns whether this effect or one of its nested effects branches on the source ability's
+     * resolution count for the current turn.
+     */
+    default boolean hasAbilityResolutionCondition() { return false; }
 
     /**
      * Resolves a trigger-only condition that depends on the activated ability that caused the
      * trigger. Effects without such a condition remain unchanged.
      */
     default CardEffect resolveForActivatedAbility(ActivatedAbility ability) { return this; }
+
+    /**
+     * Resolves a trigger-only condition that depends on the ability that caused a creature to
+     * become the target of a spell or ability. Effects without such a condition remain unchanged.
+     */
+    default CardEffect resolveForBecomesTargetOfSpellOrAbility(
+            StackEntry triggeringEntry,
+            UUID watcherPermanentId,
+            UUID targetedPermanentId,
+            UUID watcherControllerId,
+            UUID triggeringSourceControllerId) {
+        return this;
+    }
 }

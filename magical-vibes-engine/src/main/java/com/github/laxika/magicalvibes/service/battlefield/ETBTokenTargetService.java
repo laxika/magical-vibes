@@ -139,7 +139,7 @@ public class ETBTokenTargetService {
             TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
                     gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
                     pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
-                    pending.triggeringPermanentId() == null
+                    pending.sourcePermanentId() == null
                             ? null
                             : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
             List<UUID> validSpellTargets = validMixedEtbSpellTargets(gameData, pending);
@@ -217,7 +217,8 @@ public class ETBTokenTargetService {
     public boolean handleETBTokenTargetChosen(GameData gameData, UUID targetId,
             PermanentChoiceContext.ETBTokenTargetTrigger pending) {
         GraveyardCardChoosingEffect choosingEffect = pending.effects().stream()
-                .filter(e -> e instanceof GraveyardCardChoosingEffect
+                .filter(e -> e instanceof GraveyardCardChoosingEffect candidate
+                        && candidate.choosesGraveyardCards()
                         && e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
                 .map(GraveyardCardChoosingEffect.class::cast)
                 .findFirst()
@@ -259,7 +260,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -276,7 +277,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -360,7 +361,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -475,6 +476,7 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        etbEntry.setTriggeringCardId(pending.triggeringCardId());
         if (pending.sourcePermanentId() != null) {
             etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
             Permanent sourcePermanent = gameQueryService.findPermanentById(

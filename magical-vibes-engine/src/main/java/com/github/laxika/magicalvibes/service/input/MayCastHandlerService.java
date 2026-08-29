@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWi
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -554,7 +555,8 @@ public class MayCastHandlerService {
                             gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
                                             spellEffects, spellType, castEffect.exileInsteadOfGraveyard(),
-                                            castEffect.withoutPayingManaCost(), graveyardOwnerId,
+                                            castEffect.withoutPayingManaCost(), graveyardOwnerId, false,
+                                            castEffect.anyManaType(),
                                             castEffect.copyCount()));
                             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                                     "Choose a target for " + cardToCast.getName() + ".");
@@ -570,7 +572,7 @@ public class MayCastHandlerService {
                         if (!castEffect.withoutPayingManaCost()) {
                             try {
                                 spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
-                                        Zone.GRAVEYARD);
+                                        Zone.GRAVEYARD, castEffect.anyManaType());
                             } catch (IllegalStateException ex) {
                                 gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast because its mana cost can't be paid."));
                                 log.info("Game {} - {} cannot pay to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
@@ -731,6 +733,20 @@ public class MayCastHandlerService {
     public void handlePlayFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                               PendingMayAbility ability,
                                               PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
+        handlePlayFromGraveyardChoice(gameData, player, accepted, ability, effect.filter(),
+                player.getId(), false);
+    }
+
+    public void handleCastFromSpecificGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                                      PendingMayAbility ability, UUID graveyardOwnerId) {
+        handlePlayFromGraveyardChoice(gameData, player, accepted, ability, null,
+                graveyardOwnerId, true);
+    }
+
+    private void handlePlayFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                               PendingMayAbility ability, CardPredicate filter,
+                                               UUID expectedGraveyardOwnerId,
+                                               boolean exileInsteadOfGraveyard) {
         Card cardToPlay = ability.sourceCard();
         String playerName = player.getUsername();
 
@@ -755,8 +771,9 @@ public class MayCastHandlerService {
         Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToPlay.getId());
         UUID graveyardOwnerId = graveyardCard == null
                 ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToPlay.getId());
-        if (graveyardCard == null || graveyardOwnerId == null || !graveyardOwnerId.equals(player.getId())
-                || !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+        if (graveyardCard == null || graveyardOwnerId == null
+                || !graveyardOwnerId.equals(expectedGraveyardOwnerId)
+                || filter != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " is no longer a legal target in your graveyard."));
             log.info("Game {} - {} no longer a legal graveyard target for play-from-graveyard", gameData.id, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -797,7 +814,8 @@ public class MayCastHandlerService {
         boolean isPermanentSpell = cardToPlay.hasType(CardType.CREATURE)
                 || cardToPlay.hasType(CardType.ARTIFACT)
                 || cardToPlay.hasType(CardType.ENCHANTMENT)
-                || cardToPlay.hasType(CardType.PLANESWALKER);
+                || cardToPlay.hasType(CardType.PLANESWALKER)
+                || cardToPlay.hasType(CardType.BATTLE);
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
                 : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
@@ -807,7 +825,7 @@ public class MayCastHandlerService {
 
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes back to owner's graveyard.
-                graveyardService.addCardToGraveyard(gameData, player.getId(), cardToPlay);
+                graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToPlay);
                 gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets."));
                 log.info("Game {} - {} play-from-graveyard has no valid targets", gameData.id, cardToPlay.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -815,7 +833,8 @@ public class MayCastHandlerService {
             }
 
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToPlay, player.getId(), spellEffects, spellType));
+                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToPlay, player.getId(), spellEffects,
+                            spellType, exileInsteadOfGraveyard, true, graveyardOwnerId));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToPlay.getName() + ".");
 
@@ -825,10 +844,14 @@ public class MayCastHandlerService {
             return; // Wait for target choice
         }
 
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 spellType, cardToPlay, player.getId(), cardToPlay.getName(),
                 spellEffects, 0, (UUID) null, null
-        ));
+        );
+        stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
+        stackEntry.setOwnerIdOverride(graveyardOwnerId);
+        stackEntry.setSourceZone(Zone.GRAVEYARD);
+        gameData.stack.add(stackEntry);
         gameData.recordSpellCast(player.getId(), cardToPlay);
         gameData.priorityPassedBy.clear();
 

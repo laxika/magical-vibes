@@ -8,17 +8,24 @@ public record ExileTargetCardFromGraveyardAndMayCastCopyEffect(
         CardPredicate filter,
         GraveyardSearchScope scope,
         int lifeLossOnCast,
+        boolean targetPutIntoGraveyardFromAnywhereThisTurn,
         boolean withoutPayingManaCost
 ) implements CardEffect {
 
     public ExileTargetCardFromGraveyardAndMayCastCopyEffect(
             CardPredicate filter, GraveyardSearchScope scope) {
-        this(filter, scope, 0, true);
+        this(filter, scope, 0, false, true);
     }
 
     public ExileTargetCardFromGraveyardAndMayCastCopyEffect(
             CardPredicate filter, GraveyardSearchScope scope, int lifeLossOnCast) {
-        this(filter, scope, lifeLossOnCast, false);
+        this(filter, scope, lifeLossOnCast, false, true);
+    }
+
+    public ExileTargetCardFromGraveyardAndMayCastCopyEffect(
+            CardPredicate filter, GraveyardSearchScope scope, int lifeLossOnCast,
+            boolean targetPutIntoGraveyardFromAnywhereThisTurn) {
+        this(filter, scope, lifeLossOnCast, targetPutIntoGraveyardFromAnywhereThisTurn, true);
     }
 
     @Override

@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /** Resolves a targeted graveyard exile and free copy-cast offer. */
@@ -54,19 +55,28 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
         if (copyEffect.filter() != null
-                && !predicateEvaluationService.matchesCardPredicate(targetCard, copyEffect.filter(), null)) {
+                && !predicateEvaluationService.matchesCardPredicate(targetCard, copyEffect.filter(),
+                entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
+                entry.getTriggeringPermanentPowerAtTrigger())) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                     + CardPredicateUtils.describeFilter(copyEffect.filter()) + ")."));
             return;
         }
 
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
         if (graveyardOwnerId == null
                 || !copyEffect.scope().graveyardOwners(gameData.orderedPlayerIds, entry.getControllerId())
                 .contains(graveyardOwnerId)) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target is outside the required graveyard)."));
+            return;
+        }
+        if (copyEffect.targetPutIntoGraveyardFromAnywhereThisTurn()
+                && !gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of()).contains(targetCardId)) {
+            gameLogService.append(gameData,
+                    GameLog.text(entry.getDescription() + " fizzles (target was not put into a graveyard this turn)."));
             return;
         }
 

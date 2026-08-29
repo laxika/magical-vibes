@@ -37,7 +37,10 @@ public class DiscardCardAndBoostSelfEffectHandler implements NormalEffectHandler
             return;
         }
         gameData.discardCausedByOpponent = false;
+        DiscardFollowUp followUp = e.drawCount() > 0
+                ? DiscardFollowUp.rummageAndBoost(e.drawCount(), entry.getSourcePermanentId(), e.power(), e.toughness())
+                : DiscardFollowUp.boost(entry.getSourcePermanentId(), e.power(), e.toughness());
         playerInteractionSupport.resolveDiscardCards(gameData, controllerId, 1,
-                DiscardFollowUp.boost(entry.getSourcePermanentId(), e.power(), e.toughness()));
+                followUp);
     }
 }

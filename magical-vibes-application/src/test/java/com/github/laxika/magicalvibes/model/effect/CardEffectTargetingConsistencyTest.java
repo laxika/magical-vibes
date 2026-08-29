@@ -61,6 +61,9 @@ class CardEffectTargetingConsistencyTest {
             // Static marker: TargetingRestrictionEffect is a "can't be targeted by X" property read
             // by the target-legality services; it never resolves or targets anything itself.
             "TargetingRestrictionEffect",
+            // Marker: declares a target-group position consumed by a sibling effect and never
+            // resolves or chooses a target itself.
+            "TargetGroupMarkerEffect",
             // Pre-resolved: the draw-step player's UUID is baked into the stack entry when the
             // EACH_DRAW_TRIGGERED trigger is pushed in StepTriggerService (Maralen of the Mornsong);
             // it never enters the shared target-collection pipeline.

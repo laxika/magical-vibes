@@ -42,6 +42,8 @@ public enum MultiTargetConstraint {
     AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
     /** At most one chosen target may be assigned to each of the artifact, creature, and land slots. */
     AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
+    /** At most one chosen target may be assigned to each of the artifact, creature, enchantment, and planeswalker slots. */
+    AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
     /** At most one chosen target may belong to each player. */
     AT_MOST_ONE_PER_CONTROLLER,
     /** One target must be chosen for each player who controls at least one legal target. */

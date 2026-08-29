@@ -115,9 +115,10 @@ if ($LASTEXITCODE -ne 0) {
 
 for ($cardId = $From; $cardId -le $To; $cardId++) {
     $index++
+    $startedAt = Get-Date -Format "yyyy-MM-dd HH:mm"
     Write-Host ""
     Write-Host "############################################################"
-    Write-Host "# [$index/$total] implement-card $SetCode $cardId"
+    Write-Host "# [$startedAt] [$index/$total] implement-card $SetCode $cardId"
     Write-Host "############################################################"
 
     $prompt = "/implement-card $SetCode $cardId"

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -50,7 +51,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -91,8 +91,7 @@ class StackResolutionServiceTest {
     @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private AuraCopyService auraCopyService;
     @Mock private PermanentCounterSupport permanentCounterSupport;
-
-    @InjectMocks
+    private SagaChapterService sagaChapterService;
     private StackResolutionService svc;
 
     @Captor private ArgumentCaptor<Permanent> permanentCaptor;
@@ -104,6 +103,13 @@ class StackResolutionServiceTest {
 
     @BeforeEach
     void setUp() {
+        sagaChapterService = new SagaChapterService(gameQueryService, gameLogService, triggerCollectionService);
+        svc = new StackResolutionService(
+                battlefieldEntryService, sagaChapterService, cloneService, graveyardService,
+                legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
+                gameLogService, effectResolutionService, playerInputService, triggerCollectionService,
+                creatureControlService, stateTriggerService, exileService, null, permanentCounterSupport,
+                mutationCoordinator, null, auraCopyService, null);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));

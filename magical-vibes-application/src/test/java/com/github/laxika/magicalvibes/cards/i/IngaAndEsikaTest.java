@@ -24,6 +24,7 @@ class IngaAndEsikaTest extends BaseCardTest {
     void creaturesGainVigilanceAndCreatureSpellOnlyManaAbility() {
         harness.addToBattlefield(player1, new IngaAndEsika());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(createPriorityHoldingCreature()));
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
@@ -39,6 +40,7 @@ class IngaAndEsikaTest extends BaseCardTest {
     @Test
     void drawsWhenThreeCreatureManaWasSpentOnCreatureSpell() {
         harness.addToBattlefield(player1, new IngaAndEsika());
+        harness.setHand(player1, List.of(createPriorityHoldingCreature()));
         activateGrantedManaAbility(addCreatureReady(player1, new GrizzlyBears()));
         harness.handleListChoice(player1, "GREEN");
         activateGrantedManaAbility(addCreatureReady(player1, createCreature("Source Two")));
@@ -57,6 +59,7 @@ class IngaAndEsikaTest extends BaseCardTest {
     @Test
     void doesNotDrawWhenFewerThanThreeCreatureManaWasSpent() {
         harness.addToBattlefield(player1, new IngaAndEsika());
+        harness.setHand(player1, List.of(createPriorityHoldingCreature()));
         activateGrantedManaAbility(addCreatureReady(player1, new GrizzlyBears()));
         harness.handleListChoice(player1, "GREEN");
         activateGrantedManaAbility(addCreatureReady(player1, createCreature("Source Two")));
@@ -84,6 +87,12 @@ class IngaAndEsikaTest extends BaseCardTest {
         card.setColor(CardColor.GREEN);
         card.setPower(3);
         card.setToughness(3);
+        return card;
+    }
+
+    private static Card createPriorityHoldingCreature() {
+        Card card = createCreature("Priority Holder");
+        card.setManaCost("{G}");
         return card;
     }
 }

@@ -189,6 +189,19 @@ public class ExileSupport {
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
     }
 
+    /** Grants {@code permissionPlayerId} permission until {@code endStepPlayerId}'s next end step. */
+    public void grantPlayUntilNextEndStepOfPlayer(GameData gameData, UUID cardId,
+                                                   UUID permissionPlayerId, UUID endStepPlayerId) {
+        boolean endStepPlayerIsActive = endStepPlayerId.equals(gameData.activePlayerId);
+        boolean currentEndStepHasBegun = gameData.currentStep != null
+                && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();
+        int expireTurn = gameData.turnNumber + (endStepPlayerIsActive
+                ? currentEndStepHasBegun ? 2 : 0
+                : 1);
+        gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+    }
+
     public StackEntryType mapCardTypeToSpellType(Card card) {
         return switch (card.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;

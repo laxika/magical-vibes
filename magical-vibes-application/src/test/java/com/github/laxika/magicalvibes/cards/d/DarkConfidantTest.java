@@ -12,23 +12,24 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarkConfidant.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DarkConfidant.class, GrizzlyBears.class, Forest.class})
 class DarkConfidantTest extends BaseCardTest {
 
     @Test
-    @DisplayName("At the beginning of your upkeep, puts the top card into your hand and loses life equal to its mana value")
-    void revealsAndPutsIntoHandAndLosesLife() {
+    @DisplayName("At the beginning of its controller's upkeep, reveals the top card, puts it into hand, and loses life equal to its mana value")
+    void revealsTopCardAndLosesLifeEqualToManaValue() {
         harness.addToBattlefield(player1, new DarkConfidant());
         harness.setHand(player1, List.of());
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        harness.setLibrary(player1, List.of(topCard));
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(topCard.getId()));
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -37,13 +38,13 @@ class DarkConfidantTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DarkConfidant());
         harness.setHand(player1, List.of());
         Card topCard = new Forest();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        harness.setLibrary(player1, List.of(topCard));
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(topCard.getId()));
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
@@ -53,13 +54,29 @@ class DarkConfidantTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DarkConfidant());
         harness.setHand(player1, List.of());
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        harness.setLibrary(player1, List.of(topCard));
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Does nothing when its controller's library is empty")
+    void doesNothingWhenLibraryIsEmpty() {
+        harness.addToBattlefield(player1, new DarkConfidant());
+        harness.setHand(player1, List.of());
+        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 }

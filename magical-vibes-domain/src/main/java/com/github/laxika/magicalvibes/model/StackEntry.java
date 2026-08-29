@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,9 +41,12 @@ public class StackEntry {
     /** The opponent chosen before that opponent selected the spell's creature target. */
     @Setter private UUID opponentChosenTargetPlayerId;
     private boolean targetIdOverriddenForEffectResolution;
+    private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    /** Counters a permanent spell is instructed to enter with. */
+    private final Map<CounterType, Integer> enteringCounters = new EnumMap<>(CounterType.class);
     /** Card id of the spell whose stack object is the source of this ability. */
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
@@ -55,13 +59,19 @@ public class StackEntry {
     @Setter private List<Integer> targetCardGroupSizes = List.of();
     private Map<CardEffect, List<UUID>> targetCardIdsByEffect = Map.of();
     @Setter private TargetFilter targetFilter;
+    /** Per-position filters declared by a multi-target activated ability. */
+    @Setter private List<TargetFilter> targetFilters = List.of();
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
+    /** Whether an effect already placed the physical spell card in its final zone. */
+    @Setter private boolean spellDispositionHandled;
     @Setter private boolean returnToHandAfterResolving;
     /** When set, the resolved spell card is put into its owner's library at this 0-based position from the
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
+    /** Whether this spell was cast using an escape permission. */
+    @Setter private boolean castWithEscape;
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
     @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
@@ -76,6 +86,8 @@ public class StackEntry {
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     @Setter private boolean castWithOmen;
+    /** Whether this spell was cast via Adventure; after resolving, its physical card is exiled with permission to cast the front face. */
+    @Setter private boolean castWithAdventure;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -118,6 +130,8 @@ public class StackEntry {
     @Setter private boolean buyback;
     /** Whether this spell's put-counter additional cost was paid. */
     @Setter private boolean putCounterCostPaid;
+    /** Whether this spell's optional collect-evidence additional cost was paid. */
+    @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
     /** Whether this spell's optional waterbend additional cost was paid. */
@@ -206,6 +220,8 @@ public class StackEntry {
      * information when the source left the battlefield before resolution (sacrifice costs).
      */
     @Setter private Permanent sourcePermanentSnapshot;
+    /** Equipment permanent ids sacrificed with the source as part of its activation cost. */
+    @Setter private List<UUID> sacrificedAttachedEquipmentIds = List.of();
     /** Last-known snapshot of the permanent attached to the source Aura when its trigger fired. */
     @Setter private Permanent attachedPermanentSnapshot;
     /**
@@ -214,6 +230,8 @@ public class StackEntry {
      * that permanent's power as the ability resolves.
      */
     @Setter private UUID chosenPermanentId;
+    /** Permanents placed onto the battlefield by the preceding library search. */
+    @Setter private List<UUID> searchedPermanentIds = List.of();
     /**
      * Last-known card id of the event that produced this triggered ability, when an effect needs to
      * act on "that card" rather than a chosen target — e.g. the creature that died for Seraph's
@@ -326,11 +344,20 @@ public class StackEntry {
      */
     private final List<UUID> playersDealtDamageThisResolution = new ArrayList<>();
 
+    /** Trigger effects already fired for the single noncombat damage event represented by this entry. */
+    private final Map<UUID, Set<CardEffect>> noncombatExcessDamageTriggerEffectsFired = new HashMap<>();
+
     /** Records that this entry dealt damage to {@code playerId}; duplicates are ignored. */
     public void recordPlayerDealtDamage(UUID playerId) {
         if (playerId != null && !playersDealtDamageThisResolution.contains(playerId)) {
             playersDealtDamageThisResolution.add(playerId);
         }
+    }
+
+    public boolean markNoncombatExcessDamageTriggerFired(UUID sourcePermanentId, CardEffect effect) {
+        return noncombatExcessDamageTriggerEffectsFired
+                .computeIfAbsent(sourcePermanentId, ignored -> new HashSet<>())
+                .add(effect);
     }
 
     /**
@@ -547,6 +574,7 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
         this.counters.putAll(source.counters);
+        this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
         this.manaSpentToCast = source.manaSpentToCast;
@@ -558,15 +586,18 @@ public class StackEntry {
         this.targetFilter = source.targetFilter;
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
+        this.spellDispositionHandled = source.spellDispositionHandled;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.castWithEscape = source.castWithEscape;
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
                 source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
+        this.castWithAdventure = source.castWithAdventure;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
@@ -575,6 +606,7 @@ public class StackEntry {
         this.kicked = source.kicked;
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
+        this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
         this.waterbendCostPaid = source.waterbendCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
@@ -607,8 +639,12 @@ public class StackEntry {
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
+        this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.sacrificedAttachedEquipmentIds);
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.searchedPermanentIds);
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
@@ -629,6 +665,7 @@ public class StackEntry {
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
+        this.targetFilters = source.targetFilters.isEmpty() ? List.of() : new ArrayList<>(source.targetFilters);
         this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;
@@ -641,6 +678,8 @@ public class StackEntry {
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
+        source.noncombatExcessDamageTriggerEffectsFired.forEach((sourceId, effects) ->
+                this.noncombatExcessDamageTriggerEffectsFired.put(sourceId, new HashSet<>(effects)));
     }
 
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
@@ -660,6 +699,14 @@ public class StackEntry {
             counters.remove(counterType);
         } else {
             counters.put(counterType, count);
+        }
+    }
+
+    public void setEnteringCounterCount(CounterType counterType, int count) {
+        if (count <= 0) {
+            enteringCounters.remove(counterType);
+        } else {
+            enteringCounters.put(counterType, count);
         }
     }
 
@@ -874,7 +921,7 @@ public class StackEntry {
         if (card == null) {
             return null;
         }
-        if (castWithOmen && card.getBackFaceCard() != null) {
+        if ((castWithOmen || castWithAdventure) && card.getBackFaceCard() != null) {
             return card.getBackFaceCard();
         }
         Card effectiveCard = getCard();
@@ -963,6 +1010,10 @@ public class StackEntry {
         this.targetIdOverriddenForEffectResolution = false;
     }
 
+    public void setResolvingEffectTargetGroup(Integer targetGroup) {
+        this.resolvingEffectTargetGroup = targetGroup;
+    }
+
     /**
      * Whether any effect that will actually resolve on this entry is bound to the given target
      * group. A group with no surviving bound effect (a gated-out intervening-if trigger) consumed
@@ -988,7 +1039,7 @@ public class StackEntry {
             return true;
         }
         for (CardEffect effect : effectsToResolve) {
-            if (targeting.getEffectTargetIndex(effect) == groupIndex) {
+            if (targeting.isEffectBoundToTargetGroup(effect, groupIndex)) {
                 return true;
             }
         }
@@ -1006,9 +1057,17 @@ public class StackEntry {
      */
     public List<UUID> targetsForEffect(CardEffect effect) {
         Card targeting = getTargetingCard();
-        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
+        int group = targeting == null ? -1
+                : resolvingEffectTargetGroup != null && targeting.hasEffectTargetIndex(effect)
+                ? resolvingEffectTargetGroup
+                : targeting.getEffectTargetIndex(effect);
         if (group < 0) {
             return getTargetIds();
+        }
+        if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && !targetIds.contains(targetId)
+                && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
+            return List.of(targetId);
         }
         if (targetIds.isEmpty()) {
             // On an aura the lone targetId is the enchant target (group 0), never a later
@@ -1031,8 +1090,25 @@ public class StackEntry {
      */
     public List<UUID> targetsForBoundEffectGroup(CardEffect effect) {
         Card targeting = getTargetingCard();
-        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
-        return group < 0 ? null : targetsForGroup(group);
+        int group = targeting == null ? -1
+                : resolvingEffectTargetGroup != null && targeting.hasEffectTargetIndex(effect)
+                ? resolvingEffectTargetGroup
+                : targeting.getEffectTargetIndex(effect);
+        if (group < 0) {
+            return null;
+        }
+        if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && !targetIds.contains(targetId)
+                && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
+            return List.of(targetId);
+        }
+        if (targetIds.isEmpty()) {
+            if (entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura() && group != 0) {
+                return List.of();
+            }
+            return targetId != null ? List.of(targetId) : List.of();
+        }
+        return targetsForGroup(group);
     }
 
     private static List<UUID> assignmentTargetIds(Map<UUID, Integer> assignments) {

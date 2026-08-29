@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -61,11 +63,35 @@ public class ExileCastTargetSupport {
                 : flatSingleTargetCandidates(gameData, card, controllerId);
     }
 
+    /** Candidates for a prepared modal spell, filtered against its already-unwrapped effects. */
+    public List<UUID> firstSlotCandidates(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                          UUID controllerId) {
+        if (card.getMaxTargets() > 1) {
+            return nextSlotCandidates(gameData, card, controllerId, List.of());
+        }
+
+        Set<UUID> candidates = new LinkedHashSet<>(flatSingleTargetCandidates(gameData, card, controllerId));
+        candidates.addAll(gameData.orderedPlayerIds);
+        gameData.forEachPermanent((ignored, permanent) -> candidates.add(permanent.getId()));
+
+        List<UUID> legal = new ArrayList<>();
+        for (UUID candidate : candidates) {
+            try {
+                targetLegalityService.validateSpellTargeting(
+                        gameData, card, spellEffects, candidate, null, controllerId, true, 0);
+                legal.add(candidate);
+            } catch (IllegalStateException ignored) {
+                // This candidate does not satisfy the selected mode's target declaration.
+            }
+        }
+        return legal;
+    }
+
     /**
      * Legal candidates for the next target slot (position = {@code chosenTargets.size()}) of a
-     * multi-target spell, reusing the normal cast path's per-slot validation. Permanent, player, and
-     * graveyard candidates are concatenated; already-chosen targets are excluded by the underlying
-     * validator.
+     * multi-target spell, reusing the normal cast path's per-slot validation. Permanent, player,
+     * graveyard, and exile candidates are concatenated; already-chosen targets are excluded by the
+     * underlying validator.
      */
     public List<UUID> nextSlotCandidates(GameData gameData, Card card, UUID controllerId, List<UUID> chosenTargets) {
         ValidTargetsResponse response =
@@ -74,6 +100,7 @@ public class ExileCastTargetSupport {
         candidates.addAll(response.validPermanentIds());
         candidates.addAll(response.validPlayerIds());
         candidates.addAll(response.validGraveyardCardIds());
+        candidates.addAll(response.validExiledCardIds());
         return candidates;
     }
 
@@ -142,6 +169,12 @@ public class ExileCastTargetSupport {
             validTargets.addAll(validTargetService
                     .computeValidTargetsForSpell(gameData, card, controllerId, List.of())
                     .validGraveyardCardIds());
+        }
+
+        if (allowedTargets.contains(TargetType.EXILE)) {
+            validTargets.addAll(validTargetService
+                    .computeValidTargetsForSpell(gameData, card, controllerId, List.of())
+                    .validExiledCardIds());
         }
 
         return validTargets;

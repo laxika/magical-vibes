@@ -46,11 +46,15 @@ public class SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffectHandler
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         List<UUID> eligibleIds = new ArrayList<>();
+        UUID sourceCardId = entry.getSourcePermanentSnapshot() != null
+                && entry.getSourcePermanentSnapshot().getOriginalCard() != null
+                ? entry.getSourcePermanentSnapshot().getOriginalCard().getId()
+                : entry.getCard().getId();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(sourceCardId)
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId());
         if (battlefield != null) {
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(entry.getCard().getId())
-                    .withSourceControllerId(controllerId)
-                    .withSourcePermanentId(entry.getSourcePermanentId());
             for (Permanent perm : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     eligibleIds.add(perm.getId());

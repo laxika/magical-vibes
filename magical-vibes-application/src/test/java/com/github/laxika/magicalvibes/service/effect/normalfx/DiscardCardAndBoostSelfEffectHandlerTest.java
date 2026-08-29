@@ -37,6 +37,25 @@ class DiscardCardAndBoostSelfEffectHandlerTest extends AbstractPlayerInteraction
     }
 
     @Test
+    @DisplayName("Sets draw and boost follow-up when the effect includes a draw")
+    void setsDrawAndBoostAndBeginsDiscard() {
+        Card card = createCard("Reckless Detective");
+        DiscardCardAndBoostSelfEffect effect = new DiscardCardAndBoostSelfEffect(2, 0, 1);
+        UUID sourcePermanentId = UUID.randomUUID();
+        StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), sourcePermanentId);
+        gd.playerHands.get(player1Id).add(createCard("Mountain"));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt(),
+                argThat((DiscardFollowUp f) ->
+                        f.rummageDrawCount() == 1
+                                && sourcePermanentId.equals(f.boostPermanentId())
+                                && f.boostPower() == 2
+                                && f.boostToughness() == 0));
+    }
+
+    @Test
     @DisplayName("Does nothing when hand is empty")
     void doesNothingWhenHandEmpty() {
         Card card = createCard("Furyblade Vampire");

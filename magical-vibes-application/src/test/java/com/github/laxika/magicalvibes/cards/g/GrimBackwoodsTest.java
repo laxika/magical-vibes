@@ -49,6 +49,7 @@ class GrimBackwoodsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new DrawCardEffect(1));
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
 
         harness.passBothPriorities();
 

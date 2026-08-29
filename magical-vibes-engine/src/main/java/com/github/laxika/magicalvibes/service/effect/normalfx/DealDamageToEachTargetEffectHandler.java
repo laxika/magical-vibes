@@ -39,7 +39,9 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToEachTargetEffect) effect;
 
-        List<UUID> targets = entry.targetsForEffect(e);
+        List<UUID> targets = entry.isTargetIdsFromAssignments()
+                ? entry.getTargetIds()
+                : entry.targetsForEffect(e);
         if (targets.isEmpty()) {
             if (entry.getTargetId() != null) {
                 targets = List.of(entry.getTargetId());

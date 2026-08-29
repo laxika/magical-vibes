@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
 
@@ -16,10 +17,25 @@ import java.util.List;
  * @param filters the ordered, independently optional target-group filters
  */
 public record ReturnUpToOneOfEachFilterFromGraveyardToHandEffect(List<CardPredicate> filters)
-        implements CardEffect {
+        implements IndependentlyTargetedGraveyardCardsEffect {
 
     public ReturnUpToOneOfEachFilterFromGraveyardToHandEffect {
         filters = List.copyOf(filters);
+    }
+
+    @Override
+    public List<CardPredicate> targetFilters() {
+        return filters;
+    }
+
+    @Override
+    public List<String> targetDescriptions() {
+        return filters.stream().map(CardPredicateUtils::describeFilter).toList();
+    }
+
+    @Override
+    public boolean requiresDistinctTargets() {
+        return true;
     }
 
     @Override

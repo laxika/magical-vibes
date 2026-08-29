@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -104,6 +106,10 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
     }
 
     private boolean referencesExcessDamage(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditional.condition() instanceof EventValueAtLeast
+                    || referencesExcessDamage(conditional.wrapped());
+        }
         if (effect instanceof ExileTopCardsMayPlayUntilNextTurnEffect exile) {
             return amountEvaluationService.referencesEventValue(exile.count());
         }

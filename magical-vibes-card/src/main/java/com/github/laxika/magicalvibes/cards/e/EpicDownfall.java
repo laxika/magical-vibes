@@ -12,14 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "96")
+@CardRegistration(set = "ELD", collectorNumber = "85")
 public class EpicDownfall extends Card {
 
     public EpicDownfall() {
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentMinManaValuePredicate(3)
-                )),
+                        new PermanentMinManaValuePredicate(3))),
                 "Target must be a creature with mana value 3 or greater"
         )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
     }

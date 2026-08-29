@@ -63,6 +63,8 @@ public class ActivatedAbility {
     private boolean activatableOnlyByOpponents;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
     private boolean requiresUntap;
+    /** When true, the source permanent must have another activated ability to activate this ability. */
+    private boolean requiresAnotherActivatedAbility;
     /** Predicate a controlled permanent must match to count toward {@link #requiredControlledPermanentCount} (e.g. Leechridden Swamp's "two or more black permanents"). Null = no such restriction. Set via {@link #withRequiredControlledPermanents}. */
     private PermanentPredicate requiredControlledPermanentPredicate;
     /** Minimum number of controlled permanents matching {@link #requiredControlledPermanentPredicate} required to activate. */
@@ -121,6 +123,8 @@ public class ActivatedAbility {
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
+    /** Minimum value that may be chosen for X in this ability's mana cost. */
+    private int minimumXValue;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
     private boolean modalChoiceAtActivation;
     /**
@@ -151,6 +155,8 @@ public class ActivatedAbility {
     private boolean suspendsSourceFromHand;
     /** Number of time counters placed when this ability suspends its source card. */
     private int suspendTimeCounters;
+    /** Whether the number of time counters placed by suspend is the activated ability's X value. */
+    private boolean suspendTimeCountersFromX;
     /** Whether this hand-activated ability reveals the source card without moving it out of hand. */
     private boolean revealsSourceFromHand;
     /**
@@ -165,9 +171,6 @@ public class ActivatedAbility {
     private boolean sourceStaysInHand;
     /** Whether this ability can be activated only while its source card is in exile. */
     private boolean exileOnly;
-    /** Minimum player-chosen X value required to activate this ability. */
-    private int minimumXValue;
-
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
     }
@@ -259,8 +262,20 @@ public class ActivatedAbility {
      * Used by the static bonus system to track which permanent granted this ability.
      */
     public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
+        return copyWith(sourcePermanentId, maxActivationsPerTurn);
+    }
+
+    /** Returns a copy with a fixed per-turn activation cap, preserving all other ability properties. */
+    public ActivatedAbility withMaxActivationsPerTurn(int maxActivations) {
+        if (maxActivations < 0) {
+            throw new IllegalArgumentException("Maximum activations must not be negative");
+        }
+        return copyWith(grantSourcePermanentId, maxActivations);
+    }
+
+    private ActivatedAbility copyWith(UUID sourcePermanentId, Integer maxActivations) {
         ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
-                maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
+                maxActivations, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
@@ -269,6 +284,7 @@ public class ActivatedAbility {
         copy.manaCostOfEnchantedPermanent = this.manaCostOfEnchantedPermanent;
         copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
         copy.requiresUntap = this.requiresUntap;
+        copy.requiresAnotherActivatedAbility = this.requiresAnotherActivatedAbility;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
         copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
@@ -289,16 +305,20 @@ public class ActivatedAbility {
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
+        copy.exilesSourceFromHand = this.exilesSourceFromHand;
+        copy.revealsSourceFromHand = this.revealsSourceFromHand;
+        copy.ninjutsuAbility = this.ninjutsuAbility;
         copy.sourceStaysInHand = this.sourceStaysInHand;
         copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
         copy.suspendTimeCounters = this.suspendTimeCounters;
+        copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
+        copy.minimumXValue = this.minimumXValue;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
-        copy.minimumXValue = this.minimumXValue;
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
@@ -309,6 +329,15 @@ public class ActivatedAbility {
     /** Restricts every mana spent on this ability's X cost to one color. */
     public ActivatedAbility withXColorRestriction(ManaColor color) {
         this.xColorRestrictions = EnumSet.of(color);
+        return this;
+    }
+
+    /** Sets the minimum value that may be chosen for X in this ability's mana cost. */
+    public ActivatedAbility withMinimumXValue(int minimumXValue) {
+        if (minimumXValue < 0) {
+            throw new IllegalArgumentException("Minimum X value cannot be negative");
+        }
+        this.minimumXValue = minimumXValue;
         return this;
     }
 
@@ -363,6 +392,13 @@ public class ActivatedAbility {
         }
         this.suspendsSourceFromHand = true;
         this.suspendTimeCounters = timeCounters;
+        return this;
+    }
+
+    /** Marks this hand-activated ability as suspend X, using the chosen X value as time counters. */
+    public ActivatedAbility withSuspendsSourceFromHandX() {
+        this.suspendsSourceFromHand = true;
+        this.suspendTimeCountersFromX = true;
         return this;
     }
 
@@ -460,6 +496,12 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks this ability as requiring another activated ability on its source permanent. */
+    public ActivatedAbility withRequiresAnotherActivatedAbility() {
+        this.requiresAnotherActivatedAbility = true;
+        return this;
+    }
+
     /**
      * Fluent setter for an "Activate only if there are N or more [matching] cards in your graveyard"
      * restriction (e.g. Gate to the Afterlife's "six or more creature cards in your graveyard").
@@ -544,8 +586,14 @@ public class ActivatedAbility {
         return this;
     }
 
+    /**
+     * Whether this ability carries a target during activation. An ability-side target filter is
+     * itself a target declaration, even when its effect target specs are neutral (for example,
+     * an ability that looks at a target player's library).
+     */
     public boolean isNeedsTarget() {
-        return !multiTargetFilters.isEmpty()
+        return targetFilter != null
+                || !multiTargetFilters.isEmpty()
                 || effects.stream().anyMatch(e -> {
                     TargetSpec spec = e.targetSpec();
                     return spec.admits(TargetPredicate.Kind.PLAYER)
@@ -583,15 +631,6 @@ public class ActivatedAbility {
     /** Marks the ability as requiring a player-chosen xValue for a dynamic non-mana cost. */
     public ActivatedAbility withXValue() {
         this.requiresXValue = true;
-        return this;
-    }
-
-    /** Requires the player-chosen X value to be at least {@code minimumXValue}. */
-    public ActivatedAbility withMinimumXValue(int minimumXValue) {
-        if (minimumXValue < 0) {
-            throw new IllegalArgumentException("Minimum X value cannot be negative");
-        }
-        this.minimumXValue = minimumXValue;
         return this;
     }
 

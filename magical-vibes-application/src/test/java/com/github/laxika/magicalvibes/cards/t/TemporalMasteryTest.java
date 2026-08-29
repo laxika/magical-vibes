@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TemporalMastery.class, GrizzlyBears.class})
 class TemporalMasteryTest extends BaseCardTest {
 
     private void enableAutoStop() {
@@ -140,8 +142,12 @@ class TemporalMasteryTest extends BaseCardTest {
     @DisplayName("Miracle cast ignores sorcery timing (works off the draw)")
     void miracleCastIgnoresSorceryTiming() {
         enableAutoStop();
+        gd.playerAutoStopSteps.get(player1.getId()).add(TurnStep.POSTCOMBAT_MAIN);
+        gd.playerAutoStopSteps.get(player2.getId()).add(TurnStep.POSTCOMBAT_MAIN);
         // Not in a main phase — cast during trigger resolution mid-draw flow
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         TemporalMastery mastery = new TemporalMastery();
         harness.setLibrary(player1, List.of(mastery, new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);

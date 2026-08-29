@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -109,6 +110,7 @@ class LandTapTriggerCollectorServiceTest {
         lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
                 .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
                         - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
@@ -887,6 +889,45 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.BLACK)).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("AddManaWhenLandOfColorTappedForManaEffect")
+    class AddManaWhenLandOfColorTappedForMana {
+
+        @Test
+        @DisplayName("adds colorless mana when the controller taps a land for colorless mana")
+        void addsManaForControllerLand() {
+            Permanent triggerPerm = createPermanent("Ultima, Origin of Oblivion");
+            Permanent land = createLandPermanent("Wastes", ManaColor.COLORLESS);
+            var effect = new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS);
+            var ctx = new TriggerContext.LandTap(player1Id, land.getId());
+
+            when(gameQueryService.findPermanentById(gd, land.getId())).thenReturn(land);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isOne();
+        }
+
+        @Test
+        @DisplayName("does not add mana when an opponent taps a land")
+        void ignoresOpponentLand() {
+            Permanent triggerPerm = createPermanent("Ultima, Origin of Oblivion");
+            Permanent land = createLandPermanent("Wastes", ManaColor.COLORLESS);
+            var effect = new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS);
+            var ctx = new TriggerContext.LandTap(player2Id, land.getId());
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.COLORLESS)).isZero();
         }
     }
 

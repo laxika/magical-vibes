@@ -106,7 +106,9 @@ class EffectResolutionServiceTest {
         lenient().when(stackResolutionServiceProvider.getObject()).thenReturn(stackResolutionService);
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
-                registry, gameLogService, permanentRemovalService, damageSupport, gameOutcomeService,
+                registry, gameLogService, permanentRemovalService, damageSupport,
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler.class),
+                gameOutcomeService,
                 stateBasedActionServiceProvider, stackResolutionServiceProvider);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

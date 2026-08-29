@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * where X is evaluated as the trigger is put on the stack.
  */
 public record ChooseOneAtTriggerTimeEffect(ChooseOneEffect choice, DynamicAmount maximumChoices)
-        implements CardEffect {
+        implements TriggeredModalEffect {
 
     public ChooseOneAtTriggerTimeEffect(ChooseOneEffect choice) {
         this(choice, null);

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -53,7 +54,8 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     return;
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+                int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                        gameData, entry.getControllerId(), imprintedCard.hasType(CardType.CREATURE));
                 for (int copy = 0; copy < tokenMultiplier; copy++) {
                     // Create a token that's a copy of the imprinted card (copying all copiable values)
                     Card tokenCard = new Card();

@@ -8,6 +8,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@link com.github.laxika.magicalvibes.model.amount.EventValue} effect.
  *
  * @param filter which permanents the controller may sacrifice
+ * @param recordSacrificedPower whether to snapshot the selected permanents' total effective power
  */
-public record SacrificeAnyNumberOfPermanentsEffect(PermanentPredicate filter) implements CardEffect {
+public record SacrificeAnyNumberOfPermanentsEffect(PermanentPredicate filter,
+                                                    boolean recordSacrificedPower)
+        implements CardEffect {
+
+    public SacrificeAnyNumberOfPermanentsEffect(PermanentPredicate filter) {
+        this(filter, false);
+    }
 }

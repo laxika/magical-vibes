@@ -12,8 +12,8 @@ public record TriggeringCardConditionalEffect(
 ) implements CardEffect, BlockedCreatureTriggerEffect {
 
     @Override
-    public boolean countsAbilityResolution() {
-        return wrapped.countsAbilityResolution();
+    public boolean hasAbilityResolutionCondition() {
+        return wrapped.hasAbilityResolutionCondition();
     }
 
     @Override

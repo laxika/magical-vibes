@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
@@ -217,7 +218,9 @@ public class MayPenaltyChoiceHandlerService {
             if (cost.canPay(pool) && canPayLife) {
                 cost.pay(pool);
                 if (lifeCost > 0) {
-                    gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeCost);
+                    int lifeLoss = lifeCost
+                            * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
+                    gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeLoss);
                 }
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
@@ -370,6 +373,58 @@ public class MayPenaltyChoiceHandlerService {
         counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
+
+    public void handleCounterUnlessCollectsEvidenceChoice(GameData gameData, Player player,
+                                                           boolean accepted, PendingMayAbility ability) {
+        CounterUnlessCollectsEvidenceEffect effect = ability.effects().stream()
+                .filter(CounterUnlessCollectsEvidenceEffect.class::isInstance)
+                .map(CounterUnlessCollectsEvidenceEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            int totalManaValue = graveyard == null
+                    ? 0
+                    : graveyard.stream().mapToInt(Card::getManaValue).sum();
+            if (totalManaValue >= effect.minimumManaValue()) {
+                gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume = true;
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginMultiGraveyardChoiceWithMinimumManaValue(
+                        gameData, controllerId, new ArrayList<>(graveyard), graveyard.size(),
+                        effect.minimumManaValue(),
+                        "Choose cards from your graveyard to collect evidence "
+                                + effect.minimumManaValue() + ".");
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " accepts — choosing cards to collect evidence. ",
+                        ability.sourceCard(), ""));
+                return;
+            }
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+
 
     public void handleCounterUnlessExilesGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                                          PendingMayAbility ability) {
@@ -672,12 +727,14 @@ public class MayPenaltyChoiceHandlerService {
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
         } else {
+            int lifeLoss = effect.lifeLoss()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
             int currentLife = gameData.getLife(targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+            gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
 
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " loses " + effect.lifeLoss() + " life. (", ability.sourceCard(), ")"));
-            log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+                    player.getUsername() + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -706,12 +763,14 @@ public class MayPenaltyChoiceHandlerService {
                 if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                     gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                 } else {
+                    int lifeLoss = effect.lifeLoss()
+                            * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
                     int currentLife = gameData.getLife(targetPlayerId);
-                    gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                    gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " can't pay {" + effect.payAmount() + "}. " + player.getUsername()
-                                    + " loses " + effect.lifeLoss() + " life. (", ability.sourceCard(), ")"));
-                    log.info("Game {} - {} can't pay {} — loses {} life ({})", gameData.id, player.getUsername(), effect.payAmount(), effect.lifeLoss(), ability.sourceCard().getName());
+                                    + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+                    log.info("Game {} - {} can't pay {} — loses {} life ({})", gameData.id, player.getUsername(), effect.payAmount(), lifeLoss, ability.sourceCard().getName());
                 }
             }
         } else {
@@ -719,11 +778,13 @@ public class MayPenaltyChoiceHandlerService {
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
             } else {
+                int lifeLoss = effect.lifeLoss()
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
                 int currentLife = gameData.getLife(targetPlayerId);
-                gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
                 gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " loses " + effect.lifeLoss() + " life. (", ability.sourceCard(), ")"));
-                log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+                        player.getUsername() + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());
             }
             penaltyApplied = true;
         }
@@ -758,9 +819,11 @@ public class MayPenaltyChoiceHandlerService {
             boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, payerId)
                     && gameData.getLife(payerId) >= effect.lifeCost();
             if (canPayLife) {
-                gameData.playerLifeTotals.put(payerId, gameData.getLife(payerId) - effect.lifeCost());
+                int lifeLoss = effect.lifeCost()
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, payerId);
+                gameData.playerLifeTotals.put(payerId, gameData.getLife(payerId) - lifeLoss);
                 gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+                        player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} life to save the enchanted permanent ({})",
                         gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -962,9 +1025,11 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted && canPay) {
             int currentLife = gameData.getLife(targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
+            gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to keep their hand ({})", gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
             // Declined (or can no longer pay) — discard the whole hand.
@@ -988,9 +1053,11 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(targetPlayerId) >= effect.lifeCost();
         boolean paid = accepted && canPay;
         if (paid) {
-            gameData.playerLifeTotals.put(targetPlayerId, gameData.getLife(targetPlayerId) - effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
+            gameData.playerLifeTotals.put(targetPlayerId, gameData.getLife(targetPlayerId) - lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
         }
 
         revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler.afterCardDecision(
@@ -1011,9 +1078,11 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
         boolean paid = accepted && canPay;
         if (paid) {
-            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, payingPlayerId);
+            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         }
@@ -1068,9 +1137,11 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted && canPay) {
             int currentLife = gameData.getLife(payingPlayerId);
-            gameData.playerLifeTotals.put(payingPlayerId, currentLife - effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, payingPlayerId);
+            gameData.playerLifeTotals.put(payingPlayerId, currentLife - lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to keep their permanent ({})", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
@@ -1095,9 +1166,11 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - effect.lifeCost());
+            int lifeLoss = effect.lifeCost()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, payingPlayerId);
+            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - lifeLoss);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to avoid the tap ({})", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
@@ -1131,7 +1204,9 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted && canPay) {
             if (lifeCost > 0) {
-                gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - lifeCost);
+                int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, payingPlayerId);
+                gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - lifeLoss);
+                lifeCost = lifeLoss;
             }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
@@ -1670,12 +1745,14 @@ public class MayPenaltyChoiceHandlerService {
                     || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
                             && gameData.getLife(decidingPlayerId) >= lifeAmount);
             if (canPay) {
+                int lifeLoss = lifeAmount
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, decidingPlayerId);
                 gameData.playerLifeTotals.put(decidingPlayerId,
-                        gameData.getLife(decidingPlayerId) - lifeAmount);
+                        gameData.getLife(decidingPlayerId) - lifeLoss);
                 gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + lifeAmount + " life. (", ability.sourceCard(), ")"));
+                        player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} life to avoid penalty ({})", gameData.id,
-                        player.getUsername(), lifeAmount, ability.sourceCard().getName());
+                        player.getUsername(), lifeLoss, ability.sourceCard().getName());
                 forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, 0);
                 clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -1739,16 +1816,18 @@ public class MayPenaltyChoiceHandlerService {
                         + manaSpent.getOrDefault(ManaColor.RED, 0);
                 forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, blackOrRedSpent);
                 if (lifeAmount > 0) {
+                    int lifeLoss = lifeAmount
+                            * gameQueryService.opponentLifeLossMultiplier(gameData, decidingPlayerId);
                     gameData.playerLifeTotals.put(
-                            decidingPlayerId, gameData.getLife(decidingPlayerId) - lifeAmount);
+                            decidingPlayerId, gameData.getLife(decidingPlayerId) - lifeLoss);
                     // A blank mana cost means the payment is life-only (Glacial Chasm).
                     String paidText = costString == null || costString.isEmpty()
-                            ? lifeAmount + " life"
-                            : costString + " and " + lifeAmount + " life";
+                            ? lifeLoss + " life"
+                            : costString + " and " + lifeLoss + " life";
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " pays " + paidText + ". (", ability.sourceCard(), ")"));
                     log.info("Game {} - {} pays {} and {} life to avoid penalty ({})",
-                            gameData.id, player.getUsername(), costString, lifeAmount,
+                            gameData.id, player.getUsername(), costString, lifeLoss,
                             ability.sourceCard().getName());
                 } else {
                     gameLogService.append(gameData, GameLog.textCardText(

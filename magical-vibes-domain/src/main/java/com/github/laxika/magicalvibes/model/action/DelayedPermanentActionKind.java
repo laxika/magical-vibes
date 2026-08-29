@@ -12,6 +12,7 @@ public enum DelayedPermanentActionKind {
     EXILE_TOKEN_AT_END_STEP(Op.EXILE, " token is exiled."),
     EXILE_AT_END_STEP(Op.EXILE, " is exiled."),
     SACRIFICE_AT_END_STEP(Op.SACRIFICE, " is sacrificed."),
+    SACRIFICE_AT_NEXT_UPKEEP(Op.SACRIFICE, " is sacrificed."),
     DESTROY_AT_END_STEP(Op.DESTROY, " is destroyed at end step."),
     RETURN_TO_HAND_AT_END_STEP(Op.RETURN_TO_HAND, " is returned to its owner's hand."),
     EXILE_TOKEN_AT_END_OF_COMBAT(Op.EXILE, " token is exiled."),

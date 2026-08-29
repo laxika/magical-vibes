@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  *                    {@link GrantScope#ALL_OWN_CREATURES} applies to every creature the controller controls
  */
 public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope,
-                                                 boolean allowPermanentTarget) implements CardEffect {
+                                                  boolean allowPermanentTarget) implements CardEffect {
 
     public SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope) {
         this(requirement, scope, false);
@@ -32,6 +32,13 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
      */
     public SetCombatRequirementThisTurnEffect(CombatRequirement requirement) {
         this(requirement, GrantScope.TARGET, false);
+    }
+
+    /**
+     * Variant for effects that first turn a targeted permanent into a creature while resolving.
+     */
+    public static SetCombatRequirementThisTurnEffect forAnimatedPermanent(CombatRequirement requirement) {
+        return targetPermanent(requirement);
     }
 
     /**

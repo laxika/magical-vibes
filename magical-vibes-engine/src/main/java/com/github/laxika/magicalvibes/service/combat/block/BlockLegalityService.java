@@ -30,12 +30,14 @@ import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.GlobalBlockRestriction;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -69,6 +71,20 @@ public class BlockLegalityService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final BlockDenialMessageService blockDenialMessageService;
+    private final CombatTapCostService combatTapCostService;
+
+    /**
+     * Returns whether a complete blocker group leaves enough eligible creatures to pay every
+     * creature-tap combat cost in the declaration.
+     */
+    public boolean canPayBlockTapCosts(GameData gameData, UUID defenderId,
+                                       Collection<Permanent> blockers) {
+        List<Permanent> attackingBattlefield = gameData.activePlayerId == null
+                ? List.of()
+                : gameData.playerBattlefields.getOrDefault(gameData.activePlayerId, List.of());
+        return combatTapCostService.canPayBlockCosts(
+                gameData, defenderId, attackingBattlefield, blockers);
+    }
 
     /**
      * Builds a {@link BlockLegalityContext} for one declare-blockers computation: collects the
@@ -145,6 +161,7 @@ public class BlockLegalityService {
                 || (creature.isTapped() && !canBlockAsThoughUntapped(context, creature))
                 || creature.isCantBlockThisTurn()
                 || creature.isCantBlockThisCombat()
+                || gameQueryService.hasSuspectedAbilities(context.gameData, creature)
                 || isOutsideChosenBlockers(context.gameData, creature)) {
             return false;
         }
@@ -292,6 +309,9 @@ public class BlockLegalityService {
             return BlockDenial.CANT_BLOCK_THIS_TURN;
         }
         if (blocker.isCantBlockThisCombat()) {
+            return BlockDenial.CANT_BLOCK;
+        }
+        if (gameQueryService.hasSuspectedAbilities(gameData, blocker)) {
             return BlockDenial.CANT_BLOCK;
         }
         if (gameQueryService.isLockedFromBlocking(gameData, blocker.getId())) {

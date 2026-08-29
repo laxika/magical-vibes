@@ -20,11 +20,15 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
@@ -46,10 +50,14 @@ public class AiManaManager {
 
     private final GameQueryService gameQueryService;
     private final PotentialManaService potentialManaService;
+    private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public AiManaManager(GameQueryService gameQueryService, PotentialManaService potentialManaService) {
         this.gameQueryService = gameQueryService;
         this.potentialManaService = potentialManaService;
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
     }
 
     /**
@@ -62,7 +70,22 @@ public class AiManaManager {
         void tap(int permanentIndex, Integer abilityIndex);
     }
 
-    private record ManaActivation(UUID permanentId, Integer abilityIndex) {}
+    private record TappedPermanentRequirement(int count, List<UUID> candidateIds) {
+        private TappedPermanentRequirement {
+            candidateIds = List.copyOf(candidateIds);
+        }
+    }
+
+    private record ManaActivation(UUID permanentId, Integer abilityIndex,
+                                  List<TappedPermanentRequirement> tappedPermanentRequirements) {
+        private ManaActivation {
+            tappedPermanentRequirements = List.copyOf(tappedPermanentRequirements);
+        }
+
+        private ManaActivation(UUID permanentId, Integer abilityIndex) {
+            this(permanentId, abilityIndex, List.of());
+        }
+    }
 
     private record ManaPaymentPlan(List<ManaActivation> activations) {
         private ManaPaymentPlan {
@@ -117,7 +140,12 @@ public class AiManaManager {
 
     boolean canPayCost(GameData gameData, UUID playerId, String manaCostStr, int costModifier,
                        boolean creaturesOnly, Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        return canPayCost(gameData, playerId, new ManaCost(manaCostStr), costModifier,
+                creaturesOnly, excludedPermanentIds);
+    }
+
+    boolean canPayCost(GameData gameData, UUID playerId, ManaCost cost, int costModifier,
+                       boolean creaturesOnly, Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(playerId);
         if (currentPool == null) {
             return false;
@@ -135,7 +163,13 @@ public class AiManaManager {
     boolean canPayCostWithConvoke(GameData gameData, UUID playerId, String manaCostStr,
                                   int additionalGenericCost, Set<UUID> excludedPermanentIds,
                                   Map<UUID, ManaColor> convokeContributions) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        return canPayCostWithConvoke(gameData, playerId, new ManaCost(manaCostStr),
+                additionalGenericCost, excludedPermanentIds, convokeContributions);
+    }
+
+    boolean canPayCostWithConvoke(GameData gameData, UUID playerId, ManaCost cost,
+                                  int additionalGenericCost, Set<UUID> excludedPermanentIds,
+                                  Map<UUID, ManaColor> convokeContributions) {
         ManaPool currentPool = gameData.playerManaPools.get(playerId);
         if (currentPool == null) {
             return false;
@@ -170,12 +204,17 @@ public class AiManaManager {
             return false;
         }
         return hasPaymentPlan(sources, 0, requirement, new ManaPool(currentPool),
-                new HashSet<>(), new PaymentSearch());
+                new ArrayList<>(), new HashSet<>(), new PaymentSearch());
     }
 
     boolean canPayXCost(GameData gameData, UUID playerId, Card card, String manaCostStr,
                         int xValue, int costModifier, Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        return canPayXCost(gameData, playerId, card, new ManaCost(manaCostStr), xValue,
+                costModifier, excludedPermanentIds);
+    }
+
+    boolean canPayXCost(GameData gameData, UUID playerId, Card card, ManaCost cost,
+                        int xValue, int costModifier, Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(playerId);
         if (currentPool == null) {
             return false;
@@ -247,7 +286,13 @@ public class AiManaManager {
     void tapLandsForCostExcluding(GameData gameData, UUID aiPlayerId, String manaCostStr,
                                   int costModifier, ManaTapAction action, boolean skipChoiceSources,
                                   Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        tapLandsForCostExcluding(gameData, aiPlayerId, new ManaCost(manaCostStr),
+                costModifier, action, skipChoiceSources, excludedPermanentIds);
+    }
+
+    void tapLandsForCostExcluding(GameData gameData, UUID aiPlayerId, ManaCost cost,
+                                  int costModifier, ManaTapAction action, boolean skipChoiceSources,
+                                  Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
         Set<UUID> excludedIds = excludedPermanentIds == null
                 ? Set.of()
@@ -336,7 +381,13 @@ public class AiManaManager {
     void tapCreaturesForCostExcluding(GameData gameData, UUID aiPlayerId, String manaCostStr,
                                       int costModifier, ManaTapAction action,
                                       Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostStr);
+        tapCreaturesForCostExcluding(gameData, aiPlayerId, new ManaCost(manaCostStr),
+                costModifier, action, excludedPermanentIds);
+    }
+
+    void tapCreaturesForCostExcluding(GameData gameData, UUID aiPlayerId, ManaCost cost,
+                                      int costModifier, ManaTapAction action,
+                                      Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
         Set<UUID> excludedIds = excludedPermanentIds == null
                 ? Set.of()
@@ -392,7 +443,13 @@ public class AiManaManager {
     void tapLandsForXSpellExcluding(GameData gameData, UUID aiPlayerId, Card card,
                                     String manaCostString, int xValue, int costModifier,
                                     ManaTapAction action, Set<UUID> excludedPermanentIds) {
-        ManaCost cost = new ManaCost(manaCostString);
+        tapLandsForXSpellExcluding(gameData, aiPlayerId, card, new ManaCost(manaCostString),
+                xValue, costModifier, action, excludedPermanentIds);
+    }
+
+    void tapLandsForXSpellExcluding(GameData gameData, UUID aiPlayerId, Card card,
+                                    ManaCost cost, int xValue, int costModifier,
+                                    ManaTapAction action, Set<UUID> excludedPermanentIds) {
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
         Set<UUID> excludedIds = excludedPermanentIds == null
                 ? Set.of()
@@ -543,7 +600,8 @@ public class AiManaManager {
         if (++search.visitedNodes > MAX_PAYMENT_SEARCH_NODES || planCost >= search.bestCost) {
             return;
         }
-        if (requirement.isSatisfied(pool, activatedPermanentIds)) {
+        if (requirement.isSatisfied(pool, activatedPermanentIds)
+                && canSatisfyTappedPermanentRequirements(activations)) {
             search.bestCost = planCost;
             search.bestPlan = new ManaPaymentPlan(activations);
             return;
@@ -573,11 +631,13 @@ public class AiManaManager {
 
     private boolean hasPaymentPlan(List<ManaSourceOptions> sources, int sourceIndex,
                                    ManaPaymentRequirement requirement, ManaPool pool,
+                                   List<ManaActivation> activations,
                                    Set<UUID> activatedPermanentIds, PaymentSearch search) {
         if (++search.visitedNodes > MAX_PAYMENT_SEARCH_NODES) {
             return false;
         }
-        if (requirement.isSatisfied(pool, activatedPermanentIds)) {
+        if (requirement.isSatisfied(pool, activatedPermanentIds)
+                && canSatisfyTappedPermanentRequirements(activations)) {
             return true;
         }
         if (sourceIndex >= sources.size()) {
@@ -591,17 +651,72 @@ public class AiManaManager {
             if (source.creature()) {
                 option.output().forEach(nextPool::addCreatureMana);
             }
+            activations.add(option.activation());
             activatedPermanentIds.add(option.activation().permanentId());
             if (hasPaymentPlan(sources, sourceIndex + 1, requirement, nextPool,
-                    activatedPermanentIds, search)) {
+                    activations, activatedPermanentIds, search)) {
                 activatedPermanentIds.remove(option.activation().permanentId());
+                activations.removeLast();
                 return true;
             }
             activatedPermanentIds.remove(option.activation().permanentId());
+            activations.removeLast();
         }
 
         return hasPaymentPlan(sources, sourceIndex + 1, requirement, pool,
-                activatedPermanentIds, search);
+                activations, activatedPermanentIds, search);
+    }
+
+    private static boolean canSatisfyTappedPermanentRequirements(List<ManaActivation> activations) {
+        Set<UUID> manaSourceIds = new HashSet<>();
+        for (ManaActivation activation : activations) {
+            manaSourceIds.add(activation.permanentId());
+        }
+
+        List<List<UUID>> candidateIdsByRequiredPermanent = new ArrayList<>();
+        for (ManaActivation activation : activations) {
+            for (TappedPermanentRequirement requirement : activation.tappedPermanentRequirements()) {
+                List<UUID> availableCandidates = requirement.candidateIds().stream()
+                        .filter(candidateId -> !manaSourceIds.contains(candidateId))
+                        .toList();
+                if (availableCandidates.size() < requirement.count()) {
+                    return false;
+                }
+                for (int i = 0; i < requirement.count(); i++) {
+                    candidateIdsByRequiredPermanent.add(availableCandidates);
+                }
+            }
+        }
+        candidateIdsByRequiredPermanent.sort((left, right) -> Integer.compare(left.size(), right.size()));
+
+        Map<UUID, Integer> assignedRequirementByPermanent = new HashMap<>();
+        for (int requirementIndex = 0;
+             requirementIndex < candidateIdsByRequiredPermanent.size();
+             requirementIndex++) {
+            if (!assignTappedPermanent(requirementIndex, candidateIdsByRequiredPermanent,
+                    assignedRequirementByPermanent, new HashSet<>())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean assignTappedPermanent(
+            int requirementIndex, List<List<UUID>> candidateIdsByRequiredPermanent,
+            Map<UUID, Integer> assignedRequirementByPermanent, Set<UUID> visitedPermanentIds) {
+        for (UUID candidateId : candidateIdsByRequiredPermanent.get(requirementIndex)) {
+            if (!visitedPermanentIds.add(candidateId)) {
+                continue;
+            }
+            Integer previousRequirement = assignedRequirementByPermanent.get(candidateId);
+            if (previousRequirement == null
+                    || assignTappedPermanent(previousRequirement, candidateIdsByRequiredPermanent,
+                    assignedRequirementByPermanent, visitedPermanentIds)) {
+                assignedRequirementByPermanent.put(candidateId, requirementIndex);
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<ManaSourceOptions> collectManaSourceOptions(GameData gameData, UUID playerId,
@@ -636,11 +751,11 @@ public class AiManaManager {
     private List<ManaOption> manaOptionsForPermanent(GameData gameData, UUID playerId,
                                                       Permanent permanent,
                                                       boolean skipChoiceSources) {
+        if (skipChoiceSources && potentialManaService.wouldTapForManaOpenChoice(gameData, permanent)) {
+            return List.of();
+        }
         Card card = permanent.getCard();
         Set<ManaColor> replacementColors = effectiveLandManaColors(gameData, permanent);
-        if (skipChoiceSources && replacementColors.size() > 1) {
-            return List.of(); // Tapping would prompt for which replacement color to add
-        }
         boolean printedTapMana = potentialManaService.hasLivePrintedTapMana(gameData, permanent);
         int triggerCost = attachedTapTriggerCost(gameData, permanent);
         List<ManaColor> overriddenLandColors = card.hasType(CardType.LAND)
@@ -661,12 +776,8 @@ public class AiManaManager {
         if (printedTapMana) {
             return applyLandManaReplacement(replacementColors, manaOptionsForEffects(permanent.getId(), null,
                     card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false,
-                    permanent, gameData));
+                    permanent, gameData, playerId));
         }
-        if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
-            return List.of();
-        }
-
         List<ManaOption> options = new ArrayList<>();
         List<ActivatedAbility> abilities = potentialManaService.activatedAbilitiesFor(gameData, permanent, card);
         for (int i = 0; i < abilities.size(); i++) {
@@ -678,7 +789,8 @@ public class AiManaManager {
                     .anyMatch(e -> e instanceof DealDamageToPlayersEffect dmg
                             && dmg.recipient() == DamageRecipient.CONTROLLER);
             options.addAll(manaOptionsForEffects(permanent.getId(), i,
-                    ability.getEffects(), triggerCost, versatilityCost, painful, permanent, gameData));
+                    ability.getEffects(), triggerCost, versatilityCost, painful,
+                    permanent, gameData, playerId));
         }
         return applyLandManaReplacement(replacementColors, options);
     }
@@ -746,7 +858,8 @@ public class AiManaManager {
     private List<ManaOption> manaOptionsForEffects(UUID permanentId, Integer abilityIndex,
                                                     List<CardEffect> effects, int triggerCost,
                                                     int versatilityCost, boolean painful,
-                                                    Permanent permanent, GameData gameData) {
+                                                    Permanent permanent, GameData gameData,
+                                                    UUID playerId) {
         Map<ManaColor, Integer> fixedOutput = new EnumMap<>(ManaColor.class);
         int anyColorAmount = 0;
         for (CardEffect effect : effects) {
@@ -769,7 +882,8 @@ public class AiManaManager {
 
         int optionCost = ACTIVATION_COST + versatilityCost + triggerCost
                 + (painful ? PAIN_MANA_COST : 0);
-        ManaActivation activation = new ManaActivation(permanentId, abilityIndex);
+        ManaActivation activation = new ManaActivation(permanentId, abilityIndex,
+                tappedPermanentRequirements(effects, permanent, gameData, playerId));
         if (anyColorAmount <= 0) {
             return List.of(new ManaOption(activation, Map.copyOf(fixedOutput), optionCost));
         }
@@ -783,6 +897,34 @@ public class AiManaManager {
             options.add(new ManaOption(activation, Map.copyOf(output), optionCost));
         }
         return options;
+    }
+
+    private List<TappedPermanentRequirement> tappedPermanentRequirements(
+            List<CardEffect> effects, Permanent source, GameData gameData, UUID playerId) {
+        List<TappedPermanentRequirement> requirements = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            if (!(effect instanceof CostEffect cost) || cost.tappedPermanentCount() == null) {
+                continue;
+            }
+            int count = amountEvaluationService.evaluate(gameData, cost.tappedPermanentCount(),
+                    AmountContext.forManaAbility(source, playerId));
+            if (count <= 0) {
+                continue;
+            }
+            List<UUID> candidateIds = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(candidate -> !candidate.isTapped())
+                    .filter(candidate -> !cost.excludesSourceFromConsumedPermanents()
+                            || !candidate.getId().equals(source.getId()))
+                    .filter(candidate -> !cost.tappedPermanentMustBeCreature()
+                            || gameQueryService.isCreature(gameData, candidate))
+                    .filter(candidate -> cost.consumedPermanentFilter() != null
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, candidate, cost.consumedPermanentFilter()))
+                    .map(Permanent::getId)
+                    .toList();
+            requirements.add(new TappedPermanentRequirement(count, candidateIds));
+        }
+        return requirements;
     }
 
     private static int attachedTapTriggerCost(GameData gameData, Permanent permanent) {
@@ -856,11 +998,11 @@ public class AiManaManager {
             }
 
             Card card = perm.getCard();
+            if (skipChoiceSources && potentialManaService.wouldTapForManaOpenChoice(gameData, perm)) {
+                continue;
+            }
             boolean hasOnTap = potentialManaService.hasLivePrintedTapMana(gameData, perm);
             if (!hasOnTap) {
-                if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
-                    continue;
-                }
                 Integer abilityIndex = chooseBestManaAbilityIndex(card, cost, currentPool, perm, gameData, aiPlayerId);
                 if (abilityIndex == null) {
                     continue;
@@ -989,38 +1131,14 @@ public class AiManaManager {
         return maxX;
     }
 
-    /**
-     * Applies a card's cast-time X ceiling ("X can't be greater than …") when it is a controller
-     * {@link com.github.laxika.magicalvibes.model.amount.PermanentCount}. Used by AI X selection.
-     */
-    int clampByXValueCap(GameData gameData, UUID playerId, Card card, int maxX) {
+    /** Applies a card's cast-time X ceiling ("X can't be greater than …") to AI X selection. */
+    public int clampByXValueCap(GameData gameData, UUID playerId, Card card, int maxX) {
         if (card.getXValueCap() == null || maxX <= 0 || playerId == null) {
             return maxX;
         }
-        if (!(card.getXValueCap() instanceof com.github.laxika.magicalvibes.model.amount.PermanentCount pc)
-                || pc.scope() != com.github.laxika.magicalvibes.model.amount.CountScope.CONTROLLER) {
-            return maxX;
-        }
-        int cap = 0;
-        for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-            if (matchesXCapFilterIntrinsic(p, pc.filter())) {
-                cap++;
-            }
-        }
+        int cap = amountEvaluationService.evaluate(gameData, card.getXValueCap(),
+                AmountContext.forCasting(playerId, maxX, card));
         return Math.min(maxX, cap);
-    }
-
-    private static boolean matchesXCapFilterIntrinsic(Permanent permanent,
-            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
-        return switch (filter) {
-            case com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate ignored ->
-                    permanent.getCard().hasType(com.github.laxika.magicalvibes.model.CardType.LAND);
-            case com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate has ->
-                    permanent.getCard().getSupertypes().contains(has.supertype());
-            case com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate all ->
-                    all.predicates().stream().allMatch(p -> matchesXCapFilterIntrinsic(permanent, p));
-            default -> false;
-        };
     }
 
     /**
@@ -1088,22 +1206,12 @@ public class AiManaManager {
     }
 
     /**
-     * Builds a virtual mana pool excluding mana sources whose activated abilities
-     * would trigger an interactive choice (e.g. AwardAnyColorManaEffect on Birds of Paradise).
-     * Used when computing affordable attackers for attack tax, to avoid activating
-     * choice-triggering abilities during ATTACKER_DECLARATION.
+     * Builds a virtual mana pool excluding sources whose mana tap would open an interactive
+     * choice. Used when computing affordable attackers for attack tax so payment cannot replace
+     * the active declaration prompt.
      */
     public VirtualManaPool buildSafeVirtualManaPool(GameData gameData, UUID aiPlayerId) {
         return potentialManaService.buildSafeVirtualManaPool(gameData, aiPlayerId);
-    }
-
-    /**
-     * Returns true if the card's activated mana abilities would trigger an interactive
-     * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise).
-     * Cards with ON_TAP effects are always safe — they produce mana without choices.
-     */
-    static boolean wouldManaAbilityTriggerChoice(Card card) {
-        return PotentialManaService.wouldManaAbilityTriggerChoice(card);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

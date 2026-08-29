@@ -625,6 +625,17 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
     }
 
+    public void castAdventure(Player player, int cardIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, null,
+                targetIds != null ? targetIds : List.of());
+    }
+
+    public void castAdventure(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, targetId, List.of());
+    }
+
     public void foretell(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.foretellCard(gameData, player, cardIndex);

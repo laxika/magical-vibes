@@ -193,6 +193,8 @@ export interface Card {
   alternateCostDiscardsHandCard?: boolean;
   alternateCostRevealsHandCard?: boolean;
   graveyardCastRequiresDiscard?: boolean;
+  graveyardCastExileCount?: number;
+  graveyardCastExileLabel?: string | null;
   additionalBeholdSubtype: string | null;
   additionalBeholdCount: number;
   additionalBeholdFlashbackOnly: boolean;
@@ -211,6 +213,7 @@ export interface Card {
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;
+  modalModesMayRepeat?: boolean;
   modalOptions: ModalOptionView[] | null;
   /** Additional counters to remove when casting this card from exile. */
   exileCastCounterCost: number;
@@ -219,6 +222,8 @@ export interface Card {
   additionalCreatureTypeChoices?: string[];
   additionalCostLifePayment?: number;
   additionalCostManaCost?: string | null;
+  alternateCostCollectEvidence?: boolean;
+  alternateCostCollectEvidenceAmount?: number;
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other
    *  card. Not a face you flip to — the front face stays and this is drawn alongside it. */
   prepareSpell: Card | null;

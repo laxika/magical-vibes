@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
  * away as one.
  */
 @CardRegistration(set = "M15", collectorNumber = "248")
+@CardRegistration(set = "PLC", collectorNumber = "165")
 public class UrborgTombOfYawgmoth extends Card {
 
     public UrborgTombOfYawgmoth() {

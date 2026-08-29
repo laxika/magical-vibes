@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,10 +35,9 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
         var e = (FlipCoinsPerHeadsEffect) effect;
 
         int heads = 0;
-        int physicalFlips = 0;
-        for (int i = 0; i < e.coins(); i++) {
-            CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, entry.getControllerId());
-            physicalFlips += result.physicalFlips();
+        List<CoinFlipService.CoinFlipResult> results = coinFlipService.flipCoins(
+                gameData, entry.getControllerId(), e.coins());
+        for (CoinFlipService.CoinFlipResult result : results) {
             if (result.heads()) {
                 heads++;
                 triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
@@ -46,9 +45,7 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        String replacementDetails = physicalFlips == e.coins()
-                ? ""
-                : " (" + physicalFlips + " physical coin flips; one result kept per coin)";
+        String replacementDetails = coinFlipService.replacementDetailsForCoins(results);
         gameLogService.append(gameData, GameLog.text(playerName + " flips " + e.coins() + " coins for "
                 + entry.getCard().getName() + ": " + heads + " heads" + replacementDetails + "."));
         log.info("Game {} - {} flips {} coins for {}: {} heads", gameData.id, playerName, e.coins(),

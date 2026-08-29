@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsHandThenDrawsThatManyEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -31,8 +32,9 @@ public class CollectiveDefiance extends Card {
         var creatureFilter = new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature.");
-        var opponentOrPlaneswalkerFilter = new PermanentPredicateTargetFilter(
+        var opponentOrPlaneswalkerFilter = new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker.");
 
         // Choose one or more —

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -32,6 +31,15 @@ public record ExileGraveyardCardCreateTokenIfCreatureEffect(
         this(filter, GraveyardSearchScope.ALL_GRAVEYARDS, CreateTokenEffect.blackZombie(1), false);
     }
 
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(CreateTokenEffect tokenTemplate) {
+        this(null, GraveyardSearchScope.ALL_GRAVEYARDS, tokenTemplate);
+    }
+
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(
+            CardPredicate filter, CreateTokenEffect tokenTemplate) {
+        this(filter, GraveyardSearchScope.ALL_GRAVEYARDS, tokenTemplate);
+    }
+
     public ExileGraveyardCardCreateTokenIfCreatureEffect(GraveyardSearchScope graveyardScope,
                                                          CreateTokenEffect tokenTemplate) {
         this(null, graveyardScope, tokenTemplate, false);
@@ -58,7 +66,7 @@ public record ExileGraveyardCardCreateTokenIfCreatureEffect(
 
     @Override
     public DynamicAmount tokenAmount() {
-        return new Fixed(1);
+        return tokenTemplate.amount();
     }
 
     @Override

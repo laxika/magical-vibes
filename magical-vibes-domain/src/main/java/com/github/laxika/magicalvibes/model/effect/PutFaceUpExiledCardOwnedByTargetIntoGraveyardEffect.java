@@ -1,5 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Offers to put one face-up card owned by the spell's target from exile into its graveyard. */
-public record PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffect() implements CardEffect {
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
+/** Offers to put one matching face-up card owned by the spell's target from exile into its graveyard. */
+public record PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffect(CardPredicate filter) implements CardEffect {
+
+    /** Offers any face-up card owned by the spell's target. */
+    public PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffect() {
+        this(null);
+    }
 }

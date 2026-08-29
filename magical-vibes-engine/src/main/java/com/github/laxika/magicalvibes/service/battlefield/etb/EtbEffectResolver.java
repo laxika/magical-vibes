@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -48,7 +49,8 @@ import java.util.Map;
  * ({@link Condition#isEtbTriggerGate()} — Metalcraft / Morbid / Raid / ControlsAnother / OpponentControlsMoreLands) return the
  * <em>conditional effect unchanged</em> when met (it stays wrapped and is re-evaluated at stack
  * resolution by {@code EffectResolutionService}), whereas Kicked / CastFromZone <em>unwrap</em> to
- * their inner effect. Conditions with no ETB policy pass through unchanged. Dropping ({@code null})
+ * their inner effect. {@code SourceUntapped} is also unwrapped after being sampled at entry;
+ * conditions with no other ETB policy pass through unchanged. Dropping ({@code null})
  * applies the intervening-if rule (CR 603.4): the ability never goes on the stack.
  */
 @Component
@@ -102,19 +104,21 @@ public class EtbEffectResolver {
 
         // Conditional ETB effects: immutable cast-time conditions are evaluated while the trigger
         // is created, gate types (Metalcraft / Morbid / Raid / ControlsAnother) stay wrapped for
-        // re-evaluation at stack resolution, and every other condition passes through unchanged.
+        // re-evaluation at stack resolution, and source-untapped clauses are sampled at entry.
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
             Zone sourceZone = ctx.sourcePermanent() == null
                     ? (ctx.wasCastFromHand() ? Zone.HAND : null)
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
+            boolean collectEvidenceCostPaid = ctx.sourcePermanent() != null
+                    && ctx.sourcePermanent().isCollectEvidenceCostPaid();
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false, false,
                     sourceZone, 0, null, null, false, false, false, null, null, null,
-                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
-                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
-                     false, false, 0, false);
+                    ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
+                    ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
+                    false, collectEvidenceCostPaid, false, 0, false);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
@@ -146,6 +150,9 @@ public class EtbEffectResolver {
                                 ? effect : null;
                 case ControllerMainPhase controllerMainPhase ->
                         conditionEvaluationService.isMet(ctx.gameData(), controllerMainPhase, conditionContext)
+                                ? conditional.wrapped() : null;
+                case SourceUntapped ignored ->
+                        conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
                                 ? conditional.wrapped() : null;
                 // "if you cast it" is true for a spell cast from any zone, but not for a copy or
                 // a permanent put onto the battlefield by an effect.

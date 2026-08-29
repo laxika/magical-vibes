@@ -19,7 +19,7 @@ public class ChokingVines extends Card {
         // X target attacking creatures become blocked. Choking Vines deals 1 damage to each of those
         // creatures. One X-scaled attacking-creature group feeds both effects; a creature that is
         // already blocked just takes the damage.
-        targetX(TargetFilters.attackingCreature(), 100)
+        targetExactlyX(TargetFilters.attackingCreature(), 100)
                 .addEffect(EffectSlot.SPELL, new MakeTargetAttackingCreatureBlockedEffect())
                 .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
     }

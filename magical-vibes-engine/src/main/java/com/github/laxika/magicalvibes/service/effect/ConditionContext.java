@@ -37,6 +37,7 @@ public record ConditionContext(
         boolean alternateCost,
         boolean spectacle,
         boolean controlledMountAsCast,
+        boolean collectEvidenceCostPaid,
         boolean castDuringMainPhase,
         int eventValue,
         boolean waterbendCostPaid
@@ -60,7 +61,7 @@ public record ConditionContext(
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, spectacle, false, false, 0, false);
+                alternateCost, spectacle, false, false, false, 0, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -76,7 +77,7 @@ public record ConditionContext(
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, false, false, false, eventValue, false);
+                alternateCost, false, false, false, false, eventValue, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -144,7 +145,7 @@ public record ConditionContext(
                 madness, false, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, false, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, false, false, false, 0, false);
+                alternateCost, false, false, false, false, 0, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -188,7 +189,11 @@ public record ConditionContext(
     }
 
     public static ConditionContext forStackEntry(StackEntry entry) {
-        return new ConditionContext(entry.getControllerId(), entry.getSourcePermanentId(),
+        UUID sourcePermanentId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId()
+                : entry.getSourcePermanentSnapshot() == null
+                        ? null : entry.getSourcePermanentSnapshot().getId();
+        return new ConditionContext(entry.getControllerId(), sourcePermanentId,
                 entry.getSourcePermanentSnapshot(), entry.getCard(), entry.isKicked(), entry.isBuyback(),
                 entry.isProwl(), entry.isMadness(), entry.isCastForForetell(), entry.isOverloaded(),
                 entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
@@ -196,27 +201,35 @@ public record ConditionContext(
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard() != null
                         ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot(),
                 entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.isSpectacle(),
-                entry.isControlledMountAsCast(), entry.isCastDuringMainPhase(), entry.getEventValue(),
-                entry.isWaterbendCostPaid());
+                entry.isControlledMountAsCast(), entry.isCollectEvidenceCostPaid(),
+                entry.isCastDuringMainPhase(), entry.getEventValue(), entry.isWaterbendCostPaid());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
                 permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), false, false, false,
                 null, 0, null, null, false, false, false, null, null, null,
-                permanent.getRepeatedAdditionalCosts(), permanent.isAlternateCost(), permanent.isSpectacle());
+                permanent.getRepeatedAdditionalCosts(), permanent.isAlternateCost(),
+                permanent.isSpectacle(), false, permanent.isCollectEvidenceCostPaid(), false, 0, false);
     }
 
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
         return new ConditionContext(controllerId, source.getId(), source,
                 source.getCard(), source.isKicked(), false, source.isProwl(), false, false, false,
                 null, 0, null, null, true, false, false, null, null, null,
-                source.getRepeatedAdditionalCosts(), source.isAlternateCost(), source.isSpectacle());
+                source.getRepeatedAdditionalCosts(), source.isAlternateCost(),
+                source.isSpectacle(), false, source.isCollectEvidenceCostPaid(), false, 0, false);
     }
 
     public static ConditionContext forCasting(UUID castingPlayerId) {
+        return forCasting(castingPlayerId, false);
+    }
+
+    public static ConditionContext forCasting(UUID castingPlayerId, boolean collectEvidenceCostPaid) {
         return new ConditionContext(castingPlayerId, null, null, null,
-                false, false, false, false, null, 0, null, null, false);
+                false, false, false, false, false, false, null, 0, null, null, false,
+                false, false, null, null, null, List.of(), false, false, false,
+                collectEvidenceCostPaid, false, 0, false);
     }
 
     public static ConditionContext forCard(Card card, UUID controllerId) {
@@ -256,8 +269,8 @@ public record ConditionContext(
                 copiedXValue, copiedTargetId, copiedTriggeringCard, staticEvaluation,
                 putCounterCostPaid, beholdCostPaid, copiedTriggeringPermanentId,
                 copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
-                spectacle, controlledMountAsCast, castDuringMainPhase, copiedEventValue,
-                waterbendCostPaid);
+                spectacle, controlledMountAsCast, collectEvidenceCostPaid,
+                castDuringMainPhase, copiedEventValue, waterbendCostPaid);
     }
 
     public ConditionContext withEventValue(int newEventValue) {
